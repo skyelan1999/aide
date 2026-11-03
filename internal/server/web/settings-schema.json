@@ -261,6 +261,18 @@
       ]
     },
     {
+      "id": "computer-control",
+      "title": "电脑控制",
+      "description": "电脑控制已整合为 Aide 内置能力。每次点击、输入或按键仍会单独请求确认；截图可交给视觉模型分析。Linux 需要 X11；Windows 桥接随 Aide 桌面应用运行。",
+      "controls": [
+        {
+          "id": "computer-control-settings",
+          "type": "computer-control",
+          "label": "电脑控制与截图"
+        }
+      ]
+    },
+    {
       "id": "persona",
       "title": "aide 性格",
       "description": "aide 性格系统，仅作用于基本聊天。可自定义性格提示词，系统会随使用自动精简演化以节约 token。",

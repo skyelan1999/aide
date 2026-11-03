@@ -226,6 +226,10 @@ public:
  json inspect(const std::string& ref){auto r=d({L"image",L"inspect",wide(ref),L"--format",L"{{json .}}"});return r.code?json():parseJson(r.out);}
  json config(){auto r=compose({L"config",L"--format",L"json"});required(r,"Cannot resolve Compose configuration");return parseJson(r.out);}
  std::string configured(const std::string& key){auto value=utf8(env(wide(key).c_str()));return value.empty()?settings[key]:value;}
+ std::string computerBridgeToken(){
+  auto value=configured("AIDE_COMPUTER_BRIDGE_TOKEN");if(value.size()<32){std::array<unsigned char,32> bytes{};if(BCryptGenRandom(nullptr,bytes.data(),ULONG(bytes.size()),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)throw std::runtime_error("Cannot create computer bridge token");const char* digits="0123456789abcdef";value.clear();for(auto byte:bytes){value+=digits[byte>>4];value+=digits[byte&15];}setting(root,"AIDE_COMPUTER_BRIDGE_TOKEN",value);settings["AIDE_COMPUTER_BRIDGE_TOKEN"]=value;}
+  setenvw(L"AIDE_COMPUTER_BRIDGE_TOKEN",wide(value));return value;
+ }
  void defaults(const std::string& key,const fs::path& value){if(configured(key).empty()){
   auto literal=utf8(value.wstring());std::string escaped;for(char c:literal){escaped+=c;if(c=='$')escaped+='$';}
   setting(root,key,json(escaped).dump());settings[key]=literal;
@@ -460,6 +464,7 @@ public:
   throw std::runtime_error("Directory helper did not stop; update refused");
  }
  void prepareDirectory(){
+  computerBridgeToken();
   auto target=root/L".aide-data/local-mounts";directoryHelper=embeddedHelper("local-mounts");stopDirectory(directoryHelper);setenvw(L"AIDE_LOCAL_MOUNTS_COMPOSE",composeExe.empty()?L"docker":composeExe.wstring());
   auto prepared=run(directoryHelper,{L"-mode",L"prepare",L"-root",root.wstring(),L"-docker",docker.wstring()});required(prepared,"Directory mounts preparation failed");
   auto override=trim(prepared.out);if(!override.empty()){auto file=fs::absolute(fs::u8path(override));if(file.lexically_normal()!=(target/L"compose.json").lexically_normal())throw std::runtime_error("Unexpected directory helper Compose path");auto composeFiles=env(L"COMPOSE_FILE");if(composeFiles.find(file.wstring())==std::wstring::npos)setenvw(L"COMPOSE_FILE",composeFiles+L";"+file.wstring());}
@@ -513,7 +518,7 @@ public:
   auto loader=profile/(L"WebView2Loader-"+wide(embedded_webview_loader_sha256)+L".dll");realPath(loader);
   if(!fs::exists(loader))write(loader,std::string(reinterpret_cast<const char*>(aide_webview_loader_begin),size_t(aide_webview_loader_end-aide_webview_loader_begin)));
   if(sha256(loader)!=embedded_webview_loader_sha256)throw std::runtime_error("Desktop loader checksum mismatch");
-  auto origin="https://localhost:"+std::to_string(port);aide_desktop::Desktop desktop(wide(origin),wide(loginLink(origin+"/",desktopToken())),profile,wide(key),cert.out);return desktop.run(loader);
+  auto origin="https://localhost:"+std::to_string(port);aide_desktop::Desktop desktop(wide(origin),wide(loginLink(origin+"/",desktopToken())),profile,wide(key),cert.out,computerBridgeToken());return desktop.run(loader);
  }
 
  void start(){

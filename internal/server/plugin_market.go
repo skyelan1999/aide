@@ -393,6 +393,9 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	entries := []map[string]any{}
 	for _, p := range snapshot.Catalog.entries() {
+		if p.ID == "computer-control" {
+			continue
+		}
 		compatible, reason := marketCompatibleForRuntime(p, version, a.buildRuntimeMode)
 		b, _ := json.Marshal(p)
 		item := map[string]any{}
@@ -506,6 +509,10 @@ func (a *App) marketSelected(ctx context.Context, id, revision string) (marketSn
 	return s, marketPlugin{}, errors.New("官方目录中没有此插件")
 }
 func (a *App) marketDownload(w http.ResponseWriter, r *http.Request) {
+	if r.PathValue("id") == "computer-control" {
+		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再单独分发"))
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
 	defer cancel()
 	s, p, err := a.marketSelected(ctx, r.PathValue("id"), r.URL.Query().Get("revision"))
@@ -528,6 +535,10 @@ func (a *App) marketDownload(w http.ResponseWriter, r *http.Request) {
 	w.Write(raw)
 }
 func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
+	if r.PathValue("id") == "computer-control" {
+		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再通过插件市场单独安装"))
+		return
+	}
 	if !a.marketInstallMu.TryLock() {
 		fail(w, 409, errors.New("已有市场安装正在处理"))
 		return

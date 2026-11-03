@@ -299,36 +299,6 @@
         "changelog": "官方目录首批收录；打包源码固定为 4dc9a7b0。"
       },
       {
-        "id": "computer-control",
-        "kind": "plugin",
-        "name": "电脑控制",
-        "description": "读取允许应用窗口的截图和辅助功能控件；独立 Aide Computer Bridge 提供权限入口，点击、输入和按键仍需 Aide 确认",
-        "version": "1.1.0",
-        "author": "Aide",
-        "category": "workspace",
-        "icon": "workspace",
-        "package": "packages/computer-control/1.1.0-c180fa73a929.zip",
-        "sha256": "c180fa73a929db8d59d2c96194396d0d6940eb1b04c07243a50edf46a4b23dbe",
-        "bytes": 3195,
-        "minAideVersion": "0.1.17.0 RC2",
-        "platforms": [
-          "windows",
-          "macos",
-          "linux"
-        ],
-        "dependencies": [
-          "Aide Computer Bridge 与操作系统屏幕录制/辅助功能权限"
-        ],
-        "permissions": "可能访问已授权文件或调用主机控制能力；浏览器和电脑控制另需宿主授权。",
-        "trustNotice": "Node 插件在宿主中执行；目录审核和摘要校验不等于权限沙箱。安装会注册并启用插件。",
-        "features": [],
-        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/computer-control",
-        "license": "MIT",
-        "readme": "",
-        "screenshots": [],
-        "changelog": "官方目录首批收录；打包源码固定为 4dc9a7b0。"
-      },
-      {
         "id": "comm-serial",
         "kind": "plugin",
         "name": "串口通讯",

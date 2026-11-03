@@ -4717,6 +4717,36 @@ function renderCheckboxControl(control) {
   const unsub = window.aideUI?.subscribe(apply);
   settingsPanel.refreshers.push({apply, unsub}); apply(); row.append(input, copy); return row;
 }
+function renderComputerControlSettings() {
+  const wrap=el('div','settings-control computer-control-settings');
+  const cfg=state.config||{};
+  const enabledRow=el('label','settings-file-checkbox'),enabled=document.createElement('input');
+  enabled.type='checkbox';enabled.checked=cfg.computerControlEnabled===true;
+  const enabledCopy=el('span','settings-file-copy');
+  enabledCopy.append(el('strong','',t('启用电脑控制')),el('span','',t('允许 Aide 读取指定应用的界面；点击、输入和按键每次仍需你确认。')));
+  enabledRow.append(enabled,enabledCopy);
+  const label=el('label','control-label',t('允许控制的应用'));
+  const apps=document.createElement('textarea');apps.id='computer-control-allowed-apps';apps.rows=4;label.htmlFor=apps.id;apps.value=Array.isArray(cfg.computerControlAllowedApps)?cfg.computerControlAllowedApps.join('\n'):'';
+  apps.placeholder=t('每行一个应用名称，例如 TextEdit、Safari 或 notepad.exe');
+  apps.setAttribute('aria-label',t('允许控制的应用，每行一个'));
+  const hint=el('small','muted',t('仅允许列表中的前台应用。截图只覆盖桥接所支持的应用窗口。'));
+  const save=el('button','quiet',t('保存电脑控制设置'));save.type='button';
+  let busy=false;
+  const persist=async()=>{
+    if(busy)return;busy=true;save.disabled=enabled.disabled=true;
+    try{
+      const allowedApps=[...new Set(apps.value.split(/\r?\n/).map(value=>value.trim()).filter(Boolean))];
+      await api('/settings',{method:'PUT',body:JSON.stringify({computerControlEnabled:enabled.checked,computerControlAllowedApps:allowedApps})});
+      await refreshConfig();
+      toast(t('电脑控制设置已保存'));
+    }catch(error){toast(t('电脑控制设置保存失败：{0}',error.message));}
+    finally{busy=false;save.disabled=enabled.disabled=false;}
+  };
+  save.onclick=action(persist);
+  enabled.onchange=action(persist);
+  wrap.append(enabledRow,label,apps,hint,save);
+  return wrap;
+}
 function renderAboutProject(control) {
   const card = el('div', 'about-project');
   const hero = el('div', 'about-identity');
@@ -5421,7 +5451,7 @@ function renderModelConnectionsControl(control) {
   const button=el('button','quiet',control.label);button.type='button';button.onclick=openSettings;
   wrap.append(el('p','section-desc',t('管理提供商、API 密钥和可用模型。')),button);return wrap;
 }
-const controlRenderers = { 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
+const controlRenderers = { 'computer-control': renderComputerControlSettings, 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
   "knowledge-index-policy": renderKnowledgeIndexPolicy,
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
   "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='accessibility'&&settingsPanel.activeChild==='interface-tests'&&$('settings-sheet').classList.contains('open')}),

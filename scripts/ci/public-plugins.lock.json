@@ -89,23 +89,6 @@
       "public": true
     },
     {
-      "id": "computer-control",
-      "marketVersion": "1.2.0",
-      "package": "packages/computer-control/1.2.0-16c147b479ce.zip",
-      "bytes": 5746,
-      "sha256": "16c147b479ceacb0da20b96994e29f19d2623625a2534e6f5cf1853969a4e8f2",
-      "repository": "skyelan1999/aide-pkg-ComputerControl",
-      "packageSourceCommit": "cc92cd730b8120ac3a0cf7224dbfad4774fdce11",
-      "latestPublicTag": "v1.2.0",
-      "latestPublicCommit": "d37d767485ea6f44e9405e3a2ad47705cdfbd99c",
-      "checks": {
-        "package": "required",
-        "hostInstallAndDisclosure": "required",
-        "function": "required"
-      },
-      "public": true
-    },
-    {
       "id": "current-time",
       "marketVersion": "1.1.0",
       "package": "packages/current-time/1.1.0-3959e61044b8.zip",

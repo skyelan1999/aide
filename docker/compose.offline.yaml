@@ -25,6 +25,7 @@ services:
       AIDE_WEBSEARCH_URL: ${AIDE_WEBSEARCH_URL:-}
       AIDE_BROWSER_BRIDGE_TOKEN: ${AIDE_BROWSER_BRIDGE_TOKEN:-}
       AIDE_COMPUTER_BRIDGE_TOKEN: ${AIDE_COMPUTER_BRIDGE_TOKEN:-}
+      AIDE_COMPUTER_BRIDGE_URL: ${AIDE_COMPUTER_BRIDGE_URL:-http://host.docker.internal:17778}
     volumes:
       - type: bind
         source: ${AIDE_WORKSPACE:-./workspace}

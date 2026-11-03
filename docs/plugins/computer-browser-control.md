@@ -1,6 +1,8 @@
 > 2026-10-20 分发更新：以下预装记录属于历史实现。当前所有插件由独立仓库和市场分发，Aide 镜像不再携带插件，也不自动注册；已有安装保留。浏览器/电脑桥接仍属于宿主运行接口。详见 [插件分发与迁移](../plugin-checkout-migration.md)。
 
-# Aide 浏览器与电脑控制插件设计
+# Aide 浏览器与电脑控制
+
+> 2026-11-03 更新：电脑控制迁入 Aide 内置工具，设置使用 Aide 全局设置；旧插件设置在首次启动时迁移并从插件注册表移除。通用设置界面供 Web、macOS、Windows 桌面共用。`computer_snapshot` 会把 PNG/JPEG 截图送入视觉证据管线，由支持图像输入的模型分析。macOS 使用现有原生屏幕录制/辅助功能桥接；Windows 桥接随 Aide 桌面应用启动，支持截图、点击、输入和有限按键；Linux 桥接需 X11、`xdotool` 与 ImageMagick，Wayland 暂不支持。Windows/Linux 当前不提供辅助功能控件树，只能通过截图观察。三端真实设备验收尚未完成。下面较早的记录作为历史设计保留。
 
 > 当前状态（2026-10-07）：生产 Aide 已启用浏览器控制和电脑控制。浏览器使用独立无头 Chromium；真实网页读取与模型调用通过。原生电脑桥接已获屏幕录制、辅助功能权限，窗口截图、点击、中文输入、回车、文字读回及模型调用通过。下方早期“未验收/停用”描述为阶段记录，以最新验收报告为准。Safari WebDriver、模型视觉输入、下载/上传仍未完成。
 
@@ -111,6 +113,13 @@ This section supersedes the earlier current-state statements; earlier records re
 - Native capture targets one window belonging to the allowed foreground app. The legacy Node fallback still captures the full screen. `computer_inspect` returns accessible control labels and center coordinates, excluding secure password fields, and requires Accessibility permission.
 - Production browser plugin is enabled with seven executable tools; actual Docker handler calls read example.com and DJI Chinese homepage. Dynamic specification tables, downloads and uploads are not verified. Download/upload tools are not implemented.
 - Native computer bridge is ready, but both OS permissions are false. Real desktop screenshot, inspection, click and input are NOT_RUN. Service readiness is not operation acceptance.
+
+## 2026-11-03: Computer control integrated into Aide
+
+- Computer control is now an Aide setting and core tool group. The standalone `computer-control` market item and plugin registry entry are removed; startup migrates its enabled flag and allowed-app list into Aide settings, then removes only the registry entry while retaining legacy files for recovery. New installations default to disabled with an empty allowlist.
+- macOS uses the native app bridge, Windows starts its bridge with the Aide desktop app, and Linux uses the X11 bridge. Screenshot capture is exposed as `computer_snapshot` and is limited to the selected allowed app/window as supported by each platform bridge. Each click, text entry, and key press requires separate Aide confirmation.
+- `scripts/test_control_plugin_runtime.py` now checks the 17-to-18 plugin migration, the disabled built-in defaults, refusal of standalone installation, and the independent browser-control tools. It targets the disposable container only and must not be pointed at a user's running Aide data.
+- The repository full verification passed after the Compose and English locale fixes on the candidate source. The locked desktop session prevented real desktop permission and screenshot acceptance in this task; real platform operation remains NOT_RUN.
 - Text models can use body text and accessible control text. Computer screenshots are not yet passed as vision input to the model.
 
 ## 2026-10-31: macOS bridge authorization identity and status refresh

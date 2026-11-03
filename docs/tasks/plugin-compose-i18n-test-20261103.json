@@ -1,0 +1,86 @@
+{
+  "id": "plugin-compose-i18n-test-20261103",
+  "request": "提出 GitHub Issues，并修复全量测试发现的主 Compose 重复 extra_hosts、电脑控制设置英文翻译缺失和电脑控制整合后的过期 Go 测试断言，跑回归并将变更合入 main。保留现有电脑控制三端整合和截图功能改动。",
+  "baseline": "f92717f91536fefa173980febbe4f104c14d3281",
+  "initial_status": "M compose.yaml\n M docker/compose.offline.yaml\n M docs/plugin-protocol.md\n M docs/plugins/computer-browser-control.md\n M internal/server/context.go\n M internal/server/plugin-market/catalog.json\n M internal/server/plugin_market.go\n M internal/server/plugin_market_tools.go\n M internal/server/plugin_upgrade.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M native/windows-launcher/desktop.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-windows-launcher.py\n M scripts/ci/public-plugins.lock.json\n M scripts/computer-bridge-control.sh\n M scripts/package-release-assets.sh\n?? docs/tasks/plugin-tts-full-test-20261103.json\n?? docs/tasks/terminal-display-settings-20261103.json\n?? docs/tasks/terminal-log-read-api-release-20261103.json\n?? internal/server/computer_control.go\n?? native/windows-launcher/computer_bridge.hpp\n?? scripts/computer-bridge-linux.js",
+  "acceptance": [
+    "为确认的主 Compose 配置缺陷和英文翻译缺陷建立 Aide GitHub Issues；代码/验收关联 Issues。",
+    "修复主 compose.yaml 的重复 extra_hosts，保留电脑控制桥 URL 与 host-gateway 配置。",
+    "为完整电脑控制设置说明提供英文翻译；更新已整合电脑控制后的公开插件目录与独立安装测试断言。",
+    "quick、full、Compose 主/离线配置、i18n、MixSoul 与 Go race 回归通过；UI/真实平台范围据实标注。",
+    "将当前电脑控制三端整合改动及本任务修复以 PR 合并到 main；不发布 Release、不替换运行实例。"
+  ],
+  "scope": [
+    "compose.yaml",
+    "internal/server/web/locales/en.js",
+    "internal/server/plugin_commerce_test.go",
+    "internal/server/control_workflow_test.go",
+    "scripts/test_control_plugin_runtime.py",
+    "docs/plugins/computer-browser-control.md",
+    "本任务记录；保留现有三端电脑控制与截图功能改动"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权创建 Issues、修复并合并。保留之前的三端电脑控制整合与截图工作。",
+      "evidence": [
+        "GitHub 操作账号已由 `gh api user` 确认为 skyelan1999。",
+        "已搜索近期相关 open issues，无相同报告。",
+        "创建 #765（主 compose.yaml 重复键）与 #766（电脑控制设置英文翻译缺失）。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "基于全量测试收敛为两项产品修复及两项随功能变化的测试更新；现有 host-gateway 映射已存在，删除重复定义并保留桥 URL。",
+      "evidence": [
+        "分支 fix/computer-control-compose-i18n-20261103 从 f92717f91536fefa173980febbe4f104c14d3281 创建；承载原工作区的全部三端功能改动。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复 Compose 重复键与英文设置翻译；同步 Go 与 disposable-container 插件验收中的电脑控制整合预期，并更新功能说明。",
+      "evidence": [
+        "关联 Aide Issues #765、#766。",
+        "保留旧 host-gateway 映射和 AIDE_COMPUTER_BRIDGE_URL；不再重复声明 extra_hosts。",
+        "设置说明完整英文翻译已与 settings-schema.json 键一致。",
+        "Go 目录/独立安装测试与 disposable-container 插件冒烟断言均改为内置电脑控制；冒烟脚本目标为隔离测试容器。",
+        "PR CI 暴露 Windows desktop smoke fixture 漏传新增 bridge token 参数；fixture 传空 token，保证该 UI fixture 不监听 17778。修复位于 scripts/windows_desktop_smoke.cpp。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "本地 full 在 bridge fixture 参数修复前通过；对应 C++ cross-build CI 首轮发现并修正构造器参数。最新提交的 PR CI 和合并后 main full 待完成。",
+      "evidence": [
+        "本地修复代码的 `python3 scripts/agent-route.py verify quick`：PASS，322/322；full：PASS，325/325；Go race 1,616 项/24 分片、其它 Go 包、平台契约和 vet 通过（构造器修复前）。",
+        "定向 Go 1.26 + Node race：PASS；Compose 主/离线 config：PASS；i18n 3,699 sites：PASS；MixSoul 6 tests：PASS；docs check 492 files/2,363 links：PASS。",
+        "构造器夹具修复后本地 `python3 scripts/agent-route.py verify quick`：PASS，322/322；日志 .agent-state/verify-20261103T122457304498Z.log。",
+        "PR #771 CI Go job PASS；首次 Windows Desktop Check 暴露 `scripts/windows_desktop_smoke.cpp` 漏传 token 参数，已修正为不启动 bridge 的空 token；`python3 scripts/test_windows_desktop.py` 3 tests PASS。",
+        "修正后的 PR exact-head CI/full 与合并后的 main full 尚待运行。真实桌面锁定、真实 OS 权限和真实 TTS Provider 均未验收。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新电脑控制与截图的当前行为、跨平台桥接边界和新冒烟测试预期。",
+      "evidence": [
+        "docs/plugins/computer-browser-control.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未触及运行中的 Aide；仅新增本任务和诊断任务记录，保留两份终端任务记录及所有既有电脑控制改动。",
+      "evidence": [
+        "分支当前为 fix/computer-control-compose-i18n-20261103。"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "PR #771 已创建，提交 bee3d1ba0580fcba261a001ff07ebc36e50966e8；CI 首轮 Windows cross-build 发现并修正夹具参数，等待新 head CI 与 review requirement。",
+      "evidence": [
+        "Issues #765、#766 已建立；PR 和合并 SHA 待补。"
+      ]
+    }
+  },
+  "release_authorization": "用户原话：提出issues 并进行修复以及合并（允许创建 GitHub Issues、修复、提交/推送 PR 并合并到 main；未授权发布 Release 或替换运行实例）。",
+  "rollback": "main 上通过合并提交保留历史；如需回滚，使用 PR 合并 SHA 执行 revert，避免 reset/force push。",
+  "handoff": "PR #771 开放；Go CI 已通过，Windows fixture 已修正。等待新 head 检查；GitHub 当前要求至少一个 PR review，未绕过规则。Issue #765/#766 暂不关闭，等合并和最终验收。"
+}

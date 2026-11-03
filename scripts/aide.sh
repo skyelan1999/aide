@@ -12,7 +12,7 @@ source_sha() {
     find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.py
-    for extra in native/macos-desktop/main.swift native/macos-desktop/biometrics.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
+    for extra in native/macos-desktop/main.swift native/macos-desktop/biometrics.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js scripts/native-computer-bridge.swift scripts/build-native-computer-bridge.sh stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -326,9 +326,11 @@ case "$MODE" in
     bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
     if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs start --root "$PROJECT_DIR" --image "$IMG" || echo "Codex host component unavailable; see launcher output."; else echo "Codex Bridge requires host Node.js 18+."; fi
     bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
+    if [[ ("$(uname -s)" == Darwin || "$(uname -s)" == Linux) ]] && command -v node >/dev/null 2>&1; then
+      bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
+    fi
     if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then
       bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"
-      bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
       bash scripts/headless-browser-control.sh start || echo "无头浏览器未启动；可先运行 bash scripts/headless-browser-control.sh install。"
     fi
     fi
@@ -436,7 +438,7 @@ case "$MODE" in
     cp scripts/launcher.py scripts/aide-maintenance.sh "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/update-agent.sh scripts/message-lan-control.sh "$BUNDLE/scripts/"
     cp scripts/launcher-data.sh scripts/launcher-data.py scripts/prebuilt-image.sh scripts/resource-guard.sh "$BUNDLE/scripts/"
-    cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
+    cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js \
       scripts/build-native-computer-bridge.sh scripts/native-computer-bridge.swift scripts/headless-browser-control.sh scripts/headless-browser-bridge.js scripts/browser-url-policy.cjs "$BUNDLE/scripts/"
     mkdir -p "$BUNDLE/scripts/browser-runtime"
     cp scripts/browser-runtime/package.json scripts/browser-runtime/package-lock.json "$BUNDLE/scripts/browser-runtime/"

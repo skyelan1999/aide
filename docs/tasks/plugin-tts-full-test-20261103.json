@@ -1,0 +1,78 @@
+{
+  "id": "plugin-tts-full-test-20261103",
+  "request": "按用户请求执行 Aide 全量测试和插件测试，调查当日插件异常、TTS 功能及设置显示异常。",
+  "baseline": "f92717f91536fefa173980febbe4f104c14d3281",
+  "initial_status": "M compose.yaml\n M docker/compose.offline.yaml\n M docs/plugin-protocol.md\n M docs/plugins/computer-browser-control.md\n M internal/server/context.go\n M internal/server/plugin-market/catalog.json\n M internal/server/plugin_market.go\n M internal/server/plugin_market_tools.go\n M internal/server/plugin_upgrade.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M native/windows-launcher/desktop.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-windows-launcher.py\n M scripts/ci/public-plugins.lock.json\n M scripts/computer-bridge-control.sh\n M scripts/package-release-assets.sh\n?? docs/tasks/terminal-display-settings-20261103.json\n?? docs/tasks/terminal-log-read-api-release-20261103.json\n?? internal/server/computer_control.go\n?? native/windows-launcher/computer_bridge.hpp\n?? scripts/computer-bridge-linux.js",
+  "acceptance": [
+    "执行仓库定义的 quick 与 full 验证；真实环境/平台限制准确标为 NOT_RUN。",
+    "执行插件专项测试并归纳失败插件/异常阶段，不暴露用户数据或凭据。",
+    "执行 TTS 后端、前端播放和设置显示专项测试；定位当天可用诊断证据并判断是否覆盖用户现象。",
+    "保留任务开始时已有工作区改动和用户文件，不重启/改写生产实例、不发布。"
+  ],
+  "scope": [
+    "internal/server 插件管理、市场、调用和相关测试",
+    "internal/server TTS/语音设置/播放前端及相关测试",
+    "scripts 中仓库既定验证脚本",
+    "docs/tasks 本任务记录与必要验收文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求对 Aide 做全量测试、插件专项测试，并调查今天出现的多插件异常及 TTS 功能/设置显示异常。现有工作区含电脑控制三端整合的未提交改动，测试前后均需保留。",
+      "evidence": [
+        "基线 HEAD f92717f91536fefa173980febbe4f104c14d3281；保留既有变更和两份未跟踪任务 JSON。",
+        "当前环境无宿主 go 命令；Docker 29.8.0 可用，存在 golang:1.26-bookworm 与 Aide SDK 测试镜像，full 可通过仓库定义的容器化验证路径。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "读取当天脱敏诊断索引和仓库 quick/full 清单；先执行 full（包含 quick），再对 TTS 设置界面使用 Chromium 确定性夹具验收。",
+      "evidence": [
+        "不调用真实 TTS Provider，不尝试解锁桌面 Aide。"
+      ]
+    },
+    "implementation": {
+      "status": "not_needed",
+      "summary": "本请求为测试与诊断；未修改产品、插件或现有测试代码。发现的产品缺陷保留待修复。",
+      "evidence": [
+        "避免在没有用户要求向 GitHub 发布内容时创建 issue 或修改确认的产品缺陷。"
+      ]
+    },
+    "verification": {
+      "status": "fail",
+      "summary": "仓库 full 共 325 条命令，322 通过、3 失败；插件/TTS 针对性覆盖多数通过。已另通过 TTS 设置浏览器夹具。",
+      "evidence": [
+        "完整报告：.agent-state/full.json；日志：.agent-state/verify-20261103T110530455319Z.log；全量结束码失败。",
+        "失败 1：scripts/test_i18n_coverage.cjs，settings-schema.json 的新电脑控制说明文案没有精确对应的英文翻译。",
+        "失败 2：scripts/test_mixsoul_embedding_follow.py，其 compose 配置检查触发主 compose.yaml YAML 重复键错误；直接 `docker compose -f compose.yaml config --format json` 复现 extra_hosts 在 53、76 行重复定义。docker/compose.offline.yaml 的对应检查通过。",
+        "失败 3：scripts/test_go_snapshot.py，server 1,615 个测试/Fuzz seed/Example 全部分片执行；失败分片 9、19。分片 9 的旧 plugin commerce 测试仍要求 23 个公开目录项；分片 19 的旧 TestControlWorkflowConfirmationAndRevocation 仍要求 computer-control 可独立安装，现实现按设计返回 410。其余分片通过。",
+        "TTS quick 覆盖 node scripts/qwen-tts.test.cjs、node scripts/tts-playback.test.cjs、node scripts/test_voice_panel.cjs 全部通过；Go TestOpenAITTSPersistenceAndImport 通过。",
+        "插件 quick 覆盖 plugin-market.test.cjs、plugin-workbench / client / file-preview、plugin-upgrade.test.cjs 均通过；Go 插件调用及管理覆盖的既有断言问题详见分片日志。",
+        "Chromium 设置夹具通过：zh/en、亮色桌面 1440 和暗色窄屏 390；检查 TTS 模型/音色保存与重挂载、试听等待保存、错误恢复、秘密字段清空及布局溢出。截图和报告：.agent-state/plugin-tts-full-test-20261103/browser-settings/。",
+        "宿主机 Aide 桌面窗口处于锁定状态，真实桌面 TTS 设置 acceptance 为 NOT_RUN；未输入解锁凭据、未发起真实供应商调用。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录测试结果、明确失败来源与运行边界。",
+      "evidence": [
+        "本任务记录及 .agent-state/plugin-tts-full-test-20261103/report.json、server/report.json、browser-settings/report.json。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "验证容器结束后自动清理；保留全部测试证据和任务开始时的已有工作区改动。",
+      "evidence": [
+        "未改写运行中的 aide-aide-1；未发布或触发付费调用。"
+      ]
+    },
+    "release": {
+      "status": "not_applicable",
+      "summary": "仅执行测试与诊断，没有发布操作。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "全量测试未通过。当前工作区 compose.yaml 存在重复 extra_hosts 并导致 Docker Compose 配置完全无法解析；英文设置翻译缺失；computer-control 整合后 Go 测试尚未更新。保留现场等待后续修复。桌面 UI 被锁定，真实桌面验收未运行。"
+}

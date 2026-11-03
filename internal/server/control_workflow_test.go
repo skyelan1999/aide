@@ -14,14 +14,11 @@ import (
 // These use real Node plugin handlers and the workflow answer API, without
 // operating the user's Safari or desktop.
 func TestControlWorkflowConfirmationAndRevocation(t *testing.T) {
-	for _, tool := range []string{"browser_navigate", "browser_click", "browser_fill", "computer_click", "computer_type", "computer_key"} {
+	for _, tool := range []string{"browser_navigate", "browser_click", "browser_fill"} {
 		for _, action := range []string{"confirm", "decline", "cancel", "revoke"} {
 			t.Run(tool+"/"+action, func(t *testing.T) {
 				a := testApp(t)
 				pluginName := "browser-control"
-				if strings.HasPrefix(tool, "computer_") {
-					pluginName = "computer-control"
-				}
 				code := `module.exports={name:` + `"` + pluginName + `"` + `,apply(ctx){ctx.tool({name:"` + tool + `",handler:args=>({text:args.approved===true?"EXECUTED":"UNAPPROVED"})});}};`
 				installControlWorkflowFixture(t, a, pluginName, code)
 				pluginID := pluginName
@@ -75,6 +72,19 @@ func TestControlWorkflowConfirmationAndRevocation(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestComputerControlCannotBeInstalledAsStandalonePlugin(t *testing.T) {
+	a := testApp(t)
+	w := request(a, "POST", "/api/plugins", map[string]any{
+		"id": "computer-control",
+		"name": "Computer Control",
+		"code": `module.exports={name:"computer-control",apply(){}};`,
+	})
+	requireStatus(t, w, 410)
+	if !strings.Contains(w.Body.String(), "电脑控制已整合到 Aide") {
+		t.Fatalf("standalone plugin rejection should explain integration: %s", w.Body.String())
 	}
 }
 

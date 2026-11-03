@@ -22,7 +22,7 @@ import (
 
 const officialPluginPrefix = "https://github.com/skyelan1999/aide/tree/main/plugins/"
 
-var officialPluginIDs = strings.Fields("archive-tools browser-control computer-control comm-serial comm-ssh comm-tcp comm-udp current-time environment-guide feedback goal lunar-calendar markdown-history office plan plugin-authoring skill sqlite subagent terminal todo workflow")
+var officialPluginIDs = strings.Fields("archive-tools browser-control comm-serial comm-ssh comm-tcp comm-udp current-time environment-guide feedback goal lunar-calendar markdown-history office plan plugin-authoring skill sqlite subagent terminal todo workflow")
 
 func pluginUpdateSource(p PluginManifest) string {
 	if p.UpdateURL != "" && p.UpdateURL != officialPluginPrefix+p.ID {

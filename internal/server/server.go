@@ -79,6 +79,11 @@ type providerKeyWrite struct {
 
 type Settings struct {
 	RemoteAccessEnabled bool `json:"remoteAccessEnabled,omitempty"` // opt-in password-protected LAN access
+	// Computer control is an Aide host capability. Targets are stored with the
+	// workspace settings so the control policy is shared by every Aide client.
+	ComputerControlEnabled     bool     `json:"computerControlEnabled,omitempty"`
+	ComputerControlAllowedApps []string `json:"computerControlAllowedApps,omitempty"`
+	ComputerControlMigrated    bool     `json:"computerControlMigrated,omitempty"`
 
 	generationIntent string // Request-local output modality; never persisted as a setting.
 	generationError  string
@@ -321,6 +326,12 @@ func validateSettings(s *Settings) {
 	}
 	if s.RemoteAccessEnabled && s.LockTimeoutSec <= 0 {
 		s.LockTimeoutSec = 300
+	}
+	if apps, err := normalizeComputerControlApps(s.ComputerControlAllowedApps); err == nil {
+		s.ComputerControlAllowedApps = apps
+	} else {
+		s.ComputerControlEnabled = false
+		s.ComputerControlAllowedApps = nil
 	}
 	if s.LockTimeoutSec < 0 {
 		s.LockTimeoutSec = 0
@@ -996,6 +1007,10 @@ func New(work, reference, data string) (*App, error) {
 	a.buildCommit = buildCommit
 	a.buildRuntimeMode = buildRuntimeMode
 	if err := a.loadPlugins(); err != nil {
+		a.Close()
+		return nil, err
+	}
+	if err := a.migrateComputerControlPlugin(); err != nil {
 		a.Close()
 		return nil, err
 	}
@@ -1866,7 +1881,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "remoteAccessEnabled": a.settings.RemoteAccessEnabled, "remoteSession": lanAuthorized(r), "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "computerControlEnabled": a.settings.ComputerControlEnabled, "computerControlAllowedApps": a.settings.ComputerControlAllowedApps, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "remoteAccessEnabled": a.settings.RemoteAccessEnabled, "remoteSession": lanAuthorized(r), "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1938,6 +1953,8 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		VoiceReplyEnabled          *bool                       `json:"voiceReplyEnabled,omitempty"`
 		AccessibilityAutoRead      *bool                       `json:"accessibilityAutoRead,omitempty"`
 		AccessibilityHostPort      *int                        `json:"accessibilityHostPort,omitempty"`
+		ComputerControlEnabled     *bool                       `json:"computerControlEnabled,omitempty"`
+		ComputerControlAllowedApps *[]string                   `json:"computerControlAllowedApps,omitempty"`
 		VoiceReplyGender           string                      `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName         *string `json:"userName,omitempty"`
@@ -2145,6 +2162,22 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.LockTimeoutSec = a.settings.LockTimeoutSec
 	}
 	in.Settings.RemoteAccessEnabled = a.settings.RemoteAccessEnabled
+	if in.ComputerControlEnabled != nil {
+		in.Settings.ComputerControlEnabled = *in.ComputerControlEnabled
+	} else {
+		in.Settings.ComputerControlEnabled = a.settings.ComputerControlEnabled
+	}
+	if in.ComputerControlAllowedApps != nil {
+		apps, err := normalizeComputerControlApps(*in.ComputerControlAllowedApps)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		in.Settings.ComputerControlAllowedApps = apps
+	} else {
+		in.Settings.ComputerControlAllowedApps = a.settings.ComputerControlAllowedApps
+	}
+	in.Settings.ComputerControlMigrated = a.settings.ComputerControlMigrated || in.ComputerControlEnabled != nil || in.ComputerControlAllowedApps != nil
 	if in.Settings.RemoteAccessEnabled && in.Settings.LockTimeoutSec <= 0 {
 		fail(w, 400, errors.New("局域网授权开启时，锁屏时间必须大于0"))
 		return

@@ -34,7 +34,7 @@ mkdir -p "$ROOT/.agent-state"
 copy_control_runtime() {
   local destination="$1"
   cp "$ROOT/scripts/safari-bridge-control.sh" "$ROOT/scripts/safari-bridge.js" \
-     "$ROOT/scripts/computer-bridge-control.sh" "$ROOT/scripts/computer-bridge.js" \
+     "$ROOT/scripts/computer-bridge-control.sh" "$ROOT/scripts/computer-bridge.js" "$ROOT/scripts/computer-bridge-linux.js" \
      "$ROOT/scripts/build-native-computer-bridge.sh" "$ROOT/scripts/native-computer-bridge.swift" \
      "$ROOT/scripts/headless-browser-control.sh" "$ROOT/scripts/headless-browser-bridge.js" "$ROOT/scripts/browser-url-policy.cjs" "$destination/"
   mkdir -p "$destination/browser-runtime"
