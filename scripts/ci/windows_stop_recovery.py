@@ -26,6 +26,11 @@ def main():
         tools = base / 'tools'
         tools.mkdir()
         shutil.copy2(fixture, tools / 'docker.exe')
+        # SearchPathW searches the executable's directory before PATH/system
+        # Docker installations. Keep both copies together so the production CLI
+        # can only resolve our synthetic executable. No real engine is used.
+        shutil.copy2(executable, tools / 'aide-launcher.exe')
+        executable = tools / 'aide-launcher.exe'
         subprocess.run([str(fixture), str(base / 'faults')], check=True, timeout=30)
         results['windowsAPIs'] = json.loads((base / 'faults/fault-results.json').read_text())
         environment = os.environ.copy()
