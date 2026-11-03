@@ -4321,4 +4321,8 @@ window.aideEnglish = {
   "请先保存 OpenAI 语音设置，再试听": "Save OpenAI speech settings before previewing",
   "AI 生成语音。Realtime 按原文朗读，生成式语音可能有读法差异，需实听确认；文本会发送至所填接口并计费。": "AI-generated voice. Realtime is instructed to read the supplied text; generative speech may vary and needs listening verification. Text is sent to the configured API and billed.",
   "AI 生成语音。Speech API 旧模型将于 2027-01-06 停用；Realtime 模型不能填写在此接口中。文本会发送至所填接口并计费。": "AI-generated voice. Legacy Speech API models shut down on 2027-01-06. Realtime models require the Realtime API. Text is sent to the configured API and billed.",
+  "绑定本机 Touch ID": "Set up Touch ID on this Mac",
+  "Aide 桌面需单独绑定一次，Safari 的现有指纹凭据会保留。": "Set up this desktop app once. Existing Safari credentials are preserved.",
+  "请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID": "Unlock with your password, then set up desktop Touch ID in Settings → Account",
+  "Aide 桌面 · Touch ID": "Aide Desktop · Touch ID",
 };

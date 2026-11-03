@@ -1,0 +1,89 @@
+{
+  "id": "native-touchid-20261103",
+  "request": "补上独立应用的指纹解锁，这个功能很重要",
+  "baseline": "d4365358f9f060d2100121774d865768b0653965",
+  "initial_status": "",
+  "acceptance": [
+    "独立App提供Touch ID绑定及锁屏解锁，保留密码和Safari凭据",
+    "Secure Enclave P-256私钥按安装隔离，biometryCurrentSet保护；密码不进入原生桥或钥匙串",
+    "原服务端WebAuthn挑战、原点、一次性与锁代际验证保持，原生仅返回标准签名响应",
+    "桥仅可信localhost顶层工作台可用，插件/外部页拒绝，取消/失败不解锁",
+    "原生实际编译安装；正反路径和服务端跨实现验签回归；真实绑定/指纹验证由用户在本机完成"
+  ],
+  "scope": [
+    "native/macos-desktop",
+    "scripts/build-macos-desktop.py",
+    "scripts/test_macos_desktop.py",
+    "scripts/aide.sh source fingerprint list",
+    "internal/server/web authentication helpers",
+    "focused native/WebAuthn interoperability tests",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求补齐重要的原生指纹功能。",
+      "evidence": [
+        "Issue #749",
+        "internal/server/webauthn.go",
+        "Apple Secure Enclave/LocalAuthentication documentation",
+        "W3C WebAuthn 2 authenticator data specification"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "原生本机认证器使用Secure Enclave签名标准WebAuthn响应，复用原服务端验证；首次通过既有密码验证后独立绑定。原Safari绑定不迁移、不删除。",
+      "evidence": [
+        "Issue #749",
+        "internal/server/webauthn.go",
+        "Apple Secure Enclave/LocalAuthentication documentation",
+        "W3C WebAuthn 2 authenticator data specification"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成Secure Enclave本机认证器及受限WK桥；前端绑定/锁屏/管理授权复用原WebAuthn接口。根协调者已审阅帧/原点/允许列表/私钥不可导出/取消及服务端边界。",
+      "evidence": [
+        "native/macos-desktop/biometrics.swift",
+        "native/macos-desktop/main.swift",
+        "internal/server/web/app.js",
+        "internal/server/native_touchid_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "321项quick通过；Swift实际arm64编译、桌面policy、软件向量、Go跨实现正常/拒绝路径及相关race通过；native/launcher/source fingerprint测试通过。本机硬件绑定和解锁尚未执行。",
+      "evidence": [
+        ".agent-state/native-touchid/go-race.log",
+        "scripts/native-touchid.test.cjs",
+        "native/macos-desktop/biometrics-tests.swift",
+        "internal/server/testdata/native-touchid-webauthn.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录首次绑定、密码回退、Safari隔离、硬件保护与签名校验边界，明确软件测试不代替真实指纹。Markdown检查486文件2338链接通过。",
+      "evidence": [
+        "docs/architecture/macos-desktop.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "逐项审阅15个范围内变更文件；测试向量仅公钥/签名，无私钥、真实凭据。临时Go容器--rm退出；保留现有共享编译缓存及证据。",
+      "evidence": [
+        "git diff --check",
+        "internal/server/testdata/native-touchid-webauthn.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "保留原密码和Safari WebAuthn。回退宿主时正常退出Aide再恢复旧版本；不删除账户或Safari凭据。",
+  "handoff": "原生硬件首次绑定、取消和真实锁屏解锁由用户本机完成；未测试前Issue #749保持打开。尚无推送或公共Release授权。",
+  "issue": "https://github.com/skyelan1999/aide/issues/749"
+}

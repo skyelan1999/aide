@@ -92,6 +92,8 @@ def compile_app(root):
     version = match[1] + ' RC' + match[2]
     sources = [SOURCE / 'native/macos-desktop/main.swift', SOURCE / 'scripts/desktop-session.py',
                SOURCE / 'scripts/render-computer-bridge-icon.swift', Path(__file__)]
+    biometric_source = SOURCE / 'native/macos-desktop/biometrics.swift'
+    sources.append(biometric_source)
     digest = hashlib.sha256()
     for source in sources:
         digest.update(source.read_bytes())
@@ -111,7 +113,7 @@ def compile_app(root):
             resources.mkdir()
             executable = macos / 'AideDesktop'
             subprocess.run(common + ['-O', '-target', os.uname().machine + '-apple-macos14.0',
-                                      str(sources[0]), '-o', str(executable)], check=True)
+                                      str(sources[0]), str(biometric_source), '-o', str(executable)], check=True)
             shutil.copyfile(SOURCE / 'scripts/desktop-session.py', resources / 'desktop-session.py')
             info = {'CFBundleIdentifier': bundle_id(root), 'CFBundleName': 'Aide',
                     'CFBundleDisplayName': 'Aide', 'CFBundleExecutable': 'AideDesktop',

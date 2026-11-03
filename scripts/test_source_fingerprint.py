@@ -60,7 +60,7 @@ class SourceFingerprintTests(unittest.TestCase):
             def fingerprint():
                 return subprocess.check_output(['bash', 'scripts/aide.sh', 'source-sha'], cwd=root, text=True)
             previous = fingerprint()
-            for name in ['native/macos-desktop/main.swift', 'desktop.command', 'scripts/build-macos-desktop.py',
+            for name in ['native/macos-desktop/main.swift', 'native/macos-desktop/biometrics.swift', 'desktop.command', 'scripts/build-macos-desktop.py',
                          'scripts/desktop-session.py', 'scripts/render-computer-bridge-icon.swift']:
                 (root/name).write_text('fixture')
                 current = fingerprint()

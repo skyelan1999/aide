@@ -302,22 +302,23 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
     });
     const hasCred = !!(state.config && state.config.hasPlatformCredential);
     const waReady = !!(state.config && state.config.webAuthnReady);
-    const canFp = hasCred && waReady && location.hostname === 'localhost';
+    const canFp = hasCred && waReady && location.hostname === 'localhost' && !window.AideNativeBiometrics;
     fp.disabled = !canFp; fp.classList.toggle('disabled', !canFp);
     if (!canFp && !hasCred) fp.title = t('未注册指纹，可在设置 → 账号中绑定');
+    if (window.AideNativeBiometrics) touchIdAvailable().then(res => {
+      if (settled) return;
+      const enabled = hasCred && res.ok && res.enrolled;
+      fp.disabled = !enabled; fp.classList.toggle('disabled', !enabled);
+      if (!enabled) fp.title = t('请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID');
+    }).catch(() => {});
     fp.onclick = action(async () => {
       fp.disabled = true; err.textContent = '';
       try {
         const start = await api('/webauthn/assertion/start', { method: 'POST', body: '{}' });
         if (!start.allowCredentials || !start.allowCredentials.length) { err.textContent = t('未注册指纹设备'); fp.disabled = false; return; }
-        const options = {
-          challenge: b64uToBuf(start.challenge), rpId: start.rpId,
-          allowCredentials: start.allowCredentials.map(c => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
-          userVerification: start.userVerification || 'preferred', timeout: 120000,
-        };
-        const assertion = await navigator.credentials.get({ publicKey: options });
+        const assertion = await requestPlatformAssertion(start);
         if (!assertion) { fp.disabled = false; return; }
-        const body = { challenge: start.challenge, assertion: assertionToJSON(assertion) };
+        const body = { challenge: start.challenge, assertion };
         if (assistantSessionId) body.assistantSessionId = assistantSessionId;
         await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
         done('success');
@@ -12195,6 +12196,12 @@ function bufToB64u(buf) {
 async function touchIdAvailable() {
   if (!state.config || !state.config.webAuthnReady) return { ok: false, reason: 'not-ready' };
   if (location.hostname !== 'localhost') return { ok: false, reason: 'use-localhost' };
+  if (window.AideNativeBiometrics) {
+    try {
+      const native = await window.AideNativeBiometrics.status();
+      return {ok:native.available === true, native:true, enrolled:Array.isArray(native.credentialIds) && native.credentialIds.length > 0, reason:'no-touchid'};
+    } catch { return {ok:false, reason:'unsupported'}; }
+  }
   if (!window.PublicKeyCredential) return { ok: false, reason: 'unsupported' };
   try {
     const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -12214,13 +12221,13 @@ async function updateTouchIdButton() {
   }
   // 平台 authenticator 可用：按是否已注册凭证决定可点 / 置灰
   btn.hidden = false;
-  const hasCred = !!(state.config && state.config.hasPlatformCredential);
+  const hasCred = !!(state.config && state.config.hasPlatformCredential) && (!res.native || res.enrolled);
   btn.disabled = !hasCred;
   btn.classList.toggle('disabled', !hasCred);
   btn.setAttribute('aria-disabled', String(!hasCred));
   if (hint) {
     hint.hidden = hasCred;
-    hint.textContent = t('未注册触控 ID，可在设置 → 账号中绑定');
+    hint.textContent = t(res.native ? '请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID' : '未注册触控 ID，可在设置 → 账号中绑定');
   }
 }
 function assertionToJSON(a) {
@@ -12234,6 +12241,28 @@ function assertionToJSON(a) {
     },
   };
 }
+async function requestPlatformAssertion(start) {
+  if (window.AideNativeBiometrics) return window.AideNativeBiometrics.get(start);
+  const assertion = await navigator.credentials.get({publicKey:{
+    challenge:b64uToBuf(start.challenge), rpId:start.rpId,
+    allowCredentials:start.allowCredentials.map(c => ({type:c.type,id:b64uToBuf(c.id),transports:c.transports})),
+    userVerification:start.userVerification || 'preferred', timeout:120000,
+  }});
+  return assertion ? assertionToJSON(assertion) : null;
+}
+async function createPlatformCredential(start) {
+  if (window.AideNativeBiometrics) return window.AideNativeBiometrics.create(start);
+  const cred = await navigator.credentials.create({publicKey:{
+    challenge:b64uToBuf(start.challenge), rp:{id:start.rp.id,name:start.rp.name},
+    user:{id:b64uToBuf(start.user.id),name:start.user.name,displayName:start.user.displayName},
+    pubKeyCredParams:start.pubKeyCredParams, authenticatorSelection:start.authenticatorSelection,
+    excludeCredentials:(start.excludeCredentials || []).map(c => ({type:c.type,id:b64uToBuf(c.id),transports:c.transports})),
+    timeout:120000, attestation:start.attestation || 'none',
+  }});
+  return cred ? {id:cred.id,rawId:bufToB64u(cred.rawId),type:cred.type,response:{
+    attestationObject:bufToB64u(cred.response.attestationObject),clientDataJSON:bufToB64u(cred.response.clientDataJSON),
+  }} : null;
+}
 async function unlockByTouchId() {
   const btn = $('touchid-unlock-btn');
   if(lockScreen.unlocking)return;lockScreen.unlocking=true;
@@ -12245,19 +12274,12 @@ async function unlockByTouchId() {
       $('lock-error').textContent = t('未注册触控 ID 设备，请先在设置中绑定');
       return;
     }
-    const options = {
-      challenge: b64uToBuf(start.challenge),
-      rpId: start.rpId,
-      allowCredentials: start.allowCredentials.map(c => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
-      userVerification: start.userVerification || 'preferred',
-      timeout: 120000,
-    };
-    const assertion = await navigator.credentials.get({ publicKey: options });
+    const assertion = await requestPlatformAssertion(start);
     if (!assertion) { $('lock-error').textContent = ''; return; }
     const finishRes = await fetch('/api/webauthn/assertion/finish?challenge=' + encodeURIComponent(start.challenge)+'&lockGen='+scope.gen+(scope.global?'&unlockScreen=1':''), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(assertionToJSON(assertion)),
+      body: JSON.stringify(assertion),
     });
     if (!finishRes.ok) {
       const err = await finishRes.json().catch(() => ({}));
@@ -12350,13 +12372,15 @@ function renderAccountControl() {
     const waSection = el('div', 'wa-section');
     waSection.append(el('div', 'control-label', t('触控 ID / Passkey')));
     const waList = el('div', 'wa-cred-list');
-    const regBtn = el('button', 'quiet', t('注册新设备')); regBtn.type = 'button';
+    const regBtn = el('button', 'quiet', t(window.AideNativeBiometrics ? '绑定本机 Touch ID' : '注册新设备')); regBtn.type = 'button';
+    if (window.AideNativeBiometrics) waSection.append(el('p','muted',t('Aide 桌面需单独绑定一次，Safari 的现有指纹凭据会保留。')));
 
     async function refreshWaList() {
       waList.replaceChildren();
       try {
         const creds = await api('/webauthn/credentials');
         if (state.config) state.config.hasPlatformCredential = creds.length > 0;
+        updateTouchIdButton();
         if (!creds.length) waList.append(el('div', 'wa-cred-meta', t('未注册设备')));
         creds.forEach(c => {
           const item = el('div', 'wa-cred-item');
@@ -12382,26 +12406,9 @@ function renderAccountControl() {
       const pw = await passwordPrompt(t('注册触控 ID 需验证原密码'));
       if (!pw) return;
       const start = await api('/webauthn/register/start', { method: 'POST', body: JSON.stringify({ oldPassword: pw }) });
-      const options = {
-        challenge: b64uToBuf(start.challenge),
-        rp: { id: start.rp.id, name: start.rp.name },
-        user: { id: b64uToBuf(start.user.id), name: start.user.name, displayName: start.user.displayName },
-        pubKeyCredParams: start.pubKeyCredParams,
-        authenticatorSelection: start.authenticatorSelection,
-        excludeCredentials: (start.excludeCredentials || []).map(c => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
-        timeout: 120000,
-        attestation: start.attestation || 'none',
-      };
-      const cred = await navigator.credentials.create({ publicKey: options });
-      if (!cred) return;
-      const credJSON = {
-        id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
-        response: {
-          attestationObject: bufToB64u(cred.response.attestationObject),
-          clientDataJSON: bufToB64u(cred.response.clientDataJSON),
-        },
-      };
-      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge), {
+      const credJSON = await createPlatformCredential(start);
+      if (!credJSON) return;
+      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge) + (window.AideNativeBiometrics ? '&label=' + encodeURIComponent('Aide 桌面 · Touch ID') : ''), {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
         body: JSON.stringify(credJSON),

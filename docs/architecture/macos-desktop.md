@@ -33,7 +33,15 @@ python3 scripts/build-macos-desktop.py --install --open
 
 WKWebView 仅对已验证 localhost 原点处理精确叶证书 pin，同时检查证书有效期和主机名。其他 HTTPS 请求遵循系统正常校验，没有全局关闭 TLS 检查或修改系统根证书库。文件面板、媒体授权和诊断计数也受本地原点约束，没有向网页暴露通用原生命令桥。
 
-独立应用不复制 Safari 的密码、指纹凭据或已解锁状态。现有账户密码与工作台锁屏继续生效；原生设置菜单不能绕过锁屏。实测此宿主的 `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()` 为 false，使用原有密码解锁。
+独立应用不复制 Safari 的密码、指纹凭据或已解锁状态。现有账户密码与工作台锁屏继续生效；原生设置菜单不能绕过锁屏。WKWebView 的浏览器平台认证器探测可能返回 false，因此桌面通过独立原生 Touch ID 接入，浏览器仍使用原有 WebAuthn。
+
+### 原生 Touch ID
+
+首次使用：用账户密码解锁，在「设置 → 数据与账户 → 账户 → 绑定本机 Touch ID」验证原密码，再完成系统指纹确认。之后锁屏可用 Touch ID 解锁，管理授权也复用同一凭据。Safari 已绑定的凭据保留，桌面需要单独绑定一次。没有 Touch ID、被锁定、取消验证或系统新增/删除指纹后，可继续用账户密码；指纹集合变化会使旧桌面私钥失效，需要重新绑定。
+
+私钥是 Secure Enclave 的不可导出 P-256 密钥，存于本机 Keychain，以 `WhenUnlockedThisDeviceOnly` 和 `privateKeyUsage + biometryCurrentSet` 保护，并按安装 identifier 隔离。每次签名使用新的 LocalAuthentication 上下文，禁用复用和系统密码回退。账户密码只提交既有服务端密码验证，不进入原生桥或 Keychain。
+
+原生桥只提供 status/create/get，仅已验证 localhost HTTPS 顶层工作台可调用；插件 iframe、独立插件工作台、外部页面与其他端口均不授权。原生返回标准 WebAuthn none 注册响应和 ES256 断言，继续由既有服务端校验公钥、UV、挑战过期/一次性、精确原点及锁代际。原生成功布尔值不能解锁。服务端删除凭据后，残留的本机硬件密钥也无法解锁。此实现使用显式凭据列表及零计数器，不提供跨设备同步或可发现通行密钥。
 
 麦克风首次使用由系统和 WebKit 请求授权。代码包含麦克风、摄像头与语音识别的用途说明。存在 WebSocket/getUserMedia/AudioContext/SpeechRecognition API 仅代表可用性探测，不等于真实采集、实时模型通话或厂商连接验收。未授权时不自动采音或替用户点击允许。
 
@@ -43,6 +51,7 @@ WKWebView 仅对已验证 localhost 原点处理精确叶证书 pin，同时检�
 python3 scripts/test_macos_desktop.py
 python3 scripts/test_launcher_contract.py
 python3 scripts/test_source_fingerprint.py
+node scripts/native-touchid.test.cjs
 "$HOME/Applications/Aide.app/Contents/MacOS/AideDesktop" --policy-test
 python3 scripts/agent-route.py verify quick
 ```
@@ -50,3 +59,5 @@ python3 scripts/agent-route.py verify quick
 开发时可通过 `open -a <本安装 Aide.app> --args --smoke-output <本地 JSON 路径>` 启用固定的原生冒烟。它统计页面异常、验证 AppKit 标签/共享 WebKit 存储、关闭恢复、系统对话框及文件选择/下载的取消路径，解锁后检查设置页，并打开 Compare 与 ProfessionalProject 的独立插件标签后关闭测试标签。测试只操作自己的临时标签，不选择、上传或保存文件，不记录正文或凭据；不会绕过锁屏、申请媒体权限或调用付费模型。默认启动没有这套冒烟操作。
 
 精确本地验收与限制见 `docs/tasks/macos-desktop-20261103.json`。回退时退出桌面应用，在 Safari 打开现有 localhost 地址即可；删除或保留 `~/Applications/Aide.app` 均不删除后台数据。无需为回退停止 Docker 服务。
+
+原生 Touch ID 的软件跨实现签名向量位于 `internal/server/testdata/native-touchid-webauthn.json`，由测试专用临时软件密钥生成，不含私钥。Swift wire 测试与 Go 验签覆盖正常注册/解锁及拒绝路径；这些测试不替代本机真实指纹绑定、取消和解锁。实际硬件验收状态见 `docs/tasks/native-touchid-20261103.json`，关联 [#749](https://github.com/skyelan1999/aide/issues/749)。

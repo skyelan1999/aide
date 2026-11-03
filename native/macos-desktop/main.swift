@@ -54,10 +54,16 @@ enum DesktopPolicy {
         securityOrigin.protocol == expected.scheme && securityOrigin.host.lowercased() == expected.host?.lowercased()
             && securityOrigin.port == (expected.port ?? 443)
     }
+
+    static func biometric(_ url: URL, origin: URL) -> Bool {
+        guard local(url, origin: origin), url.scheme == "https", url.path == "/", url.query == nil else { return false }
+        let parameters = URLComponents(string: "?" + (url.fragment ?? ""))?.queryItems ?? []
+        return !parameters.contains(where: { $0.name == "pluginWorkbench" })
+    }
 }
 
 final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
-    WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, WKScriptMessageHandler {
+    WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, WKScriptMessageHandler, WKScriptMessageHandlerWithReply {
     let root: URL
     let smokeOutput: URL?
     var mainWindow: NSWindow!
@@ -79,6 +85,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var configuredControllers = Set<ObjectIdentifier>()
     var titleObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
     var approvedCloses = Set<ObjectIdentifier>()
+    lazy var biometrics = DesktopBiometrics(namespace: Bundle.main.bundleIdentifier ?? "local.aide.desktop.invalid")
 
     init(root: URL, smokeOutput: URL?) {
         self.root = root.resolvingSymlinksInPath()
@@ -254,6 +261,18 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         """
         if configuredControllers.insert(ObjectIdentifier(controller)).inserted {
             controller.add(self, name: "aideDesktopDiagnostics")
+            controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideBiometrics")
+            controller.addUserScript(WKUserScript(source: """
+            if (window === top) {
+              const request = (operation, options) => window.webkit.messageHandlers.aideBiometrics.postMessage({operation, options:options || {}}).then(result => {
+                if (result.error) throw new DOMException(result.error.message, result.error.name);
+                return result;
+              });
+              Object.defineProperty(window, 'AideNativeBiometrics', {value:Object.freeze({
+                status:()=>request('status'), create:options=>request('create',options), get:options=>request('get',options)
+              }), writable:false, configurable:false});
+            }
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart,
                                                   forMainFrameOnly: smokeOutput == nil))
         }
@@ -470,6 +489,33 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         if let kind = message.body as? String, ["runtime-error", "promise-error"].contains(kind) { pageErrors += 1 }
     }
 
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage,
+                               replyHandler: @escaping (Any?, String?) -> Void) {
+        func reject(_ error: BiometricFailure, name: String = "NotAllowedError") {
+            replyHandler(["error": ["name": name, "message": error.message]], nil)
+        }
+        guard message.name == "aideBiometrics", let origin = origin, message.frameInfo.isMainFrame,
+              DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin),
+              let web = message.webView, let source = web.url, DesktopPolicy.biometric(source, origin: origin),
+              let body = message.body as? [String: Any], body.count <= 2,
+              let encoded = try? JSONSerialization.data(withJSONObject: body), encoded.count <= 65536,
+              let operation = body["operation"] as? String, ["status", "create", "get"].contains(operation),
+              let options = body["options"] as? [String: Any], options.count <= 16 else {
+            reject(.invalidOptions, name: "SecurityError"); return
+        }
+        if operation == "status" { replyHandler(biometrics.status(), nil); return }
+        guard web.window?.isVisible == true, web === activeWeb else { reject(.cancelled); return }
+        let port = origin.port ?? 443
+        let ceremonyOrigin = "https://localhost" + (port == 443 ? "" : ":\(port)")
+        biometrics.perform(operation: operation, options: options, origin: ceremonyOrigin) { result in
+            guard web.url == source, web.window?.isVisible == true, web === self.activeWeb else { reject(.cancelled); return }
+            switch result {
+            case .success(let value): replyHandler(value, nil)
+            case .failure(let error): reject(error, name: error == .cancelled ? "NotAllowedError" : "OperationError")
+            }
+        }
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if smokeOutput != nil && webView == views[mainWindow] { smokeProbe(webView) }
     }
@@ -652,12 +698,18 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     }
 
     func writeSmoke(_ record: [String: Any]) {
-        guard let output = smokeOutput, let data = try? JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted]) else { return }
+        guard let output = smokeOutput else { return }
+        var record = record
+        let biometricStatus = biometrics.status()
+        record["nativeTouchIdAvailable"] = biometricStatus["available"]
+        record["nativeTouchIdCredentialCount"] = (biometricStatus["credentialIds"] as? [String])?.count ?? 0
+        guard let data = try? JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted]) else { return }
         try? FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? data.write(to: output, options: .atomic)
     }
 
     func stopMedia(_ web: WKWebView) {
+        biometrics.cancel()
         web.evaluateJavaScript("window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();", completionHandler: nil)
     }
     func webViewDidClose(_ webView: WKWebView) { webView.window?.performClose(nil) }
@@ -797,6 +849,12 @@ func policyTests() {
     precondition(DesktopPolicy.pluginURL(URL(string: "https://localhost:9999/plugin-workbench/" + String(repeating: "a", count: 64))!, origin: origin))
     for path in ["/api/config", "/plugin-workbench/short", "/plugin-workbench/" + String(repeating: "a", count: 64) + "/extra"] {
         precondition(!DesktopPolicy.pluginURL(URL(string: "https://localhost:9999" + path)!, origin: origin))
+    }
+    precondition(DesktopPolicy.biometric(URL(string: "https://localhost:9999/#token=fixture")!, origin: origin))
+    for value in ["https://localhost:9999/#pluginWorkbench=compare&workspace=fixture",
+                  "https://localhost:9999/plugin-workbench/" + String(repeating: "a", count: 64),
+                  "https://localhost:9999/?external=1", "https://localhost:9998/", "blob:https://localhost:9999/owned"] {
+        precondition(!DesktopPolicy.biometric(URL(string: value)!, origin: origin), value)
     }
     print("PASS desktop origin, blob, external-scheme policy")
 }

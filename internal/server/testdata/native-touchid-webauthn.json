@@ -1,0 +1,28 @@
+{
+  "assertion" : {
+    "id" : "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M",
+    "rawId" : "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M",
+    "response" : {
+      "authenticatorData" : "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA",
+      "clientDataJSON" : "eyJjaGFsbGVuZ2UiOiJRa0pDUWtKQ1FrSkNRa0pDUWtKQ1FrSkNRa0pDUWtKQ1FrSkNRa0pDUWtJIiwiY3Jvc3NPcmlnaW4iOmZhbHNlLCJvcmlnaW4iOiJodHRwczpcL1wvbG9jYWxob3N0Ojk5OTkiLCJ0eXBlIjoid2ViYXV0aG4uZ2V0In0",
+      "signature" : "MEUCICNq6G8Kovhp7pNNBHrNL5lGpIAgDHNgHlg8vv2xac_pAiEA33tw71hGewL_qM-c0lX88B93sN1ryIIJ6XqjRneH35Y",
+      "userHandle" : null
+    },
+    "type" : "public-key"
+  },
+  "assertionChallenge" : "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI",
+  "origin" : "https:\/\/localhost:9999",
+  "registration" : {
+    "id" : "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M",
+    "rawId" : "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M",
+    "response" : {
+      "attestationObject" : "o2NmbXRkbm9uZWhhdXRoRGF0YVikSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NFAAAAAAAAAAAAAAAAAAAAAAAAAAAAIENDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDpQECAyYgASFYIPKvtayzt99vo4l35CckgEHaDIdhtHayF_eryA832GHFIlgg2N2Z8YhAilpTJV7k8CVI5q2EQNkD27F7ogDGo-kjIUZnYXR0U3RtdKA",
+      "clientDataJSON" : "eyJjaGFsbGVuZ2UiOiJRVUZCUVVGQlFVRkJRVUZCUVVGQlFVRkJRVUZCUVVGQlFVRkJRVUZCUVVFIiwiY3Jvc3NPcmlnaW4iOmZhbHNlLCJvcmlnaW4iOiJodHRwczpcL1wvbG9jYWxob3N0Ojk5OTkiLCJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
+      "transports" : [
+        "internal"
+      ]
+    },
+    "type" : "public-key"
+  },
+  "registrationChallenge" : "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE"
+}
