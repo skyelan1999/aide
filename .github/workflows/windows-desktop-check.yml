@@ -1,0 +1,89 @@
+name: Windows Desktop Check
+on:
+  push:
+    branches: [main, 'feat/windows-desktop-*']
+    paths:
+      - 'native/windows-launcher/**'
+      - 'scripts/build-windows-launcher.py'
+      - 'scripts/windows_desktop*'
+      - 'scripts/ci/windows*desktop*'
+      - '.github/workflows/windows-desktop-check.yml'
+  pull_request:
+    paths:
+      - 'native/windows-launcher/**'
+      - 'scripts/build-windows-launcher.py'
+      - 'scripts/windows_desktop*'
+      - 'scripts/ci/windows*desktop*'
+      - '.github/workflows/windows-desktop-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-desktop-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare existing cross-build paths
+        run: |
+          sudo mkdir -p /toolchain
+          sudo chown "$USER" /toolchain
+          sudo ln -s "$GITHUB_WORKSPACE" /src
+      - name: Build Windows executable and separate UI fixture
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          out="$GITHUB_WORKSPACE/.agent-state/windows-desktop"
+          mkdir -p "$out"
+          extra=()
+          if [ "$TARGET_ARCH" = amd64 ]; then extra=(--desktop-test-output "$out/desktop-smoke.exe"); fi
+          python3 scripts/build-windows-launcher.py --in-container --arch "$TARGET_ARCH" --output "$out/aide-launcher.exe" "${extra[@]}"
+          if [ "$TARGET_ARCH" = amd64 ]; then
+            GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o "$out/fixture.exe" scripts/ci/windows-desktop-fixture.go
+            cp .agent-state/native-toolchain/WebView2Loader-amd64.dll "$out/WebView2Loader.dll"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-desktop-${{ matrix.arch }}
+          path: .agent-state/windows-desktop/
+          include-hidden-files: true
+          retention-days: 3
+  native-ui:
+    needs: compile
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-desktop-amd64
+          path: .agent-state/windows-desktop
+      - name: Actual isolated WebView2 app tabs, sandbox port, dialogs and auth guard
+        shell: cmd
+        run: python scripts/ci/windows_desktop_ui.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-desktop-native-ui
+          path: .agent-state/windows-desktop/
+          include-hidden-files: true
+          retention-days: 3

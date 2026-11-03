@@ -41,6 +41,9 @@ if errorlevel 1 goto bootstrap_failed
 set "AIDE_BOOT_STAGE=extract-exe"
 docker.exe cp "%AIDE_BOOT_CID%:/out/aide-launcher.exe" "%AIDE_BOOT_EXE%"
 if errorlevel 1 goto bootstrap_failed
+set "AIDE_BOOT_STAGE=close-owned-desktop"
+"%AIDE_BOOT_EXE%" desktop-stop --root "%CD%"
+if errorlevel 1 goto bootstrap_failed
 set "AIDE_BOOT_STAGE=stop-owned-controller"
 "%AIDE_BOOT_EXE%" host-stop --root "%CD%"
 if errorlevel 1 goto bootstrap_failed

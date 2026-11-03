@@ -1,0 +1,95 @@
+{
+  "id": "windows-desktop-20261103",
+  "request": "Windows源码启动仍打开原生浏览器，插件打开工作台打不开；需要Windows环境一并做好适配",
+  "baseline": "a8e6e69311767b3a352b96adfe80fb6765b9cccb",
+  "initial_status": "",
+  "acceptance": [
+    "Windows源码build/start默认打开WebView2独立窗口，无普通浏览器启动",
+    "应用内新标签承接window.open和插件新页，保留共享本机登录及工作区重查",
+    "原生Windows Hello注册/签名继续由原WebAuthn服务端验证；密码回退",
+    "文件/下载/媒体授权/脏编辑关闭及本机TLS精确验证",
+    "AMD64/ARM64原生构建、正反路径与Windows实际UI检查分开记录；不Release"
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "scripts/build-windows-launcher.py",
+    "scripts/windows-bootstrap.bat",
+    "internal/server/web native authentication and plugin-page routing",
+    "focused tests and CI",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认Windows Git源码build/start。将桌面窗口并入已有单EXE宿主，采用独立WebView2用户数据目录及受限同原点桥；维持既有后端和布局。",
+      "evidence": [
+        "Issue #751",
+        "native/windows-launcher/main.cpp",
+        "Microsoft WebView2/NewWindowRequested/WebAuthn API documentation"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用户确认Windows Git源码build/start。将桌面窗口并入已有单EXE宿主，采用独立WebView2用户数据目录及受限同原点桥；维持既有后端和布局。",
+      "evidence": [
+        "Issue #751",
+        "native/windows-launcher/main.cpp",
+        "Microsoft WebView2/NewWindowRequested/WebAuthn API documentation"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "接入单EXE WebView2桌面、原生标签/窗口生命周期、证书pin、系统文件/下载/权限面板和Windows Hello标准WebAuthn桥；保留当前布局与后端。修复手动登录后插件路由续开。",
+      "evidence": [
+        "native/windows-launcher/desktop.hpp",
+        "native/windows-launcher/desktop_hello.hpp",
+        "scripts/windows-bootstrap.bat",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "AMD64/ARM64生产EXE和独立UI测试EXE已跨编译成功；322项quick、8项插件页、原生认证路由、2项桌面策略/SDK拒绝、66项portable及CI合约通过。安全复核补充取消返回区分，最终代码由Windows Desktop Check重新构建并执行原生UI检查。真实用户/Hello硬件未验收。",
+      "evidence": [
+        ".agent-state/windows-desktop/build-amd64.log",
+        ".agent-state/windows-desktop/portable.log",
+        ".github/workflows/windows-desktop-check.yml"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录原生窗口、构建依赖、系统认证与验证边界，区分已恢复浏览器功能、独立桌面和真实硬件验收。",
+      "evidence": [
+        "docs/architecture/windows-desktop.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅范围内文件；原有Mac/Windows安装和用户数据未修改，临时构建容器--rm退出，SDK/工具链按固定SHA缓存。测试可执行文件与生产PE分别生成，未包含真实账户/密码/私钥。",
+      "evidence": [
+        "git diff --check",
+        "scripts/windows_desktop_smoke.cpp",
+        "scripts/ci/windows-desktop-fixture.go"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "继续遵循只整合/push源码、不Release的用户要求。",
+  "rollback": "",
+  "handoff": "用户已确认a6728b16浏览器路径主页面和插件正常。当前重点Windows独立应用呈现；不恢复被拒绝的Concept03，不升级或创建Release，不将跨编译称为Windows实机通过。",
+  "issue": "https://github.com/skyelan1999/aide/issues/751",
+  "user_observations": {
+    "failedOldVersion": "0e1b02fa",
+    "workingBrowserVersion": "a6728b16",
+    "confirmed": "主工作台和插件工作台都正常；只是缺少最新独立应用的呈现",
+    "sourceInstall": true
+  },
+  "security_review": {
+    "coordinator": "root",
+    "result": "Reviewed backend WebAuthn enforcement, root-only native messages, exact TLS pin, private profile/DLL hashes, navigation generations and cancellation. OS cancellation returns NotAllowedError promptly; context cancellation suppresses stale delivery. Hardware ceremony remains NOT_RUN."
+  }
+}

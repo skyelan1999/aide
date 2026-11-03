@@ -60,3 +60,10 @@ test('routed page rechecks workspace, current enabled plugin and lock before cre
  await context.openRoutedPluginWorkbench();assert.equal(calls.length,1,'no duplicate after repeated unlock/reconciliation');
  calls[0].s.onClose();context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,enabled:false}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);
 });
+test('manual login resumes a plugin deep link after authentication and closes the login dialog',async()=>{
+ const app=fs.readFileSync('internal/server/web/app.js','utf8');const line=app.split('\n').find(s=>s.startsWith("$('login-form').onsubmit ="));
+ const calls=[],nodes={'login-form':{},'access-token':{value:'fixture-only'},'login-dialog':{open:true,close(){this.open=false;calls.push('close');}},'login-error':{}};
+ const context={$:id=>nodes[id],state:{},initialize:async()=>calls.push('initialize'),localStorage:{setItem:(k,v)=>calls.push(k)},openRoutedPluginWorkbench:async()=>{assert.equal(nodes['login-dialog'].open,false);calls.push('route');}};
+ vm.runInNewContext(line,context);await nodes['login-form'].onsubmit({preventDefault(){}});
+ assert.deepEqual(calls,['initialize','aide-token','close','route']);assert.equal(nodes['access-token'].value,'');
+});

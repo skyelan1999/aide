@@ -13,10 +13,12 @@ import platform
 import sys
 import re
 import shlex
+import secrets
 import shutil
 from pathlib import Path
 import subprocess
 import urllib.request
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = '0.15.2'
@@ -27,7 +29,40 @@ COMPILERS = {
 JSON_SHA256 = 'aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63'
 
 
-def host_helpers(build, arch, go, assembly_root="/build"):
+WEBVIEW2_VERSION = '1.0.3537.50'
+WEBVIEW2_SHA256 = '5ea526bbd728adda0da4d31219267e96460494a427e4894c4e09d9f320f4b9aa'
+
+
+def webview_sdk(build, arch, cache=None):
+    """Build-time only, SHA256-pinned official SDK; runtime never downloads SDKs."""
+    package = (cache or build) / ('webview2-' + WEBVIEW2_VERSION + '.nupkg')
+    if not package.exists():
+        partial = package.with_name(package.name + '.partial-' + secrets.token_hex(6))
+        urllib.request.urlretrieve('https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/' +
+            WEBVIEW2_VERSION + '/microsoft.web.webview2.' + WEBVIEW2_VERSION + '.nupkg', partial)
+        if hashlib.sha256(partial.read_bytes()).hexdigest() != WEBVIEW2_SHA256:
+            raise SystemExit('Official WebView2 SDK SHA256 mismatch')
+        partial.replace(package)
+    if hashlib.sha256(package.read_bytes()).hexdigest() != WEBVIEW2_SHA256:
+        raise SystemExit('Cached WebView2 SDK SHA256 mismatch')
+    target = build / 'webview2'
+    target.mkdir(exist_ok=True)
+    with zipfile.ZipFile(package) as archive:
+        for member, name in [('build/native/include/WebView2.h', 'WebView2.h'),
+                             ('build/native/' + ('x64' if arch == 'amd64' else 'arm64') + '/WebView2Loader.dll',
+                              'WebView2Loader-' + arch + '.dll'), ('LICENSE.txt', 'LICENSE.txt')]:
+            if archive.getinfo(member).file_size > 4000000:
+                raise SystemExit('WebView2 SDK member exceeds build budget')
+            content = archive.read(member)
+            # MinGW uses lower-case include names on the Linux cross compiler.
+            if name == 'WebView2.h':
+                content = content.replace(b'"EventToken.h"', b'"eventtoken.h"')
+            (target / name).write_bytes(content)
+    (target / 'eventtoken.h').write_text('#pragma once\ntypedef struct EventRegistrationToken { long long value; } EventRegistrationToken;\n')
+    return target
+
+
+def host_helpers(build, arch, go, assembly_root="/build", sdk=None):
     """Build current host components into the single distributed PE, not the image's old helpers."""
     if not go:
         raise SystemExit('An existing Go 1.26+ compiler is required to embed the native host components')
@@ -39,6 +74,10 @@ def host_helpers(build, arch, go, assembly_root="/build"):
         subprocess.run([go, 'build', '-trimpath', '-ldflags=-s -w', '-o', str(destination), package],
                        cwd=ROOT, env=environment, check=True)
         output[role] = (name, hashlib.file_digest(destination.open('rb'), 'sha256').hexdigest())
+    if sdk is not None:
+        name = 'WebView2Loader-' + arch + '.dll'
+        shutil.copyfile(sdk / name, build / name)
+        output['webview_loader'] = (name, hashlib.file_digest((build / name).open('rb'), 'sha256').hexdigest())
     module_text = subprocess.check_output([go, 'list', '-deps', '-f',
         '{{if not .Standard}}{{with .Module}}{{.Path}}|{{.Dir}}{{end}}{{end}}',
         './cmd/aide-local-mounts', './cmd/aide-message-lan'], cwd=ROOT, env=environment, text=True)
@@ -51,6 +90,8 @@ def host_helpers(build, arch, go, assembly_root="/build"):
         if license_file is None:
             raise SystemExit('Missing embedded helper dependency license: ' + module)
         notices.append(module + '\n' + license_file.read_text(encoding='utf-8'))
+    if sdk is not None:
+        notices.append('Microsoft WebView2 SDK ' + WEBVIEW2_VERSION + '\n' + (sdk / 'LICENSE.txt').read_text())
     license_path = build / ('helper-licenses-' + arch + '.txt')
     license_path.write_text('\n\n'.join(notices), encoding='utf-8')
     assembly = '.section .rdata,"dr"\n'
@@ -88,6 +129,7 @@ def main():
                         help='Existing Go compiler used to embed the current host helpers')
     parser.add_argument('--in-container', action='store_true', help='Compile directly inside the Docker native-launcher build stage')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--desktop-test-output', type=Path, help='Build a separate synthetic UI test executable; never embedded in the product')
     args = parser.parse_args()
     if args.in_container:
         machine = {'x86_64': 'amd64', 'aarch64': 'arm64', 'arm64': 'arm64'}.get(platform.machine())
@@ -123,8 +165,9 @@ def main():
         path = ROOT / 'native/windows-launcher/third_party/miniz' / name
         if hashlib.file_digest(path.open('rb'), 'sha256').hexdigest() != expected:
             raise SystemExit('Pinned miniz 3.1.0 source SHA256 mismatch: ' + name)
+    sdk = webview_sdk(build, args.arch, Path('/toolchain') if args.in_container else None)
     embedded = '#pragma once\n'
-    helpers, helper_licenses, helpers_source = host_helpers(build, args.arch, args.go, str(build) if args.in_container else "/build")
+    helpers, helper_licenses, helpers_source = host_helpers(build, args.arch, args.go, str(build) if args.in_container else "/build", sdk=sdk)
     for name, path in [('compose', ROOT / 'docker/compose.offline.yaml'),
                        ('data', ROOT / 'scripts/launcher-data.py'),
                        ('host_data', ROOT / 'native/windows-launcher/package_image.py'),
@@ -158,15 +201,20 @@ subprocess.run([str(compiler),'cc','-target',TARGET,'-c',HELPERS_SOURCE,'-o',hel
 subprocess.run([str(compiler),'cc','-O2','-target',TARGET,'-c',
     '/src/native/windows-launcher/third_party/miniz/miniz_tinfl.c','-o',object_file],check=True)
 subprocess.run([str(compiler),'c++','-std=c++17','-O2','-target',TARGET,
-    '-municode','-static','-I/build','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp',
+    '-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32',
     '/src/native/windows-launcher/main.cpp',object_file,helpers_object,'-o',OUTPUT],check=True)
 '''.replace('COMPILER', repr(compiler)).replace('ARCHIVE_PATH', repr('/build/' + archive.name)).replace('READY_FILE', repr('/toolchain/extracted-' + compiler_arch + '-' + VERSION)).replace('TARGET', repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu')).replace('HELPERS_SOURCE', repr('/build/' + helpers_source.name)).replace('HELPERS_OBJECT', repr('/build/' + helpers_source.stem + '.o'))
+    if args.desktop_test_output and not args.in_container:
+        raise SystemExit('Desktop test build requires the existing in-container build mode')
     destination = args.output or ROOT / ('aide-launcher.exe' if args.arch == 'amd64' else 'bin/aide-launcher-arm64.exe')
     destination.parent.mkdir(parents=True, exist_ok=True)
     output = str(destination) if args.in_container else ('/src/aide-launcher.exe' if args.arch == 'amd64' else '/src/bin/aide-launcher-arm64.exe')
+    if args.desktop_test_output:
+        args.desktop_test_output.parent.mkdir(parents=True, exist_ok=True)
+        container_code += "\nsubprocess.run([str(compiler),'c++','-std=c++17','-O2','-target'," + repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu') + ",'-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','/src/scripts/windows_desktop_smoke.cpp',object_file,helpers_object,'-o'," + repr(str(args.desktop_test_output)) + "],check=True)\n"
     container_code = container_code.replace('OUTPUT', repr(output))
     if args.in_container:
-        container_code = container_code.replace('/build/' + archive.name, str(archive)).replace('/build/', str(build) + '/').replace("'-I/build'", repr('-I' + str(build)))
+        container_code = container_code.replace('/build/' + archive.name, str(archive)).replace('/build/', str(build) + '/').replace("'-I/build'", repr('-I' + str(build))).replace("'-I/build/webview2'", repr('-I' + str(sdk)))
         subprocess.run([sys.executable, '-c', container_code], check=True)
     else:
         subprocess.run(['docker', 'run', '--rm', '--pull', 'never', '--network', 'none',

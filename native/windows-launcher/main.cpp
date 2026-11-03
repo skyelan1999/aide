@@ -5,6 +5,8 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <shobjidl.h>
+#include <shlobj.h>
+#include <knownfolders.h>
 #include <sddl.h>
 #include <aclapi.h>
 #include <bcrypt.h>
@@ -182,6 +184,7 @@ bool runtime(const json& m,const std::string& platform){
  return m.is_object()&&imageId(m.value("Id",""))&&m.value("Os","")+"/"+m.value("Architecture","")==platform&&digest(label(m,"aide.srcsha"))&&(label(m,"aide.cad-runtime")=="8.0.1.1.0"||(label(m,"aide.runtime-profile")=="slim"&&label(m,"aide.cad-runtime").empty()));
 }
 #include "native_http.hpp"
+#include "desktop.hpp"
 class Launcher {
 public:
  fs::path root,docker,composeExe;bool noBrowser=false,force=false,offline=false,deferHelpers=false,allowDesktop=true,reusedRunning=false,openExisting=false;std::string platform,image;std::map<std::string,std::string> settings;
@@ -472,17 +475,32 @@ public:
  }
  bool healthy(){auto h=compose({L"exec",L"-T",L"aide",L"curl",L"-fsSk",L"--connect-timeout",L"2",L"--max-time",L"3",L"https://127.0.0.1:8080/healthz"},6000);if(h.code)return false;auto j=json::parse(h.out,nullptr,false);return j.is_object()&&j.value("service","")=="aide"&&j.value("status","")=="ok";}
  void waitHealthy(){for(int i=0;i<60;i++){if(nativeInterrupted())throw std::runtime_error("Health wait stopped by operator");if(healthy())return;Sleep(1000);}throw std::runtime_error("Health check failed; inspect Docker logs for this project");}
- void browser(){int port=mappedPort();if(!port)throw std::runtime_error("Cannot resolve the ready service address");std::string base="https://localhost:"+std::to_string(port)+"/";say("Aide ready: "+base);
-  // Direct argv avoids an extra shell parser. Use the mounted private token as
-  // a final fallback for Docker exec output/transport problems; never log it.
+ std::string desktopToken(){
   auto token=compose({L"exec",L"-T",L"aide",L"cat",L"/data/auth/access-token"});
   if(token.code)token=compose({L"exec",L"-T",L"aide",L"cat",L"/data/access-token"});
-  std::string t=token.code?"":trim(token.out);
-  if(t.empty()){auto file=root/L".aide-data/storage/data/auth/access-token";if(fs::exists(file))t=trim(read(file,4096));}
-  std::string url=loginLink(base,t);say(url==base?"Warning: automatic sign-in token unavailable; use the login page.":"Automatic sign-in link ready (token attached; omitted from logs).");
-  if(noBrowser||env(L"AIDE_OPEN_BROWSER")==L"0")return;
-  if(reinterpret_cast<INT_PTR>(ShellExecuteW(nullptr,L"open",wide(url).c_str(),nullptr,nullptr,SW_SHOWNORMAL))<=32){auto browser=installedBrowser();if(browser.empty()){say("Warning: no usable installed browser; open the displayed address manually.");return;}spawn(browser,{wide(url)},fs::path(L"NUL"));say("HTTPS association unavailable; opened the installed browser directly.");}
+  std::string value=token.code?"":trim(token.out);
+  if(value.empty()){auto file=root/L".aide-data/storage/data/auth/access-token";if(fs::exists(file))value=trim(read(file,4096));}
+  return value;
  }
+ void browser(){int port=mappedPort();if(!port)throw std::runtime_error("Cannot resolve the ready service address");say("Aide ready: https://localhost:"+std::to_string(port)+"/");
+  if(noBrowser||env(L"AIDE_OPEN_BROWSER")==L"0")return;
+  // Tokens never enter the OS command line. The private desktop child checks
+  // this installation and reads its own verified service session through pipes.
+  spawn(module(),{L"desktop",L"--root",root.wstring()},stateRoot/L"desktop.log");
+ }
+ int desktop(){
+  if(!healthy())throw std::runtime_error("Local Aide is not healthy; run start.bat");
+  int port=mappedPort();if(!port)throw std::runtime_error("Cannot resolve ready desktop port");
+  auto cert=compose({L"exec",L"-T",L"aide",L"cat",L"/data/certs/cert.pem"});required(cert,"Cannot read this installation's certificate");
+  auto dir=stateRoot/L"desktop";privateDirectory(dir);auto identity=fs::weakly_canonical(root).wstring();CharLowerBuffW(identity.data(),DWORD(identity.size()));write(dir/L"identity",utf8(identity));auto key=sha256(dir/L"identity");
+  PWSTR local=nullptr;if(FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData,KF_FLAG_CREATE,nullptr,&local)))throw std::runtime_error("Local application data unavailable");
+  auto base=fs::path(aide_desktop::takeString(local))/L"Aide";privateDirectory(base);privateDirectory(base/L"Desktop");auto profile=base/L"Desktop"/wide(key);privateDirectory(profile);
+  auto loader=profile/(L"WebView2Loader-"+wide(embedded_webview_loader_sha256)+L".dll");realPath(loader);
+  if(!fs::exists(loader))write(loader,std::string(reinterpret_cast<const char*>(aide_webview_loader_begin),size_t(aide_webview_loader_end-aide_webview_loader_begin)));
+  if(sha256(loader)!=embedded_webview_loader_sha256)throw std::runtime_error("Desktop loader checksum mismatch");
+  auto origin="https://localhost:"+std::to_string(port);aide_desktop::Desktop desktop(wide(origin),wide(loginLink(origin+"/",desktopToken())),profile,wide(key),cert.out);return desktop.run(loader);
+ }
+
  void start(){
   if(nativeInterrupted()||fs::exists(stateRoot/L"stop"))throw std::runtime_error("Native startup stopped by operator");disk();engine(allowDesktop);cleanOwnedContainers();
   if(openExisting&&!container().empty()&&healthy()){reusedRunning=true;say("Aide is already healthy; reopening its existing workbench.");return;}
@@ -531,7 +549,7 @@ BOOL WINAPI nativeConsoleControl(DWORD event){
 }
 int wmain(int argc,wchar_t** argv){
  SetConsoleOutputCP(CP_UTF8);WSADATA data{};if(WSAStartup(MAKEWORD(2,2),&data))return 1;
- bool pause=false;DWORD ids[2];if(GetConsoleProcessList(ids,2)==1)pause=true;
+ bool pause=false,desktopAction=false;DWORD ids[2];if(GetConsoleProcessList(ids,2)==1)pause=true;
  try{
   fs::path root=module().parent_path();std::wstring action=L"start";std::string generation;bool noBrowser=false,force=false,dryRun=false;
   for(int i=1;i<argc;i++){
@@ -544,10 +562,16 @@ int wmain(int argc,wchar_t** argv){
    else if(a==L"--dry-run")dryRun=true;
    else if(a==L"--self-test")return selfTest();
    else if(a==L"--licenses"){std::cout<<embedded_json_license<<'\n'<<embedded_miniz_license<<'\n'<<embedded_helper_licenses;return 0;}
-   else if(a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
+   else if(a==L"desktop"||a==L"desktop-stop"||a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
    else if(a==L"--launcher-contract"){std::cout<<"aide-launcher-contract=2\n";return 0;}
    else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
    else throw std::runtime_error("Unknown launcher argument");
+  }
+  desktopAction=action==L"desktop";
+  if(action==L"desktop-stop"){
+   auto directory=fs::absolute(root)/L".aide-data/native/desktop";auto identityFile=directory/L"identity";realPath(directory);realPath(identityFile);
+   if(!fs::exists(identityFile))return 0;auto name=L"AideDesktop_"+wide(sha256(identityFile));auto window=FindWindowW(name.c_str(),nullptr);if(!window)return 0;
+   PostMessageW(window,WM_CLOSE,0,0);for(int i=0;i<200&&IsWindow(window);i++)Sleep(100);if(IsWindow(window))throw std::runtime_error("Quit Aide or resolve unsaved edits before updating the desktop");return 0;
   }
   auto compiledRoot=fs::absolute(root)/L".aide-data/native";auto compiledReceipt=compiledRoot/L"compiled-launcher.json";
   realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
@@ -570,6 +594,7 @@ int wmain(int argc,wchar_t** argv){
   if(action==L"verify")return app.verify();
   if(action==L"supervise"){pause=false;SetConsoleCtrlHandler(nativeConsoleControl,TRUE);return nativeSupervise(app);}
   if(action==L"worker-port"||action==L"worker-update"){pause=false;if(!std::regex_match(generation,std::regex("[a-f0-9]{32}")))throw std::runtime_error("Missing native worker generation");return nativeWorkerLoop(app,action==L"worker-port"?"port":"update",generation);}
+  if(action==L"desktop"){app.restore();app.engine(false);return app.desktop();}
   if(action==L"status"||action==L"open"){NativeLock lifecycle(stateRoot/L"startup.lock");if(!lifecycle.owns())throw std::runtime_error("Lifecycle is busy; use host-status for nonblocking task status");app.restore();app.engine(false);if(!app.healthy())return 1;if(action==L"status")app.noBrowser=true;app.browser();return 0;}
   std::unique_ptr<NativeLock> control;
   if(action==L"stop"||action==L"host-stop"||action==L"clean"||action==L"docker_clean"){
@@ -595,5 +620,5 @@ int wmain(int argc,wchar_t** argv){
    if(!nativeStopping())app.browser();
   }
   return 0;
- }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
+ }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(desktopAction)MessageBoxW(nullptr,wide(message).c_str(),L"Aide desktop",MB_OK|MB_ICONERROR);if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
 }

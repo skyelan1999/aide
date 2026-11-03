@@ -139,3 +139,14 @@ retain an Explorer-style CMD window until acknowledgement. Set
 Retired PowerShell is archived under `scripts/fixtures/legacy-windows/` for tests
 only and is excluded from runtime packages. The Windows SDK test now executes
 the actual BAT shortcuts, not only direct EXE dry runs (Issue #646).
+
+
+## Windows workbench window
+
+The current source host opens an installation-scoped WebView2 desktop window,
+with app tabs for local plugin pages and Windows Hello via the system WebAuthn
+API. It no longer opens the default browser for the main workbench. The WebView2
+Runtime must already be installed. The SHA256-pinned SDK/Loader is a build input;
+normal start never downloads it. Account passwords remain in the existing server
+verification flow, never native storage. See [desktop behavior and limits](../../docs/architecture/windows-desktop.md)
+and [task acceptance](../../docs/tasks/windows-desktop-20261103.json).

@@ -275,7 +275,7 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
     const err = el('div', 'master-auth-error', '');
     const actions = el('div', 'editor-footer');
     const cancel = el('button', 'quiet', t('取消')); cancel.type = 'button';
-    const fp = el('button', 'master-auth-fp', t('指纹授权')); fp.type = 'button';
+    const fp = el('button', 'master-auth-fp', t(window.AideNativeBiometrics?.platform === 'windows' ? 'Windows Hello 授权' : '指纹授权')); fp.type = 'button';
     const ok = el('button', 'primary', t('确认')); ok.type = 'button';
     actions.append(cancel, fp, ok);
     box.append(input, err, actions);
@@ -309,7 +309,7 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
       if (settled) return;
       const enabled = hasCred && res.ok && res.enrolled;
       fp.disabled = !enabled; fp.classList.toggle('disabled', !enabled);
-      if (!enabled) fp.title = t('请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID');
+      if (!enabled) fp.title = t(window.AideNativeBiometrics?.platform === 'windows' ? '请先用密码解锁，在设置 → 账户中绑定 Windows Hello' : '请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID');
     }).catch(() => {});
     fp.onclick = action(async () => {
       fp.disabled = true; err.textContent = '';
@@ -4622,7 +4622,7 @@ $('command-form').onsubmit = action(async event => {
 }, {feedback:false}); // The command stream owns its lifecycle; later submits are PTY input.
 $('command-stop').onclick = () => state.commandAbort?.abort();
 $('login-dialog').addEventListener('cancel', event => event.preventDefault());
-$('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); } catch (error) { $('login-error').textContent = error.message; } };
+$('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); await openRoutedPluginWorkbench(); } catch (error) { $('login-error').textContent = error.message; } };
 document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && ['BODY', 'HTML'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]') && !$('settings-sheet').classList.contains('open')) action(newSession)(); });
 /* ── 设置面板（FR-58~FR-60）：品牌 logo 入口；结构由 /settings-schema.json 数据驱动；
    设置值一律经 window.aideUI 的 JSON 文档管理。必须位于 initialize() 之外：
@@ -12214,6 +12214,7 @@ async function updateTouchIdButton() {
   const hint = $('touchid-hint');
   if (!btn) return;
   const res = await touchIdAvailable();
+  if(window.AideNativeBiometrics?.platform === 'windows')btn.textContent=t('Windows Hello 解锁');
   if (!res.ok) {
     btn.hidden = true;
     if (hint) { hint.hidden = res.reason !== 'use-localhost'; }
@@ -12227,7 +12228,7 @@ async function updateTouchIdButton() {
   btn.setAttribute('aria-disabled', String(!hasCred));
   if (hint) {
     hint.hidden = hasCred;
-    hint.textContent = t(res.native ? '请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID' : '未注册触控 ID，可在设置 → 账号中绑定');
+    hint.textContent = t(res.native ? (window.AideNativeBiometrics?.platform === 'windows' ? '请先用密码解锁，在设置 → 账户中绑定 Windows Hello' : '请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID') : '未注册触控 ID，可在设置 → 账号中绑定');
   }
 }
 function assertionToJSON(a) {
@@ -12372,8 +12373,8 @@ function renderAccountControl() {
     const waSection = el('div', 'wa-section');
     waSection.append(el('div', 'control-label', t('触控 ID / Passkey')));
     const waList = el('div', 'wa-cred-list');
-    const regBtn = el('button', 'quiet', t(window.AideNativeBiometrics ? '绑定本机 Touch ID' : '注册新设备')); regBtn.type = 'button';
-    if (window.AideNativeBiometrics) waSection.append(el('p','muted',t('Aide 桌面需单独绑定一次，Safari 的现有指纹凭据会保留。')));
+    const regBtn = el('button', 'quiet', t(window.AideNativeBiometrics ? (window.AideNativeBiometrics.platform === 'windows' ? '绑定 Windows Hello' : '绑定本机 Touch ID') : '注册新设备')); regBtn.type = 'button';
+    if (window.AideNativeBiometrics) waSection.append(el('p','muted',t(window.AideNativeBiometrics?.platform === 'windows' ? 'Aide 桌面需单独绑定 Windows Hello，浏览器的现有凭据会保留。' : 'Aide 桌面需单独绑定一次，Safari 的现有指纹凭据会保留。')));
 
     async function refreshWaList() {
       waList.replaceChildren();
@@ -12403,12 +12404,12 @@ function renderAccountControl() {
 
     regBtn.onclick = action(async () => {
       if (location.hostname !== 'localhost') { toast(t('请用 localhost 打开以使用 Touch ID')); return; }
-      const pw = await passwordPrompt(t('注册触控 ID 需验证原密码'));
+      const pw = await passwordPrompt(t(window.AideNativeBiometrics?.platform === 'windows' ? '绑定 Windows Hello 需验证原密码' : '注册触控 ID 需验证原密码'));
       if (!pw) return;
       const start = await api('/webauthn/register/start', { method: 'POST', body: JSON.stringify({ oldPassword: pw }) });
       const credJSON = await createPlatformCredential(start);
       if (!credJSON) return;
-      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge) + (window.AideNativeBiometrics ? '&label=' + encodeURIComponent('Aide 桌面 · Touch ID') : ''), {
+      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge) + (window.AideNativeBiometrics ? '&label=' + encodeURIComponent(window.AideNativeBiometrics?.platform === 'windows' ? 'Aide 桌面 · Windows Hello' : 'Aide 桌面 · Touch ID') : ''), {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
         body: JSON.stringify(credJSON),
