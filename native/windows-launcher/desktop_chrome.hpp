@@ -10,7 +10,7 @@ struct Chrome {
  void apply(HWND window,HWND tabs,const json& data){
   if(!data.is_object()||data.size()!=7||!data.at("dark").is_boolean())throw std::runtime_error("Invalid native appearance");
   auto bg=color(data.at("background").get<std::string>()),s=color(data.at("surface").get<std::string>()),sel=color(data.at("selected").get<std::string>()),fg=color(data.at("text").get<std::string>()),m=color(data.at("muted").get<std::string>()),l=color(data.at("line").get<std::string>());
-  background=bg;surface=s;selected=sel;text=fg;muted=m;line=l;dark=data.at("dark").get<bool>();BOOL dim=dark;DwmSetWindowAttribute(window,20,&dim,sizeof(dim));DwmSetWindowAttribute(window,35,&background,sizeof(background));DwmSetWindowAttribute(window,36,&text,sizeof(text));InvalidateRect(window,nullptr,TRUE);InvalidateRect(tabs,nullptr,TRUE);InvalidateRect(GetDlgItem(window,101),nullptr,TRUE);InvalidateRect(GetDlgItem(window,102),nullptr,TRUE);
+  background=bg;surface=s;selected=sel;text=fg;muted=m;line=l;dark=data.at("dark").get<bool>();BOOL dim=dark;DwmSetWindowAttribute(window,20,&dim,sizeof(dim));InvalidateRect(window,nullptr,TRUE);InvalidateRect(tabs,nullptr,TRUE);InvalidateRect(GetDlgItem(window,101),nullptr,TRUE);InvalidateRect(GetDlgItem(window,102),nullptr,TRUE);
  }
  static void fill(HDC dc,const RECT& r,COLORREF color){auto brush=CreateSolidBrush(color);FillRect(dc,&r,brush);DeleteObject(brush);}
  void rounded(HDC dc,RECT r,COLORREF color){auto brush=CreateSolidBrush(color);auto pen=CreatePen(PS_SOLID,1,color);auto oldBrush=SelectObject(dc,brush),oldPen=SelectObject(dc,pen);RoundRect(dc,r.left,r.top,r.right,r.bottom,12,12);SelectObject(dc,oldBrush);SelectObject(dc,oldPen);DeleteObject(brush);DeleteObject(pen);}

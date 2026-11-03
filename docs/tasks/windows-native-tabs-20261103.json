@@ -35,7 +35,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "原生选项卡/增减按钮/标题栏随Aide样式，标题过长省略。UI变更已从启动排查cc41a2c拆出，主启动/停止/安全标记相关代码未修改。",
+      "summary": "选项卡与增减按钮按Aide CSS颜色自绘，Segoe UI字体、圆角和文字省略；标题栏只申请系统明暗，避免旧Windows/远程桌面部分支持caption颜色时文字不可读。启动代码未修改。",
       "evidence": [
         "git diff --stat",
         "native/windows-launcher/desktop.hpp"
