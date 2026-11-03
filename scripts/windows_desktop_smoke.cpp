@@ -22,6 +22,9 @@ static void capture(const wchar_t* name=L"native-desktop.bmp"){
 static void compactChromeChecks(){
  auto& app=*testApp;RECT bar{},viewport{};GetClientRect(app.bar,&bar);app.active()->controller->get_Bounds(&viewport);
  if(bar.bottom!=app.chrome.height()||viewport.top!=bar.bottom||app.chrome.height()!=MulDiv(32,int(app.chrome.dpi),96))throw std::runtime_error("Tab strip is not compact or overlaps web content");
+ RECT selected{};TabCtrl_GetItemRect(app.bar,TabCtrl_GetCurSel(app.bar),&selected);RECT visible{};IntersectRect(&visible,&selected,&bar);if(visible.right-visible.left<(selected.right-selected.left)*.9)throw std::runtime_error("Selected tab is clipped after DPI/layout change");
+ if(!IsWindowVisible(GetDlgItem(app.window,102)))throw std::runtime_error("Active tab close control missing");
+ results["selectedTabRemainsVisible"]=true;results["inlineCloseControl"]=true;
  if(!SendMessageW(app.window,WM_GETICON,ICON_SMALL,0)||!SendMessageW(app.window,WM_GETICON,ICON_BIG,0))throw std::runtime_error("Window/taskbar icon missing");
  for(auto kind:{ICON_SMALL,ICON_BIG}){auto icon=reinterpret_cast<HICON>(SendMessageW(app.window,WM_GETICON,kind,0));ICONINFO info{};if(!GetIconInfo(icon,&info))throw std::runtime_error("Cannot read window icon bitmap");BITMAP bitmap{};GetObjectW(info.hbmColor,sizeof(bitmap),&bitmap);if(info.hbmColor)DeleteObject(info.hbmColor);if(info.hbmMask)DeleteObject(info.hbmMask);if(bitmap.bmWidth!=app.chrome.px(kind==ICON_SMALL?16:32))throw std::runtime_error("Window icon did not update for DPI");}
  HICON large=nullptr,small=nullptr;auto count=ExtractIconExW(module().c_str(),0,&large,&small,1);if(!count||count==UINT_MAX||!large||!small)throw std::runtime_error("Executable shell icon missing (count "+std::to_string(count)+", Windows error "+std::to_string(GetLastError())+")");results["shellIconExtractionCount"]=count;DestroyIcon(large);DestroyIcon(small);
@@ -32,7 +35,7 @@ static void compactChromeChecks(){
 static void layoutCaptures(bool dark){
  auto& app=*testApp;RECT original{};GetWindowRect(app.window,&original);auto dpi=app.chrome.dpi;
  SetWindowPos(app.window,nullptr,original.left,original.top,640,480,SWP_NOZORDER|SWP_NOACTIVATE);
- int before=TabCtrl_GetItemCount(app.bar);for(int i=before;i<10;i++){TCITEMW item{};item.mask=TCIF_TEXT;item.pszText=const_cast<wchar_t*>(L"项目终端 · Device Terminal");TabCtrl_InsertItem(app.bar,i,&item);}app.resize();TabCtrl_SetCurSel(app.bar,9);
+ int before=TabCtrl_GetItemCount(app.bar);for(int i=before;i<10;i++){TCITEMW item{};item.mask=TCIF_TEXT;item.pszText=const_cast<wchar_t*>(L"项目终端 · Device Terminal");TabCtrl_InsertItem(app.bar,i,&item);}app.resize();TabCtrl_SetCurSel(app.bar,9);app.resize();
  RedrawWindow(app.window,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW|RDW_ALLCHILDREN);capture(dark?L"compact-dark-narrow.bmp":L"compact-light-narrow.bmp");
  // Synthetic monitor message exercises the same DPI handler on the runner's
  // single display. It does not claim physical multi-monitor hardware coverage.
