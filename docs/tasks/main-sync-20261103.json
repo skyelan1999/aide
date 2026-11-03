@@ -3,46 +3,127 @@
   "request": "先推送，不release，先把手里的都和到main上",
   "baseline": "bfff14d13b955c4beec19d3b57fcfc195471a17f",
   "initial_status": "",
-  "acceptance": [],
-  "scope": [],
+  "acceptance": [
+    "本轮接受的语音/设置/构建回收/原生桌面/插件页/透明度/Touch ID工作全部位于main",
+    "保留用户已明确要求的原有布局，不恢复被拒绝的Concept03实验",
+    "推送main并读回远端提交一致；不升版、不创建或推送tag、不触发Delivery/Release",
+    "真实Touch ID和ProfessionalProject显示验收仍待本机确认，不以推送代替验收"
+  ],
+  "scope": [
+    "main integration and Git remote refs/heads/main",
+    "docs/tasks/main-sync-20261103.json",
+    "docs/tasks/native-touchid-20261103.json publication status"
+  ],
   "stages": {
     "requirements": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "按用户授权仅整合并推送main，不Release。",
+      "evidence": [
+        "native-touchid worktree .agent-state/quick.json",
+        "docs/tasks/native-touchid-20261103.json",
+        "git worktree list --porcelain",
+        "git merge-base --is-ancestor",
+        "git diff --check"
+      ]
     },
     "design": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "保留当前已接受布局与所有现有提交；不重新引入被拒绝的UI实验，也不覆盖其他旧任务草稿。",
+      "evidence": [
+        "native-touchid worktree .agent-state/quick.json",
+        "docs/tasks/native-touchid-20261103.json",
+        "git worktree list --porcelain",
+        "git merge-base --is-ancestor",
+        "git diff --check"
+      ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "本轮已接受开发分支均为main祖先，最新四项插件页/Touch ID及验收记录均已整合。",
+      "evidence": [
+        "native-touchid worktree .agent-state/quick.json",
+        "docs/tasks/native-touchid-20261103.json",
+        "git worktree list --porcelain",
+        "git merge-base --is-ancestor",
+        "git diff --check"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "321项quick收据内容指纹与当前源码一致，相关Go race和原生编译通过；Git diff检查通过。CI仅push常规验证，Delivery/发布工作流为手动触发。",
+      "evidence": [
+        "native-touchid worktree .agent-state/quick.json",
+        "docs/tasks/native-touchid-20261103.json",
+        "git worktree list --porcelain",
+        "git merge-base --is-ancestor",
+        "git diff --check"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "保留硬件与原生显示待验收状态，记录本次推送与公共Release的区别。",
+      "evidence": [
+        "native-touchid worktree .agent-state/quick.json",
+        "docs/tasks/native-touchid-20261103.json",
+        "git worktree list --porcelain",
+        "git merge-base --is-ancestor",
+        "git diff --check"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "本轮开发工作树均干净；历史实验和其他任务旧草稿原地保留，未清理或强行合并。",
+      "evidence": [
+        "native-touchid worktree .agent-state/quick.json",
+        "docs/tasks/native-touchid-20261103.json",
+        "git worktree list --porcelain",
+        "git merge-base --is-ancestor",
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "仅main推送阶段完成：GitHub接受源码推送，ls-remote读回765e4c614d333ce88773264b874f5d70416baabd。本提交追加收据，最终远端HEAD另存私有push-result.json。公共Release/tag/升版/Delivery未执行，远端常规CI不冒充已完成。",
+      "evidence": [
+        "git push origin HEAD:refs/heads/main",
+        "git ls-remote origin refs/heads/main",
+        "primary .agent-state/main-sync-20261103/push-result.json"
+      ]
     }
   },
-  "release_authorization": "",
-  "rollback": "",
-  "handoff": ""
+  "release_authorization": "用户：先推送，不release，先把手里的都和到main上。仅授权合并和push main，不授权升版、tag或Release。",
+  "rollback": "本轮保持已有提交历史；未强推、不改tag、不更换本机运行实例。",
+  "handoff": "原生Touch ID真实绑定/取消/解锁及ProfessionalProject显示验收仍待用户本机确认，#749/#750/#746保持未关闭。",
+  "inventory": {
+    "currentDevelopmentBranchesInMain": [
+      "docs/terminal-rc3-release-notes-20261102",
+      "docs/terminal-release-publication-20261102",
+      "feat/assistant-openai-speech",
+      "feat/background-default-20261103",
+      "feat/macos-desktop",
+      "feat/native-touchid-20261103",
+      "feat/ui-translucency-20261103",
+      "feat/voice-model-bindings",
+      "fix/build-recycle-745",
+      "fix/codex-host-source-cache",
+      "fix/experience-runtime-744",
+      "fix/notification-settings-autosave",
+      "fix/openai-assistant-calls",
+      "fix/plugin-page-scope-20261103",
+      "fix/settings-archive-scroll",
+      "fix/settings-profile-scroll",
+      "main"
+    ],
+    "rejectedExperimentalBranchPreserved": "feat/international-workbench-ui (user rejected layout on 2026-11-02; retain original controls/layout)",
+    "primaryAndDevelopmentHeadBeforePush": "bfff14d13b955c4beec19d3b57fcfc195471a17f",
+    "remoteBefore": "a6728b16c6ea3a1316d1dda8c65a45731920110e",
+    "pendingSourceCommits": [
+      "840df1034f0b3c7edee2167a22bd39164bd1c88b",
+      "d4365358f9f060d2100121774d865768b0653965",
+      "e1c58b28",
+      "bfff14d13b955c4beec19d3b57fcfc195471a17f"
+    ],
+    "olderOtherTaskWorktrees": "Read-only inventory; no changes or blanket staging. Older partial explicit-build draft is superseded by current start/build contracts and remains preserved."
+  },
+  "remoteRules": "GitHub accepted the requested direct main push using existing account privileges and reported bypass of PR/expected gate rules; no force push or remote policy changes. Local 321-check receipt passed; remote CI is separate."
 }

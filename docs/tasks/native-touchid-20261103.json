@@ -82,16 +82,16 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "本机源码/镜像/原生应用已更新；无公共Release或远端推送，真实指纹验收未完成。",
+      "summary": "本机已更新，源码按用户随后授权推送main。公共Release未执行，真实指纹验收仍待本机完成。",
       "evidence": [
-        "e1c58b28",
+        "source_publication",
         "https://github.com/skyelan1999/aide/issues/749"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "保留原密码和Safari WebAuthn。回退宿主时正常退出Aide再恢复旧版本；不删除账户或Safari凭据。",
-  "handoff": "用户已收到本机首次绑定步骤，正等待反馈。真实绑定、取消和锁屏解锁未验收，Issue #749保持打开；本机更新完成、源码已本地提交，未推送。原#746 ProfessionalProject显示验收仍待解锁，未混入本任务验收结论。",
+  "handoff": "用户已收到本机首次绑定步骤。真实绑定、取消和锁屏解锁尚未验收，Issue #749保持打开；本机更新完成、源码已进入远端main，未发布Release。#746 ProfessionalProject显示验收仍待解锁，未混入本任务验收结论。",
   "issue": "https://github.com/skyelan1999/aide/issues/749",
   "local_deployment": {
     "sourceCommit": "e1c58b28",
@@ -104,5 +104,12 @@
     "quickContentMatches": true,
     "app": "~/Applications/Aide.app",
     "evidenceRoot": "primary installation .agent-state/native-touchid"
+  },
+  "source_publication": {
+    "status": "pushed-main",
+    "verifiedContainingCommit": "765e4c614d333ce88773264b874f5d70416baabd",
+    "authorization": "先推送，不release，先把手里的都和到main上",
+    "release": "not_run",
+    "hardwareAcceptance": "pending-user-local-enrollment"
   }
 }
