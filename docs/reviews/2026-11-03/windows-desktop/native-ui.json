@@ -1,0 +1,14 @@
+{
+  "appTabs": true,
+  "closePluginKeepsMain": true,
+  "dirtyCloseCancelPreservesTab": true,
+  "downloadDialogCancel": true,
+  "error": "",
+  "hardwareHello": "NOT_RUN: availability probe only, no enrollment or signing",
+  "localTLSPin": true,
+  "nativeHelloProbe": true,
+  "ok": true,
+  "pluginNativeBridgeBlocked": true,
+  "sharedStorageSandboxPort": true,
+  "windowFitsWorkArea": true
+}

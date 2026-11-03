@@ -1,0 +1,27 @@
+{
+  "sourceCommit": "05c60dcb4eb7f5137c257a95f2ef33a9fe8bd449",
+  "nativeWorkflow": "https://github.com/skyelan1999/aide/actions/runs/41568525820",
+  "basicWorkflow": "https://github.com/skyelan1999/aide/actions/runs/41568525847",
+  "nativeUI": {
+    "appTabs": true,
+    "closePluginKeepsMain": true,
+    "dirtyCloseCancelPreservesTab": true,
+    "downloadDialogCancel": true,
+    "error": "",
+    "hardwareHello": "NOT_RUN: availability probe only, no enrollment or signing",
+    "localTLSPin": true,
+    "nativeHelloProbe": true,
+    "ok": true,
+    "pluginNativeBridgeBlocked": true,
+    "sharedStorageSandboxPort": true,
+    "windowFitsWorkArea": true
+  },
+  "productionSelfTest": "PASS native Unicode/quote roundtrip and image validation; installation-ownership-v2",
+  "amd64ExeSha256": "e7916518dae03cd14ac17ffdeb23d96689168fae60d3eac449544ababa38eb99",
+  "screenshot": "native-desktop.png",
+  "limits": [
+    "Synthetic Windows localhost TLS and sandbox page; does not start Docker or exercise installed Compare/ProfessionalProject.",
+    "Hardware Windows Hello create/get and user PC build/start remain NOT_RUN.",
+    "Mac installed app, Docker service and data were not replaced. No Release, version bump or tag."
+  ]
+}

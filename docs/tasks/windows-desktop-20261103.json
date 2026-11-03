@@ -48,12 +48,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "AMD64/ARM64生产EXE和独立UI测试EXE已跨编译成功；322项quick、8项插件页、原生认证路由、2项桌面策略/SDK拒绝、66项portable及CI合约通过。安全复核补充取消返回区分，最终代码由Windows Desktop Check重新构建并执行原生UI检查。真实用户/Hello硬件未验收。",
+      "status": "pass",
+      "summary": "05c60dc: 远端Aide CI的quick/Go/vet/gate全通过；Windows Desktop Check的AMD64/ARM64编译与Windows2022原生UI通过。已实际查看截图：独立窗口、无地址栏、两个应用标签、可见增减按钮和适屏边界。原生生产PE self-test通过；Hello仅availability probe，硬件与用户完整Docker/插件环境NOT_RUN。",
       "evidence": [
-        ".agent-state/windows-desktop/build-amd64.log",
-        ".agent-state/windows-desktop/portable.log",
-        ".github/workflows/windows-desktop-check.yml"
+        "https://github.com/skyelan1999/aide/actions/runs/41568525820",
+        "https://github.com/skyelan1999/aide/actions/runs/41568525847",
+        "docs/reviews/2026-11-03/windows-desktop/receipt.json",
+        "docs/reviews/2026-11-03/windows-desktop/native-desktop.png"
       ]
     },
     "documentation": {
@@ -73,14 +74,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "用户明确要求只整合main并push，不Release、不升版、不打tag；Windows源码集成正在等待当前CI。",
+      "evidence": [
+        "user instruction: 先推送，不release，先把手里的都和到main上"
+      ]
     }
   },
   "release_authorization": "继续遵循只整合/push源码、不Release的用户要求。",
-  "rollback": "",
-  "handoff": "用户已确认a6728b16浏览器路径主页面和插件正常。当前重点Windows独立应用呈现；不恢复被拒绝的Concept03，不升级或创建Release，不将跨编译称为Windows实机通过。",
+  "rollback": "源码可回到此前main a8e6e693；当前Mac运行镜像和原生App未替换。Windows现有实例数据挂载不变，升级前用原密码本机解锁和保存插件编辑；新WebView2 profile与浏览器profile分开。",
+  "handoff": "用户已确认a6728b16浏览器路径主页面和插件正常。本次补齐Windows WebView2独立应用与应用内插件标签，保留当前布局。源码合入main后，Windows Git目录git pull并运行一次build.bat；后续start.bat复用已编译EXE。要求已安装兼容WebView2 Runtime。首次用原密码本机解锁，Hello需单独绑定；硬件和用户实际插件验收仍未执行。未创建Release，Mac服务未替换。",
   "issue": "https://github.com/skyelan1999/aide/issues/751",
   "user_observations": {
     "failedOldVersion": "0e1b02fa",
@@ -91,5 +94,27 @@
   "security_review": {
     "coordinator": "root",
     "result": "Reviewed backend WebAuthn enforcement, root-only native messages, exact TLS pin, private profile/DLL hashes, navigation generations and cancellation. OS cancellation returns NotAllowedError promptly; context cancellation suppresses stale delivery. Hardware ceremony remains NOT_RUN."
+  },
+  "verification_runs": [
+    {
+      "head": "1954072bbd03789523f743f3146d611196051bef",
+      "aideCI": 41568040339,
+      "status": "pass",
+      "nativeUI": 41568040527,
+      "nativeUIResult": "All UI assertions passed; workflow failed in temporary-profile cleanup because WebView2 was still releasing BrowserMetrics file. Bounded owned-profile cleanup retry implemented."
+    },
+    {
+      "head": "05c60dcb4eb7f5137c257a95f2ef33a9fe8bd449",
+      "aideCI": 41568525847,
+      "nativeUI": 41568525820,
+      "status": "pass",
+      "changes": "Production self-test, owned-profile cleanup wait, default window work-area bounds."
+    }
+  ],
+  "source_integration": {
+    "status": "ready",
+    "testedSource": "05c60dcb4eb7f5137c257a95f2ef33a9fe8bd449",
+    "latestSourceCI": "pass",
+    "authorization": "用户既有授权：先推送，不release，先把手里的都和到main上"
   }
 }
