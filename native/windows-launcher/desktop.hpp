@@ -145,7 +145,8 @@ struct Desktop {
   if(GetLastError()==ERROR_ALREADY_EXISTS){auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}return 0;}
   checked(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED),"Desktop COM unavailable");SetCurrentProcessExplicitAppUserModelID(className.c_str());SetProcessDPIAware();INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES};InitCommonControlsEx(&controls);
   WNDCLASSW cls{};cls.lpfnWndProc=procedure;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=className.c_str();cls.hCursor=LoadCursorW(nullptr,IDC_ARROW);cls.hbrBackground=reinterpret_cast<HBRUSH>(COLOR_WINDOW+1);RegisterClassW(&cls);
-  window=CreateWindowExW(0,className.c_str(),L"Aide",WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,CW_USEDEFAULT,CW_USEDEFAULT,1380,900,nullptr,nullptr,cls.hInstance,this);if(!window)throw std::runtime_error("Desktop window unavailable");
+  RECT work{0,0,1412,932};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);int width=std::min(1380,std::max(320,int(work.right-work.left)-32)),height=std::min(900,std::max(240,int(work.bottom-work.top)-32));
+  window=CreateWindowExW(0,className.c_str(),L"Aide",WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,work.left+(work.right-work.left-width)/2,work.top+(work.bottom-work.top-height)/2,width,height,nullptr,nullptr,cls.hInstance,this);if(!window)throw std::runtime_error("Desktop window unavailable");
   bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS,0,0,1200,32,window,nullptr,cls.hInstance,nullptr);
   CreateWindowExW(0,L"BUTTON",L"+",WS_CHILD|WS_VISIBLE,1205,0,34,30,window,reinterpret_cast<HMENU>(101),cls.hInstance,nullptr);
   CreateWindowExW(0,L"BUTTON",L"×",WS_CHILD|WS_VISIBLE,1242,0,34,30,window,reinterpret_cast<HMENU>(102),cls.hInstance,nullptr);
