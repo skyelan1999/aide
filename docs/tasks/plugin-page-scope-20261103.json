@@ -41,11 +41,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "7项路由回归和320项quick通过；用本机实际workspaceId在修正脚本中验证往返成功。待本机更新后继续原生可见验收。",
+      "status": "blocked",
+      "summary": "7项聚焦回归和320项quick通过；本机真实workspaceId在修正代码中往返成功。实际已解锁Aide.app点击Compare，新原生标签显示完整比较界面且引擎已连接。ProfessionalProject新标签创建并正确命名，但内容截图前触发空闲锁屏，待本机解锁确认。不可将旧进程累计pageErrors=10写作本轮零异常。",
       "evidence": [
         ".agent-state/plugin-page-scope/quick-result.json",
-        "ee7e875bf604b6f8d60d17d7f9615987be903062fe7660710aadb5582ae94ef5"
+        "primary .agent-state/plugin-page-scope/native-manual.json",
+        "primary .agent-state/plugin-page-scope/native-compare.png",
+        "primary .agent-state/plugin-page-scope/native-project-locked.png"
       ]
     },
     "documentation": {
@@ -70,6 +72,18 @@
   },
   "release_authorization": "",
   "rollback": "Restore plugin-workbench-tabs.js/index.html from a6728b16 and canonical build.",
-  "handoff": "",
-  "issue": "https://github.com/skyelan1999/aide/issues/750"
+  "handoff": "只关闭本轮自建插件页，保留原工作台。待用户空闲锁屏后再次解锁核对ProfessionalProject内容；#750和#746维持打开。指纹消失定位为独立宿主未接原生Touch ID（#749），WebAuthn服务与已绑定凭据仍在。本轮代码仅本地提交/构建，未推送或公开发布。",
+  "issue": "https://github.com/skyelan1999/aide/issues/750",
+  "local_deployment": {
+    "status": "pass",
+    "codeCommit": "840df1034f0b3c7edee2167a22bd39164bd1c88b",
+    "image": "sha256:284c8193f831b875d2a7c0d4675401ca1c03ea147b9d4b409e3fa7f2b81980b8",
+    "health": "healthy",
+    "mountsUnchanged": true,
+    "servedAssetsMatchSource": true,
+    "evidence": [
+      "primary .agent-state/plugin-page-scope/build-actual.log",
+      "primary .agent-state/plugin-page-scope/deployment.json"
+    ]
+  }
 }

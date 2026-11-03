@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "blocked",
-      "summary": "320-check quick gate passed on final source, plus actual Swift compilation/signature/origin/bound-root checks; Python desktop11/launcher35/fingerprint4 and plugin bridge/page35 regressions passed. Actual installed WKWebView top-frame dialogs, upload/download cancellation, native tabs/shared store and close/reopen passed. Canonical build.command deployed healthy runtime with unchanged data mounts; embedded app/plugin assets match source. Service restart re-locked the workbench; final native Compare/ProfessionalProject rendering and opaque-plugin panel checks await the pending user unlock. No live mic/upstream call, real file transfer, Safari tab UI or Windows app acceptance claimed.",
+      "summary": "继承既有320项quick与原生顶层面板/标签验收。2026-11-03用户解锁后发现真实工作区标识被slug校验误拒绝，关联#750，修正并本机部署840df103。实际原生Compare新页完整显示且引擎已连接，三标签主工作台/Compare/ProfessionalProject可见；ProfessionalProject内容检查前空闲锁屏，且opaque-plugin原生面板尚未完成，故仍待解锁验收。旧冒烟进程累计pageErrors=10不能作为本轮零错误证据。指纹凭据仍在，原生Touch ID缺项另记#749。",
       "evidence": [
         ".agent-state/macos-desktop/quick-final-host.log",
         ".agent-state/macos-desktop/native-panels-smoke.json",
@@ -54,7 +54,8 @@
         ".agent-state/macos-desktop/plugin-tabs-tests.log",
         "primary installation: .agent-state/macos-desktop/build-actual.log",
         "primary installation: .agent-state/macos-desktop/deployment-validation.json",
-        "primary installation: .agent-state/macos-desktop/native-final.json"
+        "primary installation: .agent-state/macos-desktop/native-final.json",
+        "docs/tasks/plugin-page-scope-20261103.json"
       ]
     },
     "documentation": {
@@ -78,7 +79,7 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "Public push/release, notarization, Windows desktop shell and cross-architecture publication are not authorized for this new feature. Local source deployment is part of acceptance and recorded separately.",
+      "summary": "原独立宿主源码已推送至main(a6728b16及其前序提交)；本轮#750修复只本地提交/构建尚未推送；无公开Release、公证、Windows或双架构发布。",
       "evidence": [
         "docs/architecture/macos-desktop.md"
       ]
@@ -86,18 +87,18 @@
   },
   "release_authorization": "",
   "rollback": "Quit Aide.app and use the existing localhost Safari entry; backend data is shared. Existing running image was retained before source deployment. New public Release is not part of this request.",
-  "handoff": "Local source merged and compiled; Aide.app installed and opened. Runtime code/image is dcd7b0db; host-only sandbox dialog/download compatibility is 09648514, installed without another backend restart. Current backend is healthy with original data mounts. Required next step: user unlocks current Aide window (async request pending), then native smoke completes Compare/ProfessionalProject/sandbox panel checks. Keep issue #746 open until this acceptance is done. No public push, Release, signing/notarization or platform matrix claimed.",
+  "handoff": "后台当前运行840df103工作区身份修复，健康且数据挂载不变；原生宿主仍09648514。Compare实际原生显示通过，ProfessionalProject创建新标签但内容和沙箱面板检查待空闲锁屏后解锁。原独立宿主源码已随a6728b16之前提交推送；本轮#750本机修复尚未推送。#749指纹适配缺项未修复。",
   "local_deployment": {
-    "runtimeCodeCommit": "dcd7b0db8d63bc274d026a301ea0f194b2369ade",
+    "runtimeCodeCommit": "840df1034f0b3c7edee2167a22bd39164bd1c88b",
     "nativeHostCodeCommit": "096485141b5aacdaea443ce1139df28d9ddcd092",
-    "image": "sha256:b23467508e589eaa953be0261626b43eec5b51749425bfe03f0d39a024afd86c",
+    "image": "sha256:284c8193f831b875d2a7c0d4675401ca1c03ea147b9d4b409e3fa7f2b81980b8",
     "app": "~/Applications/Aide.app",
     "appBuildDigest": "49b0287e376512639c10c0b6681b5c611dd40ee73fa3b9a7a9ed1f09348a2fd5",
     "dataMountsUnchanged": true,
     "runtimeHealth": "healthy",
     "oldRuntimeImagesRemoved": 1,
     "buildkitReclaimed": "1.78GB",
-    "publicPush": false,
+    "publicPush": true,
     "publicRelease": false
   }
 }
