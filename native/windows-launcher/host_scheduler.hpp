@@ -50,10 +50,10 @@ inline int nativeWorkerLoop(Launcher& app,const std::string& role,const std::str
    }else if(role=="update"&&!app.sourcePackage()){
     NativeUpdateHost host(app);if(!host.legacyResult()){nativeTaskStatus(role,"waiting","Retrying the durable previous update result");continue;}
     if(!seeded&&host.load().is_null()){if(!host.seed()){nativeTaskStatus(role,"not-applicable","Source runtime does not support application A/B updates");continue;}seeded=true;}
-    aide_host::Supervisor<NativeUpdateHost>(host).tick();auto transaction=host.load();if(transaction.is_object()&&transaction.value("phase","")=="blocked"){write(stateRoot/L"host-stop-required",transaction.value("reason","Native update needs inspection"));nativeTaskStatus(role,"blocked",transaction.value("reason","Native update needs inspection"));continue;}
+    aide_host::Supervisor<NativeUpdateHost>(host).tick();auto transaction=host.load();if(transaction.is_object()&&transaction.value("phase","")=="blocked"){nativeRecordStopBlocker(transaction.value("reason","Native update needs inspection"));nativeTaskStatus(role,"blocked",transaction.value("reason","Native update needs inspection"));continue;}
    }
    nativeTaskStatus(role,"idle");
-  }catch(const aide_host::Unsafe& e){write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));nativeTaskStatus(role,"blocked",e.what());}
+  }catch(const aide_host::Unsafe& e){nativeRecordStopBlocker(e.what());nativeTaskStatus(role,"blocked",e.what());}
    catch(const std::exception& e){if(nativeStopping())break;nativeTaskStatus(role,"retry",e.what());}
  }
  nativeTaskStatus(role,"stopped");return 0;
@@ -69,14 +69,14 @@ inline int nativeSupervise(Launcher& app){
  while(!nativeStopping()){
   for(auto worker:workers)if(!worker->alive()&&GetTickCount64()>=worker->retryAt){
    if(worker->process){worker->failures++;worker->retryAt=GetTickCount64()+std::min<unsigned>(60000,1000u<<std::min<unsigned>(worker->failures,6));worker->process.reset();continue;}
-   try{worker->start(job.h,app.root,generation);}catch(const aide_host::Unsafe& e){write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));throw;}catch(const std::exception& e){nativeTaskStatus(worker->role,"retry",e.what());worker->retryAt=GetTickCount64()+3000;}
+   try{worker->start(job.h,app.root,generation);}catch(const aide_host::Unsafe& e){nativeRecordStopBlocker(e.what());throw;}catch(const std::exception& e){nativeTaskStatus(worker->role,"retry",e.what());worker->retryAt=GetTickCount64()+3000;}
   }
   status["state"]="running";status["workers"]=json::object();for(auto worker:workers){auto record=worker->identity;record["running"]=worker->alive();status["workers"][worker->role]=record;}
   write(stateRoot/L"host-status.json",status.dump());Sleep(500);
  }
- if(!TerminateJobObject(job.h,0))throw aide_host::Unsafe("Native host job could not stop");
- bool stopped=false;for(int i=0;i<100;i++){JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting{};if(!QueryInformationJobObject(job.h,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),nullptr))break;if(!accounting.ActiveProcesses){stopped=true;break;}Sleep(100);}
- if(!stopped){write(stateRoot/L"host-stop-required","Owned native host process tree did not confirm exit");throw aide_host::Unsafe("Native host process tree termination is unconfirmed");}
+ std::vector<HANDLE> owned;for(auto worker:workers)if(worker->process)owned.push_back(worker->process->h);
+ try{terminateAndConfirm(job.h,owned,0,10000);}catch(const aide_host::Unsafe&){nativeRecordStopBlocker("Owned native host process tree did not confirm exit");throw;}
+
  status["state"]="stopped";write(stateRoot/L"host-status.json",status.dump());return 0;
 }
 inline void nativeStopController(){
@@ -90,15 +90,6 @@ inline void nativeStopController(){
  if(!process.valid()){if(GetLastError()==ERROR_INVALID_PARAMETER)return;throw aide_host::Unsafe("Cannot confirm previous native controller exit");}
  if(nativeIdentity(process.h,DWORD(pid))["created"]!=status["created"])return;
  if(WaitForSingleObject(process.h,15000)!=WAIT_OBJECT_0)throw aide_host::Unsafe("Native controller did not stop; lifecycle action refused");
-}
-// Only the known directory timeout marker can be cleared by a verified full
-// stop. Unknown child/legacy update blockers still require operator inspection.
-inline void nativeClearDirectoryBlocker(){
- auto path=stateRoot/L"host-stop-required";realPath(path);if(!fs::exists(path))return;
- auto value=json::parse(read(path,8192),nullptr,false);if(!value.is_object()||value.value("source","")!="directory-apply")return;
- auto status=nativeControllerStatus();if(status.value("running",false)||status.value("state","")!="stopped"||value.value("controllerGeneration","").empty()||value.value("controllerGeneration","")!=status.value("generation",""))return;
- if(fs::exists(stateRoot/L"update/transaction.json"))return;
- fs::remove(path);
 }
 inline void nativeLaunchController(Launcher& app){
  auto current=nativeControllerStatus();if(!current.value("running",false))spawn(module(),{L"supervise",L"--root",app.root.wstring(),L"--no-browser"},stateRoot/L"host-supervisor.log");

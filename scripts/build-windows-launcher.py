@@ -130,6 +130,7 @@ def main():
     parser.add_argument('--in-container', action='store_true', help='Compile directly inside the Docker native-launcher build stage')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--desktop-test-output', type=Path, help='Build a separate synthetic UI test executable; never embedded in the product')
+    parser.add_argument('--stop-test-output', type=Path, help='Separate Windows stop-recovery fault fixture; never embedded')
     args = parser.parse_args()
     if args.in_container:
         machine = {'x86_64': 'amd64', 'aarch64': 'arm64', 'arm64': 'arm64'}.get(platform.machine())
@@ -204,14 +205,15 @@ subprocess.run([str(compiler),'c++','-std=c++17','-O2','-target',TARGET,
     '-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','-ldwmapi',
     '/src/native/windows-launcher/main.cpp',object_file,helpers_object,'-o',OUTPUT],check=True)
 '''.replace('COMPILER', repr(compiler)).replace('ARCHIVE_PATH', repr('/build/' + archive.name)).replace('READY_FILE', repr('/toolchain/extracted-' + compiler_arch + '-' + VERSION)).replace('TARGET', repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu')).replace('HELPERS_SOURCE', repr('/build/' + helpers_source.name)).replace('HELPERS_OBJECT', repr('/build/' + helpers_source.stem + '.o'))
-    if args.desktop_test_output and not args.in_container:
+    if (args.desktop_test_output or args.stop_test_output) and not args.in_container:
         raise SystemExit('Desktop test build requires the existing in-container build mode')
     destination = args.output or ROOT / ('aide-launcher.exe' if args.arch == 'amd64' else 'bin/aide-launcher-arm64.exe')
     destination.parent.mkdir(parents=True, exist_ok=True)
     output = str(destination) if args.in_container else ('/src/aide-launcher.exe' if args.arch == 'amd64' else '/src/bin/aide-launcher-arm64.exe')
-    if args.desktop_test_output:
-        args.desktop_test_output.parent.mkdir(parents=True, exist_ok=True)
-        container_code += "\nsubprocess.run([str(compiler),'c++','-std=c++17','-O2','-target'," + repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu') + ",'-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','-ldwmapi','-lgdi32','/src/scripts/windows_desktop_smoke.cpp',object_file,helpers_object,'-o'," + repr(str(args.desktop_test_output)) + "],check=True)\n"
+    for fixture, source in [(args.desktop_test_output, 'windows_desktop_smoke.cpp'), (args.stop_test_output, 'windows_stop_recovery.cpp')]:
+        if fixture:
+            fixture.parent.mkdir(parents=True, exist_ok=True)
+            container_code += "\nsubprocess.run([str(compiler),'c++','-std=c++17','-O2','-target'," + repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu') + ",'-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','-ldwmapi'," + repr('/src/scripts/' + source) + ",object_file,helpers_object,'-o'," + repr(str(fixture)) + "],check=True)\n"
     container_code = container_code.replace('OUTPUT', repr(output))
     if args.in_container:
         container_code = container_code.replace('/build/' + archive.name, str(archive)).replace('/build/', str(build) + '/').replace("'-I/build'", repr('-I' + str(build))).replace("'-I/build/webview2'", repr('-I' + str(sdk)))
