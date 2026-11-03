@@ -23,7 +23,12 @@ class DesktopTests(unittest.TestCase):
   for i in range(count):
    width,height,colors,reserved,planes,bits,length,offset=struct.unpack_from('<BBBBHHII',data,6+i*16)
    size=width or 256;self.assertEqual(size,height or 256);self.assertEqual((planes,bits),(1,32));frame=data[offset:offset+length]
-   self.assertEqual(frame[:8],b'\x89PNG\r\n\x1a\n');self.assertEqual(struct.unpack_from('>II',frame,16),(size,size));sizes.append(size)
+   if size==256:
+    self.assertEqual(frame[:8],b'\x89PNG\r\n\x1a\n');self.assertEqual(struct.unpack_from('>II',frame,16),(size,size))
+   else:
+    self.assertEqual(struct.unpack_from('<IiiHH',frame),(40,size,size*2,1,32));self.assertEqual(len(frame),40+size*size*4+((size+31)//32)*4*size)
+    self.assertEqual(frame[43],0,'Rounded icon corner must remain transparent')
+   sizes.append(size)
   self.assertEqual(sizes,[16,20,24,32,40,48,64,96,128,256])
  def test_sdk_cache_tampering_refuses_extraction(self):
   with tempfile.TemporaryDirectory() as directory:
