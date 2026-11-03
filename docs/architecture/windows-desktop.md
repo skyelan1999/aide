@@ -14,7 +14,7 @@ Windows 窗口使用 Microsoft Edge WebView2 Runtime；窗口、标签和系统�
 
 ## 原生标签和图标
 
-对应 [#757](https://github.com/skyelan1999/aide/issues/757)。标签栏高度为 32 DIP，使用紧凑 Segoe UI、实体底色和选中标记；文字对比不足时使用可读色，保持键盘焦点可见。标签宽度随窗口/数量收紧，溢出仍通过原生滚动控件操作；不新增内部网页滚动条。字体采用系统字体平滑偏好，不强制 ClearType。主页面配色继续通过既有受限 appearance 消息同步；插件不能修改原生身份验证桥。
+对应 [#757](https://github.com/skyelan1999/aide/issues/757)。标签栏高度为 32 DIP，关闭按钮位于当前标签内，新建紧随标签组；溢出时为原生左右箭头保留独立区域。使用紧凑 Segoe UI、实体底色和选中标记；文字对比不足时使用可读色，保持键盘焦点可见。标签宽度随窗口/数量收紧，溢出仍通过原生滚动控件操作；不新增内部网页滚动条。字体采用系统字体平滑偏好，不强制 ClearType。主页面配色继续通过既有受限 appearance 消息同步；插件不能修改原生身份验证桥。
 
 EXE 嵌入现有 Aide 蓝底白色 a 标志，含 16/20/24/32/40/48/64/96/128/256 像素图标；窗口大小图标和任务栏使用内置资源，启动不下载图标。构建链接资源同时声明 Common Controls v6 和 PerMonitorV2；收到 DPI 变化后更新字体、几何和图标，再使用系统建议的窗口矩形。资源对 AMD64/ARM64 共用，普通 Windows/Linux 构建直接消费已提交的 ICO。维护者在 macOS 可运行 `python3 scripts/build-windows-icon.py`，复用原有原生图标渲染器生成 ICO；无需安装第三方图形包，不参与 Windows 启动。
 
