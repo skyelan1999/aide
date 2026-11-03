@@ -1,0 +1,48 @@
+{
+  "id": "main-sync-20261103",
+  "request": "先推送，不release，先把手里的都和到main上",
+  "baseline": "bfff14d13b955c4beec19d3b57fcfc195471a17f",
+  "initial_status": "",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}
