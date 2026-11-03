@@ -1,7 +1,7 @@
 /* Official catalog data is untrusted text. Mutations use existing server install transactions. */
 (() => {
  'use strict';
- const names={all:'全部',creation:'创作与专业',workspace:'工作空间',communication:'连接与通信',planning:'规划与协作',utilities:'日常工具'};
+ const names={all:'全部',uninstalled:'未安装',updates:'待升级',creation:'创作与专业',workspace:'工作空间',communication:'连接与通信',planning:'规划与协作',utilities:'日常工具'};
  const paths={creation:'M12 3v18M3 12h18M5 5l14 14M19 5L5 19',workspace:'M3 7h7l2 2h9v11H3ZM3 7V4h7l2 3',communication:'M8 3v5m8-5v5M6 8h12v3a6 6 0 0 1-12 0ZM12 17v4',planning:'M8 5h13M8 12h13M8 19h13M3 5h1M3 12h1M3 19h1',utilities:'M12 3v3m0 12v3M3 12h3m12 0h3M8 8l8 8m0-8-8 8'};
  function icon(category,node){const box=node('span','market-icon');box.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(paths[category]||paths.creation)+'"/></svg>';return box;}
  function stateOf(p){if(p.distribution==='private')return p.commerce?.status==='available'?'授权安装':'付费筹备中';return !p.compatible?'不兼容':p.newerInstalled?'已安装较新版本':p.updateAvailable?'更新':p.installedVersion?'已安装':'安装';}
@@ -11,32 +11,31 @@
   const controls=node('div','market-controls'),search=node('input'),select=node('select'),status=node('p','market-status'),syncStatus=node('small','market-status'),list=node('div','market-list'),more=node('button','quiet',t('显示更多'));
   search.type='search';search.placeholder=t('搜索官方插件');search.setAttribute('aria-label',t('搜索官方插件'));select.setAttribute('aria-label',t('插件分类'));
   for(const[id,label]of Object.entries(names)){const o=node('option','',t(label));o.value=id;select.append(o);}
-  const routing=node('section','market-routing'),routingTitle=node('strong','',t('插件路由')),routingLabel=node('label','market-routing-toggle'),autoInstall=node('input'),routingStatus=node('p','market-status'),policyStatus=node('p','market-status'),routeButton=node('button','quiet',t('按需求匹配'));
-  autoInstall.type='checkbox';autoInstall.disabled=true;autoInstall.setAttribute('aria-label',t('允许 Aide 自动安装所需插件'));routingLabel.append(autoInstall,node('span','',t('允许 Aide 自动安装所需插件')));policyStatus.setAttribute('role','status');routing.append(routingTitle,routingLabel,node('p','muted',t('路由索引默认更新；仅加载匹配工具。此开关对当前 Aide 实例生效。仅自动安装官方公开兼容插件，不覆盖已安装或停用插件，执行权限保持原有规则。')),policyStatus);routeButton.type='button';
-  let routingPolicy=null,routingLoading=false,routedIds=null;
+  const routing=node('section','market-routing'),routingTitle=node('strong','',t('插件路由')),routingLabel=node('label','market-routing-toggle'),autoInstall=node('input'),policyStatus=node('p','market-status');
+  autoInstall.type='checkbox';autoInstall.disabled=true;autoInstall.setAttribute('aria-label',t('允许 Aide 自动安装所需插件'));routingLabel.append(autoInstall,node('span','',t('允许 Aide 自动安装所需插件')));policyStatus.setAttribute('role','status');routing.append(routingTitle,routingLabel,node('p','muted',t('路由索引默认更新；仅加载匹配工具。此开关对当前 Aide 实例生效。仅自动安装官方公开兼容插件，不覆盖已安装或停用插件，执行权限保持原有规则。')),policyStatus);
+  let routingPolicy=null,routingLoading=false;
   async function initRouting(){if(blocked()||routingLoading)return;routingLoading=true;try{const data=await api('/plugin-routing');if(blocked())return;routingPolicy=data;autoInstall.checked=data.autoInstall;autoInstall.disabled=false;policyStatus.textContent=t('索引按需本地匹配，不向模型发送完整目录');}catch(e){policyStatus.textContent=e.message;}finally{routingLoading=false;}}
   autoInstall.onchange=async()=>{if(!routingPolicy||blocked())return;const previous=routingPolicy.autoInstall;autoInstall.disabled=true;try{const data=await api('/plugin-routing',{method:'PUT',body:JSON.stringify({autoInstall:autoInstall.checked,generation:routingPolicy.generation})});if(blocked())return;routingPolicy=data;autoInstall.checked=data.autoInstall;policyStatus.textContent=t(data.autoInstall?'已允许 Aide 自动安装匹配的公开插件':'已关闭自动安装');}catch(e){autoInstall.checked=previous;const message=e.message;await initRouting();policyStatus.textContent=message;}finally{autoInstall.disabled=blocked();}};
-  routeButton.onclick=async()=>{if(blocked()||!search.value.trim())return;routeButton.disabled=true;const query=search.value.trim();try{const result=await api('/plugin-routing/search?query='+encodeURIComponent(query));if(blocked()||search.value.trim()!==query)return;if(!snapshot)await load(false);routedIds=new Set(result.matches.map(m=>m.id));paint();routingStatus.textContent=result.matches.length?result.matches.map(m=>m.name+' · '+m.reasons.join(' / ')+' · '+t(m.installed?(m.enabled?'已启用':'已停用'):result.autoInstall&&m.autoInstallable?'可由 Aide 自动安装':'尚未安装')).join('；'):t('没有匹配的插件');}catch(e){routingStatus.textContent=e.message;}finally{routeButton.disabled=false;}};
   window.AidePluginMarket.initRouting=initRouting;
   window.AidePluginMarket.renderSettings=()=>{void initRouting();return routing;};
-  more.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');controls.append(search,select,routeButton);host.append(controls,routingStatus,status,syncStatus,list,more);
+  more.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');controls.append(search,select);host.append(controls,status,syncStatus,list,more);
   let snapshot=null,category='all',limit=24,busy=false,loading=false,epoch=0,dialog=null;
   const installedTab=document.getElementById('plugin-mode-installed'),marketTab=document.getElementById('plugin-mode-market');
   function tab(market){panel.dataset.marketView=market?'market':'installed';host.hidden=!market;marketTab.setAttribute('aria-selected',String(market));installedTab.setAttribute('aria-selected',String(!market));if(market){void initRouting();if(snapshot)paint();void load(false);}else{document.getElementById('plugin-count').textContent='';services.paintInstalled();}}
   installedTab.onclick=()=>tab(false);marketTab.onclick=()=>tab(true);
-  function paint(){if(!snapshot)return;list.replaceChildren();const q=search.value.trim().toLowerCase(),items=snapshot.plugins.filter(p=>(category==='all'||category===p.category)&&(routedIds?routedIds.has(p.id):(!q||(p.name+' '+p.id+' '+p.description+' '+(p.routing?.keywords||[]).join(' ')).toLowerCase().includes(q))));
+  function paint(){if(!snapshot)return;list.replaceChildren();const q=search.value.trim().toLowerCase(),items=snapshot.plugins.filter(p=>(category==='all'||category==='uninstalled'&&!p.installedVersion||category==='updates'&&!!p.updateAvailable||category===p.category)&&(!q||(p.name+' '+p.id+' '+p.description+' '+(p.routing?.keywords||[]).join(' ')).toLowerCase().includes(q)));
    if(panel.dataset.marketView==='market')document.getElementById('plugin-count').textContent=items.length+' / '+snapshot.plugins.length;
    if(!items.length)list.append(node('p','muted',t('没有匹配的插件')));
    for(const p of items.slice(0,limit)){const card=node('article','market-card'),head=node('div','market-card-head'),title=node('div','market-card-title');title.append(node('strong','',p.name),node('small','',t('Aide 官方')+' · v'+p.version));head.append(icon(p.category,node),title);const foot=node('div','market-card-foot'),open=node('button','quiet',t('查看详情'));open.type='button';open.onclick=()=>details(p);foot.append(node('small','',t(stateOf(p))),open);card.append(head,node('p','market-description',p.description),foot);list.append(card);}
    more.hidden=items.length<=limit;
   }
-  search.oninput=()=>{routedIds=null;limit=24;paint();};select.onchange=()=>{category=select.value;limit=24;paint();};more.onclick=()=>{limit+=24;paint();};
+  search.oninput=()=>{limit=24;paint();};select.onchange=()=>{category=select.value;limit=24;paint();};more.onclick=()=>{limit+=24;paint();};
   function showSync(data){
    const stamp=Number(data.fetched);syncStatus.textContent=Number.isFinite(stamp)&&stamp>0?t('上次成功同步：')+new Date(stamp*1000).toLocaleString():t('尚未成功同步，当前显示随 Aide 提供的离线目录。');
    syncStatus.title=t('市场目录独立更新，无需升级 Aide。');
    status.textContent=data.refreshError?t('刷新失败，保留可用目录：')+data.refreshError:data.stale?t('当前使用缓存目录；正在检查更新。'):t('官方目录 · 下载前核对权限与兼容性');
   }
-  async function load(force){if(loading||blocked())return;loading=true;let refreshNext=false;const captured=++epoch;if(!snapshot||force)status.textContent=t('正在读取官方目录…');try{const data=await api('/plugin-market'+(force?'?refresh=1':''));if(captured!==epoch||blocked())return;snapshot=data;refreshNext=data.stale&&!force&&!(Number(data.retryAfter)>0);paint();showSync(data);}catch(e){if(captured!==epoch||blocked())return;status.textContent=snapshot?t('刷新失败，保留可用目录：')+(e.message||t('目录加载失败，请刷新重试')):(e.message||t('目录加载失败，请刷新重试'));}finally{loading=false;if(refreshNext&&!blocked())void load(true);}}
+  async function load(force,onOpen=false){if(loading||blocked())return;loading=true;let refreshNext=false;const captured=++epoch;if(!snapshot||force)status.textContent=t('正在读取官方目录…');try{const data=await api('/plugin-market'+(force?'?refresh=1':''));if(captured!==epoch||blocked())return;snapshot=data;refreshNext=(onOpen||data.stale)&&!force&&!(Number(data.retryAfter)>0);paint();showSync(data);}catch(e){if(captured!==epoch||blocked())return;status.textContent=snapshot?t('刷新失败，保留可用目录：')+(e.message||t('目录加载失败，请刷新重试')):(e.message||t('目录加载失败，请刷新重试'));}finally{loading=false;if(refreshNext&&!blocked())void load(true);}}
   // Reopening and visible-page checks ask the server about freshness. Its bounded
   // cache avoids a GitHub request per tab click; offline failures back off.
   const checkVisible=()=>{if(panel.getClientRects&&!panel.getClientRects().length)return;if(panel.dataset.marketView==='market'&&!document.hidden&&!blocked())void load(false);};
@@ -76,6 +75,7 @@
    actions.append(download,install);modal.append(notice,actions);document.body.append(modal);modal.addEventListener('close',()=>{modal.remove();focus?.focus();},{once:true});modal.showModal();
   }
   window.AidePluginMarket.close=()=>dialog?.close();
+  window.AidePluginMarket.open=async()=>{if(blocked())return;await refreshInstalled();await load(false,true);};
   window.AidePluginMarket.refresh=()=>panel.dataset.marketView==='market'?load(true):refreshInstalled();
   window.AidePluginMarket.syncInstalled=items=>{if(!snapshot)return;const byID=new Map(items.map(p=>[p.id,p]));for(const p of snapshot.plugins){const local=byID.get(p.id);p.installedVersion=local?.version||'';p.enabled=local?.enabled;p.updateAvailable=!!local&&versionOlder(local.version,p.version);p.newerInstalled=!!local&&versionOlder(p.version,local.version);}paint();};
  }

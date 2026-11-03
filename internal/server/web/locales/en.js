@@ -1565,6 +1565,7 @@ window.aideEnglish = {
   "升级包已校验并暂存；手动激活后导入镜像并重启工作台": "Update package verified and staged. Manual activation imports the image and restarts the workbench.",
   "此版本已安装，可手动切换": "This version is installed and can be activated manually.",
   "未安装": "Not installed",
+  "待升级": "Updates available",
   "手动激活槽 {0}": "Manually activate slot {0}",
   "手动切换到槽 {0}": "Manually switch to slot {0}",
   "手动激活槽 {0} 会导入该槽镜像并短暂重启 aide；用户数据卷保持共用。若新版本健康检查失败会自动回滚。继续？": "Manually activating slot {0} imports its image and briefly restarts aide. User data volumes remain shared, and a failed health check triggers automatic rollback. Continue?",

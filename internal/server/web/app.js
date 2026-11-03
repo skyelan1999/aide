@@ -7066,7 +7066,7 @@ $('plugins-toggle').onclick = action(async () => {
   $('file-panel').classList.remove('mobile-open');
   syncPanelButtons();
   });
-  await loadPluginsPanel();
+  await window.AidePluginMarket.open();
 });
 window.AidePluginMarket.mount({api,raw:(path,options={})=>fetch('/api'+path,{...options,headers:{Authorization:'Bearer '+state.token,...options.headers}}),t,el,refreshInstalled:loadPluginsPanel,paintInstalled:renderPluginList,blocked:()=>lockScreen.locked||!state.token});
 $('refresh-plugins').onclick = action(()=>window.AidePluginMarket.refresh());

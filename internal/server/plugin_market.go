@@ -114,7 +114,7 @@ func validateMarket(s marketSnapshot) error {
 		if err := validatePluginRouting(p.Routing); err != nil {
 			return err
 		}
-		if !pluginIDPattern.MatchString(p.ID) || seen[p.ID] || p.Kind != "plugin" || len(p.Name) == 0 || len(p.Name) > 160 || len(p.Description) > 4096 || !marketVersion.MatchString(p.Version) || !marketVersion.MatchString(p.MinAideVersion) || len(p.Readme) > 32768 || len(p.Permissions) > 4096 || len(p.TrustNotice) > 4096 || len(p.Changelog) > 8192 || len(p.Dependencies) > 16 || len(p.Features) > 16 || len(p.Platforms) > 3 || len(p.Screenshots) > 6 {
+		if !pluginIDPattern.MatchString(p.ID) || seen[p.ID] || p.Kind != "plugin" || len(p.Name) == 0 || len(p.Name) > 160 || len(p.Description) > 4096 || !marketVersion.MatchString(p.Version) || !marketVersion.MatchString(p.MinAideVersion) || len(p.Readme) > 32768 || len(p.Permissions) > 4096 || len(p.TrustNotice) > 4096 || len(p.Changelog) > 32768 || len(p.Dependencies) > 16 || len(p.Features) > 16 || len(p.Platforms) > 3 || len(p.Screenshots) > 6 {
 			return errors.New("官方市场插件元数据无效")
 		}
 		if err := validateMarketDistribution(p); err != nil {

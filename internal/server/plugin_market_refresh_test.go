@@ -205,3 +205,20 @@ func TestPluginMarketRefreshBrowserHost(t *testing.T) {
 	}
 	t.Fatal("interactive browser fixture timed out")
 }
+
+// Public Terminal release histories can exceed 8 KiB; retain a bounded text budget.
+func TestPluginMarketChangelogHistoryBudget(t *testing.T) {
+	_, snapshot, _ := marketFixture(t, "2.0.0")
+	for _, size := range []int{15205, 32768, 32769} {
+		snapshot.Catalog.Plugins[0].Changelog = strings.Repeat("x", size)
+		err := validateMarket(snapshot)
+		if (err == nil) != (size <= 32768) {
+			t.Fatalf("changelog %d bytes: %v", size, err)
+		}
+	}
+	snapshot.Catalog.Plugins[0].Changelog = "valid"
+	snapshot.Catalog.Plugins[0].Name = strings.Repeat("x", 161)
+	if validateMarket(snapshot) == nil {
+		t.Fatal("other metadata limits must remain enforced")
+	}
+}
