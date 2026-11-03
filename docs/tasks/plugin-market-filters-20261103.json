@@ -1,0 +1,85 @@
+{
+  "id": "plugin-market-filters-20261103",
+  "request": "删除按需求匹配按钮，分类添加未安装/待升级，打开插件自动刷新",
+  "baseline": "8a79acd3700b7dfbaf1348e373f033e17918d0c3",
+  "initial_status": "",
+  "acceptance": [
+    "市场不再显示按需求匹配按钮",
+    "分类含未安装/待升级并与文本搜索组合，安装状态变化即时重算",
+    "每次打开面板刷新已安装列表及市场，失败退避、缓存保留、锁屏不刷新",
+    "官方Terminal 15KB更新历史可接受，32KB以上及其他非法元数据仍拒绝",
+    "实际浏览器验证桌面/窄屏和明暗主题；不Release"
+  ],
+  "scope": [
+    "internal/server/web/plugin-market.js",
+    "internal/server/web/app.js 插件打开入口",
+    "internal/server/web/index.html/locales/en.js",
+    "internal/server/plugin_market.go Changelog字段预算",
+    "相关测试和任务文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "删除按需求匹配；分类新增未安装/待升级；打开插件面板自动刷新。截图元数据错误一并定位。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用既有目录、版本比较和插件打开入口。先显示缓存再自动刷新，保留失败退避、锁屏检查与已有设置路由。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "删除市场匹配按钮，按安装状态和搜索组合筛选；open刷新已安装与目录。仅Changelog预算8KiB→32KiB，其他校验不变。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "322项quick通过；Node市场回归通过；编译的Go测试二进制在含Node的实际运行镜像执行全部TestPluginMarket通过，固定150c6b3目录30公开/3私有元数据通过，32KiB上界与其他非法元数据仍拒绝。真实Chromium生产组件及插件打开入口验证明暗1440/390、筛选/搜索、关闭重开、离线保留/恢复、锁屏不刷新。",
+      "evidence": [
+        ".agent-state/plugin-market/quick.log",
+        ".agent-state/plugin-market/go-runtime-tests.log",
+        "docs/reviews/2026-11-03/plugin-market/receipt.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录根因、测试环境与本机更新边界。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "独立检出保留并行Terminal任务文件；浏览器/HTTP验收资源由本任务持有并正常关闭。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "不Release、不升版、不打tag；延续用户main整合/push指示。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/752",
+  "qa_inventory": [
+    "筛选全部/未安装/待升级/已有功能分类并返回全部",
+    "待升级结合搜索；更新本地版本后立即从待升级移除",
+    "关闭并重开面板，缓存新鲜仍触发刷新",
+    "离线刷新保留卡片并可恢复；锁屏不触发请求",
+    "1440和390宽度，明暗配色，控件边界及按钮缺席"
+  ],
+  "catalogFix": {
+    "revision": "150c6b3d6d5956776f5386f1e3de14035ed7044f",
+    "entry": "terminal",
+    "field": "changelog",
+    "bytes": 15205,
+    "oldLimit": 8192,
+    "newLimit": 32768
+  },
+  "verificationLimits": [
+    "浏览器为生产组件、CSS及生产打开处理器的隔离页面，未读用户凭据。",
+    "首次在纯Go镜像执行安装测试因缺少Node失败，随后用相同源码测试二进制在实际含Node运行镜像全部通过。",
+    "完整旧版browser-plugin-routing.cjs因路由设置已移入设置页而更新，未作为本次实跑证据。"
+  ]
+}

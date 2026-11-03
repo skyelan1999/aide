@@ -1,0 +1,20 @@
+{
+  "source": "80d136cbbf137ab79eb766fada4d6e3c28b25115",
+  "browser": "headed Chromium, real production component/CSS/open handler; isolated catalog and installed states",
+  "checks": [
+    "no match button",
+    "uninstalled/update/category filters + search",
+    "installed-state recompute",
+    "panel reopen remote check despite fresh cache",
+    "offline preserves cards + successful recovery",
+    "locked opening makes no requests",
+    "1440/390 light/dark visual review and control bounds"
+  ],
+  "backend": "All TestPluginMarket tests passed in c1a71c8c196d using newly compiled server.test; pinned 30 public and 3 private catalog listings validated",
+  "publicCatalogRevision": "150c6b3d6d5956776f5386f1e3de14035ed7044f",
+  "limits": [
+    "浏览器为生产组件、CSS及生产打开处理器的隔离页面，未读用户凭据。",
+    "首次在纯Go镜像执行安装测试因缺少Node失败，随后用相同源码测试二进制在实际含Node运行镜像全部通过。",
+    "完整旧版browser-plugin-routing.cjs因路由设置已移入设置页而更新，未作为本次实跑证据。"
+  ]
+}
