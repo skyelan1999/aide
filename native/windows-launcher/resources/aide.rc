@@ -1,0 +1,3 @@
+// Application identity is embedded in both architectures; no runtime download.
+201 ICON "aide.ico"
+1 24 "aide.manifest"

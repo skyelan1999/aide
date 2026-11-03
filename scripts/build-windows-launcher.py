@@ -198,12 +198,14 @@ if not ready.exists():
 os.environ['ZIG_GLOBAL_CACHE_DIR']='/toolchain/zig-cache'
 object_file='/build/tinfl.'+TARGET+'.o'
 helpers_object=HELPERS_OBJECT
+resource_file='/build/aide.'+TARGET+'.res'
+subprocess.run([str(compiler),'rc','/i','/src/native/windows-launcher/resources','--','/src/native/windows-launcher/resources/aide.rc',resource_file],check=True)
 subprocess.run([str(compiler),'cc','-target',TARGET,'-c',HELPERS_SOURCE,'-o',helpers_object],check=True)
 subprocess.run([str(compiler),'cc','-O2','-target',TARGET,'-c',
     '/src/native/windows-launcher/third_party/miniz/miniz_tinfl.c','-o',object_file],check=True)
 subprocess.run([str(compiler),'c++','-std=c++17','-O2','-target',TARGET,
     '-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','-ldwmapi',
-    '/src/native/windows-launcher/main.cpp',object_file,helpers_object,'-o',OUTPUT],check=True)
+    '/src/native/windows-launcher/main.cpp',object_file,helpers_object,resource_file,'-o',OUTPUT],check=True)
 '''.replace('COMPILER', repr(compiler)).replace('ARCHIVE_PATH', repr('/build/' + archive.name)).replace('READY_FILE', repr('/toolchain/extracted-' + compiler_arch + '-' + VERSION)).replace('TARGET', repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu')).replace('HELPERS_SOURCE', repr('/build/' + helpers_source.name)).replace('HELPERS_OBJECT', repr('/build/' + helpers_source.stem + '.o'))
     if (args.desktop_test_output or args.stop_test_output) and not args.in_container:
         raise SystemExit('Desktop test build requires the existing in-container build mode')
@@ -213,7 +215,7 @@ subprocess.run([str(compiler),'c++','-std=c++17','-O2','-target',TARGET,
     for fixture, source in [(args.desktop_test_output, 'windows_desktop_smoke.cpp'), (args.stop_test_output, 'windows_stop_recovery.cpp')]:
         if fixture:
             fixture.parent.mkdir(parents=True, exist_ok=True)
-            container_code += "\nsubprocess.run([str(compiler),'c++','-std=c++17','-O2','-target'," + repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu') + ",'-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','-ldwmapi'," + repr('/src/scripts/' + source) + ",object_file,helpers_object,'-o'," + repr(str(fixture)) + "],check=True)\n"
+            container_code += "\nsubprocess.run([str(compiler),'c++','-std=c++17','-O2','-target'," + repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu') + ",'-municode','-static','-I/build','-I/build/webview2','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp','-lcomctl32','-lcrypt32','-lgdi32','-ldwmapi'," + repr('/src/scripts/' + source) + ",object_file,helpers_object,resource_file,'-o'," + repr(str(fixture)) + "],check=True)\n"
     container_code = container_code.replace('OUTPUT', repr(output))
     if args.in_container:
         container_code = container_code.replace('/build/' + archive.name, str(archive)).replace('/build/', str(build) + '/').replace("'-I/build'", repr('-I' + str(build))).replace("'-I/build/webview2'", repr('-I' + str(sdk)))
