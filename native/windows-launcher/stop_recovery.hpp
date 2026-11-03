@@ -16,6 +16,14 @@ inline bool nativeKnownJobBlocker(const std::string& reason){
  return reason=="Native child termination unconfirmed; action stopped"||reason=="Native process tree termination unconfirmed"||reason=="Native process tree still active; action stopped"||reason=="Native host job could not stop"||reason=="Native host process tree termination is unconfirmed"||reason=="Owned native host process tree did not confirm exit"||
   std::regex_match(reason,std::regex("Native process tree termination unconfirmed \\(Windows error [0-9]+, observation error [0-9]+\\); stop required"));
 }
+// A later recoverable Job error must never replace an earlier unknown/update
+// blocker. Exclusive creation also closes the concurrent first-writer race.
+inline void nativeRecordStopBlocker(const std::string& reason){
+ auto path=stateRoot/L"host-stop-required";realPath(path);auto message=aide_host::diagnostic(reason);
+ if(!nativeKnownJobBlocker(message)){write(path,message);return;}
+ if(fs::exists(path))return;
+ try{write(path,message,false);}catch(...){if(fs::exists(path))return;throw;}
+}
 inline void nativeRecoverStopBlocker(Launcher& app,bool explicitRecovery){
  auto blocker=stateRoot/L"host-stop-required";realPath(blocker);if(!fs::exists(blocker)){if(explicitRecovery)app.say("No native stop blocker remains.");return;}
  auto original=read(blocker,8192);auto reason=trim(original);auto record=json::parse(original,nullptr,false);

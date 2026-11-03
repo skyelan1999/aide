@@ -75,11 +75,11 @@ void moveState(const fs::path& from,const fs::path& to,DWORD flags,const char* m
   Sleep(DWORD(std::min<ULONGLONG>(delay,until-now)));delay=std::min(200u,delay*2);
  }
 }
-void write(const fs::path& p,const std::string& s){
+void write(const fs::path& p,const std::string& s,bool replace=true){
  static std::atomic<unsigned> serial{0};realPath(p);fs::create_directories(p.parent_path());auto t=p;t+=L".native-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64())+L"-"+std::to_wstring(++serial);realPath(t);
  struct Cleanup{fs::path p;~Cleanup(){std::error_code error;fs::remove(p,error);}}cleanup{t};
  {Handle file(CreateFileW(t.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr));if(!file.valid())throw winFailure("Cannot create atomic launcher state",GetLastError());for(size_t offset=0;offset<s.size();){DWORD written=0,n=DWORD(std::min<size_t>(65536,s.size()-offset));if(!WriteFile(file.h,s.data()+offset,n,&written,nullptr))throw winFailure("Cannot save launcher state",GetLastError());if(written!=n)throw winFailure("Incomplete launcher state write",ERROR_WRITE_FAULT);offset+=n;}if(!FlushFileBuffers(file.h))throw winFailure("Cannot flush launcher state before commit",GetLastError());}
- moveState(t,p,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH,"Cannot commit launcher state");
+ moveState(t,p,(replace?MOVEFILE_REPLACE_EXISTING:0)|MOVEFILE_WRITE_THROUGH,"Cannot commit launcher state");
 }
 
 fs::path module(){std::wstring s(32768,0);DWORD n=GetModuleFileNameW(nullptr,s.data(),DWORD(s.size()));if(!n||n>=s.size())throw std::runtime_error("Cannot locate launcher executable");s.resize(n);return fs::path(s);}
@@ -536,6 +536,7 @@ public:
 
 };
 #include "host_windows.hpp"
+inline void nativeRecordStopBlocker(const std::string& reason);
 #include "host_scheduler.hpp"
 #include "stop_recovery.hpp"
 int selfTest(){
@@ -636,5 +637,5 @@ int wmain(int argc,wchar_t** argv){
    if(!nativeStopping())app.browser();
   }
   return 0;
- }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(desktopAction)MessageBoxW(nullptr,wide(message).c_str(),L"Aide desktop",MB_OK|MB_ICONERROR);if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
+ }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{nativeRecordStopBlocker(e.what());}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(desktopAction)MessageBoxW(nullptr,wide(message).c_str(),L"Aide desktop",MB_OK|MB_ICONERROR);if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
 }

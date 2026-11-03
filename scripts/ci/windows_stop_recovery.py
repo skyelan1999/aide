@@ -32,7 +32,7 @@ def main():
         shutil.copy2(executable, tools / 'aide-launcher.exe')
         executable = tools / 'aide-launcher.exe'
         subprocess.run([str(fixture), str(base / 'faults')], check=True, timeout=30)
-        results['windowsAPIs'] = json.loads((base / 'faults/fault-results.json').read_text())
+        results['windowsAPIs'] = json.loads((base / 'faults/fault-results.json').read_text(encoding='utf-8'))
         environment = os.environ.copy()
         environment['PATH'] = str(tools) + os.pathsep + environment.get('PATH', '')
         for name in list(environment):
@@ -59,14 +59,14 @@ def main():
             if success:
                 assert not blocker.exists(), name
                 archives = [p for p in state.glob('host-stop-required.recovered-*') if p.suffix != '.json']
-                assert len(archives) == 1 and archives[0].read_text() == marker, name
-                audit = json.loads(Path(str(archives[0]) + '.json').read_text())
+                assert len(archives) == 1 and archives[0].read_text(encoding='utf-8') == marker, name
+                audit = json.loads(Path(str(archives[0]) + '.json').read_text(encoding='utf-8'))
                 assert audit['controllerAndWorkersExited'] and audit['projectContainersStopped'] == 1, audit
                 status = subprocess.run([str(executable), 'host-status', '--root', str(root)], env=env,
                                         capture_output=True, text=True, encoding='utf-8', check=True, timeout=10)
                 assert json.loads(status.stdout)['stopRequired'] is False, status.stdout
             else:
-                assert blocker.read_text() == marker and not list(state.glob('*.recovered-*')), name
+                assert blocker.read_text(encoding='utf-8') == marker and not list(state.glob('*.recovered-*')), name
             results[name] = True
 
         case('explicit-recovery', success=True)
