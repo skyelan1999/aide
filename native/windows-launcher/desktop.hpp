@@ -22,14 +22,17 @@ struct Desktop {
  HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile;std::vector<BYTE> pin;
  Ptr<ICoreWebView2Environment> environment;std::vector<std::shared_ptr<Tab>> tabs;
  Chrome chrome;Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
- HMODULE loader=nullptr;
+ HMODULE loader=nullptr;HICON smallIcon=nullptr,bigIcon=nullptr;
+ ~Desktop(){if(smallIcon)DestroyIcon(smallIcon);if(bigIcon)DestroyIcon(bigIcon);}
+ void icons(){auto instance=GetModuleHandleW(nullptr);auto small=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(16),chrome.px(16),0)),big=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(32),chrome.px(32),0));if(small){SendMessageW(window,WM_SETICON,ICON_SMALL,reinterpret_cast<LPARAM>(small));if(smallIcon)DestroyIcon(smallIcon);smallIcon=small;}if(big){SendMessageW(window,WM_SETICON,ICON_BIG,reinterpret_cast<LPARAM>(big));if(bigIcon)DestroyIcon(bigIcon);bigIcon=big;}}
  Desktop(std::wstring address,std::wstring initial,fs::path directory,std::wstring identity,std::string pem):origin(std::move(address)),entry(std::move(initial)),className(L"AideDesktop_"+identity),profile(std::move(directory)),pin(certificate(pem)){}
  void post(std::function<void()> fn){auto task=new std::function<void()>(std::move(fn));if(!PostMessageW(window,WM_APP+2,0,reinterpret_cast<LPARAM>(task)))delete task;}
  void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
  void pause(const std::shared_ptr<Tab>& tab){if(tab&&tab->web)tab->web->ExecuteScript(L"window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();document.querySelectorAll('audio,video').forEach(x=>x.pause());window.speechSynthesis?.cancel();",nullptr);}
- void resize(){RECT bounds{};GetClientRect(window,&bounds);bounds.top=48;MoveWindow(GetDlgItem(window,101),bounds.right-90,3,40,42,TRUE);MoveWindow(GetDlgItem(window,102),bounds.right-47,3,40,42,TRUE);for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);if(bar)MoveWindow(bar,0,0,bounds.right-94,48,TRUE);}
- void select(size_t index){if(index>=tabs.size())return;if(active()!=tabs[index]){pause(active());hello.cancel(ceremony);}selected=index;TabCtrl_SetCurSel(bar,int(index));for(size_t i=0;i<tabs.size();i++)if(tabs[i]->controller)tabs[i]->controller->put_IsVisible(i==index);if(active()->controller)active()->controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);SetWindowTextW(window,active()->title.c_str());}
+ void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4),available=std::max(0,int(bounds.right)-button*2-gap*3);bounds.top=h;MoveWindow(GetDlgItem(window,101),available+gap,chrome.px(2),button,button,TRUE);MoveWindow(GetDlgItem(window,102),available+button+gap*2,chrome.px(2),button,button,TRUE);for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);if(bar){MoveWindow(bar,0,0,available,h,TRUE);chrome.layout(bar,available);}InvalidateRect(window,nullptr,FALSE);}
+
+ void select(size_t index){if(index>=tabs.size())return;if(active()!=tabs[index]){pause(active());hello.cancel(ceremony);}selected=index;TabCtrl_SetCurSel(bar,int(index));for(size_t i=0;i<tabs.size();i++)if(tabs[i]->controller)tabs[i]->controller->put_IsVisible(i==index);if(active()->controller)active()->controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);SetWindowTextW(window,active()->title.c_str());resize();}
  void erase(const std::shared_ptr<Tab>& tab){if(tab->closed)return;tab->closed=true;pause(tab);hello.cancel(ceremony);if(tab->controller)tab->controller->Close();tab->web=Ptr<ICoreWebView2>();tab->controller=Ptr<ICoreWebView2Controller>();auto i=std::find(tabs.begin(),tabs.end(),tab);if(i==tabs.end())return;size_t index=size_t(i-tabs.begin());TabCtrl_DeleteItem(bar,int(index));tabs.erase(i);if(tabs.empty()){DestroyWindow(window);return;}select(std::min(selected,tabs.size()-1));}
  void close(const std::shared_ptr<Tab>& tab){if(!tab||tab->closed||tab->closing)return;tab->closing=true;
   if(!tab->web){erase(tab);return;}
@@ -130,6 +133,7 @@ struct Desktop {
   switch(message){
    case WM_ERASEBKGND:{RECT area{};GetClientRect(hwnd,&area);Chrome::fill(reinterpret_cast<HDC>(w),area,self->chrome.background);return 1;}
    case WM_DRAWITEM:{auto item=reinterpret_cast<DRAWITEMSTRUCT*>(l);if(item->CtlType==ODT_BUTTON){self->chrome.button(*item);return TRUE;}break;}
+   case WM_DPICHANGED:{self->chrome.setDpi(HIWORD(w));self->icons();auto bounds=reinterpret_cast<RECT*>(l);SetWindowPos(hwnd,nullptr,bounds->left,bounds->top,bounds->right-bounds->left,bounds->bottom-bounds->top,SWP_NOZORDER|SWP_NOACTIVATE);self->resize();return 0;}
    case WM_SIZE:self->resize();if(w==SIZE_MINIMIZED){self->pause(self->active());self->hello.cancel(self->ceremony);}return 0;
    case WM_SHOWWINDOW:if(!w){self->pause(self->active());self->hello.cancel(self->ceremony);}break;
    case WM_NOTIFY:if(reinterpret_cast<NMHDR*>(l)->hwndFrom==self->bar&&reinterpret_cast<NMHDR*>(l)->code==TCN_SELCHANGE)self->select(TabCtrl_GetCurSel(self->bar));return 0;
@@ -147,14 +151,15 @@ struct Desktop {
  int run(const fs::path& dll){
   auto mutexName=L"Local\\"+className;Handle mutex(CreateMutexW(nullptr,FALSE,mutexName.c_str()));if(!mutex.h)throw std::runtime_error("Desktop ownership unavailable");
   if(GetLastError()==ERROR_ALREADY_EXISTS){auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}return 0;}
-  checked(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED),"Desktop COM unavailable");SetCurrentProcessExplicitAppUserModelID(className.c_str());SetProcessDPIAware();INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES};InitCommonControlsEx(&controls);
-  WNDCLASSW cls{};cls.lpfnWndProc=procedure;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=className.c_str();cls.hCursor=LoadCursorW(nullptr,IDC_ARROW);cls.hbrBackground=nullptr;RegisterClassW(&cls);
+  checked(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED),"Desktop COM unavailable");SetCurrentProcessExplicitAppUserModelID(className.c_str());INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES};InitCommonControlsEx(&controls);
+  WNDCLASSW cls{};cls.lpfnWndProc=procedure;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=className.c_str();cls.hCursor=LoadCursorW(nullptr,IDC_ARROW);cls.hbrBackground=nullptr;cls.hIcon=LoadIconW(cls.hInstance,MAKEINTRESOURCEW(201));RegisterClassW(&cls);
   RECT work{0,0,1412,932};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);int width=std::min(1380,std::max(320,int(work.right-work.left)-32)),height=std::min(900,std::max(240,int(work.bottom-work.top)-32));
   window=CreateWindowExW(0,className.c_str(),L"Aide",WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,work.left+(work.right-work.left-width)/2,work.top+(work.bottom-work.top-height)/2,width,height,nullptr,nullptr,cls.hInstance,this);if(!window)throw std::runtime_error("Desktop window unavailable");
-  bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|TCS_FIXEDWIDTH|TCS_BUTTONS|TCS_FLATBUTTONS,0,0,1200,48,window,nullptr,cls.hInstance,nullptr);
+  chrome.setDpi(GetDpiForWindow(window));icons();
+  bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|TCS_FIXEDWIDTH|TCS_BUTTONS|TCS_FLATBUTTONS,0,0,1200,chrome.height(),window,nullptr,cls.hInstance,nullptr);
   CreateWindowExW(0,L"BUTTON",L"+",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1205,3,40,42,window,reinterpret_cast<HMENU>(101),cls.hInstance,nullptr);
   CreateWindowExW(0,L"BUTTON",L"×",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1242,3,40,42,window,reinterpret_cast<HMENU>(102),cls.hInstance,nullptr);
-  chrome.install(bar);
+  chrome.install(bar);resize();
   ShowWindow(window,SW_SHOW);UpdateWindow(window);
   loader=LoadLibraryExW(dll.c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_SYSTEM32);if(!loader)throw std::runtime_error("Verified WebView2 loader unavailable");
   using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);

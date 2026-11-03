@@ -1,0 +1,57 @@
+{
+  "id": "windows-compact-tabs-icon-757",
+  "request": "Windows 标签栏紧凑化、改善低素质显示器可读性，并补齐应用图标",
+  "baseline": "cc501ab027055fdf80dfa873e29d746032b6e10e",
+  "initial_status": "",
+  "acceptance": [
+    "Windows tab strip uses compact approximately 32 DIP metrics with readable selected/inactive/hover/focus states.",
+    "Metrics and fonts update on monitor DPI changes; small windows and overflow keep controls usable.",
+    "Checked-in existing Aide branding is embedded as a multi-size EXE resource and shown by the window/taskbar.",
+    "Actual Windows screenshots reviewed at normal/narrow sizes, light/dark, and DPI-change scenarios; existing desktop/security and stop recovery checks remain green."
+  ],
+  "scope": [
+    "native Windows desktop chrome and resources",
+    "Windows build resource integration",
+    "isolated Windows visual/interaction tests and documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User feedback tracked in #757; current 48 px strip / 44 px items and missing icon resources confirmed.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "32 DIP strip, 9pt system-smoothed Segoe UI, readable solid states, adaptive widths, native overflow; embedded multi-size branding + PerMonitorV2/common-controls manifest.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Native chrome/DPI/icons and resource linking implemented. Uses existing Aide mark; normal builds require no icon-generation dependency.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Initial AMD64 production + separate desktop fixture cross-build passed. Portable desktop policy/SDK/icon tests (3) passed. Final Windows CI/screenshot review pending.",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user authorization: integrate/push main without Release. No Mac service replacement.",
+  "rollback": "",
+  "handoff": "LAN access from 6058f703 is an ancestor of this branch and main; included in integration. No Mac runtime replacement or Release."
+}
