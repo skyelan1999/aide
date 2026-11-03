@@ -33,7 +33,7 @@ struct Desktop {
  void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4);int count=bar?std::max(1,TabCtrl_GetItemCount(bar)):1;int available=std::max(0,int(bounds.right)-button-gap*2);bounds.top=h;
   for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);
   if(bar){MoveWindow(bar,0,0,available,h,TRUE);chrome.layout(bar,available);}
-  RECT last{};int newX=available+gap;if(bar&&TabCtrl_GetItemRect(bar,count-1,&last)&&last.right+gap+button<bounds.right)newX=std::max(gap,int(last.right)+gap);MoveWindow(GetDlgItem(window,101),newX,chrome.px(2),button,button,TRUE);
+  RECT last{};int newX=available+gap;if(bar&&!Chrome::scroller(bar)&&TabCtrl_GetItemRect(bar,count-1,&last)&&last.right+gap+button<bounds.right)newX=std::max(gap,int(last.right)+gap);MoveWindow(GetDlgItem(window,101),newX,chrome.px(2),button,button,TRUE);
   RECT activeRect{};bool shown=bar&&TabCtrl_GetCurSel(bar)>=0&&TabCtrl_GetItemRect(bar,TabCtrl_GetCurSel(bar),&activeRect)&&activeRect.left>=0&&activeRect.right<=available;
   auto close=GetDlgItem(window,102);if(shown){MoveWindow(close,activeRect.right-chrome.px(26),chrome.px(4),chrome.px(22),chrome.px(24),TRUE);ShowWindow(close,SW_SHOWNOACTIVATE);}else ShowWindow(close,SW_HIDE);InvalidateRect(window,nullptr,FALSE);
  }
