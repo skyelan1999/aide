@@ -224,6 +224,9 @@ func (a *App) contextTools() []any {
 		tools = append(tools, t)
 	}
 	tools = append(tools, filterDisabledToolSchemas(a.pluginToolSchemas(), disabled)...)
+	if a.settings.ComputerControlEnabled {
+		tools = append(tools, filterDisabledToolSchemas(computerControlToolSchemas(), disabled)...)
+	}
 	tools = append(tools, filterDisabledToolSchemas(a.messageAssistantTools(), disabled)...)
 	return tools
 }

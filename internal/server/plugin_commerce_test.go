@@ -155,15 +155,18 @@ func TestPluginCommerceCatalogAndPublicIsolation(t *testing.T) {
 	}
 }
 
-func TestPluginCommerceExtendedCatalogKeepsLegacyPublicEntries(t *testing.T) {
+func TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl(t *testing.T) {
 	var shipped marketSnapshot
 	if err := json.Unmarshal(shippedMarket, &shipped); err != nil {
 		t.Fatal(err)
 	}
-	if len(shipped.Catalog.Plugins) != 23 || len(shipped.Catalog.PrivateListings) != 1 {
+	if len(shipped.Catalog.Plugins) != 22 || len(shipped.Catalog.PrivateListings) != 1 {
 		t.Fatal("public/private catalog partition")
 	}
 	for _, p := range shipped.Catalog.Plugins {
+		if p.ID == "computer-control" {
+			t.Fatal("computer control must not be listed as a standalone plugin")
+		}
 		if p.Package == "" || p.Bytes == 0 || !marketSHA.MatchString(p.SHA256) || p.Distribution == "private" {
 			t.Fatal("old host cannot refresh public catalog")
 		}

@@ -1974,7 +1974,7 @@ func (a *App) pluginToolSchemasForOwner(pluginID string) []any {
 	}
 	out := []any{}
 	for _, p := range surface.Plugins {
-		if p.Error != "" || (pluginID != "" && p.ID != pluginID) {
+		if p.ID == "computer-control" || p.Error != "" || (pluginID != "" && p.ID != pluginID) {
 			continue
 		}
 		for _, t := range p.Tools {
@@ -1995,6 +1995,7 @@ func (a *App) toolListHint() string {
 	hint := "list_sources（引用来源）; list_files, read_file（直接执行）; write_file（生成提案待批准）; run_shell（沙箱内实际执行并返回输出）"
 	hint += "; browse_plugin_market（内置只读市场列表、搜索和详情；未安装插件也可使用）"
 	hint += "; route_plugins（按需求发现并加载插件工具，不自动扩大权限）"
+	hint += "; computer_status / computer_inspect / computer_snapshot（Aide 设置开启电脑控制后可用，截图可交由视觉模型分析）"
 	return hint
 }
 
@@ -5219,6 +5220,26 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return a.recordVerification(str("title"), rawStr("content"), str("reqId"), str("designId"), str("implId"))
 	case "record_problem_report":
 		return a.recordProblemReport(str("title"), rawStr("content"), str("diagramPath"))
+	case "computer_status", "computer_inspect", "computer_snapshot", "computer_click", "computer_type", "computer_key":
+		if computerControlNeedsConfirmation(call.Function.Name) {
+			a.mu.Lock()
+			args["allowedApps"] = append([]string(nil), a.settings.ComputerControlAllowedApps...)
+			a.mu.Unlock()
+			question, _ := json.Marshal(map[string]any{"question": computerControlConfirmationText(call.Function.Name, args), "type": "confirm"})
+			if answer := a.awaitUserAnswer(ctx, task, question); answer != "确认" {
+				return "用户未批准电脑操作；操作未执行。"
+			}
+			args["approved"] = true
+		}
+		raw, err := a.callComputerControlTool(ctx, call.Function.Name, args)
+		if err != nil {
+			return failure("电脑控制工具失败：" + err.Error())
+		}
+		if err := capturePluginImages(ctx, raw); err != nil {
+			return failure(err.Error())
+		}
+		text, _ := normalizePluginResult(raw)
+		return text
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)

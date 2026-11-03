@@ -5,6 +5,7 @@ import json
 import ssl
 import time
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
@@ -42,8 +43,18 @@ def main():
     if isinstance(plugins, dict):
         plugins = plugins["plugins"]
     by_id = {p["id"]: p for p in plugins}
-    assert len(plugins) == len(by_id) == 19, "expected old 17 plus two controls"
-    assert not by_id["computer-control"]["enabled"]
+    assert len(plugins) == len(by_id) == 18, "expected old 17 plus browser control"
+    assert "computer-control" not in by_id, "computer control must be integrated into Aide"
+    config = call("/api/config")
+    assert config["computerControlEnabled"] is False, "computer control must default to disabled"
+    assert config["computerControlAllowedApps"] == [], "computer control must default to an empty app allowlist"
+    try:
+        call("/api/plugins", "POST", {"id": "computer-control", "name": "Computer Control",
+                                        "code": 'module.exports={name:"computer-control",apply(){}};'})
+    except HTTPError as error:
+        assert error.code == 410, f"standalone computer-control install returned {error.code}"
+    else:
+        raise AssertionError("standalone computer-control install must be refused")
     if not args.check:
         assert not by_id["browser-control"]["enabled"]
         call("/api/plugins/browser-control/settings", "PUT",
@@ -57,7 +68,8 @@ def main():
     tools = [t for p in surface["plugins"] if p["id"] == "browser-control" for t in p["tools"]]
     names = {t["name"] for t in tools if t.get("executable")}
     assert names == {"browser_status", "browser_read", "browser_snapshot", "browser_navigate", "browser_click", "browser_fill", "browser_scroll"}, names
-    print("PASS: 17 -> 19 plugins; seven executable browser tools; " +
+    print("PASS: 17 -> 18 plugins; no standalone computer-control; built-in control defaults disabled; "
+          "seven executable browser tools; " +
           ("settings survived restart" if args.check else "controls default disabled, activation works"))
 
 

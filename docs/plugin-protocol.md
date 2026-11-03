@@ -19,7 +19,7 @@
 
 aide 插件系统采用 DSH（Cordis）的插件**形态约定**：一个插件是一个 JavaScript 模块，默认导出包含 `apply(ctx)` 的插件对象。协议 v1 只实现**经过裁剪的上下文（ctx）子集**，保证任意插件在受限环境内可验证、可加载、可描述其导出能力。
 
-**本协议明确不支持**：完整 Cordis 服务注册表与依赖注入、任意 DSH 内部服务（Session/Agent/Model 路由等）、UI Slot 渲染、通用宿主网络或桌面控制。Aide 随源码另提供默认停用的 `browser-control` 与 `computer-control` 专用插件：前者经受限 Safari WebDriver 桥接控制允许列表内网页，后者经 macOS 桥接读取整屏截图并执行逐次确认的点击、输入和有限按键。这些产品集成不向一般插件授予浏览器或桌面权限。通用插件设置仅保存非敏感 JSON 配置，不单独授予额外能力。两项功能只在当前源码版本中，运行实例需升级后才会加载，详见 [浏览器与电脑控制状态](plugins/computer-browser-control.md)。
+**本协议明确不支持**：完整 Cordis 服务注册表与依赖注入、任意 DSH 内部服务（Session/Agent/Model 路由等）、UI Slot 渲染、通用宿主网络或桌面控制。Aide 的电脑控制现为 Aide 内置能力，允许列表保存在 Aide 全局设置中，截图通过受限的视觉证据管线送入支持视觉的模型；点击、输入和有限按键仍由工作流逐次确认。它不向一般插件授予桌面权限。浏览器控制仍通过独立的受限桥接授权。详见 [浏览器与电脑控制状态](plugins/computer-browser-control.md)。
 
 ## 2. 插件形态（DSH / Cordis 兼容子集）
 

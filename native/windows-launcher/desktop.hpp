@@ -7,6 +7,7 @@
 #include "desktop_com.hpp"
 #include "desktop_hello.hpp"
 #include "desktop_chrome.hpp"
+#include "computer_bridge.hpp"
 namespace aide_desktop {
 inline void checked(HRESULT result,const char* message){if(FAILED(result))throw std::runtime_error(message);}
 inline std::vector<BYTE> certificate(const std::string& pem) {
@@ -22,10 +23,11 @@ struct Desktop {
  HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile;std::vector<BYTE> pin;
  Ptr<ICoreWebView2Environment> environment;std::vector<std::shared_ptr<Tab>> tabs;
  Chrome chrome;Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
+ ComputerBridge computer;
  HMODULE loader=nullptr;HICON smallIcon=nullptr,bigIcon=nullptr;
  ~Desktop(){if(smallIcon)DestroyIcon(smallIcon);if(bigIcon)DestroyIcon(bigIcon);}
  void icons(){auto instance=GetModuleHandleW(nullptr);auto small=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(16),chrome.px(16),0)),big=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(32),chrome.px(32),0));if(small){SendMessageW(window,WM_SETICON,ICON_SMALL,reinterpret_cast<LPARAM>(small));if(smallIcon)DestroyIcon(smallIcon);smallIcon=small;}if(big){SendMessageW(window,WM_SETICON,ICON_BIG,reinterpret_cast<LPARAM>(big));if(bigIcon)DestroyIcon(bigIcon);bigIcon=big;}}
- Desktop(std::wstring address,std::wstring initial,fs::path directory,std::wstring identity,std::string pem):origin(std::move(address)),entry(std::move(initial)),className(L"AideDesktop_"+identity),profile(std::move(directory)),pin(certificate(pem)){}
+ Desktop(std::wstring address,std::wstring initial,fs::path directory,std::wstring identity,std::string pem,std::string computerToken):origin(std::move(address)),entry(std::move(initial)),className(L"AideDesktop_"+identity),profile(std::move(directory)),pin(certificate(pem)),computer(std::move(computerToken)){}
  void post(std::function<void()> fn){auto task=new std::function<void()>(std::move(fn));if(!PostMessageW(window,WM_APP+2,0,reinterpret_cast<LPARAM>(task)))delete task;}
  void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
@@ -168,6 +170,7 @@ struct Desktop {
   CreateWindowExW(0,L"BUTTON",L"Close tab",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1242,3,40,42,window,reinterpret_cast<HMENU>(102),cls.hInstance,nullptr);
   chrome.install(bar);resize();
   ShowWindow(window,SW_SHOW);UpdateWindow(window);
+  try{computer.start();}catch(...){MessageBoxW(window,L"Aide computer control is unavailable. Check whether port 17778 is already in use.",L"Aide",MB_OK|MB_ICONWARNING);}
   loader=LoadLibraryExW(dll.c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_SYSTEM32);if(!loader)throw std::runtime_error("Verified WebView2 loader unavailable");
   using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
   auto create=reinterpret_cast<Create>(GetProcAddress(loader,"CreateCoreWebView2EnvironmentWithOptions"));if(!create)throw std::runtime_error("WebView2 loader API unavailable");
@@ -175,7 +178,7 @@ struct Desktop {
   checked(create(nullptr,(profile/L"WebView2").c_str(),nullptr,ready.get()),"Install Microsoft Edge WebView2 Runtime, then retry");
   ACCEL keys[]={{FVIRTKEY|FCONTROL,'T',101},{FVIRTKEY|FCONTROL,'W',102}};auto accel=CreateAcceleratorTableW(keys,2);MSG msg{};
   while(GetMessageW(&msg,nullptr,0,0)>0){if(!TranslateAcceleratorW(window,accel,&msg)){TranslateMessage(&msg);DispatchMessageW(&msg);}}
-  DestroyAcceleratorTable(accel);for(auto& tab:tabs)if(tab->controller)tab->controller->Close();tabs.clear();environment=Ptr<ICoreWebView2Environment>();CoUninitialize();return 0;
+  DestroyAcceleratorTable(accel);computer.stop();for(auto& tab:tabs)if(tab->controller)tab->controller->Close();tabs.clear();environment=Ptr<ICoreWebView2Environment>();CoUninitialize();return 0;
  }
 };
 }

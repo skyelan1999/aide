@@ -211,6 +211,9 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 	defer a.mu.Unlock()
 	items := make([]map[string]any, 0, len(a.pluginRegistry.Plugins))
 	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == "computer-control" {
+			continue
+		}
 		items = append(items, map[string]any{
 			"id": p.ID, "name": p.Name, "description": p.Description, "version": p.Version,
 			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt, "daemon": p.Daemon,
@@ -288,6 +291,10 @@ func (a *App) updatePluginSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
+	if id == "computer-control" {
+		fail(w, http.StatusGone, errors.New("电脑控制设置已迁移到 Aide 设置"))
+		return
+	}
 	a.mu.Lock()
 	index := -1
 	for i := range a.pluginRegistry.Plugins {
@@ -375,6 +382,10 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 	}
 	if !pluginIDPattern.MatchString(in.ID) {
 		fail(w, 400, errors.New("插件 id 只能含字母、数字、-、_，长度 1–64"))
+		return
+	}
+	if in.ID == "computer-control" {
+		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再作为独立插件安装"))
 		return
 	}
 	a.mu.Lock()
@@ -711,6 +722,10 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
+	if id == "computer-control" {
+		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再作为独立插件管理"))
+		return
+	}
 	// a.mu 内只做注册表快速变更与持久化；daemon 启停与 surface 聚合（慢进程）放锁外。
 	a.mu.Lock()
 	if err := managementGuardLocked(a, r); err != nil {
@@ -818,6 +833,9 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 }
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (value any, callErr error) {
+	if pluginID == "computer-control" {
+		return nil, errors.New("电脑控制已迁移为 Aide 内置能力")
+	}
 	started := time.Now()
 	defer a.observeIncidentPanic(parent, incident{Module: "plugins", Phase: "call", Plugin: pluginID, Tool: toolName})
 	defer func() {
@@ -1118,7 +1136,9 @@ func (a *App) pluginSurfaceHandler(w http.ResponseWriter, r *http.Request) {
 
 func builtinToolNames() []string {
 	names := []string{}
-	for _, tool := range append(append([]any{}, builtinTools...), executionEnvironmentTools...) {
+	tools := append(append([]any{}, builtinTools...), executionEnvironmentTools...)
+	tools = append(tools, computerControlToolSchemas()...)
+	for _, tool := range tools {
 		if entry, ok := tool.(map[string]any); ok {
 			if fn, ok := entry["function"].(map[string]any); ok {
 				if name, ok := fn["name"].(string); ok {
