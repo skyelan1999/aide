@@ -79,6 +79,8 @@ def main():
         case('stop-failed', extra={'AIDE_FIXTURE_STOP_CASE': 'stop-fail'})
         case('container-still-running', extra={'AIDE_FIXTURE_STOP_CASE': 'running'})
         case('unrelated-container', extra={'AIDE_FIXTURE_STOP_CASE': 'foreign'})
+        case('null-task', prepare=lambda root, state: (state / 'task-port.json').write_text('null'))
+        case('malformed-controller', prepare=lambda root, state: (state / 'host-status.json').write_text(json.dumps({'version': 1, 'root': str(root), 'state': 'stopped'})))
         case('malformed-task', prepare=lambda root, state: (state / 'task-port.json').write_text('{"pid":1}'))
         # A worker from a different executable must still block recovery. Path
         # comparison and running:false are deliberately insufficient here.

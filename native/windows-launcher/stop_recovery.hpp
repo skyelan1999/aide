@@ -1,8 +1,8 @@
 #pragma once
 // Recovery runs under control.lock and startup.lock after a full explicit stop.
 // Never use executable path equality or a textual "stopped" flag as exit proof.
-inline void nativeRequireExited(const json& identity){
- if(identity.is_null()||(identity.is_object()&&identity.size()==1&&identity.contains("running")&&!identity.value("running",true)))return;
+inline void nativeRequireExited(const json& identity,bool neverStartedWorker=false){
+ if(neverStartedWorker&&identity.is_object()&&identity.size()==1&&identity.contains("running")&&identity["running"].is_boolean()&&!identity["running"].get<bool>())return;
  if(!identity.is_object()||!identity.contains("pid")||!identity["pid"].is_number_unsigned()||!identity.contains("created")||!identity["created"].is_number_unsigned())throw std::runtime_error("Stop recovery refused: invalid process lifetime record");
  auto pid=identity["pid"].get<uint64_t>();if(!pid||pid>MAXDWORD||!identity["created"].get<uint64_t>())throw std::runtime_error("Stop recovery refused: invalid process lifetime identity");
  Handle process(OpenProcess(SYNCHRONIZE|PROCESS_QUERY_LIMITED_INFORMATION,FALSE,DWORD(pid)));
@@ -22,10 +22,11 @@ inline void nativeRecoverStopBlocker(Launcher& app,bool explicitRecovery){
  auto status=nativeControllerStatus();bool directory=record.is_object()&&record.value("source","")=="directory-apply";
  if(!nativeKnownJobBlocker(reason)&&!directory){if(explicitRecovery)throw std::runtime_error("Stop recovery refused: unknown blocker; inspect host-status and the original marker");app.say("Stop completed; unknown blocker retained for inspection (recover-stop).");return;}
  for(auto path:{stateRoot/L"update/transaction.json",app.root/L".aide-data/update-agent/launcher-stop-required",app.root/L".aide-data/update-agent/transaction.json"}){realPath(path);if(fs::exists(path))throw std::runtime_error("Stop recovery refused: update transaction or previous unsafe update marker remains");}
+ privateDirectory(app.root/L".aide-update-agent.lock");
  NativeLock controller(stateRoot/L"controller.lock"),previous(app.root/L".aide-update-agent.lock/owner.lock");
  if(!controller.owns()||!previous.owns())throw std::runtime_error("Stop recovery refused: a controller or previous update agent still owns this installation");
- if(status.contains("pid"))nativeRequireExited(status);
- if(status.contains("workers")){if(!status["workers"].is_object())throw std::runtime_error("Stop recovery refused: invalid worker records");for(const auto& worker:status["workers"])nativeRequireExited(worker);}
+ if(fs::exists(stateRoot/L"host-status.json"))nativeRequireExited(status);
+ if(status.contains("workers")){if(!status["workers"].is_object())throw std::runtime_error("Stop recovery refused: invalid worker records");for(const auto& worker:status["workers"])nativeRequireExited(worker,true);}
  for(auto role:{L"port",L"update"}){auto path=stateRoot/(std::wstring(L"task-")+role+L".json");realPath(path);if(fs::exists(path))nativeRequireExited(parseJson(read(path,16384)));}
  if(directory&&(record.value("controllerGeneration","").empty()||record.value("controllerGeneration","")!=status.value("generation","")||status.value("state","")!="stopped"))throw std::runtime_error("Stop recovery refused: directory blocker controller generation is not confirmed stopped");
  // Reinspect every project container after compose stop. A successful CLI exit
