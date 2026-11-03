@@ -43,22 +43,19 @@
         "关联 Aide Issues #765、#766。",
         "保留旧 host-gateway 映射和 AIDE_COMPUTER_BRIDGE_URL；不再重复声明 extra_hosts。",
         "设置说明完整英文翻译已与 settings-schema.json 键一致。",
-        "Go 目录/独立安装测试与 disposable-container 插件冒烟断言均改为内置电脑控制；冒烟脚本目标为隔离测试容器。"
+        "Go 目录/独立安装测试与 disposable-container 插件冒烟断言均改为内置电脑控制；冒烟脚本目标为隔离测试容器。",
+        "PR CI 暴露 Windows desktop smoke fixture 漏传新增 bridge token 参数；fixture 传空 token，保证该 UI fixture 不监听 17778。修复位于 scripts/windows_desktop_smoke.cpp。"
       ]
     },
     "verification": {
-      "status": "pass",
-      "summary": "修复后的仓库 quick 与 full 全绿；其余新增的文档/冒烟脚本检查通过。当前 desktop 实例真实 UI/硬件截图验收未运行。",
+      "status": "in_progress",
+      "summary": "本地 full 在 bridge fixture 参数修复前通过；对应 C++ cross-build CI 首轮发现并修正构造器参数。最新提交的 PR CI 和合并后 main full 待完成。",
       "evidence": [
-        "修复后 `python3 scripts/agent-route.py verify quick`：PASS；322/322 命令通过；日志 .agent-state/verify-20261103T114122691708Z.log。",
-        "修复后 `python3 scripts/agent-route.py verify full`：PASS；325/325 命令通过，日志 .agent-state/verify-20261103T114303967881Z.log；Go 1,616 个 Test/Fuzz/Example 条目 24/24 分片通过，其他包、平台契约和 vet 均通过。收据 .agent-state/full.json。",
-        "`node scripts/test_i18n_coverage.cjs`：PASS，3,699 个 UI translation sites 与 placeholder 校验通过。",
-        "`python3 scripts/test_mixsoul_embedding_follow.py`：PASS，6 tests。",
-        "主与离线 Docker Compose `config --format json`：PASS；computer bridge URL 为 http://host.docker.internal:17778。",
-        "Docker Go 1.26 + Node race 定向测试：PASS；catalog, browser confirmation/revoke, standalone installation rejection。",
-        "`python3 scripts/check_docs.py`：PASS，492 Markdown files/2,363 local links。`python3 -m py_compile scripts/test_control_plugin_runtime.py` 与 `git diff --check`：PASS。该冒烟脚本需要在 disposable Aide container 内运行，本轮未运行脚本本身。",
-        "TTS browser fixture (prior full diagnostic run)：PASS，zh/en、1440 light、390 dark，设置保存/remount/preview ordering/no overflow；截图 .agent-state/plugin-tts-full-test-20261103/browser-settings/。",
-        "真实 Aide 桌面窗口仍处于锁定状态；macOS/Windows/Linux 屏幕/硬件权限真实截图操作未运行；未调用真实 TTS provider。"
+        "本地修复代码的 `python3 scripts/agent-route.py verify quick`：PASS，322/322；full：PASS，325/325；Go race 1,616 项/24 分片、其它 Go 包、平台契约和 vet 通过（构造器修复前）。",
+        "定向 Go 1.26 + Node race：PASS；Compose 主/离线 config：PASS；i18n 3,699 sites：PASS；MixSoul 6 tests：PASS；docs check 492 files/2,363 links：PASS。",
+        "构造器夹具修复后本地 `python3 scripts/agent-route.py verify quick`：PASS，322/322；日志 .agent-state/verify-20261103T122457304498Z.log。",
+        "PR #771 CI Go job PASS；首次 Windows Desktop Check 暴露 `scripts/windows_desktop_smoke.cpp` 漏传 token 参数，已修正为不启动 bridge 的空 token；`python3 scripts/test_windows_desktop.py` 3 tests PASS。",
+        "修正后的 PR exact-head CI/full 与合并后的 main full 尚待运行。真实桌面锁定、真实 OS 权限和真实 TTS Provider 均未验收。"
       ]
     },
     "documentation": {
@@ -77,7 +74,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "等待 PR/CI；用户授权合并到 main，不包括发布 Release 或替换运行实例。",
+      "summary": "PR #771 已创建，提交 bee3d1ba0580fcba261a001ff07ebc36e50966e8；CI 首轮 Windows cross-build 发现并修正夹具参数，等待新 head CI 与 review requirement。",
       "evidence": [
         "Issues #765、#766 已建立；PR 和合并 SHA 待补。"
       ]
@@ -85,5 +82,5 @@
   },
   "release_authorization": "用户原话：提出issues 并进行修复以及合并（允许创建 GitHub Issues、修复、提交/推送 PR 并合并到 main；未授权发布 Release 或替换运行实例）。",
   "rollback": "main 上通过合并提交保留历史；如需回滚，使用 PR 合并 SHA 执行 revert，避免 reset/force push。",
-  "handoff": "quick/full 与定向回归通过，等待提交、PR/CI 与合并；真实桌面硬件及 TTS provider 验收仍 NOT_RUN。"
+  "handoff": "PR #771 开放；Go CI 已通过，Windows fixture 已修正。等待新 head 检查；GitHub 当前要求至少一个 PR review，未绕过规则。Issue #765/#766 暂不关闭，等合并和最终验收。"
 }

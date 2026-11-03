@@ -67,6 +67,6 @@ static VOID CALLBACK tick(HWND,UINT,UINT_PTR,DWORD){
 int wmain(int argc,wchar_t** argv){
  try{if(argc!=5)throw std::runtime_error("Expected readiness JSON, private profile, loader DLL, result JSON");
   auto ready=parseJson(read(argv[1],65536));auto origin=wide(ready.at("origin").get<std::string>());if(!std::regex_match(origin,std::wregex(L"https://localhost:[0-9]{1,5}")))throw std::runtime_error("Fixture origin invalid");
-  fs::path profile=argv[2];privateDirectory(profile);reportPath=argv[4];Desktop app(origin,origin+L"/",profile,L"fixture_"+wide(sha256(argv[1])),read(wide(ready.at("certificate").get<std::string>()),65536));testApp=&app;began=GetTickCount();SetTimer(nullptr,0,200,tick);int code=app.run(argv[3]);if(!finished)finish(false,"Desktop closed before checks completed");std::cout<<results.dump(2)<<'\n';return results.value("ok",false)?code:1;
+  fs::path profile=argv[2];privateDirectory(profile);reportPath=argv[4];Desktop app(origin,origin+L"/",profile,L"fixture_"+wide(sha256(argv[1])),read(wide(ready.at("certificate").get<std::string>()),65536),std::string{});testApp=&app;began=GetTickCount();SetTimer(nullptr,0,200,tick);int code=app.run(argv[3]);if(!finished)finish(false,"Desktop closed before checks completed");std::cout<<results.dump(2)<<'\n';return results.value("ok",false)?code:1;
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }
