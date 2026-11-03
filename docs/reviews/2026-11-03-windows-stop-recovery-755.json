@@ -1,0 +1,63 @@
+{
+  "source": "9bec54afd277d98074e1fb2a690f13b4afcce4ec",
+  "mergedMain": "92b5733707deed68584aa14aa53a91a2cced2319",
+  "fingerprint": "7e3ea5b062fab5affe7ba1997b6a447a837e7d1c865d9129e23c795a327dd7a7",
+  "windowsRun": 41602550093,
+  "aideCIRun": 41602550385,
+  "windowsRunner": "windows-2022 x64",
+  "amd64LauncherSHA256": "15bba0a20da0f7b5f1e9cdb49993fc8c88f15d6865dfd863a889df93108b7784",
+  "stopRecovery": {
+    "windowsAPIs": {
+      "atomicFailurePreservesState": true,
+      "atomicSharingRetry": true,
+      "concurrentStateReaders": true,
+      "descendantsChecked": true,
+      "invalidJobRefused": true,
+      "liveProcessRefused": true,
+      "naturalExitRace": true,
+      "timeoutConfirmed": true,
+      "unknownBlockerPreserved": true
+    },
+    "explicit-recovery": true,
+    "ordinary-stop": true,
+    "new-job-diagnostic": true,
+    "unknown-marker": true,
+    "active-update": true,
+    "legacy-blocker": true,
+    "docker-unavailable": true,
+    "stop-failed": true,
+    "container-still-running": true,
+    "unrelated-container": true,
+    "null-task": true,
+    "malformed-controller": true,
+    "malformed-task": true,
+    "held-controller-lock": true,
+    "directory-generation": true,
+    "directory-wrong-generation": true,
+    "live-foreign-executable": true,
+    "reused-pid": true
+  },
+  "desktop": {
+    "appTabs": true,
+    "closePluginKeepsMain": true,
+    "dirtyCloseCancelPreservesTab": true,
+    "downloadDialogCancel": true,
+    "error": "",
+    "hardwareHello": "NOT_RUN: availability probe only, no enrollment or signing",
+    "localTLSPin": true,
+    "nativeDarkPalette": true,
+    "nativeHelloProbe": true,
+    "nativeLightPalette": true,
+    "ok": true,
+    "pluginNativeBridgeBlocked": true,
+    "sharedStorageSandboxPort": true,
+    "windowFitsWorkArea": true
+  },
+  "notRun": [
+    "Physical user Windows Docker Desktop restart",
+    "ARM64 execution",
+    "Real A/B migration",
+    "Windows Hello enrollment/signing hardware"
+  ],
+  "release": "No Release, tag or version bump; source merged only"
+}

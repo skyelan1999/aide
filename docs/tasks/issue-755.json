@@ -18,40 +18,58 @@
     "requirements": {
       "status": "pass",
       "summary": "Issue #755 and Windows evidence reviewed; acceptance and scope recorded.",
-      "evidence": []
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/755"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "Bounded atomic rename retries; handle plus Job exit proof; conservative full-stop recovery with original marker archive and audit.",
-      "evidence": []
+      "evidence": [
+        "docs/reviews/2026-11-03-windows-stop-recovery-755.md"
+      ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "Core and isolated fault fixture implemented; review/CI pending.",
-      "evidence": []
+      "summary": "Bounded state rename retries/error codes, process plus Job exit proof, full-stop recovery/archive/audit and concurrent unknown-marker preservation implemented.",
+      "evidence": [
+        "docs/reviews/2026-11-03-windows-stop-recovery-755.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41602550093"
+      ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Portable core 35 checks, portable native 66 checks, 11 package tests, desktop policy and 2 BAT tests passed; AMD64 cross-build passed initial implementation. Actual Windows CI pending.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final local quick 322/322 passed. Final Aide CI quick/go/gate and Windows Desktop Check AMD64/ARM64 builds + 27 Windows API/CLI checks + WebView2 regression passed. Physical user Docker Desktop restart and ARM64 execution NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-11-03-windows-stop-recovery-755.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41602550093"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Operator recovery command and conservative boundaries documented; controlled validation results link source, content fingerprint, CI and native artifact hash.",
+      "evidence": [
+        "docs/reviews/2026-11-03-windows-stop-recovery-755.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41602550093"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only task-owned local synthetic EXEs removed; logs/results retained. Existing service, user source checkout, unrelated tasks and build dependencies preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-03-windows-stop-recovery-755.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41602550093"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "User explicitly requested main integration/push without Release. PR #756 merged as 92b5733707deed68584aa14aa53a91a2cced2319; no version bump, tag, Release or local deployment.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/756"
+      ]
     }
   },
   "release_authorization": "User previously requested integration and push to main without Release; current request names #755. No tag, version bump or local service restart.",
   "rollback": "Revert the scoped source commit. Recovered markers and audits stay local; do not blindly restore a blocker while processes are active.",
-  "handoff": "Windows physical Docker Desktop restart and ARM64 execution remain separate from CI Win32 fault testing."
+  "handoff": "Source merged to main via PR #756. Update/recompile Windows source, then stop.bat and start.bat; recognized stale blockers are audited/archived. Physical user Docker Desktop restart, ARM64 execution and Hello hardware remain unverified. No running Mac service replacement."
 }
