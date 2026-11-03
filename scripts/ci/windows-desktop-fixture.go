@@ -63,7 +63,8 @@ func main() {
 	}
 }
 
-const page = `<!doctype html><meta charset="utf-8"><title>Aide desktop fixture</title><style>body{font:18px system-ui;padding:40px;background:#17202c;color:#edf0f5}button{padding:12px}</style><h1>Aide Windows desktop · isolated UI check</h1><button id="open">Open plugin in app tab</button><p id="result">Fixture data only</p><script>
+const page = `<!doctype html><meta charset="utf-8"><title>Aide desktop fixture</title><style>:root{--bg:#202328;--panel:#24282e;--selected:#344252;--text:#e0e4eb;--muted:#a4adb9;--line:#373c44}html[data-theme="light"]{--bg:#f2f3f5;--panel:#f8f9fa;--selected:#e2e8f0;--text:#262a32;--muted:#626c7b;--line:#d8dee7}body{font:18px system-ui;padding:40px;background:var(--bg);color:var(--text)}button{padding:12px}</style><h1>Aide Windows desktop · isolated UI check</h1><button id="theme" onclick="document.documentElement.dataset.theme=document.documentElement.dataset.theme==='light'?'dark':'light'">切换明暗</button> <button id="open">Open plugin in app tab</button><p id="result">Fixture data only</p><script>
+if(new URLSearchParams(location.hash.slice(1)).has('token'))history.replaceState(null,'',location.pathname+location.search);
 window.fixtureReady=true;window.fixtureNativeReady=false;
 if(new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')){
  document.title='Fixture plugin · aide';const frame=document.createElement('iframe');frame.sandbox='allow-scripts allow-downloads';frame.src='/plugin-workbench/fixture';addEventListener('message',e=>{if(e.source!==frame.contentWindow||e.data!=='fixture-ready')return;const channel=new MessageChannel();channel.port1.onmessage=e=>{window.fixturePluginReady=e.data==='isolated-port-ready'&&localStorage.getItem('desktop-fixture')==='shared';document.getElementById('result').textContent='Native app tab + sandbox MessagePort ready';};frame.contentWindow.postMessage('connect','*',[channel.port2]);});document.body.append(frame);

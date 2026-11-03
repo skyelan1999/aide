@@ -1,0 +1,69 @@
+{
+  "id": "windows-native-tabs-20261103",
+  "request": "先单独修Windows选项卡配色、圆角和字体，启动问题由用户先清理Docker尝试，保留排查分支",
+  "baseline": "08038bdfee615de0c80be29f998fd05497cbe1bb",
+  "initial_status": "M native/windows-launcher/desktop.hpp\n M scripts/build-windows-launcher.py\n M scripts/ci/windows-desktop-fixture.go\n M scripts/windows_desktop_smoke.cpp\n?? native/windows-launcher/desktop_chrome.hpp",
+  "acceptance": [
+    "Windows标签与增减按钮采用Aide配色，Segoe UI字体及圆角绘制",
+    "Aide明暗和配色变化同步到原生窗口标题栏/选项卡",
+    "保留标签切换、新建/关闭和插件页面行为",
+    "Windows真实UI检查明暗调色板和截图，双架构编译",
+    "只整合UI；启动保护标记与恢复逻辑不改，启动排查保留在独立分支，不Release"
+  ],
+  "scope": [
+    "native/windows-launcher/desktop_chrome.hpp",
+    "native/windows-launcher/desktop.hpp 样式与受限外观消息",
+    "scripts/build-windows-launcher.py 原生绘制库",
+    "Windows UI测试、fixture及文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确先修UI。保留原生TabControl行为与辅助接口，以自绘圆角/Segoe UI替代经典控件外观；从可见顶层Aide页读取6个颜色与明暗值，固定格式校验。",
+      "evidence": [
+        "user: 你先把ui修了",
+        "native/windows-launcher/desktop_chrome.hpp"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用户明确先修UI。保留原生TabControl行为与辅助接口，以自绘圆角/Segoe UI替代经典控件外观；从可见顶层Aide页读取6个颜色与明暗值，固定格式校验。",
+      "evidence": [
+        "user: 你先把ui修了",
+        "native/windows-launcher/desktop_chrome.hpp"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "原生选项卡/增减按钮/标题栏随Aide样式，标题过长省略。UI变更已从启动排查cc41a2c拆出，主启动/停止/安全标记相关代码未修改。",
+      "evidence": [
+        "git diff --stat",
+        "native/windows-launcher/desktop.hpp"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "主题绘制初次本地交叉编译成功；正在对UI专用分支验证AMD64/ARM64和Windows明暗调色板/截图。",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "启动排查保存在fix/windows-desktop-startup-20261103，用户先自行尝试Docker清理。本分支只交付UI。",
+  "issue": "https://github.com/skyelan1999/aide/issues/751"
+}
