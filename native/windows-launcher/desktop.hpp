@@ -30,10 +30,10 @@ struct Desktop {
  void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
  void pause(const std::shared_ptr<Tab>& tab){if(tab&&tab->web)tab->web->ExecuteScript(L"window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();document.querySelectorAll('audio,video').forEach(x=>x.pause());window.speechSynthesis?.cancel();",nullptr);}
- void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4);int count=bar?std::max(1,TabCtrl_GetItemCount(bar)):1;int available=std::max(0,std::min(count*chrome.px(216)+gap*2,int(bounds.right)-button-gap*2));bounds.top=h;
+ void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4);int count=bar?std::max(1,TabCtrl_GetItemCount(bar)):1;int available=std::max(0,int(bounds.right)-button-gap*2);bounds.top=h;
   for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);
   if(bar){MoveWindow(bar,0,0,available,h,TRUE);chrome.layout(bar,available);}
-  MoveWindow(GetDlgItem(window,101),available+gap,chrome.px(2),button,button,TRUE);
+  RECT last{};int newX=available+gap;if(bar&&TabCtrl_GetItemRect(bar,count-1,&last)&&last.right+gap+button<bounds.right)newX=std::max(gap,int(last.right)+gap);MoveWindow(GetDlgItem(window,101),newX,chrome.px(2),button,button,TRUE);
   RECT activeRect{};bool shown=bar&&TabCtrl_GetCurSel(bar)>=0&&TabCtrl_GetItemRect(bar,TabCtrl_GetCurSel(bar),&activeRect)&&activeRect.left>=0&&activeRect.right<=available;
   auto close=GetDlgItem(window,102);if(shown){MoveWindow(close,activeRect.right-chrome.px(26),chrome.px(4),chrome.px(22),chrome.px(24),TRUE);ShowWindow(close,SW_SHOWNOACTIVATE);}else ShowWindow(close,SW_HIDE);InvalidateRect(window,nullptr,FALSE);
  }
@@ -137,6 +137,7 @@ struct Desktop {
   auto self=reinterpret_cast<Desktop*>(GetWindowLongPtrW(hwnd,GWLP_USERDATA));if(message==WM_NCCREATE){self=static_cast<Desktop*>(reinterpret_cast<CREATESTRUCTW*>(l)->lpCreateParams);self->window=hwnd;SetWindowLongPtrW(hwnd,GWLP_USERDATA,reinterpret_cast<LONG_PTR>(self));}
   if(!self)return DefWindowProcW(hwnd,message,w,l);
   switch(message){
+   case WM_PAINT:{PAINTSTRUCT paint{};auto dc=BeginPaint(hwnd,&paint);Chrome::fill(dc,paint.rcPaint,self->chrome.background);EndPaint(hwnd,&paint);return 0;}
    case WM_ERASEBKGND:{RECT area{};GetClientRect(hwnd,&area);Chrome::fill(reinterpret_cast<HDC>(w),area,self->chrome.background);return 1;}
    case WM_DRAWITEM:{auto item=reinterpret_cast<DRAWITEMSTRUCT*>(l);if(item->CtlType==ODT_BUTTON){self->chrome.button(*item);return TRUE;}break;}
    case WM_DPICHANGED:{self->chrome.setDpi(HIWORD(w));self->icons();auto bounds=reinterpret_cast<RECT*>(l);SetWindowPos(hwnd,nullptr,bounds->left,bounds->top,bounds->right-bounds->left,bounds->bottom-bounds->top,SWP_NOZORDER|SWP_NOACTIVATE);self->resize();return 0;}

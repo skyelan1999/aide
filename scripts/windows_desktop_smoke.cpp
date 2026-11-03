@@ -22,7 +22,7 @@ static void capture(const wchar_t* name=L"native-desktop.bmp"){
 static void compactChromeChecks(){
  auto& app=*testApp;RECT bar{},viewport{};GetClientRect(app.bar,&bar);app.active()->controller->get_Bounds(&viewport);
  if(bar.bottom!=app.chrome.height()||viewport.top!=bar.bottom||app.chrome.height()!=MulDiv(32,int(app.chrome.dpi),96))throw std::runtime_error("Tab strip is not compact or overlaps web content");
- RECT selected{};TabCtrl_GetItemRect(app.bar,TabCtrl_GetCurSel(app.bar),&selected);RECT visible{};IntersectRect(&visible,&selected,&bar);if(visible.right-visible.left<(selected.right-selected.left)*.9)throw std::runtime_error("Selected tab is clipped after DPI/layout change");
+ RECT selected{};TabCtrl_GetItemRect(app.bar,TabCtrl_GetCurSel(app.bar),&selected);RECT visible{};IntersectRect(&visible,&selected,&bar);if(visible.right-visible.left<(selected.right-selected.left)*.9)throw std::runtime_error("Selected tab clipped: dpi="+std::to_string(app.chrome.dpi)+" left="+std::to_string(selected.left)+" right="+std::to_string(selected.right)+" bar="+std::to_string(bar.right));
  if(!IsWindowVisible(GetDlgItem(app.window,102)))throw std::runtime_error("Active tab close control missing");
  results["selectedTabRemainsVisible"]=true;results["inlineCloseControl"]=true;
  if(!SendMessageW(app.window,WM_GETICON,ICON_SMALL,0)||!SendMessageW(app.window,WM_GETICON,ICON_BIG,0))throw std::runtime_error("Window/taskbar icon missing");
@@ -49,6 +49,7 @@ static void pollScript(const std::wstring& script,std::function<void(const json&
  if(FAILED(testApp->active()->web->ExecuteScript(script.c_str(),callback.get()))){waiting=false;finish(false,"Script evaluation failed");}
 }
 static VOID CALLBACK tick(HWND,UINT,UINT_PTR,DWORD){
+ try{
  if(finished||!testApp||!testApp->window)return;
  if(GetTickCount()-began>90000){finish(false,"Timed out in phase "+std::to_string(phase));return;}
  if(phase==0){pollScript(L"({ready:window.fixtureReady===true,native:window.fixtureNativeReady===true})",[](const json& v){if(!v.is_object()||!v.value("ready",false)||!v.value("native",false))return;RECT work{},bounds{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);GetWindowRect(testApp->window,&bounds);if(bounds.left<work.left||bounds.top<work.top||bounds.right>work.right||bounds.bottom>work.bottom)throw std::runtime_error("Desktop default window exceeds work area");compactChromeChecks();results["windowFitsWorkArea"]=true;results["localTLSPin"]=true;results["nativeHelloProbe"]=true;phase=1;testApp->active()->web->ExecuteScript(L"document.getElementById('open').click();",nullptr);});}
@@ -60,6 +61,7 @@ static VOID CALLBACK tick(HWND,UINT,UINT_PTR,DWORD){
  else if(phase==4&&GetTickCount()-phaseStarted>600){if(testApp->tabs.size()!=1||testApp->closingAll)finish(false,"Cancelled dirty close lost main tab");else{results["dirtyCloseCancelPreservesTab"]=true;phase=5;phaseStarted=GetTickCount();pollScript(L"window.AidePluginWorkbench={isDirty:()=>false};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['fixture']));a.download='fixture.txt';a.click();true",[](const json&){});}}
  else if(phase==5){HWND dialog=FindWindowW(L"#32770",nullptr);if(dialog){PostMessageW(dialog,WM_COMMAND,IDCANCEL,0);phase=6;phaseStarted=GetTickCount();}}
  else if(phase==6&&GetTickCount()-phaseStarted>800){results["downloadDialogCancel"]=true;finish(true);}
+ }catch(const std::exception& e){capture(L"compact-failure.bmp");finish(false,e.what());}
 }
 int wmain(int argc,wchar_t** argv){
  try{if(argc!=5)throw std::runtime_error("Expected readiness JSON, private profile, loader DLL, result JSON");

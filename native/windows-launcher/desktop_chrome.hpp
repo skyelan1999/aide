@@ -4,7 +4,7 @@
 namespace aide_desktop {
 struct Chrome {
  COLORREF background=RGB(32,35,40),surface=RGB(36,40,46),selected=RGB(52,66,82),text=RGB(224,228,235),muted=RGB(164,173,185),line=RGB(55,60,68);
- HFONT font=nullptr;bool dark=true;UINT dpi=96;int hovered=-1;HWND hoveredButton=nullptr;
+ HFONT font=nullptr;bool dark=true;UINT dpi=96;int hovered=-1;HWND hoveredButton=nullptr;UINT appliedDpi=0;int lastWidth=-1,lastCount=-1,lastSelected=-2,lastItem=-1;
  Chrome(){setDpi(96);}
  ~Chrome(){if(font)DeleteObject(font);}
  int px(int dip)const{return MulDiv(dip,int(dpi),96);}
@@ -18,7 +18,7 @@ struct Chrome {
  void apply(HWND window,HWND tabs,const json& data){
   if(!data.is_object()||data.size()!=7||!data.at("dark").is_boolean())throw std::runtime_error("Invalid native appearance");
   auto bg=color(data.at("background").get<std::string>()),s=color(data.at("surface").get<std::string>()),sel=color(data.at("selected").get<std::string>()),fg=color(data.at("text").get<std::string>()),m=color(data.at("muted").get<std::string>()),l=color(data.at("line").get<std::string>());
-  background=bg;surface=s;selected=sel;text=fg;muted=m;line=l;dark=data.at("dark").get<bool>();BOOL dim=dark;DwmSetWindowAttribute(window,20,&dim,sizeof(dim));RedrawWindow(window,nullptr,nullptr,RDW_INVALIDATE|RDW_ALLCHILDREN);
+  background=bg;surface=s;selected=sel;text=fg;muted=m;line=l;dark=data.at("dark").get<bool>();BOOL dim=dark;DwmSetWindowAttribute(window,20,&dim,sizeof(dim));RedrawWindow(window,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_FRAME|RDW_UPDATENOW|RDW_ALLCHILDREN);
  }
  static void fill(HDC dc,const RECT& r,COLORREF color){auto brush=CreateSolidBrush(color);FillRect(dc,&r,brush);DeleteObject(brush);}
  void rounded(HDC dc,RECT r,COLORREF color){auto brush=CreateSolidBrush(color);auto pen=CreatePen(PS_SOLID,1,color);auto oldBrush=SelectObject(dc,brush),oldPen=SelectObject(dc,pen);RoundRect(dc,r.left,r.top,r.right,r.bottom,px(6),px(6));SelectObject(dc,oldBrush);SelectObject(dc,oldPen);DeleteObject(brush);DeleteObject(pen);}
@@ -48,7 +48,19 @@ struct Chrome {
    BitBlt(target,0,0,bounds.right,bounds.bottom,dc,0,0,SRCCOPY);SelectObject(dc,oldBitmap);DeleteObject(bitmap);DeleteDC(dc);EndPaint(hwnd,&paint);return 0;}
   return DefSubclassProc(hwnd,message,w,l);
  }
- void layout(HWND tabs,int width){if(!tabs)return;SendMessageW(tabs,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);int count=std::max(1,TabCtrl_GetItemCount(tabs));int item=std::min(px(216),std::max(px(104),(width-px(8))/count));TabCtrl_SetPadding(tabs,0,0);TabCtrl_SetItemSize(tabs,item,height()-px(6));EnumChildWindows(tabs,styleScroller,reinterpret_cast<LPARAM>(this));if(TabCtrl_GetCurSel(tabs)>=0)TabCtrl_SetCurFocus(tabs,TabCtrl_GetCurSel(tabs));InvalidateRect(tabs,nullptr,FALSE);}
- void install(HWND tabs){SetWindowSubclass(tabs,tabsProcedure,1,reinterpret_cast<DWORD_PTR>(this));for(int id:{101,102})SetWindowSubclass(GetDlgItem(GetParent(tabs),id),buttonProcedure,1,reinterpret_cast<DWORD_PTR>(this));layout(tabs,1200);}
+ void layout(HWND tabs,int width){
+  if(!tabs)return;int actual=TabCtrl_GetItemCount(tabs),count=std::max(1,actual),sel=TabCtrl_GetCurSel(tabs);int item=std::min(px(216),std::max(px(104),(width-px(8))/count));bool fontChanged=appliedDpi!=dpi,changed=fontChanged||lastWidth!=width||lastCount!=actual||lastSelected!=sel||lastItem!=item;
+  // Commit cached metrics before native focus notifications can reenter resize.
+  appliedDpi=dpi;lastWidth=width;lastCount=actual;lastSelected=sel;bool itemChanged=lastItem!=item;lastItem=item;
+  if(fontChanged)SendMessageW(tabs,WM_SETFONT,reinterpret_cast<WPARAM>(font),FALSE);
+  if(fontChanged||itemChanged)TabCtrl_SetItemSize(tabs,item,height()-px(6));
+  // TCS_BUTTONS has an independent logical focus item. Reset the scroll anchor
+  // before focusing the selected item; item-size/DPI changes otherwise leave a
+  // formerly visible selection clipped, or retain an unnecessary scroll page.
+  if(changed&&sel>=0){TabCtrl_SetCurFocus(tabs,sel?0:-1);TabCtrl_SetCurFocus(tabs,sel);}
+  EnumChildWindows(tabs,styleScroller,reinterpret_cast<LPARAM>(this));InvalidateRect(tabs,nullptr,FALSE);
+ }
+
+ void install(HWND tabs){TabCtrl_SetPadding(tabs,0,0);SetWindowSubclass(tabs,tabsProcedure,1,reinterpret_cast<DWORD_PTR>(this));for(int id:{101,102})SetWindowSubclass(GetDlgItem(GetParent(tabs),id),buttonProcedure,1,reinterpret_cast<DWORD_PTR>(this));layout(tabs,1200);}
 };
 }
