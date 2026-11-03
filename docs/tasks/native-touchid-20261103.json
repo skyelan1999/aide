@@ -52,13 +52,17 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "321项quick通过；Swift实际arm64编译、桌面policy、软件向量、Go跨实现正常/拒绝路径及相关race通过；native/launcher/source fingerprint测试通过。本机硬件绑定和解锁尚未执行。",
+      "summary": "321项quick、Swift arm64编译及policy、Swift软件向量、Go跨实现正常/拒绝及相关race、JS原生路由/取消/拒绝/浏览器回退通过。正式build.command成功，镜像健康、9个挂载不变，线上三项资源逐字节一致，运行源码/quick指纹一致，安装包签名校验通过。独立App实际锁屏已显示原生Touch ID按钮及首次绑定提示；硬件绑定/取消/解锁待用户本机完成。",
       "evidence": [
         ".agent-state/native-touchid/go-race.log",
         "scripts/native-touchid.test.cjs",
         "native/macos-desktop/biometrics-tests.swift",
         "internal/server/testdata/native-touchid-webauthn.json",
-        ".agent-state/quick.json"
+        ".agent-state/quick.json",
+        "primary .agent-state/native-touchid/deployment.json",
+        "primary .agent-state/native-touchid/verification.json",
+        "primary .agent-state/native-touchid/native-locked.png",
+        "primary .agent-state/native-touchid/build-actual.log"
       ]
     },
     "documentation": {
@@ -77,13 +81,28 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "本机源码/镜像/原生应用已更新；无公共Release或远端推送，真实指纹验收未完成。",
+      "evidence": [
+        "e1c58b28",
+        "https://github.com/skyelan1999/aide/issues/749"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "保留原密码和Safari WebAuthn。回退宿主时正常退出Aide再恢复旧版本；不删除账户或Safari凭据。",
-  "handoff": "原生硬件首次绑定、取消和真实锁屏解锁由用户本机完成；未测试前Issue #749保持打开。尚无推送或公共Release授权。",
-  "issue": "https://github.com/skyelan1999/aide/issues/749"
+  "handoff": "用户已收到本机首次绑定步骤，正等待反馈。真实绑定、取消和锁屏解锁未验收，Issue #749保持打开；本机更新完成、源码已本地提交，未推送。原#746 ProfessionalProject显示验收仍待解锁，未混入本任务验收结论。",
+  "issue": "https://github.com/skyelan1999/aide/issues/749",
+  "local_deployment": {
+    "sourceCommit": "e1c58b28",
+    "image": "sha256:c1a71c8c196db4a24e0da866200676d953e17d0de2f0392643573476281fca1e",
+    "sourceFingerprint": "c281d176e67c006c35bbe0d6f0f492b5489fa18fc92e3921eec17479ae853fcf",
+    "nativeDigest": "f37a6d0f9249264e0778d6f44944ddb4eeb42d00efefa7963d46434c146ba7eb",
+    "health": "healthy",
+    "mountsUnchanged": true,
+    "assetsMatch": true,
+    "quickContentMatches": true,
+    "app": "~/Applications/Aide.app",
+    "evidenceRoot": "primary installation .agent-state/native-touchid"
+  }
 }
