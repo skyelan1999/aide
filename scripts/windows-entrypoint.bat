@@ -3,6 +3,9 @@ setlocal DisableDelayedExpansion
 pushd "%~dp0.."
 if errorlevel 1 exit /b 1
 set "AIDE_ENTRY_RC=1"
+set "AIDE_ENTRY_ACTION=%~1"
+if not exist ".agent-state" mkdir ".agent-state"
+>>".agent-state\windows-entrypoint.log" echo action=%~1 stage=begin
 echo [Aide] %~1
 if /i "%~1"=="build" goto source_build
 if /i "%~1"=="clean" goto source_build
@@ -24,9 +27,11 @@ echo Dry run: compile the current native host in Docker, then build the source r
 set "AIDE_ENTRY_RC=0"
 goto finish
 :launch
+>>".agent-state\windows-entrypoint.log" echo action=%AIDE_ENTRY_ACTION% stage=native-contract
 if not exist "aide-launcher.exe" goto missing_host
 "%CD%\aide-launcher.exe" --launcher-contract <nul 2>nul | findstr.exe /x /c:"aide-launcher-contract=2" >nul
 if errorlevel 1 goto stale_host
+>>".agent-state\windows-entrypoint.log" echo action=%AIDE_ENTRY_ACTION% stage=native-dispatch
 "%CD%\aide-launcher.exe" %*
 set "AIDE_ENTRY_RC=%ERRORLEVEL%"
 goto finish
@@ -37,6 +42,7 @@ goto finish
 echo The existing aide-launcher.exe is outdated. In this Git checkout run build.bat to rebuild it from current source.
 echo Release users must restore a complete matching Release package. No legacy script was executed.
 :finish
+>>".agent-state\windows-entrypoint.log" echo action=%AIDE_ENTRY_ACTION% stage=finish exit=%AIDE_ENTRY_RC%
 echo [Aide] %~1 finished with exit code %AIDE_ENTRY_RC%.
 if not "%AIDE_ENTRY_RC%"=="0" if exist ".aide-data\native\launcher.log" echo Diagnostics: %CD%\.aide-data\native\launcher.log
 call :wait_if_double_clicked

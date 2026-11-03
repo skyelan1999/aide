@@ -6,6 +6,7 @@
 #include "desktop_policy.hpp"
 #include "desktop_com.hpp"
 #include "desktop_hello.hpp"
+#include "desktop_chrome.hpp"
 namespace aide_desktop {
 inline void checked(HRESULT result,const char* message){if(FAILED(result))throw std::runtime_error(message);}
 inline std::vector<BYTE> certificate(const std::string& pem) {
@@ -20,14 +21,14 @@ struct Desktop {
  struct Reply {std::shared_ptr<Tab> tab;unsigned generation;std::string id;json value;std::shared_ptr<Hello::Operation> operation;};
  HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile;std::vector<BYTE> pin;
  Ptr<ICoreWebView2Environment> environment;std::vector<std::shared_ptr<Tab>> tabs;
- Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
+ Chrome chrome;Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
  HMODULE loader=nullptr;
  Desktop(std::wstring address,std::wstring initial,fs::path directory,std::wstring identity,std::string pem):origin(std::move(address)),entry(std::move(initial)),className(L"AideDesktop_"+identity),profile(std::move(directory)),pin(certificate(pem)){}
  void post(std::function<void()> fn){auto task=new std::function<void()>(std::move(fn));if(!PostMessageW(window,WM_APP+2,0,reinterpret_cast<LPARAM>(task)))delete task;}
- void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
+ void fail(const wchar_t* text,const std::shared_ptr<Tab>& failed={}){std::wstring message=text;std::cerr<<"Desktop initialization failed"<<std::endl;post([this,message,failed]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(failed)erase(failed);else if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
  void pause(const std::shared_ptr<Tab>& tab){if(tab&&tab->web)tab->web->ExecuteScript(L"window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();document.querySelectorAll('audio,video').forEach(x=>x.pause());window.speechSynthesis?.cancel();",nullptr);}
- void resize(){RECT bounds{};GetClientRect(window,&bounds);bounds.top=34;MoveWindow(GetDlgItem(window,101),bounds.right-74,0,34,30,TRUE);MoveWindow(GetDlgItem(window,102),bounds.right-37,0,34,30,TRUE);for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);if(bar)MoveWindow(bar,0,0,bounds.right-76,32,TRUE);}
+ void resize(){RECT bounds{};GetClientRect(window,&bounds);bounds.top=48;MoveWindow(GetDlgItem(window,101),bounds.right-90,3,40,42,TRUE);MoveWindow(GetDlgItem(window,102),bounds.right-47,3,40,42,TRUE);for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);if(bar)MoveWindow(bar,0,0,bounds.right-94,48,TRUE);}
  void select(size_t index){if(index>=tabs.size())return;if(active()!=tabs[index]){pause(active());hello.cancel(ceremony);}selected=index;TabCtrl_SetCurSel(bar,int(index));for(size_t i=0;i<tabs.size();i++)if(tabs[i]->controller)tabs[i]->controller->put_IsVisible(i==index);if(active()->controller)active()->controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);SetWindowTextW(window,active()->title.c_str());}
  void erase(const std::shared_ptr<Tab>& tab){if(tab->closed)return;tab->closed=true;pause(tab);hello.cancel(ceremony);if(tab->controller)tab->controller->Close();tab->web=Ptr<ICoreWebView2>();tab->controller=Ptr<ICoreWebView2Controller>();auto i=std::find(tabs.begin(),tabs.end(),tab);if(i==tabs.end())return;size_t index=size_t(i-tabs.begin());TabCtrl_DeleteItem(bar,int(index));tabs.erase(i);if(tabs.empty()){DestroyWindow(window);return;}select(std::min(selected,tabs.size()-1));}
  void close(const std::shared_ptr<Tab>& tab){if(!tab||tab->closed||tab->closing)return;tab->closing=true;
@@ -46,6 +47,7 @@ struct Desktop {
   if(FAILED(args->get_WebMessageAsJson(&bodyRaw)))return;auto text=utf8(takeString(bodyRaw));if(text.size()>65536)return;auto body=json::parse(text,nullptr,false);
   if(!body.is_object()||body.size()!=3||!body.contains("id")||!body["id"].is_string()||!body.contains("operation")||!body["operation"].is_string()||!body.contains("options")||!body["options"].is_object())return;
   auto id=body["id"].get<std::string>(),operation=body["operation"].get<std::string>();if(!std::regex_match(id,std::regex("[0-9]{1,9}")))return;
+  if(operation=="appearance"){try{chrome.apply(window,bar,body["options"]);}catch(...){}return;}
   auto reject=[&](const char* name,const char* message){send(tab,id,{{"error",{{"name",name},{"message",message}}}});};
   if(operation=="status"){send(tab,id,hello.status(profile/L"hello-credentials.json"));return;}
   if(operation!="create"&&operation!="get"){reject("SecurityError","Unsupported native operation");return;}
@@ -89,7 +91,7 @@ struct Desktop {
    if(kind==COREWEBVIEW2_PERMISSION_KIND_MICROPHONE||kind==COREWEBVIEW2_PERMISSION_KIND_CAMERA){Ptr<ICoreWebView2Deferral> defer;if(FAILED(args->GetDeferral(defer.put()))){args->put_State(COREWEBVIEW2_PERMISSION_STATE_DENY);return S_OK;}Ptr<ICoreWebView2PermissionRequestedEventArgs> pending(args);post([this,tab,kind,pending,defer]{bool allow=!tab->closed&&tab==active()&&MessageBoxW(window,kind==COREWEBVIEW2_PERMISSION_KIND_MICROPHONE?L"Allow this Aide page to use the microphone?":L"Allow this Aide page to use the camera?",L"Aide",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)==IDYES;pending->put_State(allow?COREWEBVIEW2_PERMISSION_STATE_ALLOW:COREWEBVIEW2_PERMISSION_STATE_DENY);defer->Complete();});}return S_OK;});
   tab->web->add_PermissionRequested(permissions.get(),&token);
   auto messages=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([this,tab](ICoreWebView2*,auto* args){message(tab,args);return S_OK;});tab->web->add_WebMessageReceived(messages.get(),&token);
-  const wchar_t* script=LR"JS((()=>{if(window!==window.top||location.pathname!=='/'||location.search||new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')||new URLSearchParams(location.hash.slice(1)).has('file'))return;let sequence=0;const pending=new Map();chrome.webview.addEventListener('message',event=>{const m=event.data;if(!m?.aideBiometrics)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.result?.error)p.reject(new DOMException(m.result.error.message,m.result.error.name));else p.resolve(m.result);});const request=(operation,options={})=>new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(new DOMException('Windows Hello request expired','NotAllowedError'));},125000);pending.set(id,{resolve,reject,timer});chrome.webview.postMessage({id,operation,options});});Object.defineProperty(window,'AideNativeBiometrics',{value:Object.freeze({platform:'windows',status:()=>request('status'),create:o=>request('create',o),get:o=>request('get',o)}),writable:false,configurable:false});})();)JS";
+  const wchar_t* script=LR"JS((()=>{if(window!==window.top||location.pathname!=='/'||location.search||new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')||new URLSearchParams(location.hash.slice(1)).has('file'))return;let sequence=0;const pending=new Map();const appearance=()=>{const s=getComputedStyle(document.documentElement),hex=(key,fallback)=>{const v=s.getPropertyValue(key).trim();return /^#[0-9a-f]{6}$/i.test(v)?v:fallback;};chrome.webview.postMessage({id:'0',operation:'appearance',options:{dark:document.documentElement.dataset.theme!=='light',background:hex('--bg','#202328'),surface:hex('--panel','#24282e'),selected:hex('--selected','#344252'),text:hex('--text','#e0e4eb'),muted:hex('--muted','#a4adb9'),line:hex('--line','#373c44')}});};addEventListener('DOMContentLoaded',()=>{appearance();new MutationObserver(appearance).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette']});},{once:true});chrome.webview.addEventListener('message',event=>{const m=event.data;if(!m?.aideBiometrics)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.result?.error)p.reject(new DOMException(m.result.error.message,m.result.error.name));else p.resolve(m.result);});const request=(operation,options={})=>new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(new DOMException('Windows Hello request expired','NotAllowedError'));},125000);pending.set(id,{resolve,reject,timer});chrome.webview.postMessage({id,operation,options});});Object.defineProperty(window,'AideNativeBiometrics',{value:Object.freeze({platform:'windows',status:()=>request('status'),create:o=>request('create',o),get:o=>request('get',o)}),writable:false,configurable:false});})();)JS";
 
   auto security=tab->web.as<ICoreWebView2_14>();if(!security)throw std::runtime_error("Update Microsoft Edge WebView2 Runtime to enable local TLS validation");
   auto cert=callback<ICoreWebView2ServerCertificateErrorDetectedEventHandler,ICoreWebView2*,ICoreWebView2ServerCertificateErrorDetectedEventArgs*>([this](ICoreWebView2*,auto* args){
@@ -117,15 +119,17 @@ struct Desktop {
   if(tabs.size()>=16){if(complete)complete(nullptr);post([this]{MessageBoxW(window,L"Close an unused Aide tab before opening more pages.",L"Aide",MB_OK);});return;}
   auto tab=std::make_shared<Tab>();tabs.push_back(tab);TCITEMW item{};item.mask=TCIF_TEXT;item.pszText=tab->title.data();TabCtrl_InsertItem(bar,int(tabs.size()-1),&item);select(tabs.size()-1);
   auto ready=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([this,tab,uri,complete](HRESULT result,auto* controller){
-   if(tab->closed||FAILED(result)||!controller){if(complete)complete(nullptr);if(!tab->closed)erase(tab);return S_OK;}
-   try{tab->controller=Ptr<ICoreWebView2Controller>(controller);checked(controller->get_CoreWebView2(tab->web.put()),"WebView unavailable");configure(tab,[this,tab,uri,complete](bool ready){if(tab->closed||!ready){if(complete)complete(nullptr);if(!tab->closed)erase(tab);return;}resize();select(selected);if(complete)complete(tab);else if(!uri.empty()&&FAILED(tab->web->Navigate(uri.c_str())))fail(L"Aide page navigation failed.");});}
-   catch(...){if(complete)complete(nullptr);erase(tab);fail(L"Aide could not initialize its desktop page. Check the WebView2 Runtime and retry.");}return S_OK;});
-  if(FAILED(environment->CreateCoreWebView2Controller(window,ready.get()))){if(complete)complete(nullptr);erase(tab);fail(L"Cannot create an Aide app page. Check WebView2 Runtime.");}
+   if(tab->closed||FAILED(result)||!controller){if(complete)complete(nullptr);if(!tab->closed)fail(L"Aide could not create a WebView2 page. Check desktop.log and the installed Runtime.",tab);return S_OK;}
+   try{tab->controller=Ptr<ICoreWebView2Controller>(controller);checked(controller->get_CoreWebView2(tab->web.put()),"WebView unavailable");configure(tab,[this,tab,uri,complete](bool ready){if(tab->closed||!ready){if(complete)complete(nullptr);if(!tab->closed)fail(L"Aide could not initialize its page scripts. Check desktop.log.",tab);return;}resize();select(selected);if(complete)complete(tab);else if(!uri.empty()&&FAILED(tab->web->Navigate(uri.c_str())))fail(L"Aide page navigation failed.");});}
+   catch(...){if(complete)complete(nullptr);fail(L"Aide could not initialize its desktop page. Check the WebView2 Runtime and retry.",tab);}return S_OK;});
+  if(FAILED(environment->CreateCoreWebView2Controller(window,ready.get()))){if(complete)complete(nullptr);fail(L"Cannot create an Aide app page. Check WebView2 Runtime.",tab);}
  }
  static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM w,LPARAM l){
   auto self=reinterpret_cast<Desktop*>(GetWindowLongPtrW(hwnd,GWLP_USERDATA));if(message==WM_NCCREATE){self=static_cast<Desktop*>(reinterpret_cast<CREATESTRUCTW*>(l)->lpCreateParams);self->window=hwnd;SetWindowLongPtrW(hwnd,GWLP_USERDATA,reinterpret_cast<LONG_PTR>(self));}
   if(!self)return DefWindowProcW(hwnd,message,w,l);
   switch(message){
+   case WM_ERASEBKGND:{RECT area{};GetClientRect(hwnd,&area);Chrome::fill(reinterpret_cast<HDC>(w),area,self->chrome.background);return 1;}
+   case WM_DRAWITEM:{auto item=reinterpret_cast<DRAWITEMSTRUCT*>(l);if(item->CtlType==ODT_BUTTON){self->chrome.button(*item);return TRUE;}break;}
    case WM_SIZE:self->resize();if(w==SIZE_MINIMIZED){self->pause(self->active());self->hello.cancel(self->ceremony);}return 0;
    case WM_SHOWWINDOW:if(!w){self->pause(self->active());self->hello.cancel(self->ceremony);}break;
    case WM_NOTIFY:if(reinterpret_cast<NMHDR*>(l)->hwndFrom==self->bar&&reinterpret_cast<NMHDR*>(l)->code==TCN_SELCHANGE)self->select(TabCtrl_GetCurSel(self->bar));return 0;
@@ -142,14 +146,15 @@ struct Desktop {
  }
  int run(const fs::path& dll){
   auto mutexName=L"Local\\"+className;Handle mutex(CreateMutexW(nullptr,FALSE,mutexName.c_str()));if(!mutex.h)throw std::runtime_error("Desktop ownership unavailable");
-  if(GetLastError()==ERROR_ALREADY_EXISTS){auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}return 0;}
+  if(GetLastError()==ERROR_ALREADY_EXISTS){auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);return 0;}throw std::runtime_error("An Aide desktop process exists without a usable window; inspect desktop.log and close that owned process before retrying");}
   checked(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED),"Desktop COM unavailable");SetCurrentProcessExplicitAppUserModelID(className.c_str());SetProcessDPIAware();INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES};InitCommonControlsEx(&controls);
-  WNDCLASSW cls{};cls.lpfnWndProc=procedure;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=className.c_str();cls.hCursor=LoadCursorW(nullptr,IDC_ARROW);cls.hbrBackground=reinterpret_cast<HBRUSH>(COLOR_WINDOW+1);RegisterClassW(&cls);
+  WNDCLASSW cls{};cls.lpfnWndProc=procedure;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=className.c_str();cls.hCursor=LoadCursorW(nullptr,IDC_ARROW);cls.hbrBackground=nullptr;RegisterClassW(&cls);
   RECT work{0,0,1412,932};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);int width=std::min(1380,std::max(320,int(work.right-work.left)-32)),height=std::min(900,std::max(240,int(work.bottom-work.top)-32));
   window=CreateWindowExW(0,className.c_str(),L"Aide",WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN,work.left+(work.right-work.left-width)/2,work.top+(work.bottom-work.top-height)/2,width,height,nullptr,nullptr,cls.hInstance,this);if(!window)throw std::runtime_error("Desktop window unavailable");
-  bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS,0,0,1200,32,window,nullptr,cls.hInstance,nullptr);
-  CreateWindowExW(0,L"BUTTON",L"+",WS_CHILD|WS_VISIBLE,1205,0,34,30,window,reinterpret_cast<HMENU>(101),cls.hInstance,nullptr);
-  CreateWindowExW(0,L"BUTTON",L"×",WS_CHILD|WS_VISIBLE,1242,0,34,30,window,reinterpret_cast<HMENU>(102),cls.hInstance,nullptr);
+  bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|TCS_FIXEDWIDTH|TCS_BUTTONS|TCS_FLATBUTTONS,0,0,1200,48,window,nullptr,cls.hInstance,nullptr);
+  CreateWindowExW(0,L"BUTTON",L"+",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1205,3,40,42,window,reinterpret_cast<HMENU>(101),cls.hInstance,nullptr);
+  CreateWindowExW(0,L"BUTTON",L"×",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1242,3,40,42,window,reinterpret_cast<HMENU>(102),cls.hInstance,nullptr);
+  chrome.install(bar);
   ShowWindow(window,SW_SHOW);UpdateWindow(window);
   loader=LoadLibraryExW(dll.c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_SYSTEM32);if(!loader)throw std::runtime_error("Verified WebView2 loader unavailable");
   using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);

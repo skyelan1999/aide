@@ -1,7 +1,7 @@
 name: Windows Desktop Check
 on:
   push:
-    branches: [main, 'feat/windows-desktop-*']
+    branches: [main, 'feat/windows-desktop-*', 'fix/windows-*']
     paths:
       - 'native/windows-launcher/**'
       - 'scripts/build-windows-launcher.py'

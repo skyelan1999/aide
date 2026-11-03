@@ -128,6 +128,20 @@ void spawn(const fs::path& exe,const Args& args,const fs::path& log){
  PROCESS_INFORMATION pi{};if(!CreateProcessW(exe.c_str(),cmd.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT,nullptr,nullptr,&si.info.StartupInfo,&pi))throw std::runtime_error("Cannot launch native background helper");
  CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
 }
+// A successful process creation is not proof that the desktop appeared.
+void spawnDesktop(const fs::path& exe,const Args& args,const fs::path& log,const std::wstring& className){
+ SECURITY_ATTRIBUTES sa{sizeof(sa),nullptr,TRUE};
+ Handle output(CreateFileW(log.c_str(),FILE_APPEND_DATA,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,&sa,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr));
+ Handle input(CreateFileW(L"NUL",GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,&sa,OPEN_EXISTING,0,nullptr));
+ if(!output.valid()||!input.valid())throw std::runtime_error("Cannot open desktop startup log");
+ std::wstring command=quote(exe.wstring());for(const auto& value:args)command+=L" "+quote(value);Startup startup(input.h,output.h,output.h);PROCESS_INFORMATION pi{};
+ if(!CreateProcessW(exe.c_str(),command.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT,nullptr,nullptr,&startup.info.StartupInfo,&pi))throw std::runtime_error("Cannot launch desktop process (Windows error "+std::to_string(GetLastError())+")");
+ Handle process(pi.hProcess),thread(pi.hThread);auto begin=GetTickCount64();
+ while(GetTickCount64()-begin<60000){auto window=FindWindowW(className.c_str(),nullptr);if(window&&IsWindowVisible(window))return;
+  if(WaitForSingleObject(process.h,0)==WAIT_OBJECT_0){DWORD code=1;GetExitCodeProcess(process.h,&code);throw std::runtime_error("Desktop exited before opening a window (exit "+std::to_string(code)+"); see .aide-data/native/desktop.log");}Sleep(100);
+ }
+ throw std::runtime_error("Desktop window did not appear within 60 seconds; see .aide-data/native/desktop.log. Any existing startup dialog or process was preserved");
+}
 fs::path findExe(const std::wstring& name){std::wstring b(32768,0);DWORD n=SearchPathW(nullptr,name.c_str(),nullptr,DWORD(b.size()),b.data(),nullptr);if(n&&n<b.size()){b.resize(n);return fs::path(b);}return {};}
 fs::path installedBrowser(){
  for(auto name:{L"msedge.exe",L"opera.exe",L"chrome.exe",L"firefox.exe"}){
@@ -475,6 +489,7 @@ public:
  }
  bool healthy(){auto h=compose({L"exec",L"-T",L"aide",L"curl",L"-fsSk",L"--connect-timeout",L"2",L"--max-time",L"3",L"https://127.0.0.1:8080/healthz"},6000);if(h.code)return false;auto j=json::parse(h.out,nullptr,false);return j.is_object()&&j.value("service","")=="aide"&&j.value("status","")=="ok";}
  void waitHealthy(){for(int i=0;i<60;i++){if(nativeInterrupted())throw std::runtime_error("Health wait stopped by operator");if(healthy())return;Sleep(1000);}throw std::runtime_error("Health check failed; inspect Docker logs for this project");}
+ std::string desktopIdentity(){auto dir=stateRoot/L"desktop";privateDirectory(dir);auto identity=fs::weakly_canonical(root).wstring();CharLowerBuffW(identity.data(),DWORD(identity.size()));write(dir/L"identity",utf8(identity));return sha256(dir/L"identity");}
  std::string desktopToken(){
   auto token=compose({L"exec",L"-T",L"aide",L"cat",L"/data/auth/access-token"});
   if(token.code)token=compose({L"exec",L"-T",L"aide",L"cat",L"/data/access-token"});
@@ -483,16 +498,16 @@ public:
   return value;
  }
  void browser(){int port=mappedPort();if(!port)throw std::runtime_error("Cannot resolve the ready service address");say("Aide ready: https://localhost:"+std::to_string(port)+"/");
-  if(noBrowser||env(L"AIDE_OPEN_BROWSER")==L"0")return;
+  if(noBrowser||env(L"AIDE_OPEN_BROWSER")==L"0"){say("Desktop opening disabled by --no-browser or AIDE_OPEN_BROWSER=0");return;}
   // Tokens never enter the OS command line. The private desktop child checks
   // this installation and reads its own verified service session through pipes.
-  spawn(module(),{L"desktop",L"--root",root.wstring()},stateRoot/L"desktop.log");
+  auto key=desktopIdentity();say("Opening the Aide desktop window...");spawnDesktop(module(),{L"desktop",L"--root",root.wstring()},stateRoot/L"desktop.log",L"AideDesktop_"+wide(key));say("Aide desktop window is visible.");
  }
  int desktop(){
   if(!healthy())throw std::runtime_error("Local Aide is not healthy; run start.bat");
   int port=mappedPort();if(!port)throw std::runtime_error("Cannot resolve ready desktop port");
   auto cert=compose({L"exec",L"-T",L"aide",L"cat",L"/data/certs/cert.pem"});required(cert,"Cannot read this installation's certificate");
-  auto dir=stateRoot/L"desktop";privateDirectory(dir);auto identity=fs::weakly_canonical(root).wstring();CharLowerBuffW(identity.data(),DWORD(identity.size()));write(dir/L"identity",utf8(identity));auto key=sha256(dir/L"identity");
+  auto key=desktopIdentity();
   PWSTR local=nullptr;if(FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData,KF_FLAG_CREATE,nullptr,&local)))throw std::runtime_error("Local application data unavailable");
   auto base=fs::path(aide_desktop::takeString(local))/L"Aide";privateDirectory(base);privateDirectory(base/L"Desktop");auto profile=base/L"Desktop"/wide(key);privateDirectory(profile);
   auto loader=profile/(L"WebView2Loader-"+wide(embedded_webview_loader_sha256)+L".dll");realPath(loader);
@@ -551,7 +566,7 @@ int wmain(int argc,wchar_t** argv){
  SetConsoleOutputCP(CP_UTF8);WSADATA data{};if(WSAStartup(MAKEWORD(2,2),&data))return 1;
  bool pause=false,desktopAction=false;DWORD ids[2];if(GetConsoleProcessList(ids,2)==1)pause=true;
  try{
-  fs::path root=module().parent_path();std::wstring action=L"start";std::string generation;bool noBrowser=false,force=false,dryRun=false;
+  fs::path root=module().parent_path();std::wstring action=L"start";std::string generation;bool noBrowser=false,force=false,dryRun=false,actionSeen=false;
   for(int i=1;i<argc;i++){
    std::wstring a=argv[i];
    if(a==L"--root"&&i+1<argc)root=fs::absolute(argv[++i]);
@@ -562,7 +577,7 @@ int wmain(int argc,wchar_t** argv){
    else if(a==L"--dry-run")dryRun=true;
    else if(a==L"--self-test")return selfTest();
    else if(a==L"--licenses"){std::cout<<embedded_json_license<<'\n'<<embedded_miniz_license<<'\n'<<embedded_helper_licenses;return 0;}
-   else if(a==L"desktop"||a==L"desktop-stop"||a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
+   else if(a==L"desktop"||a==L"desktop-stop"||a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart"){if(actionSeen&&action!=a)throw std::runtime_error("Conflicting launcher actions: refusing to change an explicit start/build command into another action");action=a;actionSeen=true;}
    else if(a==L"--launcher-contract"){std::cout<<"aide-launcher-contract=2\n";return 0;}
    else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
    else throw std::runtime_error("Unknown launcher argument");
@@ -588,9 +603,9 @@ int wmain(int argc,wchar_t** argv){
    stateRoot=fs::absolute(root)/L".aide-data/native";realPath(root/L".aide-data");realPath(stateRoot);
    auto status=fs::exists(stateRoot)?nativeControllerStatus():json{{"running",false}};
    for(auto role:{"port","update"}){auto file=stateRoot/wide(std::string("task-")+role+".json");realPath(file);if(fs::exists(file)){auto task=parseJson(read(file,8192));task["running"]=nativeAlive(task);status["tasks"][role]=task;}}
-   status["stopRequired"]=fs::exists(stateRoot/L"host-stop-required");std::cout<<status.dump(2)<<'\n';return 0;
+   status["stopRequired"]=fs::exists(stateRoot/L"host-stop-required");if(status["stopRequired"].get<bool>())status["stopRequiredReason"]=aide_host::diagnostic(read(stateRoot/L"host-stop-required",8192),{},1024);std::cout<<status.dump(2)<<'\n';return 0;
   }
-  Launcher app(root);app.noBrowser=noBrowser;app.force=force;app.openExisting=action==L"start";privateDirectory(app.root/L".aide-data");stateRoot=app.root/L".aide-data/native";privateDirectory(stateRoot);nativeStopPath=stateRoot/L"stop";
+  Launcher app(root);app.noBrowser=noBrowser;app.force=force;app.openExisting=action==L"start";privateDirectory(app.root/L".aide-data");stateRoot=app.root/L".aide-data/native";privateDirectory(stateRoot);nativeStopPath=stateRoot/L"stop";app.say("Native action: "+utf8(action));
   if(action==L"verify")return app.verify();
   if(action==L"supervise"){pause=false;SetConsoleCtrlHandler(nativeConsoleControl,TRUE);return nativeSupervise(app);}
   if(action==L"worker-port"||action==L"worker-update"){pause=false;if(!std::regex_match(generation,std::regex("[a-f0-9]{32}")))throw std::runtime_error("Missing native worker generation");return nativeWorkerLoop(app,action==L"worker-port"?"port":"update",generation);}

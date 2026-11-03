@@ -1,0 +1,77 @@
+{
+  "id": "windows-desktop-startup-20261103",
+  "request": "Windows a8e6e693正常，8a79acd3编译后无窗口无报错且desktop/launcher日志均不存在；选项卡需适配Aide明暗配色",
+  "baseline": "08038bdfee615de0c80be29f998fd05497cbe1bb",
+  "initial_status": "",
+  "acceptance": [
+    "定位用户start被host-stop-required拦截原因，恢复必须保留进程/更新安全边界",
+    "启动桌面后确认窗口真正可见，失败应输出明确错误和私有日志",
+    "真实Windows验证生产CLI经过编译缓存委托、隐藏桌面子进程和页面加载链路（测试Docker传输与真实Docker Desktop分开）",
+    "原生选项卡、增减按钮、字体与Aide明暗配色同步，并检查截图",
+    "用户设备启动和Hello硬件尚未确认时保持Issue打开；不Release"
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "scripts/build-windows-launcher.py",
+    "scripts/windows-entrypoint.bat",
+    "scripts/windows_desktop_smoke.cpp",
+    "scripts/ci/windows-desktop-fixture.go",
+    "scripts/ci/windows_desktop_ui.py",
+    ".github/workflows/windows-desktop-check.yml",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "先分离入口/宿主保护标记/窗口创建，并针对源代码已有错误边界补全测试；选项卡读取Aide CSS颜色，只接受固定颜色字段。",
+      "evidence": [
+        "用户照片与回复",
+        "native/windows-launcher/host_scheduler.hpp"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先分离入口/宿主保护标记/窗口创建，并针对源代码已有错误边界补全测试；选项卡读取Aide CSS颜色，只接受固定颜色字段。",
+      "evidence": [
+        "用户照片与回复",
+        "native/windows-launcher/host_scheduler.hpp"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "已补桌面子进程可见确认、创建失败提示、启动动作冲突拒绝、入口日志和host-status原因；新增Segoe UI与原生明暗选项卡。宿主保护标记恢复仍待具体原因核对。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/751",
+  "userEvidence": [
+    "a8e6e693可用，8a79acd3编译后无窗口",
+    "最初desktop.log和launcher.log未找到；EXE --launcher-contract返回2",
+    "用户运行start.bat，第一张照片显示stop成功退出0；type start.bat内容正确",
+    "直接EXE start --root PowerShell目录后显示 A native host action needs a confirmed stop; inspect host-status before startup，exit=1",
+    "已请求host-status和host-stop-required具体内容；尚未收到"
+  ]
+}
