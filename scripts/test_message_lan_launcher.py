@@ -19,9 +19,9 @@ class MessageLANLauncherTests(unittest.TestCase):
         self.helper=b'''#!/bin/sh
 mode=run
 while [ "$#" -gt 0 ]; do
- case "$1" in -dir) dir="$2"; shift 2;; -target|-capture-target) shift 2;; -status) mode=status; shift;; -stop) mode=stop; shift;; *) exit 99;; esac
+ case "$1" in -dir) dir="$2"; shift 2;; -target|-capture-target) shift 2;; -remote-target) test -z "$LAN_OLD_HELPER" || exit 99; shift 2;; -h) mode=help; shift;; -status) mode=status; shift;; -stop) mode=stop; shift;; *) exit 99;; esac
 done
-case "$mode" in status) test -f "$dir/host.json";; stop) rm -f "$dir/host.json";; run) mkdir -p "$dir"; echo ready > "$dir/host.json";; esac
+case "$mode" in help) if [ -z "$LAN_OLD_HELPER" ]; then echo "-remote-target"; else echo "usage"; fi;; status) test -f "$dir/host.json";; stop) rm -f "$dir/host.json";; run) mkdir -p "$dir"; echo ready > "$dir/host.json";; esac
 '''
         (self.root/'helper').write_bytes(self.helper)
         docker=self.root/'bin/docker'
@@ -33,6 +33,7 @@ with (r/'calls').open('a') as f:f.write(json.dumps(a)+'\\n')
 if a==['compose','ps','-q','aide']:print('current')
 elif a==['compose','port','aide','45840']:print(os.environ.get('LAN_BINDING','127.0.0.1:55555'))
 elif a==['compose','port','aide','45841']:print(os.environ.get('LAN_CAPTURE_BINDING','127.0.0.1:55556'))
+elif a==['compose','port','aide','45842']:print(os.environ.get('LAN_REMOTE_BINDING','127.0.0.1:55557'))
 elif a==['inspect','current','--format','{{.Image}}']:print('sha256:'+'a'*64)
 elif a==['create','--network','none','--entrypoint','/bin/true','sha256:'+'a'*64]:print('pristine')
 elif a[0]=='cp':
@@ -56,6 +57,9 @@ else:raise SystemExit(87)
         self.assertIn(['rm','pristine'],calls)
         stopped=self.run_control('stop');self.assertEqual(stopped.returncode,0,stopped.stderr)
         self.assertFalse((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())
+    def test_older_release_helper_keeps_existing_startup(self):
+        result=self.run_control(LAN_OLD_HELPER='1');self.assertEqual(result.returncode,0,result.stderr)
+        self.assertTrue((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())
     def test_mismatched_checksum_does_not_execute_helper(self):
         result=self.run_control(LAN_BAD_HASH='1');self.assertNotEqual(result.returncode,0)
         self.assertFalse((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())

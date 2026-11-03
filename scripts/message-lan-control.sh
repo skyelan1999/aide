@@ -40,12 +40,22 @@ ACTUAL="$(shasum -a 256 "$TMP/$NAME" | awk '{print $1}')"
 [[ ! -x "$BIN" ]] || "$BIN" -stop -dir "$DIR"
 chmod 700 "$TMP/$NAME"
 mv "$TMP/$NAME" "$BIN"
+# Older release helpers do not advertise the optional workbench relay flag.
+REMOTE_TARGET=''
+HELP="$("$BIN" -h 2>&1 || true)"
+if [[ "$HELP" == *"-remote-target"* ]]; then
+REMOTE_BINDING="$("$DOCKER_BIN" compose port aide 45842)"
+[[ "$REMOTE_BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]] || { echo "Missing loopback remote access mapping; restart Aide." >&2; exit 1; }
+REMOTE_TARGET="127.0.0.1:${BASH_REMATCH[1]}"
+fi
 # A separate session survives the launching Terminal/tool process group.
-python3 - "$BIN" "$DIR" "$TARGET" "$CAPTURE_TARGET" "$NATIVE/bridge.log" <<'PYTHON'
+python3 - "$BIN" "$DIR" "$TARGET" "$CAPTURE_TARGET" "$REMOTE_TARGET" "$NATIVE/bridge.log" <<'PYTHON'
 import subprocess,sys
-binary,directory,target,capture,log=sys.argv[1:]
+binary,directory,target,capture,remote,log=sys.argv[1:]
 with open(log,'ab') as out:
-    subprocess.Popen([binary,'-dir',directory,'-target',target,'-capture-target',capture],stdin=subprocess.DEVNULL,stdout=out,stderr=out,start_new_session=True,close_fds=True)
+    args=[binary,'-dir',directory,'-target',target,'-capture-target',capture]
+    if remote:args.extend(['-remote-target',remote])
+    subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=out,stderr=out,start_new_session=True,close_fds=True)
 PYTHON
 for attempt in {1..30}; do
   if "$BIN" -status -dir "$DIR" >/dev/null 2>&1; then echo '消息局域网桥已启动（不修改代理或防火墙）。'; exit 0; fi

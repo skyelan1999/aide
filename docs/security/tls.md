@@ -151,3 +151,7 @@ WebAuthn 要求 **Secure Context**（`https://` 或 `http://localhost`）。0.1.
 - `internal/server/tls_test.go`：证书生成/SAN/权限、TLS 套件白名单、308 跳转保留 `r.Host`+URI、Peek 分类（0x16 vs 明文）、certs 迁移、localhost 不加 HSTS。
 - `Dockerfile`：`HEALTHCHECK` 改 `curl -fsSk https://127.0.0.1:8080/healthz`（单端口后明文 `/healthz` 会是 308，必须打 https）。
 - `scripts/aide.sh` / `start.ps1`：健康检查与打开 URL 改 https。
+
+## 可选局域网入口
+
+默认关闭的设备密码访问使用独立的 TLS 入口与 LAN 证书，主工作台仍只发布到宿主回环。开启、会话撤销、证书信任与固定目的地宿主转发见 [局域网访问授权](lan-access.md)。

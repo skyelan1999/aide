@@ -148,6 +148,7 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 语义迁移钩子：只管字段重命名/枚举转换/拆分；缺失字段补默认已由"默认底"自动完成。
+	merged.RemoteAccessEnabled = false // LAN consent is local, never activated by importing a backup.
 	migrateSettings(bk.SettingsVersion, &merged)
 	// 旧格式迁移 + 合法性回退 + 模型归一化（与 New() 启动加载同一函数，导入即生效、无需重启）。
 	if err := normalizeLoadedSettings(&merged); err != nil {
@@ -237,6 +238,7 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		migratedKey = true
 	}
 	merged.APIKey = ""
+	a.lan.revoke()
 	a.settings = merged
 	if err := atomicJSON(SettingsPath(a.dataPath), merged); err != nil {
 		fail(w, 500, err)

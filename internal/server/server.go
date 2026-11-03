@@ -78,6 +78,8 @@ type providerKeyWrite struct {
 }
 
 type Settings struct {
+	RemoteAccessEnabled bool `json:"remoteAccessEnabled,omitempty"` // opt-in password-protected LAN access
+
 	generationIntent string // Request-local output modality; never persisted as a setting.
 	generationError  string
 
@@ -314,6 +316,12 @@ func validateSettings(s *Settings) {
 	if s.ShellTimeout <= 0 || s.ShellTimeout > 300 {
 		s.ShellTimeout = 60
 	}
+	if s.RemoteAccessEnabled && s.UserPasswordHash == "" {
+		s.RemoteAccessEnabled = false
+	}
+	if s.RemoteAccessEnabled && s.LockTimeoutSec <= 0 {
+		s.LockTimeoutSec = 300
+	}
 	if s.LockTimeoutSec < 0 {
 		s.LockTimeoutSec = 0
 	}
@@ -491,6 +499,8 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 const assistantSessionKind = "assistant"
 
 type App struct {
+	lan lanAccess
+
 	incidents                 incidentJournal
 	executionEnvironment      *executionEnvironment
 	assistantEngine           string // operator-selected startup choice; never a plugin capability
@@ -1487,6 +1497,8 @@ func (a *App) Handler() http.Handler {
 // 避免测试或并发请求时多次重建 mux 并并发写 a.routes 触发 data race。
 func (a *App) buildHandler() {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/remote-access", a.remoteAccessControl)
+	mux.HandleFunc("PUT /api/remote-access", a.remoteAccessControl)
 	mux.HandleFunc("POST /mobile-capture/api", a.mobileCapturePhone)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		a.confirmImageIntegrityUpgrade()
@@ -1820,7 +1832,7 @@ func (a *App) buildHandler() {
 			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/download") || strings.HasSuffix(r.URL.Path, "/api/file/stream")) {
 				token = r.URL.Query().Get("access_token")
 			}
-			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
+			if !lanAuthorized(r) && subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
 				w.Header().Set("X-Aide-Auth-Required", "token")
 				fail(w, 401, errors.New("请输入访问令牌，或用 start.command 打开"))
 				return
@@ -1854,7 +1866,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "remoteAccessEnabled": a.settings.RemoteAccessEnabled, "remoteSession": lanAuthorized(r), "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -2131,6 +2143,11 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.LockTimeoutSec = sec
 	} else {
 		in.Settings.LockTimeoutSec = a.settings.LockTimeoutSec
+	}
+	in.Settings.RemoteAccessEnabled = a.settings.RemoteAccessEnabled
+	if in.Settings.RemoteAccessEnabled && in.Settings.LockTimeoutSec <= 0 {
+		fail(w, 400, errors.New("局域网授权开启时，锁屏时间必须大于0"))
+		return
 	}
 	in.Settings.UserPasswordHash = a.settings.UserPasswordHash
 	// 局部 PUT（仅改某一项）不携带以下字段，未传一律保留已存值，避免性格启用态/沙箱/轮次/设备被静默重置。
@@ -2429,6 +2446,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			fail(w, 500, err)
 			return
 		}
+	}
+	if a.settings.UserPasswordHash != in.Settings.UserPasswordHash {
+		a.lan.revoke()
 	}
 	assistantApprovalChanged := a.settings.AssistantAutoReview != in.Settings.AssistantAutoReview
 	a.settings = in.Settings
@@ -3347,6 +3367,9 @@ func Run() error {
 	certFile, keyFile, err := ensureTLSCert(CertsDir(a.dataPath))
 	if err != nil {
 		return err
+	}
+	if err := a.startLANAccessService(); err != nil {
+		log.Printf("LAN access service unavailable: %v", err)
 	}
 	s := &http.Server{Addr: env("AIDE_ADDR", "127.0.0.1:8097"), Handler: a.Handler(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10, TLSConfig: tlsConfig()}
 

@@ -1,0 +1,92 @@
+{
+  "id": "remote-access-20261103",
+  "request": "设置中添加默认关闭的外网授权，手机扫码/其他设备网页密码登录；加密传输；开启后锁屏超时不能0",
+  "baseline": "021e3754b60e69559857b9512bfc1a51d6e79479",
+  "initial_status": "",
+  "acceptance": [
+    "默认关闭局域网授权，主端口仍仅宿主回环；打开独立TLS入口",
+    "手机扫码二维码仅含HTTPS地址；任何设备须密码登录，绝不返回主access-token",
+    "关闭/改密码/锁屏/空闲超时撤销远程会话，TLS-only与来源校验",
+    "开启必须已有密码；0锁屏超时自动300秒，开启后服务端拒绝0",
+    "设置修改自动保存；主页面/窄屏实际渲染和正反向鉴权测试",
+    "Mac/Linux/Windows现有宿主helper适配；不改现有服务、不Release"
+  ],
+  "scope": [
+    "internal/server 远程TLS入口/会话/设置",
+    "internal/messaging 固定目的地局域网租约",
+    "cmd/aide-message-lan compose及跨平台helper参数",
+    "internal/server/web 设置/手机密码页与二维码",
+    "tests docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户选择基于局域网；无需公网隧道。继承现有host桥，以单独固定TLS端口暴露经过密码会话保护的workbench。",
+      "evidence": [
+        "user: 基于局域网的方案实现"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Separate TLS listener, fixed-target host relay, password-verified per-device tokens. LAN consent cannot be activated by backup import; preserve localhost certificate.",
+      "evidence": [
+        "docs/security/lan-access.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented auto-save consent, phone password page, credential-free QR, finite idle timeout, TLS/origin enforcement, revocation and legacy helper argument compatibility. No deployment.",
+      "evidence": [
+        "internal/server/remote_access.go",
+        "internal/server/remote_access_tls.go",
+        "internal/messaging/lan_remote_access.go",
+        "internal/server/web/remote-access.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final quick, auth race, complete messaging race, vet, 6 launcher tests, Windows AMD64 native compile and six-platform host bridge compile pass. Actual Playwright workbench/phone UI and ZXing QR decode pass. Physical device validation NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-11-03/lan-access/results.json",
+        ".agent-state/remote-access/delivery-quick.log",
+        ".agent-state/remote-access/delivery-check.log",
+        ".agent-state/remote-access/messaging-race.log",
+        ".agent-state/remote-access/delivery-windows.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented usage, certificate trust, session lifecycle, host helper integration and verification limits.",
+      "evidence": [
+        "docs/security/lan-access.md",
+        "docs/reviews/2026-11-03/lan-access/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed only owned QA browser pages and isolated container. Deleted owned synthetic test/native/helper binaries; retained logs, screenshots, SDK cache and existing user service/workspace.",
+      "evidence": [
+        ".agent-state/remote-access/server.test",
+        ".agent-state/remote-access/aide-launcher.exe",
+        ".agent-state/remote-access/lan-helper-darwin-arm64",
+        ".agent-state/remote-access/lan-helper-darwin-amd64",
+        ".agent-state/remote-access/lan-helper-linux-arm64",
+        ".agent-state/remote-access/lan-helper-linux-amd64",
+        ".agent-state/remote-access/lan-helper-windows-arm64",
+        ".agent-state/remote-access/lan-helper-windows-amd64",
+        "docker ps: user service retained; owned UI fixture stopped"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source integration and push only under existing user authorization. No Release, version bump, tag or user service replacement.",
+      "evidence": [
+        "user: source push/main only; no Release"
+      ]
+    }
+  },
+  "release_authorization": "Source integration and push main only; no Release/tag/version bump or deployment",
+  "rollback": "Disable LAN access to revoke sessions and relay lease. Reverse task commits for source rollback; no data or localhost certificate migration.",
+  "handoff": "User device certificate trust, LAN/firewall and Windows startup remain NOT_RUN. Running user instance unchanged.",
+  "issue": "https://github.com/skyelan1999/aide/issues/753"
+}

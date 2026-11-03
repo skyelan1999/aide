@@ -23,6 +23,9 @@ type hostBridge struct {
 	cancel        context.CancelFunc
 	target        string
 	captureTarget string
+	remoteTarget  string
+	remote        *hostBridge
+	remoteOwner   string
 	capture       *hostBridge
 	captureOwner  string
 	tcp           []net.Listener
@@ -68,6 +71,17 @@ func RunLANBridge(parent context.Context, dir, target string) error {
 	return RunLANBridgeWithCapture(parent, dir, target, "")
 }
 func RunLANBridgeWithCapture(parent context.Context, dir, target, captureTarget string) error {
+	return RunLANBridgeWithRemoteAccess(parent, dir, target, captureTarget, "")
+}
+func RunLANBridgeWithRemoteAccess(parent context.Context, dir, target, captureTarget, remoteTarget string) error {
+	if remoteTarget != "" {
+		host, port, e := net.SplitHostPort(remoteTarget)
+		ip := net.ParseIP(host)
+		p, _ := strconv.Atoi(port)
+		if e != nil || ip == nil || !ip.IsLoopback() || p < 1 || p > 65535 {
+			return errors.New("remote access target must be numeric loopback")
+		}
+	}
 	if captureTarget != "" {
 		host, port, e := net.SplitHostPort(captureTarget)
 		ip := net.ParseIP(host)
@@ -94,6 +108,7 @@ func RunLANBridgeWithCapture(parent context.Context, dir, target, captureTarget 
 	ctx, cancel := context.WithCancel(parent)
 	h := &hostBridge{root: root, ctx: ctx, cancel: cancel, target: target, lease: bridgeLease{Instance: randomID()}, slots: make(chan struct{}, 64), jobs: make(chan struct{}, 4)}
 	h.captureTarget = captureTarget
+	h.remoteTarget = remoteTarget
 	defer h.close()
 	interfaces := physicalLANInterfaces()
 	for _, iface := range interfaces {
@@ -152,9 +167,7 @@ func (h *hostBridge) run() error {
 				if _, err := h.announcement(); err == nil {
 					unavailable = time.Time{}
 				} else {
-					c, err := net.DialTimeout("tcp", h.target, 150*time.Millisecond)
-					if err == nil {
-						c.Close()
+					if h.backendAvailable() {
 						unavailable = time.Time{}
 					} else if unavailable.IsZero() {
 						unavailable = time.Now()
@@ -165,8 +178,24 @@ func (h *hostBridge) run() error {
 			}
 			h.scanJobs()
 			h.scanCapture()
+			h.scanRemoteAccess()
 		}
 	}
+}
+
+// The bridge also serves password-protected LAN access independently of peer messaging.
+func (h *hostBridge) backendAvailable() bool {
+	for _, target := range []string{h.target, h.captureTarget, h.remoteTarget} {
+		if target == "" {
+			continue
+		}
+		c, err := net.DialTimeout("tcp", target, 150*time.Millisecond)
+		if err == nil {
+			c.Close()
+			return true
+		}
+	}
+	return false
 }
 func (h *hostBridge) heartbeat() error {
 	var current bridgeLease
@@ -320,6 +349,9 @@ func (h *hostBridge) scanJobs() {
 }
 func (h *hostBridge) close() {
 	h.cancel()
+	if h.remote != nil {
+		h.remote.close()
+	}
 	if h.capture != nil {
 		h.capture.close()
 	}
