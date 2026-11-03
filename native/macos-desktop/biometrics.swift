@@ -2,9 +2,10 @@ import CryptoKit
 import Foundation
 import LocalAuthentication
 import Security
+import Darwin
 
 enum BiometricFailure: String, Error {
-    case unavailable, invalidOptions, noCredential, alreadyRegistered, cancelled, busy, failed, capacity
+    case unavailable, invalidOptions, noCredential, alreadyRegistered, cancelled, busy, failed, capacity, storage
     var message: String {
         switch self {
         case .unavailable: return "触控 ID 暂不可用，请使用账户密码"
@@ -15,6 +16,75 @@ enum BiometricFailure: String, Error {
         case .busy: return "触控 ID 正在验证，请稍候"
         case .capacity: return "本机指纹凭据已达上限，请使用账户密码"
         case .failed: return "触控 ID 验证失败，请重试或使用账户密码"
+        case .storage: return "无法安全保存本机 Touch ID 凭据，请检查应用数据目录权限并使用账户密码"
+        }
+    }
+}
+
+// CryptoKit's representation is sealed by this Mac's Secure Enclave, not a
+// plaintext/exported private key. Permanent Keychain enclave keys require
+// provisioned entitlements that an ad-hoc source build does not have.
+final class SealedCredentialStore {
+    let directory: URL
+    init(directory: URL) { self.directory = directory }
+    private func withDirectory<T>(_ body: (Int32) throws -> T) throws -> T {
+        if mkdir(directory.path, 0o700) != 0 && errno != EEXIST { throw BiometricFailure.storage }
+        let fd = open(directory.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+        guard fd >= 0 else { throw BiometricFailure.storage }
+        defer { close(fd) }
+        var info = stat()
+        guard fstat(fd, &info) == 0, info.st_uid == getuid(), info.st_mode & 0o777 == 0o700 else {
+            throw BiometricFailure.storage
+        }
+        return try body(fd)
+    }
+    private func filename(_ id: String) throws -> String {
+        guard NativeWebAuthn.decode(id)?.count == 32 else { throw BiometricFailure.invalidOptions }
+        return id + ".sealed"
+    }
+    func read(_ id: String) throws -> Data {
+        let name = try filename(id)
+        return try withDirectory { dir in
+            let fd = openat(dir, name, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
+            guard fd >= 0 else { throw BiometricFailure.storage }
+            defer { close(fd) }
+            var info = stat()
+            guard fstat(fd, &info) == 0, info.st_mode & S_IFMT == S_IFREG,
+                  info.st_uid == getuid(), info.st_nlink == 1, info.st_mode & 0o777 == 0o600,
+                  (1...16384).contains(info.st_size) else { throw BiometricFailure.storage }
+            var data = Data(count: Int(info.st_size))
+            let count = data.withUnsafeMutableBytes { Darwin.read(fd, $0.baseAddress!, $0.count) }
+            guard count == data.count else { throw BiometricFailure.storage }
+            return data
+        }
+    }
+    func ids() throws -> [String] {
+        try withDirectory { _ in
+            try FileManager.default.contentsOfDirectory(atPath: directory.path).sorted().compactMap {
+                guard $0.hasSuffix(".sealed") else { return nil }
+                let id = String($0.dropLast(7))
+                guard NativeWebAuthn.decode(id)?.count == 32, (try? read(id)) != nil else { return nil }
+                return id
+            }
+        }
+    }
+    func write(_ data: Data, id: String) throws {
+        let name = try filename(id)
+        guard (1...16384).contains(data.count) else { throw BiometricFailure.storage }
+        try withDirectory { dir in
+            let fd = openat(dir, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+            guard fd >= 0 else { throw BiometricFailure.storage }
+            var completed = false
+            defer { close(fd); if !completed { unlinkat(dir, name, 0) } }
+            guard data.withUnsafeBytes({ Darwin.write(fd, $0.baseAddress!, $0.count) }) == data.count,
+                  fsync(fd) == 0 else { throw BiometricFailure.storage }
+            completed = true
+        }
+    }
+    func remove(_ id: String) throws {
+        let name = try filename(id)
+        try withDirectory { dir in
+            guard unlinkat(dir, name, 0) == 0 || errno == ENOENT else { throw BiometricFailure.storage }
         }
     }
 }
@@ -101,6 +171,8 @@ final class DesktopBiometrics {
     private var context: LAContext?
     private var cancelled = false
     private let queue = DispatchQueue(label: "local.aide.biometric-key")
+    private lazy var store = SealedCredentialStore(directory: FileManager.default.urls(for: .applicationSupportDirectory,
+        in: .userDomainMask)[0].appendingPathComponent(namespace, isDirectory: true))
     init(namespace: String) { self.namespace = namespace + ".touch-id" }
     private func tag(_ id: String) -> Data { Data((namespace + "." + id).utf8) }
 
@@ -108,10 +180,13 @@ final class DesktopBiometrics {
         let probe = LAContext()
         let available = SecureEnclave.isAvailable && probe.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
             && probe.biometryType == .touchID
-        let ids = credentialIDs()
-        return ["available": available, "credentialIds": ids]
+        do { return ["available": available, "credentialIds": try credentialIDs()] }
+        catch { return ["available": false, "credentialIds": [], "error": BiometricFailure.storage.message] }
     }
-    private func credentialIDs() -> [String] {
+    private func credentialIDs() throws -> [String] {
+        Array(Set(try store.ids() + legacyCredentialIDs())).sorted()
+    }
+    private func legacyCredentialIDs() -> [String] {
         let metadata = LAContext()
         metadata.interactionNotAllowed = true
         let query: [CFString: Any] = [kSecClass: kSecClassKey, kSecAttrLabel: namespace,
@@ -135,7 +210,7 @@ final class DesktopBiometrics {
         guard context == nil else { completion(.failure(.busy)); return }
         do {
             let challenge = try NativeWebAuthn.challenge(options, create: operation == "create")
-            let existing = credentialIDs()
+            let existing = try credentialIDs()
             var selected: String?
             if operation == "create" {
                 guard existing.count < 32 else { throw BiometricFailure.capacity }
@@ -172,6 +247,7 @@ final class DesktopBiometrics {
                         deadline.cancel(); authentication.invalidate(); self.context = nil
                         if self.cancelled {
                             if operation == "create", case .success(let value) = result, let id = value["id"] as? String {
+                                try? self.store.remove(id)
                                 SecItemDelete([kSecClass: kSecClassKey, kSecAttrApplicationTag: self.tag(id),
                                                kSecAttrKeyClass: kSecAttrKeyClassPrivate] as CFDictionary)
                             }
@@ -189,17 +265,21 @@ final class DesktopBiometrics {
               let access = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
                     [.privateKeyUsage, .biometryCurrentSet], nil) else { throw BiometricFailure.failed }
         let id = NativeWebAuthn.b64(random)
-        let attributes: [CFString: Any] = [kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
-            kSecAttrKeySizeInBits: 256, kSecAttrTokenID: kSecAttrTokenIDSecureEnclave,
-            kSecUseAuthenticationContext: authentication,
-            kSecPrivateKeyAttrs: [kSecAttrIsPermanent: true, kSecAttrApplicationTag: tag(id),
-                                 kSecAttrLabel: namespace, kSecAttrAccessControl: access]]
-        var error: Unmanaged<CFError>?
-        guard let key = SecKeyCreateRandomKey(attributes as CFDictionary, &error), let publicKey = SecKeyCopyPublicKey(key),
-              let bytes = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else { throw BiometricFailure.failed }
-        return try NativeWebAuthn.creation(id: random, publicKey: bytes, challenge: challenge, origin: origin)
+        let key = try SecureEnclave.P256.Signing.PrivateKey(accessControl: access, authenticationContext: authentication)
+        let result = try NativeWebAuthn.creation(id: random, publicKey: key.publicKey.x963Representation,
+                                               challenge: challenge, origin: origin)
+        try store.write(key.dataRepresentation, id: id)
+        return result
     }
     private func sign(id: String, challenge: String, origin: String, authentication: LAContext) throws -> [String: Any] {
+        if try store.ids().contains(id) {
+            let key = try SecureEnclave.P256.Signing.PrivateKey(dataRepresentation: store.read(id),
+                                                             authenticationContext: authentication)
+            guard let raw = NativeWebAuthn.decode(id) else { throw BiometricFailure.invalidOptions }
+            return try NativeWebAuthn.assertion(id: raw, challenge: challenge, origin: origin) {
+                try key.signature(for: $0).derRepresentation
+            }
+        }
         let query: [CFString: Any] = [kSecClass: kSecClassKey, kSecAttrApplicationTag: tag(id),
             kSecAttrKeyClass: kSecAttrKeyClassPrivate, kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
             kSecReturnRef: true, kSecUseAuthenticationContext: authentication]

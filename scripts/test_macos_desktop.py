@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import plistlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,19 @@ builder = load('build-macos-desktop')
 
 
 class DesktopTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('xcrun'), 'requires macOS Swift and Security')
+    def test_sealed_touchid_store_and_hardware_acl(self):
+        with tempfile.TemporaryDirectory(prefix='aide-touchid-regression-') as temporary:
+            executable = str(Path(temporary) / 'store-test')
+            subprocess.run(['xcrun', 'swiftc', '-swift-version', '5',
+                            str(ROOT / 'native/macos-desktop/biometrics.swift'),
+                            str(ROOT / 'scripts/native-touchid-store-test.swift'),
+                            '-o', executable], check=True, capture_output=True, timeout=90)
+            result = subprocess.run([executable], check=True, capture_output=True, text=True, timeout=30)
+            self.assertIn('PASS owner-only store', result.stdout)
+            self.assertTrue('NOT_RUN user-approved Touch ID signature' in result.stdout
+                            or 'NOT_RUN Secure Enclave hardware unavailable' in result.stdout)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='aide-desktop-中文 空格-')
         self.addCleanup(self.tmp.cleanup)
