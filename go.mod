@@ -6,6 +6,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.4
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/pkg/sftp v1.13.10
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/yuin/goldmark/v2 v2.1.6
 	golang.org/x/crypto v0.57.0
 	golang.org/x/sys v0.48.0

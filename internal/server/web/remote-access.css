@@ -1,0 +1,11 @@
+
+/* Account LAN authorization: QR stays legible within a phone viewport. */
+.lan-access{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.lan-access-entry{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin:18px 0}
+.lan-access-entry a,.lan-access-fingerprint{overflow-wrap:anywhere;max-width:100%}
+.lan-access-qr{width:192px;height:192px;max-width:100%;border-radius:10px;background:white}
+.lan-access-fingerprint{display:block;font-size:12px}
+
+.lan-access-entry a{color:var(--brand-text,var(--text));text-decoration:underline;text-underline-offset:3px}
+.lan-access-entry a:focus-visible{outline:2px solid var(--brand-text,var(--text));outline-offset:3px}
+.lan-access-fingerprint{margin-bottom:22px}

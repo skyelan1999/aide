@@ -320,6 +320,8 @@ func (a *App) applyCredentialsReset() error {
 	next.TTSAzureKey = ""
 	next.CloneTTSAPIKey = ""
 	next.UserPasswordHash = ""
+	next.RemoteAccessEnabled = false
+	a.lan.revoke()
 	next.PersonaCiphers = map[string]string{}
 	next.PersonaCipher = ""
 	next.DebugTokenHash = ""

@@ -1,0 +1,52 @@
+{
+  "scope": "isolated synthetic TLS workbench; no user service or physical phone changed",
+  "ui": {
+    "defaultOff": true,
+    "passwordRequiredToEnable": true,
+    "wrongPasswordDoesNotOpenTokenDialog": true,
+    "autoSave": true,
+    "zeroBecomes300": true,
+    "minimum1": true,
+    "serverRejectsZero": true,
+    "qrZXingDecoded": "https://127.0.0.1:18641/lan-login.html",
+    "qrNoQueryOrFragment": true,
+    "mobileWrongPasswordRejected": true,
+    "mobileCorrectPasswordLoadsWorkbench": true,
+    "mobileConnected": true,
+    "disabledSessionLeavesWorkbench": true,
+    "firstPasswordImmediatelyEnablesControl": true,
+    "viewportWidths": [
+      1440,
+      390
+    ],
+    "noHorizontalOverflow": true,
+    "browserErrors": []
+  },
+  "checks": {
+    "quick": "pass",
+    "passwordSessionsRace": "pass",
+    "messagingFullRace": "pass",
+    "goVet": "pass",
+    "launcherScriptTests": 6,
+    "identityLoginRouting": "pass",
+    "windowsAMD64Compile": "pass",
+    "hostBridgeCompile": [
+      "darwin/arm64",
+      "darwin/amd64",
+      "linux/arm64",
+      "linux/amd64",
+      "windows/arm64",
+      "windows/amd64"
+    ]
+  },
+  "notRun": [
+    "physical phone certificate trust",
+    "user LAN/firewall",
+    "Windows device startup",
+    "deployment",
+    "Release"
+  ],
+  "windowsExeSHA256": "050d37929507d79a7e90a573508b4e88270f40b1f9d8f3c4b60e3ee9b961a8eb",
+  "quickSourceFingerprint": "71f37d819768d051608c49a113cf384eb80846c901f226517455a9bb2a0ee92c",
+  "quickReceipt": ".agent-state/verify-20261103T065914978164Z.log"
+}

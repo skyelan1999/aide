@@ -1,6 +1,18 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  '局域网访问授权': 'LAN access authorization',
+  '允许局域网设备访问': 'Allow devices on this LAN',
+  '默认关闭。开启后，手机扫码或其他设备打开 HTTPS 地址均须输入账户密码。锁屏时间不能为 0；原为 0 时自动设为 5 分钟。': 'Off by default. Phones and other devices must enter the account password at the HTTPS address. Auto-lock cannot be zero; zero changes to five minutes.',
+  '请先在上方设置账户密码。': 'Set an account password above first.',
+  '开启局域网访问请输入账户密码': 'Enter the account password to enable LAN access',
+  '正在准备局域网加密入口…': 'Preparing the encrypted LAN endpoint…',
+  '请在同一局域网访问。首次使用需在访问设备上信任本机证书，并核对下方 SHA-256 指纹。': 'Connect from the same LAN. On first use, trust this computer’s certificate on the connecting device and verify its SHA-256 fingerprint below.',
+  '手机扫码登录': 'Scan to sign in on a phone',
+  '请在本机管理访问授权；当前设备使用密码会话登录。': 'Manage access on the host computer. This device is signed in with a password session.',
+  '退出当前设备': 'Sign out this device',
+  '请重新输入账户密码登录': 'Enter the account password to sign in again',
+
   '请允许 Aide 打开新页面后重试': 'Allow Aide to open a new tab, then try again',
   '工作区已切换，请从当前工作区重新打开插件': 'The workspace changed. Open the plugin again from the current workspace.',
   '插件工作台不可用，请检查插件是否已启用': 'The plugin workbench is unavailable. Check that the plugin is enabled.',

@@ -468,7 +468,9 @@ public:
    auto cid=container();auto actual=d({L"inspect",wide(cid),L"--format",L"{{.Image}}"});required(actual,"Cannot identify running image");auto selected=inspect(image);if(selected.is_null()||selected.value("Id","")!=trim(actual.out))throw std::runtime_error("Running image changed; refusing helper extraction");
    auto binary=embeddedHelper("message-lan"),dir=root/L".aide-data/storage/data/messages/lan-bridge";privateDirectory(dir);
    required(run(binary,{L"-stop",L"-dir",dir.wstring()}),"Old LAN helper could not stop");
-   spawn(binary,{L"-dir",dir.wstring(),L"-target",wide(binding(L"45840")),L"-capture-target",wide(binding(L"45841"))},stateRoot/L"lan-helper.log");
+   std::vector<std::wstring> lanArgs{L"-dir",dir.wstring(),L"-target",wide(binding(L"45840")),L"-capture-target",wide(binding(L"45841"))};
+   auto help=run(binary,{L"-h"},5000);if(help.out.find("-remote-target")!=std::string::npos){lanArgs.push_back(L"-remote-target");lanArgs.push_back(wide(binding(L"45842")));}
+   spawn(binary,lanArgs,stateRoot/L"lan-helper.log");
    bool ready=false;for(int i=0;i<30;i++){if(!run(binary,{L"-status",L"-dir",dir.wstring()},5000).code){ready=true;break;}Sleep(100);}if(!ready)throw std::runtime_error("LAN helper not ready; check its local log");say("LAN bridge ready.");
    try{codexHost();}catch(const std::exception&){say("Codex host component unavailable; see native/codex-host.log.");}
   }catch(const std::exception&){throw;}

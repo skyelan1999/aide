@@ -342,7 +342,8 @@ async function api(path, options = {}) {
     // Password/Passkey reauthentication failures also return 401. Only the
     // access-token middleware can mark those paths as requiring a new login;
     // otherwise keep the current identity dialog and its local error visible.
-    const identityCheck = path === '/account/verify-password' || path === '/auth/verify' || path.startsWith('/webauthn/') || /^\/sessions\/[^/]+\/unlock-assistant$/.test(path);
+    const identityCheck = path === '/remote-access' || path === '/account/verify-password' || path === '/auth/verify' || path.startsWith('/webauthn/') || /^\/sessions\/[^/]+\/unlock-assistant$/.test(path);
+    if((response.status===401||response.status===403) && response.headers?.get('X-Aide-Auth-Required')==='lan-password'){location.replace('/lan-login.html');throw new Error(t('请重新输入账户密码登录'));}
     const tokenRequired = response.headers?.get('X-Aide-Auth-Required') === 'token';
     if (response.status === 401 && (!identityCheck || tokenRequired) && !$('login-dialog').open) $('login-dialog').showModal();
     const error = new Error(t(data.error) || t("请求失败"));
@@ -12213,6 +12214,7 @@ async function updateTouchIdButton() {
   const btn = $('touchid-unlock-btn');
   const hint = $('touchid-hint');
   if (!btn) return;
+  if(state.config?.remoteSession){btn.hidden=true;if(hint)hint.hidden=true;return;}
   const res = await touchIdAvailable();
   if(window.AideNativeBiometrics?.platform === 'windows')btn.textContent=t('Windows Hello 解锁');
   if (!res.ok) {
@@ -12321,6 +12323,7 @@ if (typeof LockCluster !== 'undefined') {
   window.addEventListener(ev, () => {
     // master 自己活动即续表；slave 活动节流发 ping，由 master 续表
     if(lockScreen.locked)return;
+    window.AideLANAccess?.activity();
     if (typeof LockCluster !== 'undefined') LockCluster.noteActivity();
     resetIdleTimer(true);
   }, { passive: true }));
@@ -12337,7 +12340,7 @@ function renderAccountControl() {
   uRow.append(uInput);
   const tRow = el('div', 'account-row');
   tRow.append(el('span', '', t('锁屏时间(秒)')));
-  const tInput = el('input'); tInput.type = 'number'; tInput.min = 0; tInput.max = 86400; tInput.placeholder = '0'; tInput.value = cfg.lockTimeoutSec || 0;
+  const tInput = el('input'); tInput.type = 'number'; tInput.min = cfg.remoteAccessEnabled ? 1 : 0; tInput.max = 86400; tInput.placeholder = '0'; tInput.value = cfg.lockTimeoutSec || 0;
   tRow.append(tInput);
   const oldRow = el('div', 'account-row');
   oldRow.append(el('span', '', t('原密码')));
@@ -12361,12 +12364,14 @@ function renderAccountControl() {
     await refreshConfig();
     newPw.value = ''; oldPw.value = '';
     toast(t('账户设置已保存'));
+    window.AideLANAccess?.update(wrap,state.config);
     resetIdleTimer();
   });
   const lockBtn = el('button', 'quiet', t('立即锁屏')); lockBtn.type = 'button';
   lockBtn.onclick = action(lockScreenNow);
   actions.append(save, lockBtn);
   wrap.append(uRow, tRow, oldRow, newRow, actions);
+  if (window.AideLANAccess) wrap.append(window.AideLANAccess.render(cfg,()=>{tInput.min=state.config.remoteAccessEnabled?1:0;tInput.value=state.config.lockTimeoutSec||0;}));
 
   // ── 触控 ID / Passkey 管理 ──
   if (cfg.webAuthnReady) {
