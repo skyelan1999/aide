@@ -42,28 +42,42 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "主题绘制初次本地交叉编译成功；正在对UI专用分支验证AMD64/ARM64和Windows明暗调色板/截图。",
-      "evidence": []
+      "status": "pass",
+      "summary": "edbe568 的 AMD64/ARM64 编译、Windows 2022 WebView2 原生UI和明暗截图检查，以及Aide CI quick/关键Go回归全部通过；原生结果ok=true。用户Windows完整启动、Hello硬件不属于本次UI验收。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/actions/runs/41587483795",
+        "https://github.com/skyelan1999/aide/actions/runs/41587483787",
+        "docs/reviews/2026-11-03/windows-native-tabs/native-ui.json",
+        "docs/reviews/2026-11-03/windows-native-tabs/native-desktop.png",
+        "docs/reviews/2026-11-03/windows-native-tabs/native-light.png"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "记录最终UI行为、截图、准确源码和CI身份、主页面外观消息来源限制、Windows实机启动未验收边界。",
+      "evidence": [
+        "docs/reviews/2026-11-03/windows-native-tabs/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "逐文件审阅UI差异与归属；仅原生外观、绘制依赖和UI fixture/文档。启动修复保留独立分支；未改用户主checkout和运行服务。",
+      "evidence": [
+        "git diff origin/main --stat",
+        "fix/windows-desktop-startup-20261103@cc41a2c"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "用户授权源码合入main并push，明确不Release；不升版、不创建tag，不部署或重启现有实例。",
+      "evidence": [
+        "user: 先推送，不release，先把手里的都和到main上",
+        "user: 你先把ui修了"
+      ]
     }
   },
-  "release_authorization": "",
-  "rollback": "",
+  "release_authorization": "仅源码整合并push main；禁止Release/tag/版本号变更",
+  "rollback": "反向应用本次UI提交即可；不涉及配置/数据迁移。",
   "handoff": "启动排查保存在fix/windows-desktop-startup-20261103，用户先自行尝试Docker清理。本分支只交付UI。",
   "issue": "https://github.com/skyelan1999/aide/issues/751"
 }
