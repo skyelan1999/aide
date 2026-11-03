@@ -7,7 +7,7 @@ function fixture(){
  const window={AidePluginWorkbench:{selection(value){if(!value?.left?.path||value.left.path.includes('..'))return undefined;return value;}},open:(...args)=>(calls.push(args),popup)};
  const context={window,URL,URLSearchParams,location:{href:'https://localhost:9999/#token=private-fixture',hash:''}};
  vm.runInNewContext(code,context);
- return {tabs:window.AidePluginWorkbenchTabs,calls,errors,page,context,services:{t:x=>x,toast:e=>errors.push(e),blocked:()=>blocked,workspace:()=>workspace},block:()=>blocked=true,popup:()=>popup=null,foreign:()=>workspace='../foreign'};
+ return {tabs:window.AidePluginWorkbenchTabs,calls,errors,page,context,services:{t:x=>x,toast:e=>errors.push(e),blocked:()=>blocked,workspace:()=>workspace},scope:value=>workspace=value,block:()=>blocked=true,popup:()=>popup=null,foreign:()=>workspace='../foreign'};
 }
 const plugin={id:'compare',enabled:true,workbench:{protocol:1}};
 test('workbench opens a fresh same-origin page with scoped selection and no credentials',()=>{
@@ -23,6 +23,19 @@ test('blocked popup reports failure without replacing current workbench',()=>{
  const f=fixture();f.popup();assert.equal(f.tabs.open(plugin,f.services),false);assert.equal(f.errors.length,1);
  assert.equal(f.calls.length,1);
 });
+test('actual local and SSH workspace identities round-trip without becoming paths or credentials',()=>{
+ for(const scope of ['local|/Users/test/Library/Mobile Documents/工作区 & notes#1|','ssh|/srv/projects/研发|user@example:2222','local|C:\\Users\\test\\AI Workspace|']){
+  const f=fixture();f.scope(scope);assert.equal(f.tabs.open(plugin,f.services),true);
+  const url=new URL(f.calls[0][0]);assert.equal(url.pathname,'/');assert.equal(url.search,'');assert.equal(f.tabs.read(url.hash).workspace,scope);
+  assert.equal(new URLSearchParams(url.hash.slice(1)).get('workspace'),scope);assert(!f.calls[0][0].includes('private-fixture'));
+ }
+});
+test('oversized and control-bearing workspace identities never open a page or parse',()=>{
+ for(const scope of ['', 'local|/workspace\nsecret|', 'ssh|/workspace|host\x00','local|/'+ 'a'.repeat(4096)+'|']){
+  const f=fixture();f.scope(scope);assert.equal(f.tabs.open(plugin,f.services),false);assert.equal(f.calls.length,0);
+  assert.equal(f.tabs.read('#'+new URLSearchParams({pluginWorkbench:'compare',workspace:scope})),null);
+ }
+});
 test('locked, disabled, broken or malformed plugin routes cannot open a page',()=>{
  for(const variant of [{...plugin,enabled:false},{...plugin,error:'bad'},{...plugin,id:'../other'},{...plugin,workbench:{protocol:2}}]){
   const f=fixture();assert.equal(f.tabs.open(variant,f.services),false);assert.equal(f.calls.length,0);
@@ -36,14 +49,14 @@ test('deep link parser rejects traversal, bad selections and missing workspace',
 });
 test('routed page rechecks workspace, current enabled plugin and lock before creating a bridge',async()=>{
  const app=fs.readFileSync('internal/server/web/app.js','utf8'),start=app.indexOf('let pluginPageOpening='),end=app.indexOf('async function loadPluginsPanel()',start);
- const calls=[],errors=[],state={token:'fixture',plugins:[]},lockScreen={locked:false};let scope='workspace_1';
+ const calls=[],errors=[],state={token:'fixture',plugins:[]},lockScreen={locked:false};let scope='local|/Users/test/工作区 with spaces|';
  const route={id:'compare',workspace:scope,selection:undefined};
  const context={window:{AidePluginWorkbenchTabs:{read:()=>route},AidePluginWorkbench:{open:async(p,s)=>(calls.push({p,s}),true)}},state,lockScreen,recoveryScope:()=>scope,chatRecoveryEpoch:0,
   loadPluginsPanel:async()=>{state.plugins=[plugin];},pluginWorkbenchServices:()=>({}),document:{title:''},t:x=>x,toast:e=>errors.push(e)};
  vm.runInNewContext(app.slice(start,end),context);
  lockScreen.locked=true;await context.openRoutedPluginWorkbench();assert.equal(calls.length,0);
  lockScreen.locked=false;scope='foreign';await context.openRoutedPluginWorkbench();assert.equal(calls.length,0);assert.equal(errors.length,1);
- scope='workspace_1';await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.equal(calls[0].s.inPage,true);
+ scope='local|/Users/test/工作区 with spaces|';await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.equal(calls[0].s.inPage,true);
  await context.openRoutedPluginWorkbench();assert.equal(calls.length,1,'no duplicate after repeated unlock/reconciliation');
  calls[0].s.onClose();context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,enabled:false}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);
 });

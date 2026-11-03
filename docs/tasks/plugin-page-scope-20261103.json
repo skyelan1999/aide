@@ -1,0 +1,75 @@
+{
+  "id": "plugin-page-scope-20261103",
+  "request": "继续#746已解锁后的插件新标签页验收，修复真实工作区ID被路由误拒绝",
+  "baseline": "a6728b16c6ea3a1316d1dda8c65a45731920110e",
+  "initial_status": "",
+  "acceptance": [
+    "真实local/ssh mode|path|host含空格和Unicode的工作区ID可往返传递",
+    "跨工作区、锁屏、插件禁用、选择路径与有界控制字符检查保持",
+    "已解锁独立应用Compare/ProfessionalProject新页实际渲染"
+  ],
+  "scope": [
+    "internal/server/web/plugin-workbench-tabs.js",
+    "internal/server/web/index.html",
+    "scripts/plugin-workbench-tabs.test.cjs",
+    "docs/tasks/plugin-page-scope-20261103.json",
+    "docs/architecture/macos-desktop.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将wsID视为有界不透明标识，通过URLSearchParams编码，目标页严格与当前工作区相等；不放宽文件选择。",
+      "evidence": [
+        "Issue #750",
+        "internal/server/workspace_config.go:285"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "将wsID视为有界不透明标识，通过URLSearchParams编码，目标页严格与当前工作区相等；不放宽文件选择。",
+      "evidence": [
+        "Issue #750",
+        "internal/server/workspace_config.go:285"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "替换slug假设，接受有界真实mode|path|host标识，目的页仍严格对比工作区。",
+      "evidence": [
+        "internal/server/web/plugin-workbench-tabs.js",
+        "scripts/plugin-workbench-tabs.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "7项路由回归和320项quick通过；用本机实际workspaceId在修正脚本中验证往返成功。待本机更新后继续原生可见验收。",
+      "evidence": [
+        ".agent-state/plugin-page-scope/quick-result.json",
+        "ee7e875bf604b6f8d60d17d7f9615987be903062fe7660710aadb5582ae94ef5"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构记录不透明工作区身份和保持原有桥接边界。",
+      "evidence": [
+        "docs/architecture/macos-desktop.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅范围内受控文件；测试未传输文件、调用模型或改变插件设置；已清空测试插件搜索并恢复文件面板。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未推送或发布；仅本机部署修复。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore plugin-workbench-tabs.js/index.html from a6728b16 and canonical build.",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/750"
+}
