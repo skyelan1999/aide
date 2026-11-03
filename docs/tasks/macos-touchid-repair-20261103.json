@@ -1,0 +1,83 @@
+{
+  "id": "macos-touchid-repair-20261103",
+  "request": "Touch ID 一直验证失败，之前已经保存的也不能用",
+  "baseline": "748438ba6a9f15fe2f456d64f4370ae6204d5c39",
+  "initial_status": "",
+  "acceptance": [
+    "ad-hoc app creates and restores Secure Enclave credentials without privileged Keychain entitlements",
+    "Biometric current set remains enforced by hardware signing; no software/password fallback",
+    "Old Safari and existing native credentials are preserved; enrollment error is actionable",
+    "Focused Swift hardware/store, JS routing, Go verification and native compilation pass; user Touch ID acceptance reported separately"
+  ],
+  "scope": [
+    "native/macos-desktop/biometrics.swift",
+    "scripts/*touchid*",
+    "scripts/build-macos-desktop.py",
+    "docs/architecture/macos-desktop.md",
+    "docs/tasks/macos-touchid-repair-20261103.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports enrollment and old credentials fail in installed app. Retain existing data.",
+      "evidence": [
+        "System Security log: SecKeyCreateRandomKey_ios failed -34018 at 18:11:09, 18:11:16, 18:11:42 local",
+        "Installed app ad-hoc signed; no signing identities available"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "CryptoKit enclave sealed representations in installation-scoped owner-only local storage; retain legacy keychain retrieval. Biometric ACL remains in enclave. No forged restricted entitlements.",
+      "evidence": [
+        "Local hardware probe: enclave create/reopen succeeds; noninteractive signature denied LA -1004",
+        "Apple SecureEnclave.P256.Signing.PrivateKey and TN3125 documentation"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Source-built ad-hoc app now persists enclave-sealed representations in owner-only installation storage. Legacy Keychain queries remain; no existing server/Safari credentials deleted.",
+      "evidence": [
+        "native/macos-desktop/biometrics.swift",
+        "Checked-in Swift store/hardware regression integrated into macOS desktop Python tests"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused native/JS/Go regressions and final quick passed; user confirmed new binding and locked-screen Touch ID unlock.",
+      "evidence": [
+        "User reply: 都好了 (new binding and locked-screen unlock)",
+        "Real enclave create/persist/reopen public-key match; no-interaction signing denied",
+        "Swift storage tests reject traversal, links, FIFO, unsafe permissions and duplicate overwrite",
+        "12 macOS desktop tests pass; JS native routing tests pass",
+        "Go TestNativeTouchIDWebAuthnInterop passed in offline golang:1.26-bookworm container",
+        "Native app arm64 build, signature verification and --policy-test passed",
+        "Installed desktop build e42062ae0c89cd835d68e001fb800a1cac0e7dc39b4b282babbc9a38df7ae41d",
+        "Final quick PASS receipt .agent-state/verify-20261103T101851153383Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture documents ad-hoc entitlement failure, enclave-sealed storage, permissions and legacy compatibility.",
+      "evidence": [
+        "docs/architecture/macos-desktop.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "All added files task-owned; temporary test stores removed automatically, Docker test container removed. Swift cache retained. No production data or old credentials removed.",
+      "evidence": [
+        "git diff --check passed",
+        "Backend was not rebuilt or restarted by this task"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepare source PR/main merge under existing authorization; no Release/version/tag. Updated local desktop app only.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested fixes pushed/merged to main, no Release; current user confirmed hardware flow works.",
+  "rollback": "Rebuild desktop app from prior main if needed; retain server credential registrations and local sealed files. Account password remains available. No backend data migration.",
+  "handoff": "Local installed app and real user Touch ID acceptance passed. Pending PR/main integration; no Release, tag or backend restart.",
+  "issue": 749
+}

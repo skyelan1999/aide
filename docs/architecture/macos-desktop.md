@@ -39,7 +39,11 @@ WKWebView 仅对已验证 localhost 原点处理精确叶证书 pin，同时检�
 
 首次使用：用账户密码解锁，在「设置 → 数据与账户 → 账户 → 绑定本机 Touch ID」验证原密码，再完成系统指纹确认。之后锁屏可用 Touch ID 解锁，管理授权也复用同一凭据。Safari 已绑定的凭据保留，桌面需要单独绑定一次。没有 Touch ID、被锁定、取消验证或系统新增/删除指纹后，可继续用账户密码；指纹集合变化会使旧桌面私钥失效，需要重新绑定。
 
-私钥是 Secure Enclave 的不可导出 P-256 密钥，存于本机 Keychain，以 `WhenUnlockedThisDeviceOnly` 和 `privateKeyUsage + biometryCurrentSet` 保护，并按安装 identifier 隔离。每次签名使用新的 LocalAuthentication 上下文，禁用复用和系统密码回退。账户密码只提交既有服务端密码验证，不进入原生桥或 Keychain。
+私钥是 Secure Enclave 的不可导出 P-256 密钥，以 `WhenUnlockedThisDeviceOnly` 和 `privateKeyUsage + biometryCurrentSet` 保护，并按安装 identifier 隔离。源码本地构建采用 ad-hoc 签名，没有 provisioned Keychain access groups；旧版永久 Keychain 注册会返回 `errSecMissingEntitlement (-34018)`，不能只添加未经授权的 entitlement 解决。现在使用 CryptoKit `SecureEnclave.P256.Signing.PrivateKey.dataRepresentation` 保存由本机 Secure Enclave 封装的表示，位置为 `~/Library/Application Support/<bundle-id>.touch-id/<credential-id>.sealed`。该表示不是明文私钥，仍须由原设备 Secure Enclave 在指纹 ACL 下使用；不使用软件私钥或把 LocalAuthentication 成功布尔值当作断言。
+
+目录限当前 UID、0700，文件限当前 UID、0600、普通文件且单硬链接，文件读取上限 16 KiB；使用 `O_NOFOLLOW`、`O_EXCL` 和目录描述符拒绝符号链接、覆盖及路径穿越。原有永久 Keychain 凭据继续只读枚举和签名，不自动删除或迁移；Safari 凭据由 Safari 继续管理，不能复制成独立应用私钥。失败的旧版注册没有写入成功，需要在修复后的应用中重新绑定。每次签名使用新的 LocalAuthentication 上下文，禁用复用和系统密码回退。账户密码只提交既有服务端密码验证，不进入原生桥或本地凭据文件。
+
+参考：[Apple CryptoKit Secure Enclave signing key](https://developer.apple.com/documentation/cryptokit/secureenclave/p256/signing/privatekey)、[TN3125 provisioning profiles](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles)。
 
 原生桥只提供 status/create/get，仅已验证 localhost HTTPS 顶层工作台可调用；插件 iframe、独立插件工作台、外部页面与其他端口均不授权。原生返回标准 WebAuthn none 注册响应和 ES256 断言，继续由既有服务端校验公钥、UV、挑战过期/一次性、精确原点及锁代际。原生成功布尔值不能解锁。服务端删除凭据后，残留的本机硬件密钥也无法解锁。此实现使用显式凭据列表及零计数器，不提供跨设备同步或可发现通行密钥。
 
@@ -52,6 +56,10 @@ python3 scripts/test_macos_desktop.py
 python3 scripts/test_launcher_contract.py
 python3 scripts/test_source_fingerprint.py
 node scripts/native-touchid.test.cjs
+# macOS：在临时目录测试存储与真实 enclave；不触发指纹提示，不接触生产凭据
+xcrun swiftc native/macos-desktop/biometrics.swift scripts/native-touchid-store-test.swift -o /tmp/aide-touchid-store-test
+/tmp/aide-touchid-store-test
+# 用户主动硬件验收时可加 --interactive，测试后删除这个可再生二进制
 "$HOME/Applications/Aide.app/Contents/MacOS/AideDesktop" --policy-test
 python3 scripts/agent-route.py verify quick
 ```
@@ -61,3 +69,5 @@ python3 scripts/agent-route.py verify quick
 精确本地验收与限制见 `docs/tasks/macos-desktop-20261103.json`。回退时退出桌面应用，在 Safari 打开现有 localhost 地址即可；删除或保留 `~/Applications/Aide.app` 均不删除后台数据。无需为回退停止 Docker 服务。
 
 原生 Touch ID 的软件跨实现签名向量位于 `internal/server/testdata/native-touchid-webauthn.json`，由测试专用临时软件密钥生成，不含私钥。Swift wire 测试与 Go 验签覆盖正常注册/解锁及拒绝路径；这些测试不替代本机真实指纹绑定、取消和解锁。实际硬件验收状态见 `docs/tasks/native-touchid-20261103.json`，关联 [#749](https://github.com/skyelan1999/aide/issues/749)。
+
+2026-11-03 修复后，本机真实 Secure Enclave 的创建、封装持久化/恢复及无交互签名拒绝通过；用户确认新绑定和锁屏 Touch ID 解锁均成功。见 `docs/tasks/macos-touchid-repair-20261103.json`。当前硬件验收不代表其他 Mac 或 Windows Hello 的真机验收。
