@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <atomic>
 #include <memory>
 #include <stdexcept>
 #include "third_party/json.hpp"
@@ -65,12 +66,22 @@ std::string read(const fs::path& p,size_t max=32*1024*1024){
  if(s.compare(0,3,"\xef\xbb\xbf")==0)s.erase(0,3);return s;
 }
 void realPath(const fs::path& p){DWORD a=GetFileAttributesW(p.c_str());if(a!=INVALID_FILE_ATTRIBUTES && (a&FILE_ATTRIBUTE_REPARSE_POINT))throw std::runtime_error("Persistent launcher paths cannot be links or junctions");}
-void write(const fs::path& p,const std::string& s){
- static unsigned serial=0;realPath(p);fs::create_directories(p.parent_path());auto t=p;t+=L".native-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64())+L"-"+std::to_wstring(++serial);realPath(t);
- struct Cleanup{fs::path p;~Cleanup(){std::error_code error;fs::remove(p,error);}}cleanup{t};
- {Handle file(CreateFileW(t.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr));if(!file.valid())throw std::runtime_error("Cannot create atomic launcher state");for(size_t offset=0;offset<s.size();){DWORD written=0,n=DWORD(std::min<size_t>(65536,s.size()-offset));if(!WriteFile(file.h,s.data()+offset,n,&written,nullptr)||written!=n)throw std::runtime_error("Cannot save launcher state");offset+=n;}if(!FlushFileBuffers(file.h))throw std::runtime_error("Cannot flush launcher state before commit");}
- if(!MoveFileExW(t.c_str(),p.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Cannot commit launcher state");
+std::runtime_error winFailure(const char* message,DWORD error){return std::runtime_error(std::string(message)+" (Windows error "+std::to_string(error)+")");}
+void moveState(const fs::path& from,const fs::path& to,DWORD flags,const char* message){
+ auto until=GetTickCount64()+2000;unsigned delay=20;
+ while(true){realPath(from);realPath(to);if(MoveFileExW(from.c_str(),to.c_str(),flags))return;DWORD error=GetLastError();
+  if((error!=ERROR_SHARING_VIOLATION&&error!=ERROR_LOCK_VIOLATION&&error!=ERROR_ACCESS_DENIED&&error!=ERROR_USER_MAPPED_FILE))throw winFailure(message,error);
+  auto now=GetTickCount64();if(now>=until)throw winFailure(message,error);
+  Sleep(DWORD(std::min<ULONGLONG>(delay,until-now)));delay=std::min(200u,delay*2);
+ }
 }
+void write(const fs::path& p,const std::string& s){
+ static std::atomic<unsigned> serial{0};realPath(p);fs::create_directories(p.parent_path());auto t=p;t+=L".native-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64())+L"-"+std::to_wstring(++serial);realPath(t);
+ struct Cleanup{fs::path p;~Cleanup(){std::error_code error;fs::remove(p,error);}}cleanup{t};
+ {Handle file(CreateFileW(t.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr));if(!file.valid())throw winFailure("Cannot create atomic launcher state",GetLastError());for(size_t offset=0;offset<s.size();){DWORD written=0,n=DWORD(std::min<size_t>(65536,s.size()-offset));if(!WriteFile(file.h,s.data()+offset,n,&written,nullptr))throw winFailure("Cannot save launcher state",GetLastError());if(written!=n)throw winFailure("Incomplete launcher state write",ERROR_WRITE_FAULT);offset+=n;}if(!FlushFileBuffers(file.h))throw winFailure("Cannot flush launcher state before commit",GetLastError());}
+ moveState(t,p,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH,"Cannot commit launcher state");
+}
+
 fs::path module(){std::wstring s(32768,0);DWORD n=GetModuleFileNameW(nullptr,s.data(),DWORD(s.size()));if(!n||n>=s.size())throw std::runtime_error("Cannot locate launcher executable");s.resize(n);return fs::path(s);}
 std::wstring quote(const std::wstring& s){
  std::wstring r=L"\"";size_t slashes=0;
@@ -94,6 +105,7 @@ fs::path nativeStopPath;
 bool observeNativeStop=false;
 bool nativeInterrupted(){return observeNativeStop&&!nativeStopPath.empty()&&GetFileAttributesW(nativeStopPath.c_str())!=INVALID_FILE_ATTRIBUTES;}
 unsigned sequence=0;
+#include "process_exit.hpp"
 Result run(const fs::path& exe,const Args& args,DWORD timeout=120000){
  auto stem=L"process-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64())+L"-"+std::to_wstring(++sequence);
  auto out=stateRoot/(stem+L".out"),err=stateRoot/(stem+L".err");
@@ -110,12 +122,13 @@ Result run(const fs::path& exe,const Args& args,DWORD timeout=120000){
  PROCESS_INFORMATION pi{};
  if(!CreateProcessW(exe.c_str(),cmd.data(),nullptr,nullptr,TRUE,CREATE_SUSPENDED|CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT,nullptr,nullptr,&si.info.StartupInfo,&pi))throw std::runtime_error("Cannot execute required native program (Windows error "+std::to_string(GetLastError())+")");
  Handle process(pi.hProcess),thread(pi.hThread);
- if(!AssignProcessToJobObject(job.h,process.h)||ResumeThread(thread.h)==DWORD(-1)){TerminateProcess(process.h,125);if(WaitForSingleObject(process.h,5000)!=WAIT_OBJECT_0)throw aide_host::Unsafe("Unattached native child termination unconfirmed");throw std::runtime_error("Cannot supervise native child process");}
+ if(!AssignProcessToJobObject(job.h,process.h)||ResumeThread(thread.h)==DWORD(-1)){DWORD error=GetLastError();TerminateProcess(process.h,125);if(WaitForSingleObject(process.h,5000)!=WAIT_OBJECT_0)throw aide_host::Unsafe("Unattached native child termination unconfirmed (Windows error "+std::to_string(error)+")");throw winFailure("Cannot supervise native child process",error);}
  DWORD waited=WAIT_TIMEOUT,code=1;auto deadline=GetTickCount64()+timeout;bool cancelled=false;
  while(true){auto now=GetTickCount64();if(now>=deadline)break;waited=WaitForSingleObject(process.h,DWORD(std::min<ULONGLONG>(250,deadline-now)));if(waited!=WAIT_TIMEOUT)break;if(nativeInterrupted()){cancelled=true;break;}}
- if(waited!=WAIT_OBJECT_0){if(!TerminateJobObject(job.h,124)||WaitForSingleObject(process.h,5000)!=WAIT_OBJECT_0)throw aide_host::Unsafe("Native child termination unconfirmed; action stopped");code=124;}else GetExitCodeProcess(process.h,&code);
- if(!TerminateJobObject(job.h,code))throw aide_host::Unsafe("Native process tree termination unconfirmed");
- bool stopped=false;for(int i=0;i<50;i++){JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting{};if(!QueryInformationJobObject(job.h,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),nullptr))break;if(!accounting.ActiveProcesses){stopped=true;break;}Sleep(100);}if(!stopped)throw aide_host::Unsafe("Native process tree still active; action stopped");
+ if(waited==WAIT_FAILED)throw aide_host::Unsafe("Cannot observe native child exit (Windows error "+std::to_string(GetLastError())+")");
+ if(waited!=WAIT_OBJECT_0)code=124;else if(!GetExitCodeProcess(process.h,&code))throw aide_host::Unsafe("Cannot read native child exit (Windows error "+std::to_string(GetLastError())+")");
+ terminateAndConfirm(job.h,{process.h},code);
+
  Result r{code,read(out),read(err)};if(cancelled)throw std::runtime_error("Native operation stopped by operator");return r;
 }
 void spawn(const fs::path& exe,const Args& args,const fs::path& log){
@@ -524,6 +537,7 @@ public:
 };
 #include "host_windows.hpp"
 #include "host_scheduler.hpp"
+#include "stop_recovery.hpp"
 int selfTest(){
  auto base=std::string("https://localhost:8098/");auto token=std::string(32,'a')+"+/=#";auto link=loginLink(base,token);if(link!=base+"#token="+std::string(32,'a')+"%2B%2F%3D%23"||loginLink(base,"short")!=base)throw std::runtime_error("Automatic sign-in URL encoding failed");
  bool redacted=false;try{parseJson("{private-configuration-sentinel");}catch(const std::exception& e){redacted=std::string(e.what()).find("sentinel")==std::string::npos;}if(!redacted)throw std::runtime_error("JSON error redaction failed");
@@ -564,9 +578,9 @@ int wmain(int argc,wchar_t** argv){
    else if(a==L"--dry-run")dryRun=true;
    else if(a==L"--self-test")return selfTest();
    else if(a==L"--licenses"){std::cout<<embedded_json_license<<'\n'<<embedded_miniz_license<<'\n'<<embedded_helper_licenses;return 0;}
-   else if(a==L"desktop"||a==L"desktop-stop"||a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
+   else if(a==L"desktop"||a==L"desktop-stop"||a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"recover-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
    else if(a==L"--launcher-contract"){std::cout<<"aide-launcher-contract=2\n";return 0;}
-   else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
+   else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|recover-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
    else throw std::runtime_error("Unknown launcher argument");
   }
   desktopAction=action==L"desktop";
@@ -577,11 +591,11 @@ int wmain(int argc,wchar_t** argv){
   }
   auto compiledRoot=fs::absolute(root)/L".aide-data/native";auto compiledReceipt=compiledRoot/L"compiled-launcher.json";
   realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
-  if(fs::exists(compiledReceipt)&&!dryRun&&action!=L"build"&&action!=L"clean"&&action!=L"host-stop"){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){stateRoot=compiledRoot;auto probe=run(target,{L"--launcher-contract"},5000);if(!probe.code&&trim(probe.out)=="aide-launcher-contract=2"){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}}
+  if(fs::exists(compiledReceipt)&&!dryRun&&action!=L"build"&&action!=L"clean"&&action!=L"host-stop"&&action!=L"recover-stop"){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){stateRoot=compiledRoot;auto probe=run(target,{L"--launcher-contract"},5000);if(!probe.code&&trim(probe.out)=="aide-launcher-contract=2"){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}}
   if(action==L"choose-directory")return chooseDirectory();
   if(action==L"confirm-directory-restart")return MessageBoxW(nullptr,L"Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.",L"Aide directories",MB_OKCANCEL|MB_ICONWARNING|MB_DEFBUTTON2)==IDOK?0:2;
   if(force&&action!=L"build"&&action!=L"clean")throw std::runtime_error("--force-build is valid only with build or clean; start never compiles");
-  if(dryRun&&(action==L"stop"||action==L"build"||action==L"clean"||action==L"docker_clean"||action==L"release"||action==L"verify")){
+  if(dryRun&&(action==L"stop"||action==L"recover-stop"||action==L"build"||action==L"clean"||action==L"docker_clean"||action==L"release"||action==L"verify")){
    bool source=fs::exists(root/L".git")||(fs::exists(root/L"go.mod")&&fs::exists(root/L"Dockerfile"));if(!source&&(action==L"build"||action==L"clean"||action==L"release"))throw std::runtime_error("Source-only command is unavailable in a Release package");
    std::cout<<"Dry run: "<<utf8(action)<<"; current-installation resources only; no commands executed.\n";return 0;
   }
@@ -590,7 +604,7 @@ int wmain(int argc,wchar_t** argv){
    stateRoot=fs::absolute(root)/L".aide-data/native";realPath(root/L".aide-data");realPath(stateRoot);
    auto status=fs::exists(stateRoot)?nativeControllerStatus():json{{"running",false}};
    for(auto role:{"port","update"}){auto file=stateRoot/wide(std::string("task-")+role+".json");realPath(file);if(fs::exists(file)){auto task=parseJson(read(file,8192));task["running"]=nativeAlive(task);status["tasks"][role]=task;}}
-   status["stopRequired"]=fs::exists(stateRoot/L"host-stop-required");std::cout<<status.dump(2)<<'\n';return 0;
+   status["stopRequired"]=fs::exists(stateRoot/L"host-stop-required");if(status["stopRequired"].get<bool>()){status["stopRequiredReason"]=aide_host::diagnostic(read(stateRoot/L"host-stop-required",8192),{},512);status["recoveryCommand"]="recover-stop";}std::cout<<status.dump(2)<<'\n';return 0;
   }
   Launcher app(root);app.noBrowser=noBrowser;app.force=force;app.openExisting=action==L"start";privateDirectory(app.root/L".aide-data");stateRoot=app.root/L".aide-data/native";privateDirectory(stateRoot);nativeStopPath=stateRoot/L"stop";
   if(action==L"verify")return app.verify();
@@ -599,14 +613,14 @@ int wmain(int argc,wchar_t** argv){
   if(action==L"desktop"){app.restore();app.engine(false);return app.desktop();}
   if(action==L"status"||action==L"open"){NativeLock lifecycle(stateRoot/L"startup.lock");if(!lifecycle.owns())throw std::runtime_error("Lifecycle is busy; use host-status for nonblocking task status");app.restore();app.engine(false);if(!app.healthy())return 1;if(action==L"status")app.noBrowser=true;app.browser();return 0;}
   std::unique_ptr<NativeLock> control;
-  if(action==L"stop"||action==L"host-stop"||action==L"clean"||action==L"docker_clean"){
+  if(action==L"stop"||action==L"recover-stop"||action==L"host-stop"||action==L"clean"||action==L"docker_clean"){
    for(int i=0;i<150;i++){write(nativeStopPath,"");control=std::make_unique<NativeLock>(stateRoot/L"control.lock");if(control->owns())break;control.reset();Sleep(100);}if(!control)throw std::runtime_error("Another explicit host action has not stopped yet");nativeStopController();
   }else{control=std::make_unique<NativeLock>(stateRoot/L"control.lock");if(!control->owns())throw std::runtime_error("Another explicit native host action is active");}
   if(action==L"host-stop")return 0;
   fs::path builtHost;
   {
-   NativeLock lifecycle(stateRoot/L"startup.lock");if(!lifecycle.owns())throw std::runtime_error("Another lifecycle operation owns this installation");app.restore(action!=L"stop");
-   if(action==L"stop"){if(!app.stop())throw std::runtime_error("Some owned components did not confirm stop; data and stop marker retained");nativeClearDirectoryBlocker();}
+   NativeLock lifecycle(stateRoot/L"startup.lock");if(!lifecycle.owns())throw std::runtime_error("Another lifecycle operation owns this installation");app.restore(action!=L"stop"&&action!=L"recover-stop");
+   if(action==L"stop"||action==L"recover-stop"){if(!app.stop())throw std::runtime_error("Some owned components did not confirm stop; data and stop marker retained");nativeRecoverStopBlocker(app,action==L"recover-stop");}
    else if(action==L"clean-cache")app.cleanCache(dryRun);
    else if(action==L"docker_clean")app.dockerClean();
    else if(action==L"release")app.release();

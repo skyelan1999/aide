@@ -74,9 +74,9 @@ inline int nativeSupervise(Launcher& app){
   status["state"]="running";status["workers"]=json::object();for(auto worker:workers){auto record=worker->identity;record["running"]=worker->alive();status["workers"][worker->role]=record;}
   write(stateRoot/L"host-status.json",status.dump());Sleep(500);
  }
- if(!TerminateJobObject(job.h,0))throw aide_host::Unsafe("Native host job could not stop");
- bool stopped=false;for(int i=0;i<100;i++){JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting{};if(!QueryInformationJobObject(job.h,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),nullptr))break;if(!accounting.ActiveProcesses){stopped=true;break;}Sleep(100);}
- if(!stopped){write(stateRoot/L"host-stop-required","Owned native host process tree did not confirm exit");throw aide_host::Unsafe("Native host process tree termination is unconfirmed");}
+ std::vector<HANDLE> owned;for(auto worker:workers)if(worker->process)owned.push_back(worker->process->h);
+ try{terminateAndConfirm(job.h,owned,0,10000);}catch(const aide_host::Unsafe&){write(stateRoot/L"host-stop-required","Owned native host process tree did not confirm exit");throw;}
+
  status["state"]="stopped";write(stateRoot/L"host-status.json",status.dump());return 0;
 }
 inline void nativeStopController(){
@@ -90,15 +90,6 @@ inline void nativeStopController(){
  if(!process.valid()){if(GetLastError()==ERROR_INVALID_PARAMETER)return;throw aide_host::Unsafe("Cannot confirm previous native controller exit");}
  if(nativeIdentity(process.h,DWORD(pid))["created"]!=status["created"])return;
  if(WaitForSingleObject(process.h,15000)!=WAIT_OBJECT_0)throw aide_host::Unsafe("Native controller did not stop; lifecycle action refused");
-}
-// Only the known directory timeout marker can be cleared by a verified full
-// stop. Unknown child/legacy update blockers still require operator inspection.
-inline void nativeClearDirectoryBlocker(){
- auto path=stateRoot/L"host-stop-required";realPath(path);if(!fs::exists(path))return;
- auto value=json::parse(read(path,8192),nullptr,false);if(!value.is_object()||value.value("source","")!="directory-apply")return;
- auto status=nativeControllerStatus();if(status.value("running",false)||status.value("state","")!="stopped"||value.value("controllerGeneration","").empty()||value.value("controllerGeneration","")!=status.value("generation",""))return;
- if(fs::exists(stateRoot/L"update/transaction.json"))return;
- fs::remove(path);
 }
 inline void nativeLaunchController(Launcher& app){
  auto current=nativeControllerStatus();if(!current.value("running",false))spawn(module(),{L"supervise",L"--root",app.root.wstring(),L"--no-browser"},stateRoot/L"host-supervisor.log");

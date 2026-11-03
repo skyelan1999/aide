@@ -13,6 +13,7 @@ aide-launcher.exe status
 aide-launcher.exe open
 aide-launcher.exe stop
 aide-launcher.exe host-stop
+aide-launcher.exe recover-stop
 aide-launcher.exe clean-cache --dry-run
 aide-launcher.exe --root "C:\path with spaces\aide" --project my-install
 ```
@@ -81,13 +82,27 @@ Docker container stopped.
 
 State lives under `.aide-data/native`, with current-user SID DACLs, atomic writes,
 reparse checks, generation/PID/creation-time identity and bounded/redacted logs.
-`host-status` reports worker phase and `stopRequired`. Unknown child termination
-or legacy unsafe-update markers fail closed: inspect the owned process/container
-state and transaction before removing the blocker; restart does not erase it.
-A directory-command timeout marker is cleared only after a full stop confirms the
-same controller generation and application have stopped. Docker unavailable or
-unconfirmed termination keeps the blocker. Preserve `.env`, `.aide-data`, storage
-receipts and original data when troubleshooting. Stop all native tasks before
+`host-status` reports worker phase, `stopRequired`, a redacted reason and the
+`recover-stop` command. A full `stop` automatically recovers recognized stale
+assigned-Job termination markers; `recover-stop --root "C:\path to\aide"` runs the
+same explicit stop and fails if the marker cannot be safely recovered. It checks
+exclusive lifecycle/controller/legacy-agent ownership, exact PID creation-time
+lifetimes (including workers from older EXEs), absence of update transactions,
+confirmed helper stop, every owned project container's exited state, and absence
+of temporary containers. Directory timeout markers additionally require the same
+stopped controller generation. Successful recovery archives the original marker
+as `host-stop-required.recovered-<pid>-<tick>` alongside a durable JSON audit; it
+does not delete data, volumes, image markers or update journals. Start can then
+be retried. Unknown/unattached-child or legacy unsafe-update markers remain
+blocked for inspection. Docker unavailable, unreadable process state, active
+workers/containers, or failed audit/archive writes also retain the blocker.
+
+Atomic state replacement retries transient Windows sharing/lock/access failures
+for at most two seconds, then reports the numeric Windows error while retaining
+the previous file. Process cleanup verifies retained process handles and empty
+Job accounting even when termination races with natural exit; failed termination
+alone neither proves failure nor proves safety. Preserve `.env`, `.aide-data`,
+storage receipts and original data when troubleshooting. Stop all native tasks before
 replacing a running launcher EXE; application A/B updates change the image, not
 the host executable.
 
@@ -150,3 +165,9 @@ Runtime must already be installed. The SHA256-pinned SDK/Loader is a build input
 normal start never downloads it. Account passwords remain in the existing server
 verification flow, never native storage. See [desktop behavior and limits](../../docs/architecture/windows-desktop.md)
 and [task acceptance](../../docs/tasks/windows-desktop-20261103.json).
+
+The `Windows Desktop Check` CI also builds `--stop-test-output` as a separate,
+unshipped fault fixture. `scripts/ci/windows_stop_recovery.py` exercises actual
+Windows sharing locks and Jobs, plus the production CLI against a synthetic
+Docker executable in a disposable Unicode root. These tests do not establish
+physical Docker Desktop startup or ARM64 execution.
