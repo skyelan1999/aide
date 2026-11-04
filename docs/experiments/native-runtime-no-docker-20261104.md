@@ -75,5 +75,10 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 ## 2026-11-05 原生电脑控制依赖续查
 
 - 发现 `computerControlBridgeURL()` 在 `AIDE_RUNTIME_MODE=native` 时仍默认连接 `host.docker.internal:17778`，与安装包脱离 Docker 的运行方式冲突。已改为原生模式固定访问 `127.0.0.1:17778`，容器模式保持 Docker gateway；新增的三种运行模式回归测试通过。
-- Linux Debian 包现复制 `computer-bridge-linux.js`，声明 X11 bridge 的 `xdotool`/ImageMagick 依赖；仅在 X11 且有 `DISPLAY` 时生成独立 256-bit bridge token、启动服务并绑定 loopback，停止器核验 pid 命令路径后关闭 bridge。无头/Wayland 不误启动。当前完成脚本语法与 Node 语法/peer-filter 检查；下一轮 Linux 包 CI 将实际检查载荷并通过 `/api/command` 验证工作区 Node 写入、外部文件读取/写入拒绝。
+- Linux Debian 包现复制 `computer-bridge-linux.js`，声明 X11 bridge 的 `xdotool`/ImageMagick 依赖；仅在 X11 且有 `DISPLAY` 时生成独立 256-bit bridge token、启动服务并绑定 loopback，停止器核验 pid 命令路径后关闭 bridge。无头/Wayland 不误启动。CI run `41884702473` 的 Linux 安装 smoke 检查了包内桥接文件与 Node 语法，并通过安装后的 `/api/command` 验证包内 Node 在工作区写入成功、工作区外文件读取和写入被 Landlock 拒绝。hosted Linux runner 无 X11，真实桌面截图/输入仍未验收。
 - 这只是 Linux 路径的一部分：macOS 原生 `.app` 与 Windows NSIS 包目前仍未自动附带、启动各自的电脑控制 bridge；截图、点击、输入还未在三平台安装包上做实机闭环。不要据此宣称电脑控制已从容器版完全移植。
+
+## 2026-11-05 三端安装回归
+
+- commit `577e7491` 对应原生包 CI run `41884702473` 的三端包构建、安装/启动 smoke 与 required gate 全部通过：Debian Linux 包安装、鉴权、Office 文件、命令沙箱读写隔离和停止；macOS arm64 PKG 安装、服务 TLS/鉴权、首页、停止与无 Docker；Windows x64 NSIS 安装、服务健康/鉴权、停止、卸载和用户数据保留。run artifact 包含 macOS PKG/ZIP；Windows smoke 明确输出 PASS。
+- 同一 commit 的 Aide CI run `41884702501` quick、Go 编译/关键回归和 gate 全通过。此记录不代表 Windows shell 沙箱、macOS/Linux 用户桌面浏览器、三端电脑控制、全市场插件/TTS/AI 会话具备完整原生支持。
