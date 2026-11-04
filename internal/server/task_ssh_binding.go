@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // Local tasks retain their captured root. A remote task cannot inherit a new
@@ -26,12 +27,16 @@ func (a *App) taskSSHBindingLocked(task *Task) error {
 
 type taskSSHSession struct {
 	bin, socket, target, directory, cache string
+	identity                              string
 	port                                  int
 	pinned                                bool
 }
 
 func (s *taskSSHSession) args(command string) []string {
-	args := append([]string{"-S", s.socket}, sshConnectionArgs(s.socket, s.port)...)
+	args := append(sshControlPrefixForOS(runtime.GOOS, s.socket), sshConnectionArgs(s.socket, s.port)...)
+	if runtime.GOOS == "windows" {
+		args = appendWindowsSSHIdentity(args, s.identity)
+	}
 	if s.pinned {
 		// Require this exact authenticated master. If it is gone, never fall
 		// back to creating a fresh connection (ProxyCommand is not used by mux).
@@ -69,7 +74,7 @@ func (a *App) taskSSHSession(ctx context.Context, task *Task) (*taskSSHSession, 
 		a.mu.Unlock()
 		return nil, nil, err
 	}
-	session := &taskSSHSession{bin: a.sshBin, socket: sshControlSocket, target: a.sshTarget(), port: a.wsConfig.Workspace.Port, directory: a.wsConfig.Workspace.Path, cache: a.workspaceRemoteCachePath()}
+	session := &taskSSHSession{bin: a.sshBin, socket: sshControlSocket, target: a.sshTarget(), port: a.wsConfig.Workspace.Port, directory: a.wsConfig.Workspace.Path, cache: a.workspaceRemoteCachePath(), identity: a.windowsWorkspaceKeyRef()}
 	if task != nil && task.WorkspaceRemotePath != "" {
 		session.directory = task.WorkspaceRemotePath
 	}
@@ -80,7 +85,7 @@ func (a *App) taskSSHSession(ctx context.Context, task *Task) (*taskSSHSession, 
 		return nil, nil, err
 	}
 	release := func() {}
-	if bound {
+	if bound && runtime.GOOS != "windows" {
 		unlock, err := a.lockSSHSession(ctx, sshControlSocket)
 		if err != nil {
 			return nil, nil, err

@@ -5,8 +5,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -89,7 +89,7 @@ func (a *App) browseSFTPSource(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	args := []string{"-o", "ControlPath=" + sock, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(src.Config.Port), "-b", "-", a.sftpTargetOf(src)}
+	args := append(sshSFTPConnectionArgsForOS(runtime.GOOS, sock, src.Config.Port), "-b", "-", a.sftpTargetOf(src))
 	out, err := a.runSFTPBatch(ctx, args, "cd "+shellQuoteRemote(in.Path)+"\nls -l\n")
 	if err != nil {
 		fail(w, 400, sshProcessError(ctx, "SSH 目录浏览失败", out, err))

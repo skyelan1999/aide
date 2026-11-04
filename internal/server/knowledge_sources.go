@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -873,14 +874,17 @@ func (a *App) knowledgeSFTP(ctx context.Context, ar knowledgeArea, batch string,
 	if port == 0 {
 		port = 22
 	}
-	args := []string{"-o", "ControlPath=" + sock, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", strconv.Itoa(port), "-b", "-", target}
+	args := append(sshSFTPConnectionArgsForOS(runtime.GOOS, sock, port), "-b", "-", target)
+	if runtime.GOOS == "windows" && ar.kind != "sftp" {
+		args = appendWindowsSSHIdentity(args, a.windowsWorkspaceKeyRef())
+	}
 	// Limit temporary downloads in the child process as well as captured output.
 	// POSIX shells express -f in blocks; Linux dash uses 1KiB. On 512-byte
 	// implementations the cap is stricter. No source data is a shell command.
 	blocks := (max + 1023) / 1024
 	cmdArgs := append([]string{"-c", "ulimit -f " + strconv.FormatInt(blocks, 10) + " || exit 1; exec \"$@\"", "aide-knowledge-sftp", a.sftpBin}, args...)
-	cmd := exec.CommandContext(ctx, "/bin/sh", cmdArgs...)
-	cmd.Env = aideRuntimeEnvironment()
+	cmd := exec.CommandContext(ctx, hostShellCommand(), cmdArgs...)
+	cmd.Env = sshClientEnvironment()
 	cmd.Stdin = strings.NewReader(batch)
 	diagnostic := &knowledgeLimitWriter{max: 64 * 1024, stop: func() {
 		if cmd.Process != nil {

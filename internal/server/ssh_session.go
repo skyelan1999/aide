@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -132,6 +133,10 @@ func (a *App) lockSSHSession(ctx context.Context, sock string) (func(), error) {
 }
 
 func (a *App) closeSSHMaster(ctx context.Context, sock, target string) error {
+	if runtime.GOOS == "windows" {
+		// Win32 OpenSSH does not implement client ControlMaster.
+		return nil
+	}
 	args := []string{"-S", sock, "-O", "exit"}
 	if target != "" {
 		args = append(args, target)
@@ -222,23 +227,180 @@ func (a *App) sshTarget() string {
 }
 
 func (a *App) sshCommonArgs() []string {
-	return sshConnectionArgs(sshControlSocket, a.wsConfig.Workspace.Port)
+	args := sshConnectionArgs(sshControlSocket, a.wsConfig.Workspace.Port)
+	if runtime.GOOS == "windows" {
+		args = appendWindowsSSHIdentity(args, a.windowsWorkspaceKeyRef())
+	}
+	return args
+}
+
+func appendWindowsSSHIdentity(args []string, keyPath string) []string {
+	if keyPath == "" {
+		return args
+	}
+	return append(args, "-i", keyPath, "-o", "IdentitiesOnly=yes")
+}
+
+func (a *App) windowsWorkspaceKeyRef() string {
+	workspace := a.wsConfig.Workspace
+	if workspace.Auth != "key" || workspace.KeyMode != "ref" || strings.TrimSpace(workspace.KeyRefPath) == "" {
+		return ""
+	}
+	resolved, _, err := a.resolveHostPath(workspace.KeyRefPath)
+	if err != nil {
+		return ""
+	}
+	return resolved
 }
 
 func sshConnectionArgs(sock string, port int) []string {
+	home := "/home/aide"
+	if runtime.GOOS == "windows" {
+		if value, err := os.UserHomeDir(); err == nil {
+			home = value
+		}
+	}
+	return sshConnectionArgsForOS(runtime.GOOS, sock, port, home)
+}
+
+func sshConnectionArgsForOS(goos, sock string, port int, home string) []string {
 	if port == 0 {
 		port = 22
 	}
-	return []string{
-		"-o", "ControlPath=" + sock,
+	args := []string{
 		"-o", "StrictHostKeyChecking=accept-new",
-		"-o", "UserKnownHostsFile=/home/aide/.ssh/known_hosts",
 		"-o", "ConnectTimeout=10",
 		"-o", "ServerAliveInterval=15",
 		"-o", "ServerAliveCountMax=2",
 		"-o", "LogLevel=ERROR",
 		"-p", fmt.Sprint(port),
 	}
+	if goos == "windows" {
+		args = append([]string{"-o", "UserKnownHostsFile=" + strings.TrimRight(home, `/\\`) + `\.ssh\known_hosts`}, args...)
+	} else {
+		args = append([]string{"-o", "ControlPath=" + sock, "-o", "UserKnownHostsFile=" + path.Join(home, ".ssh", "known_hosts")}, args...)
+	}
+	return args
+}
+
+func sshControlPrefixForOS(goos, sock string) []string {
+	if goos == "windows" {
+		return nil
+	}
+	return []string{"-S", sock}
+}
+
+func sshControlOperationForOS(goos, sock, operation string) []string {
+	if goos == "windows" {
+		return nil
+	}
+	return []string{"-S", sock, "-O", operation}
+}
+
+func sshSFTPConnectionArgsForOS(goos, sock string, port int) []string {
+	if port == 0 {
+		port = 22
+	}
+	args := []string{"-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(port)}
+	if goos != "windows" {
+		args = append([]string{"-o", "ControlPath=" + sock}, args...)
+	}
+	return args
+}
+
+func sshHomeDir() string {
+	if runtime.GOOS == "windows" {
+		if home, err := os.UserHomeDir(); err == nil && strings.TrimSpace(home) != "" {
+			return home
+		}
+	}
+	return "/home/aide"
+}
+
+// The SSH agent socket is a signing capability. Keep it out of plugin and
+// general command environments; only pass it to the bundled SSH clients.
+func sshClientEnvironment() []string {
+	env := aideRuntimeEnvironment()
+	if value := strings.TrimSpace(os.Getenv("SSH_AUTH_SOCK")); value != "" {
+		env = append(env, "SSH_AUTH_SOCK="+value)
+	}
+	return env
+}
+
+func (a *App) probeWindowsSSH(ctx context.Context, base []string, target, keyPath, keyMaterial string) error {
+	if keyMaterial != "" {
+		tmp, err := os.CreateTemp(a.ensureSecretsTmpDir(), "aide-sshkey-*.key")
+		if err != nil {
+			return fmt.Errorf("创建临时密钥文件失败: %w", err)
+		}
+		keyPath = tmp.Name()
+		defer os.Remove(keyPath)
+		if _, err := tmp.WriteString(keyMaterial); err != nil {
+			tmp.Close()
+			return fmt.Errorf("写入临时密钥失败: %w", err)
+		}
+		if err := tmp.Close(); err != nil {
+			return err
+		}
+		_ = os.Chmod(keyPath, 0600)
+	}
+	args := append([]string{"-T", "-o", "BatchMode=yes"}, base...)
+	if keyPath != "" {
+		args = append([]string{"-i", keyPath, "-o", "IdentitiesOnly=yes"}, args...)
+	}
+	args = append(args, target, "exit")
+	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	cmd.Env = sshClientEnvironment()
+	cmd.Dir = sshHomeDir()
+	cmd.WaitDelay = 2 * time.Second
+	if err := os.MkdirAll(path.Join(sshHomeDir(), ".ssh"), 0700); err != nil {
+		return fmt.Errorf("SSH 本地配置目录不可用: %w", err)
+	}
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return sshProcessError(ctx, "SSH 连接失败", out, err)
+	}
+	return nil
+}
+
+func (a *App) ensureWindowsWorkspaceSSH(ctx context.Context, auth, username, host string, base []string, password, keyMaterial, passphrase, directKeyPath string, generation uint64) error {
+	if auth == "password" && password != "" {
+		return errors.New("Windows SSH password authentication is not available yet; configure a referenced key or Windows SSH agent")
+	}
+	if passphrase != "" {
+		return errors.New("Windows SSH cannot unlock this passphrase-protected key yet; add the key to an SSH agent first")
+	}
+	if keyMaterial != "" && directKeyPath == "" {
+		return errors.New("Windows SSH cannot safely reuse an Aide-managed private key without ControlMaster; configure a referenced key or Windows SSH agent")
+	}
+	base = appendWindowsSSHIdentity(base, directKeyPath)
+	if username == "" {
+		username = "root"
+	}
+	err := a.probeWindowsSSH(ctx, base, username+"@"+host, "", "")
+	if err != nil {
+		return err
+	}
+	if generation != a.sshSessionGeneration(sshControlSocket) {
+		return errors.New("SSH 连接配置已变化，请重新访问目录")
+	}
+	return nil
+}
+
+func (a *App) ensureWindowsSourceSSH(ctx context.Context, src Source, base []string, keyMaterial string, generation uint64) error {
+	if src.Config.Auth == "password" {
+		return errors.New("Windows SFTP password authentication is not available yet; configure a Windows SSH agent")
+	}
+	if keyMaterial != "" {
+		return errors.New("Windows SFTP cannot safely reuse an Aide-managed private key without ControlMaster; configure a Windows SSH agent")
+	}
+	err := a.probeWindowsSSH(ctx, base, a.sftpTargetOf(src), "", keyMaterial)
+	if err != nil {
+		return fmt.Errorf("SFTP 连接失败: %w", err)
+	}
+	if generation != a.sshSessionGeneration(sourceSocket(src.ID)) {
+		return errors.New("SFTP 连接配置已变化，请重新访问目录")
+	}
+	return nil
 }
 
 // ensureSSHSession 建立/复用唯一 master 会话。返回错误信息（供用户界面反馈）。
@@ -268,12 +430,15 @@ func (a *App) ensureSSHSession(ctx context.Context) error {
 	}
 	target := username + "@" + host
 	base := sshConnectionArgs(sshControlSocket, config.Port)
+	if runtime.GOOS == "windows" {
+		return a.ensureWindowsWorkspaceSSH(ctx, config.Auth, config.Username, config.Host, base, password, keyMaterial, passphrase, directKeyPath, generation)
+	}
 	if err := a.prepareSSHMaster(ctx, sshControlSocket, target, generation); err != nil {
 		return err
 	}
 	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	check := exec.CommandContext(checkCtx, a.sshBin, append([]string{"-S", sshControlSocket, "-O", "check"}, append(base, target)...)...)
+	check := exec.CommandContext(checkCtx, a.sshBin, append(sshControlOperationForOS(runtime.GOOS, sshControlSocket, "check"), append(base, target)...)...)
 	if err := check.Run(); err == nil {
 		if generation != a.sshSessionGeneration(sshControlSocket) {
 			a.closeSSHMaster(ctx, sshControlSocket, target)
@@ -353,7 +518,7 @@ func (a *App) ensureSSHSession(ctx context.Context) error {
 	// 复检
 	checkCtx2, cancel2 := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel2()
-	check2 := exec.CommandContext(checkCtx2, a.sshBin, append([]string{"-S", sshControlSocket, "-O", "check"}, append(base, target)...)...)
+	check2 := exec.CommandContext(checkCtx2, a.sshBin, append(sshControlOperationForOS(runtime.GOOS, sshControlSocket, "check"), append(base, target)...)...)
 	if err := check2.Run(); err != nil {
 		return sshProcessError(ctx, "SSH 会话未建立", nil, err)
 	}
@@ -438,11 +603,11 @@ func (a *App) execRemoteSession(ctx context.Context, command string, stdout, std
 	if session != nil {
 		args, bin = session.args(wrapped), session.bin
 	} else {
-		args = append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+		args = append(sshControlPrefixForOS(runtime.GOOS, sshControlSocket), a.sshCommonArgs()...)
 		args, bin = append(args, a.sshTarget(), wrapped), a.sshBin
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Env = aideRuntimeEnvironment()
+	cmd.Env = sshClientEnvironment()
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	// CommandContext 会在取消时终止本地 ssh 客户端；WaitDelay 防止失联的
@@ -488,11 +653,11 @@ func (a *App) execRemotePTYSession(ctx context.Context, command string, stdin io
 		args = append([]string{"-tt"}, session.args(wrapped)...)
 		bin = session.bin
 	} else {
-		args = append([]string{"-tt", "-S", sshControlSocket}, a.sshCommonArgs()...)
+		args = append(append([]string{"-tt"}, sshControlPrefixForOS(runtime.GOOS, sshControlSocket)...), a.sshCommonArgs()...)
 		args = append(args, a.sshTarget(), wrapped)
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Env = append(aideRuntimeEnvironment(), "TERM=xterm-256color")
+	cmd.Env = append(sshClientEnvironment(), "TERM=xterm-256color")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
 	cmd.WaitDelay = 2 * time.Second
 	err := cmd.Run()
@@ -537,11 +702,11 @@ func (a *App) cleanupRemoteGroupSession(pgidFile string, session *taskSSHSession
 	if session != nil {
 		args = session.args(remote)
 	} else {
-		args = append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+		args = append(sshControlPrefixForOS(runtime.GOOS, sshControlSocket), a.sshCommonArgs()...)
 		args = append(args, a.sshTarget(), remote)
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Env = aideRuntimeEnvironment()
+	cmd.Env = sshClientEnvironment()
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -572,10 +737,11 @@ func remoteGroupCleanupInner(pgidFile string) string {
 
 func (a *App) sftpArgs() []string {
 	port := a.wsConfig.Workspace.Port
-	if port == 0 {
-		port = 22
+	args := sshSFTPConnectionArgsForOS(runtime.GOOS, sshControlSocket, port)
+	if runtime.GOOS == "windows" {
+		args = appendWindowsSSHIdentity(args, a.windowsWorkspaceKeyRef())
 	}
-	return []string{"-o", "ControlPath=" + sshControlSocket, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(port)}
+	return args
 }
 
 func (a *App) sftpBatch(batch string) (string, error) {
@@ -649,7 +815,7 @@ func (a *App) runWorkspaceSFTPBatch(ctx context.Context, args []string, batch st
 func (a *App) runSFTPBatch(ctx context.Context, args []string, batch string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, a.sftpBin, args...)
 	cmd.Stdin = strings.NewReader(batch)
-	cmd.Env = aideRuntimeEnvironment()
+	cmd.Env = sshClientEnvironment()
 	cmd.WaitDelay = 2 * time.Second
 	w := &knowledgeLimitWriter{max: 4 << 20, stop: func() {
 		if cmd.Process != nil {
@@ -1079,10 +1245,13 @@ func (a *App) ensureSourceSessionCredentials(ctx context.Context, src Source, se
 		defer cleanup()
 		base = append(base, "-o", "ProxyCommand="+proxy)
 	}
+	if runtime.GOOS == "windows" {
+		return a.ensureWindowsSourceSSH(ctx, src, base, secKey, generation)
+	}
 	if err := a.prepareSSHMaster(ctx, sock, a.sftpTargetOf(src), generation); err != nil {
 		return err
 	}
-	if err := exec.CommandContext(ctx, a.sshBin, append([]string{"-S", sock, "-O", "check"}, append(base, a.sftpTargetOf(src))...)...).Run(); err == nil {
+	if err := exec.CommandContext(ctx, a.sshBin, append(sshControlOperationForOS(runtime.GOOS, sock, "check"), append(base, a.sftpTargetOf(src))...)...).Run(); err == nil {
 		if generation != a.sshSessionGeneration(sock) {
 			a.closeSSHMaster(ctx, sock, a.sftpTargetOf(src))
 			return fmt.Errorf("SFTP 连接配置已变化，请重新访问目录")
@@ -1127,7 +1296,7 @@ func (a *App) ensureSourceSessionCredentials(ctx context.Context, src Source, se
 		a.closeSSHMaster(ctx, sock, a.sftpTargetOf(src))
 		return fmt.Errorf("SFTP 连接配置已变化，请重新访问目录")
 	}
-	if err := exec.CommandContext(ctx, a.sshBin, append([]string{"-S", sock, "-O", "check"}, append(base, a.sftpTargetOf(src))...)...).Run(); err != nil {
+	if err := exec.CommandContext(ctx, a.sshBin, append(sshControlOperationForOS(runtime.GOOS, sock, "check"), append(base, a.sftpTargetOf(src))...)...).Run(); err != nil {
 		return sshProcessError(ctx, "SFTP 会话未建立", nil, err)
 	}
 	if generation != a.sshSessionGeneration(sock) {
@@ -1167,7 +1336,7 @@ func (a *App) sftpBatchSourceExpected(src Source, batch string, expected *uint64
 	if port == 0 {
 		port = 22
 	}
-	args := []string{"-o", "ControlPath=" + sourceSocket(src.ID), "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(port), "-b", "-", a.sftpTargetOf(src)}
+	args := append(sshSFTPConnectionArgsForOS(runtime.GOOS, sourceSocket(src.ID), port), "-b", "-", a.sftpTargetOf(src))
 	previousSocket, _ := os.Stat(sourceSocket(src.ID))
 	out, err := a.runSFTPBatch(ctx, args, batch)
 	if err != nil && ctx.Err() == nil && isSFTPDirectoryBatch(batch) && isSFTPTransportFailure(string(out)) {

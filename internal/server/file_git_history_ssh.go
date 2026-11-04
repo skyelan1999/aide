@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -82,7 +83,7 @@ func (s gitHistorySSH) run(ctx context.Context, limit int64, command string) ([]
 	}
 	args := append(append([]string(nil), s.args...), s.target, command)
 	cmd := exec.CommandContext(ctx, s.bin, args...)
-	cmd.Env = aideRuntimeEnvironment()
+	cmd.Env = sshClientEnvironment()
 	output := &knowledgeLimitWriter{max: limit, stop: func() {
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
@@ -119,7 +120,7 @@ func (a *App) findSSHGitHistoryRepo(ctx context.Context, p string) (*gitHistoryR
 		a.mu.Unlock()
 		return nil, "未配置 SSH 远程主机。", nil
 	}
-	s := gitHistorySSH{app: a, bin: a.sshBin, target: a.sshTarget(), workspace: a.wsID(), base: a.wsConfig.Workspace.Path, args: append([]string{"-T", "-S", sshControlSocket}, a.sshCommonArgs()...), generation: a.sshSessionGeneration(sshControlSocket)}
+	s := gitHistorySSH{app: a, bin: a.sshBin, target: a.sshTarget(), workspace: a.wsID(), base: a.wsConfig.Workspace.Path, args: append(append([]string{"-T"}, sshControlPrefixForOS(runtime.GOOS, sshControlSocket)...), a.sshCommonArgs()...), generation: a.sshSessionGeneration(sshControlSocket)}
 	a.mu.Unlock()
 	if s.base == "" {
 		return nil, "", errors.New("SSH 工作区目录未配置")

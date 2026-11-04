@@ -56,7 +56,7 @@ func TestNativeWindowsRuntimeEnvironmentKeepsSystemPathsWithoutSecrets(t *testin
 			t.Fatalf("Windows runtime env missing %q: %q", want, got)
 		}
 	}
-	if strings.Contains(got, "AI_API_KEY") || strings.Contains(got, "must-not-leak") {
+	if strings.Contains(got, "AI_API_KEY") || strings.Contains(got, "must-not-leak") || strings.Contains(got, "SSH_AUTH_SOCK") {
 		t.Fatalf("secret entered Windows plugin environment: %q", got)
 	}
 }

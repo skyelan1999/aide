@@ -4,11 +4,11 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/pkg/sftp"
@@ -95,7 +95,15 @@ func (a *App) streamTransferFS(ctx context.Context, id string, write bool) (*tra
 		port = 22
 	}
 	generation := a.sshSessionGeneration(sock)
-	cmd := exec.CommandContext(child, a.sshBin, "-o", "ControlPath="+sock, "-o", "ControlMaster=no", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=2", "-o", "LogLevel=ERROR", "-p", fmt.Sprint(port), "-s", target, "sftp")
+	sshArgs := sshConnectionArgs(sock, port)
+	if runtime.GOOS != "windows" {
+		sshArgs = append(sshArgs, "-o", "ControlMaster=no")
+	} else if !loc.hasSource {
+		sshArgs = appendWindowsSSHIdentity(sshArgs, a.windowsWorkspaceKeyRef())
+	}
+	sshArgs = append(sshArgs, "-o", "BatchMode=yes", "-s", target, "sftp")
+	cmd := exec.CommandContext(child, a.sshBin, sshArgs...)
+	cmd.Env = sshClientEnvironment()
 	in, err := cmd.StdinPipe()
 	if err != nil {
 		cancel()
