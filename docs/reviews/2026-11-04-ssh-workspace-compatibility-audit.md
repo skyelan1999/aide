@@ -49,6 +49,10 @@
 | `workflow` 1.0.0 | 能力预设 | 实际文件读写走 Aide 原生工具，能力边界由来源/审批执行器决定。 |
 | `file-preview` 0.1.0 | 只读文件预览 | `api.sources` 选择授权来源并经有界暂存；可走宿主 SSH 来源读取，不接收凭据或直接路径。 |
 
+## Aide 随包市场快照与私有条目
+
+Aide 原随包目录快照来源提交 `4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94`，含 22 个 public 元数据条目和 `pjplan`、`compare`、`professional-project` 三个 `privateListings` 展示条目。原快照不是当前可安装清单，版本号和代码来源已历史化；其中 `propeller-aero`、`comm-serial`、`comm-ssh`、`comm-tcp`、`comm-udp` 当前市场没有安装 ZIP。此次分支已将 Aide 离线 fallback 更新到锁定市场 revision `582effee8fc2530b6c552ff3fad24ef9d519dbae`，含 30 条 public 目录元数据和 3 个 private 展示条目。私有条目不携带公开包路径/摘要，不属于 public 安装/发行测试；私有实现和包仓库均未读取或改动。
+
 ### 市场里已迁移的电脑控制条目
 
 `computer-control` 1.2.0（市场仍保留 ZIP/目录记录）现已迁移为 Aide 内置能力；Aide UI 隐藏市场卡片，下载/安装端点返回 Gone，工具通过只允许本机 loopback 的专用桥接令牌调用。它只能操作 Aide 所在桌面的允许应用，不会控制 SSH 主机；截图由内置 `computer_snapshot` 返回图像协议。冻结 QA 漏项修复后，ARM64 合成宿主验收覆盖 token、截图协议及未确认点击拒绝。真实 macOS/Windows 桌面硬件仍需对应原生验收。

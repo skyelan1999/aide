@@ -24,11 +24,12 @@
   "stages": {
     "requirements": {
       "status": "complete",
-      "summary": "已核对市场实际 catalog 与 Aide host。目录是29个可安装 public 包加1个已迁移电脑控制记录；另含未读取实现的私有条目。SSH 按三种身份拆分。",
+      "summary": "已核对市场实际 catalog 与 Aide host。当前市场是30条public包目录（其中电脑控制已迁为内置并不在市场UI单独安装）及3个coming_soon private展示条目；另核对了旧 shipped fallback 的22条历史目录。SSH按三种身份拆分。",
       "evidence": [
         "origin/main 572f5dfd32bd8587efb99030409b9859fef36690",
         "市场 revision 582effee8fc2530b6c552ff3fad24ef9d519dbae，catalog 30条，电脑控制已内置并拒绝独立安装",
-        "Aide issue #790，https://github.com/skyelan1999/aide/issues/790"
+        "Aide issue #790，https://github.com/skyelan1999/aide/issues/790",
+        "internal/server/plugin-market/catalog.json 原快照来源 4dc9a7b0，有22 public条目和3 private展示条目；5个历史通信/气动条目无当前市场ZIP。"
       ]
     },
     "design": {
@@ -40,26 +41,28 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "修复 Aide public package 冻结清单漏项和迁移后电脑控制的发布验收路径；StarLink SSH 支持 0.1.5 候选已提交包仓库 PR。SQLite/Terminal/Office 已定位但未整改。",
+      "summary": "修复市场锁漏项、迁移后电脑控制的发布验收路径，并把Aide离线市场fallback同步到锁定revision以移除旧显示项；StarLink SSH支持0.1.5候选已提交包仓库PR。SQLite/Terminal/Office SSH限制已定位但仍未整改。",
       "evidence": [
         "scripts/ci/public-plugins.lock.json 增 computer-control 1.2.0 精确锁定",
         "internal/server/release_public_plugins_test.go 对迁移能力改用宿主桥接/截图/确认测试",
-        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/1"
+        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/1",
+        "internal/server/plugin-market/catalog.json 更新至 revision 582effee8fc2530b6c552ff3fad24ef9d519dbae，30 public metadata + 3 private metadata；scripts/ci/test_public_plugins.py 增加 shipped fallback/lock 对齐回归。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "快速检查、basic Go/vet、市场包契约脚本和 Linux ARM64 隔离宿主 30/30 插件检查/安装/功能测试通过；AMD64、完整 Delivery 与真实 SSH 未验。",
+      "summary": "快速检查、basic Go/vet、public package gate单测、PluginMarket测试和Linux ARM64隔离宿主30/30插件检查/安装/功能测试通过；AMD64与完整Aide Delivery及真实SSH未验。",
       "evidence": [
-        ".agent-state/plugin-audit-arm64-20261104/report.json",
-        "python3 scripts/ci/test_public_plugins.py: OK (3 tests)",
+        ".agent-state/plugin-audit-arm64-20261104-final/report.json (30/30 inspection/install/function PASS)",
+        "python3 scripts/ci/test_public_plugins.py: 4 tests OK",
+        "go test -mod=vendor -count=1 -timeout=8m ./internal/server -run ^TestPluginMarket: PASS",
         "python3 scripts/agent-route.py verify quick: PASS",
-        "Docker aide:release-ci-test-tools python3 scripts/ci/basic_go.py: PASS"
+        "Docker aide:release-ci-test-tools python3 scripts/ci/basic_go.py (Go tests and vet): PASS"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "建立逐个市场包的 SSH 身份兼容矩阵及限制说明；发布记录待 PR/发行门禁补齐。",
+      "summary": "逐个市场包SSH身份兼容矩阵、旧随包目录条目与3个private展示条目限制已记录；完整发布说明待两架构Delivery补证。",
       "evidence": [
         "docs/reviews/2026-11-04-ssh-workspace-compatibility-audit.md"
       ]
@@ -80,5 +83,5 @@
   },
   "release_authorization": "用户消息：“对当前aide的所有插件进行审计，并进行整改和发布。”——明确授权整改及发布，按仓库发行流程，不含生产服务替换/重启。",
   "rollback": "Aide main/release: revert release commit and restore prior tag/image according to version-management and delivery rollback instructions. Public plugin packages/catalog: retain current immutable ZIPs and previous market revision; publish replacements only after all checks; restore old catalog/package entries on rollback. No production deployment unless separately asked.",
-  "handoff": "完整工作树位于 /tmp/aide-plugin-ssh-audit-20261104。已识别的包侧代码缺陷仍包括 SQLite 固定本机文件根、Terminal SFTP 本地端点不支持 SSH workspace/authorized references、Aide Office 部分 DOCX 工具拒绝 SSH；这些未修复，因此 #790 仍保持 OPEN。"
+  "handoff": "工作树 /tmp/aide-plugin-ssh-audit-20261104。仍需修复SQLite固定本机数据库根、Terminal SFTP本地端点不接受SSH workspace/authorized refs、Office结构/resolve工具SSH guard；对应Aide #790继续OPEN。两仓代码owner审批和full Delivery是发布门禁。"
 }
