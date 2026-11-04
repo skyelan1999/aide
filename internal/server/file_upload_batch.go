@@ -105,6 +105,8 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if nerr != nil {
+			results = append(results, batchFileResult{Path: "[multipart]", OK: false,
+				Error: "multipart 请求不完整: " + nerr.Error()})
 			break
 		}
 		_, dispParams, _ := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
