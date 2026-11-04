@@ -4555,15 +4555,9 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 		if cache := session.cache; cache != "" {
 			remote = "mkdir -p " + shellQuote(cache) + " && export AIDE_CACHE=" + shellQuote(cache) + " GOCACHE=" + shellQuote(cache) + " && " + remote
 		}
-		var stdoutBuf, stderrBuf strings.Builder
+		var stdoutBuf, stderrBuf cappedShellOutput
 		code, err := a.execRemoteSession(ctx, remote, &stdoutBuf, &stderrBuf, session)
-		stdout, stderr := stdoutBuf.String(), stderrBuf.String()
-		if len(stdout) > 64<<10 {
-			stdout = stdout[:64<<10] + "\n…（stdout已截断 64KB）"
-		}
-		if len(stderr) > 64<<10 {
-			stderr = stderr[:64<<10] + "\n…（stderr已截断 64KB）"
-		}
+		stdout, stderr := stdoutBuf.result("stdout"), stderrBuf.result("stderr")
 		out := stdout
 		if strings.TrimSpace(stderr) != "" {
 			if out != "" {
@@ -4620,21 +4614,15 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 		cacheEnv = "/home/aide/.cache/go-build"
 	}
 	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv, "AIDE_SANDBOX=1"}
-	var stdoutBuf, stderrBuf strings.Builder
+	var stdoutBuf, stderrBuf cappedShellOutput
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 	err = cmd.Run()
 	if cmd.Process != nil {
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 	}
-	stdout := stdoutBuf.String()
-	stderr := stderrBuf.String()
-	if len(stdout) > 64<<10 {
-		stdout = stdout[:64<<10] + "\n…（stdout已截断 64KB）"
-	}
-	if len(stderr) > 64<<10 {
-		stderr = stderr[:64<<10] + "\n…（stderr已截断 64KB）"
-	}
+	stdout := stdoutBuf.result("stdout")
+	stderr := stderrBuf.result("stderr")
 	out := stdout
 	if strings.TrimSpace(stderr) != "" {
 		if out != "" {
