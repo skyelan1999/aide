@@ -96,4 +96,4 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 
 - Windows NSIS 包新增 loopback-only PowerShell 桥接，随 `AideNative.ps1` 自动启动并随 stop/uninstall 关闭。它使用 `%LOCALAPPDATA%\AideNative` 下继承用户 ACL 的随机令牌文件，Aide 服务共享该令牌；启动器经授权 `/healthz` 检查 bridge，停止器仅按 PID、PowerShell 可执行文件及安装路径内的脚本命令行共同确认后结束该进程。
 - 桥接实现允许应用检查、截图、Aide 已确认后的有限点击/键入/按键；截图仅限前台允许应用窗口，截图或输入前再次检查前台进程，点击坐标限制在窗口矩形。Windows 当前不提供辅助功能控件树读取，`computer_inspect` 返回空控件并说明可用截图。
-- Windows 安装 smoke 已扩展为检查桥接脚本 PowerShell parser、安装包载荷、授权 healthz、缺失令牌返回 401，以及 stop 后桥接进程退出。新增代码当前通过包构建静态单测（`scripts/test_windows_native_package.py` 11/11）和 shell 语法检查；完整 Windows runner 运行在提交后验证。PowerShell 5.1 的 Add-Type、截图、点击/键入仍需以该 runner/实体 Windows 结果为准。
+- Windows 安装 smoke 已扩展为检查桥接脚本 PowerShell parser、安装包载荷、授权 healthz、缺失令牌返回 401，以及 stop 后桥接进程退出。`scripts/test_windows_native_package.py` 11/11；三端包 CI run `41891718340` 全部通过，Windows 2025 runner 的安装、桥接脚本解析、Aide/桥接健康、token 鉴权与未授权拒绝、停止、卸载、数据保留通过。runner 只验收桥接生命周期和协议，未执行桌面截图/点击/键入；System.Drawing 在无头桌面下的截图质量及真实用户交互仍需实体 Windows 验收。
