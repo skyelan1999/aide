@@ -113,3 +113,10 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - 此次服务状态未提供文件/插件/TTS/浏览器能力完整性证明；macOS TCC 屏幕录制与辅助功能尚未授权，所以仍未验收真实截图和点击输入。
 - 随后 commit `fe025102` 的原生包 run `41894891085` 三端及 required gate 全绿。macOS 日志明确出现 bridge Launch Services/auth/token-rotation/loopback/stop PASS、`runtimeMode=native`、完整 Aide.app Launch Services/service/auth/bridge PASS 和 graceful shutdown PASS；Linux package 和 Windows package/install smoke 均通过。相同提交的 Aide CI run `41894891478` 全绿。此 CI 证明干净 hosted runner 上的安装包启动与进程闭环，不证明 Windows/Linux 实体桌面交互、全插件、TTS 或 SSH 对等。
 - commit `74a76c56` 为三端安装 smoke 增加同一隔离 daemon 插件的端到端启动/停止验证：测试先向各自临时 workspace 安装插件，再通过受鉴权的 Aide API 启动进程，等待 daemon IPC ready、核对 running 状态并停止。原生包 run `41897737079` 三平台及 required gate 全绿，macOS/Linux/Windows job 均明确输出 `Bundled Node plugin daemon start/IPC-ready/status/stop smoke: PASS`；Aide CI run `41897737166` 全绿。这证明各包将自带 Node 纳入真实插件 daemon 的运行 PATH，并不代表完整市场插件及外部依赖都已打包。
+
+## 2026-11-05 Linux 原生安装后截图回归
+
+- Linux X11 截图 bridge 的第一轮安装 smoke 曾被测试夹具阻断：`xmessage` 创建的窗口没有 `_NET_WM_PID`，`xdotool getwindowpid` 在截图请求之前退出。改用带进程 ID 元数据的 xterm 后，安装包内 bridge 成功识别 `xterm` 前台窗口并返回 PNG；run `41905062418` 三端包构建、Linux/macOS 安装、Windows 安装 smoke 和 required gate 全绿。
+- 为避免“有效 PNG 头”掩盖空白或尺寸异常，又让 xterm 显示固定文字，并使用 ImageMagick 校验截图尺寸与颜色数。commit `fdb27816` 对应原生包 run `41906373799` 三端包构建、Linux/macOS 安装、Windows 安装 smoke、required gate 全通过；Linux 日志为 `X11 packaged screenshot: PASS (484x316, 2 colors, 389 PNG bytes)`。同一提交 Aide CI run `41906373881` 的 quick、Go 和 gate 全通过。
+- 该截图闭环来自 Debian 安装包运行在 GitHub hosted runner 的 Xvfb/X11 虚拟桌面，验证了授权 bridge 截取指定前台应用窗口；它不是实体 Linux 桌面、Wayland、显示器组合或用户真实应用交互验收。测试用的 xterm 只安装在临时 CI runner，不进入 Aide 安装包依赖。
+- 当前工作仍仅在已 push 的 `experiment/native-runtime-no-docker-20261104`，没有合并或改动 `main`。这些结果证明安装包可脱离 Docker 启动及部分插件/桌面 bridge 路径；不等于三端所有插件、TTS、AI 会话、SSH、安全沙箱、权限提示和真实桌面交互均与 Docker 版本等价。
