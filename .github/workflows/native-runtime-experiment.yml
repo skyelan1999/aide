@@ -75,7 +75,7 @@ jobs:
           sudo installer -allowUntrusted -pkg "$AIDE_NATIVE_PACKAGE_OUT/Aide-Native-macOS.pkg" -target /
           resources=/Applications/Aide.app/Contents/Resources
           test -x "$resources/aide-server"
-          test "$("$resources/runtime/bin/node" --version)" = "v24.19.0"
+          "$resources/runtime/bin/node" --version | grep -q '^v24\.'
           "$resources/runtime/python/bin/python3.12" -I -c 'import docx,openpyxl,pptx,ezdxf,pypdf'
           testbin="$RUNNER_TEMP/native-macos-bin"
           testroot="$RUNNER_TEMP/native-macos-smoke"

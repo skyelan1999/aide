@@ -50,7 +50,7 @@ AIDE_WORKSPACE="$PWD" AIDE_CONTEXT="$PWD/context" scripts/run-native-runtime.sh
 - Windows 安装器 v6 完整解包、文件清点和 PowerShell 语法分析已在前文记录；当前服务二进制与该安装器中的二进制哈希一致。此环境没有 Windows 主机、虚拟机或 Wine，仍未实际运行安装、升级、卸载、桌面浏览器和 Windows SSH。
 - 产物与测试结果仍只用于本实验分支，未合并到 `main`。当前 Linux arm64 包、macOS arm64 包以及 Windows x64 安装器包含自带 Go/Node/Python/Office 依赖，但完整插件市场、AI 会话、浏览器桥、TTS、电脑控制、隔离命令和 SSH 凭据方案未在三端逐项端到端验收；原生运行仍不具有 Docker 沙箱的安全等价性，不能据此宣称已达到功能/安全完全等价的正式发行标准。
 - 为补上安装器级 Windows 验收，新增仅监听本实验分支的 `Native Runtime Experiment` GitHub Actions：Linux/macOS runner 从当前源码构建、安装并执行健康/令牌/Office/停止/无 Docker 冒烟，Windows runner 实际执行 NSIS 安装、启动、HTTP 鉴权、停止、卸载及数据保留；构建产物限期保存。工作流通过 actionlint，Linux 安装冒烟脚本已在 Debian arm64 测试容器通过，Windows PowerShell 脚本语法通过；远程 runner 尚未运行，因此 Windows 实际安装结果仍待 CI。
-- 工作流复核还发现 Linux 启动器的端口探测依赖 PATH 中的 `python3` 别名，并且 Linux 打包脚本没有正确使用自定义 Python/Node 运行时输出目录；现已改为明确调用随安装包提供的 Python 3.12，同时让构建脚本尊重配置的运行时目录。重新构建的 Linux amd64 包 SHA-256 为 `213ac988f5fcbd3826daf349ea9fa098f5cc9d7527175c40426bdd36719736da`；在干净 Debian Bookworm amd64 容器内成功安装、启动、鉴权、首页访问、Node/Python Office 导入、DOCX 创建/回读、停止并确认无 Docker 调用。CI 工作流与 PowerShell 语法检查通过；远程三端 runner 尚未完成。
+- 工作流复核还发现 Linux 启动器的端口探测依赖 PATH 中的 `python3` 别名，并且 Linux 打包脚本没有正确使用自定义 Python/Node 运行时输出目录；现已改为明确调用随安装包提供的 Python 3.12，同时让构建脚本尊重配置的运行时目录。重新构建的 Linux amd64 包 SHA-256 为 `213ac988f5fcbd3826daf349ea9fa098f5cc9d7527175c40426bdd36719736da`；在干净 Debian Bookworm amd64 容器内成功安装、启动、鉴权、首页访问、Node/Python Office 导入、DOCX 创建/回读、停止并确认无 Docker 调用。首次远程 CI 的 Linux 安装和 Windows runner 安装/启动/鉴权/停止/卸载/保留用户数据均通过；macOS runner 暴露了 CI 对 Node 24 补丁版的过严断言，现已改为校验 24 主版本并等待重跑。工作流通过 actionlint，PowerShell 语法检查通过。
 
 ## 尚未达到“独立自主运行”的部分
 
