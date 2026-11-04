@@ -148,14 +148,10 @@ func literalReadOnlyCommand(words []string) bool {
 		// Only numeric print selections; never -i, w/e commands or arbitrary scripts.
 		return len(words) >= 3 && words[1] == "-n" && readOnlySedSelection.MatchString(words[2]) && sedReadOperands(words[3:])
 	case "git":
-		for _, w := range words[1:] {
-			option := strings.SplitN(w, "=", 2)[0]
-			for _, forbidden := range []string{"--ext-diff", "--textconv", "--no-index", "--output"} {
-				if len(option) > 2 && (strings.HasPrefix(forbidden, option) || strings.HasPrefix(option, forbidden)) {
-					return false
-				}
-			}
-		}
+		// Repository-local Git configuration can execute helpers even for
+		// commands such as status/diff. Until Git runs through a fully
+		// controlled config wrapper, use the normal per-command approval path.
+		return false
 	}
 	return legacyReadOnlyAllowed(strings.Join(words, " "))
 }
