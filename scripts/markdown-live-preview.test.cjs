@@ -9,7 +9,8 @@ assert(start >= 0 && end > start, 'actual live-preview function must exist');
 function fixture(panelId = 'file-view') {
   const listeners = {}, hidden = new Set(), timers = new Map(), renders = [];
   const editor = {value: 'recovered', addEventListener: (type, fn) => {listeners[type] = fn;}};
-  const host = {scrollTop: 42, classList: {contains: name => hidden.has('preview:' + name)}};
+  const hostClasses = new Set();
+  const host = {scrollTop: 42, classList: {contains: name => hostClasses.has(name) || hidden.has('preview:' + name), add: name => hostClasses.add(name), remove: name => hostClasses.delete(name)}};
   const panel = {open: true, classList: {contains: name => hidden.has('panel:' + name)}};
   const lockScreen = {locked: false};
   let spec = {path: 'notes.md'}, serial = 0, disposed = 0;
@@ -19,6 +20,8 @@ function fixture(panelId = 'file-view') {
     // the live-preview debounce and should not depend on page-level bindings.
     syncSplitScroll: () => {},
     lockScreen, isMarkdownPath: p => /\.(md|markdown)$/i.test(p || ''),
+    MARKDOWN_LIVE_PREVIEW_LIMIT: 512 * 1024,
+    deferLargeMarkdownPreview: (h, text, render) => {h.classList.add('md-preview-deferred');h._markdownDeferredRender=render;},
     window: {AideMarkdownOutline: {dispose: () => disposed++}},
     setupMarkdownPreview: (h, text, p, s) => {renders.push({text, p, s}); h.scrollTop = 0;},
     setTimeout: fn => {timers.set(++serial, fn); return serial;},
@@ -48,4 +51,8 @@ const modal = fixture('editor-dialog'); modal.panel.open = false; modal.input(fa
 const text = fixture(); text.setSpec({path: 'code.txt'}); text.input(false); text.flush(); assert.equal(text.renders.length, 0);
 const hinted = fixture(); hinted.setSpec({path: 'virtual', format: '.md'}); hinted.input(false); hinted.flush(); assert.equal(hinted.renders.length, 1);
 const ime = fixture(); ime.input(true); ime.flush(); assert.equal(ime.renders.length, 0); ime.compositionEnd(); ime.flush(); assert.equal(ime.renders.length, 1);
+const large = fixture(); large.editor.value = 'x'.repeat(512 * 1024 + 1); large.input(false); large.flush();
+assert.equal(large.renders.length, 0); assert.equal(large.host.classList.contains('md-preview-deferred'), true);
+large.editor.value += ' latest'; large.input(false); large.flush(); assert.equal(large.renders.length, 0);
+large.host._markdownDeferredRender(); assert.equal(large.renders.length, 1); assert.equal(large.renders[0].text, large.editor.value);
 console.log('PASS: Markdown preview recovery, split, debounce, scroll, visibility, stale context, lock and IME');

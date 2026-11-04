@@ -3,7 +3,7 @@
  'use strict';
  const LIMIT=32*1024*1024, WIDTH=794, PAGE=987, PDF_SCALE=1.25, PDF_JPEG_QUALITY=0.82;
  let active=null, menu=null;
- const css=`*{box-sizing:border-box}body{margin:0;width:794px;padding:48px 60px;color:#202630;background:white;font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}main{overflow-wrap:anywhere}h1,h2,h3,h4{line-height:1.3}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}img,svg{max-width:100%;height:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace;padding:14px;background:#f3f5f7;border:1px solid #dde2e8;border-radius:6px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #cdd4dd;padding:8px;text-align:left;overflow-wrap:anywhere}blockquote{margin:16px 0;padding-left:16px;border-left:3px solid #8295ab;color:#46505e}a{color:#355f86;text-decoration:none}hr{border:0;border-top:1px solid #cdd4dd}button,nav,.md-outline{display:none!important}`;
+ const css=`*{box-sizing:border-box;max-width:100%}body{margin:0;width:794px;padding:48px 60px;color:#202630;background:#fff;font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}main{min-width:0;overflow-wrap:anywhere}h1,h2,h3,h4{line-height:1.3}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}img,svg{max-width:100%!important;height:auto;object-fit:contain}pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace;padding:14px;background:#f3f5f7;border:1px solid #718096;border-radius:6px}table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;font-size:14px;border:1.25px solid #718096}th,td{border:1.25px solid #718096!important;padding:8px;text-align:left;overflow-wrap:anywhere;word-break:break-word}blockquote{margin:16px 0;padding-left:16px;border-left:3px solid #8295ab;color:#46505e}a{color:#355f86;text-decoration:none}hr{border:0;border-top:1px solid #cdd4dd}button,nav,.md-outline{display:none!important}`;
  function closeMenu(){if(!menu)return;const {host,button,dispose}=menu;menu=null;dispose();host.remove();button.setAttribute('aria-expanded','false');button.focus();}
  function close(){closeMenu();active?.controller.abort();active?.frame?.remove();active?.renderFrame?.remove();active=null;}
  window.LockCluster?.on('effective',value=>{if(value)close();});window.addEventListener('pagehide',close);
@@ -99,6 +99,18 @@
   body.querySelectorAll('script,iframe,object,embed,form,input,button,textarea,select').forEach(e=>e.remove());
   for(const e of body.querySelectorAll('*'))for(const a of [...e.attributes])if(/^on/i.test(a.name)||['srcdoc','style','srcset'].includes(a.name))e.removeAttribute(a.name);
   doc.body.append(body);if(o.renderDiagrams)await job.wait(o.renderDiagrams(body));validateDOM(body);
+  // Keep print-critical paints on the export snapshot itself. html2canvas
+  // rasterizes a pruned, cross-frame clone for each PDF page; relying only on
+  // stylesheet selectors caused table/code borders to disappear in that clone.
+  for(const table of body.querySelectorAll('table')){
+   table.style.borderCollapse='collapse';table.style.width='100%';table.style.tableLayout='fixed';table.style.border='1px solid #718096';
+   for(const cell of table.querySelectorAll('th,td')){cell.style.border='1px solid #718096';cell.style.padding='8px';cell.style.textAlign='left';cell.style.overflowWrap='anywhere';cell.style.wordBreak='break-word';}
+  }
+  for(const pre of body.querySelectorAll('pre')){pre.style.border='1px solid #718096';pre.style.padding='14px';pre.style.whiteSpace='pre-wrap';pre.style.overflowWrap='anywhere';}
+  for(const img of body.querySelectorAll('img')){img.style.setProperty('display','block','important');img.style.setProperty('width','auto','important');img.style.setProperty('height','auto','important');img.style.setProperty('max-width','100%','important');img.style.setProperty('max-height',PAGE+'px','important');img.style.setProperty('object-fit','contain','important');}
+  // Diagrams should stay together on a page when their natural portrait size
+  // is larger than the printable area. Preserve their viewBox aspect ratio.
+  for(const svg of body.querySelectorAll('svg')){svg.style.setProperty('width','auto','important');svg.style.setProperty('height','auto','important');svg.style.setProperty('max-width','100%','important');svg.style.setProperty('max-height','560px','important');svg.style.setProperty('object-fit','contain','important');}
   let total=0;
   for(const img of body.querySelectorAll('img')){
    const url=img.getAttribute('src');if(!url)throw Error(uiTextMarkdownExport('图片地址为空'));
@@ -144,6 +156,11 @@
      // once, then advance through the intervals with the page cursor.
      const addBreak=r=>{if(r.height>0&&r.height<=PAGE)breakSpans.push({top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top});};
      for(const node of sourceRoot.querySelectorAll('tr,li,img,svg'))addBreak(node.getBoundingClientRect());
+     for(let i=0;i<sourceRoot.children.length-1;i++){
+      const heading=sourceRoot.children[i];if(!/^H[1-6]$/.test(heading.tagName))continue;
+      const first=heading.getBoundingClientRect(),next=sourceRoot.children[i+1].getBoundingClientRect(),top=first.top-sourceBox.top,bottom=next.bottom-sourceBox.top;
+      if(bottom>top&&bottom-top<=PAGE)breakSpans.push({top,bottom});
+     }
      const walker=sourceRoot.ownerDocument.createTreeWalker(sourceRoot,4);
      while(walker.nextNode()){const node=walker.currentNode;if(!node.nodeValue.trim()||node.parentElement?.closest('svg'))continue;const range=node.ownerDocument.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())addBreak(r);}
      breakSpans.sort((a,b)=>a.top-b.top||a.bottom-b.bottom);

@@ -1,0 +1,95 @@
+{
+  "id": "markdown-editor-preview-pdf-20261104",
+  "request": "大型 Markdown 文档编辑时容易卡死；预览目录标题需要随文档滚动同步并改为紧凑纵向；Markdown 导出 PDF 需要修复代码/表格边框、Mermaid/流程图发黑、图片宽度超页和页面适配。Issue: #792.",
+  "baseline": "572f5dfd32bd8587efb99030409b9859fef36690",
+  "initial_status": "Isolated worktree based on clean origin/main 572f5dfd32bd8587efb99030409b9859fef36690; unrelated user working tree was left untouched.",
+  "acceptance": [
+    "Editing a representative large Markdown fixture must not synchronously rerender/rehighlight the full document on every keystroke; visible editing remains responsive and preview has a clear bounded update policy.",
+    "Preview outline is a compact vertical list and tracks the heading at the reading position while scrolling up and down; section links still navigate correctly.",
+    "PDF export preserves table/code borders and Mermaid flowchart colors, constrains images and other wide content to the printable area without aspect distortion, and does not clip page edges.",
+    "Run focused automated checks and inspect exported PDF pages in a real browser; report both evidence types and limits separately."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/markdown-outline.js",
+    "internal/server/web/markdown-export.js",
+    "internal/server/web/markdown-diagrams.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/style.css",
+    "scripts/*markdown*.cjs",
+    "scripts/markdown-*.test.cjs",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-editor-preview-pdf-20261104.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Issue #792 records the four reported symptoms without user document content; the requirements separate editor responsiveness, outline behavior, PDF visual style, and page fitting.",
+      "evidence": [
+        "GitHub issue https://github.com/skyelan1999/aide/issues/792"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Live edits above 512 KiB now avoid repeated synchronous full-document parse/render; large preview requires explicit generation. Heading activation uses binary search. PDF export uses explicit readable print borders and limits SVG style loss by inlining computed paint for strict export, with max-width constraints for page content.",
+      "evidence": [
+        "Source inspection: internal/server/web/app.js bindMarkdownLivePreview/setupMarkdownPreview",
+        "Source inspection: internal/server/web/markdown-outline.js",
+        "Source inspection: internal/server/web/markdown-diagrams.js and markdown-export.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added a 512 KiB large-document deferred preview policy, a compact vertical outline with binary-search scroll activation, and print-snapshot styles for borders, responsive images, color-preserving Mermaid SVG and page-aware heading breaks.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/macos.css",
+        "internal/server/web/markdown-export.js",
+        "internal/server/web/markdown-diagrams.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Manual browser/PDF acceptance and repository quick gate passed. Quick fingerprint f249361b813ea2833f99c2de773f9ccae85e9b9bea55161dce0f3c8008910ced. The repository full profile failed in Go server shards outside this change because the test container lacks Node, the project JavaScript parser, python-docx and registered fixture tools; some tests explicitly require non-root permissions. The isolated verification container was stopped; the user Aide container stayed healthy.",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick — PASS; .agent-state/verify-20261104T053913801845Z.log",
+        "node scripts/markdown-image-path.test.js — PASS",
+        "node scripts/markdown-live-preview.test.cjs — PASS, includes >512 KiB deferred preview + latest buffer test",
+        "node scripts/markdown-pdf-layout.test.cjs — PASS",
+        "node scripts/markdown-diagrams.test.cjs — PASS",
+        "Manual browser: isolated temporary Aide at http://localhost:18999; 1.1 MiB edit fixture and compact heading scroll verified",
+        "Manual PDF: 2-page A4 output visually inspected; temporary download/render files removed after inspection",
+        "Production Aide was not accessed or restarted",
+        "AIDE_TEST_IMAGE=aide:release-ci-test-tools AIDE_TEST_TOOLCHAIN_IMAGE=golang:1.26-bookworm python3 scripts/agent-route.py verify full — FAIL (full fingerprint f249361b813ea2833f99c2de773f9ccae85e9b9bea55161dce0f3c8008910ced)",
+        ".agent-state/verify-20261104T054144721430Z.log — missing node/JS parser/python-docx/fixture tool registrations and tests requiring normal runtime user permissions; full gate not accepted for merge"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Markdown architecture notes for deferred previews, outline synchronization, PDF styles, SVG sizing and heading page breaks.",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed temporary browser, interrupted local QA proxy, stopped both QA-only containers, and removed generated PDF/fixture/render artifacts; production aide-aide-1 remained untouched and healthy.",
+      "evidence": [
+        "docker ps confirmed the temporary server container is stopped",
+        "Temporary browser tab closed",
+        "Temporary QA files removed"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Issue #792 remains open pending review/merge; changes have not been pushed, merged or deployed.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/792"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Manual isolated browser/PDF acceptance and the repository quick gate passed. The full verification profile failed because its Go runtime fixture lacks required Node/JavaScript parser, Python docx, registered fixture tools, and non-root test permissions; no source changes are implicated by those environment-specific failures. Full gate must pass in the correctly provisioned CI before merge. Production Aide was not restarted."
+}
