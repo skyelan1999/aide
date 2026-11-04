@@ -19,7 +19,6 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -142,12 +141,12 @@ func runOfficeScript(workdir, script string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, bin, append([]string{"-c", officeParserBootstrap, script}, args...)...)
 	cmd.Dir = workdir
 	// 独立进程组；超时/取消时 kill 整个组（含 soffice 子进程）。
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	configureProcessGroup(cmd)
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
 			return nil
 		}
-		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		return killProcessGroup(cmd)
 	}
 	cmd.WaitDelay = 2 * time.Second
 

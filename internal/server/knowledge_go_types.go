@@ -17,7 +17,6 @@ import (
 	"os/exec"
 	"path"
 	"sort"
-	"syscall"
 	"time"
 )
 
@@ -360,12 +359,12 @@ func runGoTypeProcess(ctx context.Context, binary string, files []goTypeFile) (g
 			cmd.Env = append(cmd.Env, name+"="+value)
 		}
 	}
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	configureProcessGroup(cmd)
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
 			return nil
 		}
-		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		return killProcessGroup(cmd)
 	}
 	cmd.WaitDelay = time.Second
 	if err = cmd.Run(); err != nil {

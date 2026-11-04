@@ -150,7 +150,7 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext, sourc
       const outputLimit = 8 << 20;
       if ((!workspace || !path2.isAbsolute(workspace)) && !(sourceSocket && options.sourceSnapshot === true)) return reject(Error('当前工作区不支持本地 Python 执行'));
       const pythonCwd = typeof workspace === 'string' && path2.isAbsolute(workspace) ? workspace : realPluginDir;
-      const proc = spawn('python3', ['-I', realScript], { cwd: pythonCwd, env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/home/aide', PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
+      const proc = spawn('python3', ['-I', realScript], { cwd: pythonCwd, env: { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: process.env.HOME || '/home/aide', ...(process.env.PYTHONPATH ? { PYTHONPATH: process.env.PYTHONPATH } : {}), PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
       let stdout = Buffer.alloc(0), stderr = Buffer.alloc(0), settled = false;
       const finish = (err, value) => { if (settled) return; settled = true; clearTimeout(timer); err ? reject(err) : resolve(value); };
       const timer = setTimeout(() => { proc.kill('SIGKILL'); finish(new Error('Python 工具执行超时')); }, timeoutMs);

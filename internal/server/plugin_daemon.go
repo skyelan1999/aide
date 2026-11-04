@@ -388,7 +388,7 @@ func (p *daemonProc) spawn() {
 	configurePluginProcess(cmd, false)
 	settingsJSON := p.settingsJSON
 	// 与 v1.1 短命进程同一受限环境；AIDE_DAEMON_BIND 告知协议插件仅绑回环。
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1", "AIDE_PLUGIN_SETTINGS=" + settingsJSON}
+	cmd.Env = append(pluginHostEnvironment(), "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1", "AIDE_PLUGIN_SETTINGS="+settingsJSON)
 	var cleanup = func() {}
 	if p.environment != nil {
 		var err error

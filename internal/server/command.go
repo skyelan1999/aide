@@ -7,11 +7,11 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -195,13 +195,23 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	defer cleanup()
 	cmd.Dir = dir
 	cacheEnv := cacheContainer
-	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	goPath := "/home/aide/go"
+	if os.Getenv("AIDE_RUNTIME_MODE") == "native" {
+		if cacheRoot, cacheErr := os.UserCacheDir(); cacheErr == nil {
+			cacheEnv = filepath.Join(cacheRoot, "Aide", "command")
+			_ = os.MkdirAll(cacheEnv, 0700)
+		}
+		if home := os.Getenv("HOME"); home != "" {
+			goPath = filepath.Join(home, "go")
+		}
+	}
+	cmd.Env = append(aideRuntimeEnvironment(), "LANG=C.UTF-8", "TERM=dumb", "GOCACHE="+cacheEnv, "GOPATH="+goPath, "AIDE_CACHE="+cacheEnv)
+	configureProcessGroup(cmd)
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
 			return nil
 		}
-		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		return killProcessGroup(cmd)
 	}
 	cmd.WaitDelay = 2 * time.Second
 	w.Header().Set("Content-Type", "application/x-ndjson")
@@ -213,7 +223,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	err = cmd.Start()
 	if err == nil {
 		err = cmd.Wait()
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		_ = killProcessGroup(cmd)
 	}
 	code := 0
 	if err != nil {

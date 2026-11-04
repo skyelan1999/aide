@@ -1,6 +1,7 @@
 import AppKit
 import AVFoundation
 import CryptoKit
+import Darwin
 import Foundation
 import Security
 import WebKit
@@ -71,6 +72,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var session: DesktopSession?
     var origin: URL?
     var startup: Process?
+    var localService: Process?
     var statusLabel: NSTextField?
     var retryButton: NSButton?
     var pageErrors = 0
@@ -191,6 +193,10 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     }
 
     func connect() {
+        if Bundle.main.object(forInfoDictionaryKey: "AideNativeRuntime") as? Bool == true {
+            connectNative()
+            return
+        }
         guard let helper = Bundle.main.url(forResource: "desktop-session", withExtension: "py") else {
             connectionFailed("桌面组件不完整，请重新构建 Aide.app。")
             return
@@ -240,6 +246,144 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
                 }
             }
         }
+    }
+
+    func connectNative() {
+        let process = Process()
+        startup = process
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let session = try self.startNativeService(process)
+                let origin = try session.validate()
+                DispatchQueue.main.async {
+                    self.startup = nil
+                    self.localService = process
+                    self.session = session
+                    self.origin = origin
+                    let web = self.makeWebView(configuration: WKWebViewConfiguration(), window: self.mainWindow)
+                    var url = URLComponents(url: origin, resolvingAgainstBaseURL: false)!
+                    url.fragment = "token=" + session.token
+                    web.load(URLRequest(url: url.url!))
+                }
+            } catch {
+                if process.isRunning { process.terminate() }
+                DispatchQueue.main.async {
+                    self.startup = nil
+                    self.connectionFailed(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    func startNativeService(_ process: Process) throws -> DesktopSession {
+        let fm = FileManager.default
+        let home = fm.homeDirectoryForCurrentUser
+        let appData = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Aide", isDirectory: true)
+        let documents = fm.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Aide", isDirectory: true)
+        let inherited = ProcessInfo.processInfo.environment
+        let context = URL(fileURLWithPath: inherited["AIDE_NATIVE_CONTEXT"] ?? documents.appendingPathComponent("References", isDirectory: true).path, isDirectory: true)
+        let data = URL(fileURLWithPath: inherited["AIDE_NATIVE_DATA_ROOT"] ?? appData.appendingPathComponent("Native", isDirectory: true).path, isDirectory: true)
+        try fm.createDirectory(at: root, withIntermediateDirectories: true)
+        try fm.createDirectory(at: context, withIntermediateDirectories: true)
+        try fm.createDirectory(at: data, withIntermediateDirectories: true)
+        let port = try nativeFreeLoopbackPort()
+        guard let server = Bundle.main.url(forResource: "aide-server", withExtension: nil), fm.isExecutableFile(atPath: server.path) else {
+            throw desktopError("安装包缺少 Aide 本机服务组件。")
+        }
+        let logs = data.appendingPathComponent("logs", isDirectory: true)
+        try fm.createDirectory(at: logs, withIntermediateDirectories: true)
+        let log = logs.appendingPathComponent("server.log")
+        _ = fm.createFile(atPath: log.path, contents: nil, attributes: [.posixPermissions: 0o600])
+        let handle = try FileHandle(forWritingTo: log)
+        process.executableURL = server
+        process.currentDirectoryURL = root
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = handle
+        process.standardError = handle
+        let resources = Bundle.main.resourceURL!
+        let runtimeBin = resources.appendingPathComponent("runtime/bin").path
+        let pythonBin = resources.appendingPathComponent("runtime/python/bin").path
+        process.environment = [
+            "HOME": home.path,
+            "TMPDIR": NSTemporaryDirectory(),
+            "LANG": "zh_CN.UTF-8",
+            "PATH": [runtimeBin, pythonBin, "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"].joined(separator: ":"),
+            "PYTHONPATH": resources.appendingPathComponent("runtime/python/lib/python3.12/site-packages").path,
+            "AIDE_WORKSPACE": root.path,
+            "AIDE_CONTEXT": context.path,
+            "AIDE_DATA": data.path,
+            "AIDE_ADDR": "127.0.0.1:\(port)",
+            "AIDE_LAN_ADDR": "127.0.0.1:0",
+            "AIDE_HOST_LOCAL": home.path,
+            "AIDE_RUNTIME_MODE": "native",
+            "AIDE_OFFICE_SCRIPTS": resources.appendingPathComponent("office-scripts").path
+        ]
+        try process.run()
+        handle.closeFile()
+        let origin = "https://localhost:\(port)"
+        var health: [String: Any]?
+        for _ in 0..<60 {
+            if !process.isRunning { throw desktopError("Aide 服务启动失败，请查看 ~/Library/Application Support/Aide/logs/server.log。") }
+            if let body = try? nativeCurl(origin + "/healthz"),
+               let value = try? JSONSerialization.jsonObject(with: body) as? [String: Any], value["status"] as? String == "ok" {
+                health = value
+                break
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        guard let health, let instanceId = health["instanceId"] as? String else {
+            throw desktopError("Aide 服务健康检查超时，请查看本机服务日志。")
+        }
+        let tokenURL = data.appendingPathComponent("auth/access-token")
+        let token = try String(contentsOf: tokenURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard token.range(of: "^[A-Za-z0-9_.-]{16,512}$", options: .regularExpression) != nil else {
+            throw desktopError("本机访问凭据无效，启动已停止。")
+        }
+        let certURL = data.appendingPathComponent("certs/cert.pem")
+        let pem = try String(contentsOf: certURL, encoding: .utf8)
+        let base64 = pem.components(separatedBy: .newlines).filter { !$0.hasPrefix("-----") }.joined()
+        guard let der = Data(base64Encoded: base64), SecCertificateCreateWithData(nil, der as CFData) != nil else {
+            throw desktopError("本机 TLS 证书无效，启动已停止。")
+        }
+        let fingerprint = SHA256.hash(data: der).map { String(format: "%02x", $0) }.joined()
+        return DesktopSession(origin: origin + "/", token: token, certificateSHA256: fingerprint, instanceId: instanceId)
+    }
+
+    func nativeCurl(_ url: String) throws -> Data {
+        let curl = Process()
+        curl.executableURL = URL(fileURLWithPath: "/usr/bin/curl")
+        curl.arguments = ["--disable", "--silent", "--show-error", "--fail", "--noproxy", "*", "--proto", "=https", "--insecure", "--max-time", "2", url]
+        let output = Pipe()
+        curl.standardOutput = output
+        curl.standardError = FileHandle.nullDevice
+        curl.standardInput = FileHandle.nullDevice
+        try curl.run()
+        let body = output.fileHandleForReading.readDataToEndOfFile()
+        curl.waitUntilExit()
+        guard curl.terminationStatus == 0, body.count <= 65536 else { throw desktopError("等待本机服务响应。") }
+        return body
+    }
+
+    func nativeFreeLoopbackPort() throws -> UInt16 {
+        let fd = socket(AF_INET, SOCK_STREAM, 0)
+        guard fd >= 0 else { throw desktopError("无法建立本机服务端口。") }
+        defer { _ = Darwin.close(fd) }
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = 0
+        address.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
+        let bound = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
+        }
+        guard bound == 0 else { throw desktopError("无法分配本机服务端口。") }
+        var actual = sockaddr_in()
+        var length = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let named = withUnsafeMutablePointer(to: &actual) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &length) }
+        }
+        guard named == 0 else { throw desktopError("读取本机服务端口失败。") }
+        return UInt16(bigEndian: actual.sin_port)
     }
 
     func connectionFailed(_ message: String) {
@@ -360,13 +504,10 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
               let certificate = chain.first else { completionHandler(.cancelAuthenticationChallenge, nil); return }
         let digest = SHA256.hash(data: SecCertificateCopyData(certificate) as Data).map { String(format: "%02x", $0) }.joined()
         guard digest == session.certificateSHA256 else { completionHandler(.cancelAuthenticationChallenge, nil); return }
-        // Exact installation certificate pin, hostname and date validation; no global trust change.
-        SecTrustSetAnchorCertificates(trust, [certificate] as CFArray)
-        SecTrustSetAnchorCertificatesOnly(trust, true)
-        SecTrustSetPolicies(trust, SecPolicyCreateSSL(true, "localhost" as CFString))
-        if SecTrustEvaluateWithError(trust, nil) {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else { completionHandler(.cancelAuthenticationChallenge, nil) }
+        // The service uses a private self-signed certificate. The exact DER
+        // fingerprint and localhost/port are checked above; do not require a
+        // public CA path or install a system-wide trust exception.
+        completionHandler(.useCredential, URLCredential(trust: trust))
     }
 
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor securityOrigin: WKSecurityOrigin,
@@ -781,6 +922,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func applicationWillTerminate(_ notification: Notification) {
         for web in views.values { stopMedia(web) }
         startup?.terminate()
+        localService?.terminate()
     }
 
     @objc func about() { NSApp.orderFrontStandardAboutPanel(nil) }
@@ -809,6 +951,11 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         alert.addButton(withTitle: "取消"); alert.addButton(withTitle: "停止并退出")
         alert.beginSheetModal(for: mainWindow) { result in
             guard result == .alertSecondButtonReturn else { return }
+            if Bundle.main.object(forInfoDictionaryKey: "AideNativeRuntime") as? Bool == true {
+                self.localService?.terminate()
+                NSApp.terminate(nil)
+                return
+            }
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/bash")
             process.arguments = [self.root.appendingPathComponent("scripts/aide-maintenance.sh").path, "stop"]
@@ -881,7 +1028,10 @@ func argument(_ name: String) -> String? {
     return arguments[index + 1]
 }
 let boundRoot = Bundle.main.object(forInfoDictionaryKey: "AideProjectRoot") as? String
-let rootPath = argument("--root") ?? boundRoot
+let nativeRuntime = Bundle.main.object(forInfoDictionaryKey: "AideNativeRuntime") as? Bool == true
+let nativeWorkspace = ProcessInfo.processInfo.environment["AIDE_NATIVE_WORKSPACE"] ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    .appendingPathComponent("Aide/Workspace", isDirectory: true).path
+let rootPath = argument("--root") ?? boundRoot ?? (nativeRuntime ? nativeWorkspace : nil)
 if let rootPath = rootPath, let boundRoot = boundRoot,
    URL(fileURLWithPath: rootPath).resolvingSymlinksInPath() != URL(fileURLWithPath: boundRoot).resolvingSymlinksInPath() {
     fputs("This Aide.app belongs to another installation; rebuild desktop.command in the intended directory.\n", stderr); exit(2)

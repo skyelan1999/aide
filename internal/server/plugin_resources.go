@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 )
 
 // This is a scheduling contract for trusted plugin code, not a filesystem
@@ -144,7 +143,7 @@ func pluginResourcePath(root, relative string) (string, bool) {
 			return "", false
 		}
 		if err == nil && info.Mode().IsRegular() {
-			if stat, ok := info.Sys().(*syscall.Stat_t); ok && stat.Nlink > 1 {
+			if isHardlinked(current) {
 				return "", false
 			}
 		}

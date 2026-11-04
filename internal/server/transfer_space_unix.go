@@ -23,3 +23,11 @@ func transferAvailableBytes(root *os.Root) (int64, error) {
 	}
 	return int64(a * b), nil
 }
+
+func filesystemFreeBytes(path string) uint64 {
+	var stat unix.Statfs_t
+	if err := unix.Statfs(path, &stat); err != nil {
+		return 0
+	}
+	return uint64(stat.Bavail) * uint64(stat.Bsize)
+}

@@ -880,7 +880,7 @@ func (a *App) knowledgeSFTP(ctx context.Context, ar knowledgeArea, batch string,
 	blocks := (max + 1023) / 1024
 	cmdArgs := append([]string{"-c", "ulimit -f " + strconv.FormatInt(blocks, 10) + " || exit 1; exec \"$@\"", "aide-knowledge-sftp", a.sftpBin}, args...)
 	cmd := exec.CommandContext(ctx, "/bin/sh", cmdArgs...)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	cmd.Stdin = strings.NewReader(batch)
 	diagnostic := &knowledgeLimitWriter{max: 64 * 1024, stop: func() {
 		if cmd.Process != nil {

@@ -359,7 +359,7 @@ func (a *App) probePluginUpgrade(ctx context.Context, root, id string, entries [
 	defer cancel()
 	cmd := exec.CommandContext(cctx, "node", "-e", pluginHostJS, "run", root, string(encoded), out)
 	configurePluginProcess(cmd, true)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	log := &limitedBytesWriter{limit: 64 << 10}
 	cmd.Stdout = log
 	cmd.Stderr = log

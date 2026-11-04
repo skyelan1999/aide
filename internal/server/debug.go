@@ -18,7 +18,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -275,11 +274,7 @@ func (a *App) readDebugAudit() ([]debugAuditEntry, error) {
 // ──────────────────────────── 只读端点 ────────────────────────────
 
 func fsFreeBytes(path string) uint64 {
-	var st syscall.Statfs_t
-	if err := syscall.Statfs(path, &st); err != nil {
-		return 0
-	}
-	return st.Bavail * uint64(st.Bsize)
+	return filesystemFreeBytes(path)
 }
 
 // mountInfo 单个挂载点的脱敏摘要。

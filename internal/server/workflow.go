@@ -26,7 +26,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 	"unicode"
 )
@@ -4599,12 +4598,12 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	defer cleanup()
 	cmd.Dir = dir
 	// 独立进程组，取消时杀掉整个进程组（含 find 等 bash 子进程），避免孤儿继续运行。
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	configureProcessGroup(cmd)
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
 			return nil
 		}
-		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		return killProcessGroup(cmd)
 	}
 	cmd.WaitDelay = 2 * time.Second
 	a.mu.Lock()
@@ -4613,13 +4612,23 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	if cacheEnv == "" {
 		cacheEnv = "/home/aide/.cache/go-build"
 	}
-	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv, "AIDE_SANDBOX=1"}
+	goPath := "/home/aide/go"
+	if os.Getenv("AIDE_RUNTIME_MODE") == "native" {
+		if cacheRoot, cacheErr := os.UserCacheDir(); cacheErr == nil {
+			cacheEnv = filepath.Join(cacheRoot, "Aide", "command")
+			_ = os.MkdirAll(cacheEnv, 0700)
+		}
+		if home := os.Getenv("HOME"); home != "" {
+			goPath = filepath.Join(home, "go")
+		}
+	}
+	cmd.Env = append(aideRuntimeEnvironment(), "LANG=C.UTF-8", "TERM=dumb", "GOCACHE="+cacheEnv, "GOPATH="+goPath, "AIDE_CACHE="+cacheEnv, "AIDE_SANDBOX=1")
 	var stdoutBuf, stderrBuf cappedShellOutput
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 	err = cmd.Run()
 	if cmd.Process != nil {
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		_ = killProcessGroup(cmd)
 	}
 	stdout := stdoutBuf.result("stdout")
 	stderr := stderrBuf.result("stderr")

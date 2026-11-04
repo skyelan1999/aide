@@ -82,7 +82,7 @@ func (s gitHistorySSH) run(ctx context.Context, limit int64, command string) ([]
 	}
 	args := append(append([]string(nil), s.args...), s.target, command)
 	cmd := exec.CommandContext(ctx, s.bin, args...)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	output := &knowledgeLimitWriter{max: limit, stop: func() {
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()

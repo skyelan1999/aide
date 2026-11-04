@@ -183,7 +183,7 @@ func (a *App) mixSoulCall(ctx context.Context, b mixSoulBinding, input map[strin
 	configurePluginProcess(cmd, true)
 	cmd.Stdin = bytes.NewReader(payload)
 	cmd.Dir = dir
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	stdout := &limitedBytesWriter{limit: 256 << 10}
 	stderr := &limitedBytesWriter{limit: 1024}
 	cmd.Stdout = stdout

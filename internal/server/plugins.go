@@ -141,7 +141,7 @@ func (a *App) runPluginHost(ctx context.Context) {
 		defer cleanup()
 		configurePluginProcess(cmd, true)
 	}
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = pluginHostEnvironment()
 	if err := cmd.Run(); err != nil {
 		a.recordIncident(ctx, incident{Module: "plugins", Phase: "load-host"}, err, time.Time{})
 	} // Preserve existing surface on failure.
@@ -168,6 +168,39 @@ func (a *App) runPluginHost(ctx context.Context) {
 		}
 	}
 }
+
+// pluginHostEnvironment exposes only ordinary runtime paths, never model keys
+// or inherited credentials. A packaged native runtime supplies its own Node
+// executable through PATH and uses the signed-in user's application data home.
+func aideRuntimeEnvironment() []string {
+	path, home := "/usr/local/bin:/usr/bin:/bin", "/home/aide"
+	if os.Getenv("AIDE_RUNTIME_MODE") == "native" {
+		if value := strings.TrimSpace(os.Getenv("PATH")); value != "" {
+			path = value
+		}
+		value := strings.TrimSpace(os.Getenv("HOME"))
+		if value == "" {
+			value, _ = os.UserHomeDir()
+		}
+		if value != "" {
+			home = value
+		}
+	}
+	env := []string{"PATH=" + path, "HOME=" + home}
+	for _, name := range []string{"TMPDIR", "TMP", "TEMP", "LANG", "LC_ALL"} {
+		if value, ok := os.LookupEnv(name); ok {
+			env = append(env, name+"="+value)
+		}
+	}
+	if os.Getenv("AIDE_RUNTIME_MODE") == "native" {
+		if value := strings.TrimSpace(os.Getenv("PYTHONPATH")); value != "" {
+			env = append(env, "PYTHONPATH="+value)
+		}
+	}
+	return env
+}
+
+func pluginHostEnvironment() []string { return aideRuntimeEnvironment() }
 
 func (a *App) validatePluginCode(code string) (string, error) {
 	if len(code) > maxPluginCode {
@@ -1006,7 +1039,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	if workspace != "" {
 		cmd.Dir = workspace
 	}
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	if bridgeToken := os.Getenv("AIDE_BROWSER_BRIDGE_TOKEN"); pluginID == "browser-control" && len(bridgeToken) >= 32 {
 		cmd.Env = append(cmd.Env, "AIDE_BROWSER_BRIDGE_TOKEN="+bridgeToken)
 	}

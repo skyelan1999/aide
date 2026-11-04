@@ -442,7 +442,7 @@ func (a *App) execRemoteSession(ctx context.Context, command string, stdout, std
 		args, bin = append(args, a.sshTarget(), wrapped), a.sshBin
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	// CommandContext 会在取消时终止本地 ssh 客户端；WaitDelay 防止失联的
@@ -492,7 +492,7 @@ func (a *App) execRemotePTYSession(ctx context.Context, command string, stdin io
 		args = append(args, a.sshTarget(), wrapped)
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "TERM=xterm-256color"}
+	cmd.Env = append(aideRuntimeEnvironment(), "TERM=xterm-256color")
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
 	cmd.WaitDelay = 2 * time.Second
 	err := cmd.Run()
@@ -541,7 +541,7 @@ func (a *App) cleanupRemoteGroupSession(pgidFile string, session *taskSSHSession
 		args = append(args, a.sshTarget(), remote)
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -649,7 +649,7 @@ func (a *App) runWorkspaceSFTPBatch(ctx context.Context, args []string, batch st
 func (a *App) runSFTPBatch(ctx context.Context, args []string, batch string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, a.sftpBin, args...)
 	cmd.Stdin = strings.NewReader(batch)
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	cmd.Env = aideRuntimeEnvironment()
 	cmd.WaitDelay = 2 * time.Second
 	w := &knowledgeLimitWriter{max: 4 << 20, stop: func() {
 		if cmd.Process != nil {
