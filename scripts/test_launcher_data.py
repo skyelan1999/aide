@@ -200,6 +200,19 @@ class LauncherDataTests(unittest.TestCase):
 
 
 class LegacyOwnerSelectionTests(unittest.TestCase):
+    def test_default_compose_project_identity_is_stable_and_install_specific(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / 'one'
+            second = Path(directory) / 'two'
+            first.mkdir(); second.mkdir()
+            source = 'source "$1"; launcher_default_project "$2"; launcher_default_project "$2"; launcher_default_project "$3"'
+            result = subprocess.run(['bash', '-c', source, 'test', str(ROOT/'scripts/launcher-data.sh'), str(first), str(second)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        one, repeated, two = result.stdout.splitlines()
+        self.assertEqual(one, repeated)
+        self.assertNotEqual(one, two)
+        self.assertRegex(one, r'^aide-[a-f0-9]{16}$')
+
     def test_select_only_intended_service_owner_and_refuse_ambiguity(self):
         import shlex
         cases = [

@@ -67,6 +67,13 @@ launcher_legacy_owner() {
   echo "Cannot select legacy data owner for Compose project '$project' ($matched_count matching, $eligible_count eligible containers). No container stopped or data imported. Check COMPOSE_PROJECT_NAME and container labels; old containers/data are retained." >&2
   return 1
 }
+launcher_default_project() {
+  local root="$1" digest
+  digest="$(printf '%s' "$root" | shasum -a 256)" || return
+  digest="${digest%% *}"
+  [[ "$digest" =~ ^[a-fA-F0-9]{64}$ ]] || { echo 'Cannot derive a stable per-installation Compose identity.' >&2; return 1; }
+  printf 'aide-%s\n' "${digest:0:16}"
+}
 launcher_data_prepare() {
   local docker_bin="$1" image="$2" root own project legacy_type legacy_source volume target platform count stopped=0
   root="$(pwd -P)"
@@ -81,8 +88,7 @@ launcher_data_prepare() {
   project="${COMPOSE_PROJECT_NAME:-}"
   if [[ -z "$project" && -f .env ]]; then project="$(awk -F= '$1=="COMPOSE_PROJECT_NAME"{gsub(/^[ "\047]+|[ "\047]+$/, "", $2);print $2;exit}' .env)"; fi
   [[ -z "$project" ]] || explicit_project=1
-  if [[ -z "$project" ]]; then project="$(awk '$1=="name:"{print $2;exit}' compose.yaml)"; fi
-  project="${project:-aide}"
+  if [[ -z "$project" ]]; then project="$(launcher_default_project "$root")" || return; fi
   project="${project%$'\r'}"
   [[ "$project" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo 'Invalid Compose project identity.' >&2; return 1; }
   own="$(launcher_legacy_owner "$docker_bin" "$root" "$project" "$explicit_project")" || return
