@@ -64,9 +64,11 @@
       ]
     },
     "release": {
-      "status": "pending_push",
-      "summary": "待按用户本轮授权提交并推送至 origin/main；不发布 Windows 安装包。",
-      "evidence": []
+      "status": "pushed",
+      "summary": "提交 2a0512c1 已推送至 origin/main（main: 6837a056..2a0512c1）；未发布安装包。GitHub 提示本次推送绕过 PR 与 required gate 规则。",
+      "evidence": [
+        "origin/main 指向 2a0512c1。"
+      ]
     }
   },
   "release_authorization": "用户明确要求完成三个阶段并 push 到 main；授权提交并推送本次远程访问兼容修复，不包含发行安装包。",
