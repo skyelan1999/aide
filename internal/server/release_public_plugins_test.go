@@ -170,6 +170,42 @@ func releasePublicNative(t *testing.T, a *App, name string, args map[string]any)
 func releasePublicFunction(t *testing.T, a *App, id string) []string {
 	t.Helper()
 	switch id {
+	case "computer-control":
+		// This market package has been migrated to an Aide built-in capability.
+		// Exercise the native tool bridge instead of invoking the retired plugin ID.
+		t.Setenv("AIDE_COMPUTER_BRIDGE_TOKEN", strings.Repeat("r", 40))
+		t.Setenv("AIDE_COMPUTER_BRIDGE_URL", "http://127.0.0.1:17778")
+		listener, err := net.Listen("tcp", "127.0.0.1:17778")
+		if err != nil {
+			t.Fatal(err)
+		}
+		bridge := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("Authorization") != "Bearer "+strings.Repeat("r", 40) {
+				t.Error("native computer bridge token missing")
+			}
+			if r.URL.Path == "/v1/snapshot" {
+				jsonOut(w, http.StatusOK, map[string]any{"ok": true, "app": "synthetic-window", "mimeType": "image/png", "imageBase64": base64.StdEncoding.EncodeToString([]byte("synthetic-image"))})
+				return
+			}
+			jsonOut(w, http.StatusOK, map[string]any{"ok": true, "fixture": "native-computer-control"})
+		}))
+		bridge.Listener = listener
+		bridge.Start()
+		t.Cleanup(bridge.Close)
+		a.settings.ComputerControlEnabled = true
+		a.settings.ComputerControlAllowedApps = []string{"synthetic-window"}
+		status, err := a.callComputerControlTool(context.Background(), "computer_status", map[string]any{})
+		if err != nil || status.(map[string]any)["fixture"] != "native-computer-control" {
+			t.Fatal("native status tool failed", status, err)
+		}
+		snapshot, err := a.callComputerControlTool(context.Background(), "computer_snapshot", map[string]any{})
+		if err != nil || snapshot.(map[string]any)["protocol"] != "plugin-tool-images-v1" {
+			t.Fatal("native screenshot tool failed", snapshot, err)
+		}
+		if _, err = a.callComputerControlTool(context.Background(), "computer_click", map[string]any{"x": 1, "y": 1}); err == nil {
+			t.Fatal("click without confirmation was accepted")
+		}
+		return []string{"migrated Aide native control uses authenticated loopback bridge", "screenshot returns image protocol payload", "click without Aide confirmation is rejected"}
 	case "goal", "plan", "todo", "feedback", "subagent", "workflow":
 		// These published packages are explicitly capability presets, not executable
 		// task-management implementations. Verify the real installed disclosure.
@@ -469,11 +505,8 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 	case "codex-bridge":
 		return releasePublicCodex(t, a)
 
-	case "browser-control", "computer-control":
+	case "browser-control":
 		port, tokenEnv, tool := 17779, "AIDE_BROWSER_BRIDGE_TOKEN", "browser_status"
-		if id == "computer-control" {
-			port, tokenEnv, tool = 17778, "AIDE_COMPUTER_BRIDGE_TOKEN", "computer_status"
-		}
 		token := strings.Repeat("r", 40)
 		t.Setenv(tokenEnv, token)
 		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
