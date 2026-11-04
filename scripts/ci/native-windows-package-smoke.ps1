@@ -18,6 +18,7 @@ try {
   $installResult = Start-Process -FilePath $installerPath -ArgumentList '/S' -Wait -PassThru
   if ($installResult.ExitCode -ne 0) { throw "NSIS installer exited with $($installResult.ExitCode)" }
   foreach ($relative in @('aide-server.exe','AideNative.ps1','AideNativeStop.ps1','Uninstall.exe',
+                          'AideComputerBridge.ps1',
                           'runtime\node\node.exe','runtime\python\python.exe',
                           'runtime\git\cmd\git.exe','runtime\openssh\ssh.exe')) {
     if (-not (Test-Path (Join-Path $install $relative))) { throw "Missing installed payload: $relative" }
@@ -31,13 +32,21 @@ try {
   $python = Join-Path $install 'runtime\python\python.exe'
   & $python -I -c 'import docx,openpyxl,pptx,ezdxf,pypdf'
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $install 'AideNative.ps1')
+  $bridgeScript = Join-Path $install 'AideComputerBridge.ps1'
+  $parseTokens = $null; $parseErrors = $null
+  [System.Management.Automation.Language.Parser]::ParseFile($bridgeScript,[ref]$parseTokens,[ref]$parseErrors) | Out-Null
+  if ($parseErrors.Count -gt 0) { throw "Computer bridge PowerShell parse failed: $($parseErrors -join '; ')" }
   $data = Join-Path $testLocal 'AideNative'
   $pidFile = Join-Path $data 'service.pid'
   $portFile = Join-Path $data 'service.port'
   $tokenFile = Join-Path $data 'auth\access-token'
+  $bridgeTokenFile = Join-Path $data 'auth\computer-bridge-token'
+  $bridgePidFile = Join-Path $data 'computer-bridge.pid'
   if (-not (Test-Path $pidFile) -or -not (Test-Path $portFile) -or -not (Test-Path $tokenFile)) {
     throw 'Native launcher did not persist service readiness metadata.'
   }
+  if (-not (Test-Path $bridgeTokenFile) -or -not (Test-Path $bridgePidFile)) { throw 'Native launcher did not start the computer bridge.' }
+  $bridgePid = [int]((Get-Content -Raw $bridgePidFile).Trim())
   $servicePid = [int]((Get-Content -Raw $pidFile).Trim())
   $port = [int]((Get-Content -Raw $portFile).Trim())
   $base = "http://127.0.0.1:$port"
@@ -51,12 +60,20 @@ try {
   $config = Invoke-RestMethod -TimeoutSec 3 -Headers $headers "$base/api/config"
   if ($config.runtimeMode -ne 'native') { throw "Runtime mode was not reported as native: $($config.runtimeMode)" }
   if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 3 "$base/").StatusCode -ne 200) { throw 'Workbench home did not return HTTP 200.' }
+  $bridgeToken = (Get-Content -Raw $bridgeTokenFile).Trim()
+  $bridgeHeaders = @{ Authorization = "Bearer $bridgeToken" }
+  $bridgeHealth = Invoke-RestMethod -TimeoutSec 3 -Headers $bridgeHeaders 'http://127.0.0.1:17778/healthz'
+  if ($bridgeHealth.service -ne 'aide-windows-computer-bridge') { throw "Computer bridge health failed: $bridgeHealth" }
+  $unauthorized = $false
+  try { Invoke-RestMethod -TimeoutSec 3 'http://127.0.0.1:17778/healthz' | Out-Null } catch { $unauthorized = $_.Exception.Response.StatusCode.value__ -eq 401 }
+  if (-not $unauthorized) { throw 'Computer bridge accepted a request without its bearer token.' }
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $install 'AideNativeStop.ps1')
   for ($i=0; $i -lt 30; $i++) {
     if (-not (Get-Process -Id $servicePid -ErrorAction SilentlyContinue)) { break }
     Start-Sleep -Milliseconds 300
   }
   if (Get-Process -Id $servicePid -ErrorAction SilentlyContinue) { throw 'Native service did not stop.' }
+  if (Get-Process -Id $bridgePid -ErrorAction SilentlyContinue) { throw 'Native computer bridge did not stop.' }
   if (Test-Path $dockerMarker) { throw 'Native package attempted to invoke Docker.' }
   $uninstall = Start-Process -FilePath (Join-Path $install 'Uninstall.exe') -ArgumentList '/S' -Wait -PassThru
   if ($uninstall.ExitCode -ne 0 -or (Test-Path $install)) { throw 'Native package uninstall failed.' }

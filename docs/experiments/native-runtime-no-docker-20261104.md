@@ -90,3 +90,10 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - 本机实际重新构建 `.pkg`/`.zip`，从 ZIP 解出的整个 Aide app 通过 `codesign --verify --deep --strict`；检查了 PKG payload 存在内嵌桥接可执行文件和稳定签名标识。主 App 与桥接 Swift 源通过本机 macOS 14 target 类型检查。
 - 直接从临时目录执行解包的桥接二进制被本机进程执行策略拒绝（`sandbox_extension_issue_file_to_process`），所以本轮未能完成真实 HTTP health、截图或输入操作验收；也未安装或覆盖当前 Aide。下一步需在 macOS CI/真实桌面以 Launch Services 启动来验证桥接 listener 和 TCC 流程。
 - 本机首次打包还复现了共享构建目录的跨平台缓存污染：Linux ELF Python 被 macOS 当成可执行文件。本轮 macOS 与 Linux 打包脚本现校验服务/Python 的操作系统格式和 CPU 架构，默认缓存不匹配时自动重建；显式指定错误平台的自定义产物则报出清晰错误。macOS 重新打包成功；Linux runner 将在后续 CI 验证。
+- 同一提交 CI run `41889384883` 已全绿：Aide quick/Go/required gate、Linux 包 smoke、Windows 安装器构建与实际安装/启动/鉴权/停止/卸载/数据保留、macOS arm64 PKG 安装及内嵌桥接签名检查全部通过。该 Windows smoke 尚未验证桌面截图/输入权限行为。
+
+## 2026-11-05 Windows 安装包电脑控制桥接续接
+
+- Windows NSIS 包新增 loopback-only PowerShell 桥接，随 `AideNative.ps1` 自动启动并随 stop/uninstall 关闭。它使用 `%LOCALAPPDATA%\AideNative` 下继承用户 ACL 的随机令牌文件，Aide 服务共享该令牌；启动器经授权 `/healthz` 检查 bridge，停止器仅按 PID、PowerShell 可执行文件及安装路径内的脚本命令行共同确认后结束该进程。
+- 桥接实现允许应用检查、截图、Aide 已确认后的有限点击/键入/按键；截图仅限前台允许应用窗口，截图或输入前再次检查前台进程，点击坐标限制在窗口矩形。Windows 当前不提供辅助功能控件树读取，`computer_inspect` 返回空控件并说明可用截图。
+- Windows 安装 smoke 已扩展为检查桥接脚本 PowerShell parser、安装包载荷、授权 healthz、缺失令牌返回 401，以及 stop 后桥接进程退出。新增代码当前通过包构建静态单测（`scripts/test_windows_native_package.py` 11/11）和 shell 语法检查；完整 Windows runner 运行在提交后验证。PowerShell 5.1 的 Add-Type、截图、点击/键入仍需以该 runner/实体 Windows 结果为准。

@@ -75,6 +75,7 @@ cp -a "$DEPS/mingit/." "$PAYLOAD/runtime/git/"
 cp -a "$DEPS/openssh/OpenSSH-Win64/." "$PAYLOAD/runtime/openssh/"
 find "$PAYLOAD/runtime/python" -type f -name '*.pdb' -delete
 cp -a scripts/office/. "$PAYLOAD/office-scripts/"
+install -m 0644 scripts/native/windows-computer-bridge.ps1 "$PAYLOAD/AideComputerBridge.ps1"
 cat > "$PAYLOAD/AideNative.ps1" <<'PS1'
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -83,6 +84,17 @@ $data = Join-Path $env:LOCALAPPDATA 'AideNative'
 $workspace = Join-Path $env:USERPROFILE 'Documents\Aide\Workspace'
 $context = Join-Path $env:USERPROFILE 'Documents\Aide\References'
 $null = New-Item -ItemType Directory -Force -Path $data,$workspace,$context,(Join-Path $data 'logs')
+$bridgeTokenFile = Join-Path $data 'auth\computer-bridge-token'
+$null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $bridgeTokenFile)
+$bridgeToken = if (Test-Path $bridgeTokenFile) { (Get-Content -Raw $bridgeTokenFile).Trim() } else { '' }
+if ($bridgeToken -notmatch '^[A-Za-z0-9_-]{40,64}$') {
+  $bytes = New-Object byte[] 32
+  $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+  try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+  $bridgeToken = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+  [IO.File]::WriteAllText($bridgeTokenFile,$bridgeToken + "`n",[Text.Encoding]::ASCII)
+}
+$env:AIDE_COMPUTER_BRIDGE_TOKEN = $bridgeToken
 $env:AIDE_DATA = $data
 $env:AIDE_WORKSPACE = $workspace
 $env:AIDE_CONTEXT = $context
@@ -147,12 +159,48 @@ if (-not $healthy) {
   if (Test-Path $tokenFile) { $token = (Get-Content -Raw $tokenFile).Trim() }
 }
 if ($token -notmatch '^[A-Za-z0-9_.-]{16,512}$') { throw 'Aide local access token is missing or invalid.' }
+$bridgeScript = Join-Path $install 'AideComputerBridge.ps1'
+$bridgePidFile = Join-Path $data 'computer-bridge.pid'
+$bridgeHealthy = $false
+if ((Test-Path $bridgePidFile) -and (Test-Path $bridgeScript)) {
+  $rawBridgePid = (Get-Content -Raw $bridgePidFile).Trim()
+  if ($rawBridgePid -match '^\d+$') {
+    $bridgeProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$rawBridgePid" -ErrorAction SilentlyContinue
+    if ($bridgeProcess -and $bridgeProcess.ExecutablePath -match '\\powershell\.exe$' -and $bridgeProcess.CommandLine.Contains($bridgeScript)) {
+      try { $bridgeHealth = Invoke-RestMethod -TimeoutSec 2 -Headers @{ Authorization = "Bearer $bridgeToken" } 'http://127.0.0.1:17778/healthz'; $bridgeHealthy = $bridgeHealth.service -eq 'aide-windows-computer-bridge' } catch { }
+    }
+  }
+}
+if (-not $bridgeHealthy) {
+  $bridgeArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$bridgeScript`" -TokenFile `"$bridgeTokenFile`" -Port 17778"
+  $bridgeProcess = Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList $bridgeArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $data 'logs\computer-bridge.stdout.log') -RedirectStandardError (Join-Path $data 'logs\computer-bridge.log')
+  Set-Content -Path $bridgePidFile -Value $bridgeProcess.Id -NoNewline
+  for ($i=0; $i -lt 40; $i++) {
+    Start-Sleep -Milliseconds 250
+    if ($bridgeProcess.HasExited) { & (Join-Path $install 'AideNativeStop.ps1'); throw "Aide computer bridge exited ($($bridgeProcess.ExitCode)). Check $(Join-Path $data 'logs\computer-bridge.log')" }
+    try { $bridgeHealth = Invoke-RestMethod -TimeoutSec 2 -Headers @{ Authorization = "Bearer $bridgeToken" } 'http://127.0.0.1:17778/healthz'; if ($bridgeHealth.service -eq 'aide-windows-computer-bridge') { $bridgeHealthy = $true; break } } catch { }
+  }
+  if (-not $bridgeHealthy) { & (Join-Path $install 'AideNativeStop.ps1'); throw 'Aide computer bridge health check timed out.' }
+}
 Start-Process "$base/#token=$token"
 PS1
 cat > "$PAYLOAD/AideNativeStop.ps1" <<'PS1'
 $ErrorActionPreference = 'Stop'
 $install = Split-Path -Parent $MyInvocation.MyCommand.Path
 $data = Join-Path $env:LOCALAPPDATA 'AideNative'
+$bridgePidFile = Join-Path $data 'computer-bridge.pid'
+$bridgeScript = Join-Path $install 'AideComputerBridge.ps1'
+if (Test-Path $bridgePidFile) {
+  $rawBridgePid = (Get-Content -Raw $bridgePidFile).Trim()
+  if ($rawBridgePid -match '^\d+$') {
+    $bridgeProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$rawBridgePid" -ErrorAction SilentlyContinue
+    if ($bridgeProcess -and $bridgeProcess.ExecutablePath -match '\\powershell\.exe$' -and $bridgeProcess.CommandLine.Contains($bridgeScript)) {
+      Stop-Process -Id ([int]$rawBridgePid) -Force -ErrorAction SilentlyContinue
+      Wait-Process -Id ([int]$rawBridgePid) -Timeout 5 -ErrorAction SilentlyContinue
+    }
+  }
+  Remove-Item $bridgePidFile -Force
+}
 $pidFile = Join-Path $data 'service.pid'
 if (Test-Path $pidFile) {
   $raw = (Get-Content -Raw $pidFile).Trim()
