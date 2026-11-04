@@ -74,6 +74,23 @@ func TestWorkspaceConfigCRUD(t *testing.T) {
 	}
 }
 
+func TestWorkspaceConfigPartialUpdateUsesCurrentModeSnapshot(t *testing.T) {
+	a := testApp(t)
+	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
+		"workspace": map[string]any{"mode": "ssh", "path": "/srv/project", "host": "example.test", "port": 22, "username": "dev", "auth": "none"},
+	}), 200)
+	// Omitted mode/auth defaults must come from the same serialized config
+	// generation that this partial update commits.
+	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
+		"workspace": map[string]any{"path": "/srv/next"},
+	}), 200)
+	w := request(a, "GET", "/api/workspace-config", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"mode":"ssh"`) || !strings.Contains(w.Body.String(), `"path":"/srv/next"`) || !strings.Contains(w.Body.String(), `"auth":"none"`) {
+		t.Fatalf("partial update lost current SSH defaults: %s", w.Body.String())
+	}
+}
+
 // FR-79：配置自定义本地路径后，AI（附件/工作流）必须从配置根读到内容。
 func TestLocalWorkspacePathAIReadFix(t *testing.T) {
 	a := testApp(t)

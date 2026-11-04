@@ -474,13 +474,24 @@ func remoteCommandInner(pgidFile, command string) string {
 // execRemotePTY runs a command through an allocated SSH terminal while retaining
 // the remote process-group marker used by execRemote cancellation cleanup.
 func (a *App) execRemotePTY(ctx context.Context, command string, stdin io.Reader, stdout, stderr io.Writer) (int, error) {
+	return a.execRemotePTYSession(ctx, command, stdin, stdout, stderr, nil)
+}
+
+func (a *App) execRemotePTYSession(ctx context.Context, command string, stdin io.Reader, stdout, stderr io.Writer, session *taskSSHSession) (int, error) {
 	runID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), atomic.AddInt64(&remoteRunSeq, 1))
 	pgidFile := "/tmp/.aide-remote-" + runID + ".pgid"
 	inner := remoteCommandInner(pgidFile, command)
 	wrapped := "setsid -w -c bash -c " + shellQuote(inner)
-	args := append([]string{"-tt", "-S", sshControlSocket}, a.sshCommonArgs()...)
-	args = append(args, a.sshTarget(), wrapped)
-	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	var args []string
+	bin := a.sshBin
+	if session != nil {
+		args = append([]string{"-tt"}, session.args(wrapped)...)
+		bin = session.bin
+	} else {
+		args = append([]string{"-tt", "-S", sshControlSocket}, a.sshCommonArgs()...)
+		args = append(args, a.sshTarget(), wrapped)
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "TERM=xterm-256color"}
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
 	cmd.WaitDelay = 2 * time.Second
@@ -489,7 +500,7 @@ func (a *App) execRemotePTY(ctx context.Context, command string, stdin io.Reader
 		return 0, nil
 	}
 	if ctx.Err() != nil {
-		receipt := a.cleanupRemoteGroup(pgidFile)
+		receipt := a.cleanupRemoteGroupSession(pgidFile, session)
 		return -1, fmt.Errorf("交互远程命令已取消或超时；%s", receipt)
 	}
 	var ee *exec.ExitError

@@ -2,6 +2,7 @@ package server
 
 import (
 	"aide/internal/execsandbox"
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -10,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"math"
 	"net/http"
@@ -3380,6 +3382,35 @@ func (a *App) writeMemory(content string) string {
 	return a.appendTokenMemory(content)
 }
 
+// Task memory operations hold a read lock for the entire access so a
+// workspace switch cannot redirect an in-flight task's memory read or write.
+func (a *App) readTaskMemory(task *Task) string {
+	a.workspaceConfigMu.RLock()
+	defer a.workspaceConfigMu.RUnlock()
+	if !a.taskWorkspaceIsCurrent(task) {
+		return "工作区已变化，拒绝读取其他工作区的项目记忆"
+	}
+	return a.readMemory()
+}
+
+func (a *App) writeTaskMemory(task *Task, content string) string {
+	a.workspaceConfigMu.RLock()
+	defer a.workspaceConfigMu.RUnlock()
+	if !a.taskWorkspaceIsCurrent(task) {
+		return "工作区已变化，拒绝写入其他工作区的项目记忆"
+	}
+	return a.writeMemory(content)
+}
+
+func (a *App) taskWorkspaceIsCurrent(task *Task) bool {
+	if task == nil || task.WorkspaceID == "" {
+		return false
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return task.WorkspaceID == a.wsID() && task.WorkspaceRev == a.wsRevision && task.WorkspaceMode == a.workspaceMode()
+}
+
 // requirementPhasePrompt 需求阶段强流程提示（注入 system prompt 末尾）。
 const requirementPhasePrompt = `
 【需求阶段强流程】你当前处于需求分析阶段。必须严格执行：
@@ -3870,23 +3901,78 @@ except Exception as e:
 	return result
 }
 
-// searchText 关键字搜索工作目录（#61：搜索根绑定任务快照 ContainerAbs，不再硬编码 /workspace）
-func (a *App) searchText(dir, query, path string) string {
+// searchText searches only beneath the task's captured workspace root.
+func (a *App) searchText(root *os.Root, query, requestedPath string) string {
 	if query == "" {
 		return "缺少 query"
 	}
-	if path == "" {
-		path = "."
+	if root == nil {
+		return "工作区不可用"
 	}
-	// 用 grep -rn 递归搜索
-	cmd := exec.Command("bash", "--norc", "-c",
-		"cd "+shellQuote(dir)+" && grep -rn --include='*.txt' --include='*.md' --include='*.go' --include='*.js' --include='*.py' --include='*.json' --include='*.html' --include='*.css' -i "+
-			shellQuote(query)+" "+shellQuote(path)+" 2>/dev/null | head -50")
-	out, err := cmd.Output()
+	rel := strings.TrimSpace(strings.ReplaceAll(requestedPath, "\\", "/"))
+	if rel == "" {
+		rel = "."
+	}
+	if rel != "." && (!fs.ValidPath(rel) || !filepath.IsLocal(filepath.FromSlash(rel))) {
+		return "搜索路径必须是工作区内的相对路径"
+	}
+	info, err := fs.Stat(root.FS(), rel)
 	if err != nil {
+		return "搜索路径不可用: " + err.Error()
+	}
+	wanted := strings.ToLower(query)
+	var result strings.Builder
+	results, totalBytes := 0, int64(0)
+	searchFile := func(name string) error {
+		ext := strings.ToLower(path.Ext(name))
+		switch ext {
+		case ".txt", ".md", ".go", ".js", ".py", ".json", ".html", ".css":
+		default:
+			return nil
+		}
+		f, err := root.Open(name)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		scanner := bufio.NewScanner(f)
+		scanner.Buffer(make([]byte, 64*1024), 1<<20)
+		for line := 1; scanner.Scan(); line++ {
+			text := scanner.Text()
+			totalBytes += int64(len(text))
+			if totalBytes > 64<<20 {
+				return errors.New("搜索内容超过 64 MiB 安全上限")
+			}
+			if strings.Contains(strings.ToLower(text), wanted) {
+				fmt.Fprintf(&result, "%s:%d:%s\n", name, line, text)
+				results++
+				if results >= 50 {
+					return fs.SkipAll
+				}
+			}
+		}
+		return scanner.Err()
+	}
+	if !info.IsDir() {
+		err = searchFile(rel)
+	} else {
+		err = fs.WalkDir(root.FS(), rel, func(name string, entry fs.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if entry.IsDir() || entry.Type()&fs.ModeSymlink != 0 {
+				return nil
+			}
+			return searchFile(name)
+		})
+	}
+	if err != nil && !errors.Is(err, fs.SkipAll) {
+		return "搜索失败: " + err.Error()
+	}
+	if result.Len() == 0 {
 		return "未找到匹配: " + query
 	}
-	return string(out)
+	return result.String()
 }
 
 // createDiagram 写 .drawio 文件
@@ -5192,15 +5278,15 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		answer := a.awaitUserAnswer(ctx, task, qb)
 		return "用户回答：" + strings.TrimSpace(answer)
 	case "read_memory":
-		return a.readMemory()
+		return a.readTaskMemory(task)
 	case "write_memory":
 		content := str("content")
 		if content == "" {
 			return "缺少 content 参数"
 		}
-		return a.writeMemory(content)
+		return a.writeTaskMemory(task, content)
 	case "search_text":
-		return a.searchText(wsRoot.Name(), str("query"), str("path"))
+		return a.searchText(wsRoot, str("query"), str("path"))
 	case "document_search", "office_document_search":
 		if call.Function.Name == "office_document_search" && a.pluginOwnerOf("office_document_search") != "office" {
 			return "错误：Office 文档检索插件未启用"

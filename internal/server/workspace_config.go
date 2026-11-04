@@ -501,6 +501,8 @@ func validateWorkspaceRemotePath(p string) error {
 }
 
 func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
+	a.workspaceConfigMu.Lock()
+	defer a.workspaceConfigMu.Unlock()
 	var in struct {
 		Workspace struct {
 			Mode     string `json:"mode"`

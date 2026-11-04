@@ -517,6 +517,7 @@ type App struct {
 	assistantEngine           string // operator-selected startup choice; never a plugin capability
 	mixSoulCalls              pluginCallQueues
 	mu                        sync.Mutex
+	workspaceConfigMu         sync.RWMutex // serializes workspace defaults/commits with workspace-bound operations
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
 	transferMu                sync.Mutex
