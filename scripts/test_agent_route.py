@@ -1,10 +1,12 @@
 """Regression tests for the route's deletion and release boundaries."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 
 spec = importlib.util.spec_from_file_location('route', Path(__file__).with_name('agent-route.py'))
@@ -61,6 +63,82 @@ class RouteTests(unittest.TestCase):
         self.assertTrue(route.release_errors(task, receipt, CONFIG, 'abc'))
         receipt['profile'] = 'quick'
         self.assertTrue(route.release_errors(task, receipt, CONFIG, 'abc'))
+
+    def test_release_gate_requires_same_head_as_full_verification(self):
+        task = {f: 'recorded' for f in ('request', 'scope', 'acceptance', 'release_authorization', 'rollback')}
+        task['stages'] = {s: {'status': 'pass', 'summary': 'checked', 'evidence': ['record']} for s in CONFIG['stages'][:-1]}
+        receipt = {'profile': 'full', 'status': 'pass', 'fingerprint': 'abc', 'head': 'verified-head'}
+        self.assertEqual(route.release_errors(task, receipt, CONFIG, 'abc', 'verified-head'), [])
+        self.assertIn('The full verification receipt must match the current Git revision',
+                      route.release_errors(task, receipt, CONFIG, 'abc', 'changed-head'))
+
+    def test_full_verification_requires_at_least_one_check(self):
+        self.assertFalse(route.verification_passed([], 'same', 'same'))
+        self.assertTrue(route.verification_passed([{'exit': 0}], 'same', 'same'))
+        self.assertFalse(route.verification_passed([{'exit': 0}], 'old', 'new'))
+
+    def test_task_creation_is_atomic_and_does_not_follow_predictable_temp_symlink(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / 'outside.json'
+            target.write_text('keep')
+            tasks = root / 'docs/tasks'
+            tasks.mkdir(parents=True)
+            destination = tasks / 'demo.json'
+            (tasks / 'demo.tmp').symlink_to(target)
+            route.create_json(destination, {'winner': 'first'})
+            self.assertEqual(json.loads(destination.read_text()), {'winner': 'first'})
+            self.assertEqual(target.read_text(), 'keep')
+            self.assertTrue((tasks / 'demo.tmp').is_symlink())
+            with self.assertRaises(FileExistsError):
+                route.create_json(destination, {'winner': 'second'})
+            self.assertEqual(json.loads(destination.read_text()), {'winner': 'first'})
+
+    def test_concurrent_task_creators_have_one_winner(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            destination = Path(tmp) / 'docs/tasks/race.json'
+            def create(value):
+                try:
+                    route.create_json(destination, {'winner': value})
+                    return 'created'
+                except FileExistsError:
+                    return 'exists'
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(create, ('first', 'second')))
+            self.assertCountEqual(results, ['created', 'exists'])
+            self.assertIn(json.loads(destination.read_text())['winner'], ('first', 'second'))
+
+    def test_clean_deletion_refuses_parent_symlink_swap_after_enumeration(self):
+        if os.open not in os.supports_dir_fd or os.unlink not in os.supports_dir_fd or not hasattr(os, 'O_NOFOLLOW'):
+            self.skipTest('platform lacks directory-handle no-follow unlink')
+        original = route.ROOT
+        outside = None
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                route.ROOT = Path(tmp)
+                subprocess.run(['git', 'init', '-q', tmp], check=True)
+                subtree = route.ROOT / 'sub'
+                subtree.mkdir()
+                candidate = subtree / '.DS_Store'
+                candidate.write_text('inside')
+                outside = route.ROOT.parent / (route.ROOT.name + '-outside')
+                outside.mkdir()
+                external = outside / '.DS_Store'
+                external.write_text('outside')
+                found = route.candidates(CONFIG)
+                selected = next(p for p in found if p.relative_to(route.ROOT).as_posix() == 'sub/.DS_Store')
+                subtree.rename(route.ROOT / 'sub-original')
+                subtree.symlink_to(outside, target_is_directory=True)
+                with self.assertRaises(OSError):
+                    route.remove_candidate(route.ROOT, selected)
+                self.assertEqual(external.read_text(), 'outside')
+                self.assertEqual((route.ROOT / 'sub-original/.DS_Store').read_text(), 'inside')
+        finally:
+            route.ROOT = original
+            if outside and outside.exists():
+                for child in outside.iterdir():
+                    child.unlink()
+                outside.rmdir()
 
     def test_cleanup_preserves_unknown_protected_tracked_and_symlinks(self):
         original = route.ROOT
