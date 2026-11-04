@@ -79,12 +79,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "用户明确要求将完成的主题改动合并到 main 并推送。仅包含主题实现与相关文档/任务记录。",
-      "evidence": []
+      "status": "pass",
+      "summary": "主题改动已通过具管理员权限的直接推送合入 origin/main。远端 main 已核验指向 ebdb75d15d0bdf708536b0598272889f148fecc6。GitHub 提示该推送绕过了 PR 与 required status check gate。",
+      "evidence": [
+        "git push origin HEAD:main 成功：f3f29b4e..ebdb75d1",
+        "git ls-remote origin refs/heads/main 返回 ebdb75d15d0bdf708536b0598272889f148fecc6"
+      ]
     }
   },
   "release_authorization": "用户明确要求“把该push的都push，主要是要和到main”；此前亦授权管理员合并。",
   "rollback": "",
-  "handoff": ""
+  "handoff": "已合入 origin/main，尚未构建/发布桌面应用或重启本地服务。"
 }
