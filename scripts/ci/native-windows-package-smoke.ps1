@@ -79,6 +79,50 @@ try {
   $unauthorized = $false
   try { Invoke-RestMethod -TimeoutSec 3 'http://127.0.0.1:17778/healthz' | Out-Null } catch { $unauthorized = $_.Exception.Response.StatusCode.value__ -eq 401 }
   if (-not $unauthorized) { throw 'Computer bridge accepted a request without its bearer token.' }
+  $screenshotFixtureSource = @'
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+public static class AideNativeScreenshotFixture {
+  [STAThread] public static void Main() {
+    Application.EnableVisualStyles();
+    var form = new Form { Text = "AideNativeScreenshotFixture", Width = 720, Height = 420, StartPosition = FormStartPosition.CenterScreen, BackColor = Color.White };
+    var label = new Label { Text = "AIDE NATIVE SCREENSHOT OK", AutoSize = true, Location = new Point(40, 70), Font = new Font("Arial", 24, FontStyle.Bold), ForeColor = Color.DarkBlue };
+    form.Controls.Add(label);
+    form.Shown += (sender, args) => { form.Activate(); form.BringToFront(); };
+    Application.Run(form);
+  }
+}
+'@
+  $screenshotFixtureExe = Join-Path $testRoot 'screenshot-fixture.exe'
+  Add-Type -TypeDefinition $screenshotFixtureSource -Language CSharp -OutputType WindowsApplication -OutputAssembly $screenshotFixtureExe -ReferencedAssemblies @('System.Windows.Forms','System.Drawing')
+  $screenshotFixture = Start-Process -FilePath $screenshotFixtureExe -PassThru
+  try {
+    $fixtureWindow = $false
+    for ($i=0; $i -lt 30; $i++) {
+      $screenshotFixture.Refresh()
+      if ($screenshotFixture.MainWindowTitle -eq 'AideNativeScreenshotFixture') { $fixtureWindow = $true; break }
+      Start-Sleep -Milliseconds 250
+    }
+    if (-not $fixtureWindow) { throw 'Windows screenshot fixture window did not become visible.' }
+    $shell = New-Object -ComObject WScript.Shell
+    if (-not $shell.AppActivate('AideNativeScreenshotFixture')) { throw 'Windows screenshot fixture could not be focused.' }
+    Start-Sleep -Milliseconds 500
+    $snapshot = Invoke-RestMethod -TimeoutSec 10 -Method Post -Headers $bridgeHeaders -ContentType 'application/json' -Body (@{allowedApps=@('AideNativeScreenshotFixture')} | ConvertTo-Json -Compress) 'http://127.0.0.1:17778/v1/snapshot'
+    if (-not $snapshot.ok -or $snapshot.mimeType -ne 'image/png' -or $snapshot.app -ne 'screenshot-fixture') { throw "Windows screenshot bridge response was invalid: $snapshot" }
+    $png = [Convert]::FromBase64String($snapshot.imageBase64)
+    $imageStream = [IO.MemoryStream]::new($png)
+    try {
+      $image = [Drawing.Bitmap]::FromStream($imageStream)
+      if ($image.Width -lt 600 -or $image.Height -lt 300 -or $png.Length -gt 2MB) { throw "Windows screenshot dimensions or size are invalid: $($image.Width)x$($image.Height), $($png.Length) bytes" }
+      $sampledColors = New-Object 'System.Collections.Generic.HashSet[int]'
+      for ($y=20; $y -lt $image.Height; $y+=8) { for ($x=20; $x -lt $image.Width; $x+=8) { [void]$sampledColors.Add($image.GetPixel($x,$y).ToArgb()) } }
+      if ($sampledColors.Count -lt 4) { throw "Windows screenshot appears blank or uniform: $($sampledColors.Count) sampled colors" }
+      Write-Output "Windows packaged screenshot: PASS ($($image.Width)x$($image.Height), $($sampledColors.Count) sampled colors, $($png.Length) PNG bytes)"
+    } finally { if ($image) { $image.Dispose() }; $imageStream.Dispose() }
+  } finally {
+    if ($screenshotFixture -and -not $screenshotFixture.HasExited) { Stop-Process -Id $screenshotFixture.Id -Force -ErrorAction SilentlyContinue }
+  }
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $install 'AideNativeStop.ps1')
   for ($i=0; $i -lt 30; $i++) {
     if (-not (Get-Process -Id $servicePid -ErrorAction SilentlyContinue)) { break }
