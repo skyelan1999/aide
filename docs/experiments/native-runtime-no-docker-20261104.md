@@ -111,3 +111,4 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - 通过 macOS `NSRunningApplication.terminate()` 请求正常退出，确认桌面进程、服务进程及桥接进程均结束。测试只写临时目录，没有覆盖或重启用户当前安装的 Aide。
 - `scripts/test_macos_native_desktop_launch.sh` 已加入原生包 macOS CI，覆盖上述完整应用启动、服务鉴权、桥接启动和正常退出。这是本机真实桌面启动证据；CI 重跑仍需查看触发该测试的后续 run。
 - 此次服务状态未提供文件/插件/TTS/浏览器能力完整性证明；macOS TCC 屏幕录制与辅助功能尚未授权，所以仍未验收真实截图和点击输入。
+- 随后 commit `fe025102` 的原生包 run `41894891085` 三端及 required gate 全绿。macOS 日志明确出现 bridge Launch Services/auth/token-rotation/loopback/stop PASS、`runtimeMode=native`、完整 Aide.app Launch Services/service/auth/bridge PASS 和 graceful shutdown PASS；Linux package 和 Windows package/install smoke 均通过。相同提交的 Aide CI run `41894891478` 全绿。此 CI 证明干净 hosted runner 上的安装包启动与进程闭环，不证明 Windows/Linux 实体桌面交互、全插件、TTS 或 SSH 对等。
