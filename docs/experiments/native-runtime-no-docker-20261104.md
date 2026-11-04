@@ -21,10 +21,10 @@ AIDE_WORKSPACE="$PWD" AIDE_CONTEXT="$PWD/context" scripts/run-native-runtime.sh
 - App 从本机证书目录读取 TLS 证书 DER 指纹；WebKit 仅对 `localhost`、该随机端口和完全匹配的本机证书 pin 放行，不安装系统 CA。测试确认服务随窗口退出而终止。
 - 本机安装器执行需要管理员凭据；当前环境没有可用的 sudo 凭据，因此没有对 `/Applications` 或用户系统执行安装。已检查安装包载荷并从其中运行 App，未覆盖现有 `/Users/skyelan/Applications/Aide.app`。
 - `.pkg` 载荷包含原生服务、Node/npm 24、可重定位 Python 3.12 和镜像内固定的 Office Python 包。对解出的安装包检查了 Node v24.19.0、npm、`python3.12 -I` 下的 python-docx/openpyxl/python-pptx/ezdxf/pypdf 导入，以及 WebView 首屏。
-- 当前 `.pkg` 为本机临时 ad-hoc 签名 App + 未签名安装包；正式公开分发仍需 Developer ID 签名和 notarization。安装器实际写入 `/Applications` 需要管理员凭据，本机没有可用 sudo 凭据。
+- App 仍为本机临时 ad-hoc 签名；正式公开分发需要 Developer ID 签名和 notarization。第一次通过 `pkgbuild` 生成的组件包在 Installer 的卷检查阶段异常退出；手工改用 `productbuild` 生成标准 product archive 后，安装器进入授权阶段。构建脚本已改为 `productbuild --component` 格式，但尚未用该脚本重建完整包。
 - 使用全新临时工作区、引用目录和数据目录，测试后清理；未读取或迁移 Docker 安装的 `.env`、数据卷、插件、工作区和凭证。
 - 试验 App 有一次在加入隔离路径参数前启动，曾写入 `~/Library/Application Support/Aide`。没有删除该路径，也没有将它用作之后的测试数据目录；其内容未做差异盘点，应由用户决定是否检查或清理。
-- 当前 `.pkg` 仍未实际执行安装器写入 `/Applications`，因为该操作需要管理员凭据；提取安装载荷后直接运行 App 只证明载荷可启动，不等同于完成系统安装。ad-hoc 签名和缺少公证也使它不适合公开分发。
+- 当前系统级安装仍未完成：Installer 的安装日志明确停在“Authorization is being checked, waiting until authorization arrives”，`/Applications/Aide.app` 还未出现。管理员必须在 macOS 授权界面完成认证；提取安装载荷运行只证明 App 可启动，不等同于安装器完成写入。ad-hoc 签名和缺少公证也使它不适合公开分发。
 
 ## Linux Debian 安装包试验
 

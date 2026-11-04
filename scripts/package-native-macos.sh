@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 [[ "$(uname -s)" == Darwin ]] || { echo 'Native macOS packaging must run on macOS.' >&2; exit 2; }
-command -v swiftc >/dev/null && command -v codesign >/dev/null && command -v pkgbuild >/dev/null && command -v ditto >/dev/null || { echo 'Xcode Command Line Tools are required.' >&2; exit 1; }
+command -v swiftc >/dev/null && command -v codesign >/dev/null && command -v productbuild >/dev/null && command -v ditto >/dev/null || { echo 'Xcode Command Line Tools are required.' >&2; exit 1; }
 OUT="${AIDE_NATIVE_PACKAGE_OUT:-$ROOT/dist/native-macos}"
 mkdir -p "$OUT"
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/aide-native-package.XXXXXX")"
@@ -61,10 +61,7 @@ PY
 codesign --force --sign - --identifier local.aide.desktop.native --entitlements "$STAGE/entitlements.plist" "$APP"
 codesign --verify --deep --strict "$APP"
 [[ ! -e "$OUT/Aide-Native-macOS.pkg" && ! -e "$OUT/Aide-Native-macOS.zip" ]] || { echo 'Native package output already exists; choose another AIDE_NATIVE_PACKAGE_OUT.' >&2; exit 1; }
-PKGROOT="$STAGE/pkgroot"
-mkdir -p "$PKGROOT/Applications"
-ditto "$APP" "$PKGROOT/Applications/Aide.app"
-pkgbuild --root "$PKGROOT" --identifier local.aide.native --version "$VERSION" --install-location / "$OUT/Aide-Native-macOS.pkg" >/dev/null
+productbuild --component "$APP" /Applications "$OUT/Aide-Native-macOS.pkg" >/dev/null
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$OUT/Aide-Native-macOS.zip"
 if [[ "${AIDE_BUILD_DMG:-0}" == 1 ]]; then
   hdiutil create -volname Aide -srcfolder "$APP" -format UDZO "$OUT/Aide-Native-macOS.dmg"
