@@ -101,6 +101,6 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 ## 2026-11-05 macOS Launch Services 桥接闭环
 
 - 在当前实体 macOS arm64 主机，从本轮生成的 ZIP 解包独立临时 Aide.app，使用 `NSWorkspace.openApplication`（与主应用启动桥接的 API 相同）启动内嵌 `Aide Computer Bridge.app`，没有重启或覆盖用户当前安装的 Aide。
-- 使用隔离令牌文件和端口 `17883` 验证桥接返回 healthz `200`、缺少 Bearer token 返回 `401`，并以 `lsof` 确认监听地址是 `127.0.0.1:17883`。结束桥接进程后确认监听端口关闭。
+- 使用隔离令牌文件和端口 `17883` 验证桥接返回 healthz `200`、缺少 Bearer token 返回 `401`；热更新令牌文件后，旧令牌立即返回 `401`、新令牌返回 `200`。以 `lsof` 确认监听地址是 `127.0.0.1:17883`，结束桥接进程后确认监听端口关闭。这些检查已固化到 `scripts/test_macos_native_bridge_launch.sh`，由原生包 macOS CI 执行。
 - 此主机尚未授予桥接屏幕录制和辅助功能权限；本次仅验证真实 Launch Services 启动、授权协议和 loopback 绑定，响应中两个权限状态均为 false。截图、点击、键入仍需在用户授权后用桌面应用验收。
 - 当时由文档变更触发的 Aide CI run `41892954729` 尚在 queued 状态；此记录不把它计为通过。完整 CI 需以后续 run 状态为准。

@@ -62,6 +62,10 @@ with open(sys.argv[1], encoding="utf-8") as f: result=json.load(f)
 assert result.get("ok") is True and result.get("service") == "aide-native-computer-bridge", result
 PY
 test "$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 2 "http://127.0.0.1:$PORT/healthz")" = 401
+ROTATED_TOKEN="$(openssl rand -hex 32)"
+printf '%s' "$ROTATED_TOKEN" > "$TOKEN_FILE"
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 2 -H "Authorization: Bearer $TOKEN" "http://127.0.0.1:$PORT/healthz")" = 401
+test "$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 2 -H "Authorization: Bearer $ROTATED_TOKEN" "http://127.0.0.1:$PORT/healthz")" = 200
 lsof -nP -iTCP:"$PORT" -sTCP:LISTEN | grep -F "127.0.0.1:$PORT" >/dev/null
 kill "$BRIDGE_PID"
 for _ in $(seq 1 20); do
@@ -70,4 +74,4 @@ for _ in $(seq 1 20); do
 done
 ! lsof -nP -iTCP:"$PORT" -sTCP:LISTEN | grep -q .
 BRIDGE_PID=""
-echo 'macOS Launch Services bridge startup/auth/loopback/stop smoke: PASS'
+echo 'macOS Launch Services bridge startup/auth/token-rotation/loopback/stop smoke: PASS'
