@@ -97,3 +97,10 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - Windows NSIS 包新增 loopback-only PowerShell 桥接，随 `AideNative.ps1` 自动启动并随 stop/uninstall 关闭。它使用 `%LOCALAPPDATA%\AideNative` 下继承用户 ACL 的随机令牌文件，Aide 服务共享该令牌；启动器经授权 `/healthz` 检查 bridge，停止器仅按 PID、PowerShell 可执行文件及安装路径内的脚本命令行共同确认后结束该进程。
 - 桥接实现允许应用检查、截图、Aide 已确认后的有限点击/键入/按键；截图仅限前台允许应用窗口，截图或输入前再次检查前台进程，点击坐标限制在窗口矩形。Windows 当前不提供辅助功能控件树读取，`computer_inspect` 返回空控件并说明可用截图。
 - Windows 安装 smoke 已扩展为检查桥接脚本 PowerShell parser、安装包载荷、授权 healthz、缺失令牌返回 401，以及 stop 后桥接进程退出。`scripts/test_windows_native_package.py` 11/11；三端包 CI run `41891718340` 全部通过，Windows 2025 runner 的安装、桥接脚本解析、Aide/桥接健康、token 鉴权与未授权拒绝、停止、卸载、数据保留通过。runner 只验收桥接生命周期和协议，未执行桌面截图/点击/键入；System.Drawing 在无头桌面下的截图质量及真实用户交互仍需实体 Windows 验收。
+
+## 2026-11-05 macOS Launch Services 桥接闭环
+
+- 在当前实体 macOS arm64 主机，从本轮生成的 ZIP 解包独立临时 Aide.app，使用 `NSWorkspace.openApplication`（与主应用启动桥接的 API 相同）启动内嵌 `Aide Computer Bridge.app`，没有重启或覆盖用户当前安装的 Aide。
+- 使用隔离令牌文件和端口 `17883` 验证桥接返回 healthz `200`、缺少 Bearer token 返回 `401`，并以 `lsof` 确认监听地址是 `127.0.0.1:17883`。结束桥接进程后确认监听端口关闭。
+- 此主机尚未授予桥接屏幕录制和辅助功能权限；本次仅验证真实 Launch Services 启动、授权协议和 loopback 绑定，响应中两个权限状态均为 false。截图、点击、键入仍需在用户授权后用桌面应用验收。
+- 当时由文档变更触发的 Aide CI run `41892954729` 尚在 queued 状态；此记录不把它计为通过。完整 CI 需以后续 run 状态为准。

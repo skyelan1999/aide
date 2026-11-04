@@ -9,6 +9,7 @@ on:
       - 'native/macos-desktop/**'
       - 'scripts/build-native-*.sh'
       - 'scripts/package-native-*.sh'
+      - 'scripts/test_macos_native_bridge_launch.sh'
       - 'scripts/office/**'
       - 'scripts/ci/native-*-package-smoke.*'
       - 'version.md'
@@ -78,6 +79,7 @@ jobs:
           test -x "$resources/Aide Computer Bridge.app/Contents/MacOS/AideComputerBridge"
           codesign --verify --deep --strict /Applications/Aide.app
           codesign -dv --verbose=2 "$resources/Aide Computer Bridge.app" 2>&1 | grep -q 'Identifier=local.aide.computer-bridge'
+          bash scripts/test_macos_native_bridge_launch.sh "$resources/Aide Computer Bridge.app"
           "$resources/runtime/bin/node" --version | grep -q '^v24\.'
           "$resources/runtime/python/bin/python3.12" -I -c 'import docx,openpyxl,pptx,ezdxf,pypdf'
           testbin="$RUNNER_TEMP/native-macos-bin"
