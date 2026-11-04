@@ -1,0 +1,58 @@
+{
+  "id": "issue-audit-20261104",
+  "request": "全面审计 skyelan1999/aide 所有 open GitHub Issues；先修复已确认的 agent-route.py 问题 #767 #768 #769 #770 #772，另按当前 main 逐项复核 issue。",
+  "baseline": "9dfa7449e3d2dcd74ef5310f63e6f5835c5a626a",
+  "initial_status": "M scripts/agent-route.py\n M scripts/test_agent_route.py",
+  "acceptance": [
+    "审阅 2026-11-04 当前 117 条 open issues；逐项判断对照 origin/main 的完成状态、有效性和对应证据。",
+    "对仍在当前 main 可复现且本轮可安全修复的问题，先保留原 issue，补回归、实现修复并通过相关 CI 后合并，再按用户要求关闭。",
+    "已在 main 完成、重复、过时或无后续动作的 issue 留存可核查依据后关闭；未验证/仍存在的问题不得标成已修复。",
+    "报告本轮关单数量、已修复数量、仍打开数量和环境验收边界。"
+  ],
+  "scope": [
+    "scripts/agent-route.py",
+    "scripts/test_agent_route.py",
+    "docs/tasks/issue-audit-20261104.json",
+    "当前 open issue 对应的 main 源码与回归测试（仅经复核、逐项列入后修改）"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求全面清理 Aide open issues。已确认 GitHub 身份 skyelan1999，刷新 main 为 9dfa7449，open issues 基线为 117。检视 AGENTS.md 与 docs/agent/WORKFLOW.md，按 issue 的实现/验收证据判断，不按年龄单独关单。当前先处理可确认完成项与五个本地工具缺陷；余下 97 项仍需复核。",
+      "evidence": ["gh api user -> skyelan1999", "gh issue list -R skyelan1999/aide --state open -> 117 at intake", "origin/main=9dfa7449e3d2dcd74ef5310f63e6f5835c5a626a", "已关闭 20 项：#779 #753 #735 #655 #649 #646 #644 #640 #630 #615 #742 #741 #740 #739 #752 #604 #667 #340 #335 #467；#778 在 PR #780 合入时自动关闭", "当前 open issues=97"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "选择在一组改动中修复 #767 #768 #769 #770 #772：full receipt 必须绑定当前 HEAD；零检查不得返回 PASS；任务创建用 O_EXCL 原子保留目标路径；JSON 原子更新改用唯一 mkstemp；清理经 root/parent dirfd 与 O_NOFOLLOW 删除，平台不支持时 fail closed。",
+      "evidence": ["main baseline 9dfa7449", "Issues #767 #768 #769 #770 #772", "独立 worktree /tmp/aide-issue-audit-20261104"]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "五项修复已实现并完成聚焦测试，待 PR/CI 与 main 合并。",
+      "evidence": ["python3 scripts/test_agent_route.py: 11 tests pass", "python3 scripts/test_agent_skill_routing.py: 7 tests pass", "python3 -m py_compile scripts/agent-route.py scripts/test_agent_route.py: pass", "git diff --check: pass"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "变更相关单测、技能路由测试及完整 quick profile 通过。",
+      "evidence": ["python3 scripts/test_agent_route.py: 11/11", "python3 scripts/test_agent_skill_routing.py: 7/7", "python3 -m py_compile scripts/agent-route.py scripts/test_agent_route.py: exit 0", "python3 scripts/agent-route.py verify quick: PASS, 322/322, receipt .agent-state/quick.json, fingerprint 23ff64539e9e35d8a1926562a1d6fb9febf1215c40788b54d5597df6f173c6ec", "git diff --check: PASS"]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

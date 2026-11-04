@@ -9,7 +9,9 @@ from pathlib import Path
 import re
 import runpy
 import subprocess
+import stat
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,9 +22,30 @@ def git(*args):
 
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
-    temp = path.with_suffix('.tmp')
-    temp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-    temp.replace(path)
+    fd, temp_name = tempfile.mkstemp(prefix=path.name + '.', suffix='.tmp', dir=path.parent)
+    temp = Path(temp_name)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+            stream.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        temp.replace(path)
+    finally:
+        try:
+            temp.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def create_json(path, data):
+    """Reserve a JSON path atomically without following or replacing links/files."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, 'O_NOFOLLOW', 0)
+    fd = os.open(path, flags, 0o666)
+    with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+        stream.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+        stream.flush()
+        os.fsync(stream.fileno())
 
 
 def task_path(name):
@@ -76,7 +99,32 @@ def candidates(config):
     return result
 
 
-def release_errors(task, receipt, config, current):
+def remove_candidate(root, path):
+    """Unlink a cleanup candidate through directory handles, never path lookup."""
+    relative = Path(path).relative_to(root)
+    if (not relative.parts or not hasattr(os, 'O_NOFOLLOW') or os.open not in os.supports_dir_fd
+            or os.unlink not in os.supports_dir_fd or os.stat not in os.supports_dir_fd
+            or os.stat not in os.supports_follow_symlinks):
+        raise OSError('Safe root-anchored cleanup is unavailable on this platform')
+    flags = os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0) | os.O_NOFOLLOW
+    root_fd = os.open(root, flags)
+    parent_fd = root_fd
+    opened = []
+    try:
+        for part in relative.parts[:-1]:
+            parent_fd = os.open(part, flags, dir_fd=parent_fd)
+            opened.append(parent_fd)
+        info = os.stat(relative.parts[-1], dir_fd=parent_fd, follow_symlinks=False)
+        if not stat.S_ISREG(info.st_mode):
+            raise OSError('Cleanup candidate is not a regular file')
+        os.unlink(relative.parts[-1], dir_fd=parent_fd)
+    finally:
+        for fd in reversed(opened):
+            os.close(fd)
+        os.close(root_fd)
+
+
+def release_errors(task, receipt, config, current, current_head=None):
     errors = []
     for field in ('request', 'acceptance', 'scope', 'release_authorization', 'rollback'):
         if not task.get(field):
@@ -87,7 +135,13 @@ def release_errors(task, receipt, config, current):
             errors.append('Incomplete stage: ' + stage)
     if receipt.get('profile') != 'full' or receipt.get('status') != 'pass' or receipt.get('fingerprint') != current:
         errors.append('A passing full verification of current inputs is required')
+    if current_head is not None and receipt.get('head') != current_head:
+        errors.append('The full verification receipt must match the current Git revision')
     return errors
+
+
+def verification_passed(records, before, after):
+    return bool(records) and all(record['exit'] == 0 for record in records) and before == after
 
 
 def resolve_check_command(command):
@@ -160,12 +214,14 @@ def main():
     config = json.loads((ROOT / 'docs/agent/router.json').read_text())
     if args.cmd == 'start':
         path = task_path(args.id)
-        if path.exists():
-            raise ValueError('Task already exists; resume it, do not overwrite')
-        write_json(path, {'id': args.id, 'request': args.request, 'baseline': git('rev-parse', 'HEAD'),
-                         'initial_status': git('status', '--short'), 'acceptance': [], 'scope': [],
-                         'stages': {s: {'status': 'pending', 'summary': '', 'evidence': []} for s in config['stages']},
-                         'release_authorization': '', 'rollback': '', 'handoff': ''})
+        data = {'id': args.id, 'request': args.request, 'baseline': git('rev-parse', 'HEAD'),
+                'initial_status': git('status', '--short'), 'acceptance': [], 'scope': [],
+                'stages': {s: {'status': 'pending', 'summary': '', 'evidence': []} for s in config['stages']},
+                'release_authorization': '', 'rollback': '', 'handoff': ''}
+        try:
+            create_json(path, data)
+        except FileExistsError as exc:
+            raise ValueError('Task already exists; resume it, do not overwrite') from exc
         print(path.relative_to(ROOT))
     elif args.cmd == 'prompt':
         print('aide workflow v1 / client: ' + args.client)
@@ -182,7 +238,7 @@ def main():
         for p in candidates(config):
             print(('DELETE ' if args.cmd == 'clean' else 'CANDIDATE ') + str(p.relative_to(ROOT)))
             if args.cmd == 'clean':
-                p.unlink()
+                remove_candidate(ROOT, p)
         print('Untracked files to classify (NOT deletion candidates):\n' + git('ls-files', '--others', '--exclude-standard'))
     elif args.cmd == 'check':
         missing = [f for f in config['required_files'] if not (ROOT / f).is_file()]
@@ -212,7 +268,7 @@ def main():
                 except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
                     stream.write(str(exc) + '\n'); code = 1
                 records.append({'command': command, 'exit': code})
-        passed = all(r['exit'] == 0 for r in records) and before == fingerprint()
+        passed = verification_passed(records, before, fingerprint())
         receipt = {'profile': args.profile, 'status': 'pass' if passed else 'fail', 'fingerprint': before,
                    'head': git('rev-parse', 'HEAD'), 'time': stamp, 'results': records, 'log': str(log.relative_to(ROOT))}
         write_json(ROOT / '.agent-state' / (args.profile + '.json'), receipt)
@@ -222,7 +278,7 @@ def main():
         task = json.loads(task_path(args.id).read_text())
         rp = ROOT / '.agent-state/full.json'
         receipt = json.loads(rp.read_text()) if rp.exists() else {}
-        errors = release_errors(task, receipt, config, fingerprint())
+        errors = release_errors(task, receipt, config, fingerprint(), git('rev-parse', 'HEAD'))
         if git('branch', '--show-current') != 'main': errors.append('Release requires main')
         if git('status', '--porcelain'): errors.append('Release requires clean Git status')
         if errors: raise ValueError('\n'.join(errors))
