@@ -12,6 +12,7 @@ on:
       - 'scripts/test_macos_native_bridge_launch.sh'
       - 'scripts/test_macos_native_desktop_launch.sh'
       - 'scripts/ci/native-plugin-daemon-smoke.py'
+      - 'scripts/ci/native-ai-session-smoke.py'
       - 'scripts/office/**'
       - 'scripts/ci/native-*-package-smoke.*'
       - 'version.md'

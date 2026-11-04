@@ -72,6 +72,8 @@ try {
   $fixture = Join-Path $PSScriptRoot '..\..\plugins\testdata\mock-daemon'
   & $python -I (Join-Path $PSScriptRoot 'native-plugin-daemon-smoke.py') --base $base --token $token --workspace $workspace --fixture (Resolve-Path $fixture).Path
   if ($LASTEXITCODE -ne 0) { throw "Bundled Node plugin daemon smoke failed with exit code $LASTEXITCODE." }
+  & $python -I (Join-Path $PSScriptRoot 'native-ai-session-smoke.py') --base $base --token $token
+  if ($LASTEXITCODE -ne 0) { throw "Installed AI session/provider smoke failed with exit code $LASTEXITCODE." }
   $bridgeToken = (Get-Content -Raw $bridgeTokenFile).Trim()
   $bridgeHeaders = @{ Authorization = "Bearer $bridgeToken" }
   $bridgeHealth = Invoke-RestMethod -TimeoutSec 3 -Headers $bridgeHeaders 'http://127.0.0.1:17778/healthz'

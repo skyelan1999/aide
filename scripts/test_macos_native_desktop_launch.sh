@@ -114,6 +114,9 @@ PY
 "$APP/Contents/Resources/runtime/python/bin/python3.12" -I \
   "$(cd "$(dirname "$0")/.." && pwd)/scripts/ci/native-plugin-daemon-smoke.py" \
   --base "https://localhost:$PORT" --token "$TOKEN" --workspace "$TMP/workspace" --fixture "$FIXTURE"
+"$APP/Contents/Resources/runtime/python/bin/python3.12" -I \
+  "$(cd "$(dirname "$0")/.." && pwd)/scripts/ci/native-ai-session-smoke.py" \
+  --base "https://localhost:$PORT" --token "$TOKEN"
 BRIDGE_PID="$(python3 - "$APP/Contents/Resources/Aide Computer Bridge.app/Contents/MacOS/AideComputerBridge" <<'PY'
 import ctypes,os,subprocess,sys
 lib=ctypes.CDLL('/usr/lib/libproc.dylib')

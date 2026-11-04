@@ -100,6 +100,8 @@ wait "$xterm_pid" 2>/dev/null || true
 "$runtime/python/bin/python3.12" -I "$REPO_ROOT/scripts/ci/native-plugin-daemon-smoke.py" \
   --base http://127.0.0.1:18097 --token "$token" --workspace "$TEST_ROOT/workspace" \
   --fixture "$REPO_ROOT/plugins/testdata/mock-daemon"
+"$runtime/python/bin/python3.12" -I "$REPO_ROOT/scripts/ci/native-ai-session-smoke.py" \
+  --base http://127.0.0.1:18097 --token "$token"
 printf '%s\n' 'native-command-payload-4f9a' >"$TEST_ROOT/outside-read.txt"
 command_json="$("$runtime/python/bin/python3.12" -I -c 'import json,sys; print(json.dumps({"command":sys.argv[1]}))' "node -e 'require(\"fs\").writeFileSync(\"native-command.txt\",\"sandbox-ok\")' && cat native-command.txt")"
 curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$command_json" http://127.0.0.1:18097/api/command >"$TEST_ROOT/workspace-command.ndjson"
