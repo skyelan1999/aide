@@ -132,3 +132,11 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 
 - 上述截图扩展的验证结果已由 commit `91252776` 对应的原生包 CI run `41908498259` 实际执行：四个安装 job（Linux 包安装、macOS PKG 安装、Windows 安装器构建、Windows 安装 smoke）和 required gate 均成功。Windows 日志显示 bridge 返回的 PNG 是 `720x420`，采样 77 种像素颜色，大小 13,688 字节；完整安装 smoke 还通过浏览器首页、Node daemon 插件启动/IPC/停止、bridge 授权、停止、卸载和用户数据保留检查。
 - 同一提交的 Aide CI run `41908498137` quick、Go、gate 全通过。此次桌面截图来自 GitHub `windows-2025` runner 的临时 WinForms 可见窗口，仍需留意实体 Windows 在 DPI 缩放、多屏、远程桌面锁屏/权限策略下的差异；点击和键入尚未随此 smoke 实际执行。
+
+## 2026-11-05 三端安装包 AI 会话验收
+
+- 新增 `scripts/ci/native-ai-session-smoke.py`，由安装后的 Aide 服务接收 API 请求，配置仅监听 `127.0.0.1` 的 OpenAI-compatible 模拟模型，创建会话并执行 AI chat run；验证了服务鉴权、vault 中模型凭据读取、模型名/Authorization 头传递、模型响应写回会话。无真实模型账户或外网模型调用。
+- 首轮烟测曾因模拟模型上下文窗口填成 8192 而被 Aide 正确拒绝（系统提示约 6100 tokens，加默认输出预留 8192 tokens）。将夹具窗口改为 32768 后，三端安装验收全通过。最终提交 `0fd8cf0d`；Native Runtime Experiment run [`41913777579`](https://github.com/skyelan1999/aide/actions/runs/41913777579) 的 macOS arm64 PKG、Linux amd64 Debian、Windows x64 NSIS 安装与运行 jobs、Windows 安装 smoke 及 required gate 全绿；日志三端均有 `Native installed Aide AI session/provider/auth/response smoke: PASS`。Aide CI run [`41913777599`](https://github.com/skyelan1999/aide/actions/runs/41913777599) quick、Go、gate 全绿。
+- 同一原生包 run 还复验 Linux X11/Xvfb 截图（484×316 PNG）、Windows 可见 WinForms 窗口截图（720×420，77 个采样颜色）、三端 Node 插件 daemon 安装/IPC ready/status/stop，以及安装、启动、HTTP/TLS、Office 运行路径、停止和卸载；日志均通过。Windows 安装 smoke 验证卸载后用户数据保留。
+- macOS/Linux/Windows 的安装包可通过上述 GitHub Actions run 的 artifacts 下载（macOS arm64、Linux amd64、Windows x64）。这些是实验包，不发布到正式渠道。仍未覆盖实体 macOS TCC 截图/输入权限、Wayland、实体 Windows DPI/多屏/RDP 桌面、完整市场插件依赖矩阵、TTS 离线资源和 Windows OS 级受限 shell 隔离；这些限制不应被三端 hosted runner smoke 的通过替代。
+- 代码和文档仍只在 `experiment/native-runtime-no-docker-20261104`，HEAD `0fd8cf0d` 已推送；未合并或改动 `main`。
