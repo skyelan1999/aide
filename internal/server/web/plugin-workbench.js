@@ -29,7 +29,7 @@
   const invalid=()=>active!==item||services.blocked()||services.scope()!==scope||!services.enabled(plugin.id);
   // Presentation only: never expose host credentials, settings, or arbitrary CSS.
   const themeKeys=['bg','panel','surface','field','text','muted','line','field-border','brand-hi','brand-text','on-brand','chip-bg','selected','focus-ring','danger','warn','success'];
-  const sendTheme=()=>{item.themeFrame=null;if(invalid()||!item.themeReady)return;const root=document.documentElement,style=getComputedStyle(root),colors={};for(const key of themeKeys)colors[key]=style.getPropertyValue('--'+key).trim();frame.contentWindow.postMessage({type:'aide.workbench.theme',protocol:1,theme:root.dataset.theme==='light'?'light':'dark',palette:['blue','comfort','green'].includes(root.dataset.palette)?root.dataset.palette:'blue',colors},'*');};
+  const sendTheme=()=>{item.themeFrame=null;if(invalid()||!item.themeReady)return;const root=document.documentElement,style=getComputedStyle(root),colors={};for(const key of themeKeys)colors[key]=style.getPropertyValue('--'+key).trim();frame.contentWindow.postMessage({type:'aide.workbench.theme',protocol:1,theme:root.dataset.theme==='light'?'light':'dark',palette:['blue','comfort','green','modern'].includes(root.dataset.palette)?root.dataset.palette:'blue',colors},'*');};
   item.listener=e=>{
    if(invalid()||e.source!==frame.contentWindow)return;
    const m=e.data;

@@ -148,12 +148,28 @@ func (a *App) imageChat(ctx context.Context, cfg Settings, input []Message, task
 			return "", input, err
 		}
 		var err error
+		snapshotIndex := -1
+		requestStarted := time.Now()
 		out, err = generateQwenImage(ctx, cfg, prompt, func(body []byte) {
 			sum := sha256.Sum256(body)
 			a.mu.Lock()
 			defer a.mu.Unlock()
 			task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{Purpose: "image#1", Model: cfg.Model, Messages: []Message{{Role: "user", Content: prompt}}, Body: append(json.RawMessage{}, body...), SHA256: hex.EncodeToString(sum[:]), At: time.Now().UTC().Format(time.RFC3339Nano)})
+			snapshotIndex = len(task.RequestSnapshots) - 1
 		})
+		completed := time.Now()
+		a.mu.Lock()
+		if snapshotIndex >= 0 && snapshotIndex < len(task.RequestSnapshots) {
+			snapshot := &task.RequestSnapshots[snapshotIndex]
+			snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
+			snapshot.ElapsedMillis = completed.Sub(requestStarted).Milliseconds()
+			snapshot.Outcome = "completed"
+			if err != nil {
+				snapshot.Outcome = "failed"
+				snapshot.FailureCode, _, _ = incidentClass(err, 0)
+			}
+		}
+		a.mu.Unlock()
 		if err != nil {
 			a.recordMediaHealth(cfg, err)
 			return "", input, err

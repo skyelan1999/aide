@@ -25,9 +25,6 @@ func (m *transferManager) fileSnapshot(ctx context.Context, j *transferJob, src 
 		return errors.New("无效原文件下载清单")
 	}
 	p := j.Parts[0]
-	if err := checkTransferSource(src, p); err != nil {
-		return err
-	}
 	root, err := os.OpenRoot(m.jobDir(j))
 	if err != nil {
 		return err
@@ -42,6 +39,13 @@ func (m *transferManager) fileSnapshot(ctx context.Context, j *transferJob, src 
 		return err
 	}
 	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	if err = checkTransferFileInfo(info, p); err != nil {
+		return err
+	}
 	name := filepath.Join(m.jobDir(j), "download.file.part")
 	out, err := os.OpenFile(name, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
@@ -52,7 +56,9 @@ func (m *transferManager) fileSnapshot(ctx context.Context, j *transferJob, src 
 	j.mu.Lock()
 	j.Completed = 0
 	j.mu.Unlock()
-	buf := make([]byte, 128<<10)
+	// Read in the same bounded 4 MiB units as copy jobs so SFTP can pipeline
+	// its 34 KiB packets instead of making several serial round trips per 128 KiB.
+	buf := make([]byte, int(transferChunkSize))
 	reader := io.NewSectionReader(f, 0, p.Size)
 	var copied int64
 	for {
@@ -64,9 +70,6 @@ func (m *transferManager) fileSnapshot(ctx context.Context, j *transferJob, src 
 		}
 		n, readErr := reader.Read(buf)
 		if n > 0 {
-			if err := space.CheckSpace(int64(n)); err != nil {
-				return err
-			}
 			written, err := out.Write(buf[:n])
 			if err != nil {
 				return err
@@ -93,7 +96,11 @@ func (m *transferManager) fileSnapshot(ctx context.Context, j *transferJob, src 
 	if copied != p.Size {
 		return io.ErrUnexpectedEOF
 	}
-	if err := checkTransferSource(src, p); err != nil {
+	info, err = f.Stat()
+	if err != nil {
+		return err
+	}
+	if err := checkTransferFileInfo(info, p); err != nil {
 		return err
 	}
 	if err := out.Sync(); err != nil {

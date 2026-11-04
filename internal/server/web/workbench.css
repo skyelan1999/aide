@@ -64,7 +64,7 @@ button,select,input,textarea{touch-action:manipulation}
 .segmented{min-height:36px;border-radius:9px}
 .segmented button{padding:7px 10px;min-width:0;white-space:normal}
 dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
-.background-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.background-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:12px}
 .background-options button{border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--surface)}
 .background-options button[aria-pressed=true]{border-color:var(--brand);background:var(--selected);color:var(--brand-text)}
 .background-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
@@ -72,7 +72,7 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 .background-status{font-size:12px;line-height:1.6;overflow-wrap:anywhere;color:var(--text-settings);min-height:1.6em}
 .background-control .muted{font-size:11px;line-height:1.7;color:var(--muted)}
 .workbench-background{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:strict;display:none}
-html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=studio] .workbench-background{display:block}
+html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=studio] .workbench-background,html[data-background=modern] .workbench-background{display:block}
 html[data-background]:not([data-background=off]) body{isolation:isolate;background:transparent}
 /* Shared materials sit after sanctum.css: let the backdrop softly show through
    without changing text, fields, code surfaces, or primary button opacity. */
@@ -121,6 +121,10 @@ html[data-background=aurora] .workbench-background::before{display:none}
 @keyframes workbench-flow-secondary{from{transform:translate3d(11%,-9%,0) rotate(9deg) scale(1.12)}to{transform:translate3d(-12%,11%,0) rotate(-9deg) scale(.96)}}
 .workbench-background :is(video,img){width:100%;height:100%;object-fit:cover}
 html[data-background-paused] .workbench-aurora{animation-play-state:paused}
+html[data-background=modern] .workbench-background{background:linear-gradient(155deg,color-mix(in srgb,var(--bg) 84%,#dce7f2),var(--bg) 48%,color-mix(in srgb,var(--bg) 86%,#b7c9dd))}
+.workbench-modern-glow{position:absolute;inset:-10%;background:radial-gradient(ellipse 50% 38% at 78% 12%,color-mix(in srgb,var(--brand) 22%,transparent),transparent 75%),radial-gradient(ellipse 38% 45% at 7% 88%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 78%);opacity:calc(var(--wb-background-strength,.22) * 1.35)}
+.workbench-modern-grid{position:absolute;inset:0;opacity:calc(var(--wb-background-strength,.22) * .22);background-image:linear-gradient(to right,color-mix(in srgb,var(--brand) 18%,transparent) 1px,transparent 1px),linear-gradient(to bottom,color-mix(in srgb,var(--brand) 18%,transparent) 1px,transparent 1px);background-size:68px 68px;mask-image:linear-gradient(110deg,transparent 5%,#000 62%,transparent 100%)}
+.workbench-modern-horizon{position:absolute;left:12%;right:8%;top:17%;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--brand) 30%,transparent),transparent);box-shadow:0 42vh 100px 28vh color-mix(in srgb,var(--brand) 5%,transparent);opacity:calc(var(--wb-background-strength,.22) * .7)}
 html[data-background-paused] .workbench-background video,html[data-background-paused][data-background-media=animated] .workbench-background img{visibility:hidden}
 @media(prefers-reduced-motion:reduce){.workbench-aurora{animation:none!important}.workbench-background video{visibility:hidden}}
 @media(pointer:coarse){:root{--wb-control:40px}.session-item{min-height:42px}.composer-toolbar :is(button,select){min-height:40px}}

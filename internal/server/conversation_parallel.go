@@ -528,6 +528,20 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 		snapshot := &task.RequestSnapshots[snapshotIndex]
 		snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
 		snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
+		snapshot.Outcome = "completed"
+		snapshot.FailureCode = ""
+		if err != nil {
+			if isEmptyCompletionErr(err) {
+				snapshot.Outcome = "empty_response"
+				snapshot.FailureCode = "EMPTY_RESPONSE"
+			} else {
+				snapshot.Outcome = "failed"
+				snapshot.FailureCode, _, _ = incidentClass(err, 0)
+			}
+		} else if len(calls) == 0 && strings.TrimSpace(out) == "" {
+			snapshot.Outcome = "empty_response"
+			snapshot.FailureCode = "EMPTY_RESPONSE"
+		}
 	}
 	task.Usage = addUsage(task.Usage, usage)
 	if callContext != nil {

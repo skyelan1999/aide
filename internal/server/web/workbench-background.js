@@ -83,6 +83,9 @@
     if(mode==='studio'){
       for(const name of ['plane','line','halo']){const node=document.createElement('span');node.className='workbench-studio-'+name;layer.append(node);}return;
     }
+    if(mode==='modern'){
+      for(const name of ['glow','grid','horizon']){const node=document.createElement('span');node.className='workbench-modern-'+name;layer.append(node);}return;
+    }
     if (mode !== 'local') return;
     try {
       const asset = await stored('get');
@@ -108,7 +111,7 @@
     const node = document.createElement('div'); node.className = 'settings-control background-control';
     const label = document.createElement('div'); label.className = 'control-label'; label.textContent = t('工作台背景');
     const choices = document.createElement('div'); choices.className = 'background-options'; choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', t('工作台背景'));
-    const buttons = [['off', '关闭'], ['aurora', '流光'], ['studio', '静域'], ['local', '本地素材']].map(([value, text]) => {
+    const buttons = [['off', '关闭'], ['aurora', '流光'], ['studio', '静域'], ['modern', '现代光场'], ['local', '本地素材']].map(([value, text]) => {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.value = value; button.textContent = t(text);
       button.onclick = () => window.aideUI?.set('background', value); choices.append(button); return button;
     });
@@ -131,7 +134,7 @@
       range.value = String(window.aideUI?.get('backgroundStrength') ?? 22);
       value.textContent = range.value + '%';
       range.setAttribute('aria-valuetext', value.textContent);
-      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : mode === 'studio' ? t('静域 · 柔光与几何层次') : record?.name || t('选择本地素材后自动启用');
+      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : mode === 'studio' ? t('静域 · 柔光与几何层次') : mode === 'modern' ? t('现代光场 · 雾银与冷蓝层次') : record?.name || t('选择本地素材后自动启用');
     }};
     input.onchange = async () => {
       const file = input.files?.[0]; input.value = ''; if (!file || saving) return;

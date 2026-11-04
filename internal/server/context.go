@@ -202,6 +202,8 @@ type RequestSnapshot struct {
 	Tools         []any           `json:"tools,omitempty"`
 	Body          json.RawMessage `json:"body"`
 	SHA256        string          `json:"sha256"`
+	Outcome       string          `json:"outcome,omitempty"`
+	FailureCode   string          `json:"failureCode,omitempty"`
 	At            string          `json:"at"`
 	CompletedAt   string          `json:"completedAt,omitempty"`
 	ElapsedMillis int64           `json:"elapsedMillis,omitempty"`

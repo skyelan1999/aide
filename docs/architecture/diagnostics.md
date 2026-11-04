@@ -14,7 +14,7 @@
 | 插件显式失败结果 | `result-status`：顶层 `ok:false`、`status:error/failed/crashed` 或非空字符串 error | RPC 可能成功但插件明确报告失败；只记录，不改返回结果，不猜测普通正文或深层引用数据 |
 | 常驻插件 | `daemon-restart` / `daemon-heartbeat` | 非预期退出与心跳超时；保留原退避策略，不无条件重放调用 |
 | 原生工具与命令 | `execute`，包括工具拒绝和 shell 非零退出/执行错误 | 工具名、任务/工作区、耗时；不保存命令、参数或 stdout/stderr |
-| 模型请求 | `provider / stream` | 首次及重试的失败均记录，同一任务/requestId 关联；重试仍由现有执行逻辑决定 |
+| 模型请求 | `provider / stream` 与会话请求快照 | 每次 Provider 请求快照记录开始/结束、耗时、成功/失败/空响应状态及结构化错误分类；incident 关联同一任务/requestId，重试仍由现有执行逻辑决定 |
 | 上下文压缩 | `context / summary` | 摘要失败，包括 JSON、网络、超时、取消；不保存对话、提示词或摘要正文 |
 | 任务终态 | `workflow / task-failed` 等已有错误入口 | runId、可获得的 sessionId；保留原有 recentErrors |
 | 原生执行边界 panic | `*-panic` | 尽力记录后按原语义重新抛出，不把未完成操作伪装成恢复成功 |
@@ -29,13 +29,14 @@
 2. owner 访问令牌可读取 `GET /api/diagnostics/incidents`；支持 `incidentId`、`requestId`、`runId`、`module`、`pluginId`、`fingerprint`、`code`、`severity` 精确过滤，`limit` 为 1–256，结果按新到旧返回。鉴权与同源约束沿用普通 API；未鉴权请求不会填满事件库。
 3. HTTP 错误返回 `X-AIDE-Request-ID`，可记录的已鉴权错误另返回 `X-AIDE-Incident-ID`。任务对象的 `diagnosticTraceId` 将启动请求与后台工具/模型事件关联；旧历史任务可能没有该字段。
 4. 既有 `POST /api/debug/actions/diagnostic-bundle` 增加 `incidents`、`diagnosticHealth`、只含 ID/版本/启用状态的插件清单和 daemon 状态/崩溃次数，不改变独立调试令牌、开关、审计与管理面限制。导出前仍按原流程核对授权。
-5. 先看最早发生的底层插件/连接事件，再沿同一 requestId/runId 对照后续工具与任务失败；源代码位置与 commit 指向发生时的代码。不要把最后一次工作流失败直接认作第一根因。
+5. `GET /api/debug/sessions/{id}/runs/{run}/dataflow` 下载单次 run 的有界数据流 dump：Provider 请求状态、步骤状态、工具派发/结果事件、incident 与异常检测结果按时间汇总。工具调用 ID 在 dump 内替换为 `call-N`，参数/结果/正文只保留字节数，不导出内容。
+6. 先看最早发生的底层插件/连接事件，再沿同一 requestId/runId 对照后续工具与任务失败；源代码位置与 commit 指向发生时的代码。不要把最后一次工作流失败直接认作第一根因。
 
 ## 保留与隐私
 
 内存只保留最近 256 条；数据目录 `diagnostics/incidents.jsonl` 最多约 4 MiB 后轮转，另保留 `.1`、`.2` 两段。POSIX 文件为 0600、目录 0700；读取与写入都拒绝符号链接诊断目录及非普通日志文件，已有普通目录在写入时收紧权限。启动后首次查询/记录加载最近历史，进程重启不直接丢失已有文件；计数/原始文件不作为用户工作区内容。
 
-事件不保存 raw error、用户正文、文件内容、命令、参数、URL、模型请求/响应、凭据或任意插件返回内容。错误链只存类型，位置只含代码文件 basename/行号/函数名；不能据此还原原始输出。已有系统日志和 recentErrors 的脱敏规则继续有效，新事件不会重复存储这些正文。
+Incident 不保存 raw error、用户正文、文件内容、命令、参数、URL、凭据或任意插件返回内容。数据流 dump 虽读取已有会话请求快照与工具执行日志，响应也只输出状态、时间、数量、字节数、结构化分类及脱敏事件元数据；不输出快照正文、提示词、工具参数/结果或原始 call ID。错误链只存类型，位置只含代码文件 basename/行号；不能据此还原原始输出。已有系统日志和 recentErrors 的脱敏规则继续有效。
 
 诊断落盘失败不改变原操作结果；保留有界内存并记录 `AIDE-DIAGNOSTIC-PERSIST`。API 的 health 显示 `persistenceErrors`、`malformedRecords` 和 `droppedFromMemory`，不能把不可写目录或损坏历史静默当作“没有异常”。这些计数表示当前进程观察到的情况，不是假装持久化的全历史累计。
 

@@ -25,12 +25,13 @@ type transferFile interface {
 	Sync() error
 }
 type transferFS struct {
-	relay   *sourceRelayFS
-	root    *os.Root
-	client  *sftp.Client
-	base    string
-	command *exec.Cmd
-	cancel  context.CancelFunc
+	relay                 *sourceRelayFS
+	root                  *os.Root
+	client                *sftp.Client
+	base                  string
+	resolveChecksSymlinks bool
+	command               *exec.Cmd
+	cancel                context.CancelFunc
 }
 
 func (a *App) transferSourceStreaming(id string) bool {
@@ -109,13 +110,19 @@ func (a *App) streamTransferFS(ctx context.Context, id string, write bool) (*tra
 		cancel()
 		return nil, err
 	}
-	client, err := sftp.NewClientPipe(out, in)
+	// The SFTP client defaults to sequential writes within each file. That
+	// serializes every 34 KiB packet in a 4 MiB transfer chunk, so SSH latency
+	// dominates and the outer transfer worker pool cannot help. Pipeline a
+	// bounded number of requests per file; unacknowledged partial chunks are
+	// re-hashed and retransmitted on resume before they can be published.
+	client, err := sftp.NewClientPipe(out, in, sftp.MaxConcurrentRequestsPerFile(16), sftp.UseConcurrentWrites(true))
 	if err != nil {
 		cancel()
 		_ = cmd.Wait()
 		return nil, err
 	}
-	fs := &transferFS{client: client, command: cmd, cancel: cancel}
+	_, resolveChecksSymlinks := client.HasExtension("limits@openssh.com")
+	fs := &transferFS{client: client, command: cmd, cancel: cancel, resolveChecksSymlinks: resolveChecksSymlinks}
 	if generation != a.sshSessionGeneration(sock) {
 		fs.Close()
 		return nil, errors.New("SSH 连接配置已变化")
@@ -179,11 +186,20 @@ func (f *transferFS) remotePath(p string) (string, error) {
 	if p == "." {
 		parent = f.base
 	}
-	if err := f.checkRemoteDirectories(parent); err != nil {
-		return "", err
-	}
 	resolved, err := f.client.RealPath(parent)
 	if err != nil {
+		return "", err
+	}
+	if f.resolveChecksSymlinks {
+		// OpenSSH REALPATH resolves symlinks. Comparing it with the normalized
+		// requested parent proves every ancestor stayed lexical and avoids one
+		// sequential LSTAT round trip for each path component.
+		if resolved != parent {
+			return "", errors.New("传输不跟随符号链接")
+		}
+	} else if err := f.checkRemoteDirectories(parent); err != nil {
+		// Other SFTP servers may implement REALPATH as lexical normalization.
+		// Keep the explicit ancestor checks for those servers.
 		return "", err
 	}
 	if resolved != f.base && !strings.HasPrefix(resolved, strings.TrimSuffix(f.base, "/")+"/") {

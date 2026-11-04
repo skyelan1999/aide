@@ -7,9 +7,9 @@ const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.jso
 const context=vm.createContext({window:{}});
 vm.runInContext(fs.readFileSync('internal/server/web/settings-navigation.js','utf8'),context);
 const navigation=context.window.AideSettingsNavigation;
-test('all original settings remain reachable exactly once in seven groups',()=>{
+test('all original settings remain reachable exactly once in eight groups',()=>{
  const model=navigation.build(schema),ids=model.groups.flatMap(group=>group.pages.map(page=>page.id));
- assert.equal(model.groups.length,7);assert.equal(ids.length,model.pages.length);assert.equal(new Set(ids).size,ids.length);
+ assert.equal(model.groups.length,8);assert.equal(ids.length,model.pages.length);assert.equal(new Set(ids).size,ids.length);
  for(const section of schema.sections){
   const page=navigation.resolve(model,section.id,'');assert.equal(page.sectionId,section.id);
   for(const child of section.children||[])assert.equal(navigation.resolve(model,section.id,child.id).id,child.id);
@@ -34,8 +34,20 @@ test('advanced controls initialize once only after expansion and keep original r
 test('appearance uses independent palette and mode with unchanged stored values',()=>{
  const controls=schema.sections.find(s=>s.id==='appearance').controls;
  assert.deepEqual(controls.filter(c=>['palette','theme'].includes(c.id)).map(c=>c.id),['palette','theme']);
- assert.deepEqual(controls.find(c=>c.id==='palette').options.map(x=>x.value),['blue','comfort','green']);
+ assert.deepEqual(controls.find(c=>c.id==='palette').options.map(x=>x.value),['blue','comfort','green','modern']);
  assert.deepEqual(controls.find(c=>c.id==='theme').options.map(x=>x.value),['light','dark','system']);
+ const app=fs.readFileSync('internal/server/web/app.js','utf8');
+ assert(!app.includes('前往模型设置配置厂商与密钥'));
+});
+test('modern palette persists and immediately changes the document theme attribute',()=>{
+ const values={'aide.ui':JSON.stringify({palette:'modern',theme:'dark'})},attributes={},listeners={};
+ const browser={localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},navigator:{language:'zh-CN'},dispatchEvent(){},matchMedia:q=>({matches:q.includes('color-scheme: dark'),addEventListener(){}}),addEventListener:(n,fn)=>listeners[n]=fn};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:browser,document:{documentElement:{setAttribute:(k,v)=>attributes[k]=v}},Event:class{}});
+ assert.equal(attributes['data-palette'],'modern');assert.equal(attributes['data-theme'],'dark');
+ browser.aideUI.set('palette','comfort');assert.equal(attributes['data-palette'],'comfort');assert.equal(browser.aideUI.get('palette'),'comfort');
+ assert.equal(browser.aideUI.set('background','modern'),'modern');assert.equal(browser.aideUI.get('background'),'modern');
+ listeners.storage({key:'aide.ui',newValue:JSON.stringify({palette:'modern',theme:'light',background:'modern'})});
+ assert.equal(attributes['data-palette'],'modern');assert.equal(attributes['data-theme'],'light');assert.equal(browser.aideUI.get('background'),'modern');
 });
 test('opening voice settings never requests microphone permission; explicit refresh stops its temporary track',async()=>{
  const source=fs.readFileSync('internal/server/web/app.js','utf8');let permissions=0,stopped=0;

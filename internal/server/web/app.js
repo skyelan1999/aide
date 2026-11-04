@@ -4666,7 +4666,7 @@ function renderSegmentedControl(control) {
   head.append(el('span', '', control.label), value);
   const track = el('div', 'segmented');
   track.setAttribute('data-control', control.id);
-  if (control.palette) track.dataset.palette = control.palette;
+  if (control.palette || control.id === 'theme') track.dataset.palette = control.palette || window.aideUI?.get('palette') || 'blue';
   track.setAttribute('role', 'group');
   track.setAttribute('aria-label', control.label);
   const thumb = el('span', 'segmented-thumb');
@@ -4680,6 +4680,7 @@ function renderSegmentedControl(control) {
   });
   const apply = () => {
     const current = window.aideUI ? window.aideUI.get(control.id) : (control.options[0] || {}).value;
+    if (control.id === 'theme' && window.aideUI) track.dataset.palette = window.aideUI.get('palette') || 'blue';
     const rowActive = !control.palette || window.aideUI?.get('palette') === control.palette;
     const active = rowActive ? (buttons.find(b => b.dataset.value === current) || buttons[0]) : null;
     buttons.forEach(b => b.setAttribute('aria-pressed', b === active ? 'true' : 'false'));
@@ -11464,7 +11465,6 @@ function renderTTSEngineControl() {
   restoreMissing(model,cfg.ttsModelRef?'model:'+cfg.ttsModelRef:'engine:'+(cfg.ttsProvider||'auto'));
   restoreMissing(call,cfg.assistantCallModelRef||'');
   field('朗读模型',model);field('通话模型',call);
-  const link=el('button','quiet',t('前往模型设置配置厂商与密钥'));link.type='button';link.onclick=()=>{settingsPanel.active='model';settingsPanel.activeChild='model-profiles';renderSettingsSheet();};wrap.append(link);
   const legacyModel=el('select'),voice=el('select'),callVoice=el('select');
   field('语音模型',legacyModel);field('音色',voice);field('通话音色',callVoice);
   const fill=(select,items,value)=>{select.replaceChildren();for(const item of items)option(select,item.id||item,item.name||item.id||item);if(value&&![...select.options].some(o=>o.value===value))option(select,value,value);select.value=value||select.options[0]?.value||'';};

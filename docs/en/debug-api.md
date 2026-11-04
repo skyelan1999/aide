@@ -31,6 +31,7 @@ Authorization: Bearer <debug-token>
 | GET | `/api/debug/overview` | Overview: status/version/uptime/redacted config/mounts/provider health |
 | GET | `/api/debug/sessions` | Sessions + latest run; `?status=running\|failed` filter |
 | GET | `/api/debug/sessions/{id}/runs/{run}` | Run replay: steps/tool names/errors/failure count (no message bodies) |
+| GET | `/api/debug/sessions/{id}/runs/{run}/dataflow` | Download one run's dataflow JSON: provider request states, execution journal, tool-call states, linked incidents, and anomaly findings |
 | GET | `/api/debug/sessions/{id}/runs/{run}/events` | SSE live run observation |
 | GET | `/api/debug/errors` | Last 50 errors + top-10 cross-run failure loops |
 | GET | `/api/debug/stats` | Reuses token-usage stats |
@@ -50,7 +51,12 @@ BASE=http://127.0.0.1:8097
 curl -s -H "Authorization: Bearer $TOKEN" $BASE/api/debug/overview | jq .
 curl -s -H "Authorization: Bearer $TOKEN" "$BASE/api/debug/sessions?status=failed" | jq .
 curl -s -X POST -H "Authorization: Bearer $TOKEN" $BASE/api/debug/actions/ping-provider | jq .
+curl -sS -H "Authorization: Bearer $TOKEN" \
+  "$BASE/api/debug/sessions/$SESSION_ID/runs/$RUN_ID/dataflow" \
+  -o aide-session-dataflow.json
 ```
+
+The dataflow dump combines request-snapshot metadata, execution journal events, and incidents linked to the run. It flags provider status/snapshot-count mismatches; dispatched tools without results; unresolved intents; and missing or malformed journals. New request snapshots persist success/failure/empty-response status and a structured error classification. The dump excludes prompts, model messages, provider bodies, tool arguments/results, and secrets; message/request payloads are represented only by counts and byte lengths. Journal reads are capped at 64 MiB and 5,000 output events. The debug API remains disabled by default and uses the same dedicated debug token and audit policy.
 
 Redacted `overview` sample:
 

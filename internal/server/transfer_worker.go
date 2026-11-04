@@ -73,6 +73,7 @@ func (m *transferManager) run(ctx context.Context, j *transferJob) error {
 			}
 		}
 	}
+	preparedDirs := make(map[string]struct{})
 	for _, part := range j.Parts {
 		if m.published(j, part) {
 			continue
@@ -81,13 +82,20 @@ func (m *transferManager) run(ctx context.Context, j *transferJob) error {
 			return e
 		}
 		if part.Dir {
-			if err = dst.MkdirAll(part.Target); err != nil {
-				return err
+			if _, ok := preparedDirs[part.Target]; !ok {
+				if err = dst.MkdirAll(part.Target); err != nil {
+					return err
+				}
+				preparedDirs[part.Target] = struct{}{}
 			}
 			continue
 		}
-		if err = dst.MkdirAll(path.Dir(part.Target)); err != nil {
-			return err
+		parent := path.Dir(part.Target)
+		if _, ok := preparedDirs[parent]; !ok {
+			if err = dst.MkdirAll(parent); err != nil {
+				return err
+			}
+			preparedDirs[parent] = struct{}{}
 		}
 		f, e := dst.Open(part.Target, os.O_RDWR|os.O_CREATE|os.O_EXCL)
 		if os.IsExist(e) {
@@ -99,9 +107,6 @@ func (m *transferManager) run(ctx context.Context, j *transferJob) error {
 		info, e := f.Stat()
 		if e == nil && info.Size() != part.Size {
 			e = f.Truncate(part.Size)
-		}
-		if e == nil {
-			e = syncTransferFile(f)
 		}
 		_ = f.Close()
 		if e != nil {
@@ -130,13 +135,55 @@ func (m *transferManager) run(ctx context.Context, j *transferJob) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// Keep at most one source/destination pair open per worker. Reopening an
+			// SFTP path for every 4 MiB chunk repeats REALPATH/LSTAT checks and adds
+			// several network round trips per chunk. Workers consume the queue in
+			// order, so this also keeps descriptor use bounded for large manifests.
+			var activePart *transferPart
+			var from, to transferFile
+			closeFiles := func() {
+				if from != nil {
+					_ = from.Close()
+					from = nil
+				}
+				if to != nil {
+					_ = to.Close()
+					to = nil
+				}
+				activePart = nil
+			}
+			defer closeFiles()
 			for c := range queue {
 				select {
 				case m.slots <- struct{}{}:
 				case <-workerCtx.Done():
 					return
 				}
-				e := m.copyChunk(workerCtx, j, src, dst, c.p, c.index)
+				if activePart != c.p {
+					closeFiles()
+					// Open validates the remote path; full source metadata/hash checks
+					// still run before publication. Avoid a duplicate remote stat here.
+					e := error(nil)
+					from, e = src.Open(c.p.Source, os.O_RDONLY)
+					if e == nil {
+						var info os.FileInfo
+						info, e = from.Stat()
+						if e == nil {
+							e = checkTransferFileInfo(info, c.p)
+						}
+					}
+					if e == nil {
+						to, e = dst.Open(c.p.Target, os.O_RDWR)
+					}
+					if e != nil {
+						closeFiles()
+						<-m.slots
+						report(e)
+						return
+					}
+					activePart = c.p
+				}
+				e := m.copyChunkHandles(workerCtx, j, from, to, c.p, c.index)
 				<-m.slots
 				if e != nil {
 					report(e)
@@ -166,6 +213,26 @@ produce:
 	if err = ctx.Err(); err != nil {
 		return err
 	}
+	// Acknowledgements are durable per chunk, and recovery re-hashes the staged
+	// target before trusting them. Flush each staged file once here instead of
+	// issuing a potentially high-latency SFTP fsync for every 4 MiB chunk.
+	for _, p := range j.Parts {
+		if p.Dir || m.published(j, p) {
+			continue
+		}
+		f, e := dst.Open(p.Target, os.O_RDWR)
+		if e != nil {
+			return e
+		}
+		e = syncTransferFile(f)
+		closeErr := f.Close()
+		if e != nil {
+			return e
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+	}
 	if err = m.check(j); err != nil {
 		return err
 	}
@@ -179,28 +246,48 @@ produce:
 		if j.Operation == "move" && (p.Deleted || p.Dir && hasDeleted) {
 			continue
 		}
-		if err = checkTransferSource(src, p); err != nil {
-			if j.Operation == "move" && m.published(j, p) && os.IsNotExist(err) {
-				continue
-			}
-			return err
-		}
-		if !p.Dir {
-			f, e := src.Open(p.Source, os.O_RDONLY)
-			if e != nil {
-				return e
-			}
-			for off := int64(0); off < p.Size; off += transferChunkSize {
-				digest, e := transferDigestAt(f, off, min(transferChunkSize, p.Size-off))
-				if e != nil || digest != p.Chunks[off/transferChunkSize] {
-					f.Close()
-					return errors.New("发布前源文件校验不匹配")
-				}
-			}
-			f.Close()
+		if p.Dir {
 			if err = checkTransferSource(src, p); err != nil {
+				if j.Operation == "move" && m.published(j, p) && os.IsNotExist(err) {
+					continue
+				}
 				return err
 			}
+			continue
+		}
+		f, e := src.Open(p.Source, os.O_RDONLY)
+		if e != nil {
+			if j.Operation == "move" && m.published(j, p) && os.IsNotExist(e) {
+				continue
+			}
+			return e
+		}
+		info, e := f.Stat()
+		if e == nil {
+			e = checkTransferFileInfo(info, p)
+		}
+		// A copy publishes and hashes exactly the bytes read by its workers;
+		// the target is re-hashed before publication. Re-reading every source
+		// byte would add a full extra SSH download pass. Moves still re-hash so
+		// a changed source is never deleted.
+		if e == nil && j.Operation == "move" {
+			for off := int64(0); off < p.Size; off += transferChunkSize {
+				digest, readErr := transferDigestAt(f, off, min(transferChunkSize, p.Size-off))
+				if readErr != nil || digest != p.Chunks[off/transferChunkSize] {
+					e = errors.New("发布前源文件校验不匹配")
+					break
+				}
+			}
+		}
+		if e == nil {
+			info, e = f.Stat()
+			if e == nil {
+				e = checkTransferFileInfo(info, p)
+			}
+		}
+		_ = f.Close()
+		if e != nil {
+			return e
 		}
 	}
 	for _, top := range j.Tops {
@@ -256,8 +343,6 @@ produce:
 				if err == nil && !info.IsDir() {
 					err = errors.New("源目录类型变化")
 				}
-			} else {
-				err = checkTransferSource(src, p)
 			}
 			if err != nil {
 				if os.IsNotExist(err) {
@@ -277,14 +362,31 @@ produce:
 				if e != nil {
 					return e
 				}
+				info, e := f.Stat()
+				if e == nil {
+					e = checkTransferFileInfo(info, p)
+				}
+				err = e
 				for off := int64(0); off < p.Size; off += transferChunkSize {
-					digest, e := transferDigestAt(f, off, min(transferChunkSize, p.Size-off))
-					if e != nil || digest != p.Chunks[off/transferChunkSize] {
-						f.Close()
-						return errors.New("源文件已变化，目标已保留，源文件未删除")
+					if e != nil {
+						break
+					}
+					digest, readErr := transferDigestAt(f, off, min(transferChunkSize, p.Size-off))
+					if readErr != nil || digest != p.Chunks[off/transferChunkSize] {
+						err = errors.New("源文件已变化，目标已保留，源文件未删除")
+						break
+					}
+				}
+				if err == nil {
+					info, err = f.Stat()
+					if err == nil {
+						err = checkTransferFileInfo(info, p)
 					}
 				}
 				_ = f.Close()
+				if err != nil {
+					return errors.New("源文件已变化，目标已保留，源文件未删除")
+				}
 			}
 			if err = src.Remove(p.Source, p.Dir); err != nil {
 				return fmt.Errorf("目标已完整发布，删除源失败：%w", err)
@@ -313,6 +415,9 @@ func checkTransferSource(src *transferFS, p *transferPart) error {
 	if e != nil {
 		return e
 	}
+	return checkTransferFileInfo(info, p)
+}
+func checkTransferFileInfo(info os.FileInfo, p *transferPart) error {
 	if info.IsDir() != p.Dir || (!p.Dir && info.Size() != p.Size) || info.ModTime().UnixNano() != p.Mod {
 		return errors.New("源文件或目录已变化，请重新创建传输")
 	}
@@ -329,13 +434,10 @@ func syncTransferFile(f transferFile) error {
 	}
 	return e
 }
+
+// copyChunk remains the single-chunk entry point used by recovery tests and
+// callers that do not retain file handles between chunks.
 func (m *transferManager) copyChunk(ctx context.Context, j *transferJob, src, dst *transferFS, p *transferPart, index int64) error {
-	if e := ctx.Err(); e != nil {
-		return e
-	}
-	if e := m.check(j); e != nil {
-		return e
-	}
 	if e := checkTransferSource(src, p); e != nil {
 		return e
 	}
@@ -349,6 +451,19 @@ func (m *transferManager) copyChunk(ctx context.Context, j *transferJob, src, ds
 		return e
 	}
 	defer to.Close()
+	if e = m.copyChunkHandles(ctx, j, from, to, p, index); e != nil {
+		return e
+	}
+	return syncTransferFile(to)
+}
+
+func (m *transferManager) copyChunkHandles(ctx context.Context, j *transferJob, from, to transferFile, p *transferPart, index int64) error {
+	if e := ctx.Err(); e != nil {
+		return e
+	}
+	if e := m.check(j); e != nil {
+		return e
+	}
 	offset := index * transferChunkSize
 	size := min(transferChunkSize, p.Size-offset)
 	j.mu.Lock()
@@ -368,19 +483,14 @@ func (m *transferManager) copyChunk(ctx context.Context, j *transferJob, src, ds
 		}
 	}
 	b := make([]byte, int(size))
+	var e error
 	if _, e = io.ReadFull(io.NewSectionReader(from, offset, size), b); e != nil {
 		return e
 	}
 	if e = ctx.Err(); e != nil {
 		return e
 	}
-	if e = dst.CheckSpace(int64(len(b))); e != nil {
-		return e
-	}
 	if _, e = to.WriteAt(b, offset); e != nil {
-		return e
-	}
-	if e = syncTransferFile(to); e != nil {
 		return e
 	}
 	digest := hash(b)
@@ -476,8 +586,10 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 		if err = m.check(j); err != nil {
 			break
 		}
-		if err = checkTransferSource(src, p); err != nil {
-			break
+		if p.Dir {
+			if err = checkTransferSource(src, p); err != nil {
+				break
+			}
 		}
 		relative := ""
 		for _, top := range j.Tops {
@@ -519,7 +631,16 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 			err = e
 			break
 		}
-		buf := make([]byte, 128<<10)
+		info, e := f.Stat()
+		if e == nil {
+			e = checkTransferFileInfo(info, p)
+		}
+		if e != nil {
+			_ = f.Close()
+			err = e
+			break
+		}
+		buf := make([]byte, int(transferChunkSize))
 		reader := io.NewSectionReader(f, 0, p.Size)
 		var copied int64
 		for {
@@ -528,9 +649,6 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 			}
 			n, e := reader.Read(buf)
 			if n > 0 {
-				if err = space.CheckSpace(int64(n)); err != nil {
-					break
-				}
 				if _, err = w.Write(buf[:n]); err != nil {
 					break
 				}
@@ -544,14 +662,17 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 				break
 			}
 		}
+		if err == nil {
+			info, err = f.Stat()
+			if err == nil {
+				err = checkTransferFileInfo(info, p)
+			}
+		}
 		f.Close()
 		if err == nil && copied != p.Size {
 			err = io.ErrUnexpectedEOF
 		}
 		if err != nil {
-			break
-		}
-		if err = checkTransferSource(src, p); err != nil {
 			break
 		}
 		j.mu.Lock()

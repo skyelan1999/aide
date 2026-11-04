@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 )
 
 // The runner owns the server, credentials and master socket. The wrapper maps
@@ -29,6 +31,18 @@ func TestLargeTransferSSHLive(t *testing.T) {
 	a.wsConfig.Workspace.Port = port
 	a.wsConfig.Workspace.Path = filepath.Join(root, "remote")
 	t.Cleanup(func() { a.sshBin = "" })
+	if e = os.Symlink(root, filepath.Join(root, "remote/escape")); e != nil {
+		t.Fatal(e)
+	}
+	pathCheck, e := a.streamTransferFS(context.Background(), "workspace", false)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = pathCheck.Open("escape/host", os.O_RDONLY); e == nil {
+		pathCheck.Close()
+		t.Fatal("OpenSSH REALPATH fast path followed a symlink")
+	}
+	pathCheck.Close()
 	a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, Source{ID: "owned-local", Type: "local", Enabled: true, RW: true})
 	m := a.transfers()
 	size := int64(65<<20) + 37
@@ -66,6 +80,20 @@ func TestLargeTransferSSHLive(t *testing.T) {
 	}
 	testTransferWait(t, m, j)
 	remote := filepath.Join(root, "remote/remote.bin")
+	sshToSSH, e := m.create(context.Background(), transferCreate{Operation: "copy", Source: "workspace", Destination: "workspace", DestinationPath: "ssh-copy", Paths: []string{"remote.bin"}, Concurrency: 4})
+	if e != nil {
+		t.Fatal(e)
+	}
+	started := time.Now()
+	if e = m.start(sshToSSH); e != nil {
+		t.Fatal(e)
+	}
+	testTransferWait(t, m, sshToSSH)
+	t.Logf("SSH-to-SSH 65 MiB: %.1f MiB/s", float64(size)/(1<<20)/time.Since(started).Seconds())
+	if testFileDigest(t, remote) != testFileDigest(t, filepath.Join(root, "remote/ssh-copy/remote.bin")) {
+		t.Fatal("SSH to SSH checksum")
+	}
+	started = time.Now()
 	copyJob, e := m.create(context.Background(), transferCreate{Operation: "copy", Source: "workspace", Destination: "owned-local", Paths: []string{"remote.bin"}})
 	if e != nil {
 		t.Fatal(e)
@@ -74,9 +102,11 @@ func TestLargeTransferSSHLive(t *testing.T) {
 		t.Fatal(e)
 	}
 	testTransferWait(t, m, copyJob)
+	t.Logf("SSH-to-local 65 MiB: %.1f MiB/s", float64(size)/(1<<20)/time.Since(started).Seconds())
 	if testFileDigest(t, remote) != testFileDigest(t, filepath.Join(a.reference.Name(), "remote.bin")) {
 		t.Fatal("SSH to local checksum")
 	}
+	started = time.Now()
 	moveJob, e := m.create(context.Background(), transferCreate{Operation: "move", Source: "owned-local", Destination: "workspace", DestinationPath: "moved", Paths: []string{"remote.bin"}})
 	if e != nil {
 		t.Fatal(e)
@@ -85,11 +115,52 @@ func TestLargeTransferSSHLive(t *testing.T) {
 		t.Fatal(e)
 	}
 	testTransferWait(t, m, moveJob)
+	t.Logf("local-to-SSH 65 MiB: %.1f MiB/s", float64(size)/(1<<20)/time.Since(started).Seconds())
 	if testFileDigest(t, remote) != testFileDigest(t, filepath.Join(root, "remote/moved/remote.bin")) {
 		t.Fatal("local to SSH checksum")
 	}
 	if _, e = os.Stat(filepath.Join(a.reference.Name(), "remote.bin")); !os.IsNotExist(e) {
 		t.Fatal("move source remains")
+	}
+	// A small-file tree stresses fixed per-file protocol round trips rather than
+	// bulk throughput. The manifest is disposable and isolated with this fixture.
+	smallRoot := filepath.Join(root, "remote/small-tree")
+	if e = os.MkdirAll(smallRoot, 0700); e != nil {
+		t.Fatal(e)
+	}
+	for n := 0; n < 100; n++ {
+		if e = os.WriteFile(filepath.Join(smallRoot, fmt.Sprintf("f-%03d.txt", n)), []byte("small-file-transfer\n"), 0600); e != nil {
+			t.Fatal(e)
+		}
+	}
+	started = time.Now()
+	smallJob, e := m.create(context.Background(), transferCreate{Operation: "copy", Source: "workspace", Destination: "owned-local", Paths: []string{"small-tree"}, Concurrency: 4})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = m.start(smallJob); e != nil {
+		t.Fatal(e)
+	}
+	testTransferWait(t, m, smallJob)
+	t.Logf("SSH-to-local 100 small files: %.1f files/s", 100/time.Since(started).Seconds())
+	for n := 0; n < 100; n++ {
+		got, readErr := os.ReadFile(filepath.Join(a.reference.Name(), "small-tree", fmt.Sprintf("f-%03d.txt", n)))
+		if readErr != nil || string(got) != "small-file-transfer\n" {
+			t.Fatalf("small file %d: %v", n, readErr)
+		}
+	}
+	started = time.Now()
+	downloadJob, e := m.create(context.Background(), transferCreate{Operation: "download", Source: "workspace", Paths: []string{"moved/remote.bin"}, RawDownload: true})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = m.start(downloadJob); e != nil {
+		t.Fatal(e)
+	}
+	testTransferWait(t, m, downloadJob)
+	t.Logf("SSH raw download 65 MiB: %.1f MiB/s", float64(size)/(1<<20)/time.Since(started).Seconds())
+	if testFileDigest(t, remote) != testFileDigest(t, filepath.Join(m.jobDir(downloadJob), "download.file")) {
+		t.Fatal("SSH raw download checksum")
 	}
 	r := httptest.NewRequest("GET", "/api/file/stream?root=workspace&path=moved/remote.bin", nil)
 	r.Header.Set("Authorization", "Bearer "+a.token)

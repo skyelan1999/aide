@@ -354,6 +354,9 @@ dialog label, dialog p { font-size: 12px; }
 .segmented[data-palette="green"] button[data-value="light"]::before { background: linear-gradient(90deg, #d3e9d8 29%, #f4f9f5 29%); box-shadow: inset 0 8px #e3f0e7; }
 .segmented[data-palette="green"] button[data-value="dark"]::before { background: linear-gradient(90deg, #283a2e 29%, #111513 29%); box-shadow: inset 0 8px #304a39; }
 .segmented[data-palette="green"] button[data-value="system"]::before { background: linear-gradient(90deg, #d3e9d8 28%, #f4f9f5 28% 50%, #111513 50%); box-shadow: inset 0 8px #759f8344; }
+.segmented[data-palette="modern"] button[data-value="light"]::before { background:linear-gradient(90deg,#e8edf3 29%,#fbfcfe 29%);box-shadow:inset 0 8px #f5f7fa; }
+.segmented[data-palette="modern"] button[data-value="dark"]::before { background:linear-gradient(90deg,#202831 29%,#141a21 29%);box-shadow:inset 0 8px #303b48; }
+.segmented[data-palette="modern"] button[data-value="system"]::before { background:linear-gradient(90deg,#e8edf3 28%,#fbfcfe 28% 50%,#141a21 50%);box-shadow:inset 0 8px #a8b7c844; }
 
 /* About: a compact identity card with a direct repository link. */
 .about-project { margin-top: 24px; }

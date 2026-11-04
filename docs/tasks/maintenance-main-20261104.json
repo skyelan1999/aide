@@ -1,0 +1,98 @@
+{
+  "id": "maintenance-main-20261104",
+  "request": "继续完成 Aide 项目文件传输优化、Windows 增量编译缓存排查与修复、移除助理语音页前往模型设置按钮、增加现代配色与配套工作台背景，并构建测试后推送到 main。",
+  "baseline": "737ac831d1d5e507d0e56f995040bd276336730f",
+  "initial_status": "M docs/architecture/diagnostics.md\n M docs/debug-api.md\n M docs/en/debug-api.md\n M internal/server/context.go\n M internal/server/conversation_parallel.go\n M internal/server/provider_image.go\n M internal/server/server.go\n M internal/server/transfer_snapshot.go\n M internal/server/transfer_ssh_live_test.go\n M internal/server/transfer_stream_fs.go\n M internal/server/transfer_worker.go\n M internal/server/workflow.go\n M scripts/test_headless_websocket.cjs\n?? \"docs/tasks/plugin-compose-i18n-test-20261103 2.json\"\n?? \"docs/tasks/plugin-tts-full-test-20261103 2.json\"\n?? docs/tasks/session-dataflow-dump-20261103.json\n?? docs/tasks/terminal-display-settings-20261103.json\n?? docs/tasks/terminal-log-read-api-release-20261103.json\n?? \"internal/server/computer_control 2.go\"\n?? internal/server/debug_dataflow.go\n?? \"native/windows-launcher/computer_bridge 2.hpp\"\n?? \"scripts/computer-bridge-linux 2.js\"",
+  "acceptance": [
+    "SSH/SFTP 本地↔SSH、SSH↔SSH、大文件与小文件项目文件传输及原文件快照下载通过隔离集成测试；断点恢复、校验、不覆盖与 symlink 边界保持正确；记录低延迟与注入延迟吞吐。Issue #774 仅在修复与验收通过后关闭。",
+    "Windows 源码环境重复构建复用稳定缓存；确认缓存键/目录、失效条件和真实连续构建耗时，增加回归覆盖。",
+    "助理与语音设置移除“前往模型设置配置厂商与密钥”按钮，保留剩余配置控件及全部语言本地化。",
+    "设置增加名为“现代”的配色及浅色、深色、跟随系统外观；提供与现代主题协调的工作台背景选择，并保存/恢复偏好。",
+    "保留并验证当前工作树内已实现的会话数据流 dump 与诊断记录改动。",
+    "相关快速/定向测试、Go 构建和 UI 实际交互验收通过；浏览器重载恢复异常已修复或明确记录为未通过且不得据此宣称全验收。",
+    "精确暂存本任务范围，提交并推送到 origin/main；确认远端 HEAD 包含本次提交且不包含无关未跟踪文件。"
+  ],
+  "scope": [
+    "internal/server/transfer_worker.go",
+    "internal/server/transfer_stream_fs.go",
+    "internal/server/transfer_snapshot.go",
+    "internal/server/transfer_ssh_live_test.go",
+    "Windows build/cache scripts and their focused tests",
+    "internal/server/web settings, appearance and background source/locales/tests",
+    "session dataflow diagnostics implementation/docs already modified in the initial worktree",
+    "docs/tasks/maintenance-main-20261104.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "范围覆盖传输 SSH/本地路径、Windows BuildKit 缓存、语音设置入口、现代主题/背景和既有会话诊断；直接在 main 继续。",
+      "evidence": [
+        "Issue #774：文件传输 SFTP 并发与目录校验问题",
+        "Issue #775：Windows bootstrap 每次删除随机 BuildKit builder，缓存无法跨构建保留"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "复用仓库现有 transfer、aide.ui 偏好、主题 token 与 BuildKit ownership 约定。",
+      "evidence": [
+        "Windows builder 以源码根路径 SHA-256 派生名称，并用安装级 receipt 防止误接管",
+        "现代主题通过语义 token 支持 light/dark/system；工作台背景使用 CSS 程序化本地绘制"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "传输并发与元数据往返优化、诊断数据流 dump、Windows builder 缓存保留、语音设置入口移除、现代配色及程序化背景均已实现。",
+      "evidence": [
+        "Issue #774 SSH/SFTP 传输性能修复",
+        "Issue #775 Windows bootstrap 持久缓存修复",
+        "Issue #776 跟踪浏览器重载续传 Chromium 退出"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "服务端针对性测试、Race、vet、构建、前端/背景/本地化测试和现代主题浏览器交互通过；Windows 本机连续构建无法在当前 macOS 环境运行；大文件浏览器重载恢复测试持续失败并登记 #776。",
+      "evidence": [
+        "go test -p 1 -count=1 -timeout=8m ./internal/server -run Test(DebugSessionDataflowDump|Transfer|LargeTransfer) - PASS",
+        "go test -race -p 1 -count=1 -timeout=8m ./internal/server -run Test(DebugSessionDataflowDump|Transfer|LargeTransfer) - PASS",
+        "go vet -p 1 ./internal/server - PASS",
+        "go build -p 1 ./cmd/aide - PASS",
+        "node --test scripts/settings-navigation.test.cjs - 6/6 PASS",
+        "node scripts/workbench-background.test.cjs - PASS",
+        "node scripts/test_i18n_coverage.cjs - PASS (3700 UI sites)",
+        "python3 scripts/test_windows_bootstrap_cache.py - PASS",
+        "浏览器实际操作现代/浅色/深色/系统跟随/现代光场 - PASS；下载重载续传 TestLargeTransferBrowser - FAIL，Chromium 在继续按钮动作时退出，1.8、2.5、3.6 GiB 限制下重复",
+        "5 ms 延迟注入实测：SSH↔SSH 17.7 MiB/s（基线约 6.8）；SSH→本地 65.6 MiB/s；本地→SSH 12.7 MiB/s（基线约 6.3）；100 个小文件 9.5 files/s（基线约 5.8）；原文件快照下载 30.4 MiB/s。OpenSSH 不延迟实测：SSH↔SSH 67.6 MiB/s、SSH→本地 159.5 MiB/s、本地→SSH 61.0 MiB/s、100 个小文件 436.4 files/s。",
+        "GitHub Issue #774 已关闭；#775 等待真实 Windows 连续构建验收；#776 记录浏览器重载续传 Chromium 退出。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新两个相关 task 记录；已知缺口以 GitHub issue 追踪。",
+      "evidence": [
+        "docs/tasks/session-dataflow-dump-20261103.json",
+        "docs/tasks/maintenance-main-20261104.json",
+        "Issue #776"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "精确暂存本次范围文件；任务外的预存 2 后缀与其它用户未跟踪文件继续保留。",
+      "evidence": [
+        "通过 git status --short 核对所有待提交路径。"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户明确授权推送到 origin/main；不执行 Release 发布或更新当前运行镜像。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "核心功能和代码构建通过并待提交推送。尚未通过的项目：TestLargeTransferBrowser 重载续传时 Chromium 退出（Issue #776）；当前 macOS 环境不能运行 Windows 原生连续编译验收（Issue #775 保持打开）。运行中的 Aide Docker 服务未重启。",
+  "github_issues": [
+    "https://github.com/skyelan1999/aide/issues/774",
+    "https://github.com/skyelan1999/aide/issues/775",
+    "https://github.com/skyelan1999/aide/issues/776"
+  ]
+}

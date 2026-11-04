@@ -77,7 +77,7 @@ function setup(initial='off'){
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local',backgroundStrength:36})});assert.equal(ws.aideUI.get('backgroundStrength'),36);
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local'})});assert.equal(ws.aideUI.get('background'),'local');ws.storage({key:'aide.ui',newValue:'{}'});assert.equal(ws.aideUI.get('background'),'studio');
  // Fresh defaults, preserved explicit background choices and system-owned motion.
- for(const background of [undefined,'off','aurora','studio','local'])for(const motion of ['full','reduced','system']){
+ for(const background of [undefined,'off','aurora','studio','modern','local'])for(const motion of ['full','reduced','system']){
   const values={'aide.ui':JSON.stringify({background,motion,theme:'dark'})},attributes={},queries={};
   const browser={localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},navigator:{language:'zh-CN'},dispatchEvent(){},
    matchMedia:query=>(queries[query]={matches:false,addEventListener:(kind,fn)=>queries[query].change=fn}),addEventListener:(kind,fn)=>browser[kind]=fn};
@@ -92,5 +92,6 @@ function setup(initial='off'){
  }
  const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.json','utf8'));
  assert(!schema.sections.find(s=>s.id==='appearance').controls.some(c=>c.id==='motion'),'manual motion choice removed from appearance');
+ assert(fs.readFileSync('internal/server/web/workbench-background.js','utf8').includes("['modern', '现代光场']"));
  console.log('PASS background lifecycle, stale reads, local save/rollback, validation, release, motion, lock and preference persistence');
 })().catch(e=>{console.error(e);process.exitCode=1;});

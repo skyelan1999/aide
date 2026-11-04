@@ -2452,7 +2452,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			a.mu.Unlock()
 		}
-		markSnapshotComplete := func(started, completed time.Time) {
+		markSnapshotComplete := func(started, completed time.Time, requestErr error, emptyResponse bool) {
 			if snapshotIndex < 0 {
 				return
 			}
@@ -2461,12 +2461,26 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				snapshot := &task.RequestSnapshots[snapshotIndex]
 				snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
 				snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
+				snapshot.Outcome = "completed"
+				snapshot.FailureCode = ""
+				if requestErr != nil {
+					if isEmptyCompletionErr(requestErr) {
+						snapshot.Outcome = "empty_response"
+						snapshot.FailureCode = "EMPTY_RESPONSE"
+					} else {
+						snapshot.Outcome = "failed"
+						snapshot.FailureCode, _, _ = incidentClass(requestErr, 0)
+					}
+				} else if emptyResponse {
+					snapshot.Outcome = "empty_response"
+					snapshot.FailureCode = "EMPTY_RESPONSE"
+				}
 			}
 			a.mu.Unlock()
 		}
 		requestStarted := time.Now()
 		out, calls, usage, finish, err := completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
-		markSnapshotComplete(requestStarted, time.Now())
+		markSnapshotComplete(requestStarted, time.Now(), err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 		if err != nil {
 			a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
 		}
@@ -2514,7 +2528,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			requestStarted = time.Now()
 			out, calls, usage, finish, err = completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
-			markSnapshotComplete(requestStarted, time.Now())
+			markSnapshotComplete(requestStarted, time.Now(), err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 			if err != nil {
 				a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
 			}

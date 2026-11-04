@@ -98,10 +98,10 @@
     doc.language = normalizeLanguage(parsed.language);
     doc.motion = 'system';
     doc.startupAnimation = 'on';
-    doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
+    doc.background = ['off', 'aurora', 'studio', 'modern', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
+    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : parsed.palette === 'modern' ? 'modern' : 'blue';
     var normalized = JSON.stringify(doc);
     if (stored !== normalized) rawSet(KEY, normalized);
     return doc;
@@ -190,13 +190,13 @@
         if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
       }
       doc.version = VERSION;
-    doc.language = normalizeLanguage(parsed.language);
-    doc.motion = 'system';
-    doc.startupAnimation = 'on';
-    doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
-    doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
+      doc.language = normalizeLanguage(parsed.language);
+      doc.motion = 'system';
+      doc.startupAnimation = 'on';
+      doc.background = ['off', 'aurora', 'studio', 'modern', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
+      doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
+      doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : parsed.palette === 'modern' ? 'modern' : 'blue';
       applyTheme();
       notifyAll();
     } else if (event.key === LEGACY_KEY) {
@@ -218,7 +218,7 @@
     },
     getAll: snapshot,
     setAppearance: function (palette, theme) {
-      doc.palette = palette === 'green' || palette === 'comfort' ? palette : 'blue';
+      doc.palette = ['green', 'comfort', 'modern'].indexOf(palette) >= 0 ? palette : 'blue';
       doc.theme = normalizeTheme(theme);
       persist();
       applyTheme();
@@ -226,9 +226,9 @@
     },
     set: function (name, value) {
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'background' ? (['off','aurora','studio','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['blue','comfort','green','modern'].indexOf(value)>=0 ? value : 'blue') : name === 'background' ? (['off','aurora','studio','modern','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
       persist();
-      if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();
+      if (name === 'theme' || name === 'language' || name === 'motion' || name === 'palette') applyTheme();
       notifyAll();
       return doc[name];
     },

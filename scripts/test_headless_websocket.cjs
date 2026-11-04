@@ -18,13 +18,16 @@ async function main() {
     connections++;
     socket.on('message', message => { messages++; socket.send(message.toString()); });
   });
-  const outsidePort = await listen(outside, '127.0.0.2');
+  // Use two loopback hostnames instead of 127.0.0.2: macOS does not always
+  // configure every address in 127/8, while localhost remains a distinct
+  // allowlist hostname that resolves to the same loopback interface.
+  const outsidePort = await listen(outside, '127.0.0.1');
   const fixture = http.createServer((_, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<!doctype html><title>WebSocket scope fixture</title>
       <p id="result">connecting</p><button id="send">Send again</button>
       <script>
-        const socket = new WebSocket('ws://127.0.0.2:${outsidePort}/channel');
+        const socket = new WebSocket('ws://localhost:${outsidePort}/channel');
         socket.onopen = () => socket.send('initial');
         socket.onmessage = event => document.querySelector('#result').textContent = event.data;
         socket.onclose = () => document.querySelector('#result').textContent = 'closed';
@@ -60,7 +63,7 @@ async function main() {
     return value;
   };
   const rules = ['127.0.0.1'];
-  const both = ['127.0.0.1', '127.0.0.2'];
+  const both = ['127.0.0.1', 'localhost'];
   const url = `http://127.0.0.1:${fixturePort}/`;
   try {
     let ready = false;

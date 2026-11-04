@@ -31,6 +31,7 @@ Authorization: Bearer <调试令牌>
 | GET | `/api/debug/overview` | 总览：状态/版本/uptime/配置脱敏/挂载/provider 连通性 |
 | GET | `/api/debug/sessions` | 会话ID+最近run元数据，不含标题/错误原文；`?status=running\|failed`过滤 |
 | GET | `/api/debug/sessions/{id}/runs/{run}` | 步骤顺序/状态、工具名、用量/失败计数及错误存在标记，不含工具结果预览 |
+| GET | `/api/debug/sessions/{id}/runs/{run}/dataflow` | 下载单次会话任务的数据流 JSON：Provider 请求状态、执行日志事件、工具调用状态、关联异常与自动检测结果 |
 | GET | `/api/debug/sessions/{id}/runs/{run}/events` | SSE仅发step/tool/intent/status/done/compaction的状态、工具名、轮次和数值进度；忽略内容事件与未知事件 |
 | GET | `/api/debug/errors` | 最近 50 条错误 + 跨 run 失败循环 Top10 |
 | GET | `/api/debug/stats` | 复用 token 用量统计 |
@@ -53,6 +54,11 @@ curl -s -H "Authorization: Bearer $TOKEN" $BASE/api/debug/overview | jq .
 # 会话列表（仅看失败的）
 curl -s -H "Authorization: Bearer $TOKEN" "$BASE/api/debug/sessions?status=failed" | jq .
 
+# 单次会话任务调用链 dump（下载 JSON；只含状态/计数/大小/时间/错误分类）
+curl -sS -H "Authorization: Bearer $TOKEN" \
+  "$BASE/api/debug/sessions/$SESSION_ID/runs/$RUN_ID/dataflow" \
+  -o aide-session-dataflow.json
+
 # Provider 连通性
 curl -s -X POST -H "Authorization: Bearer $TOKEN" $BASE/api/debug/actions/ping-provider | jq .
 ```
@@ -72,6 +78,8 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" $BASE/api/debug/actions/ping-p
   "provider": { "reachable": true, "lastProbeMs": 183, "checkedAt": "2026-09-25T10:00:00Z" }
 }
 ```
+
+数据流 dump 聚合该 run 的请求快照元数据、执行事件 JSONL 和关联 incident，并检测 Provider 调用状态/快照数量异常、无工具结果的 dispatch、未完成 intent、缺失/损坏的执行日志。新请求快照持久化成功、失败或空响应状态及结构化错误分类。它不会包含提示词、模型消息、Provider 请求正文、工具参数/结果或密钥；消息与请求只报告数量和字节数。执行日志单文件读取上限 64 MiB，最多输出 5000 条事件。调试接口默认关闭，dump 继承相同的独立调试令牌与审计要求。
 
 ## 开关与令牌生命周期
 

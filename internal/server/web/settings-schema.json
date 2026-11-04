@@ -22,6 +22,10 @@
             {
               "value": "green",
               "label": "经典"
+            },
+            {
+              "value": "modern",
+              "label": "现代"
             }
           ]
         },

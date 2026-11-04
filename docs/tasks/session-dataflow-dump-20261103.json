@@ -1,0 +1,81 @@
+{
+  "id": "session-dataflow-dump-20261103",
+  "request": "你看看有没有还能加日志和异常分析检测的地方，这样后面会非常好分析，在额外加一个功能，会话数据流dump，用于分析会话调用和工具调用状态",
+  "baseline": "737ac831d1d5e507d0e56f995040bd276336730f",
+  "initial_status": "?? docs/tasks/terminal-display-settings-20261103.json\n?? docs/tasks/terminal-log-read-api-release-20261103.json",
+  "acceptance": [
+    "Add a downloadable, authenticated per-session/per-run dataflow dump that records provider request lifecycle, tool dispatch/result state, persisted execution-journal events, related incident metadata, and bounded anomaly findings.",
+    "Keep dump content-free by default: no prompts, model messages, provider request bodies, tool arguments/results, secrets, or host paths; include counts, byte lengths, digests only where safe, timestamps, statuses, IDs, and structured error classifications.",
+    "Preserve existing debug authentication/auditing and bound journal reads/output; do not change runtime session data or existing diagnostic authorization defaults.",
+    "Document the endpoint and explain which existing logs are reused and what anomaly checks are derived."
+  ],
+  "scope": [
+    "internal/server/debug_dataflow.go",
+    "internal/server/debug.go",
+    "internal/server/server.go",
+    "internal/server/execution_journal.go (only if required to share safe journal parsing)",
+    "docs/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Define an authenticated, content-free per-run dataflow download that combines provider calls, execution journal, tool state, incidents, and derived anomaly findings.",
+      "evidence": [
+        "User request on 2026-11-03.",
+        "Acceptance criteria preserve the debug token/audit policy and exclude raw prompts, provider bodies, tool args/results, secrets, and host paths."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Add GET /api/debug/sessions/{id}/runs/{run}/dataflow; reuse persisted request snapshots, execution-events JSONL, and linked incidents. Persist provider outcome/error classification; report only counts, byte lengths, timestamps, enums, and anonymized call refs.",
+      "evidence": [
+        "Existing request snapshots and execution journal are already correlated to run/session IDs.",
+        "Journal reads bounded to 64 MiB and 5000 events; dump contains no message/request/tool payload."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added dataflow JSON download, chronological timeline, content-safe projections, provider success/failure/empty-response metadata, and detection for incomplete calls, missing tool results, unresolved intents, journal gaps/corruption, and linked error incidents. Updated Chinese and English API docs.",
+      "evidence": [
+        "Added internal/server/debug_dataflow.go and route in internal/server/server.go.",
+        "Provider outcome metadata recorded in internal/server/workflow.go, internal/server/conversation_parallel.go, internal/server/provider_image.go, and RequestSnapshot in internal/server/context.go.",
+        "Updated docs/debug-api.md, docs/en/debug-api.md, docs/architecture/diagnostics.md."
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "认证、会话数据流导出和内容脱敏单元测试通过；服务端定向测试、Race 检测、vet 和二进制构建通过。",
+      "evidence": [
+        "go test -p 1 -count=1 ./internal/server -run TestDebugSessionDataflowDump",
+        "go test -race -p 1 -count=1 ./internal/server -run TestDebugSessionDataflowDump",
+        "go vet -p 1 ./internal/server",
+        "go build -p 1 ./cmd/aide"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented the endpoint, payload redaction, limits, anomaly checks, and curl download in Chinese and English; updated diagnostics architecture notes.",
+      "evidence": [
+        "docs/debug-api.md",
+        "docs/en/debug-api.md",
+        "docs/architecture/diagnostics.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Kept all prior untracked task files untouched; added only this task record and the implementation/docs files in scope. No runtime state or session data changed.",
+      "evidence": [
+        "git status --short reviewed; pre-existing task files docs/tasks/terminal-display-settings-20261103.json and docs/tasks/terminal-log-read-api-release-20261103.json were left untouched.",
+        "git diff --check passed."
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "代码纳入当前 main 提交并待推送；运行中的 Aide 服务镜像未更新。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the new endpoint, handler, docs, and task record; no data migration or session-data rewrite.",
+  "handoff": "已增加认证、内容安全的 API 导出；GET /api/debug/sessions/{id}/runs/{run}/dataflow。针对脱敏、认证和 journal/anomaly 元数据的 TestDebugSessionDataflowDump 已通过 race 检测；完整服务端包 vet 与 cmd/aide 构建通过。"
+}
