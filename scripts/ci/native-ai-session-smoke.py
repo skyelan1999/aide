@@ -60,7 +60,8 @@ def main():
             with urllib.request.urlopen(req, timeout=12, context=context) as response:
                 return json.load(response)
         except urllib.error.HTTPError as exc:
-            raise RuntimeError(f"Aide API {method} {path} returned HTTP {exc.code}") from None
+            detail = exc.read(1024).decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"Aide API {method} {path} returned HTTP {exc.code}: {detail}") from None
 
     try:
         provider_url = f"http://127.0.0.1:{server.server_address[1]}/v1"
