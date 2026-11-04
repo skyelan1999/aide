@@ -1,0 +1,85 @@
+{
+  "id": "windows-chat-tabs-20261104",
+  "request": "检查当前 macOS Aide 实际聊天失败根因并修复 Windows AI 会话不可用；修复 Windows 桌面标签页关闭按钮，并尽可能使标签栏视觉与交互贴近 macOS 原生标签栏。",
+  "baseline": "4b817de1135509b25e9053e30042d6c88ec76a96",
+  "initial_status": "?? \"docs/tasks/plugin-compose-i18n-test-20261103 2.json\"\n?? \"docs/tasks/plugin-tts-full-test-20261103 2.json\"\n?? docs/tasks/terminal-display-settings-20261103.json\n?? docs/tasks/terminal-log-read-api-release-20261103.json\n?? \"internal/server/computer_control 2.go\"\n?? \"native/windows-launcher/computer_bridge 2.hpp\"\n?? \"scripts/computer-bridge-linux 2.js\"",
+  "acceptance": [
+    "当电脑控制开启时，computer_status/computer_inspect/computer_snapshot 的 function schema 经 JSON 编码后为有效 schema（required 是空数组而不是 null）；普通聊天请求不再因工具 schema 被 Provider HTTP 400 拒绝。",
+    "Windows 标签关闭按钮实际可点并关闭预期标签；非活动标签关闭后保留当前选中标签；脏插件页取消关闭时标签仍保留。",
+    "Windows 标签栏在关闭/选择/新建/键盘快捷键行为上尽量贴近 macOS 原生标签体验，并保持缩放/溢出可用。",
+    "相关 Go 与 Windows 原生 smoke 检查通过；没有 Windows 实机时明确记录未运行。"
+  ],
+  "scope": [
+    "internal/server/computer_control.go",
+    "internal/server/computer_control_test.go",
+    "native/windows-launcher/desktop.hpp",
+    "native/windows-launcher/desktop_chrome.hpp",
+    "scripts/windows_desktop_smoke.cpp",
+    "docs/architecture/windows-desktop.md",
+    "docs/tasks/windows-chat-tabs-20261104.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "本机 Aide 临时会话复现 Provider HTTP 400，错误指出 computer_status function schema 无效；computerControlEnabled=true。Windows 标签关闭问题为用户实机报告；现有 smoke 未直接点击关闭控件。账号 skyelan1999 已确认；#778 跟踪聊天 schema，#779 跟踪 Windows 标签关闭。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/778",
+        "https://github.com/skyelan1999/aide/issues/779",
+        "本机临时测试会话执行后已删除。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留 Provider/API 兼容，只确保无参 schema 的 required 编码为空数组。Windows 关闭动作改为标签内悬停叉号/中键，按 Tab 的稳定当前索引调度，删掉单独关闭活动标签按钮；关闭非活动标签时按删除索引修正活动选择。",
+      "evidence": [
+        "macOS native tabs 由 AppKit 管理并在标签悬停时关闭；Windows 新交互使用现有 tab control 与异步脏页保护。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "电脑控制无参工具 now encode required: []；新增 JSON 编码回归。Windows 标签关闭叉号现按标签工作，Ctrl+W 保留，中键关闭增加，关闭非活动页保留活动页；native smoke 增加实际点击当前与非活动标签关闭。",
+      "evidence": [
+        "internal/server/computer_control_test.go",
+        "scripts/windows_desktop_smoke.cpp"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Go schema regression PASS；Windows desktop policy tests 3/3 PASS；launcher contract 35/35 PASS；diff check PASS。Windows WebView2 native smoke 已扩展但当前 macOS 主机无法执行，待 PR Windows Desktop Check；未对运行中的本机 Aide 做镜像替换/重启，因此实际聊天修复后端到端未重测。",
+      "evidence": [
+        "docker run ... golang:1.26-bookworm go test -p 1 ./internal/server -run TestComputerControlToolSchemasEncodeRequiredArrays -count=1 — PASS",
+        "python3 scripts/test_windows_desktop.py — 3/3 PASS (portable guards only, no Win32 claim)",
+        "python3 scripts/test_launcher_contract.py — 35/35 PASS",
+        "git diff --check — PASS",
+        "本机修复前临时对话 HTTP 400 已复现，测试会话删除；运行容器 buildCommit 仍为 737ac831...-dirty。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Windows 原生标签文档更新为每标签 hover close、中键关闭及活动标签保留逻辑；任务记录包含两个 GitHub issue、源码复现、测试和未运行边界。",
+      "evidence": [
+        "docs/architecture/windows-desktop.md",
+        "https://github.com/skyelan1999/aide/issues/778",
+        "https://github.com/skyelan1999/aide/issues/779"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "保留所有既有未跟踪用户文件；测试会话已删除。精确暂存仅本任务文件；本地 Aide 服务未重启。",
+      "evidence": [
+        "git status confirms pre-existing unrelated ` 2.*` files were untouched."
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "源码修复本身未部署。准备以 PR 运行 required gate 与 Windows Desktop Check；不会触发 Aide Release 或重启当前 Mac 服务。",
+      "evidence": [
+        "issue #778",
+        "issue #779"
+      ]
+    }
+  },
+  "release_authorization": "用户授权检查并解决 Windows 会话和标签问题；此前授权推送 main 的范围为上一轮任务，不将其推定为本轮新改动的直接 main 推送许可。",
+  "rollback": "",
+  "handoff": "源码中聊天 schema 与 Windows 标签关闭问题已修复。修复后尚未在当前运行 Docker 重新构建/实际调用模型，也未在用户 Windows 实机验收。PR 的 required gate 和 Windows Desktop Check 完成后再决定合并；两项 Issue 保持开放，直到各验收路径通过。"
+}

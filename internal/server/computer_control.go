@@ -88,7 +88,10 @@ func (a *App) migrateComputerControlPlugin() error {
 
 func computerControlToolSchemas() []any {
 	tool := func(name, description string, properties map[string]any, required ...string) any {
-		return map[string]any{"type": "function", "function": map[string]any{"name": name, "description": description, "parameters": map[string]any{"type": "object", "properties": properties, "required": required}}}
+		// A nil variadic slice encodes as JSON null, which strict providers reject
+		// for the JSON Schema `required` array on zero-argument tools.
+		requiredFields := append([]string{}, required...)
+		return map[string]any{"type": "function", "function": map[string]any{"name": name, "description": description, "parameters": map[string]any{"type": "object", "properties": properties, "required": requiredFields}}}
 	}
 	return []any{
 		tool("computer_status", "检查 Aide 本机电脑控制桥接状态，不读取屏幕。", map[string]any{}),
