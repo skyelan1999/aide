@@ -41,6 +41,15 @@ AIDE_WORKSPACE="$PWD" AIDE_CONTEXT="$PWD/context" scripts/run-native-runtime.sh
 - Windows 运行路径还发现知识来源 SFTP 子进程固定启动 `/bin/sh`；现在改用平台 shell 选择器，Windows 从 PATH 运行随 MinGit 安装的 `sh.exe`，macOS/Linux 仍用 `/bin/sh`。对应平台选择单测与 SSH 回归用例通过，Windows 服务交叉编译通过。第六版安装器 `/tmp/aide-native-win64-v6/output/Aide-Native-Windows-x64-Setup.exe`（208 MiB，SHA-256 `dac419eddf1ca4085aa2a06302f0ec495ff94e51257543753b5e76b5d9f684e2`）已生成并 7-Zip 完整解包；确认含服务、python3 别名、Node、MinGit `sh.exe`、Git、OpenSSH、SSH keygen、Office 脚本、启动/停止和卸载文件。包内服务 SHA-256 与构建产物一致；启动/停止脚本 PowerShell 解析通过。仍未在 Windows 主机执行安装与启动。
 - 当前宿主 Python 3.9 只有标准库，没有 `python-docx`、`openpyxl`、`python-pptx`、`ezdxf`、`pypdf`、Pillow 或 NumPy；依赖这些模块的工具不会与容器环境等价。Node 存在，但测试没有安装或验收任一插件。
 
+## 2026-11-05 最新源码包复验
+
+- 从当前实验分支同一源码分别交叉构建 macOS arm64、Linux amd64、Linux arm64、Windows amd64 服务。文件格式检查均符合目标平台；Windows amd64 SHA-256 为 `fe810f5583c2740d7393d03a6522f8507523ddf24af0571860163e0bcaaa9d06`，与 Windows v6 安装器载荷中的服务一致。
+- 重新生成 macOS arm64 `.pkg`（SHA-256 `490dfadc9a2a1483332094beb9476763e9971d6bba71a864ceeb5054c755de12`）和 `.zip`（`eb7930d64c90106f22e8413d357c74a9a8577b261b0f41a7f636ec3987866d1d`）。从新 `.pkg` 解出 App 后直接启动，隔离数据/工作区/引用目录；本机 HTTPS `/healthz` 返回 `ok/integrity=ok`，访问令牌鉴权配置请求成功，工作台首页 HTTP 200，服务监听回环地址。手动停止服务并退出测试进程后，监听端口关闭。系统日志出现 macOS 对 `/tmp` 解出 App 的 sandbox extension 提示，但服务启动和上述 HTTP 验收均成功；本次没有把新版本安装覆盖到 `/Applications`。
+- 从当前源码新生成 Linux arm64 `.deb`：`/tmp/aide-native-linux-latest/aide-native-experiment.deb`，SHA-256 `2ec4ae3f3f256cd3cb8e854a80c3e4b74a3b5f18ddde6487a4d5c42865c4c2ea`。在干净 Debian Bookworm arm64 容器内通过 `dpkg -i` 安装；运行容器没有 Docker CLI。真实执行了桌面启动器（用 `xdg-open` 替身捕获 URL）、本机服务启动、健康与令牌鉴权、首页 HTTP 200、随包 Python Office 模块导入、DOCX 创建与文本回读；停止后确认端口关闭。该验证使用容器作为隔离 Debian 主机，不等于实体 Linux 桌面验收。
+- 完整 `go test -json ./internal/server -count=1` 在带 Node 24 与 Office Python 依赖的测试容器内运行 551 秒：2431 项通过、125 项跳过、3 项失败。复现的 2 项只读分类失败来自旧测试仍要求 Git status/diff/branch/remote 免审批；当前实现有意对所有 Git 命令要求审批，以阻断仓库 Git 配置 helper 执行，`TestGitRepositoryHelpersRequireApproval` 等既有安全测试与此一致。`TestRemoteWorkspaceDispatch` 的 SSH 替身只用标记文件模拟 `-O check`，没有创建真实 Unix 控制 socket；当前任务 SSH 绑定要求把已认证 socket 固定后才执行，因此替身被拒绝。上述失败是既有断言/替身需要更新，不能算全量测试通过，也没有降低安全检查来迎合旧测试。
+- Windows 安装器 v6 完整解包、文件清点和 PowerShell 语法分析已在前文记录；当前服务二进制与该安装器中的二进制哈希一致。此环境没有 Windows 主机、虚拟机或 Wine，仍未实际运行安装、升级、卸载、桌面浏览器和 Windows SSH。
+- 产物与测试结果仍只用于本实验分支，未合并到 `main`。当前 Linux arm64 包、macOS arm64 包以及 Windows x64 安装器包含自带 Go/Node/Python/Office 依赖，但完整插件市场、AI 会话、浏览器桥、TTS、电脑控制、隔离命令和 SSH 凭据方案未在三端逐项端到端验收；原生运行仍不具有 Docker 沙箱的安全等价性，不能据此宣称已达到功能/安全完全等价的正式发行标准。
+
 ## 尚未达到“独立自主运行”的部分
 
 浏览器和本地 sherpa 离线 TTS 工具链仍未随 App 打包；插件 daemon、消息桥、电脑/浏览器桥接、AI/TTS 以及 Office 真实文件转换尚未端到端验收。Python/Node/Git/SSH 主机工具已纳入实验安装包，但尚未验证真实市场插件的安装、启动和依赖行为。Windows SSH 的 Aide vault 密钥、SFTP 来源密钥、密码认证和安全 askpass 尚未实现；当前不能宣称 Windows SSH 与 macOS/Linux 功能对等。桌面冒烟的完整插件页断言因隔离数据目录没有 Compare/ProfessionalProject 插件而为 false；系统平台认证器检查也为 false，原生 Touch ID bridge 本身可用。
