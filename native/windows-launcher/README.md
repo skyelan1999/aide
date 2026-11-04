@@ -44,6 +44,16 @@ update protocol implementation. Components are materialized into private caches
 when needed; they are not separate downloads or manually installed programs.
 This is one distributed EXE, not one OS process or a replacement for Docker.
 
+When an existing installation is opened with a launcher whose embedded LAN
+helper differs from the cached helper, the launcher requests a host-worker refresh.
+The helper uses the fixed loopback `-remote-target` mapping for password-protected
+LAN access. If that optional mapping or helper capability is unavailable, the
+launcher logs a clear warning and keeps message chat running; the workbench stays
+available and the settings page reports LAN access as unavailable. Update and
+restart Aide to enable it. When replacing a source-built launcher, run `stop.bat`
+and then `start.bat` so the old resident controller releases its installation
+lock before the new executable starts.
+
 A controller starts bounded port and update worker processes using the **same
 EXE**. Directory and LAN helpers belong to its kill-on-close Win32 Job. A worker
 can restart without abandoning the helper processes or creating an unbounded

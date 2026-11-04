@@ -1,0 +1,75 @@
+{
+  "id": "remote-access-win-launcher-20261104",
+  "request": "Windows 局域网远程访问不可用，提示请使用新版启动器；检查 Windows 启动器是否传递远程访问桥接端口，并修复版本不兼容提示。",
+  "baseline": "6837a0568686783dcc1c044528afc5cbea5a08ab",
+  "initial_status": "M docs/architecture/assistant-live.md\n M internal/server/assistant_agent.go\n M internal/server/message_assistant.go\n M internal/server/message_center.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/assistant-realtime.js\n M internal/server/web/index.html\n M internal/server/web/message-center.js\n?? docs/tasks/message-auto-reply-20261104.json\n?? internal/server/message_auto_reply.go",
+  "acceptance": [
+    "新版 Windows 启动器发现安装目录 LAN helper 版本落后时，刷新 helper 并在受支持时传递受限的 127.0.0.1:45842 远程入口映射。",
+    "缺少 -remote-target 能力或 45842 loopback 映射时，不得静默宣称远程访问可用；需记录明确告警，同时保留消息桥和工作台其他功能。",
+    "日常 start 在 helper 摘要匹配且监督器健康时不重启 LAN helper。"
+  ],
+  "scope": [
+    "native/windows-launcher/main.cpp",
+    "native/windows-launcher/README.md",
+    "docs/architecture/launcher-contract.md",
+    "docs/tasks/remote-access-win-launcher-20261104.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "修复 Windows 已有安装中远程访问入口未就绪的问题；保留消息服务，不重启或迁移 Docker 数据。用户原话与实际安装版本未拿到，因此聚焦代码中已确认的旧 helper 静默回退路径。",
+      "evidence": [
+        "用户报告：Windows 无法实现远程访问，页面提示使用新版启动器。",
+        "remote_access.go 在 LAN host bridge 未创建地址时返回“请使用新版启动器”；native/windows-launcher/main.cpp 曾对不支持 -remote-target 的 helper 静默跳过该参数。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新版启动器按嵌入式 message-lan helper SHA256 识别版本落后；仅缺失/过期、启动新服务或缺少原生监督器时请求 helper-refresh。远程访问为可选能力：helper 或 45842 映射不兼容时记录告警并保留消息聊天。",
+      "evidence": [
+        "native/windows-launcher/host_scheduler.hpp：port worker 对 helper-refresh generation 变化调用 app.helpers 并更新 helper-ready。",
+        "native/windows-launcher/main.cpp：按 helper 摘要刷新缓存；支持时传递固定 loopback 45842，不支持时记录告警并保持消息桥运行。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "start 可发现过期 Windows LAN helper 并要求现有原生 worker 刷新；受支持时传递 loopback 45842，缺少能力时显式告警且不阻断消息桥。",
+      "evidence": [
+        "native/windows-launcher/main.cpp",
+        "native/windows-launcher/README.md"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "静态检查通过；未进行 Windows 原生构建、启动器行为测试或真实 LAN 设备验收。",
+      "evidence": [
+        "本轮 git diff --cached --check：通过。",
+        "本轮 bash -n scripts/message-lan-control.sh：通过。",
+        "Windows/MSVC/MinGW 和真实 Windows LAN 验收未执行。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录缓存 helper 更新条件、远程入口要求与故障限制。",
+      "evidence": [
+        "native/windows-launcher/README.md",
+        "docs/architecture/launcher-contract.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅触及 Windows 启动器、Windows 启动器说明和本任务账本；未清理或改写其他既有工作树改动。",
+      "evidence": [
+        "git status --short --branch 已复核；其他消息/语音任务变更保持原状。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地提交并合并到 main；没有推送远端分支或发布 Windows 安装包。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确授权本次提交并合并到 main；未授权推送远端分支或发布 Windows 安装包。",
+  "rollback": "还原 native/windows-launcher/main.cpp 与 README 修改；不影响容器、配置或用户数据。",
+  "handoff": "已提交并合并到本地 main 后，仍需 Windows 原生构建、源码安装与 Release 包安装路径验收，以及真实 LAN/HTTPS 网络验收；本地合并不代表远端 main 已推送或安装包已发布。"
+}

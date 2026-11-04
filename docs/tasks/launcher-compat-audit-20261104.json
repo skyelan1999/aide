@@ -1,0 +1,75 @@
+{
+  "id": "launcher-compat-audit-20261104",
+  "request": "审计是否还有启动器、helper、镜像或前端版本未同步导致的不兼容，跨平台检查并修复确认的问题。",
+  "baseline": "6837a0568686783dcc1c044528afc5cbea5a08ab",
+  "initial_status": "M docs/architecture/assistant-live.md\n M internal/server/assistant_agent.go\n M internal/server/message_assistant.go\n M internal/server/message_center.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/assistant-realtime.js\n M internal/server/web/index.html\n M internal/server/web/message-center.js\n M native/windows-launcher/README.md\n M native/windows-launcher/main.cpp\n?? docs/tasks/message-auto-reply-20261104.json\n?? docs/tasks/remote-access-win-launcher-20261104.json\n?? internal/server/message_auto_reply.go",
+  "acceptance": [
+    "Windows 与 macOS/Linux 对旧消息桥 helper、旧运行镜像或缺失 loopback 45842 映射采取一致策略：消息桥继续运行，远程访问明确告警，不静默假成功。",
+    "helper 更新前先验证可选远程能力与端口映射，避免因可选功能不兼容而先停掉当前消息桥。",
+    "确认打包镜像、Compose 回环端口、Windows 嵌入 helper 与 legacy fixture 的发布边界，并记录仍需平台运行验证的限制。"
+  ],
+  "scope": [
+    "scripts/message-lan-control.sh",
+    "native/windows-launcher/main.cpp",
+    "native/windows-launcher/README.md",
+    "docs/architecture/launcher-contract.md",
+    "docs/tasks/remote-access-win-launcher-20261104.json",
+    "docs/tasks/launcher-compat-audit-20261104.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "审计目标限定为启动器、helper、镜像与工作台的跨版本能力不兼容。",
+      "evidence": [
+        "用户要求检查是否有未统一导致的不兼容情况。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留消息聊天基础能力，将局域网工作台远程访问视作可选能力；探测并记录降级原因，替换 helper 前完成校验。",
+      "evidence": [
+        "scripts/message-lan-control.sh",
+        "native/windows-launcher/main.cpp"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "macOS/Linux helper 缺少 -remote-target 或 45842 loopback 映射时保留消息桥并输出/落盘告警；Windows 做相同降级并保留消息桥。",
+      "evidence": [
+        "scripts/message-lan-control.sh",
+        "native/windows-launcher/main.cpp"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "完成静态兼容路径审查、bash -n scripts/message-lan-control.sh 与 git diff --check；按当前会话规则未运行测试套件，Windows 实机及 A/B 镜像组合未验证。",
+      "evidence": [
+        "compose.yaml 与 docker/compose.offline.yaml 均声明 45840/45841/45842 loopback 映射。",
+        "Dockerfile 与 Dockerfile.local 构建 Linux helper；Windows EXE 从 cmd/aide-message-lan 构建并嵌入 helper。",
+        "scripts/fixtures/legacy-windows 为归档回归 fixture，不在当前 Windows runtime package。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 Windows launcher 兼容说明，说明可选远程访问降级和消息聊天仍可用。",
+      "evidence": [
+        "native/windows-launcher/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未修改遗留 PowerShell fixture 或无关用户改动；记录仍待运行验收的跨版本组合。",
+      "evidence": [
+        "git status --short 保留所有任务开始前的改动。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地提交并合并到 main；没有推送远端分支或发布 Windows 安装包。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确授权将本次兼容修复提交并合并到本地 main；未授权推送远端分支或发布安装包。",
+  "rollback": "回退 scripts/message-lan-control.sh、native/windows-launcher/main.cpp、native/windows-launcher/README.md 的本任务差异。",
+  "handoff": "已静态确认 Compose 端口及 helper 打包路径一致。Windows helper 由 launcher 源码单独嵌入，未来需保持 helper/server 协议兼容；当前没有通用协议协商端点。消息桥与服务端 API 之间跨版本验证、Windows 实机及旧/新 launcher × 旧/新镜像矩阵仍待验收。"
+}

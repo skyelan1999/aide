@@ -66,6 +66,12 @@ call build.bat
 
 Docker 的专用缓存与驱动行为见 [docker-container driver](https://docs.docker.com/build/builders/drivers/docker-container/)；移除专用构建器会移除其缓存，本接口不使用 `--keep-state`，见 [buildx rm](https://docs.docker.com/reference/cli/docker/buildx/rm/)。
 
+### 宿主消息桥与服务镜像兼容边界
+
+局域网消息桥由宿主启动器管理，端口 `45840`（消息）和 `45841`（消息采集）必须绑定到 loopback；`45842` 是可选的、受密码保护的工作台远程访问转发入口，也只能绑定 loopback。`-remote-target` 能力或 `45842` 映射缺失时，启动器必须明确记录远程访问不可用，同时保留消息桥和工作台其他功能；不能把可选远程访问故障升级为消息服务整体启动失败，也不能静默显示为已就绪。
+
+macOS/Linux 从正在运行的不可变镜像提取并校验对应 helper；Windows 将 Go helper 嵌入原生 EXE，并按 helper 摘要刷新安装缓存。Windows launcher/helper 与服务镜像是分别构建和更新的产物，跨版本协议变更必须保持兼容或显式协商；能力探测不能替代后端 API 协议兼容。旧 PowerShell helper 仅在 `scripts/fixtures/legacy-windows/` 中用于回归，不构成当前发布路径。跨版本与真实 Windows 网络验收边界记录在[远程访问任务](../tasks/remote-access-win-launcher-20261104.json)和[兼容审计任务](../tasks/launcher-compat-audit-20261104.json)。
+
 ## 干净环境验收（#654）
 
 POSIX 构建协调器把实际项目路径作为独立、带引号的参数传入磁盘检查子 shell，不依赖调用者导出 `PROJECT_DIR`。资源检查也支持显式路径和当前目录回退；低磁盘空间和无法识别的磁盘报告仍拒绝继续。在线 Python 依赖安装发生中途下载失败时，按原索引、原版本和原参数最多重试三次完整安装；离线安装不改为联网。

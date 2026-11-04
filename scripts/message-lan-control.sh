@@ -37,16 +37,26 @@ SOURCE="$("$DOCKER_BIN" create --network none --entrypoint /bin/true "$IMAGE")"
 EXPECTED="$(awk -v name="$NAME" '$2==name {print $1}' "$TMP/SHA256SUMS")"
 ACTUAL="$(shasum -a 256 "$TMP/$NAME" | awk '{print $1}')"
 [[ "$EXPECTED" =~ ^[a-f0-9]{64}$ && "$EXPECTED" == "$ACTUAL" ]] || { echo 'LAN helper checksum mismatch.' >&2; exit 1; }
-[[ ! -x "$BIN" ]] || "$BIN" -stop -dir "$DIR"
 chmod 700 "$TMP/$NAME"
-mv "$TMP/$NAME" "$BIN"
-# Older release helpers do not advertise the optional workbench relay flag.
+# Detect optional remote-access support before stopping the current bridge or
+# replacing its cached executable. Older images can still serve messaging.
 REMOTE_TARGET=''
-HELP="$("$BIN" -h 2>&1 || true)"
+REMOTE_WARNING=''
+HELP="$("$TMP/$NAME" -h 2>&1 || true)"
 if [[ "$HELP" == *"-remote-target"* ]]; then
-REMOTE_BINDING="$("$DOCKER_BIN" compose port aide 45842)"
-[[ "$REMOTE_BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]] || { echo "Missing loopback remote access mapping; restart Aide." >&2; exit 1; }
-REMOTE_TARGET="127.0.0.1:${BASH_REMATCH[1]}"
+  if REMOTE_BINDING="$("$DOCKER_BIN" compose port aide 45842 2>/dev/null)" && [[ "$REMOTE_BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]]; then
+    REMOTE_TARGET="127.0.0.1:${BASH_REMATCH[1]}"
+  else
+    REMOTE_WARNING='局域网远程访问不可用：运行环境缺少 45842 回环端口映射；聊天消息桥仍可用，请更新并重启 Aide。'
+  fi
+else
+  REMOTE_WARNING='局域网远程访问不可用：当前运行镜像中的消息桥不支持远程访问；聊天消息桥仍可用，请更新并重启 Aide。'
+fi
+[[ ! -x "$BIN" ]] || "$BIN" -stop -dir "$DIR"
+mv "$TMP/$NAME" "$BIN"
+if [[ -n "$REMOTE_WARNING" ]]; then
+  echo "$REMOTE_WARNING" >&2
+  printf '%s\n' "$REMOTE_WARNING" >> "$NATIVE/bridge.log"
 fi
 # A separate session survives the launching Terminal/tool process group.
 python3 - "$BIN" "$DIR" "$TARGET" "$CAPTURE_TARGET" "$REMOTE_TARGET" "$NATIVE/bridge.log" <<'PYTHON'

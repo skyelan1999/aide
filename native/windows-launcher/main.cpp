@@ -451,6 +451,7 @@ public:
   if(role=="local-mounts")stopDirectory(stage);else{auto dir=root/L".aide-data/storage/data/messages/lan-bridge";if(fs::exists(dir))required(run(stage,{L"-stop",L"-dir",dir.wstring()}),"Previous LAN component did not stop");}
   if(!MoveFileExW(stage.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Cannot install verified embedded host component");return file;
  }
+ bool messageLanHelperNeedsRefresh(){auto file=root/L".aide-data/message-lan"/wide("aide-message-lan-windows-"+hostArch()+".exe");realPath(file);return !fs::exists(file)||sha256(file)!=embedded_message_lan_sha256;}
  fs::path directoryHelper;bool directoryAvailable=false;
  void stopDirectory(const fs::path& program){
   auto pidFile=root/L".aide-data/storage/data/local-mounts/serve.pid";DWORD pid=0;
@@ -485,9 +486,11 @@ public:
   try{
    auto cid=container();auto actual=d({L"inspect",wide(cid),L"--format",L"{{.Image}}"});required(actual,"Cannot identify running image");auto selected=inspect(image);if(selected.is_null()||selected.value("Id","")!=trim(actual.out))throw std::runtime_error("Running image changed; refusing helper extraction");
    auto binary=embeddedHelper("message-lan"),dir=root/L".aide-data/storage/data/messages/lan-bridge";privateDirectory(dir);
-   required(run(binary,{L"-stop",L"-dir",dir.wstring()}),"Old LAN helper could not stop");
    std::vector<std::wstring> lanArgs{L"-dir",dir.wstring(),L"-target",wide(binding(L"45840")),L"-capture-target",wide(binding(L"45841"))};
-   auto help=run(binary,{L"-h"},5000);if(help.out.find("-remote-target")!=std::string::npos){lanArgs.push_back(L"-remote-target");lanArgs.push_back(wide(binding(L"45842")));}
+   auto help=run(binary,{L"-h"},5000);bool remoteReady=!help.code&&help.out.find("-remote-target")!=std::string::npos;
+   if(remoteReady){try{lanArgs.push_back(L"-remote-target");lanArgs.push_back(wide(binding(L"45842")));}catch(const std::exception&){remoteReady=false;lanArgs.resize(6);}}
+   if(!remoteReady)say("LAN remote access unavailable: update and restart Aide; messaging remains available.");
+   required(run(binary,{L"-stop",L"-dir",dir.wstring()}),"Old LAN helper could not stop");
    spawn(binary,lanArgs,stateRoot/L"lan-helper.log");
    bool ready=false;for(int i=0;i<30;i++){if(!run(binary,{L"-status",L"-dir",dir.wstring()},5000).code){ready=true;break;}Sleep(100);}if(!ready)throw std::runtime_error("LAN helper not ready; check its local log");say("LAN bridge ready.");
    try{codexHost();}catch(const std::exception&){say("Codex host component unavailable; see native/codex-host.log.");}
@@ -586,6 +589,7 @@ int wmain(int argc,wchar_t** argv){
    else if(a==L"--licenses"){std::cout<<embedded_json_license<<'\n'<<embedded_miniz_license<<'\n'<<embedded_helper_licenses;return 0;}
    else if(a==L"desktop"||a==L"desktop-stop"||a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"recover-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
    else if(a==L"--launcher-contract"){std::cout<<"aide-launcher-contract=2\n";return 0;}
+   else if(a==L"--windows-lan-remote-access-contract"){std::cout<<"aide-windows-lan-remote-access=1\n";return 0;}
    else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|recover-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
    else throw std::runtime_error("Unknown launcher argument");
   }
@@ -597,7 +601,7 @@ int wmain(int argc,wchar_t** argv){
   }
   auto compiledRoot=fs::absolute(root)/L".aide-data/native";auto compiledReceipt=compiledRoot/L"compiled-launcher.json";
   realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
-  if(fs::exists(compiledReceipt)&&!dryRun&&action!=L"build"&&action!=L"clean"&&action!=L"host-stop"&&action!=L"recover-stop"){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){stateRoot=compiledRoot;auto probe=run(target,{L"--launcher-contract"},5000);if(!probe.code&&trim(probe.out)=="aide-launcher-contract=2"){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}}
+  if(fs::exists(compiledReceipt)&&!dryRun&&action!=L"build"&&action!=L"clean"&&action!=L"host-stop"&&action!=L"recover-stop"){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){stateRoot=compiledRoot;auto probe=run(target,{L"--launcher-contract"},5000);bool compatible=!probe.code&&trim(probe.out)=="aide-launcher-contract=2";if(compatible&&(action==L"start"||action==L"start-built"||action==L"refresh-helpers")){auto feature=run(target,{L"--windows-lan-remote-access-contract"},5000);compatible=!feature.code&&trim(feature.out)=="aide-windows-lan-remote-access=1";}if(compatible){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}}
   if(action==L"choose-directory")return chooseDirectory();
   if(action==L"confirm-directory-restart")return MessageBoxW(nullptr,L"Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.",L"Aide directories",MB_OKCANCEL|MB_ICONWARNING|MB_DEFBUTTON2)==IDOK?0:2;
   if(force&&action!=L"build"&&action!=L"clean")throw std::runtime_error("--force-build is valid only with build or clean; start never compiles");
@@ -633,12 +637,12 @@ int wmain(int argc,wchar_t** argv){
    else if(action==L"build"||action==L"clean"){app.requireSource();if(action==L"clean")app.dockerClean();fs::remove(nativeStopPath);observeNativeStop=true;builtHost=app.buildSource();nativeStopController();fs::remove(nativeStopPath);}
 
    else if(action==L"refresh-helpers"){nativeCheckPreviousAgent(app);observeNativeStop=true;app.engine(false);auto cid=app.container();auto m=app.d({L"inspect",wide(cid),L"--format",L"{{.Image}}"});app.required(m,"Cannot resolve running image");app.image=trim(m.out);setenvw(L"AIDE_IMAGE",wide(app.image));app.helpers();}
-   else{nativeCheckPreviousAgent(app);nativeRestoreInterruptedMarker(app);fs::remove(nativeStopPath);observeNativeStop=true;app.deferHelpers=true;app.start();if(!app.reusedRunning)write(stateRoot/L"helper-refresh",std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));}
+   else{nativeCheckPreviousAgent(app);nativeRestoreInterruptedMarker(app);fs::remove(nativeStopPath);observeNativeStop=true;app.deferHelpers=true;app.start();if(!app.reusedRunning||app.messageLanHelperNeedsRefresh()||!nativeControllerStatus().value("running",false)){app.say("Refreshing Windows host helpers for the current launcher version.");write(stateRoot/L"helper-refresh",std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));}}
   }
   if(!builtHost.empty()){control.reset();Args args={L"start-built",L"--root",app.root.wstring()};if(noBrowser)args.push_back(L"--no-browser");return delegateNative(builtHost,args);}
   if(action==L"start"||action==L"start-built"){
    if(nativeStopping())throw std::runtime_error("Native startup stopped by operator");
-   try{if(!app.reusedRunning)nativeLaunchController(app);}catch(const aide_host::Unsafe&){throw;}catch(const std::exception& e){app.say(std::string("Background warning: ")+e.what());}
+   try{nativeLaunchController(app);}catch(const aide_host::Unsafe&){throw;}catch(const std::exception& e){app.say(std::string("Background warning: ")+e.what());}
    if(!nativeStopping())app.browser();
   }
   return 0;
