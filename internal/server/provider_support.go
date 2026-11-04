@@ -186,6 +186,53 @@ func supportMatches(c *supportCatalog, base string) bool {
 	return false
 }
 
+// Legacy or externally repaired registry.json files can lose optional support
+// metadata while the installed package manifest remains intact. Recover only
+// when package identity matches and the catalog passes the same strict
+// validation as an uploaded bundle.
+func (a *App) installedProviderSupportLocked(p *PluginManifest) *PluginProviderSupport {
+	if p == nil || p.ProviderSupport != nil || !pluginIDPattern.MatchString(p.ID) || p.Version == "" || p.PackageSHA256 == "" {
+		return nil
+	}
+	root, err := os.OpenRoot(a.pluginsPath)
+	if err != nil {
+		return nil
+	}
+	defer root.Close()
+	pluginRoot, err := root.OpenRoot(p.ID)
+	if err != nil {
+		return nil
+	}
+	defer pluginRoot.Close()
+	manifestFile, err := pluginRoot.Open("manifest.json")
+	if err != nil {
+		return nil
+	}
+	defer manifestFile.Close()
+	info, err := manifestFile.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		return nil
+	}
+	raw, err := io.ReadAll(io.LimitReader(manifestFile, (64<<10)+1))
+	if err != nil || len(raw) > 64<<10 {
+		return nil
+	}
+	var installed PluginManifest
+	if json.Unmarshal(raw, &installed) != nil || installed.ID != p.ID || installed.Version != p.Version || installed.PackageSHA256 != p.PackageSHA256 || installed.ProviderSupport == nil {
+		return nil
+	}
+	catalogFile, err := pluginRoot.Open(installed.ProviderSupport.Catalog)
+	if err != nil {
+		return nil
+	}
+	defer catalogFile.Close()
+	catalog, err := io.ReadAll(io.LimitReader(catalogFile, (128<<10)+1))
+	if err != nil || validatePluginProviderSupport(installed.ProviderSupport, map[string][]byte{installed.ProviderSupport.Catalog: catalog}) != nil {
+		return nil
+	}
+	return installed.ProviderSupport
+}
+
 // Caller holds a.mu. Invalid, disabled, failed or ambiguous extensions do not apply.
 func (a *App) providerSupportLocked(base string) (*supportCatalog, *PluginManifest) {
 	var selected *supportCatalog
@@ -193,6 +240,9 @@ func (a *App) providerSupportLocked(base string) (*supportCatalog, *PluginManife
 	for i := range a.pluginRegistry.Plugins {
 		p := &a.pluginRegistry.Plugins[i]
 		s := p.ProviderSupport
+		if s == nil {
+			s = a.installedProviderSupportLocked(p)
+		}
 		if !p.Enabled || a.pluginError(p.ID) != "" || s == nil || s.Protocol != 1 || !pluginIDPattern.MatchString(p.ID) || !routerCatalogName.MatchString(s.Catalog) {
 			continue
 		}

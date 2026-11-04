@@ -121,6 +121,60 @@ func TestProviderSupportActualPackagesEnabledDisabledRemoved(t *testing.T) {
 		t.Fatal("no plugin reported official", out)
 	}
 }
+
+func TestProviderSupportRecoversMissingRegistryMetadataFromMatchingManifest(t *testing.T) {
+	a := testApp(t)
+	m := supporterInstall(t, a, "deepseek")
+	index := -1
+	for i := range a.pluginRegistry.Plugins {
+		if a.pluginRegistry.Plugins[i].ID == m.ID {
+			index = i
+			break
+		}
+	}
+	if index < 0 || a.pluginRegistry.Plugins[index].PackageSHA256 == "" {
+		if index < 0 {
+			t.Fatal("installed package missing")
+		}
+		// Direct test uploads omit the marketplace receipt. Model the stable
+		// installed package identity that normal marketplace installs persist.
+		a.pluginRegistry.Plugins[index].PackageSHA256 = strings.Repeat("a", 64)
+		manifestPath := filepath.Join(a.pluginsPath, m.ID, "manifest.json")
+		var installed PluginManifest
+		raw, err := os.ReadFile(manifestPath)
+		if err != nil || json.Unmarshal(raw, &installed) != nil {
+			t.Fatalf("read installed manifest: %v", err)
+		}
+		installed.PackageSHA256 = a.pluginRegistry.Plugins[index].PackageSHA256
+		if err := atomicJSON(manifestPath, installed); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a.pluginRegistry.Plugins[index].ProviderSupport = nil
+	if err := a.savePluginRegistry(); err != nil {
+		t.Fatal(err)
+	}
+	q := a.providerQuote("https://api.deepseek.com/v1", "deepseek-flash", 100, supporterAt(t, "2026-10-22T09:00:00+08:00"))
+	if q == nil || q.Source != m.ID || q.Tier.PriceIn != 2 {
+		t.Fatalf("matching installed manifest should restore provider support: %+v", q)
+	}
+	if a.pluginRegistry.Plugins[index].ProviderSupport != nil {
+		t.Fatal("fallback must not silently rewrite registry state")
+	}
+	manifestPath := filepath.Join(a.pluginsPath, m.ID, "manifest.json")
+	var installed PluginManifest
+	raw, err := os.ReadFile(manifestPath)
+	if err != nil || json.Unmarshal(raw, &installed) != nil {
+		t.Fatalf("read installed manifest: %v", err)
+	}
+	installed.Version = "different-version"
+	if err := atomicJSON(manifestPath, installed); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.providerQuote("https://api.deepseek.com/v1", "deepseek-flash", 100, time.Now()); got != nil {
+		t.Fatalf("mismatched package manifest must not be trusted: %+v", got)
+	}
+}
 func TestProviderSupportExactHostPathAndModel(t *testing.T) {
 	a := testApp(t)
 	supporterInstall(t, a, "deepseek")
