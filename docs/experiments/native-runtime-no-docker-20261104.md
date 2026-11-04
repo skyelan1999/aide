@@ -71,3 +71,9 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - 后续 commit `fd19aa5a` 的三端原生包 CI run `41881694517` 全绿：macOS `.pkg` 构建、安装、TLS 服务启动/健康/鉴权/首页/无 Docker 检查通过；Linux Debian 包安装及运行 smoke 通过；Windows NSIS 安装、启动、健康/鉴权/首页、停止、卸载和用户数据保留通过；required gate success。独立 Aide CI run `41881331256` 的 quick、Go 编译/关键回归和 gate 均通过。手动 dispatch 曾被随后自动 push run 按并发策略取消；以最终 push run `41881694517` 为准。
 - 注意：测试最初用 `/etc/hosts` 作为“工作区外不可读”样本，macOS profile 允许读取系统配置路径，所以该断言不适用；后续改为工作区同级私有文件，并通过真实接口确认用户文件内容无法读取。系统范围只读授权是当前运行策略的一部分，不能据此宣称完全隔离宿主机系统数据。
 - Windows `workspace-write` 的 OS 级沙箱仍未实现，继续 fail-closed。Linux/macOS 沙箱当前允许网络，插件隔离未实现；不等价于 Docker 隔离。包级 TTS、浏览器/电脑控制、完整插件与远程工作区能力尚未因本轮变为已验收。
+
+## 2026-11-05 原生电脑控制依赖续查
+
+- 发现 `computerControlBridgeURL()` 在 `AIDE_RUNTIME_MODE=native` 时仍默认连接 `host.docker.internal:17778`，与安装包脱离 Docker 的运行方式冲突。已改为原生模式固定访问 `127.0.0.1:17778`，容器模式保持 Docker gateway；新增的三种运行模式回归测试通过。
+- Linux Debian 包现复制 `computer-bridge-linux.js`，声明 X11 bridge 的 `xdotool`/ImageMagick 依赖；仅在 X11 且有 `DISPLAY` 时生成独立 256-bit bridge token、启动服务并绑定 loopback，停止器核验 pid 命令路径后关闭 bridge。无头/Wayland 不误启动。当前完成脚本语法与 Node 语法/peer-filter 检查；下一轮 Linux 包 CI 将实际检查载荷并通过 `/api/command` 验证工作区 Node 写入、外部文件读取/写入拒绝。
+- 这只是 Linux 路径的一部分：macOS 原生 `.app` 与 Windows NSIS 包目前仍未自动附带、启动各自的电脑控制 bridge；截图、点击、输入还未在三平台安装包上做实机闭环。不要据此宣称电脑控制已从容器版完全移植。

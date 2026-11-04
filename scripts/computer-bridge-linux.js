@@ -8,6 +8,7 @@ const { promisify } = require('node:util');
 const execFileAsync = promisify(execFile);
 
 const PORT = Number(process.env.AIDE_COMPUTER_BRIDGE_PORT || 17778);
+const BIND_HOST = process.env.AIDE_COMPUTER_BRIDGE_BIND || '0.0.0.0';
 const TOKEN = process.env.AIDE_COMPUTER_BRIDGE_TOKEN || '';
 const BODY_LIMIT = 16 * 1024;
 const MAX_IMAGE = 2 * 1024 * 1024;
@@ -95,7 +96,7 @@ if (require.main === module) {
   if (process.env.XDG_SESSION_TYPE !== 'x11' || !process.env.DISPLAY) throw new Error('Aide Linux Computer Bridge requires an X11 desktop session');
   const server = http.createServer((req, res) => { void handle(req, res); });
   server.headersTimeout = 5000; server.requestTimeout = 10000;
-  server.listen(PORT, '0.0.0.0', () => console.log(`Aide Linux computer bridge listening on ${PORT} (X11)`));
+  server.listen(PORT, BIND_HOST, () => console.log(`Aide Linux computer bridge listening on ${BIND_HOST}:${PORT} (X11)`));
 }
 
 module.exports = { peerAllowed, allowed };

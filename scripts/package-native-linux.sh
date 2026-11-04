@@ -38,6 +38,7 @@ install -m 0755 "$SERVER" "$RES/aide"
 cp -a "$NODE_RUNTIME" "$RES/runtime/node"
 cp -a "$PYTHON_RUNTIME" "$RES/runtime/python"
 cp -a scripts/office/. "$RES/office-scripts/"
+install -m 0644 scripts/computer-bridge-linux.js "$RES/computer-bridge-linux.js"
 cat > "$RES/native-env.sh" <<'SH'
 #!/bin/sh
 set -eu
@@ -75,6 +76,37 @@ BASE="http://127.0.0.1:$PORT"
 LOG="$DATA/logs/service.log"
 PIDFILE="$DATA/service.pid"
 mkdir -p "$DATA/logs"
+BRIDGE_PIDFILE="$DATA/computer-bridge.pid"
+start_computer_bridge() {
+  [ "${XDG_SESSION_TYPE:-}" = x11 ] && [ -n "${DISPLAY:-}" ] || return 0
+  command -v xdotool >/dev/null 2>&1 && command -v import >/dev/null 2>&1 || { echo 'Aide computer bridge unavailable: install xdotool and ImageMagick.' >&2; return 0; }
+  AUTH_DIR="$DATA/auth"
+  TOKEN_FILE="$AUTH_DIR/computer-bridge-token"
+  mkdir -p "$AUTH_DIR"
+  "$ROOT/runtime/python/bin/python3.12" -I - "$TOKEN_FILE" <<'PY'
+import os,secrets,sys
+path=sys.argv[1]
+try:
+ fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+except FileExistsError:
+ pass
+else:
+ with os.fdopen(fd,'w') as stream: stream.write(secrets.token_hex(32))
+PY
+  BRIDGE_TOKEN="$(cat "$TOKEN_FILE")"
+  [ "${#BRIDGE_TOKEN}" -eq 64 ] || { echo 'Aide computer bridge token is invalid.' >&2; return 0; }
+  export AIDE_COMPUTER_BRIDGE_TOKEN="$BRIDGE_TOKEN" AIDE_COMPUTER_BRIDGE_URL=http://127.0.0.1:17778
+  if TOKEN="$BRIDGE_TOKEN" "$ROOT/runtime/node/bin/node" -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>r.json()).then(x=>process.exit(x.ok&&x.service==="aide-linux-computer-bridge"?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then return 0; fi
+  AIDE_COMPUTER_BRIDGE_BIND=127.0.0.1 nohup "$ROOT/runtime/node/bin/node" "$ROOT/computer-bridge-linux.js" >>"$DATA/logs/computer-bridge.log" 2>&1 </dev/null &
+  echo "$!" >"$BRIDGE_PIDFILE"
+  for _ in $(seq 1 30); do
+    if TOKEN="$BRIDGE_TOKEN" "$ROOT/runtime/node/bin/node" -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>r.json()).then(x=>process.exit(x.ok&&x.service==="aide-linux-computer-bridge"?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then return 0; fi
+    sleep 0.2
+  done
+  echo 'Aide computer bridge did not become ready; check logs/computer-bridge.log.' >&2
+  return 0
+}
+start_computer_bridge
 if "$ROOT/runtime/python/bin/python3.12" -I -c 'import socket,sys; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); r=s.connect_ex(("127.0.0.1", int(sys.argv[1]))); s.close(); raise SystemExit(0 if r == 0 else 1)' "$PORT"; then
   # Reuse only our own already-running instance; never attach to another app
   # that happens to answer on Aide's preferred port.
@@ -111,6 +143,15 @@ if [ -f "$PIDFILE" ]; then
   kill -TERM "$PID" 2>/dev/null || true
   rm -f "$PIDFILE"
 fi
+BRIDGE_PIDFILE="$DATA/computer-bridge.pid"
+if [ -f "$BRIDGE_PIDFILE" ]; then
+  BRIDGE_PID="$(cat "$BRIDGE_PIDFILE")"
+  case "$BRIDGE_PID" in ''|*[!0-9]*) echo 'Invalid computer bridge PID file.' >&2; exit 1 ;; esac
+  if kill -0 "$BRIDGE_PID" 2>/dev/null && ps -p "$BRIDGE_PID" -o command= | grep -Fq '/usr/lib/aide-native/computer-bridge-linux.js'; then
+    kill -TERM "$BRIDGE_PID" 2>/dev/null || true
+  fi
+  rm -f "$BRIDGE_PIDFILE"
+fi
 SH
 chmod 0755 "$RES/native-env.sh" "$PKG/usr/bin/aide-native" "$PKG/usr/bin/aide-native-ui" "$PKG/usr/bin/aide-native-stop"
 cat > "$PKG/usr/share/applications/aide-native-experiment.desktop" <<'DESKTOP'
@@ -132,7 +173,7 @@ Section: devel
 Priority: optional
 Architecture: $ARCH
 Maintainer: Aide Experimental Build
-Depends: libc6 (>= 2.34), libstdc++6, libgcc-s1, ca-certificates, curl, git, openssh-client, xdg-utils
+Depends: libc6 (>= 2.34), libstdc++6, libgcc-s1, ca-certificates, curl, git, openssh-client, xdg-utils, xdotool, imagemagick
 Description: Experimental Docker-free Aide runtime
  Aide service and Node/Python runtime installed independently of Docker.
 EOF

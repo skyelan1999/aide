@@ -17,6 +17,7 @@ import (
 )
 
 const computerControlDefaultBridge = "http://host.docker.internal:17778"
+const computerControlLoopbackBridge = "http://127.0.0.1:17778"
 
 var computerControlKeyNames = []string{"ENTER", "TAB", "ESCAPE", "BACKSPACE", "DELETE", "UP", "DOWN", "LEFT", "RIGHT", "SPACE"}
 
@@ -131,6 +132,11 @@ func computerControlConfirmationText(name string, args map[string]any) string {
 
 func computerControlBridgeURL() string {
 	value := strings.TrimRight(strings.TrimSpace(os.Getenv("AIDE_COMPUTER_BRIDGE_URL")), "/")
+	if runtimeMode() == "native" {
+		// Native packages run the bridge on the same host. Never fall back to a
+		// Docker Desktop gateway hostname from an installed, Docker-free app.
+		return computerControlLoopbackBridge
+	}
 	if value == "" {
 		return computerControlDefaultBridge
 	}

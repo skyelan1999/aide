@@ -30,9 +30,38 @@ aide-native-ui
 grep -q '^http://localhost:18097/#token=' "$AIDE_NATIVE_BROWSER_URL"
 token="$(cat "$AIDE_DATA/auth/access-token")"
 runtime=/usr/lib/aide-native/runtime
+test -f /usr/lib/aide-native/computer-bridge-linux.js
+"$runtime/node/bin/node" --check /usr/lib/aide-native/computer-bridge-linux.js
 curl -fsS "http://127.0.0.1:18097/healthz" | "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["status"]=="ok" and h["integrity"]=="ok",h'
 curl -fsS -H "Authorization: Bearer $token" http://127.0.0.1:18097/api/config | "$runtime/python/bin/python3.12" -I -c 'import json,sys; assert json.load(sys.stdin)["runtimeMode"] == "native"'
 [[ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18097/)" == 200 ]]
+printf '%s\n' 'native-command-payload-4f9a' >"$TEST_ROOT/outside-read.txt"
+command_json="$("$runtime/python/bin/python3.12" -I -c 'import json,sys; print(json.dumps({"command":sys.argv[1]}))' "node -e 'require(\"fs\").writeFileSync(\"native-command.txt\",\"sandbox-ok\")' && cat native-command.txt")"
+curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$command_json" http://127.0.0.1:18097/api/command >"$TEST_ROOT/workspace-command.ndjson"
+"$runtime/python/bin/python3.12" -I - "$TEST_ROOT/workspace-command.ndjson" "$TEST_ROOT/workspace/native-command.txt" <<'PY'
+import json,sys
+rows=[json.loads(line) for line in open(sys.argv[1]) if line.strip()]
+assert any(row.get('text')=='sandbox-ok' for row in rows), rows
+assert any(row.get('type')=='exit' and row.get('code')==0 for row in rows), rows
+assert open(sys.argv[2]).read()=='sandbox-ok'
+PY
+outside_command="$("$runtime/python/bin/python3.12" -I -c 'import json,shlex,sys; print(json.dumps({"command":"cat "+shlex.quote(sys.argv[1])}))' "$TEST_ROOT/outside-read.txt")"
+curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$outside_command" http://127.0.0.1:18097/api/command >"$TEST_ROOT/outside-command.ndjson"
+"$runtime/python/bin/python3.12" -I - "$TEST_ROOT/outside-command.ndjson" <<'PY'
+import json,sys
+rows=[json.loads(line) for line in open(sys.argv[1]) if line.strip()]
+output=''.join(row.get('text','') for row in rows if row.get('type')=='output')
+assert 'native-command-payload-4f9a' not in output, output
+assert any(row.get('type')=='exit' and row.get('code')!=0 for row in rows), rows
+PY
+outside_write_command="$("$runtime/python/bin/python3.12" -I -c 'import json,shlex,sys; print(json.dumps({"command":"printf leaked > "+shlex.quote(sys.argv[1])}))' "$TEST_ROOT/outside-write.txt")"
+curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$outside_write_command" http://127.0.0.1:18097/api/command >"$TEST_ROOT/outside-write-command.ndjson"
+"$runtime/python/bin/python3.12" -I - "$TEST_ROOT/outside-write-command.ndjson" "$TEST_ROOT/outside-write.txt" <<'PY'
+import json,os,sys
+rows=[json.loads(line) for line in open(sys.argv[1]) if line.strip()]
+assert not os.path.exists(sys.argv[2]), sys.argv[2]
+assert any(row.get('type')=='exit' and row.get('code')!=0 for row in rows), rows
+PY
 "$runtime/node/bin/node" --version | grep -q '^v24\.'
 "$runtime/python/bin/python3.12" -I -c 'import docx,openpyxl,pptx,ezdxf,pypdf'
 printf '%s\n' '{"title":"Native install smoke","blocks":[{"text":"without Docker"}]}' >"$TEST_ROOT/spec.json"
