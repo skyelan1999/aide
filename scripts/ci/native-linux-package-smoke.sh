@@ -56,7 +56,7 @@ bridge_token="$(cat "$AIDE_DATA/auth/computer-bridge-token")"
 curl -fsS -H "Authorization: Bearer $bridge_token" http://127.0.0.1:17778/healthz | \
   "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["ok"] and h["service"] == "aide-linux-computer-bridge",h'
 test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:17778/healthz)" = 401
-xterm -class AideNativeSmoke -T AideNativeSmoke -e sleep 90 >"$TEST_ROOT/xterm.log" 2>&1 &
+xterm -class AideNativeSmoke -T AideNativeSmoke -e sh -c 'printf "AIDE native screenshot smoke\\n"; sleep 90' >"$TEST_ROOT/xterm.log" 2>&1 &
 xterm_pid=$!
 window_id=''
 for _ in $(seq 1 30); do
@@ -84,10 +84,16 @@ try:
 except HTTPError as error:
     print(f'computer bridge HTTP {error.code}: {error.read().decode("utf-8",errors="replace")}',file=sys.stderr)
     raise
+import subprocess
 image=base64.b64decode(result.get('imageBase64',''),validate=True)
 assert result.get('ok') is True and result.get('mimeType')=='image/png',result
 assert len(image)>100 and image[:8]==b'\x89PNG\r\n\x1a\n',(len(image),image[:8])
-print(f'X11 packaged screenshot: PASS ({len(image)} PNG bytes)')
+width,height=__import__('struct').unpack('>II',image[16:24])
+assert width>=100 and height>=100,(width,height)
+identified=subprocess.run(['identify','-format','%k','png:-'],input=image,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True).stdout.decode().strip()
+colors=int(identified)
+assert colors>=2,colors
+print(f'X11 packaged screenshot: PASS ({width}x{height}, {colors} colors, {len(image)} PNG bytes)')
 PY
 kill "$xterm_pid" 2>/dev/null || true
 wait "$xterm_pid" 2>/dev/null || true
