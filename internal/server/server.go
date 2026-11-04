@@ -3393,6 +3393,21 @@ func routeConn(c net.Conn, tlsLn, plainLn *protoListener) {
 	}
 }
 
+func nativeLoopbackHTTPEnabled(addr string) bool {
+	if os.Getenv("AIDE_NATIVE_LOCAL_HTTP") != "1" {
+		return false
+	}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return false
+	}
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 func Run() error {
 	a, err := New(env("AIDE_WORKSPACE", "."), env("AIDE_CONTEXT", "context"), env("AIDE_DATA", ".data"))
 	if err != nil {
@@ -3416,16 +3431,25 @@ func Run() error {
 	if err != nil {
 		return err
 	}
-	tlsLn, plainLn := splitProto(rawLn)
-	redirectSrv := &http.Server{Handler: httpsRedirectHandler(), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 15 * time.Second}
-
 	serveErr := make(chan error, 2)
-	go func() { serveErr <- s.ServeTLS(tlsLn, certFile, keyFile) }()
-	go func() { serveErr <- redirectSrv.Serve(plainLn) }()
+	var redirectSrv *http.Server
+	localHTTP := nativeLoopbackHTTPEnabled(s.Addr)
+	if localHTTP {
+		// The installable Linux desktop opens the system browser on localhost.
+		// Loopback is a browser secure context, and avoiding a self-signed TLS
+		// interstitial makes first launch usable without installing a CA.
+		go func() { serveErr <- s.Serve(rawLn) }()
+		log.Printf("aide listening on http://%s (native loopback only)", s.Addr)
+	} else {
+		tlsLn, plainLn := splitProto(rawLn)
+		redirectSrv = &http.Server{Handler: httpsRedirectHandler(), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 15 * time.Second}
+		go func() { serveErr <- s.ServeTLS(tlsLn, certFile, keyFile) }()
+		go func() { serveErr <- redirectSrv.Serve(plainLn) }()
+		log.Printf("aide listening on https://%s (单端口自适应 http→https 308); cert=%s; token saved in %s", s.Addr, certFile, AccessTokenPath(a.dataPath))
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	log.Printf("aide listening on https://%s (单端口自适应 http→https 308); cert=%s; token saved in %s", s.Addr, certFile, AccessTokenPath(a.dataPath))
 	select {
 	case <-ctx.Done():
 		// Flush the privacy event before sockets/processes disappear. Close also
@@ -3435,7 +3459,9 @@ func Run() error {
 		defer done()
 		_ = s.Shutdown(c)
 		_ = s.Close()
-		_ = redirectSrv.Close()
+		if redirectSrv != nil {
+			_ = redirectSrv.Close()
+		}
 		_ = rawLn.Close()
 		return nil
 	case err := <-serveErr:
