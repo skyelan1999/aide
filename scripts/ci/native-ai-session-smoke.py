@@ -69,7 +69,7 @@ def main():
             "model": MODEL,
             "activeModel": MODEL,
             "baseURL": provider_url,
-            "models": [{"id": MODEL, "name": "Native install smoke", "providerId": "default", "contextWindow": 8192}],
+            "models": [{"id": MODEL, "name": "Native install smoke", "providerId": "default", "contextWindow": 32768}],
             "modelProviders": [{
                 "id": "default", "name": "Native install smoke", "baseURL": provider_url,
                 "protocol": "openai-compatible", "keys": [{"id": "smoke", "label": "CI fixture"}], "activeKeyId": "smoke",
