@@ -66,8 +66,12 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	mode := sandboxMode(a.settings.SandboxMode)
-	remoteMode := a.workspaceMode() == "ssh"
+	workspaceMode := a.workspaceMode()
+	commandTask := &Task{WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: workspaceMode, WorkspaceRemotePath: a.wsConfig.Workspace.Path}
+	wsRoot := a.workspace
+	cacheContainer := a.cacheContainer
 	a.mu.Unlock()
+	remoteMode := workspaceMode == "ssh"
 	if err := shellSandboxPolicy(mode, in.Command, remoteMode, in.Interactive); err != nil {
 		fail(w, 403, err)
 		return
@@ -75,7 +79,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	if in.Cwd == "" {
 		in.Cwd = "."
 	}
-	if a.workspaceMode() == "ssh" {
+	if remoteMode {
 		// R02/R03：远程模式不做本地 cwd 校验；命令进入绑定的远程目录
 		timeout := 60 * time.Second
 		if in.Interactive {
@@ -83,10 +87,12 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
-		if err := a.ensureSSHSession(ctx); err != nil {
+		session, release, err := a.taskSSHSession(ctx, commandTask)
+		if err != nil {
 			fail(w, 400, err)
 			return
 		}
+		defer release()
 		remote := in.Command
 		if in.Interactive {
 			// Keep one login shell attached to the PTY. The first command is
@@ -94,10 +100,10 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 			// shell history and Tab completion all share the same shell state.
 			remote = sshInteractiveShellCommand()
 		}
-		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
+		if rp := strings.TrimSpace(session.directory); rp != "" {
 			remote = "cd " + shellQuote(rp) + " && " + remote
 		}
-		if cache := a.workspaceRemoteCachePath(); cache != "" {
+		if cache := session.cache; cache != "" {
 			remote = "mkdir -p " + shellQuote(cache) + " && export AIDE_CACHE=" + shellQuote(cache) + " GOCACHE=" + shellQuote(cache) + " && " + remote
 		}
 		select {
@@ -124,14 +130,14 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 			a.commandInputMu.Unlock()
 			stream.event(map[string]string{"type": "session", "id": inputID})
 			ptyInput := sshInteractivePTYInput(in.Command, reader)
-			code, runErr = a.execRemotePTY(ctx, remote, ptyInput, stream, stream)
+			code, runErr = a.execRemotePTYSession(ctx, remote, ptyInput, stream, stream, session)
 			a.commandInputMu.Lock()
 			delete(a.commandInputs, inputID)
 			a.commandInputMu.Unlock()
 			_ = reader.Close()
 			_ = writer.Close()
 		} else {
-			code, runErr = a.execRemote(ctx, remote, stream, stream)
+			code, runErr = a.execRemoteSession(ctx, remote, stream, stream, session)
 		}
 		message := ""
 		if runErr != nil {
@@ -151,15 +157,17 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	a.mu.Lock()
-	wsRoot := a.workspace.Name() // R02：命令目录必须跟随当前工作区
-	a.mu.Unlock()
-	dir, err := filepath.EvalSymlinks(filepath.Join(wsRoot, in.Cwd))
+	if wsRoot == nil {
+		fail(w, 400, errors.New("工作区不可用"))
+		return
+	}
+	wsRootPath := wsRoot.Name() // The captured root cannot be redirected by a concurrent switch.
+	dir, err := filepath.EvalSymlinks(filepath.Join(wsRootPath, in.Cwd))
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	base, err := filepath.EvalSymlinks(wsRoot)
+	base, err := filepath.EvalSymlinks(wsRootPath)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -186,7 +194,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cleanup()
 	cmd.Dir = dir
-	cacheEnv := a.cacheContainer
+	cacheEnv := cacheContainer
 	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
