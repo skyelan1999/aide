@@ -71,11 +71,19 @@ if [[ -z "$window_id" ]]; then
   exit 1
 fi
 xdotool windowfocus --sync "$window_id"
+target_pid="$(xdotool getwindowpid "$window_id")"
+target_name="$(cat "/proc/$target_pid/comm")"
+printf 'X11 screenshot target: id=%s pid=%s process=%s focused=%s\n' "$window_id" "$target_pid" "$target_name" "$(xdotool getwindowfocus)"
 "$runtime/python/bin/python3.12" -I - "$bridge_token" <<'PY'
 import base64,json,sys,urllib.request
-req=urllib.request.Request('http://127.0.0.1:17778/v1/snapshot',data=json.dumps({'allowedApps':['xmessage']}).encode(),headers={'Authorization':'Bearer '+sys.argv[1],'Content-Type':'application/json'},method='POST')
-with urllib.request.urlopen(req,timeout=15) as response:
-    result=json.load(response)
+from urllib.error import HTTPError
+req=urllib.request.Request('http://127.0.0.1:17778/v1/snapshot',data=json.dumps({'allowedApps':['xmessage','AideNativeSmoke']}).encode(),headers={'Authorization':'Bearer '+sys.argv[1],'Content-Type':'application/json'},method='POST')
+try:
+    with urllib.request.urlopen(req,timeout=15) as response:
+        result=json.load(response)
+except HTTPError as error:
+    print(f'computer bridge HTTP {error.code}: {error.read().decode("utf-8",errors="replace")}',file=sys.stderr)
+    raise
 image=base64.b64decode(result.get('imageBase64',''),validate=True)
 assert result.get('ok') is True and result.get('mimeType')=='image/png',result
 assert len(image)>100 and image[:8]==b'\x89PNG\r\n\x1a\n',(len(image),image[:8])
