@@ -44,11 +44,35 @@ if ! command -v makensis >/dev/null; then
 fi
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/aide-native-windows.XXXXXX")"
 trap 'python3 -c "import shutil,sys; shutil.rmtree(sys.argv[1],ignore_errors=True)" "$STAGE"' EXIT
+DEPS="$STAGE/dependencies"
+mkdir -p "$DEPS"
+MINGIT_VERSION=2.56.0.4
+MINGIT_SHA256=e3bf78351fe777fba47ddee5950082f8a98bb0f02604fdc7ba3ee2cb68ffa877
+MINGIT_ZIP="${AIDE_WINDOWS_MINGIT_ZIP:-$DEPS/MinGit.zip}"
+if [[ ! -f "$MINGIT_ZIP" ]]; then
+  curl -fL --retry 2 --connect-timeout 15 --max-time 240 "https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.4/MinGit-${MINGIT_VERSION}-64-bit.zip" -o "$MINGIT_ZIP"
+fi
+printf '%s  %s\n' "$MINGIT_SHA256" "$MINGIT_ZIP" | shasum -a 256 -c -
+OPENSSH_VERSION=10.4.0.0p1-Preview
+OPENSSH_SHA256=b67ff8becd203502190ec42ac7787c24c2cd3325ed7700485fe7a1c83d2a7957
+OPENSSH_ZIP="${AIDE_WINDOWS_OPENSSH_ZIP:-$DEPS/OpenSSH-Win64.zip}"
+if [[ ! -f "$OPENSSH_ZIP" ]]; then
+  curl -fL --retry 2 --connect-timeout 15 --max-time 240 "https://github.com/PowerShell/Win32-OpenSSH/releases/download/${OPENSSH_VERSION}/OpenSSH-Win64.zip" -o "$OPENSSH_ZIP"
+fi
+printf '%s  %s\n' "$OPENSSH_SHA256" "$OPENSSH_ZIP" | shasum -a 256 -c -
+mkdir "$DEPS/mingit" "$DEPS/openssh"
+unzip -q "$MINGIT_ZIP" -d "$DEPS/mingit"
+unzip -q "$OPENSSH_ZIP" -d "$DEPS/openssh"
+[[ -f "$DEPS/mingit/cmd/git.exe" && -f "$DEPS/mingit/usr/bin/ssh.exe" ]] || { echo 'MinGit archive is missing git.exe or ssh.exe.' >&2; exit 1; }
+[[ -f "$DEPS/openssh/OpenSSH-Win64/ssh-keygen.exe" && -f "$DEPS/openssh/OpenSSH-Win64/libcrypto.dll" ]] || { echo 'OpenSSH archive is missing required SSH client files.' >&2; exit 1; }
 PAYLOAD="$STAGE/payload"
-mkdir -p "$PAYLOAD/runtime/python" "$PAYLOAD/runtime/node" "$PAYLOAD/office-scripts"
+mkdir -p "$PAYLOAD/runtime/python" "$PAYLOAD/runtime/node" "$PAYLOAD/runtime/git" "$PAYLOAD/runtime/openssh" "$PAYLOAD/office-scripts"
 install -m 0755 "$SERVER" "$PAYLOAD/aide-server.exe"
 cp -a "$PYTHON_RUNTIME/." "$PAYLOAD/runtime/python/"
+cp "$PAYLOAD/runtime/python/python.exe" "$PAYLOAD/runtime/python/python3.exe"
 cp -a "$NODE_RUNTIME/." "$PAYLOAD/runtime/node/"
+cp -a "$DEPS/mingit/." "$PAYLOAD/runtime/git/"
+cp -a "$DEPS/openssh/OpenSSH-Win64/." "$PAYLOAD/runtime/openssh/"
 find "$PAYLOAD/runtime/python" -type f -name '*.pdb' -delete
 cp -a scripts/office/. "$PAYLOAD/office-scripts/"
 cat > "$PAYLOAD/AideNative.ps1" <<'PS1'
@@ -67,7 +91,8 @@ $env:AIDE_RUNTIME_MODE = 'native'
 $env:AIDE_NATIVE_LOCAL_HTTP = '1'
 $env:AIDE_LAN_ADDR = '127.0.0.1:0'
 $env:AIDE_OFFICE_SCRIPTS = Join-Path $install 'office-scripts'
-$env:PATH = (Join-Path $install 'runtime\node') + ';' + (Join-Path $install 'runtime\python') + ';' + $env:PATH
+$env:PATH = (Join-Path $install 'runtime\node') + ';' + (Join-Path $install 'runtime\python') + ';' + (Join-Path $install 'runtime\openssh') + ';' + (Join-Path $install 'runtime\git\cmd') + ';' + (Join-Path $install 'runtime\git\usr\bin') + ';' + $env:PATH
+$env:GIT_SSH = Join-Path $install 'runtime\openssh\ssh.exe'
 $env:PYTHONPATH = Join-Path $install 'runtime\python\Lib\site-packages'
 $tokenFile = Join-Path $data 'auth\access-token'
 $token = if (Test-Path $tokenFile) { (Get-Content -Raw $tokenFile).Trim() } else { '' }

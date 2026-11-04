@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -173,6 +174,10 @@ func (a *App) runPluginHost(ctx context.Context) {
 // or inherited credentials. A packaged native runtime supplies its own Node
 // executable through PATH and uses the signed-in user's application data home.
 func aideRuntimeEnvironment() []string {
+	return aideRuntimeEnvironmentForOS(runtime.GOOS)
+}
+
+func aideRuntimeEnvironmentForOS(goos string) []string {
 	path, home := "/usr/local/bin:/usr/bin:/bin", "/home/aide"
 	if os.Getenv("AIDE_RUNTIME_MODE") == "native" {
 		if value := strings.TrimSpace(os.Getenv("PATH")); value != "" {
@@ -187,7 +192,13 @@ func aideRuntimeEnvironment() []string {
 		}
 	}
 	env := []string{"PATH=" + path, "HOME=" + home}
-	for _, name := range []string{"TMPDIR", "TMP", "TEMP", "LANG", "LC_ALL"} {
+	allowed := []string{"TMPDIR", "TMP", "TEMP", "LANG", "LC_ALL"}
+	if goos == "windows" {
+		// Windows child processes need these to locate system DLLs, shells,
+		// per-user configuration, and system-managed application data.
+		allowed = append(allowed, "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "APPDATA", "LOCALAPPDATA", "PROGRAMDATA", "SYSTEMDRIVE")
+	}
+	for _, name := range allowed {
 		if value, ok := os.LookupEnv(name); ok {
 			env = append(env, name+"="+value)
 		}

@@ -36,11 +36,12 @@ AIDE_WORKSPACE="$PWD" AIDE_CONTEXT="$PWD/context" scripts/run-native-runtime.sh
 - Linux 包的本机网页服务仅在明确的 `AIDE_NATIVE_LOCAL_HTTP=1` 且监听地址为 loopback 时用 HTTP，避免系统浏览器首次遇到自签名 TLS 拦截；服务拒绝将该选项用于非回环地址。首页返回 HTTP 200，不重定向 HTTPS；LAN 远程访问服务仍保持独立 TLS 路径。当前启动器调用系统默认浏览器，尚未做真实桌面浏览器/媒体权限验收。
 - 新增 `nativeLoopbackHTTPEnabled` 边界单测；Go 服务针对这项行为的测试通过。修改后的同一 Go 服务再次交叉编译为 macOS arm64、Linux amd64/arm64 和 Windows amd64；Windows 编译结果仍未在真实 Windows 上执行。
 - Windows amd64 服务已从相同源码交叉编译成功；此前发现的 POSIX 进程组与磁盘统计调用已抽成 Windows 实现。新增 `scripts/build-native-python-windows.sh`、`scripts/package-native-windows.sh`，组成 x64 per-user NSIS 安装链：内置 Aide Go 服务、Python 3.12.16、Node 24.19.0 和 Office 脚本。PowerShell 启动器将数据放在用户目录、只监听 loopback、健康检查后打开默认浏览器、不需要管理员权限，也不调用 Docker；安装前和卸载前都会停止本安装实例的服务。Python/Node 官方归档 SHA-256 校验通过；交叉编译 PE 和 NSIS 安装器静态生成成功，7-Zip 实际解包并核对了服务、Python、Node、启动/停止脚本、Office 脚本及卸载器，PowerShell parser 对启动/停止脚本解析通过。安装器为 181 MiB。当前没有可用 Windows 主机，因此安装、启动、升级、卸载和浏览器联调仍未在 Windows 真机验收。
+- 后续检查发现 Windows 启动器没有自带 Git/SSH，且 Office 子进程使用 `python3` 而 Python 归档默认名是 `python.exe`；native 子进程环境也过滤掉了 Windows 的 `SYSTEMROOT`/`USERPROFILE` 等必要变量。已修正环境白名单和单测，并给包内 Python 增加 `python3.exe`；安装器现在附带校验过 SHA-256 的 MinGit 2.56.0.4 与 Win32-OpenSSH 10.4 preview，`PATH`/`GIT_SSH` 指向随包工具。第三版安装包目标为 `/tmp/aide-native-win64-v3/output/Aide-Native-Windows-x64-Setup.exe`；包内的服务、Node、Python、Git、SSH 客户端、`ssh-keygen` 和 Office 脚本在 7-Zip 解包后逐项检查，PowerShell 启动/停止脚本语法解析通过。新增 Windows native 环境单测和 Windows amd64 服务交叉编译通过；完整 `go test ./internal/server` 执行超过 4 分钟仍在 CPU 密集阶段，本轮终止，不能记作通过。OpenSSH 上游所发版本标为 preview；尚未在 Windows 实机验证安装、SSH、插件子进程或浏览器启动。
 - 当前宿主 Python 3.9 只有标准库，没有 `python-docx`、`openpyxl`、`python-pptx`、`ezdxf`、`pypdf`、Pillow 或 NumPy；依赖这些模块的工具不会与容器环境等价。Node 存在，但测试没有安装或验收任一插件。
 
 ## 尚未达到“独立自主运行”的部分
 
-浏览器和本地 sherpa 离线 TTS 工具链仍未随 App 打包；插件 daemon、消息桥、电脑/浏览器桥接、AI/TTS 以及 Office 真实文件转换尚未端到端验收。Python/Node 主进程运行时已随实验包提供，但尚未验证真实市场插件的安装、启动和依赖行为。桌面冒烟的完整插件页断言因隔离数据目录没有 Compare/ProfessionalProject 插件而为 false；系统平台认证器检查也为 false，原生 Touch ID bridge 本身可用。
+浏览器和本地 sherpa 离线 TTS 工具链仍未随 App 打包；插件 daemon、消息桥、电脑/浏览器桥接、AI/TTS 以及 Office 真实文件转换尚未端到端验收。Python/Node/Git/SSH 主机工具已纳入实验安装包，但尚未验证真实市场插件的安装、启动和依赖行为。Windows 带口令 SSH 私钥的 `SSH_ASKPASS` 仍依赖 Unix `ExtraFiles` 管道实现，需设计 Windows 安全等价实现并在 Windows 上测试。桌面冒烟的完整插件页断言因隔离数据目录没有 Compare/ProfessionalProject 插件而为 false；系统平台认证器检查也为 false，原生 Touch ID bridge 本身可用。
 
 `internal/execsandbox` 只有 Linux Landlock 实现；macOS/Windows 的 restricted 命令继续 fail-closed，不会因为改成原生启动就扩大为不受限的宿主机 shell。原生运行时需先设计并验证系统级隔离，否则不能宣称与 Docker 工作台具有同等的安全能力。
 

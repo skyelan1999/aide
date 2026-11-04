@@ -36,3 +36,27 @@ func TestPluginHostEnvironmentKeepsContainerDefaults(t *testing.T) {
 		t.Fatalf("container runtime defaults changed: %q", got)
 	}
 }
+
+func TestNativeWindowsRuntimeEnvironmentKeepsSystemPathsWithoutSecrets(t *testing.T) {
+	t.Setenv("AIDE_RUNTIME_MODE", "native")
+	t.Setenv("PATH", `C:\Aide\runtime\node;C:\Windows\System32`)
+	t.Setenv("HOME", `C:\Users\test\AppData\Local\Aide`)
+	t.Setenv("SYSTEMROOT", `C:\Windows`)
+	t.Setenv("WINDIR", `C:\Windows`)
+	t.Setenv("COMSPEC", `C:\Windows\System32\cmd.exe`)
+	t.Setenv("PATHEXT", ".COM;.EXE;.BAT;.CMD")
+	t.Setenv("USERPROFILE", `C:\Users\test`)
+	t.Setenv("LOCALAPPDATA", `C:\Users\test\AppData\Local`)
+	t.Setenv("PROGRAMDATA", `C:\ProgramData`)
+	t.Setenv("SYSTEMDRIVE", "C:")
+	t.Setenv("AI_API_KEY", "must-not-leak")
+	got := strings.Join(aideRuntimeEnvironmentForOS("windows"), "\n")
+	for _, want := range []string{`PATH=C:\Aide\runtime\node;C:\Windows\System32`, `SYSTEMROOT=C:\Windows`, `COMSPEC=C:\Windows\System32\cmd.exe`, `USERPROFILE=C:\Users\test`, `LOCALAPPDATA=C:\Users\test\AppData\Local`, `PROGRAMDATA=C:\ProgramData`} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("Windows runtime env missing %q: %q", want, got)
+		}
+	}
+	if strings.Contains(got, "AI_API_KEY") || strings.Contains(got, "must-not-leak") {
+		t.Fatalf("secret entered Windows plugin environment: %q", got)
+	}
+}
