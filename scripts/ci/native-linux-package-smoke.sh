@@ -56,15 +56,20 @@ bridge_token="$(cat "$AIDE_DATA/auth/computer-bridge-token")"
 curl -fsS -H "Authorization: Bearer $bridge_token" http://127.0.0.1:17778/healthz | \
   "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["ok"] and h["service"] == "aide-linux-computer-bridge",h'
 test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:17778/healthz)" = 401
-xmessage -name AideNativeSmoke -title AideNativeSmoke -buttons Close:0 'Aide native screenshot smoke' >/dev/null 2>&1 &
+xmessage -name AideNativeSmoke -title AideNativeSmoke -buttons Close:0 'Aide native screenshot smoke' >"$TEST_ROOT/xmessage.log" 2>&1 &
 xmessage_pid=$!
 window_id=''
 for _ in $(seq 1 30); do
-  window_id="$(xdotool search --onlyvisible --pid "$xmessage_pid" 2>/dev/null | head -1 || true)"
+  window_id="$(xdotool search --onlyvisible --name 'AideNativeSmoke' 2>/dev/null | head -1 || true)"
   [[ -n "$window_id" ]] && break
+  if ! kill -0 "$xmessage_pid" 2>/dev/null; then break; fi
   sleep 0.2
 done
-test -n "$window_id" || { echo 'X11 screenshot fixture window did not appear.' >&2; exit 1; }
+if [[ -z "$window_id" ]]; then
+  echo 'X11 screenshot fixture window did not appear.' >&2
+  cat "$TEST_ROOT/xmessage.log" >&2 || true
+  exit 1
+fi
 xdotool windowfocus --sync "$window_id"
 "$runtime/python/bin/python3.12" -I - "$bridge_token" <<'PY'
 import base64,json,sys,urllib.request
