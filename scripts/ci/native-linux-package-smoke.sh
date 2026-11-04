@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Install and exercise a Debian package on an ephemeral Linux runner.
 set -euo pipefail
+if [[ "${AIDE_NATIVE_LINUX_XVFB:-}" != 1 ]]; then
+  command -v sudo >/dev/null && sudo apt-get update -qq && sudo apt-get install -y -qq xvfb xauth x11-utils
+  exec xvfb-run -a env AIDE_NATIVE_LINUX_XVFB=1 XDG_SESSION_TYPE=x11 "$0" "$@"
+fi
 PACKAGE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 [[ -f "$PACKAGE" ]] || { echo "Debian package not found: $PACKAGE" >&2; exit 2; }
 command -v sudo >/dev/null && command -v dpkg-deb >/dev/null || { echo 'sudo and dpkg-deb are required.' >&2; exit 2; }
@@ -13,6 +17,12 @@ sudo apt-get update -qq
 sudo apt-get install -y -qq "$PACKAGE"
 TEST_ROOT="${RUNNER_TEMP:-$(mktemp -d)}/aide-native-linux-package-smoke"
 mkdir -p "$TEST_ROOT"/{bin,home,data,workspace,context}
+xmessage_pid=''
+cleanup_native_smoke() {
+  if [[ -n "$xmessage_pid" ]]; then kill "$xmessage_pid" 2>/dev/null || true; fi
+  aide-native-stop >/dev/null 2>&1 || true
+}
+trap cleanup_native_smoke EXIT
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$TEST_ROOT/workspace/plugins/native-runtime-smoke-daemon"
 cp "$REPO_ROOT/plugins/testdata/mock-daemon/index.js" "$TEST_ROOT/workspace/plugins/native-runtime-smoke-daemon/index.js"
@@ -41,6 +51,33 @@ test -f /usr/lib/aide-native/computer-bridge-linux.js
 curl -fsS "http://127.0.0.1:18097/healthz" | "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["status"]=="ok" and h["integrity"]=="ok",h'
 curl -fsS -H "Authorization: Bearer $token" http://127.0.0.1:18097/api/config | "$runtime/python/bin/python3.12" -I -c 'import json,sys; assert json.load(sys.stdin)["runtimeMode"] == "native"'
 [[ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18097/)" == 200 ]]
+test -s "$AIDE_DATA/computer-bridge.pid" && test -s "$AIDE_DATA/auth/computer-bridge-token"
+bridge_token="$(cat "$AIDE_DATA/auth/computer-bridge-token")"
+curl -fsS -H "Authorization: Bearer $bridge_token" http://127.0.0.1:17778/healthz | \
+  "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["ok"] and h["service"] == "aide-linux-computer-bridge",h'
+test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:17778/healthz)" = 401
+xmessage -name AideNativeSmoke -title AideNativeSmoke -buttons Close:0 'Aide native screenshot smoke' >/dev/null 2>&1 &
+xmessage_pid=$!
+window_id=''
+for _ in $(seq 1 30); do
+  window_id="$(xdotool search --onlyvisible --pid "$xmessage_pid" 2>/dev/null | head -1 || true)"
+  [[ -n "$window_id" ]] && break
+  sleep 0.2
+done
+test -n "$window_id" || { echo 'X11 screenshot fixture window did not appear.' >&2; exit 1; }
+xdotool windowfocus --sync "$window_id"
+"$runtime/python/bin/python3.12" -I - "$bridge_token" <<'PY'
+import base64,json,sys,urllib.request
+req=urllib.request.Request('http://127.0.0.1:17778/v1/snapshot',data=json.dumps({'allowedApps':['xmessage']}).encode(),headers={'Authorization':'Bearer '+sys.argv[1],'Content-Type':'application/json'},method='POST')
+with urllib.request.urlopen(req,timeout=15) as response:
+    result=json.load(response)
+image=base64.b64decode(result.get('imageBase64',''),validate=True)
+assert result.get('ok') is True and result.get('mimeType')=='image/png',result
+assert len(image)>100 and image[:8]==b'\x89PNG\r\n\x1a\n',(len(image),image[:8])
+print(f'X11 packaged screenshot: PASS ({len(image)} PNG bytes)')
+PY
+kill "$xmessage_pid" 2>/dev/null || true
+wait "$xmessage_pid" 2>/dev/null || true
 "$runtime/python/bin/python3.12" -I "$REPO_ROOT/scripts/ci/native-plugin-daemon-smoke.py" \
   --base http://127.0.0.1:18097 --token "$token" --workspace "$TEST_ROOT/workspace" \
   --fixture "$REPO_ROOT/plugins/testdata/mock-daemon"
@@ -85,5 +122,6 @@ for _ in $(seq 1 20); do
 done
 [[ "$code" == 000 ]] || { echo "Aide still responds after stop: HTTP $code" >&2; exit 1; }
 [[ ! -e "$AIDE_NATIVE_DOCKER_MARKER" ]]
+trap - EXIT
 sudo dpkg -r "$PKG_NAME"
 printf 'Native Linux package install/start/auth/Office/stop/no-Docker smoke: PASS\n'
