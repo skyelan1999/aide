@@ -13,7 +13,7 @@
           "options": [
             {
               "value": "blue",
-              "label": "专业"
+              "label": "基础"
             },
             {
               "value": "comfort",
@@ -22,6 +22,10 @@
             {
               "value": "green",
               "label": "经典"
+            },
+            {
+              "value": "professional",
+              "label": "专业"
             },
             {
               "value": "modern",

@@ -7,6 +7,8 @@
 > - **文件与键名**：`theme-init.js` 已更名 `settings-init.js`；存储键由 `aide.theme`（字符串）改为 `localStorage['aide.ui']`（JSON，含 `theme`/`palette`/`language`）。旧键 `aide.theme` 与旧值 `classic` 仍被迁移吸收。
 > - 79 个语义令牌冻结约定保留（`themes/light|dark/tokens.css` 各 79 条）。
 
+> **现行实现补充（2026-11-04）**：配色现为「基础」(`blue`)、舒适、经典、专业和现代五套，均支持浅色/深色/跟随系统。旧版 `modern` 偏好通过 `paletteVersion` 一次迁移为专业；新现代偏好使用 `paletteVersion: 2`，保证升级与跨标签同步不串色。专业保留此前雾银冷蓝钛金配色；现代使用更克制的中性瓷白/墨色层次与清晰蓝色强调。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design）+ 任务分解 |

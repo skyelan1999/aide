@@ -27,6 +27,7 @@
   var KEY = 'aide.ui';
   var LEGACY_KEY = 'aide.theme';
   var VERSION = 1;
+  var PALETTE_VERSION = 2;
   var VALID_THEME = ['light', 'dark', 'system']; // 主题枚举唯一来源
   var DEFAULT_PREF = 'system';
   function normalizeLanguage(value) { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; }                   // 缺省偏好
@@ -69,6 +70,10 @@
   function normalizeTheme(value) {
     return isTheme(value) ? value : DEFAULT_PREF;
   }
+  function normalizePalette(value, version) {
+    if (value === 'modern') return version === PALETTE_VERSION ? 'modern' : 'professional';
+    return ['blue', 'comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'blue';
+  }
   function normalizeBackgroundStrength(value) {
     return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;
   }
@@ -101,7 +106,8 @@
     doc.background = ['off', 'aurora', 'studio', 'modern', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : parsed.palette === 'modern' ? 'modern' : 'blue';
+    doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
+    doc.paletteVersion = PALETTE_VERSION;
     var normalized = JSON.stringify(doc);
     if (stored !== normalized) rawSet(KEY, normalized);
     return doc;
@@ -196,7 +202,8 @@
       doc.background = ['off', 'aurora', 'studio', 'modern', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
       doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-      doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : parsed.palette === 'modern' ? 'modern' : 'blue';
+      doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
+      doc.paletteVersion = PALETTE_VERSION;
       applyTheme();
       notifyAll();
     } else if (event.key === LEGACY_KEY) {
@@ -218,7 +225,8 @@
     },
     getAll: snapshot,
     setAppearance: function (palette, theme) {
-      doc.palette = ['green', 'comfort', 'modern'].indexOf(palette) >= 0 ? palette : 'blue';
+      doc.palette = ['green', 'comfort', 'professional', 'modern'].indexOf(palette) >= 0 ? palette : 'blue';
+      doc.paletteVersion = PALETTE_VERSION;
       doc.theme = normalizeTheme(theme);
       persist();
       applyTheme();
@@ -226,7 +234,8 @@
     },
     set: function (name, value) {
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['blue','comfort','green','modern'].indexOf(value)>=0 ? value : 'blue') : name === 'background' ? (['off','aurora','studio','modern','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['blue','comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'blue') : name === 'background' ? (['off','aurora','studio','modern','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
+      if (name === 'palette') doc.paletteVersion = PALETTE_VERSION;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion' || name === 'palette') applyTheme();
       notifyAll();

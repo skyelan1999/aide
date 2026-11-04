@@ -1,0 +1,90 @@
+{
+  "id": "modern-palette-redesign-20261104",
+  "request": "把主题现代变成专业，在重新做一个现代，现在的现代不够现代",
+  "baseline": "f3f29b4e4fd627bea79bf32cd294207d9dae94c3",
+  "initial_status": "M .env.example\n M compose.yaml\n M internal/server/web/app.js\n M internal/server/web/index.html\n M scripts/browser-preview-resource-bounds.cjs\n M scripts/browser-zip-preview-review.cjs\n M scripts/test_docx_preview_bounds.cjs\n?? docs/tasks/aide-perf-stability-20261104.json\n?? docs/tasks/issue-audit-20261104.json\n?? \"docs/tasks/plugin-compose-i18n-test-20261103 2.json\"\n?? docs/tasks/plugin-ssh-compat-audit-20261104.json\n?? \"docs/tasks/plugin-tts-full-test-20261103 2.json\"\n?? docs/tasks/terminal-display-settings-20261103.json\n?? docs/tasks/terminal-log-read-api-release-20261103.json\n?? \"internal/server/computer_control 2.go\"\n?? \"native/windows-launcher/computer_bridge 2.hpp\"\n?? \"scripts/computer-bridge-linux 2.js\"",
+  "acceptance": [
+    "配色选项将旧现代外观命名为专业，并提供全新现代配色；浅色、深色、跟随系统均可用。",
+    "未升级的旧 palette=modern 用户保留旧外观并迁移为 professional；新版本 modern 可持久化且跨标签同步。",
+    "插件工作台能收到 professional 与 modern 两种主题标识。",
+    "在实际浏览器页面查看浅色、深色和配色选择器预览，无控制台错误。"
+  ],
+  "scope": [
+    "internal/server/web/themes/modern.css",
+    "internal/server/web/themes/professional.css",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/settings-init.js",
+    "internal/server/web/index.html",
+    "internal/server/web/experience.css",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/plugin-workbench.js",
+    "scripts/settings-navigation.test.cjs",
+    "docs/architecture/2026-09-21-theme-switching.md",
+    "docs/tasks/modern-palette-redesign-20261104.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求将当前现代配色改名为专业，并重新设计现代配色。保留现有用户外观是兼容要求。",
+      "evidence": [
+        "当前 settings-schema.json 显示 blue=专业、comfort=舒适、green=经典、modern=现代。现有 themes/modern.css 即旧外观。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留已有基础蓝、舒适、经典配色；把旧现代配色以 professional 作为单独值对外，新增 modern 新令牌。paletteVersion=2 将旧版无版本 modern 迁移成 professional，版本化 modern 不迁移。插件主题广播接收 professional。",
+      "evidence": [
+        "internal/server/web/settings-init.js 设置读取/跨标签同步迁移逻辑",
+        "internal/server/web/themes/professional.css 保留旧现代令牌",
+        "internal/server/web/themes/modern.css 使用新中性瓷白/墨色与蓝色强调令牌"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成配色重命名/拆分、现代新色值、设置迁移、插件主题消息识别、主题选择器样式与中英文配色名；原蓝配色更名基础以避免出现两个“专业”。",
+      "evidence": [
+        "internal/server/web/settings-schema.json 新配色项",
+        "internal/server/web/settings-init.js paletteVersion=2 迁移及即时设置 API",
+        "internal/server/web/themes/professional.css 与 internal/server/web/themes/modern.css",
+        "internal/server/web/plugin-workbench.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Safari 本机主题预览加载项目实际主题 CSS 与 settings-init.js；手动核对旧 modern 自动选中专业、新 modern 可选、professional 保留旧钛金外观、modern 浅/深色变化。node --check、schema/task JSON 解析、git diff --check 均通过；settings-navigation.test.cjs 6/6 通过。线上 Aide 实例未重启或替换。",
+      "evidence": [
+        "Safari 页面 http://127.0.0.1:18998/（本地临时预览；非完整 Aide 工作台）",
+        "node --check internal/server/web/settings-init.js",
+        "node --check internal/server/web/plugin-workbench.js",
+        "node --check internal/server/web/locales/en.js",
+        "JSON parse settings-schema.json/task record; git diff --check",
+        "node scripts/settings-navigation.test.cjs: 6/6 passed"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新主题架构与增量 PRD 中的现行配色/迁移说明。",
+      "evidence": [
+        "docs/architecture/2026-09-21-theme-switching.md",
+        "docs/prd/2026-09-21-theme-switching.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "关闭本任务新开的 Safari 预览标签，停止仅供本次预览的 18997/18998 本地 HTTP 服务并移除 /tmp 临时页。工作区中原有改动与未跟踪用户文件均保留。",
+      "evidence": [
+        "lsof 确认两个端口无监听服务",
+        "git status 显示既有文件状态保留"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户明确要求将完成的主题改动合并到 main 并推送。仅包含主题实现与相关文档/任务记录。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确要求“把该push的都push，主要是要和到main”；此前亦授权管理员合并。",
+  "rollback": "",
+  "handoff": ""
+}
