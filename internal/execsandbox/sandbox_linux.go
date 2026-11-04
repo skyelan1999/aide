@@ -75,6 +75,11 @@ func runChild(p policy, command string) error {
 			return fmt.Errorf("runtime rule: %w", err)
 		}
 	}
+	if p.Runtime != "" {
+		if err := allow(p.Runtime, read, true); err != nil {
+			return fmt.Errorf("native runtime rule: %w", err)
+		}
+	}
 	workspaceAccess := read
 	if p.Mode == "workspace-write" {
 		workspaceAccess |= write
@@ -98,6 +103,10 @@ func runChild(p policy, command string) error {
 	if err := unix.Chdir(p.Workspace); err != nil {
 		return err
 	}
-	env := []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "TERM=dumb", "HOME=" + filepath.Join(p.Temporary, "home"), "TMPDIR=" + p.Temporary, "GOCACHE=" + filepath.Join(p.Temporary, "cache"), "GOPATH=" + filepath.Join(p.Temporary, "go"), "AIDE_CACHE=" + filepath.Join(p.Temporary, "cache"), "AIDE_SANDBOX=1"}
+	path := p.Path
+	if path == "" {
+		path = "/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin"
+	}
+	env := []string{"PATH=" + path, "LANG=C.UTF-8", "TERM=dumb", "HOME=" + filepath.Join(p.Temporary, "home"), "TMPDIR=" + p.Temporary, "GOCACHE=" + filepath.Join(p.Temporary, "cache"), "GOPATH=" + filepath.Join(p.Temporary, "go"), "AIDE_CACHE=" + filepath.Join(p.Temporary, "cache"), "AIDE_SANDBOX=1"}
 	return unix.Exec("/bin/bash", []string{"bash", "--noprofile", "--norc", "-c", command}, env)
 }

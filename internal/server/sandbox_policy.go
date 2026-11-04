@@ -4,6 +4,7 @@ import (
 	"aide/internal/execsandbox"
 	"errors"
 	"fmt"
+	"runtime"
 )
 
 func sandboxMode(mode string) string {
@@ -39,11 +40,19 @@ func shellSandboxPolicy(mode, command string, remote, interactive bool) error {
 func (a *App) sandboxStatusLocked() map[string]any {
 	abi, err := execsandbox.ABI()
 	remote := a.workspaceMode() == "ssh"
-	available := err == nil && abi >= 6 && !remote
+	available := err == nil && execsandbox.Available() == nil && !remote
 	mode := sandboxMode(a.settings.SandboxMode)
 	backend := "unavailable"
 	if available {
-		backend = "linux-landlock"
+		switch runtime.GOOS {
+		case "linux":
+			backend = "linux-landlock"
+		case "darwin":
+			backend = "macos-sandbox-exec"
+		}
+	}
+	if runtime.GOOS == "windows" && !remote {
+		backend = "unsupported-windows"
 	}
 	if remote {
 		backend = "unsupported-ssh"

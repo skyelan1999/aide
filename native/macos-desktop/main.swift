@@ -316,6 +316,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             "AIDE_LAN_ADDR": "127.0.0.1:0",
             "AIDE_HOST_LOCAL": home.path,
             "AIDE_RUNTIME_MODE": "native",
+            "AIDE_NATIVE_RUNTIME_ROOT": resources.appendingPathComponent("runtime", isDirectory: true).path,
             "AIDE_OFFICE_SCRIPTS": resources.appendingPathComponent("office-scripts").path
         ]
         try process.run()

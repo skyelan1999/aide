@@ -60,4 +60,13 @@ AIDE_WORKSPACE="$PWD" AIDE_CONTEXT="$PWD/context" scripts/run-native-runtime.sh
 
 `internal/execsandbox` 只有 Linux Landlock 实现；macOS/Windows 的 restricted 命令继续 fail-closed，不会因为改成原生启动就扩大为不受限的宿主机 shell。原生运行时需先设计并验证系统级隔离，否则不能宣称与 Docker 工作台具有同等的安全能力。
 
-Linux/Windows 安装包尚未在真实用户主机验证；Windows 目前只有 NSIS 生成结果和交叉编译证据。尚未完成 macOS 重装/升级/卸载、真实 Linux 浏览器首启、Windows 安装启动卸载、登录后启动、全量 AI 会话、真实插件/TTS、远程访问及三端对等验收。Linux 桌面仍依赖系统默认浏览器、`xdg-open` 和 Debian 系统库。`internal/execsandbox` 的 macOS/Windows fail-closed 限制仍存在，restricted 宿主 shell 不会因为原生启动自动得到支持。原生包还未达到与 Docker 工作台同等的功能和安全隔离能力；本分支只用于继续实验，不替换 Docker/Compose 启动器，也未合并到 main。
+Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner 做过安装 smoke，但还没有用户实体 Linux/Windows 桌面验收。尚未完成 macOS 重装/升级/卸载、真实 Linux 浏览器首启、登录后启动、全量 AI 会话、真实插件/TTS、远程访问及三端对等验收。Linux 桌面仍依赖系统默认浏览器、`xdg-open` 和 Debian 系统库。macOS 本轮已增加并实测受限 shell 沙箱；Windows `internal/execsandbox` 仍 fail-closed，restricted 宿主 shell 不会因为原生启动自动得到支持。原生包还未达到与 Docker 工作台同等的功能和安全隔离能力；本分支只用于继续实验，不替换 Docker/Compose 启动器，也未合并到 main。
+
+## 2026-11-05 macOS 原生命令沙箱续测
+
+- 实现 macOS `sandbox-exec` 后端并将它接入受限本地命令执行；子进程继承安装包的 PATH，Linux Landlock 同样授权包内 runtime。包启动器向服务提供原生 runtime 根目录。沙箱状态接口现在按平台报告 Linux Landlock、macOS sandbox-exec 或 Windows 不支持。
+- 在真实 macOS arm64 主机编译并重新生成 PKG/ZIP；从 PKG payload 解包后直接启动包内服务，设置隔离 HOME、数据、工作区和引用目录，PATH 中没有 Docker。健康/配置接口成功，配置报告 `runtimeMode=native`、`backend=macos-sandbox-exec`、`available=true`。通过真实 `/api/command` 验证工作区写入成功、工作区同级文件读取被内核拒绝、工作区外写入被内核拒绝；服务退出后测试结束。
+- Darwin execsandbox 测试二进制在本机执行通过，覆盖 workspace-write、read-only、工作区外读写、包内 runtime 和私有临时目录。Linux execsandbox 全量定向测试通过，包含包内 runtime PATH；`TestRuntimeMode` 通过。服务分别交叉编译为 macOS arm64 和 Windows amd64 成功。
+- 当前三端 CI run `41877101081`：Linux package install、Windows build 和 Windows install smoke 通过；macOS package 作业由 GitHub runner 取消/abandon，required gate 因该作业未运行而失败，不能记录为 macOS CI 失败或通过。后续提交触发完整新 run。
+- 注意：测试最初用 `/etc/hosts` 作为“工作区外不可读”样本，macOS profile 允许读取系统配置路径，所以该断言不适用；后续改为工作区同级私有文件，并通过真实接口确认用户文件内容无法读取。系统范围只读授权是当前运行策略的一部分，不能据此宣称完全隔离宿主机系统数据。
+- Windows `workspace-write` 的 OS 级沙箱仍未实现，继续 fail-closed。Linux/macOS 沙箱当前允许网络，插件隔离未实现；不等价于 Docker 隔离。包级 TTS、浏览器/电脑控制、完整插件与远程工作区能力尚未因本轮变为已验收。

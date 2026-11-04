@@ -101,3 +101,22 @@ func TestSandboxPrivateTemporaryDirectory(t *testing.T) {
 		t.Fatalf("isolated scratch failed: %s %v", out, err)
 	}
 }
+
+func TestSandboxNativeRuntimeOnPath(t *testing.T) {
+	workspace, _ := sandboxFixture(t)
+	runtimeRoot := filepath.Join(t.TempDir(), "runtime")
+	bin := filepath.Join(runtimeRoot, "bin")
+	if err := os.MkdirAll(bin, 0700); err != nil {
+		t.Fatal(err)
+	}
+	runtimeTool := filepath.Join(bin, "aide-runtime-fixture")
+	if err := os.WriteFile(runtimeTool, []byte("#!/bin/sh\nprintf 'bundled-runtime-ok\\n'\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AIDE_NATIVE_RUNTIME_ROOT", runtimeRoot)
+	t.Setenv("PATH", bin+":"+os.Getenv("PATH"))
+	out, err := runFixture(t, "workspace-write", workspace, "aide-runtime-fixture")
+	if err != nil || strings.TrimSpace(out) != "bundled-runtime-ok" {
+		t.Fatalf("bundled runtime is not executable inside sandbox: %q %v", out, err)
+	}
+}

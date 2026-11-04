@@ -88,6 +88,7 @@ $env:AIDE_WORKSPACE = $workspace
 $env:AIDE_CONTEXT = $context
 $env:AIDE_HOST_LOCAL = $env:USERPROFILE
 $env:AIDE_RUNTIME_MODE = 'native'
+$env:AIDE_NATIVE_RUNTIME_ROOT = Join-Path $install 'runtime'
 $env:AIDE_NATIVE_LOCAL_HTTP = '1'
 $env:AIDE_LAN_ADDR = '127.0.0.1:0'
 $env:AIDE_OFFICE_SCRIPTS = Join-Path $install 'office-scripts'

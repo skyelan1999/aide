@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 )
 
 const childFlag = "--aide-sandbox-child-v1"
@@ -16,6 +18,9 @@ type policy struct {
 	Mode      string
 	Workspace string
 	Temporary string
+	Runtime   string
+	Path      string
+	Profile   string
 }
 
 // The same entrypoint works in the application and Go test executables. Only
@@ -65,6 +70,11 @@ func Command(ctx context.Context, mode, workspace, command string) (*exec.Cmd, f
 	if err != nil {
 		return nil, nil, err
 	}
+	tmp, err = filepath.EvalSymlinks(tmp)
+	if err != nil {
+		_ = os.RemoveAll(tmp)
+		return nil, nil, err
+	}
 	cleanup := func() { _ = os.RemoveAll(tmp) }
 	for _, dir := range []string{"home", "cache", "go"} {
 		if err = os.MkdirAll(filepath.Join(tmp, dir), 0700); err != nil {
@@ -77,7 +87,28 @@ func Command(ctx context.Context, mode, workspace, command string) (*exec.Cmd, f
 		cleanup()
 		return nil, nil, err
 	}
-	encoded, _ := json.Marshal(policy{Mode: mode, Workspace: root, Temporary: tmp})
+	runtimeRoot := strings.TrimSpace(os.Getenv("AIDE_NATIVE_RUNTIME_ROOT"))
+	if runtimeRoot != "" {
+		runtimeRoot, err = filepath.EvalSymlinks(runtimeRoot)
+		if err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("resolve native runtime directory: %w", err)
+		}
+		runtimeRoot, err = filepath.Abs(runtimeRoot)
+		if err != nil || runtimeRoot == string(filepath.Separator) {
+			cleanup()
+			return nil, nil, fmt.Errorf("invalid native runtime directory")
+		}
+	}
+	pol := policy{Mode: mode, Workspace: root, Temporary: tmp, Runtime: runtimeRoot, Path: os.Getenv("PATH")}
+	if runtime.GOOS == "darwin" {
+		pol.Profile, err = writeDarwinProfile(tmp, pol)
+		if err != nil {
+			cleanup()
+			return nil, nil, err
+		}
+	}
+	encoded, _ := json.Marshal(pol)
 	cmd := exec.CommandContext(ctx, executable, childFlag, string(encoded), command)
 	return cmd, cleanup, nil
 }
