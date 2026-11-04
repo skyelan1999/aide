@@ -120,3 +120,15 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - 为避免“有效 PNG 头”掩盖空白或尺寸异常，又让 xterm 显示固定文字，并使用 ImageMagick 校验截图尺寸与颜色数。commit `fdb27816` 对应原生包 run `41906373799` 三端包构建、Linux/macOS 安装、Windows 安装 smoke、required gate 全通过；Linux 日志为 `X11 packaged screenshot: PASS (484x316, 2 colors, 389 PNG bytes)`。同一提交 Aide CI run `41906373881` 的 quick、Go 和 gate 全通过。
 - 该截图闭环来自 Debian 安装包运行在 GitHub hosted runner 的 Xvfb/X11 虚拟桌面，验证了授权 bridge 截取指定前台应用窗口；它不是实体 Linux 桌面、Wayland、显示器组合或用户真实应用交互验收。测试用的 xterm 只安装在临时 CI runner，不进入 Aide 安装包依赖。
 - 当前工作仍仅在已 push 的 `experiment/native-runtime-no-docker-20261104`，没有合并或改动 `main`。这些结果证明安装包可脱离 Docker 启动及部分插件/桌面 bridge 路径；不等于三端所有插件、TTS、AI 会话、SSH、安全沙箱、权限提示和真实桌面交互均与 Docker 版本等价。
+
+## 2026-11-05 Windows 原生桌面截图安装验收
+
+- Windows NSIS 安装 smoke 增加独立 WinForms 截图夹具：窗口显示固定文字并由 Windows 桥接按前台允许应用规则捕获；验收 PNG 尺寸和多个像素采样颜色，最后清理夹具窗口。
+- commit `91252776` 的 Native Runtime Experiment run `41908498259` 全绿；Windows 2025 runner 从安装后的 bridge 获得 `720x420`、77 个采样颜色、13,688 字节 PNG，随后停止服务/bridge、卸载安装包并确认数据保留。该 Windows 安装 smoke 明确输出 `Windows packaged screenshot: PASS` 与 `Native Windows package install/start/auth/browser/stop/uninstall/no-Docker smoke: PASS`。
+- 同一提交的 Aide CI run `41908498137` quick、Go 与 gate 全通过。此次确认 Windows hosted runner 提供了可用桌面截图环境，仍不替代实体用户桌面、不同显示缩放/多屏/远程桌面锁屏场景及点击/键入验收。
+- 当前 Windows/Linux 安装包桌面截图已分别在真实 Windows runner 与 Xvfb/X11 runner 上通过；macOS 仍只验证 Launch Services 启动桥接、权限状态与 loopback 鉴权，屏幕录制/辅助功能尚未授权，故真实 macOS 截图/输入未验收。
+
+## 2026-11-05 Windows 安装包截图闭环结果
+
+- 上述截图扩展的验证结果已由 commit `91252776` 对应的原生包 CI run `41908498259` 实际执行：四个安装 job（Linux 包安装、macOS PKG 安装、Windows 安装器构建、Windows 安装 smoke）和 required gate 均成功。Windows 日志显示 bridge 返回的 PNG 是 `720x420`，采样 77 种像素颜色，大小 13,688 字节；完整安装 smoke 还通过浏览器首页、Node daemon 插件启动/IPC/停止、bridge 授权、停止、卸载和用户数据保留检查。
+- 同一提交的 Aide CI run `41908498137` quick、Go、gate 全通过。此次桌面截图来自 GitHub `windows-2025` runner 的临时 WinForms 可见窗口，仍需留意实体 Windows 在 DPI 缩放、多屏、远程桌面锁屏/权限策略下的差异；点击和键入尚未随此 smoke 实际执行。
