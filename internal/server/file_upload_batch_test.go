@@ -228,6 +228,41 @@ func TestBatchUploadTotalSizeCap(t *testing.T) {
 	}
 }
 
+func TestBatchUploadTruncatedNextPartHeaderIsReported(t *testing.T) {
+	a := testApp(t)
+	original := maxBatchBytes
+	t.Cleanup(func() { maxBatchBytes = original })
+	const boundary = "header-truncation-boundary"
+	body := []byte("--" + boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"files\"; filename=\"first.txt\"\r\n" +
+		"Content-Type: application/octet-stream\r\n\r\nfirst\r\n" +
+		"--" + boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"files\"; filename=\"second.txt\"\r\n" +
+		"Content-Type: application/octet-stream\r\n\r\nsecond\r\n" +
+		"--" + boundary + "--\r\n")
+	secondHeader := bytes.Index(body, []byte("Content-Disposition: form-data; name=\"files\"; filename=\"second.txt\""))
+	if secondHeader < 0 {
+		t.Fatal("second part header not found")
+	}
+	// Leave enough bytes to fully commit first.txt, then cap the request in
+	// the second part's header so NextPart itself receives the size error.
+	maxBatchBytes = secondHeader + 24
+	r := httptest.NewRequest("POST", "/api/file/upload-batch", bytes.NewReader(body))
+	r.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+	w := httptest.NewRecorder()
+	a.uploadBatchFile(w, r)
+	if w.Code != 207 {
+		t.Fatalf("status=%d, want 207 partial success: %s", w.Code, w.Body.String())
+	}
+	result := decodeBatch(t, w)
+	if result.Summary.Succeeded != 1 || result.Summary.Failed != 1 {
+		t.Fatalf("summary=%+v, want one success and one parse failure", result.Summary)
+	}
+	if got := readBatchFile(t, a, "first.txt"); got != "first" {
+		t.Fatalf("first part was not committed: %q", got)
+	}
+}
+
 func TestBatchUploadSourceRules(t *testing.T) {
 	a := testApp(t)
 	refs := filepath.Join(a.workPath, "refs")
