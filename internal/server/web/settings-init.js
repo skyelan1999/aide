@@ -27,11 +27,11 @@
   var KEY = 'aide.ui';
   var LEGACY_KEY = 'aide.theme';
   var VERSION = 1;
-  var PALETTE_VERSION = 2;
+  var PALETTE_VERSION = 3;
   var VALID_THEME = ['light', 'dark', 'system']; // 主题枚举唯一来源
   var DEFAULT_PREF = 'system';
   function normalizeLanguage(value) { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; }                   // 缺省偏好
-  var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'blue' };
+  var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'modern' };
   var motionMedia = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
 
@@ -71,8 +71,9 @@
     return isTheme(value) ? value : DEFAULT_PREF;
   }
   function normalizePalette(value, version) {
-    if (value === 'modern') return version === PALETTE_VERSION ? 'modern' : 'professional';
-    return ['blue', 'comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'blue';
+    if (value === 'modern') return version >= 2 ? 'modern' : 'professional';
+    if (value === 'blue') return 'modern';
+    return ['comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'modern';
   }
   function normalizeBackgroundStrength(value) {
     return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;
@@ -225,7 +226,7 @@
     },
     getAll: snapshot,
     setAppearance: function (palette, theme) {
-      doc.palette = ['green', 'comfort', 'professional', 'modern'].indexOf(palette) >= 0 ? palette : 'blue';
+      doc.palette = ['comfort', 'green', 'professional', 'modern'].indexOf(palette) >= 0 ? palette : 'modern';
       doc.paletteVersion = PALETTE_VERSION;
       doc.theme = normalizeTheme(theme);
       persist();
@@ -234,7 +235,7 @@
     },
     set: function (name, value) {
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['blue','comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'blue') : name === 'background' ? (['off','aurora','studio','modern','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'modern') : name === 'background' ? (['off','aurora','studio','modern','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
       if (name === 'palette') doc.paletteVersion = PALETTE_VERSION;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion' || name === 'palette') applyTheme();

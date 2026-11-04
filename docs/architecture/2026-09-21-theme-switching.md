@@ -7,7 +7,7 @@
 > - **文件与键名**：`theme-init.js` 已更名 `settings-init.js`；存储键由 `aide.theme`（字符串）改为 `localStorage['aide.ui']`（JSON，含 `theme`/`palette`/`language`）。旧键 `aide.theme` 与旧值 `classic` 仍被迁移吸收。
 > - 79 个语义令牌冻结约定保留（`themes/light|dark/tokens.css` 各 79 条）。
 
-> **现行实现补充（2026-11-04）**：配色现为「基础」(`blue`)、舒适、经典、专业和现代五套，均支持浅色/深色/跟随系统。旧版 `modern` 偏好通过 `paletteVersion` 一次迁移为专业；新现代偏好使用 `paletteVersion: 2`，保证升级与跨标签同步不串色。专业保留此前雾银冷蓝钛金配色；现代使用更克制的中性瓷白/墨色层次与清晰蓝色强调。
+> **现行实现补充（2026-11-04）**：配色现为舒适、经典、专业和现代四套，均支持浅色/深色/跟随系统。旧版 `modern` 偏好通过 `paletteVersion` 一次迁移为专业；旧「基础」(`blue`) 偏好迁移到现代，新现代偏好使用 `paletteVersion: 3`，保证升级与跨标签同步不串色。专业保留此前雾银冷蓝钛金配色；现代使用中性灰阶、OLED/LCD 兼顾的深色层次与清晰蓝色强调。
 
 | 项 | 值 |
 | --- | --- |

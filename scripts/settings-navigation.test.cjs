@@ -34,20 +34,24 @@ test('advanced controls initialize once only after expansion and keep original r
 test('appearance uses independent palette and mode with unchanged stored values',()=>{
  const controls=schema.sections.find(s=>s.id==='appearance').controls;
  assert.deepEqual(controls.filter(c=>['palette','theme'].includes(c.id)).map(c=>c.id),['palette','theme']);
- assert.deepEqual(controls.find(c=>c.id==='palette').options.map(x=>x.value),['blue','comfort','green','professional','modern']);
+ assert.deepEqual(controls.find(c=>c.id==='palette').options.map(x=>x.value),['comfort','green','professional','modern']);
  assert.deepEqual(controls.find(c=>c.id==='theme').options.map(x=>x.value),['light','dark','system']);
  const app=fs.readFileSync('internal/server/web/app.js','utf8');
  assert(!app.includes('前往模型设置配置厂商与密钥'));
 });
 test('modern palette persists and immediately changes the document theme attribute',()=>{
- const values={'aide.ui':JSON.stringify({palette:'modern',paletteVersion:2,theme:'dark'})},attributes={},listeners={};
+ const values={'aide.ui':JSON.stringify({palette:'modern',paletteVersion:3,theme:'dark'})},attributes={},listeners={};
  const browser={localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},navigator:{language:'zh-CN'},dispatchEvent(){},matchMedia:q=>({matches:q.includes('color-scheme: dark'),addEventListener(){}}),addEventListener:(n,fn)=>listeners[n]=fn};
  vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:browser,document:{documentElement:{setAttribute:(k,v)=>attributes[k]=v}},Event:class{}});
  assert.equal(attributes['data-palette'],'modern');assert.equal(attributes['data-theme'],'dark');
  browser.aideUI.set('palette','comfort');assert.equal(attributes['data-palette'],'comfort');assert.equal(browser.aideUI.get('palette'),'comfort');
  assert.equal(browser.aideUI.set('background','modern'),'modern');assert.equal(browser.aideUI.get('background'),'modern');
- listeners.storage({key:'aide.ui',newValue:JSON.stringify({palette:'modern',paletteVersion:2,theme:'light',background:'modern'})});
+ listeners.storage({key:'aide.ui',newValue:JSON.stringify({palette:'modern',paletteVersion:3,theme:'light',background:'modern'})});
  assert.equal(attributes['data-palette'],'modern');assert.equal(attributes['data-theme'],'light');assert.equal(browser.aideUI.get('background'),'modern');
+ const legacyBlue={'aide.ui':JSON.stringify({palette:'blue',paletteVersion:2,theme:'dark'})},legacyAttributes={};
+ const legacyBrowser={localStorage:{getItem:k=>legacyBlue[k]??null,setItem:(k,v)=>legacyBlue[k]=v,removeItem:k=>delete legacyBlue[k]},navigator:{language:'zh-CN'},dispatchEvent(){},matchMedia:q=>({matches:q.includes('color-scheme: dark'),addEventListener(){}}),addEventListener(){}};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:legacyBrowser,document:{documentElement:{setAttribute:(k,v)=>legacyAttributes[k]=v}},Event:class{}});
+ assert.equal(legacyAttributes['data-palette'],'modern');assert.equal(legacyBrowser.aideUI.get('palette'),'modern');
 });
 test('opening voice settings never requests microphone permission; explicit refresh stops its temporary track',async()=>{
  const source=fs.readFileSync('internal/server/web/app.js','utf8');let permissions=0,stopped=0;

@@ -12,10 +12,6 @@
           "label": "配色",
           "options": [
             {
-              "value": "blue",
-              "label": "基础"
-            },
-            {
               "value": "comfort",
               "label": "舒适"
             },
