@@ -68,5 +68,6 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 - 在真实 macOS arm64 主机编译并重新生成 PKG/ZIP；从 PKG payload 解包后直接启动包内服务，设置隔离 HOME、数据、工作区和引用目录，PATH 中没有 Docker。健康/配置接口成功，配置报告 `runtimeMode=native`、`backend=macos-sandbox-exec`、`available=true`。通过真实 `/api/command` 验证工作区写入成功、工作区同级文件读取被内核拒绝、工作区外写入被内核拒绝；服务退出后测试结束。
 - Darwin execsandbox 测试二进制在本机执行通过，覆盖 workspace-write、read-only、工作区外读写、包内 runtime 和私有临时目录。Linux execsandbox 全量定向测试通过，包含包内 runtime PATH；`TestRuntimeMode` 通过。服务分别交叉编译为 macOS arm64 和 Windows amd64 成功。
 - 当前三端 CI run `41877101081`：Linux package install、Windows build 和 Windows install smoke 通过；macOS package 作业由 GitHub runner 取消/abandon，required gate 因该作业未运行而失败，不能记录为 macOS CI 失败或通过。后续提交触发完整新 run。
+- 后续 commit `fd19aa5a` 的三端原生包 CI run `41881694517` 全绿：macOS `.pkg` 构建、安装、TLS 服务启动/健康/鉴权/首页/无 Docker 检查通过；Linux Debian 包安装及运行 smoke 通过；Windows NSIS 安装、启动、健康/鉴权/首页、停止、卸载和用户数据保留通过；required gate success。独立 Aide CI run `41881331256` 的 quick、Go 编译/关键回归和 gate 均通过。手动 dispatch 曾被随后自动 push run 按并发策略取消；以最终 push run `41881694517` 为准。
 - 注意：测试最初用 `/etc/hosts` 作为“工作区外不可读”样本，macOS profile 允许读取系统配置路径，所以该断言不适用；后续改为工作区同级私有文件，并通过真实接口确认用户文件内容无法读取。系统范围只读授权是当前运行策略的一部分，不能据此宣称完全隔离宿主机系统数据。
 - Windows `workspace-write` 的 OS 级沙箱仍未实现，继续 fail-closed。Linux/macOS 沙箱当前允许网络，插件隔离未实现；不等价于 Docker 隔离。包级 TTS、浏览器/电脑控制、完整插件与远程工作区能力尚未因本轮变为已验收。
