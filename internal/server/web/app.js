@@ -7942,6 +7942,9 @@ function sanitizeHtml(html) {
     for (const attr of [...el.attributes]) {
       const name = attr.name.toLowerCase();
       if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
+      // Markdown may come from shared or remote documents. Inline CSS can
+      // create viewport-level overlays that intercept the AIDE UI.
+      if (name === 'style') { el.removeAttribute(attr.name); continue; }
       if (name === 'href' || name === 'src') {
         // 去掉 scheme 内的 tab/换行/空白等控制字符，堵住 java\tscript: / java\nscript: 绕过
         const norm = (attr.value || '').replace(/[\x00-\x20]/g, '');
