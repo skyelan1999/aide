@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP="${1:?usage: test_macos_native_desktop_launch.sh /path/to/Aide.app}"
+APP="${1:?usage: test_macos_native_desktop_launch.sh /path/to/Aide.app /path/to/mock-daemon-fixture}"
+FIXTURE="${2:?usage: test_macos_native_desktop_launch.sh /path/to/Aide.app /path/to/mock-daemon-fixture}"
 [[ -d "$APP" && -x "$APP/Contents/MacOS/AideDesktop" && -x "$APP/Contents/Resources/aide-server" ]] || {
   echo "Incomplete native Aide app: $APP" >&2
   exit 2
@@ -22,6 +23,11 @@ PY
 }
 trap cleanup EXIT
 mkdir -p "$TMP/workspace" "$TMP/context" "$TMP/data"
+mkdir -p "$TMP/workspace/plugins/native-runtime-smoke-daemon"
+cp "$FIXTURE/index.js" "$TMP/workspace/plugins/native-runtime-smoke-daemon/index.js"
+cat > "$TMP/workspace/plugins/registry.json" <<'JSON'
+{"version":1,"plugins":[{"id":"native-runtime-smoke-daemon","name":"Native Runtime Smoke Daemon","version":"0.0.1","main":"index.js","daemon":true,"enabled":false}]}
+JSON
 
 cat > "$TMP/lifecycle.swift" <<'SWIFT'
 import AppKit
@@ -105,6 +111,9 @@ value=json.load(open(sys.argv[1],encoding='utf-8'))
 assert value.get('runtimeMode')=='native', value
 print('runtimeMode=native')
 PY
+"$APP/Contents/Resources/runtime/python/bin/python3.12" -I \
+  "$(cd "$(dirname "$0")/.." && pwd)/scripts/ci/native-plugin-daemon-smoke.py" \
+  --base "https://localhost:$PORT" --token "$TOKEN" --workspace "$TMP/workspace" --fixture "$FIXTURE"
 BRIDGE_PID="$(python3 - "$APP/Contents/Resources/Aide Computer Bridge.app/Contents/MacOS/AideComputerBridge" <<'PY'
 import ctypes,os,subprocess,sys
 lib=ctypes.CDLL('/usr/lib/libproc.dylib')

@@ -13,6 +13,12 @@ sudo apt-get update -qq
 sudo apt-get install -y -qq "$PACKAGE"
 TEST_ROOT="${RUNNER_TEMP:-$(mktemp -d)}/aide-native-linux-package-smoke"
 mkdir -p "$TEST_ROOT"/{bin,home,data,workspace,context}
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+mkdir -p "$TEST_ROOT/workspace/plugins/native-runtime-smoke-daemon"
+cp "$REPO_ROOT/plugins/testdata/mock-daemon/index.js" "$TEST_ROOT/workspace/plugins/native-runtime-smoke-daemon/index.js"
+cat >"$TEST_ROOT/workspace/plugins/registry.json" <<'JSON'
+{"version":1,"plugins":[{"id":"native-runtime-smoke-daemon","name":"Native Runtime Smoke Daemon","version":"0.0.1","main":"index.js","daemon":true,"enabled":false}]}
+JSON
 cat >"$TEST_ROOT/bin/docker" <<'SH'
 #!/bin/sh
 echo "unexpected Docker invocation: $*" >>"$AIDE_NATIVE_DOCKER_MARKER"
@@ -35,6 +41,9 @@ test -f /usr/lib/aide-native/computer-bridge-linux.js
 curl -fsS "http://127.0.0.1:18097/healthz" | "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["status"]=="ok" and h["integrity"]=="ok",h'
 curl -fsS -H "Authorization: Bearer $token" http://127.0.0.1:18097/api/config | "$runtime/python/bin/python3.12" -I -c 'import json,sys; assert json.load(sys.stdin)["runtimeMode"] == "native"'
 [[ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18097/)" == 200 ]]
+"$runtime/python/bin/python3.12" -I "$REPO_ROOT/scripts/ci/native-plugin-daemon-smoke.py" \
+  --base http://127.0.0.1:18097 --token "$token" --workspace "$TEST_ROOT/workspace" \
+  --fixture "$REPO_ROOT/plugins/testdata/mock-daemon"
 printf '%s\n' 'native-command-payload-4f9a' >"$TEST_ROOT/outside-read.txt"
 command_json="$("$runtime/python/bin/python3.12" -I -c 'import json,sys; print(json.dumps({"command":sys.argv[1]}))' "node -e 'require(\"fs\").writeFileSync(\"native-command.txt\",\"sandbox-ok\")' && cat native-command.txt")"
 curl -fsS -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d "$command_json" http://127.0.0.1:18097/api/command >"$TEST_ROOT/workspace-command.ndjson"

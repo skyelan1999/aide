@@ -27,6 +27,14 @@ try {
   $env:USERPROFILE = $testProfile
   $env:AIDE_NATIVE_DOCKER_MARKER = $dockerMarker
   $env:PATH = "$testBin;$oldPath"
+  $workspace = Join-Path $testProfile 'Documents\Aide\Workspace'
+  $pluginDir = Join-Path $workspace 'plugins\native-runtime-smoke-daemon'
+  New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
+  $fixture = Join-Path $PSScriptRoot '..\..\plugins\testdata\mock-daemon'
+  Copy-Item (Join-Path $fixture 'index.js') (Join-Path $pluginDir 'index.js')
+  $registry = @{ version = 1; plugins = @(@{ id='native-runtime-smoke-daemon'; name='Native Runtime Smoke Daemon'; version='0.0.1'; main='index.js'; daemon=$true; enabled=$false }) }
+  $registryJson = ConvertTo-Json -InputObject $registry -Depth 8 -Compress
+  [IO.File]::WriteAllText((Join-Path $workspace 'plugins\registry.json'),$registryJson,[Text.UTF8Encoding]::new($false))
   $node = Join-Path $install 'runtime\node\node.exe'
   if (-not (& $node --version).StartsWith('v24.')) { throw 'Bundled Node runtime version mismatch.' }
   $python = Join-Path $install 'runtime\python\python.exe'
@@ -60,6 +68,10 @@ try {
   $config = Invoke-RestMethod -TimeoutSec 3 -Headers $headers "$base/api/config"
   if ($config.runtimeMode -ne 'native') { throw "Runtime mode was not reported as native: $($config.runtimeMode)" }
   if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 3 "$base/").StatusCode -ne 200) { throw 'Workbench home did not return HTTP 200.' }
+  $python = Join-Path $install 'runtime\python\python.exe'
+  $fixture = Join-Path $PSScriptRoot '..\..\plugins\testdata\mock-daemon'
+  & $python -I (Join-Path $PSScriptRoot 'native-plugin-daemon-smoke.py') --base $base --token $token --workspace $workspace --fixture (Resolve-Path $fixture).Path
+  if ($LASTEXITCODE -ne 0) { throw "Bundled Node plugin daemon smoke failed with exit code $LASTEXITCODE." }
   $bridgeToken = (Get-Content -Raw $bridgeTokenFile).Trim()
   $bridgeHeaders = @{ Authorization = "Bearer $bridgeToken" }
   $bridgeHealth = Invoke-RestMethod -TimeoutSec 3 -Headers $bridgeHeaders 'http://127.0.0.1:17778/healthz'
