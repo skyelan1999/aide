@@ -7,6 +7,14 @@
  // disallows inline CSS; use browser CSSOM without weakening the page CSP.
  const sheets=new Map(),styleCache=new WeakMap();
  let observer;
+ const exportPaintProperties=['fill','stroke','color','stroke-width','stroke-dasharray','stroke-linecap','stroke-linejoin','fill-opacity','stroke-opacity','opacity','font-family','font-size','font-weight','text-anchor','dominant-baseline','visibility'];
+ function inlineComputedSVGStyles(root){
+  const svgs=[...(root.matches?.('svg')?[root]:[]),...root.querySelectorAll('svg')];
+  for(const svg of svgs)for(const node of [svg,...svg.querySelectorAll('*')]){
+   const computed=node.ownerDocument.defaultView.getComputedStyle(node);
+   for(const property of exportPaintProperties){const value=computed.getPropertyValue(property);if(value)node.style.setProperty(property,value);}
+  }
+ }
  function clearStyles(node){
   const sheet=sheets.get(node);if(!sheet)return;
   const doc=node.ownerDocument;doc.adoptedStyleSheets=doc.adoptedStyleSheets.filter(s=>s!==sheet);sheets.delete(node);
@@ -35,7 +43,7 @@
    styleCache.set(style,{source:css,css});if(css!==source)style.textContent=css;return css;
   }).join('\n');
  }
- function applyStyles(node){
+ function applyStyles(node,inlinePaint=false){
   const doc=node.ownerDocument,View=doc.defaultView;
   clearStyles(node);
   const css=scopedCSS(node,'svg style');
@@ -46,6 +54,10 @@
   // Setting individual CSS declarations through CSSOM is permitted by CSP.
   // Keep serialized SVG styles for HTML/PDF export and author classDef colours.
   applyDeclarations(node,'svg[style],svg [style]');
+  // html2canvas rasterizes the PDF in a cloned document, where adopted style
+  // sheets and SVG-local <style> rules are not consistently retained. Export
+  // computed paint as presentation styles before cloning that page.
+  if(inlinePaint)inlineComputedSVGStyles(node);
   if(!observer){observer=new View.MutationObserver(records=>{if(records.some(r=>r.removedNodes.length))releaseStyles();});observer.observe(doc.documentElement,{childList:true,subtree:true});}
   releaseStyles();
  }
@@ -84,7 +96,7 @@
    let entry=sources.get(node);
    if(!entry){entry={source:node.textContent,version:0};sources.set(node,entry);}
    if(entry.pending===theme)return null;
-   if(!entry.pending&&node.dataset.diagramTheme===theme){if(node.isConnected&&!sheets.has(node))applyStyles(node);return null;}
+   if(!entry.pending&&node.dataset.diagramTheme===theme){if(node.isConnected&&!sheets.has(node))applyStyles(node,strict);return null;}
    const version=++entry.version;entry.pending=theme;
    return {node,entry,version};
   }).filter(Boolean);
@@ -100,7 +112,7 @@
       window.mermaid.initialize(configuration(dark,/\$\$/.test(entry.source)));
       const result=await renderStyled('aideDiagram'+crypto.randomUUID().replaceAll('-',''),entry.source);
       if(entry.version!==version)continue;
-      node.innerHTML=result.svg;applyStyles(node);node.dataset.processed='1';node.dataset.diagramTheme=theme;
+      node.innerHTML=result.svg;applyStyles(node,strict);node.dataset.processed='1';node.dataset.diagramTheme=theme;
      }catch(e){if(entry.version===version){clearStyles(node);node.textContent=errorText;delete node.dataset.diagramTheme;delete node.dataset.processed;}if(strict)throw e;}
      finally{if(entry.version===version)entry.pending=null;}
     }

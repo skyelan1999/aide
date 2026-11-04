@@ -62,8 +62,12 @@
       frame = 0;
       if (!reader.isConnected) return;
       const threshold = host.getBoundingClientRect().top + (reader.getBoundingClientRect().width < 420 ? summary.offsetHeight + 28 : 44);
-      let active = 0;
-      for (let i = 0; i < headings.length; i++) { if (headings[i].getBoundingClientRect().top <= threshold) active = i; else break; }
+      let lo = 0, hi = headings.length - 1, active = 0;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (headings[mid].getBoundingClientRect().top <= threshold) { active = mid; lo = mid + 1; }
+        else hi = mid - 1;
+      }
       if (host.scrollHeight > host.clientHeight && host.scrollTop + host.clientHeight >= host.scrollHeight - 3) active = headings.length - 1;
       select(active);
     };

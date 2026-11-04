@@ -3328,7 +3328,7 @@ function bindSplitScrollLock(key, editorId, previewId, buttonId) {
 }
 bindSplitScrollLock('editor', 'editor', 'editor-preview', 'editor-scroll-lock');
 bindSplitScrollLock('fileView', 'file-view-editor', 'file-view-preview', 'file-view-scroll-lock');
-function setEditorMode(mode) {
+function setEditorMode(mode, allowLargePreview = false) {
   window.AideMarkdownOutline?.dispose($('editor-preview'));
   const preview = mode === 'preview';
   const split = !preview && isMarkdownPath(state.file?.path) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
@@ -3346,7 +3346,7 @@ function setEditorMode(mode) {
   if (preview || split) {
     if(isUrdfPath(state.file?.path||''))setupUrdfPreview($('editor-preview'),state.file.path,state.file.root,state.file.source||'',state.file,$('editor').value);
     else if(isDelimitedPath(state.file?.path || ''))setupDelimitedPreview($('editor-preview'),$('editor'),state.file.path);
-    else setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file);
+    else setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file, allowLargePreview);
     $('editor-preview').scrollTop = 0;
     if (split && splitScrollLock.editor) syncSplitScroll($('editor'), $('editor-preview'), 'editor');
   }
@@ -3441,7 +3441,7 @@ function showEditor() {
   $('editor-dialog').showModal();
 }
 $('editor-mode-edit').onclick = () => setEditorMode('edit');
-$('editor-mode-preview').onclick = () => setEditorMode('preview');
+$('editor-mode-preview').onclick = () => setEditorMode('preview',true);
 $('open-new-tab').onclick = () => {
   const spec = { root: state.file.source ? 'source' : state.file.root, source: state.file.source || '', path: state.file.path };
   window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
@@ -9431,9 +9431,32 @@ function setupMarkdownMedia(editor, spec, currentSpec, edit) {
   window.AideMarkdownMedia?.dispose(editor);
   if (fileRenderEnabled('fileMarkdownMedia')) window.AideMarkdownMedia?.mount(editor, {spec,currentSpec,edit,t,error:toast,upload:uploadMarkdownAsset});
 }
-function setupMarkdownPreview(host, text, path, spec) {
+const MARKDOWN_LIVE_PREVIEW_LIMIT = 512 * 1024;
+function deferLargeMarkdownPreview(host, text, render) {
+  window.AideMarkdownOutline?.dispose(host);
+  host.classList.add('md-preview-deferred');
+  host._markdownDeferredRender = render;
+  const panel=el('section','md-preview-deferred-card');
+  const title=el('strong','',t('大型文档已暂停实时预览'));
+  const detail=el('p','muted',t('文档约 {0} KiB。编辑保持响应；需要预览时可手动生成。',Math.ceil(text.length/1024)));
+  const button=el('button','primary primary-sm md-preview-deferred-load',t('生成预览'));button.type='button';
+  panel.append(title,detail,button);host.replaceChildren(panel);
+}
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('.md-preview-deferred-load');
+  if(!button)return;
+  const host=button.closest('.md-preview-deferred'),render=host?._markdownDeferredRender;
+  if(typeof render==='function')render();
+});
+function setupMarkdownPreview(host, text, path, spec, allowLarge = false) {
+  text=String(text||'');
+  if(text.length>MARKDOWN_LIVE_PREVIEW_LIMIT&&!allowLarge){
+    deferLargeMarkdownPreview(host,text,()=>setupMarkdownPreview(host,text,path,spec,true));
+    return;
+  }
+  host.classList.remove('md-preview-deferred');host._markdownDeferredRender=null;
   host.innerHTML = renderMarkdown(text, false, path, spec);
-  host._markdownSourceAnchors = markdownSourceAnchors(text, host);
+  host._markdownSourceAnchors = text.length<=MARKDOWN_LIVE_PREVIEW_LIMIT?markdownSourceAnchors(text, host):[];
   if (fileRenderEnabled('fileMarkdownOutline')) window.AideMarkdownOutline?.mount(host, { title: t('标题目录') });
   const captured = {...spec};
   host.querySelectorAll('a[href^="#"]').forEach(link=>{link.addEventListener('click',event=>{
@@ -9566,7 +9589,7 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
 }
 /* ── 单文件视图（新标签页）：路径 + 可编辑内容（保存带哈希校验）+ md 渲染预览 ── */
 const fileView = { spec: null, hash: '' };
-function setFileViewMode(mode) {
+function setFileViewMode(mode, allowLargePreview = false) {
   window.AideMarkdownOutline?.dispose($('file-view-preview'));
   const preview = mode === 'preview';
   const split = !preview && (isMarkdownPath(fileView.spec?.path) || ['.md','.markdown'].includes(fileView.spec?.format)) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
@@ -9585,7 +9608,7 @@ function setFileViewMode(mode) {
   if (preview || split) {
     if(urdf)setupUrdfPreview($('file-view-preview'),fileView.spec.path,fileView.spec.root,fileView.spec.source||'',fileView.spec,$('file-view-editor').value);
     else if(isDelimitedPath(fileView.spec?.path || '') || ['.csv','.tsv'].includes(fileView.spec?.format))setupDelimitedPreview($('file-view-preview'),$('file-view-editor'),isDelimitedPath(fileView.spec.path)?fileView.spec.path:'resource'+fileView.spec.format);
-    else setupMarkdownPreview($('file-view-preview'), $('file-view-editor').value, fileView.spec?.path || '', fileView.spec);
+    else setupMarkdownPreview($('file-view-preview'), $('file-view-editor').value, fileView.spec?.path || '', fileView.spec, allowLargePreview);
     $('file-view-preview').scrollTop = 0;
     if (split && splitScrollLock.fileView) syncSplitScroll($('file-view-editor'), $('file-view-preview'), 'fileView');
   }
@@ -9754,9 +9777,18 @@ function bindMarkdownLivePreview(editorId, previewId, panelId, getSpec) {
     clearTimeout(timer);
     const spec = getSpec();
     if (!visible(spec)) return;
+    const editor=$(editorId),host=$(previewId),text=editor.value;
+    if(text.length>MARKDOWN_LIVE_PREVIEW_LIMIT){
+      const render=()=>{
+        const current=getSpec();if(current===spec&&visible(current))setupMarkdownPreview(host,editor.value,current.path,current,true);
+      };
+      if(!host.classList.contains('md-preview-deferred'))deferLargeMarkdownPreview(host,text,render);
+      else host._markdownDeferredRender=render;
+      return;
+    }
     timer = setTimeout(() => {
       if (getSpec() !== spec || !visible(spec)) return;
-      const host = $(previewId), scroll = host.scrollTop;
+      const scroll = host.scrollTop;
       window.AideMarkdownOutline?.dispose(host);
       setupMarkdownPreview(host, $(editorId).value, spec.path, spec);
       host.scrollTop = scroll;
@@ -9780,7 +9812,7 @@ for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','e
  if(panelId==='editor-dialog')$(panelId).addEventListener('close',()=>window.AideMarkdownExport.close());
 }
 $('fv-edit').onclick = () => setFileViewMode('edit');
-$('fv-preview').onclick = () => setFileViewMode('preview');
+$('fv-preview').onclick = () => setFileViewMode('preview',true);
 function isDrawioPathForSave(path){return /\.drawio$/i.test(path||'');}
 const editorHistory = window.AideMarkdownHistory.bind({button:$('editor-history'),editor:$('editor'),getContext:()=>state.file,api,t,error:e=>toast(e.message),isDirty:()=>editorAutoSave.dirty()||editorAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(state.file,result.journal);state.file.hash=result.hash;state.file.content=result.content;$('editor').value=result.content;$('editor').dispatchEvent(new Event('input'));editorAutoSave.activate();loadFiles().catch(()=>{});toast(t('✓ 历史版本已恢复'));}});
 const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-history'),editor:$('file-view-editor'),getContext:()=>({...fileView.spec,wsId:fileView.wsId}),api,t,error:e=>toast(e.message),isDirty:()=>fileViewAutoSave.dirty()||fileViewAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(fileView.spec,result.journal);fileView.hash=result.hash;$('file-view-editor').value=result.content;$('file-view-editor').dispatchEvent(new Event('input'));fileViewAutoSave.activate();toast(t('✓ 历史版本已恢复'));}});
