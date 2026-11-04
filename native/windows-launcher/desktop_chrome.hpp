@@ -4,7 +4,7 @@
 namespace aide_desktop {
 struct Chrome {
  COLORREF background=RGB(32,35,40),surface=RGB(36,40,46),selected=RGB(52,66,82),text=RGB(224,228,235),muted=RGB(164,173,185),line=RGB(55,60,68);
- HFONT font=nullptr;bool dark=true;UINT dpi=96;int hovered=-1;HWND hoveredButton=nullptr;UINT appliedDpi=0;int lastWidth=-1,lastCount=-1,lastSelected=-2,lastItem=-1;
+ HFONT font=nullptr;bool dark=true;UINT dpi=96;int hovered=-1,closePressed=-1;HWND hoveredButton=nullptr;UINT appliedDpi=0;int lastWidth=-1,lastCount=-1,lastSelected=-2,lastItem=-1;
  Chrome(){setDpi(96);}
  ~Chrome(){if(font)DeleteObject(font);}
  int px(int dip)const{return MulDiv(dip,int(dpi),96);}
@@ -35,16 +35,22 @@ struct Chrome {
  static LRESULT CALLBACK scrollerProcedure(HWND hwnd,UINT message,WPARAM w,LPARAM l,UINT_PTR,DWORD_PTR pointer){auto self=reinterpret_cast<Chrome*>(pointer);if(message==WM_ERASEBKGND)return TRUE;if(message==WM_PAINT){PAINTSTRUCT paint{};HDC dc=BeginPaint(hwnd,&paint);RECT r{};GetClientRect(hwnd,&r);fill(dc,r,self->background);auto pen=CreatePen(PS_SOLID,std::max(1,self->px(1)),readable(self->text,self->background));auto old=SelectObject(dc,pen);int mid=(r.top+r.bottom)/2,d=self->px(3);for(int direction:{-1,1}){int x=(direction<0?r.right/4:3*r.right/4);MoveToEx(dc,x-direction*d,mid-d,nullptr);LineTo(dc,x,mid);LineTo(dc,x-direction*d,mid+d);}SelectObject(dc,old);DeleteObject(pen);EndPaint(hwnd,&paint);return 0;}return DefSubclassProc(hwnd,message,w,l);}
  static HWND scroller(HWND tabs){for(auto child=GetWindow(tabs,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)){wchar_t name[64]{};GetClassNameW(child,name,64);if(IsWindowVisible(child)&&!_wcsicmp(name,UPDOWN_CLASSW))return child;}return nullptr;}
  static BOOL CALLBACK styleScroller(HWND hwnd,LPARAM pointer){wchar_t name[64]{};GetClassNameW(hwnd,name,64);if(!_wcsicmp(name,UPDOWN_CLASSW))SetWindowSubclass(hwnd,scrollerProcedure,2,DWORD_PTR(pointer));return TRUE;}
+ bool closeHit(HWND hwnd,int index,POINT point)const{RECT r{};return index>=0&&TabCtrl_GetItemRect(hwnd,index,&r)&&point.x>=r.right-px(24)&&point.x<r.right-px(2)&&point.y>=r.top&&point.y<r.bottom;}
  static LRESULT CALLBACK tabsProcedure(HWND hwnd,UINT message,WPARAM w,LPARAM l,UINT_PTR,DWORD_PTR pointer){
   auto self=reinterpret_cast<Chrome*>(pointer);
   if(message==WM_ERASEBKGND)return TRUE;
-  if(message==WM_MOUSEMOVE){TCHITTESTINFO hit{};hit.pt={short(LOWORD(l)),short(HIWORD(l))};int index=TabCtrl_HitTest(hwnd,&hit);if(index!=self->hovered){self->hovered=index;InvalidateRect(hwnd,nullptr,FALSE);}TRACKMOUSEEVENT track{sizeof(track),TME_LEAVE,hwnd,0};TrackMouseEvent(&track);}
+  POINT point{short(LOWORD(l)),short(HIWORD(l))};
+  if(message==WM_MOUSEMOVE){TCHITTESTINFO hit{};hit.pt=point;int index=TabCtrl_HitTest(hwnd,&hit);if(index!=self->hovered){self->hovered=index;InvalidateRect(hwnd,nullptr,FALSE);}TRACKMOUSEEVENT track{sizeof(track),TME_LEAVE,hwnd,0};TrackMouseEvent(&track);}
+  if(message==WM_LBUTTONDOWN){TCHITTESTINFO hit{};hit.pt=point;int index=TabCtrl_HitTest(hwnd,&hit);if(self->closeHit(hwnd,index,point)){self->closePressed=index;SetCapture(hwnd);return 0;}}
+  if(message==WM_LBUTTONUP&&self->closePressed>=0){int pressed=self->closePressed;self->closePressed=-1;if(GetCapture()==hwnd)ReleaseCapture();TCHITTESTINFO hit{};hit.pt=point;int index=TabCtrl_HitTest(hwnd,&hit);if(index==pressed&&self->closeHit(hwnd,index,point))SendMessageW(GetParent(hwnd),WM_APP+3,WPARAM(index),0);InvalidateRect(hwnd,nullptr,FALSE);return 0;}
+  if(message==WM_MBUTTONUP){TCHITTESTINFO hit{};hit.pt=point;int index=TabCtrl_HitTest(hwnd,&hit);if(index>=0)SendMessageW(GetParent(hwnd),WM_APP+3,WPARAM(index),0);return 0;}
+  if(message==WM_CAPTURECHANGED)self->closePressed=-1;
   if(message==WM_MOUSELEAVE){self->hovered=-1;InvalidateRect(hwnd,nullptr,FALSE);}
   if(message==WM_SETFOCUS||message==WM_KILLFOCUS)InvalidateRect(hwnd,nullptr,FALSE);
   if(message==WM_PAINT){PAINTSTRUCT paint{};HDC target=BeginPaint(hwnd,&paint);RECT bounds{};GetClientRect(hwnd,&bounds);HDC dc=CreateCompatibleDC(target);auto bitmap=CreateCompatibleBitmap(target,std::max(1L,bounds.right),std::max(1L,bounds.bottom));auto oldBitmap=SelectObject(dc,bitmap);fill(dc,bounds,self->background);
    for(int i=0;i<TabCtrl_GetItemCount(hwnd);i++){RECT r{};TabCtrl_GetItemRect(hwnd,i,&r);r.top=self->px(2);r.bottom=bounds.bottom-self->px(2);InflateRect(&r,-self->px(2),0);bool active=i==TabCtrl_GetCurSel(hwnd);auto bg=active?self->selected:i==self->hovered?self->surface:self->background;
     if(active||i==self->hovered)self->rounded(dc,r,bg);if(active){RECT stripe{r.left+self->px(6),r.bottom-self->px(2),r.right-self->px(6),r.bottom};fill(dc,stripe,self->accent());}else{RECT divider{r.right,r.top+self->px(7),r.right+1,r.bottom-self->px(7)};fill(dc,divider,self->line);}
-    wchar_t title[256]{};TCITEMW item{};item.mask=TCIF_TEXT;item.pszText=title;item.cchTextMax=256;TabCtrl_GetItem(hwnd,i,&item);InflateRect(&r,-self->px(10),0);if(active)r.right-=self->px(22);self->label(dc,r,title,readable(active?self->text:self->muted,bg),DT_LEFT);if(active&&GetFocus()==hwnd)DrawFocusRect(dc,&r);
+    wchar_t title[256]{};TCITEMW item{};item.mask=TCIF_TEXT;item.pszText=title;item.cchTextMax=256;TabCtrl_GetItem(hwnd,i,&item);InflateRect(&r,-self->px(10),0);if(i==self->hovered){r.right-=self->px(24);int cx=r.right+self->px(23),cy=(r.top+r.bottom)/2,d=self->px(3);auto pen=CreatePen(PS_SOLID,std::max(1,self->px(1)),readable(self->text,bg));auto previous=SelectObject(dc,pen);MoveToEx(dc,cx-d,cy-d,nullptr);LineTo(dc,cx+d+1,cy+d+1);MoveToEx(dc,cx+d,cy-d,nullptr);LineTo(dc,cx-d-1,cy+d+1);SelectObject(dc,previous);DeleteObject(pen);}self->label(dc,r,title,readable(active?self->text:self->muted,bg),DT_LEFT);if(active&&GetFocus()==hwnd)DrawFocusRect(dc,&r);
    }
    BitBlt(target,0,0,bounds.right,bounds.bottom,dc,0,0,SRCCOPY);SelectObject(dc,oldBitmap);DeleteObject(bitmap);DeleteDC(dc);EndPaint(hwnd,&paint);return 0;}
   return DefSubclassProc(hwnd,message,w,l);
@@ -62,6 +68,6 @@ struct Chrome {
   EnumChildWindows(tabs,styleScroller,reinterpret_cast<LPARAM>(this));InvalidateRect(tabs,nullptr,FALSE);
  }
 
- void install(HWND tabs){TabCtrl_SetPadding(tabs,0,0);SetWindowSubclass(tabs,tabsProcedure,1,reinterpret_cast<DWORD_PTR>(this));for(int id:{101,102})SetWindowSubclass(GetDlgItem(GetParent(tabs),id),buttonProcedure,1,reinterpret_cast<DWORD_PTR>(this));layout(tabs,1200);}
+ void install(HWND tabs){TabCtrl_SetPadding(tabs,0,0);SetWindowSubclass(tabs,tabsProcedure,1,reinterpret_cast<DWORD_PTR>(this));SetWindowSubclass(GetDlgItem(GetParent(tabs),101),buttonProcedure,1,reinterpret_cast<DWORD_PTR>(this));layout(tabs,1200);}
 };
 }

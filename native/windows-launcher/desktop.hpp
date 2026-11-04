@@ -32,16 +32,14 @@ struct Desktop {
  void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
  void pause(const std::shared_ptr<Tab>& tab){if(tab&&tab->web)tab->web->ExecuteScript(L"window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();document.querySelectorAll('audio,video').forEach(x=>x.pause());window.speechSynthesis?.cancel();",nullptr);}
- void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4);int count=bar?std::max(1,TabCtrl_GetItemCount(bar)):1;int available=std::max(0,int(bounds.right)-button-gap*2);bounds.top=h;
+ void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4);int count=bar?std::max(1,TabCtrl_GetItemCount(bar)):1;int available=std::max(0,int(bounds.right)-button-gap);bounds.top=h;
   for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);
   if(bar){MoveWindow(bar,0,0,available,h,TRUE);chrome.layout(bar,available);}
-  RECT last{};int newX=available+gap;if(bar&&!Chrome::scroller(bar)&&TabCtrl_GetItemRect(bar,count-1,&last)&&last.right+gap+button<bounds.right)newX=std::max(gap,int(last.right)+gap);MoveWindow(GetDlgItem(window,101),newX,chrome.px(2),button,button,TRUE);
-  RECT activeRect{};bool shown=bar&&TabCtrl_GetCurSel(bar)>=0&&TabCtrl_GetItemRect(bar,TabCtrl_GetCurSel(bar),&activeRect)&&activeRect.left>=0&&activeRect.right<=available;
-  auto close=GetDlgItem(window,102);if(shown){MoveWindow(close,activeRect.right-chrome.px(26),chrome.px(4),chrome.px(22),chrome.px(24),TRUE);ShowWindow(close,SW_SHOWNOACTIVATE);}else ShowWindow(close,SW_HIDE);InvalidateRect(window,nullptr,FALSE);
+  RECT last{};int newX=available+gap;if(bar&&!Chrome::scroller(bar)&&TabCtrl_GetItemRect(bar,count-1,&last)&&last.right+gap+button<bounds.right)newX=std::max(gap,int(last.right)+gap);MoveWindow(GetDlgItem(window,101),newX,chrome.px(2),button,button,TRUE);InvalidateRect(window,nullptr,FALSE);
  }
 
  void select(size_t index){if(index>=tabs.size())return;if(active()!=tabs[index]){pause(active());hello.cancel(ceremony);}selected=index;TabCtrl_SetCurSel(bar,int(index));for(size_t i=0;i<tabs.size();i++)if(tabs[i]->controller)tabs[i]->controller->put_IsVisible(i==index);if(active()->controller)active()->controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);SetWindowTextW(window,active()->title.c_str());resize();}
- void erase(const std::shared_ptr<Tab>& tab){if(tab->closed)return;tab->closed=true;pause(tab);hello.cancel(ceremony);if(tab->controller)tab->controller->Close();tab->web=Ptr<ICoreWebView2>();tab->controller=Ptr<ICoreWebView2Controller>();auto i=std::find(tabs.begin(),tabs.end(),tab);if(i==tabs.end())return;size_t index=size_t(i-tabs.begin());TabCtrl_DeleteItem(bar,int(index));tabs.erase(i);if(tabs.empty()){DestroyWindow(window);return;}select(std::min(selected,tabs.size()-1));}
+ void erase(const std::shared_ptr<Tab>& tab){if(tab->closed)return;tab->closed=true;pause(tab);hello.cancel(ceremony);if(tab->controller)tab->controller->Close();tab->web=Ptr<ICoreWebView2>();tab->controller=Ptr<ICoreWebView2Controller>();auto i=std::find(tabs.begin(),tabs.end(),tab);if(i==tabs.end())return;size_t index=size_t(i-tabs.begin());bool wasSelected=index==selected;TabCtrl_DeleteItem(bar,int(index));tabs.erase(i);if(tabs.empty()){DestroyWindow(window);return;}if(index<selected)--selected;if(wasSelected)selected=std::min(index,tabs.size()-1);select(selected);}
  void close(const std::shared_ptr<Tab>& tab){if(!tab||tab->closed||tab->closing)return;tab->closing=true;
   if(!tab->web){erase(tab);return;}
   auto done=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([this,tab](HRESULT result,LPCWSTR value){tab->closing=false;if(tab->closed)return S_OK;
@@ -152,6 +150,7 @@ struct Desktop {
     else if(LOWORD(w)==106&&self->active()&&self->active()->web)self->active()->web->ExecuteScript(L"if(!document.getElementById('lock-screen')?.hidden)document.getElementById('lock-password')?.focus();else document.getElementById('brand-mini')?.click();",nullptr);return 0;
    case WM_CLOSE:if(l==1){self->hello.cancel(self->ceremony);DestroyWindow(hwnd);}else if(!self->closingAll){self->closingAll=true;self->hello.cancel(self->ceremony);if(self->tabs.empty())DestroyWindow(hwnd);else self->close(self->tabs.back());}return 0;
    case WM_APP+2:{std::unique_ptr<std::function<void()>> task(reinterpret_cast<std::function<void()>*>(l));(*task)();return 0;}
+   case WM_APP+3:if(size_t(w)<self->tabs.size())self->close(self->tabs[size_t(w)]);return 0;
    case WM_APP+1:{std::unique_ptr<Reply> reply(reinterpret_cast<Reply*>(l));if(self->ceremony==reply->operation)self->ceremony.reset();if(!reply->operation->cancelled&&!reply->tab->closed&&reply->tab==self->active()&&reply->generation==reply->tab->generation&&IsWindowVisible(hwnd)&&!IsIconic(hwnd))self->send(reply->tab,reply->id,reply->value);return 0;}
    case WM_DESTROY:self->hello.cancel(self->ceremony);PostQuitMessage(0);return 0;
   }
@@ -167,7 +166,6 @@ struct Desktop {
   chrome.setDpi(GetDpiForWindow(window));icons();
   bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|TCS_FIXEDWIDTH|TCS_BUTTONS|TCS_FLATBUTTONS,0,0,1200,chrome.height(),window,nullptr,cls.hInstance,nullptr);
   CreateWindowExW(0,L"BUTTON",L"New tab",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1205,3,40,42,window,reinterpret_cast<HMENU>(101),cls.hInstance,nullptr);
-  CreateWindowExW(0,L"BUTTON",L"Close tab",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1242,3,40,42,window,reinterpret_cast<HMENU>(102),cls.hInstance,nullptr);
   chrome.install(bar);resize();
   ShowWindow(window,SW_SHOW);UpdateWindow(window);
   try{computer.start();}catch(...){MessageBoxW(window,L"Aide computer control is unavailable. Check whether port 17778 is already in use.",L"Aide",MB_OK|MB_ICONWARNING);}
