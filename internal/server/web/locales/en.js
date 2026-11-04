@@ -1232,6 +1232,7 @@ window.aideEnglish = {
   "上下文消耗（估算）": "Context usage (estimated)",
   "上下文占用": "Context usage",
   "Docker 环境": "Docker environment",
+  "本机运行": "Native runtime",
   "版本加载中…": "Loading version…",
   "模型设置": "Model settings",
   "工作台": "Workbench",

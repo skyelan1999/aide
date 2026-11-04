@@ -31,7 +31,7 @@ grep -q '^http://localhost:18097/#token=' "$AIDE_NATIVE_BROWSER_URL"
 token="$(cat "$AIDE_DATA/auth/access-token")"
 runtime=/usr/lib/aide-native/runtime
 curl -fsS "http://127.0.0.1:18097/healthz" | "$runtime/python/bin/python3.12" -I -c 'import json,sys; h=json.load(sys.stdin); assert h["status"]=="ok" and h["integrity"]=="ok",h'
-curl -fsS -H "Authorization: Bearer $token" http://127.0.0.1:18097/api/config >/dev/null
+curl -fsS -H "Authorization: Bearer $token" http://127.0.0.1:18097/api/config | "$runtime/python/bin/python3.12" -I -c 'import json,sys; assert json.load(sys.stdin)["runtimeMode"] == "native"'
 [[ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18097/)" == 200 ]]
 "$runtime/node/bin/node" --version | grep -q '^v24\.'
 "$runtime/python/bin/python3.12" -I -c 'import docx,openpyxl,pptx,ezdxf,pypdf'

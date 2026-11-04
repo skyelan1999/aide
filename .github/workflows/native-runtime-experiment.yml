@@ -104,7 +104,7 @@ jobs:
           done
           test "$ready" = 1
           token="$(cat "$testroot/data/auth/access-token")"
-          curl -ksf --max-time 3 -H "Authorization: Bearer $token" "https://127.0.0.1:$port/api/config" >/dev/null
+          curl -ksf --max-time 3 -H "Authorization: Bearer $token" "https://127.0.0.1:$port/api/config" | "$resources/runtime/python/bin/python3.12" -I -c 'import json,sys; assert json.load(sys.stdin)["runtimeMode"] == "native"'
           test "$(curl -ks -o /dev/null -w '%{http_code}' "https://127.0.0.1:$port/")" = 200
           test ! -e "$testroot/docker-called"
           cleanup

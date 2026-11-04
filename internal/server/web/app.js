@@ -567,6 +567,8 @@ async function refreshConfig() {
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
+  const runtimeLabel = $('runtime-label');
+  if (runtimeLabel) runtimeLabel.textContent = t(state.config.runtimeMode === 'native' ? '本机运行' : 'Docker 环境');
   syncVoiceAssistantDisplayName();
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
   $('model-name').textContent = state.config.configured ? t("{0} · API 已配置", state.config.model) : t("先配置模型，即可开始真实 AI 对话");

@@ -48,7 +48,8 @@ try {
   if ($health.status -ne 'ok' -or $health.integrity -ne 'ok') { throw "Service health failed: $health" }
   $token = (Get-Content -Raw $tokenFile).Trim()
   $headers = @{ Authorization = "Bearer $token" }
-  $null = Invoke-RestMethod -TimeoutSec 3 -Headers $headers "$base/api/config"
+  $config = Invoke-RestMethod -TimeoutSec 3 -Headers $headers "$base/api/config"
+  if ($config.runtimeMode -ne 'native') { throw "Runtime mode was not reported as native: $($config.runtimeMode)" }
   if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 3 "$base/").StatusCode -ne 200) { throw 'Workbench home did not return HTTP 200.' }
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $install 'AideNativeStop.ps1')
   for ($i=0; $i -lt 30; $i++) {
