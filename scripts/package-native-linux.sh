@@ -23,13 +23,11 @@ case "$(uname -m):$(file -b "$SERVER")" in
 esac
 PYTHON_RUNTIME="${AIDE_PYTHON_RUNTIME:-$ROOT/build/native/python}"
 if [[ ! -x "$PYTHON_RUNTIME/bin/python3.12" ]]; then
-  AIDE_NATIVE_PYTHON_OUT="$ROOT/build/native/python" scripts/build-native-python-linux.sh
-  PYTHON_RUNTIME="$ROOT/build/native/python"
+  AIDE_NATIVE_PYTHON_OUT="$PYTHON_RUNTIME" scripts/build-native-python-linux.sh
 fi
 NODE_RUNTIME="${AIDE_NODE_RUNTIME:-$ROOT/build/native/node}"
 if [[ ! -x "$NODE_RUNTIME/bin/node" ]]; then
-  AIDE_NATIVE_NODE_OUT="$ROOT/build/native/node" scripts/build-native-node-linux.sh
-  NODE_RUNTIME="$ROOT/build/native/node"
+  AIDE_NATIVE_NODE_OUT="$NODE_RUNTIME" scripts/build-native-node-linux.sh
 fi
 PYTHONPATH="$PYTHON_RUNTIME/lib/python3.12/site-packages" "$PYTHON_RUNTIME/bin/python3.12" -c 'import docx,openpyxl,pptx,ezdxf,pypdf; assert pypdf.__version__ == "6.19.0"'
 [[ "$("$NODE_RUNTIME/bin/node" -p 'process.versions.node.split(".")[0]')" == 24 ]] || { echo 'Bundled Node runtime must be v24.' >&2; exit 1; }
@@ -76,12 +74,12 @@ BASE="http://127.0.0.1:$PORT"
 LOG="$DATA/logs/service.log"
 PIDFILE="$DATA/service.pid"
 mkdir -p "$DATA/logs"
-if python3 -I -c 'import socket,sys; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); r=s.connect_ex(("127.0.0.1", int(sys.argv[1]))); s.close(); raise SystemExit(0 if r == 0 else 1)' "$PORT"; then
+if "$ROOT/runtime/python/bin/python3.12" -I -c 'import socket,sys; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); r=s.connect_ex(("127.0.0.1", int(sys.argv[1]))); s.close(); raise SystemExit(0 if r == 0 else 1)' "$PORT"; then
   # Reuse only our own already-running instance; never attach to another app
   # that happens to answer on Aide's preferred port.
   TOKEN="$(cat "$DATA/auth/access-token" 2>/dev/null || true)"
   if [ -z "$TOKEN" ] || ! curl -fsS --max-time 2 "$BASE/healthz" >/dev/null 2>&1 || ! curl -fsS --max-time 2 -H "Authorization: Bearer $TOKEN" "$BASE/api/config" >/dev/null 2>&1; then
-    PORT="$(python3 -I -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+    PORT="$("$ROOT/runtime/python/bin/python3.12" -I -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
     AIDE_ADDR="127.0.0.1:$PORT"
     export AIDE_ADDR
     BASE="http://127.0.0.1:$PORT"

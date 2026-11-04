@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -163,6 +164,9 @@ func TestRemoteWorkspaceDispatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	socket := sshControlSocket // 全局常量，mock 用固定 socket
+	if _, err := os.Lstat(socket); err == nil {
+		t.Skip("shared SSH control socket is already in use")
+	}
 	sshStub := filepath.Join(dir, "ssh")
 	sftpStub := filepath.Join(dir, "sftp")
 	sshLog := filepath.Join(dir, "ssh.log")
@@ -223,6 +227,16 @@ exit 0
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
 		"workspace": map[string]any{"mode": "ssh", "path": at("/srv/app"), "host": "remote.example", "port": 22, "username": "deploy", "auth": "none"},
 	}), 200)
+	// Bring up the fake master, then attach a real Unix socket pathname so
+	// bound-task pinning verifies the same invariant as the production SSH mux.
+	if err := a.ensureSSHSession(context.Background()); err != nil {
+		t.Fatalf("prepare SSH master fixture: %v", err)
+	}
+	master, err := net.Listen("unix", socket)
+	if err != nil {
+		t.Fatalf("create authenticated SSH master socket fixture: %v", err)
+	}
+	t.Cleanup(func() { _ = master.Close(); _ = os.Remove(socket) })
 	// 远程文件列表
 	w := request(a, "GET", "/api/files?root=workspace&path=.", nil)
 	requireStatus(t, w, 200)
@@ -298,9 +312,9 @@ exit 0
 	if err := json.Unmarshal([]byte(strings.SplitN(w.Body.String(), "\n", 2)[0]), &commandEvent); err != nil || !strings.Contains(commandEvent.Text, at(`cd '\''/srv/app'\'' && echo hi`)) {
 		t.Fatalf("remote command must enter remote dir: %s", w.Body.String())
 	}
-	// 会话只建立一次（master 复用）
-	if b, _ := os.ReadFile(sshLog); strings.Count(string(b), "-fNM") != 1 {
-		t.Fatalf("master session must be established exactly once: %s", string(b))
+	// 复用固定的已认证主连接，不在绑定任务期间重新建立连接。
+	if b, _ := os.ReadFile(sshLog); strings.Count(string(b), "-fNM") != 1 || !strings.Contains(string(b), "-O check") {
+		t.Fatalf("task must reuse the authenticated master socket: %s", string(b))
 	}
 	// 切回本地
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{

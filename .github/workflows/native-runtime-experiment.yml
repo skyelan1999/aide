@@ -1,0 +1,184 @@
+name: Native Runtime Experiment
+on:
+  push:
+    branches: [experiment/native-runtime-no-docker-20261104]
+    paths:
+      - '.github/workflows/native-runtime-experiment.yml'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'native/macos-desktop/**'
+      - 'scripts/build-native-*.sh'
+      - 'scripts/package-native-*.sh'
+      - 'scripts/office/**'
+      - 'scripts/ci/native-*-package-smoke.*'
+      - 'version.md'
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-runtime-experiment-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux-package-install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build current Debian package and install it on the runner
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq dpkg-dev file
+          export AIDE_NATIVE_PACKAGE_OUT="$RUNNER_TEMP/native-linux"
+          mkdir -p "$AIDE_NATIVE_PACKAGE_OUT"
+          scripts/package-native-linux.sh
+          scripts/ci/native-linux-package-smoke.sh "$AIDE_NATIVE_PACKAGE_OUT/aide-native-experiment.deb"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aide-native-linux-debian-amd64
+          path: ${{ runner.temp }}/native-linux/aide-native-experiment.deb
+          if-no-files-found: error
+          retention-days: 7
+
+  macos-package-install:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build and install the current macOS package
+        shell: bash
+        run: |
+          set -euo pipefail
+          export AIDE_NATIVE_PACKAGE_OUT="$RUNNER_TEMP/native-macos"
+          mkdir -p "$AIDE_NATIVE_PACKAGE_OUT"
+          scripts/package-native-macos.sh
+          sudo installer -allowUntrusted -pkg "$AIDE_NATIVE_PACKAGE_OUT/Aide-Native-macOS.pkg" -target /
+          resources=/Applications/Aide.app/Contents/Resources
+          test -x "$resources/aide-server"
+          test "$("$resources/runtime/bin/node" --version)" = "v24.19.0"
+          "$resources/runtime/python/bin/python3.12" -I -c 'import docx,openpyxl,pptx,ezdxf,pypdf'
+          testbin="$RUNNER_TEMP/native-macos-bin"
+          testroot="$RUNNER_TEMP/native-macos-smoke"
+          mkdir -p "$testbin" "$testroot"/{workspace,context,data}
+          cat >"$testbin/docker" <<'SH'
+          #!/bin/sh
+          echo "$*" >>"$AIDE_NATIVE_DOCKER_MARKER"
+          exit 97
+          SH
+          chmod +x "$testbin/docker"
+          port="$("$resources/runtime/python/bin/python3.12" -I -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
+          PATH="$resources/runtime/bin:$resources/runtime/python/bin:$testbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+            PYTHONPATH="$resources/runtime/python/lib/python3.12/site-packages" \
+            AIDE_RUNTIME_MODE=native AIDE_NATIVE_LOCAL_HTTP=0 \
+            AIDE_WORKSPACE="$testroot/workspace" AIDE_CONTEXT="$testroot/context" AIDE_DATA="$testroot/data" \
+            AIDE_ADDR="127.0.0.1:$port" AIDE_LAN_ADDR=127.0.0.1:0 AIDE_HOST_LOCAL="$RUNNER_TEMP" \
+            AIDE_OFFICE_SCRIPTS="$resources/office-scripts" AIDE_NATIVE_DOCKER_MARKER="$testroot/docker-called" \
+            "$resources/aide-server" >"$testroot/server.log" 2>&1 &
+          service_pid=$!
+          cleanup() { kill -TERM "$service_pid" 2>/dev/null || true; wait "$service_pid" 2>/dev/null || true; }
+          trap cleanup EXIT
+          ready=0
+          for _ in $(seq 1 45); do
+            if curl -ksf --max-time 2 "https://127.0.0.1:$port/healthz" >"$testroot/health.json"; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          token="$(cat "$testroot/data/auth/access-token")"
+          curl -ksf --max-time 3 -H "Authorization: Bearer $token" "https://127.0.0.1:$port/api/config" >/dev/null
+          test "$(curl -ks -o /dev/null -w '%{http_code}' "https://127.0.0.1:$port/")" = 200
+          test ! -e "$testroot/docker-called"
+          cleanup
+          trap - EXIT
+          echo 'Native macOS package install/start/TLS/auth/Office/stop/no-Docker smoke: PASS'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aide-native-macos-arm64
+          path: |
+            ${{ runner.temp }}/native-macos/Aide-Native-macOS.pkg
+            ${{ runner.temp }}/native-macos/Aide-Native-macOS.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  windows-package-install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build Windows x64 installer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq nsis unzip
+          mkdir -p "$RUNNER_TEMP/native-windows"
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -mod=vendor -trimpath \
+            -ldflags='-s -w -H=windowsgui' -o "$RUNNER_TEMP/aide-server.exe" ./cmd/aide
+          export AIDE_NATIVE_SERVER_BINARY="$RUNNER_TEMP/aide-server.exe"
+          export AIDE_NATIVE_PACKAGE_OUT="$RUNNER_TEMP/native-windows"
+          scripts/package-native-windows.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aide-native-windows-x64
+          path: ${{ runner.temp }}/native-windows/Aide-Native-Windows-x64-Setup.exe
+          if-no-files-found: error
+          retention-days: 2
+
+  windows-install-smoke:
+    needs: windows-package-install
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: aide-native-windows-x64
+          path: ${{ runner.temp }}/native-windows
+      - name: Install, run, health-check, stop and uninstall without Docker
+        shell: powershell
+        run: >-
+          ./scripts/ci/native-windows-package-smoke.ps1
+          -Installer "$env:RUNNER_TEMP\native-windows\Aide-Native-Windows-x64-Setup.exe"
+
+  required:
+    if: always()
+    needs: [linux-package-install, macos-package-install, windows-package-install, windows-install-smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require all native package install jobs
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          assert all(job['result'] == 'success' for job in results.values()), results
+          PY

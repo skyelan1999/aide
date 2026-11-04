@@ -417,12 +417,12 @@ func TestHarnessIndependentReviewerReleaseAndSandbox(t *testing.T) {
 }
 
 func TestHarnessReadOnlyCommandOptions(t *testing.T) {
-	for _, command := range []string{"find . -delete", "find . -fls output.txt", "file --compile -m magic", "find . -de'lete'", "find . -fprint output.txt", "find . -fprintf output.txt text", "rg --pre=python3 needle", "git branch -D main", "git branch new", "git remote add other https://example.com/repo", "go env -w GOOS=linux", "go env -u GOOS"} {
+	for _, command := range []string{"find . -delete", "find . -fls output.txt", "file --compile -m magic", "find . -de'lete'", "find . -fprint output.txt", "find . -fprintf output.txt text", "rg --pre=python3 needle", "git status", "git diff", "git branch --show-current", "git remote -v", "git branch -D main", "git branch new", "git remote add other https://example.com/repo", "go env -w GOOS=linux", "go env -u GOOS"} {
 		if readOnlyAllowed(command) {
 			t.Errorf("write/helper option allowed as read-only: %s", command)
 		}
 	}
-	for _, command := range []string{"find . -type f", "rg needle file.txt", "git branch --show-current", "git remote -v", "go env -json GOPATH"} {
+	for _, command := range []string{"find . -type f", "rg needle file.txt", "go env -json GOPATH"} {
 		if !readOnlyAllowed(command) {
 			t.Errorf("ordinary read unexpectedly requires approval: %s", command)
 		}

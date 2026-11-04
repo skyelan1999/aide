@@ -340,13 +340,13 @@ func TestShellBlocked(t *testing.T) {
 }
 
 func TestReadOnlyAllowed(t *testing.T) {
-	readOnly := []string{"ls -la", "cat main.go", "grep -r foo .", "git status", "git diff", "pwd", "head -n 5 x", "wc -l x"}
+	readOnly := []string{"ls -la", "cat main.go", "grep -r foo .", "pwd", "head -n 5 x", "wc -l x"}
 	for _, c := range readOnly {
 		if !readOnlyAllowed(c) {
 			t.Fatalf("read-only should allow: %s", c)
 		}
 	}
-	writeOps := []string{"mkdir foo", "rm file", "go build -o x", "echo hi > file", "touch x", "cp a b", "git commit -m x"}
+	writeOps := []string{"mkdir foo", "rm file", "go build -o x", "echo hi > file", "touch x", "cp a b", "git status", "git diff", "git commit -m x"}
 	for _, c := range writeOps {
 		if readOnlyAllowed(c) {
 			t.Fatalf("read-only should NOT allow: %s", c)
