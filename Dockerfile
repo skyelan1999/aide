@@ -103,6 +103,8 @@ RUN --mount=type=cache,target=/toolchain \
 # 把随每次代码/前端改动而变的 COPY 二进制放到最后。这样改 Go/前端只失效最末 COPY 层，
 # pip 层稳定 CACHED、不重复联网下载；运行期镜像自包含、绝不联网 pip。
 FROM ${PYTHON_BASE} AS runtime
+ARG TARGETOS
+ARG TARGETARCH
 COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
 # A fresh root is essential: deleting SDK files from toolchain retains its layers.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -130,6 +132,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     echo "[runtime] PIP_OFFLINE=${PIP_OFFLINE} index=${PIP_INDEX_URL}" && \
     if [ "${PIP_OFFLINE}" = "1" ]; then \
       echo "[runtime] 离线模式：从 /wheels 安装（--no-index）"; \
+      test -f /wheels/.aide-wheelhouse-target || { echo "离线 wheelhouse 缺少目标平台标记，请重新运行 scripts/prebuild-wheels.sh" >&2; exit 1; }; \
+      grep -qx "platform=${TARGETOS}/${TARGETARCH}" /wheels/.aide-wheelhouse-target || { echo "wheelhouse 平台与构建目标 ${TARGETOS}/${TARGETARCH} 不匹配" >&2; exit 1; }; \
+      grep -qx 'python=3.12' /wheels/.aide-wheelhouse-target || { echo "wheelhouse Python 版本与运行时不匹配" >&2; exit 1; }; \
       pip install --no-index --find-links=/wheels \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     else \
