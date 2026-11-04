@@ -82,14 +82,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "Issue #792 remains open pending review/merge; changes have not been pushed, merged or deployed.",
+      "status": "pass",
+      "summary": "Source change was merged to main in PR #793 at 0f3a6406bb941715be26f9afb6068048c2fbd672; Issue #792 is closed. No packaged release or production deployment was requested or performed.",
       "evidence": [
-        "https://github.com/skyelan1999/aide/issues/792"
+        "https://github.com/skyelan1999/aide/pull/793",
+        "https://github.com/skyelan1999/aide/issues/792",
+        "Remote main: 0f3a6406bb941715be26f9afb6068048c2fbd672"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Manual isolated browser/PDF acceptance and the repository quick gate passed. The full verification profile failed because its Go runtime fixture lacks required Node/JavaScript parser, Python docx, registered fixture tools, and non-root test permissions; no source changes are implicated by those environment-specific failures. Full gate must pass in the correctly provisioned CI before merge. Production Aide was not restarted."
+  "handoff": "Fix is merged to main and Issue #792 is closed. Manual isolated browser/PDF acceptance and GitHub CI quick/go/gate passed. Local full profile failed because its Go runtime fixture lacks Node/JavaScript parser, python-docx, registered fixture tools and non-root permissions. Production Aide was not restarted; no packaged release/deployment was requested."
 }
