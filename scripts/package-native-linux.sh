@@ -11,18 +11,39 @@ mkdir -p "$OUT"
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/aide-native-linux.XXXXXX")"
 trap 'python3 -c "import shutil,sys; shutil.rmtree(sys.argv[1],ignore_errors=True)" "$STAGE"' EXIT
 SERVER="${AIDE_NATIVE_SERVER_BINARY:-$ROOT/build/native/aide}"
-if [[ ! -x "$SERVER" ]]; then
+SERVER_VALID=0
+if [[ -x "$SERVER" && "$(file -b "$SERVER")" == *ELF* ]]; then
+  case "$(uname -m):$(file -b "$SERVER")" in
+    aarch64:*ARM\ aarch64*|arm64:*ARM\ aarch64*|x86_64:*x86-64*|amd64:*x86-64*) SERVER_VALID=1 ;;
+  esac
+fi
+if [[ "$SERVER_VALID" != 1 ]]; then
+  if [[ -n "${AIDE_NATIVE_SERVER_BINARY:-}" ]]; then
+    echo "AIDE_NATIVE_SERVER_BINARY must be a Linux executable for $(uname -m)." >&2
+    exit 1
+  fi
+  rm -f -- "$SERVER"
   command -v go >/dev/null || { echo 'Go is required to build the Linux service; set AIDE_NATIVE_SERVER_BINARY to a Linux binary.' >&2; exit 1; }
   scripts/build-native-runtime.sh
 fi
-[[ "$(file -b "$SERVER")" == *ELF* ]] || { echo 'AIDE_NATIVE_SERVER_BINARY is not a Linux executable.' >&2; exit 1; }
 case "$(uname -m):$(file -b "$SERVER")" in
   aarch64:*ARM\ aarch64*) ;;
   x86_64:*x86-64*) ;;
   *) echo "Service binary architecture does not match this Linux host: $(file -b "$SERVER")" >&2; exit 1 ;;
 esac
 PYTHON_RUNTIME="${AIDE_PYTHON_RUNTIME:-$ROOT/build/native/python}"
-if [[ ! -x "$PYTHON_RUNTIME/bin/python3.12" ]]; then
+PYTHON_VALID=0
+if [[ -x "$PYTHON_RUNTIME/bin/python3.12" && "$(file -b "$PYTHON_RUNTIME/bin/python3.12")" == *ELF* ]]; then
+  case "$(uname -m):$(file -b "$PYTHON_RUNTIME/bin/python3.12")" in
+    aarch64:*ARM\ aarch64*|arm64:*ARM\ aarch64*|x86_64:*x86-64*|amd64:*x86-64*) PYTHON_VALID=1 ;;
+  esac
+fi
+if [[ "$PYTHON_VALID" != 1 ]]; then
+  if [[ -n "${AIDE_PYTHON_RUNTIME:-}" ]]; then
+    echo "AIDE_PYTHON_RUNTIME must contain a Linux Python 3.12 runtime for $(uname -m)." >&2
+    exit 1
+  fi
+  rm -rf -- "$PYTHON_RUNTIME"
   AIDE_NATIVE_PYTHON_OUT="$PYTHON_RUNTIME" scripts/build-native-python-linux.sh
 fi
 NODE_RUNTIME="${AIDE_NODE_RUNTIME:-$ROOT/build/native/node}"

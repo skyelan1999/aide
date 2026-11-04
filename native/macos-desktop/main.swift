@@ -73,6 +73,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var origin: URL?
     var startup: Process?
     var localService: Process?
+    var localComputerBridge: NSRunningApplication?
     var statusLabel: NSTextField?
     var retryButton: NSButton?
     var pageErrors = 0
@@ -267,6 +268,10 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
                 }
             } catch {
                 if process.isRunning { process.terminate() }
+                DispatchQueue.main.sync {
+                    self.localComputerBridge?.terminate()
+                    self.localComputerBridge = nil
+                }
                 DispatchQueue.main.async {
                     self.startup = nil
                     self.connectionFailed(error.localizedDescription)
@@ -287,6 +292,27 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         try fm.createDirectory(at: context, withIntermediateDirectories: true)
         try fm.createDirectory(at: data, withIntermediateDirectories: true)
         let port = try nativeFreeLoopbackPort()
+        let bridgeTokenURL = data.appendingPathComponent("auth/computer-bridge-token")
+        let bridgeAuthDirectory = bridgeTokenURL.deletingLastPathComponent()
+        try fm.createDirectory(at: bridgeAuthDirectory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: bridgeAuthDirectory.path)
+        let bridgeToken: String
+        if let savedToken = try? String(contentsOf: bridgeTokenURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines),
+           savedToken.range(of: "^[A-Za-z0-9_-]{40,64}$", options: .regularExpression) != nil {
+            bridgeToken = savedToken
+        } else {
+            var bytes = [UInt8](repeating: 0, count: 32)
+            guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+                throw desktopError("无法生成本机电脑控制凭据。")
+            }
+            bridgeToken = Data(bytes).base64EncodedString()
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+            try (bridgeToken + "\n").write(to: bridgeTokenURL, atomically: true, encoding: .utf8)
+        }
+        try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: bridgeTokenURL.path)
+        try launchNativeComputerBridge(token: bridgeToken, tokenFile: bridgeTokenURL)
         guard let server = Bundle.main.url(forResource: "aide-server", withExtension: nil), fm.isExecutableFile(atPath: server.path) else {
             throw desktopError("安装包缺少 Aide 本机服务组件。")
         }
@@ -316,6 +342,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             "AIDE_LAN_ADDR": "127.0.0.1:0",
             "AIDE_HOST_LOCAL": home.path,
             "AIDE_RUNTIME_MODE": "native",
+            "AIDE_COMPUTER_BRIDGE_TOKEN": bridgeToken,
             "AIDE_NATIVE_RUNTIME_ROOT": resources.appendingPathComponent("runtime", isDirectory: true).path,
             "AIDE_OFFICE_SCRIPTS": resources.appendingPathComponent("office-scripts").path
         ]
@@ -348,6 +375,29 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         }
         let fingerprint = SHA256.hash(data: der).map { String(format: "%02x", $0) }.joined()
         return DesktopSession(origin: origin + "/", token: token, certificateSHA256: fingerprint, instanceId: instanceId)
+    }
+
+    func launchNativeComputerBridge(token: String, tokenFile: URL) throws {
+        let bridge = Bundle.main.bundleURL.appendingPathComponent("Contents/Resources/Aide Computer Bridge.app", isDirectory: true)
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: bridge.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            throw desktopError("安装包缺少本机电脑控制桥接组件。")
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        configuration.environment = ["AIDE_COMPUTER_BRIDGE_TOKEN": token, "AIDE_COMPUTER_BRIDGE_TOKEN_FILE": tokenFile.path, "AIDE_COMPUTER_BRIDGE_PORT": "17778", "AIDE_COMPUTER_BRIDGE_LOOPBACK_ONLY": "1"]
+        let semaphore = DispatchSemaphore(value: 0)
+        var runningApplication: NSRunningApplication?
+        var launchError: Error?
+        NSWorkspace.shared.openApplication(at: bridge, configuration: configuration) { application, error in
+            runningApplication = application
+            launchError = error
+            semaphore.signal()
+        }
+        guard semaphore.wait(timeout: .now() + 15) == .success, let runningApplication else {
+            throw desktopError("本机电脑控制桥接启动失败：\(launchError?.localizedDescription ?? "启动超时")")
+        }
+        DispatchQueue.main.sync { self.localComputerBridge = runningApplication }
     }
 
     func nativeCurl(_ url: String) throws -> Data {
@@ -924,6 +974,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         for web in views.values { stopMedia(web) }
         startup?.terminate()
         localService?.terminate()
+        localComputerBridge?.terminate()
     }
 
     @objc func about() { NSApp.orderFrontStandardAboutPanel(nil) }

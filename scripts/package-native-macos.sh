@@ -12,12 +12,23 @@ trap 'python3 -c "import shutil,sys; shutil.rmtree(sys.argv[1],ignore_errors=Tru
 APP="$STAGE/Aide.app"
 RES="$APP/Contents/Resources"
 mkdir -p "$APP/Contents/MacOS" "$RES/runtime/bin" "$RES/runtime/lib/node_modules" "$RES/runtime/python"
+BRIDGE_APP="$RES/Aide Computer Bridge.app"
+mkdir -p "$BRIDGE_APP/Contents/MacOS" "$BRIDGE_APP/Contents/Resources"
 SERVER="${AIDE_NATIVE_SERVER_BINARY:-$ROOT/build/native/aide}"
-if [[ ! -x "$SERVER" ]]; then
+SERVER_VALID=0
+if [[ -x "$SERVER" && "$(file -b "$SERVER")" == *Mach-O* ]]; then
+  SERVER_ARCHS="$(lipo -archs "$SERVER" 2>/dev/null || true)"
+  [[ " $SERVER_ARCHS " == *" $(uname -m) "* ]] && SERVER_VALID=1
+fi
+if [[ "$SERVER_VALID" != 1 ]]; then
+  if [[ -n "${AIDE_NATIVE_SERVER_BINARY:-}" ]]; then
+    echo "AIDE_NATIVE_SERVER_BINARY must be a macOS executable for $(uname -m)." >&2
+    exit 1
+  fi
+  rm -f -- "$SERVER"
   command -v go >/dev/null 2>&1 || { echo 'Go is needed to build the native Aide service; set AIDE_NATIVE_SERVER_BINARY to a matching macOS binary.' >&2; exit 1; }
   scripts/build-native-runtime.sh
 fi
-[[ "$(file -b "$SERVER")" == *Mach-O* ]] || { echo 'AIDE_NATIVE_SERVER_BINARY is not a macOS executable.' >&2; exit 1; }
 HOST_ARCH="$(uname -m)"
 SERVER_ARCHS="$(lipo -archs "$SERVER" 2>/dev/null || true)"
 [[ " $SERVER_ARCHS " == *" $HOST_ARCH "* ]] || { echo "Aide service architecture ($SERVER_ARCHS) does not include this Mac ($HOST_ARCH)." >&2; exit 1; }
@@ -26,7 +37,19 @@ NODE="${AIDE_NODE_BIN:-$(command -v node || true)}"
 NODE_MAJOR="$("$NODE" -p 'process.versions.node.split(".")[0]')"
 [[ "$NODE_MAJOR" == 24 ]] || { echo "Node.js 24 is required; found major $NODE_MAJOR." >&2; exit 1; }
 PYTHON_RUNTIME="${AIDE_PYTHON_RUNTIME:-$ROOT/build/native/python}"
-if [[ ! -x "$PYTHON_RUNTIME/bin/python3.12" ]]; then
+PYTHON_VALID=0
+if [[ -x "$PYTHON_RUNTIME/bin/python3.12" && "$(file -b "$PYTHON_RUNTIME/bin/python3.12")" == *Mach-O* ]]; then
+  PYTHON_ARCHS="$(lipo -archs "$PYTHON_RUNTIME/bin/python3.12" 2>/dev/null || true)"
+  [[ " $PYTHON_ARCHS " == *" $(uname -m) "* ]] && PYTHON_VALID=1
+fi
+if [[ "$PYTHON_VALID" != 1 ]]; then
+  if [[ -n "${AIDE_PYTHON_RUNTIME:-}" ]]; then
+    echo "AIDE_PYTHON_RUNTIME must contain a macOS Python 3.12 runtime for $(uname -m)." >&2
+    exit 1
+  fi
+  # build/native is shared by cross-platform experiments; replace a stale
+  # Linux/Windows runtime instead of trying to execute it as a macOS binary.
+  rm -rf -- "$PYTHON_RUNTIME"
   AIDE_NATIVE_PYTHON_OUT="$ROOT/build/native/python" scripts/build-native-python-macos.sh
   PYTHON_RUNTIME="$ROOT/build/native/python"
 fi
@@ -46,6 +69,15 @@ if [[ -n "$NPM_GLOBAL_ROOT" && -f "$NPM_ROOT/bin/npm-cli.js" ]]; then
 fi
 ditto "$PYTHON_RUNTIME" "$RES/runtime/python"
 cp -R scripts/office "$RES/office-scripts"
+swiftc -swift-version 5 -O -target "$(uname -m)-apple-macos14.0" scripts/native-computer-bridge.swift -o "$BRIDGE_APP/Contents/MacOS/AideComputerBridge"
+python3 - "$BRIDGE_APP/Contents/Info.plist" <<'PY'
+import plistlib,sys
+value={"CFBundleIdentifier":"local.aide.computer-bridge","CFBundleName":"Aide Computer Bridge","CFBundleDisplayName":"Aide Computer Bridge","CFBundleExecutable":"AideComputerBridge","CFBundlePackageType":"APPL","CFBundleVersion":"1","CFBundleShortVersionString":"1.0.0","LSMinimumSystemVersion":"14.0","NSHighResolutionCapable":True}
+with open(sys.argv[1],'wb') as f: plistlib.dump(value,f)
+PY
+chmod 755 "$BRIDGE_APP/Contents/MacOS/AideComputerBridge"
+codesign --force --sign - --identifier local.aide.computer-bridge \
+  --requirements '=designated => identifier "local.aide.computer-bridge"' "$BRIDGE_APP"
 VERSION="$(python3 -c 'import re,sys; s=open(sys.argv[1]).read(); m=re.search(r"(\d+\.\d+\.\d+\.\d+) RC(\d+)",s); print((m.group(1)+"."+m.group(2)) if m else "0.1.0")' version.md)"
 python3 - "$APP/Contents/Info.plist" "$VERSION" <<'PY'
 import plistlib,sys

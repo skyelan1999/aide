@@ -82,3 +82,11 @@ Linux/Windows 安装包已经在隔离的 Debian 容器及 Windows hosted runner
 
 - commit `577e7491` 对应原生包 CI run `41884702473` 的三端包构建、安装/启动 smoke 与 required gate 全部通过：Debian Linux 包安装、鉴权、Office 文件、命令沙箱读写隔离和停止；macOS arm64 PKG 安装、服务 TLS/鉴权、首页、停止与无 Docker；Windows x64 NSIS 安装、服务健康/鉴权、停止、卸载和用户数据保留。run artifact 包含 macOS PKG/ZIP；Windows smoke 明确输出 PASS。
 - 同一 commit 的 Aide CI run `41884702501` quick、Go 编译/关键回归和 gate 全通过。此记录不代表 Windows shell 沙箱、macOS/Linux 用户桌面浏览器、三端电脑控制、全市场插件/TTS/AI 会话具备完整原生支持。
+
+## 2026-11-05 macOS 电脑控制桥接集成续测
+
+- macOS 原生 `.app` 现将 `Aide Computer Bridge.app` 编入 `Contents/Resources` 并以稳定 bundle identifier 签名；Aide 启动时创建权限为 0600 的本地随机令牌文件，通过 Launch Services 启动桥接，同时把令牌传给本机 Go 服务；退出或服务启动失败会关闭桥接。桥接支持从令牌文件动态读取新值，以处理 Aide 异常退出后桥接进程仍在的重启情形。
+- 原生包启动的桥接只绑定 `127.0.0.1:17778`；独立旧版桥接继续保留既有监听模式。设置页引导屏幕录制和辅助功能授权，因此截图/输入仍取决于用户授予 macOS TCC 权限。
+- 本机实际重新构建 `.pkg`/`.zip`，从 ZIP 解出的整个 Aide app 通过 `codesign --verify --deep --strict`；检查了 PKG payload 存在内嵌桥接可执行文件和稳定签名标识。主 App 与桥接 Swift 源通过本机 macOS 14 target 类型检查。
+- 直接从临时目录执行解包的桥接二进制被本机进程执行策略拒绝（`sandbox_extension_issue_file_to_process`），所以本轮未能完成真实 HTTP health、截图或输入操作验收；也未安装或覆盖当前 Aide。下一步需在 macOS CI/真实桌面以 Launch Services 启动来验证桥接 listener 和 TCC 流程。
+- 本机首次打包还复现了共享构建目录的跨平台缓存污染：Linux ELF Python 被 macOS 当成可执行文件。本轮 macOS 与 Linux 打包脚本现校验服务/Python 的操作系统格式和 CPU 架构，默认缓存不匹配时自动重建；显式指定错误平台的自定义产物则报出清晰错误。macOS 重新打包成功；Linux runner 将在后续 CI 验证。
