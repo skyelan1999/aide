@@ -24,7 +24,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='aide-native-syntax-') as temporary:
         folder = Path(temporary)
         sources = '\n'.join(p.read_text(encoding='utf-8') for p in (ROOT / 'native/windows-launcher').glob('*') if p.suffix in ('.cpp', '.hpp'))
-        declarations = ['#pragma once']
+        declarations = ['#pragma once', '#define AIDE_LAN_BRIDGE_PROTOCOL_VERSION 1', '#define AIDE_LAN_REMOTE_ACCESS_PROTOCOL_VERSION 1']
         declarations += [f'inline const char* {name}="";' for name in sorted(set(re.findall(r'\bembedded_[a-z_0-9]+\b', sources)))]
         declarations += [f'extern "C" const unsigned char {name}[]={{0}};' for name in sorted(set(re.findall(r'\baide_(?:local_mounts|message_lan)_(?:begin|end)\b', sources)))]
         (folder / 'embedded.hpp').write_text('\n'.join(declarations), encoding='utf-8')

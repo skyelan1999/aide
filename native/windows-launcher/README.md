@@ -49,8 +49,12 @@ helper differs from the cached helper, the launcher requests a host-worker refre
 The helper uses the fixed loopback `-remote-target` mapping for password-protected
 LAN access. If that optional mapping or helper capability is unavailable, the
 launcher logs a clear warning and keeps message chat running; the workbench stays
-available and the settings page reports LAN access as unavailable. Update and
-restart Aide to enable it. When replacing a source-built launcher, run `stop.bat`
+available and the settings page reports LAN access as unavailable. The launcher
+compares the embedded helper's machine-readable `-capabilities` protocol with the
+service `/healthz` capability manifest before forwarding the optional port. The
+protocol constants are generated from the Go bridge package at build time. Older
+helpers are probed through their help output; older services safely disable only
+remote access. Update and restart Aide to enable it. When replacing a source-built launcher, run `stop.bat`
 and then `start.bat` so the old resident controller releases its installation
 lock before the new executable starts.
 

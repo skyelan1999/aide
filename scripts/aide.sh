@@ -114,7 +114,7 @@ fi
 
 # A healthy owned instance is reopened before archive imports, migration or
 # package-image selection, including when a Release marker has changed.
-if [[ "$START_BUILT" != 1 && ( "$MODE" == start || "$MODE" == start-bundle || "$MODE" == start-image ) ]] && launcher_running_ready "$DOCKER_BIN"; then
+if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && launcher_running_ready "$DOCKER_BIN"; then
   MODE=start-image
 fi
 
@@ -290,7 +290,7 @@ case "$MODE" in
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
     REUSE_RUNNING=0
     source scripts/prebuilt-image.sh
-    if [[ "$START_BUILT" != 1 ]] && launcher_running_ready "$DOCKER_BIN"; then
+    if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && launcher_running_ready "$DOCKER_BIN"; then
       echo "== Aide 已在运行且健康，重新打开现有工作台 =="
       REUSE_RUNNING=1
       IMG="$("$DOCKER_BIN" compose config --images aide)"
@@ -325,7 +325,6 @@ case "$MODE" in
     if [[ "$REUSE_RUNNING" != 1 ]]; then
     bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
     if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs start --root "$PROJECT_DIR" --image "$IMG" || echo "Codex host component unavailable; see launcher output."; else echo "Codex Bridge requires host Node.js 18+."; fi
-    bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
     if [[ ("$(uname -s)" == Darwin || "$(uname -s)" == Linux) ]] && command -v node >/dev/null 2>&1; then
       bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
     fi
@@ -343,6 +342,14 @@ case "$MODE" in
         "$DOCKER_BIN" image tag "$AIDE_STARTUP_PREVIOUS_IMAGE_ID" "$IMG" && "$DOCKER_BIN" compose up -d --no-build --pull never || echo "自动恢复启动失败；旧镜像仍保留为 $AIDE_STARTUP_PREVIOUS_IMAGE_ID。" >&2
       fi
       exit 1
+    fi
+    if [[ "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" == 1 ]]; then
+      ACTIVE_CONTAINER="$("$DOCKER_BIN" compose ps --status running --quiet aide)"
+      ACTIVE_IMAGE_ID="$("$DOCKER_BIN" inspect --format '{{.Image}}' "$ACTIVE_CONTAINER")"
+      [[ "$ACTIVE_IMAGE_ID" == "$BUNDLE_ID" ]] || { echo "A/B 激活镜像不匹配（expected $BUNDLE_ID, running $ACTIVE_IMAGE_ID）。" >&2; exit 1; }
+    fi
+    if [[ "$REUSE_RUNNING" != 1 ]]; then
+      bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
     fi
     if [[ -n "${AIDE_STARTUP_RELEASE_TAG:-}" ]]; then
       python3 scripts/latest-release-runtime.py commit --tag "$AIDE_STARTUP_RELEASE_TAG" --image-id "$AIDE_STARTUP_RELEASE_IMAGE_ID" --state .agent-state/startup/active-release.json --cache .cache/aide/releases || echo "Release 已通过容器健康检查，但版本标记写入失败；下次启动将重新核对。" >&2

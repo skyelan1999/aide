@@ -18,10 +18,11 @@ class MessageLANLauncherTests(unittest.TestCase):
         shutil.copy2(ROOT/'scripts/message-lan-control.sh',self.root/'scripts')
         self.helper=b'''#!/bin/sh
 mode=run
+argv="$*"
 while [ "$#" -gt 0 ]; do
- case "$1" in -dir) dir="$2"; shift 2;; -target|-capture-target) shift 2;; -remote-target) test -z "$LAN_OLD_HELPER" || exit 99; shift 2;; -h) mode=help; shift;; -status) mode=status; shift;; -stop) mode=stop; shift;; *) exit 99;; esac
+ case "$1" in -dir) dir="$2"; shift 2;; -target|-capture-target|-remote-target) shift 2;; -capabilities) if [ -n "$LAN_OLD_HELPER" ]; then echo "flag provided but not defined: -capabilities" >&2; exit 2; fi; mode=capabilities; shift;; -h) mode=help; shift;; -status) mode=status; shift;; -stop) mode=stop; shift;; *) exit 99;; esac
 done
-case "$mode" in help) if [ -z "$LAN_OLD_HELPER" ]; then echo "-remote-target"; else echo "usage"; fi;; status) test -f "$dir/host.json";; stop) rm -f "$dir/host.json";; run) mkdir -p "$dir"; echo ready > "$dir/host.json";; esac
+case "$mode" in capabilities) printf '{"protocol":1,"capabilities":{"message":1,"capture":1,"remoteAccess":1}}\\n';; help) if [ -n "$LAN_OLD_HELPER" ]; then echo "-remote-target" >&2; else echo "usage" >&2; fi;; status) test -f "$dir/host.json";; stop) rm -f "$dir/host.json";; run) mkdir -p "$dir"; echo ready > "$dir/host.json"; printf '%s\\n' "$argv" > "$dir/args";; esac
 '''
         (self.root/'helper').write_bytes(self.helper)
         docker=self.root/'bin/docker'
@@ -34,6 +35,9 @@ if a==['compose','ps','-q','aide']:print('current')
 elif a==['compose','port','aide','45840']:print(os.environ.get('LAN_BINDING','127.0.0.1:55555'))
 elif a==['compose','port','aide','45841']:print(os.environ.get('LAN_CAPTURE_BINDING','127.0.0.1:55556'))
 elif a==['compose','port','aide','45842']:print(os.environ.get('LAN_REMOTE_BINDING','127.0.0.1:55557'))
+elif a[:3]==['compose','exec','-T'] and any('healthz' in x for x in a):
+ if os.environ.get('LAN_SERVER_NO_CAPABILITIES'):print('{"status":"ok","service":"aide"}')
+ else:print('{"status":"ok","service":"aide","capabilities":{"messageBridgeProtocol":1,"remoteAccessProtocol":'+os.environ.get('LAN_SERVER_REMOTE_PROTOCOL','1')+'}}')
 elif a==['inspect','current','--format','{{.Image}}']:print('sha256:'+'a'*64)
 elif a==['create','--network','none','--entrypoint','/bin/true','sha256:'+'a'*64]:print('pristine')
 elif a[0]=='cp':
@@ -49,9 +53,18 @@ else:raise SystemExit(87)
         self.env=dict(os.environ,LAN_FIXTURE=str(self.root),PATH=str(self.root/'bin')+os.pathsep+os.environ['PATH'])
     def run_control(self,action='start',**environment):
         return subprocess.run(['bash',str(self.root/'scripts/message-lan-control.sh'),action],env={**self.env,**environment},capture_output=True,text=True,timeout=10)
+    def sha256_only_path(self):
+        path=self.root/'sha256-only-bin';path.mkdir()
+        for name in ('bash','dirname','uname','awk','sha256sum','python3','mkdir','chmod','mktemp','rm','mv','sleep'):
+            target=shutil.which(name)
+            if target:(path/name).symlink_to(target)
+        (path/'docker').symlink_to(self.root/'bin/docker')
+        return str(path)
     def test_start_uses_loopback_mapping_and_pristine_checked_image(self):
         result=self.run_control();self.assertEqual(result.returncode,0,result.stderr)
         self.assertTrue((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())
+        helper_args=(self.root/'.aide-data/storage/data/messages/lan-bridge/args').read_text()
+        self.assertIn('-remote-target',helper_args)
         calls=[json.loads(line) for line in (self.root/'calls').read_text().splitlines()]
         self.assertIn(['create','--network','none','--entrypoint','/bin/true','sha256:'+'a'*64],calls)
         self.assertIn(['rm','pristine'],calls)
@@ -60,6 +73,24 @@ else:raise SystemExit(87)
     def test_older_release_helper_keeps_existing_startup(self):
         result=self.run_control(LAN_OLD_HELPER='1');self.assertEqual(result.returncode,0,result.stderr)
         self.assertTrue((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())
+        self.assertIn('-remote-target',(self.root/'.aide-data/storage/data/messages/lan-bridge/args').read_text())
+    def test_server_protocol_mismatch_keeps_messaging_but_disables_remote_access(self):
+        result=self.run_control(LAN_SERVER_REMOTE_PROTOCOL='0');self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('协议版本不兼容',result.stderr)
+        self.assertNotIn('-remote-target',(self.root/'.aide-data/storage/data/messages/lan-bridge/args').read_text())
+    def test_old_server_without_capability_manifest_keeps_messaging(self):
+        result=self.run_control(LAN_SERVER_NO_CAPABILITIES='1');self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('协议版本不兼容',result.stderr)
+        self.assertNotIn('-remote-target',(self.root/'.aide-data/storage/data/messages/lan-bridge/args').read_text())
+    def test_sha256sum_only_linux_host_can_verify_and_start_helper(self):
+        env={**self.env,'PATH':self.sha256_only_path()}
+        result=subprocess.run(['bash',str(self.root/'scripts/message-lan-control.sh'),'start'],env=env,capture_output=True,text=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertTrue((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())
+    def test_non_loopback_remote_mapping_disables_only_remote_access(self):
+        result=self.run_control(LAN_REMOTE_BINDING='0.0.0.0:55557');self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('45842',result.stderr)
+        self.assertNotIn('-remote-target',(self.root/'.aide-data/storage/data/messages/lan-bridge/args').read_text())
     def test_mismatched_checksum_does_not_execute_helper(self):
         result=self.run_control(LAN_BAD_HASH='1');self.assertNotEqual(result.returncode,0)
         self.assertFalse((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())

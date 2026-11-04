@@ -35,22 +35,36 @@ SOURCE="$("$DOCKER_BIN" create --network none --entrypoint /bin/true "$IMAGE")"
 "$DOCKER_BIN" cp "$SOURCE:/opt/aide/message-lan/$NAME" "$TMP/$NAME"
 "$DOCKER_BIN" cp "$SOURCE:/opt/aide/message-lan/SHA256SUMS" "$TMP/SHA256SUMS"
 EXPECTED="$(awk -v name="$NAME" '$2==name {print $1}' "$TMP/SHA256SUMS")"
-ACTUAL="$(shasum -a 256 "$TMP/$NAME" | awk '{print $1}')"
+if command -v shasum >/dev/null 2>&1; then ACTUAL="$(shasum -a 256 "$TMP/$NAME" | awk '{print $1}')"
+elif command -v sha256sum >/dev/null 2>&1; then ACTUAL="$(sha256sum "$TMP/$NAME" | awk '{print $1}')"
+else echo 'Missing shasum or sha256sum; cannot verify LAN helper.' >&2; exit 1; fi
 [[ "$EXPECTED" =~ ^[a-f0-9]{64}$ && "$EXPECTED" == "$ACTUAL" ]] || { echo 'LAN helper checksum mismatch.' >&2; exit 1; }
 chmod 700 "$TMP/$NAME"
 # Detect optional remote-access support before stopping the current bridge or
 # replacing its cached executable. Older images can still serve messaging.
 REMOTE_TARGET=''
 REMOTE_WARNING=''
-HELP="$("$TMP/$NAME" -h 2>&1 || true)"
-if [[ "$HELP" == *"-remote-target"* ]]; then
+HELPER_CAPABILITIES="$("$TMP/$NAME" -capabilities 2>/dev/null || true)"
+HELPER_PROTOCOLS="$(python3 -c 'import json,sys; d=json.load(sys.stdin); c=d.get("capabilities",{}); print(int(d.get("protocol",0)), int(c.get("remoteAccess",0)))' <<< "$HELPER_CAPABILITIES" 2>/dev/null || true)"
+HELPER_PROTOCOL=0
+HELPER_REMOTE_PROTOCOL=0
+read -r HELPER_PROTOCOL HELPER_REMOTE_PROTOCOL <<< "$HELPER_PROTOCOLS"
+if [[ "$HELPER_PROTOCOL" != 1 ]]; then
+  HELP="$("$TMP/$NAME" -h 2>&1 || true)"
+  [[ "$HELP" == *"-remote-target"* ]] && HELPER_REMOTE_PROTOCOL=1 || HELPER_REMOTE_PROTOCOL=0
+fi
+SERVER_HEALTH="$("$DOCKER_BIN" compose exec -T aide curl -fsSk --connect-timeout 2 --max-time 3 https://127.0.0.1:8080/healthz 2>/dev/null || true)"
+SERVER_REMOTE_PROTOCOL="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(int(d.get("capabilities",{}).get("remoteAccessProtocol",0)))' <<< "$SERVER_HEALTH" 2>/dev/null || true)"
+if [[ "$HELPER_REMOTE_PROTOCOL" =~ ^[1-9][0-9]*$ && "$SERVER_REMOTE_PROTOCOL" =~ ^[1-9][0-9]*$ && "$HELPER_REMOTE_PROTOCOL" -le "$SERVER_REMOTE_PROTOCOL" ]]; then
   if REMOTE_BINDING="$("$DOCKER_BIN" compose port aide 45842 2>/dev/null)" && [[ "$REMOTE_BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]]; then
     REMOTE_TARGET="127.0.0.1:${BASH_REMATCH[1]}"
   else
     REMOTE_WARNING='局域网远程访问不可用：运行环境缺少 45842 回环端口映射；聊天消息桥仍可用，请更新并重启 Aide。'
   fi
+elif [[ "$HELPER_REMOTE_PROTOCOL" =~ ^[1-9][0-9]*$ ]]; then
+  REMOTE_WARNING='局域网远程访问不可用：消息桥与服务端协议版本不兼容；聊天消息桥仍可用，请更新并重启 Aide。'
 else
-  REMOTE_WARNING='局域网远程访问不可用：当前运行镜像中的消息桥不支持远程访问；聊天消息桥仍可用，请更新并重启 Aide。'
+  REMOTE_WARNING='局域网远程访问不可用：当前消息桥不支持远程访问；聊天消息桥仍可用，请更新并重启 Aide。'
 fi
 [[ ! -x "$BIN" ]] || "$BIN" -stop -dir "$DIR"
 mv "$TMP/$NAME" "$BIN"

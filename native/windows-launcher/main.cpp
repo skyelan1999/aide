@@ -34,6 +34,8 @@
 using json=nlohmann::json;
 namespace fs=std::filesystem;
 using Args=std::vector<std::wstring>;
+constexpr int kLanBridgeProtocolVersion=AIDE_LAN_BRIDGE_PROTOCOL_VERSION;
+constexpr int kLanRemoteAccessProtocolVersion=AIDE_LAN_REMOTE_ACCESS_PROTOCOL_VERSION;
 struct Handle {
  HANDLE h=INVALID_HANDLE_VALUE;
  Handle()=default; explicit Handle(HANDLE v):h(v){}
@@ -472,6 +474,7 @@ public:
   directoryAvailable=true;
  }
  std::string binding(const wchar_t* port){auto r=compose({L"port",L"aide",port});required(r,"Missing helper port mapping");auto value=trim(r.out);if(!std::regex_match(value,std::regex("127\\.0\\.0\\.1:[0-9]{1,5}")))throw std::runtime_error("Helper mapping must be loopback only");return value;}
+ int serverRemoteAccessProtocol(){auto result=compose({L"exec",L"-T",L"aide",L"curl",L"-fsSk",L"--connect-timeout",L"2",L"--max-time",L"3",L"https://127.0.0.1:8080/healthz"},6000);if(result.code)return 0;auto health=json::parse(result.out,nullptr,false);if(!health.is_object()||!health.contains("capabilities")||!health["capabilities"].is_object())return 0;auto value=health["capabilities"].value("remoteAccessProtocol",0);return value>0?value:0;}
  void codexHost(){
   auto helper=root/L"scripts/codex-host-control.cjs",node=findExe(L"node.exe");
   if(!fs::exists(helper))return;
@@ -487,7 +490,10 @@ public:
    auto cid=container();auto actual=d({L"inspect",wide(cid),L"--format",L"{{.Image}}"});required(actual,"Cannot identify running image");auto selected=inspect(image);if(selected.is_null()||selected.value("Id","")!=trim(actual.out))throw std::runtime_error("Running image changed; refusing helper extraction");
    auto binary=embeddedHelper("message-lan"),dir=root/L".aide-data/storage/data/messages/lan-bridge";privateDirectory(dir);
    std::vector<std::wstring> lanArgs{L"-dir",dir.wstring(),L"-target",wide(binding(L"45840")),L"-capture-target",wide(binding(L"45841"))};
-   auto help=run(binary,{L"-h"},5000);bool remoteReady=!help.code&&help.out.find("-remote-target")!=std::string::npos;
+   auto probe=run(binary,{L"-capabilities"},5000);int helperRemoteProtocol=0;
+   if(!probe.code){auto caps=json::parse(probe.out,nullptr,false);if(caps.is_object()&&caps.value("protocol",0)==kLanBridgeProtocolVersion&&caps.contains("capabilities")&&caps["capabilities"].is_object())helperRemoteProtocol=caps["capabilities"].value("remoteAccess",0);}
+   else{auto help=run(binary,{L"-h"},5000);if((help.out+help.err).find("-remote-target")!=std::string::npos)helperRemoteProtocol=kLanRemoteAccessProtocolVersion;}
+   bool remoteReady=helperRemoteProtocol>0&&helperRemoteProtocol<=serverRemoteAccessProtocol();
    if(remoteReady){try{lanArgs.push_back(L"-remote-target");lanArgs.push_back(wide(binding(L"45842")));}catch(const std::exception&){remoteReady=false;lanArgs.resize(6);}}
    if(!remoteReady)say("LAN remote access unavailable: update and restart Aide; messaging remains available.");
    required(run(binary,{L"-stop",L"-dir",dir.wstring()}),"Old LAN helper could not stop");

@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+// LAN bridge protocols are shared by the host helper and the Aide service.
+// Bump these only when their corresponding on-disk/API contract changes.
+const (
+	LANBridgeProtocolVersion       = 1
+	LANRemoteAccessProtocolVersion = 1
+)
+
 type bridgeLease struct {
 	Instance  string   `json:"instance"`
 	Expires   int64    `json:"expires"`

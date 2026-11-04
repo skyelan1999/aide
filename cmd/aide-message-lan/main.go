@@ -4,6 +4,7 @@ package main
 import (
 	"aide/internal/messaging"
 	"context"
+	"encoding/json"
 	"flag"
 	"log"
 	"os"
@@ -11,7 +12,19 @@ import (
 	"syscall"
 )
 
+func helperCapabilities() map[string]any {
+	return map[string]any{
+		"protocol": messaging.LANBridgeProtocolVersion,
+		"capabilities": map[string]int{
+			"message":      messaging.LANBridgeProtocolVersion,
+			"capture":      messaging.LANBridgeProtocolVersion,
+			"remoteAccess": messaging.LANRemoteAccessProtocolVersion,
+		},
+	}
+}
+
 func main() {
+	capabilities := flag.Bool("capabilities", false, "print machine-readable helper capabilities")
 	dir := flag.String("dir", "", "private bridge directory")
 	target := flag.String("target", "", "loopback Docker port mapping")
 	captureTarget := flag.String("capture-target", "", "optional fixed loopback phone collector mapping")
@@ -19,6 +32,10 @@ func main() {
 	status := flag.Bool("status", false, "check the live helper lease")
 	stop := flag.Bool("stop", false, "stop the helper owning this directory")
 	flag.Parse()
+	if *capabilities {
+		_ = json.NewEncoder(os.Stdout).Encode(helperCapabilities())
+		return
+	}
 	if *dir == "" {
 		log.Fatal("-dir is required")
 	}

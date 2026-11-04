@@ -92,12 +92,14 @@ while compose ps --status running --services 2>/dev/null | grep -qx aide; do
       if (( ready )) && "$DOCKER_BIN" image tag "$image_id" "$image_ref" >/dev/null; then
           report_progress activating 70 '正在切换活动槽并重启工作台' || true
           printf '%s %s %s %s\n' "$image_ref" "$image_id" "$platform" "$tag" > .aide-image
-          if AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-bundle >/dev/null 2>&1; then
+          if AIDE_OPEN_BROWSER=0 AIDE_FORCE_IMAGE_ACTIVATION=1 bash scripts/aide.sh start-bundle >/dev/null 2>&1; then
             report_progress health-check 88 '新版本已启动，正在检查健康状态' || true
             new_port="$(compose port aide 8080 2>/dev/null | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | tail -1)"
             healthy=0
             for _ in {1..45}; do
-              [[ -n "$new_port" ]] && curl -ksf --max-time 3 "https://127.0.0.1:$new_port/healthz" >/dev/null 2>&1 && { healthy=1; break; }
+              active_container="$(compose ps --status running --quiet aide 2>/dev/null || true)"
+              active_image="$("$DOCKER_BIN" inspect --format '{{.Image}}' "$active_container" 2>/dev/null || true)"
+              [[ "$active_image" == "$image_id" && -n "$new_port" ]] && curl -ksf --max-time 3 "https://127.0.0.1:$new_port/healthz" >/dev/null 2>&1 && { healthy=1; break; }
               sleep 1
             done
             if (( healthy )); then
@@ -105,13 +107,13 @@ while compose ps --status running --services 2>/dev/null | grep -qx aide; do
             else
               report_progress rollback 95 '健康检查超时，正在恢复上一槽' || true
               printf '%s\n' "$old_marker" > .aide-image
-              AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-bundle >/dev/null 2>&1 || true
+              AIDE_OPEN_BROWSER=0 AIDE_FORCE_IMAGE_ACTIVATION=1 bash scripts/aide.sh start-bundle >/dev/null 2>&1 || true
               post_result false 'health check timed out; restored previous slot' || true
             fi
           else
             report_progress rollback 95 '新版本启动失败，正在恢复上一槽' || true
             printf '%s\n' "$old_marker" > .aide-image
-            AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-bundle >/dev/null 2>&1 || true
+            AIDE_OPEN_BROWSER=0 AIDE_FORCE_IMAGE_ACTIVATION=1 bash scripts/aide.sh start-bundle >/dev/null 2>&1 || true
             post_result false 'target container failed to start; restored previous slot' || true
           fi
       else

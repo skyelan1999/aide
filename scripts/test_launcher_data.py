@@ -409,6 +409,16 @@ sys.exit(90)
     def test_running_instance_requires_local_service_health(self):
         for state,success in [('healthy',True),('stopped',False),('unhealthy',False),('foreign',False)]:
             with self.subTest(state=state):self.assertEqual(self.probe('launcher_running_ready',state).returncode==0,success)
+    def test_only_explicit_a_b_activation_bypasses_healthy_reuse(self):
+        def policy(mode,start_built,activation):
+            result=subprocess.run(['bash','-ec','source "$1"; launcher_may_reuse_running "$2" "$3" "$4"','fixture',str(ROOT/'scripts/prebuilt-image.sh'),mode,str(start_built),str(activation)])
+            return result.returncode==0
+        for mode in ('start','start-bundle','start-image'):
+            with self.subTest(mode=mode):
+                self.assertTrue(policy(mode,0,0))
+                self.assertFalse(policy(mode,0,1))
+        self.assertFalse(policy('start',1,0))
+        self.assertFalse(policy('stop',0,0))
     def test_installed_runtime_requires_platform_and_complete_metadata(self):
         for state,success in [('healthy',True),('missing',False),('wrong-platform',False),('incomplete',False)]:
             with self.subTest(state=state):self.assertEqual(self.probe('launcher_local_runtime_ready',state).returncode==0,success)

@@ -2,6 +2,7 @@ package server
 
 import (
 	"aide/internal/localmounts"
+	"aide/internal/messaging"
 	"aide/internal/server/tts"
 	"bufio"
 	"context"
@@ -1518,7 +1519,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /mobile-capture/api", a.mobileCapturePhone)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		a.confirmImageIntegrityUpgrade()
-		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "integrity": a.integrityStatus()})
+		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "capabilities": map[string]int{"messageBridgeProtocol": messaging.LANBridgeProtocolVersion, "remoteAccessProtocol": messaging.LANRemoteAccessProtocolVersion}, "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-call/socket", a.assistantRealtimeSocket)

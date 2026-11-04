@@ -121,6 +121,19 @@ def source_manifest():
     return dict(filteredTrees=trees, plainTrees=plain, files=files + extras)
 
 
+def helper_protocol_versions():
+    """Use the Go shared protocol constants as the C++ launcher's source of truth."""
+    source = (ROOT / 'internal/messaging/lan_bridge.go').read_text(encoding='utf-8')
+    values = {}
+    for go_name, macro in [('LANBridgeProtocolVersion', 'AIDE_LAN_BRIDGE_PROTOCOL_VERSION'),
+                           ('LANRemoteAccessProtocolVersion', 'AIDE_LAN_REMOTE_ACCESS_PROTOCOL_VERSION')]:
+        match = re.search(r'^\s*' + go_name + r'\s*=\s*([1-9][0-9]*)\s*$', source, re.M)
+        if not match:
+            raise SystemExit('Missing positive helper protocol constant: ' + go_name)
+        values[macro] = int(match.group(1))
+    return values
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--image', default=os.environ.get('AIDE_LAUNCHER_BUILD_IMAGE', 'aide:local'))
@@ -168,6 +181,8 @@ def main():
             raise SystemExit('Pinned miniz 3.1.0 source SHA256 mismatch: ' + name)
     sdk = webview_sdk(build, args.arch, Path('/toolchain') if args.in_container else None)
     embedded = '#pragma once\n'
+    for name, value in helper_protocol_versions().items():
+        embedded += f'#define {name} {value}\n'
     helpers, helper_licenses, helpers_source = host_helpers(build, args.arch, args.go, str(build) if args.in_container else "/build", sdk=sdk)
     for name, path in [('compose', ROOT / 'docker/compose.offline.yaml'),
                        ('data', ROOT / 'scripts/launcher-data.py'),

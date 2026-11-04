@@ -172,6 +172,10 @@ func TestCrashHealthInstanceIdentity(t *testing.T) {
 		if id == "" || data["status"] != "ok" || data["service"] != "aide" {
 			t.Fatalf("invalid health identity: %v", data)
 		}
+		caps, ok := data["capabilities"].(map[string]any)
+		if !ok || caps["messageBridgeProtocol"] != float64(1) || caps["remoteAccessProtocol"] != float64(1) {
+			t.Fatalf("invalid host capability contract: %#v", data["capabilities"])
+		}
 		return id
 	}
 	if read() != read() {

@@ -72,6 +72,10 @@ Docker 的专用缓存与驱动行为见 [docker-container driver](https://docs.
 
 macOS/Linux 从正在运行的不可变镜像提取并校验对应 helper；Windows 将 Go helper 嵌入原生 EXE，并按 helper 摘要刷新安装缓存。Windows launcher/helper 与服务镜像是分别构建和更新的产物，跨版本协议变更必须保持兼容或显式协商；能力探测不能替代后端 API 协议兼容。旧 PowerShell helper 仅在 `scripts/fixtures/legacy-windows/` 中用于回归，不构成当前发布路径。跨版本与真实 Windows 网络验收边界记录在[远程访问任务](../tasks/remote-access-win-launcher-20261104.json)和[兼容审计任务](../tasks/launcher-compat-audit-20261104.json)。
 
+当前协议清单通过 helper `-capabilities` 返回 `protocol`、`message`、`capture`、`remoteAccess`；服务 `/healthz` 公布 `messageBridgeProtocol` 与 `remoteAccessProtocol`。Go 服务/helper 共用协议常量，Windows launcher 构建时从同一源码生成 C++ 头文件常量。POSIX 与 Windows launcher 都在传递可选 `-remote-target` 前比较版本，并验证 `45842` 只映射到 loopback。旧 helper 可由帮助输出兼容探测，旧服务或不匹配时只停用远程访问并保留消息桥；替换 POSIX helper 前先完成探测。协议版本改变必须同步更新服务、helper 与 launcher 并加入组合测试。
+
+Release A/B 更新通过 `AIDE_FORCE_IMAGE_ACTIVATION=1` 明确绕过健康旧实例复用；普通 `start` 仍只重开当前健康实例。启动器检查实际运行容器镜像 ID 与目标槽一致并通过健康检查后才算激活成功；更新代理等待相同镜像身份，否则回滚旧槽。此开关仅允许 `start-bundle` 更新路径使用。
+
 ## 干净环境验收（#654）
 
 POSIX 构建协调器把实际项目路径作为独立、带引号的参数传入磁盘检查子 shell，不依赖调用者导出 `PROJECT_DIR`。资源检查也支持显式路径和当前目录回退；低磁盘空间和无法识别的磁盘报告仍拒绝继续。在线 Python 依赖安装发生中途下载失败时，按原索引、原版本和原参数最多重试三次完整安装；离线安装不改为联网。

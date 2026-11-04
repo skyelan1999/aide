@@ -10,6 +10,14 @@ launcher_running_ready() {
   [[ "$health" == *'"service":"aide"'* && "$health" == *'"status":"ok"'* ]]
 }
 
+# Explicit A/B activation is the only healthy-instance reuse bypass. Ordinary
+# start remains a reopen operation and must never turn a changed marker into an
+# implicit image update.
+launcher_may_reuse_running() {
+  local mode="$1" start_built="$2" force_activation="$3"
+  [[ "$start_built" != 1 && "$force_activation" != 1 && ( "$mode" == start || "$mode" == start-bundle || "$mode" == start-image ) ]]
+}
+
 # Reuse only a complete, platform-matching runtime already installed locally.
 # This is startup, not an implicit software update or a source-build fallback.
 launcher_local_runtime_ready() {

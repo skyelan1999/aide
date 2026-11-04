@@ -25,7 +25,7 @@
     },
     "design": {
       "status": "pass",
-      "summary": "新版启动器按嵌入式 message-lan helper SHA256 识别版本落后；仅缺失/过期、启动新服务或缺少原生监督器时请求 helper-refresh。远程访问为可选能力：helper 或 45842 映射不兼容时记录告警并保留消息聊天。",
+      "summary": "Windows launcher 嵌入 helper 与服务镜像通过机器可读协议清单协商；共享 Go 协议常量在 Windows launcher 构建时生成。远程访问仍为可选能力，兼容失败时保留消息桥。",
       "evidence": [
         "native/windows-launcher/host_scheduler.hpp：port worker 对 helper-refresh generation 变化调用 app.helpers 并更新 helper-ready。",
         "native/windows-launcher/main.cpp：按 helper 摘要刷新缓存；支持时传递固定 loopback 45842，不支持时记录告警并保持消息桥运行。"
@@ -33,7 +33,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "start 可发现过期 Windows LAN helper 并要求现有原生 worker 刷新；受支持时传递 loopback 45842，缺少能力时显式告警且不阻断消息桥。",
+      "summary": "新增 helper -capabilities 与服务 /healthz manifest；Windows/macOS/Linux 检查 helper/server 协议后再传 -remote-target；helper 缓存刷新前完成探测，更新 Windows README 与跨版本契约。",
       "evidence": [
         "native/windows-launcher/main.cpp",
         "native/windows-launcher/README.md"
@@ -64,12 +64,21 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本地提交并合并到 main；没有推送远端分支或发布 Windows 安装包。",
+      "status": "pending_push",
+      "summary": "待按用户本轮授权提交并推送至 origin/main；不发布 Windows 安装包。",
       "evidence": []
     }
   },
-  "release_authorization": "用户明确授权本次提交并合并到 main；未授权推送远端分支或发布 Windows 安装包。",
+  "release_authorization": "用户明确要求完成三个阶段并 push 到 main；授权提交并推送本次远程访问兼容修复，不包含发行安装包。",
   "rollback": "还原 native/windows-launcher/main.cpp 与 README 修改；不影响容器、配置或用户数据。",
-  "handoff": "已提交并合并到本地 main 后，仍需 Windows 原生构建、源码安装与 Release 包安装路径验收，以及真实 LAN/HTTPS 网络验收；本地合并不代表远端 main 已推送或安装包已发布。"
+  "handoff": "代码与跨版本回归已完成；仍需 Windows SDK/实机 Docker Desktop 与实际局域网设备验收。",
+  "verification": {
+    "status": "partial_platform_limit",
+    "summary": "兼容协商与降级回归通过；当前 macOS 主机无 Windows SDK，未进行原生 launcher 编译、Windows Docker Desktop 启动及真实 LAN/HTTPS 验收。",
+    "evidence": [
+      "python3 -m unittest scripts.test_message_lan_launcher -v：9 tests OK（包含旧 helper、旧 server、协议不匹配、回环绑定及 sha256sum 环境）。",
+      "Docker golang:1.26-bookworm 运行 aide-message-lan helper capability 与 server health identity 测试通过。",
+      "python3 scripts/test_windows_launcher_compile.py：NOT_RUN，Windows SDK compiler required。"
+    ]
+  }
 }

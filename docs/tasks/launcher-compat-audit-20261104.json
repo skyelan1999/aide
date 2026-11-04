@@ -6,7 +6,10 @@
   "acceptance": [
     "Windows 与 macOS/Linux 对旧消息桥 helper、旧运行镜像或缺失 loopback 45842 映射采取一致策略：消息桥继续运行，远程访问明确告警，不静默假成功。",
     "helper 更新前先验证可选远程能力与端口映射，避免因可选功能不兼容而先停掉当前消息桥。",
-    "确认打包镜像、Compose 回环端口、Windows 嵌入 helper 与 legacy fixture 的发布边界，并记录仍需平台运行验证的限制。"
+    "确认打包镜像、Compose 回环端口、Windows 嵌入 helper 与 legacy fixture 的发布边界，并记录仍需平台运行验证的限制。",
+    "Go helper 提供机器可读协议能力清单；服务 /healthz 发布对应后端协议，Windows 编译时从 Go 共享常量生成协议号。",
+    "Release A/B 更新必须显式绕过健康旧实例复用，并核实实际运行镜像 ID 与目标槽一致后才报告成功；普通 start 继续复用健康实例。",
+    "Linux helper 校验兼容 shasum 与 sha256sum 两种宿主工具环境。"
   ],
   "scope": [
     "scripts/message-lan-control.sh",
@@ -14,7 +17,19 @@
     "native/windows-launcher/README.md",
     "docs/architecture/launcher-contract.md",
     "docs/tasks/remote-access-win-launcher-20261104.json",
-    "docs/tasks/launcher-compat-audit-20261104.json"
+    "docs/tasks/launcher-compat-audit-20261104.json",
+    "cmd/aide-message-lan/main.go",
+    "cmd/aide-message-lan/main_test.go",
+    "internal/messaging/lan_bridge.go",
+    "internal/server/server.go",
+    "internal/server/crash_diagnostics_test.go",
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "scripts/update-agent.sh",
+    "scripts/build-windows-launcher.py",
+    "scripts/test_message_lan_launcher.py",
+    "scripts/test_launcher_data.py",
+    "scripts/test_windows_launcher_compile.py"
   ],
   "stages": {
     "requirements": {
@@ -34,24 +49,25 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "macOS/Linux helper 缺少 -remote-target 或 45842 loopback 映射时保留消息桥并输出/落盘告警；Windows 做相同降级并保留消息桥。",
+      "summary": "实现共享协议常量、helper -capabilities 与服务 /healthz manifest；macOS/Linux 和 Windows 比较 helper/server 能力后决定是否启用可选远程转发；POSIX A/B 激活确认活动容器镜像身份；Linux SHA256 校验支持 shasum/sha256sum。",
       "evidence": [
         "scripts/message-lan-control.sh",
         "native/windows-launcher/main.cpp"
       ]
     },
     "verification": {
-      "status": "partial",
-      "summary": "完成静态兼容路径审查、bash -n scripts/message-lan-control.sh 与 git diff --check；按当前会话规则未运行测试套件，Windows 实机及 A/B 镜像组合未验证。",
+      "status": "pass_with_platform_limit",
+      "summary": "52 项 launcher 与桥接 Python 回归测试通过；Go helper、messaging、server 目标测试通过；bash -n、build-windows-launcher.py 协议常量读取、git diff --check 通过。Windows 原生编译工具链本机不可用，Windows 实机/LAN 与真实 A/B 更新未执行。",
       "evidence": [
-        "compose.yaml 与 docker/compose.offline.yaml 均声明 45840/45841/45842 loopback 映射。",
-        "Dockerfile 与 Dockerfile.local 构建 Linux helper；Windows EXE 从 cmd/aide-message-lan 构建并嵌入 helper。",
-        "scripts/fixtures/legacy-windows 为归档回归 fixture，不在当前 Windows runtime package。"
+        "python3 -m unittest scripts.test_message_lan_launcher scripts.test_launcher_data -v：52 tests OK。",
+        "Docker golang:1.26-bookworm：go test ./cmd/aide-message-lan ./internal/messaging ./internal/server -run TestHelperCapabilities|TestCrashHealthInstanceIdentity -count=1 通过。",
+        "python3 scripts/test_windows_launcher_compile.py：NOT_RUN，Windows SDK compiler required。",
+        "bash -n scripts/aide.sh scripts/message-lan-control.sh scripts/update-agent.sh scripts/prebuilt-image.sh；git diff --check。"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "更新 Windows launcher 兼容说明，说明可选远程访问降级和消息聊天仍可用。",
+      "summary": "更新 launcher contract 与 Windows launcher README，记录能力清单、版本协商、可选远程降级及 A/B 活动镜像确认规则。",
       "evidence": [
         "native/windows-launcher/README.md"
       ]
@@ -64,12 +80,12 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本地提交并合并到 main；没有推送远端分支或发布 Windows 安装包。",
+      "status": "pending_push",
+      "summary": "待按用户本轮授权提交并推送至 origin/main；不发布安装包。",
       "evidence": []
     }
   },
-  "release_authorization": "用户明确授权将本次兼容修复提交并合并到本地 main；未授权推送远端分支或发布安装包。",
+  "release_authorization": "用户明确要求完成三个阶段并 push 到 main；授权提交并推送本次兼容修复至 origin/main，不包含无关消息/助理工作，不包含发行安装包。",
   "rollback": "回退 scripts/message-lan-control.sh、native/windows-launcher/main.cpp、native/windows-launcher/README.md 的本任务差异。",
-  "handoff": "已静态确认 Compose 端口及 helper 打包路径一致。Windows helper 由 launcher 源码单独嵌入，未来需保持 helper/server 协议兼容；当前没有通用协议协商端点。消息桥与服务端 API 之间跨版本验证、Windows 实机及旧/新 launcher × 旧/新镜像矩阵仍待验收。"
+  "handoff": "能力清单与版本比较已实现；未能在当前 macOS 主机执行 Windows SDK 原生构建、Windows 实机网络或真实 Release A/B 更新验收。协议版本变更需同步 Go 服务/helper 与 Windows launcher。"
 }
