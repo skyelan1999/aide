@@ -1027,13 +1027,10 @@ func New(work, reference, data string) (*App, error) {
 	a.sftpBin = "sftp"
 	a.curlBin = "curl"
 	a.hostLocal = env("AIDE_HOST_LOCAL", os.Getenv("HOME"))
-	localRoot, localErr := os.OpenRoot("/local")
+	localRoot, localErr := openRuntimeLocalRoot(work, a.hostLocal)
 	if localErr != nil {
-		localRoot, localErr = os.OpenRoot(work)
-		if localErr != nil {
-			a.Close()
-			return nil, localErr
-		}
+		a.Close()
+		return nil, localErr
 	}
 	a.localRoot = localRoot
 	a.initLocalMounts()

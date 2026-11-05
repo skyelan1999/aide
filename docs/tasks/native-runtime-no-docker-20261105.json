@@ -1,0 +1,90 @@
+{
+  "id": "native-runtime-no-docker-20261105",
+  "request": "修复并验收当前 Mac 的 Aide native no-Docker 运行，保留现有会话和项目工作区数据，安装/切换到原生桌面应用并确认 Docker Aide 容器保持停止。",
+  "baseline": "5f31dbf270fe9d3ef3cc797481a159d55ecc10c2",
+  "initial_status": "M native/macos-desktop/main.swift",
+  "acceptance": [
+    "A native macOS Aide.app installed in the user Applications directory starts the Go service without starting the Aide Docker container.",
+    "The native service reports runtimeMode=native and health status ok.",
+    "Existing sessions and local native data remain available; the original CloudDocs project workspace can be selected and verified after the account is unlocked.",
+    "The original Docker container remains stopped with restart policy no; preserve the old app and all original data for rollback."
+  ],
+  "scope": [
+    "native/macos-desktop/main.swift",
+    "scripts/package-native-macos.sh",
+    "internal/server/local_mounts.go",
+    "internal/server/server.go",
+    "internal/server/runtime_mode_test.go",
+    "docs/architecture/macos-desktop.md",
+    "docs/tasks/native-runtime-no-docker-20261105.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User asked to switch this Mac to the independent native app and carry the existing workspace/session state. Preserve the prior Docker install and data; do not merge the experiment branch.",
+      "evidence": [
+        "User instruction: “切换”; prior scope explicitly keeps this as an experimental, unmerged branch."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep the Go /local virtual root contract, root it at host HOME in native mode, and resolve /local paths through the retained os.Root. Start native first-run workspace/context from local Application Support to avoid protected Documents/iCloud opens during server startup.",
+      "evidence": [
+        "Inspected New(), loadWorkspaceConfig(), resolveHostPath(), openHostRoot(), and macOS Desktop startup environment.",
+        "A debug build showed blocked startup at os.OpenRoot(work) for a Documents/iCloud path; direct CLI execution with the same path started, confirming the desktop first-run path was the blocker."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Patched native startup defaults and host /local mapping; installed signed native app in ~/Applications/Aide.app, preserving the Docker-era app and source data. The older /Applications duplicate remains preserved because macOS denied moving it; its Launch Services entry was unregistered to reduce duplicate selection.",
+      "evidence": [
+        "Installed version 0.1.18.0.3; code-signed app bundle verified.",
+        "Old Docker Aide app preserved at ~/Library/Application Support/Aide/Backups/Aide-Docker-20261105.app; intermediate native packages preserved as .app.backup.",
+        "Older /Applications/Aide.app was version 0.1.18.0.3 with the same native bundle ID; `mv` to user backup was denied, so no app/data was removed. Launch Services entry was unregistered; exact UI selection is still affected by CUA cache/duplicate copies."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Backend acceptance passes for native runtime and preserved sessions. Original CloudDocs workspace acceptance is pending because the account is locked and the user must personally enter the password. Integrity health remains degraded because the copied Docker-era binary baseline SHA differs from the bundled native server; service status itself is ok.",
+      "evidence": [
+        "docker run --rm --network none -v \"$PWD\":/src -w /src aide-native-go-test:local go test -mod=vendor ./internal/server -run Test(RuntimeMode|OpenRuntimeLocalRoot|OpenHostRootResolvesVirtualLocalPath) -count=1 — PASS.",
+        "python3 scripts/test_macos_desktop.py — 12 tests PASS.",
+        "python3 scripts/test_launcher_contract.py — 35 tests PASS.",
+        "codesign --verify --deep --strict ~/Applications/Aide.app — PASS.",
+        "docker inspect aide-aide-1 — Exited; restart=no.",
+        "Native UI displayed saved session titles #74 through #3, but account lock blocked workspace settings acceptance.",
+        "Native service https://127.0.0.1:57462/healthz returned status=ok, integrity=degraded; authenticated /api/config reports runtimeMode=native and local bootstrap workspace; authenticated /api/sessions returned 59.",
+        "Aide lock state remains locked=true; workspace not changed or unlocked by the agent.",
+        "Docker aide-aide-1 remains Exited with restart=no.",
+        "Native bundle codesign verification and targeted backend, desktop, and launcher tests passed (see prior evidence above).",
+        "Integrity diagnosis: existing data baseline SHA starts 239dc6e5961e2f28 while bundled native server SHA starts d009d7f36bc8c8e7; expected mismatch after replacing the Docker-era server binary, not yet migrated because the integrity baseline must not be silently rewritten."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated macOS desktop architecture notes for Docker-free package runtime and local Application Support bootstrap paths.",
+      "evidence": [
+        "docs/architecture/macos-desktop.md updated."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Docker Aide container remains stopped and intact. The old Docker app backup, earlier native app copy, and original CloudDocs data are preserved; no container, volume, or user project data was deleted.",
+      "evidence": [
+        "Experiment worktree has only scoped source/doc/task changes plus prior main.swift change.",
+        "No container or persistent Docker volume was removed.",
+        "Attempt to move the older /Applications/Aide.app into the user backup was denied by macOS; it remains intact in place. Its Launch Services registration was removed and the newer user-space app was registered."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "This is the user-requested experimental branch and remains unmerged/unpublished.",
+      "evidence": [
+        "User previously directed that the Docker-free experiment branch not be merged."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Quit the native app and reopen ~/Library/Application Support/Aide/Backups/Aide-Docker-20261105.app or the existing /Applications/Aide.app; the Docker container aide-aide-1 remains stopped with restart=no, and the original CloudDocs project data was not modified.",
+  "handoff": "Waiting for the user to personally unlock Aide. After the user unlocks, set and verify the original CloudDocs workspace, then close out verification."
+}

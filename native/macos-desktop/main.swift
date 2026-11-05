@@ -284,10 +284,14 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let fm = FileManager.default
         let home = fm.homeDirectoryForCurrentUser
         let appData = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Aide", isDirectory: true)
-        let documents = fm.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Aide", isDirectory: true)
         let inherited = ProcessInfo.processInfo.environment
-        let context = URL(fileURLWithPath: inherited["AIDE_NATIVE_CONTEXT"] ?? documents.appendingPathComponent("References", isDirectory: true).path, isDirectory: true)
+        let localHome = appData.appendingPathComponent("Native Host", isDirectory: true)
+        let context = URL(fileURLWithPath: inherited["AIDE_NATIVE_CONTEXT"] ?? localHome.appendingPathComponent("References", isDirectory: true).path, isDirectory: true)
         let data = URL(fileURLWithPath: inherited["AIDE_NATIVE_DATA_ROOT"] ?? appData.appendingPathComponent("Native", isDirectory: true).path, isDirectory: true)
+        // Keep the service process cwd on the local filesystem. A workspace can
+        // live in iCloud Drive/File Provider storage, where Go's initial
+        // os.Getwd may block before it emits any startup logs or opens a port.
+        try fm.createDirectory(at: appData, withIntermediateDirectories: true)
         try fm.createDirectory(at: root, withIntermediateDirectories: true)
         try fm.createDirectory(at: context, withIntermediateDirectories: true)
         try fm.createDirectory(at: data, withIntermediateDirectories: true)
@@ -322,7 +326,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         _ = fm.createFile(atPath: log.path, contents: nil, attributes: [.posixPermissions: 0o600])
         let handle = try FileHandle(forWritingTo: log)
         process.executableURL = server
-        process.currentDirectoryURL = root
+        process.currentDirectoryURL = appData
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = handle
         process.standardError = handle
@@ -350,7 +354,11 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         handle.closeFile()
         let origin = "https://localhost:\(port)"
         var health: [String: Any]?
-        for _ in 0..<60 {
+        // New() restores each enabled daemon sequentially; with multiple slow
+        // plugin runtimes a cold launch can exceed 30 seconds. Keep the child
+        // alive long enough to finish initialization instead of killing a
+        // healthy native service during its own daemon start timeout.
+        for _ in 0..<240 {
             if !process.isRunning { throw desktopError("Aide 服务启动失败，请查看 ~/Library/Application Support/Aide/logs/server.log。") }
             if let body = try? nativeCurl(origin + "/healthz"),
                let value = try? JSONSerialization.jsonObject(with: body) as? [String: Any], value["status"] as? String == "ok" {
@@ -1081,8 +1089,8 @@ func argument(_ name: String) -> String? {
 }
 let boundRoot = Bundle.main.object(forInfoDictionaryKey: "AideProjectRoot") as? String
 let nativeRuntime = Bundle.main.object(forInfoDictionaryKey: "AideNativeRuntime") as? Bool == true
-let nativeWorkspace = ProcessInfo.processInfo.environment["AIDE_NATIVE_WORKSPACE"] ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    .appendingPathComponent("Aide/Workspace", isDirectory: true).path
+let nativeWorkspace = ProcessInfo.processInfo.environment["AIDE_NATIVE_WORKSPACE"] ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    .appendingPathComponent("Aide/Native Host/Workspace", isDirectory: true).path
 let rootPath = argument("--root") ?? boundRoot ?? (nativeRuntime ? nativeWorkspace : nil)
 if let rootPath = rootPath, let boundRoot = boundRoot,
    URL(fileURLWithPath: rootPath).resolvingSymlinksInPath() != URL(fileURLWithPath: boundRoot).resolvingSymlinksInPath() {

@@ -1,6 +1,8 @@
 # macOS 独立工作台窗口
 
-对应需求 [#746](https://github.com/skyelan1999/aide/issues/746)。AppKit 与 WKWebView 承载原有工作台，复用本安装的 Go/Docker 服务。Mac 宿主不打包另一份服务、模型或 API 密钥，Windows 入口保持原有行为。
+对应需求 [#746](https://github.com/skyelan1999/aide/issues/746)。AppKit 与 WKWebView 承载原有工作台。源码安装可复用本安装的 Go/Docker 服务；原生安装包内置 Go 服务及 Python/Node 运行时，启动不依赖 Docker。Mac 宿主不打包模型或 API 密钥，Windows 入口保持原有行为。
+
+原生安装包首次启动把工作区和参考目录放在 `~/Library/Application Support/Aide/Native Host/`，避免在服务尚未就绪时访问 macOS 受保护的 Documents/iCloud 目录。用户随后可在工作空间设置中选择已有项目目录；安装包声明 Documents 访问用途，由 macOS 按系统策略请求授权。会话、配置和凭据仍在 `~/Library/Application Support/Aide/Native/`。
 
 ## 使用与更新
 

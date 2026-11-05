@@ -81,7 +81,45 @@ func (a *App) openHostRoot(p string) (*os.Root, error) {
 	if r, rel, _, matched := a.localMountPath(p); matched {
 		return r.OpenRoot(rel)
 	}
+	// /local is a virtual host-home mount inside the server in both container
+	// and native modes. Open through the retained root so native callers never
+	// try to resolve a Docker-only absolute path on macOS, and so symlinks cannot
+	// escape the authorized local root.
+	if p == "/local" {
+		return a.localRoot.OpenRoot(".")
+	}
+	if strings.HasPrefix(p, "/local/") {
+		rel := filepath.Clean(filepath.FromSlash(strings.TrimPrefix(p, "/local/")))
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return nil, errors.New("路径越出本机目录根")
+		}
+		return a.localRoot.OpenRoot(rel)
+	}
 	return os.OpenRoot(p)
+}
+// openRuntimeLocalRoot preserves the /local path contract in container mode,
+// while rooting it at the real host home directory in native desktop mode.
+// Native workspace settings are persisted as host paths and are translated to
+// /local-relative paths by resolveHostPath; rooting /local at work would make
+// those paths point into the project checkout instead of the user's home.
+func openRuntimeLocalRoot(work, hostLocal string) (*os.Root, error) {
+	return openRuntimeLocalRootAt("/local", work, hostLocal)
+}
+
+func openRuntimeLocalRootAt(localMount, work, hostLocal string) (*os.Root, error) {
+	if runtimeMode() == "native" {
+		if strings.TrimSpace(hostLocal) == "" {
+			hostLocal = os.Getenv("HOME")
+		}
+		if strings.TrimSpace(hostLocal) == "" {
+			return nil, errors.New("native runtime requires a host home directory")
+		}
+		return os.OpenRoot(hostLocal)
+	}
+	if root, err := os.OpenRoot(localMount); err == nil {
+		return root, nil
+	}
+	return os.OpenRoot(work)
 }
 func (a *App) mkdirHostPath(p string, mode os.FileMode) error {
 	if r, rel, ro, matched := a.localMountPath(p); matched {

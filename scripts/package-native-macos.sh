@@ -82,7 +82,7 @@ VERSION="$(python3 -c 'import re,sys; s=open(sys.argv[1]).read(); m=re.search(r"
 python3 - "$APP/Contents/Info.plist" "$VERSION" <<'PY'
 import plistlib,sys
 path,version=sys.argv[1:]
-value={"CFBundleIdentifier":"local.aide.desktop.native","CFBundleName":"Aide","CFBundleDisplayName":"Aide","CFBundleExecutable":"AideDesktop","CFBundlePackageType":"APPL","CFBundleVersion":version,"CFBundleShortVersionString":".".join(version.split('.')[:4]),"LSMinimumSystemVersion":"14.0","LSApplicationCategoryType":"public.app-category.developer-tools","NSHighResolutionCapable":True,"AideNativeRuntime":True,"NSMicrophoneUsageDescription":"Aide 使用麦克风进行你主动开启的语音输入和通话。","NSSpeechRecognitionUsageDescription":"Aide 仅在你主动开启语音输入时请求语音识别。","NSCameraUsageDescription":"Aide 仅在你主动使用摄像头功能时请求访问。","NSLocalNetworkUsageDescription":"Aide 连接本机工作台服务。"}
+value={"CFBundleIdentifier":"local.aide.desktop.native","CFBundleName":"Aide","CFBundleDisplayName":"Aide","CFBundleExecutable":"AideDesktop","CFBundlePackageType":"APPL","CFBundleVersion":version,"CFBundleShortVersionString":".".join(version.split('.')[:4]),"LSMinimumSystemVersion":"14.0","LSApplicationCategoryType":"public.app-category.developer-tools","NSHighResolutionCapable":True,"AideNativeRuntime":True,"NSMicrophoneUsageDescription":"Aide 使用麦克风进行你主动开启的语音输入和通话。","NSSpeechRecognitionUsageDescription":"Aide 仅在你主动开启语音输入时请求语音识别。","NSCameraUsageDescription":"Aide 仅在你主动使用摄像头功能时请求访问。","NSLocalNetworkUsageDescription":"Aide 连接本机工作台服务。","NSDocumentsFolderUsageDescription":"Aide 需要访问你在工作空间设置中选择的文档和项目文件夹。"}
 with open(path,'wb') as f: plistlib.dump(value,f)
 PY
 swiftc -swift-version 5 -O -target "$(uname -m)-apple-macos14.0" native/macos-desktop/main.swift native/macos-desktop/biometrics.swift -o "$APP/Contents/MacOS/AideDesktop"
