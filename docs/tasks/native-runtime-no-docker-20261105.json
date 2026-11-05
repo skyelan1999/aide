@@ -86,5 +86,12 @@
   },
   "release_authorization": "",
   "rollback": "Quit the native app and reopen ~/Library/Application Support/Aide/Backups/Aide-Docker-20261105.app or the existing /Applications/Aide.app; the Docker container aide-aide-1 remains stopped with restart=no, and the original CloudDocs project data was not modified.",
-  "handoff": "Waiting for the user to personally unlock Aide. After the user unlocks, set and verify the original CloudDocs workspace, then close out verification."
+  "handoff": "Waiting for the user to personally unlock Aide. After the user unlocks, set and verify the original CloudDocs workspace, then close out verification.",
+  "branch_push": {
+    "branch": "experiment/native-runtime-no-docker-20261104",
+    "remote": "origin",
+    "pushedCommit": "bf72f76b4d633edb4095e421656415f5f5bebe33",
+    "remoteMainAtVerification": "3db8498c78ca5dead3d23017e79060914ab1df4f",
+    "mergedToMain": false
+  }
 }
