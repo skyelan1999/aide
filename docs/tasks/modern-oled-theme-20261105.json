@@ -1,0 +1,85 @@
+{
+  "id": "modern-oled-theme-20261105",
+  "request": "在 main 上解决主题问题：保留专业配色，把现代主题重新设计得更现代；移除用户所说的基础主题；在 OLED 与 LCD 上都保持颜色准确、层次清楚和可读性。沿用原版工作台布局。",
+  "baseline": "3db8498c78ca5dead3d23017e79060914ab1df4f",
+  "initial_status": "?? build/",
+  "acceptance": [
+    "Aide stays on main; retain the original workbench layout and the Comfort, Classic, and Professional palettes.",
+    "There is no visible Basic palette option; legacy blue preference continues migrating to Modern without breaking existing stored preferences.",
+    "Modern light and dark palettes use neutral, stable surface steps with readable primary/secondary text, fields, borders, focus, and selection colors; do not alter other palettes.",
+    "Modern workbench background is visually distinct from Aurora and Studio at default strength using a static low-distraction light field; it remains visible in both light and dark modes and respects strength/reduced-motion settings.",
+    "Theme PRD/architecture descriptions and static asset cache keys match the implementation."
+  ],
+  "scope": [
+    "internal/server/web/themes/modern.css",
+    "internal/server/web/workbench.css",
+    "internal/server/web/workbench-background.js",
+    "internal/server/web/index.html",
+    "docs/architecture/2026-09-21-theme-switching.md",
+    "docs/prd/2026-09-21-theme-switching.md",
+    "docs/tasks/modern-oled-theme-20261105.json",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "The current main UI already omits the Basic option and migrates legacy blue to Modern. User dissatisfaction is with Modern color accuracy/appearance and a Modern field background that remains hard to distinguish. Preserve the current layout and other palettes.",
+      "evidence": [
+        "User request after switching to main: resolve theme issues.",
+        "Current main settings-schema options are Comfort, Classic, Professional, Modern; settings-init maps legacy blue to Modern.",
+        "Current theme PRD records the prior 2026-11-04 palette work; user indicates it still does not meet visual expectations."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Refine Modern only: neutral RGB-balanced grayscale with more separable surface tiers in light/dark; remove the Modern backdrop blue wash and clarify its static grid/horizon light field. Leave the already-removed Basic palette and legacy migration intact.",
+      "evidence": [
+        "Inspected main modern.css tokens, Modern background DOM/CSS, settings palette schema/migration, and existing palette history.",
+        "Open issue searches for modern, OLED, and palette found no matching theme issue; existing Basic-option removal/migration is already in main."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Updated only Modern palette tokens and Modern light-field styling; clarified the background label and invalidated affected static asset caches. Professional, Comfort, Classic, settings migration, and workbench layout were left intact.",
+      "evidence": [
+        "Modern palette CSS now uses neutral light/dark surface ramps, stronger control borders, readable muted text, and restrained blue interaction accents.",
+        "Modern field is a static neutral haze with a fine grid and a visible horizontal light line; strength remains tied to the existing setting.",
+        "Updated bilingual field label and cache versions for the changed CSS/JS assets."
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "Static verification only; no test suite, browser rendering, hardware display review, build, or installation was run.",
+      "evidence": [
+        "git diff --check passed.",
+        "Reviewed scoped diff; only Modern-specific CSS, background label/localization, cache keys, and theme documentation changed.",
+        "OLED/LCD appearance remains a design target pending visual review on physical panels."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated the theme PRD and architecture note to match the revised Modern palette and field.",
+      "evidence": [
+        "docs/prd/2026-09-21-theme-switching.md updated.",
+        "docs/architecture/2026-09-21-theme-switching.md updated."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Kept the pre-existing untracked build/ untouched; no generated artifacts or unrelated edits were added.",
+      "evidence": [
+        "Final worktree status retains ?? build/ as pre-existing user data."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No commit, push, merge, or installation requested in this theme turn.",
+      "evidence": [
+        "User asked to switch to main and address the theme issue; current branch is main."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only theme-scoped CSS, description/cache-key, and documentation edits in this task; keep legacy palette migration and all user workspaces/build artifacts.",
+  "handoff": "Local changes are on main, not committed or pushed. Static diff check passed. Browser/hardware appearance and automated suites remain unverified."
+}

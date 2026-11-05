@@ -134,7 +134,7 @@
       range.value = String(window.aideUI?.get('backgroundStrength') ?? 22);
       value.textContent = range.value + '%';
       range.setAttribute('aria-valuetext', value.textContent);
-      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : mode === 'studio' ? t('静域 · 柔光与几何层次') : mode === 'modern' ? t('现代光场 · 雾银与冷蓝层次') : record?.name || t('选择本地素材后自动启用');
+      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : mode === 'studio' ? t('静域 · 柔光与几何层次') : mode === 'modern' ? t('现代光场 · 中性雾面与精密网格') : record?.name || t('选择本地素材后自动启用');
     }};
     input.onchange = async () => {
       const file = input.files?.[0]; input.value = ''; if (!file || saving) return;

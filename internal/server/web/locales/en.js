@@ -27,7 +27,7 @@ window.aideEnglish = {
   '通话音色': 'Call voice',
   '现代': 'Modern',
   '现代光场': 'Modern light field',
-  '现代光场 · 雾银与冷蓝层次': 'Modern light field · misted silver and cool blue',
+  '现代光场 · 中性雾面与精密网格': 'Modern light field · neutral haze and fine grid',
   '语音模型': 'Voice model',
   '模型默认音色': 'Model default voice',
   '自动识别': 'Detect automatically',
