@@ -144,6 +144,80 @@ func computerControlBridgeURL() string {
 	}
 }
 
+// callComputerControlBridge is the single authenticated server-side interface
+// used by both the AI tools and the Aide settings permission panel.
+func callComputerControlBridge(ctx context.Context, method, route string, payload any) (map[string]any, error) {
+	token := os.Getenv("AIDE_COMPUTER_BRIDGE_TOKEN")
+	if len(token) < 32 {
+		return nil, errors.New("本机电脑控制桥接未配置；请检查 Aide 启动环境")
+	}
+	var body io.Reader
+	if payload != nil {
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+		body = bytes.NewReader(encoded)
+	}
+	request, err := http.NewRequestWithContext(ctx, method, computerControlBridgeURL()+route, body)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	request.Header.Set("Content-Type", "application/json")
+	client := &http.Client{Timeout: 15 * time.Second, Transport: &http.Transport{Proxy: nil}}
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("电脑桥接服务不可用：%w", err)
+	}
+	defer response.Body.Close()
+	data, err := io.ReadAll(io.LimitReader(response.Body, 8<<20))
+	if err != nil {
+		return nil, err
+	}
+	var result map[string]any
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("电脑桥接服务返回无效响应（HTTP %d）", response.StatusCode)
+	}
+	if response.StatusCode < 200 || response.StatusCode >= 300 || result["ok"] != true {
+		message, _ := result["error"].(string)
+		if message == "" {
+			message = fmt.Sprintf("电脑桥接服务返回 HTTP %d", response.StatusCode)
+		}
+		return nil, errors.New(message)
+	}
+	return result, nil
+}
+
+func (a *App) computerControlStatus(w http.ResponseWriter, r *http.Request) {
+	result, err := callComputerControlBridge(r.Context(), http.MethodGet, "/healthz", nil)
+	if err != nil {
+		jsonOut(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": err.Error(), "available": false})
+		return
+	}
+	result["available"] = true
+	jsonOut(w, http.StatusOK, result)
+}
+
+func (a *App) computerControlPermission(w http.ResponseWriter, r *http.Request) {
+	var route string
+	switch r.PathValue("permission") {
+	case "screen-recording":
+		route = "/v1/permissions/screen-recording"
+	case "accessibility":
+		route = "/v1/permissions/accessibility"
+	default:
+		jsonOut(w, http.StatusNotFound, map[string]any{"error": "不支持的电脑控制权限"})
+		return
+	}
+	result, err := callComputerControlBridge(r.Context(), http.MethodPost, route, map[string]any{})
+	if err != nil {
+		jsonOut(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	jsonOut(w, http.StatusOK, result)
+}
+
 func (a *App) callComputerControlTool(ctx context.Context, name string, args map[string]any) (any, error) {
 	a.mu.Lock()
 	enabled := a.settings.ComputerControlEnabled
@@ -155,11 +229,6 @@ func (a *App) callComputerControlTool(ctx context.Context, name string, args map
 	if name != "computer_status" && len(apps) == 0 {
 		return nil, errors.New("请先在 Aide 设置 → 电脑控制中添加允许应用")
 	}
-	token := os.Getenv("AIDE_COMPUTER_BRIDGE_TOKEN")
-	if len(token) < 32 {
-		return nil, errors.New("本机电脑控制桥接未配置；请检查 Aide 启动环境")
-	}
-	url := computerControlBridgeURL()
 	method, route := http.MethodPost, ""
 	var payload any
 	switch name {
@@ -197,40 +266,9 @@ func (a *App) callComputerControlTool(ctx context.Context, name string, args map
 	default:
 		return nil, errors.New("未知电脑控制操作")
 	}
-	var body io.Reader
-	if payload != nil {
-		encoded, err := json.Marshal(payload)
-		if err != nil {
-			return nil, err
-		}
-		body = bytes.NewReader(encoded)
-	}
-	request, err := http.NewRequestWithContext(ctx, method, url+route, body)
+	result, err := callComputerControlBridge(ctx, method, route, payload)
 	if err != nil {
 		return nil, err
-	}
-	request.Header.Set("Authorization", "Bearer "+token)
-	request.Header.Set("Content-Type", "application/json")
-	client := &http.Client{Timeout: 15 * time.Second, Transport: &http.Transport{Proxy: nil}}
-	response, err := client.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("电脑桥接服务不可用：%w", err)
-	}
-	defer response.Body.Close()
-	data, err := io.ReadAll(io.LimitReader(response.Body, 8<<20))
-	if err != nil {
-		return nil, err
-	}
-	var result map[string]any
-	if err := json.Unmarshal(data, &result); err != nil {
-		return nil, fmt.Errorf("电脑桥接服务返回无效响应（HTTP %d）", response.StatusCode)
-	}
-	if response.StatusCode < 200 || response.StatusCode >= 300 || result["ok"] != true {
-		message, _ := result["error"].(string)
-		if message == "" {
-			message = fmt.Sprintf("电脑桥接服务返回 HTTP %d", response.StatusCode)
-		}
-		return nil, errors.New(message)
 	}
 	if name == "computer_snapshot" {
 		encoded, _ := result["imageBase64"].(string)

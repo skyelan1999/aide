@@ -5,49 +5,9 @@ import Network
 
 // All operations stay in this named app so macOS has one permission identity.
 let app = NSApplication.shared
-app.setActivationPolicy(.regular)
-let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 280), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-window.title = "Aide Computer Bridge"
-window.center()
-let status = NSTextField(wrappingLabelWithString: "")
-status.frame = NSRect(x: 24, y: 104, width: 512, height: 126)
-window.contentView?.addSubview(status)
+app.setActivationPolicy(.accessory)
 var listener: NWListener?
 var bridgeToken = ""
-var serviceState = "Starting"
-
-func refresh() {
-    let screenRecording = CGPreflightScreenCaptureAccess()
-    let accessibility = AXIsProcessTrusted()
-    let screenState = screenRecording ? "已授权" : "未检测到授权（请在系统设置启用；启用后若状态未更新，请退出并重开桥接）"
-    let accessibilityState = accessibility ? "已授权" : "未检测到授权（请在系统设置启用；返回本窗口后会自动刷新）"
-    status.stringValue = "Aide 电脑控制桥接\n服务：\(serviceState)\n屏幕录制：\(screenState)\n辅助功能：\(accessibilityState)\nAide 按允许的前台应用限制操作；输入、点击、按键仍需 Aide 确认。"
-}
-final class PermissionActions: NSObject {
-    @objc func screen() { _ = CGRequestScreenCaptureAccess(); refresh() }
-    @objc func accessibility() {
-        _ = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
-        refresh()
-    }
-    @objc func update() { refresh() }
-}
-let actions = PermissionActions()
-for (title, selector, x) in [("申请屏幕录制", #selector(PermissionActions.screen), 24), ("申请辅助功能", #selector(PermissionActions.accessibility), 202), ("刷新状态", #selector(PermissionActions.update), 380)] {
-    let button = NSButton(title: title, target: actions, action: selector)
-    button.frame = NSRect(x: x, y: 35, width: 155, height: 36)
-    window.contentView?.addSubview(button)
-}
-
-// TCC state may change while the user is in System Settings. Refresh when the
-// app becomes active again and periodically so the displayed state does not
-// remain stuck at the value sampled when the permission prompt was opened.
-NotificationCenter.default.addObserver(
-    forName: NSApplication.didBecomeActiveNotification,
-    object: app,
-    queue: .main
-) { _ in refresh() }
-Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in refresh() }
-
 func error(_ message: String) -> NSError { NSError(domain: "AideBridge", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
 func allowedApp(_ input: [String: Any]) throws -> NSRunningApplication {
     guard let rules = input["allowedApps"] as? [String], !rules.isEmpty, rules.count <= 50,
@@ -56,7 +16,7 @@ func allowedApp(_ input: [String: Any]) throws -> NSRunningApplication {
     return target
 }
 func targetWindow(_ target: NSRunningApplication) async throws -> SCWindow {
-    guard CGPreflightScreenCaptureAccess() else { throw error("请在 Aide Computer Bridge 中申请屏幕录制权限，再在系统设置中授权") }
+    guard CGPreflightScreenCaptureAccess() else { throw error("请在 Aide 设置 → 电脑控制中授权屏幕录制") }
     let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
     guard let selected = content.windows.first(where: { $0.owningApplication?.processID == target.processIdentifier && $0.windowLayer == 0 && $0.frame.width > 1 && $0.frame.height > 1 }) else { throw error("授权应用没有可捕获的前台窗口") }
     return selected
@@ -66,7 +26,7 @@ func axAttribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
     return AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success ? value : nil
 }
 func inspect(_ target: NSRunningApplication) throws -> [String: Any] {
-    guard AXIsProcessTrusted() else { throw error("请先授权 Aide Computer Bridge 的辅助功能权限") }
+    guard AXIsProcessTrusted() else { throw error("请在 Aide 设置 → 电脑控制中授权辅助功能") }
     let root = AXUIElementCreateApplication(target.processIdentifier)
     guard let focused = axAttribute(root, kAXFocusedWindowAttribute) else { throw error("没有可读取的前台窗口") }
     var controls: [[String: Any]] = []
@@ -111,7 +71,7 @@ func operate(_ route: String, _ input: [String: Any]) async throws -> [String: A
         if AXIsProcessTrusted(), let details = try? inspect(target) { result["controls"] = details["controls"] }
         return result
     }
-    guard AXIsProcessTrusted() else { throw error("请在 Aide Computer Bridge 中申请辅助功能权限，再在系统设置中授权") }
+    guard AXIsProcessTrusted() else { throw error("请在 Aide 设置 → 电脑控制中授权辅助功能") }
     if route == "/v1/click" {
         guard let x = input["x"] as? Int, let y = input["y"] as? Int, x >= 0, y >= 0 else { throw error("坐标无效") }
         let selected = try await targetWindow(target)
@@ -159,11 +119,20 @@ func receive(_ connection: NWConnection, _ previous: Data = Data()) {
         let request = (lines.first ?? "").split(separator: " ")
         guard request.count == 3 else { connection.cancel(); return }
         let method = String(request[0]), route = String(request[1])
-        if method == "GET" && route == "/healthz" { send(connection, 200, ["ok": true, "service": "aide-native-computer-bridge", "screenRecording": CGPreflightScreenCaptureAccess(), "accessibility": AXIsProcessTrusted()]); return }
-        guard method == "POST", ["/v1/snapshot", "/v1/inspect", "/v1/click", "/v1/type", "/v1/key"].contains(route), let input = (try? JSONSerialization.jsonObject(with: data[divider.upperBound..<(divider.upperBound + size)])) as? [String: Any] else { send(connection, 400, ["ok": false, "error": "不支持的操作或无效 JSON"]); return }
+        if method == "GET" && route == "/healthz" {
+            let screen = CGPreflightScreenCaptureAccess(), accessibility = AXIsProcessTrusted()
+            send(connection, 200, ["ok": true, "service": "aide-native-computer-bridge", "platform": "macos", "screenRecording": screen, "accessibility": accessibility, "permissions": ["screenRecording": ["required": true, "granted": screen, "supported": true], "accessibility": ["required": true, "granted": accessibility, "supported": true]]]); return
+        }
+        guard method == "POST", ["/v1/snapshot", "/v1/inspect", "/v1/click", "/v1/type", "/v1/key", "/v1/permissions/screen-recording", "/v1/permissions/accessibility"].contains(route), let input = (try? JSONSerialization.jsonObject(with: data[divider.upperBound..<(divider.upperBound + size)])) as? [String: Any] else { send(connection, 400, ["ok": false, "error": "不支持的操作或无效 JSON"]); return }
         Task { @MainActor in
-            do { send(connection, 200, try await operate(route, input)) }
-            catch { send(connection, 502, ["ok": false, "error": error.localizedDescription]) }
+            do {
+                if route == "/v1/permissions/screen-recording" { _ = CGRequestScreenCaptureAccess() }
+                else if route == "/v1/permissions/accessibility" {
+                    _ = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
+                } else { send(connection, 200, try await operate(route, input)); return }
+                let screen = CGPreflightScreenCaptureAccess(), accessibility = AXIsProcessTrusted()
+                send(connection, 200, ["ok": true, "platform": "macos", "screenRecording": screen, "accessibility": accessibility, "permissions": ["screenRecording": ["required": true, "granted": screen, "supported": true], "accessibility": ["required": true, "granted": accessibility, "supported": true]]])
+            } catch { send(connection, 502, ["ok": false, "error": error.localizedDescription]) }
         }
     }
 }
@@ -184,15 +153,8 @@ func startServer() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 10) { connection.cancel() }
             receive(connection)
         }
-        listener?.stateUpdateHandler = { state in
-            switch state { case .ready: serviceState = "17778 已就绪"; case .failed(let failure): serviceState = failure.localizedDescription; default: break }
-            refresh()
-        }
         listener?.start(queue: .main)
-    } catch { serviceState = error.localizedDescription }
-    refresh()
+    } catch { fputs("Aide computer permission broker failed: \(error.localizedDescription)\n", stderr) }
 }
 startServer()
-window.makeKeyAndOrderFront(nil)
-app.activate(ignoringOtherApps: true)
 app.run()

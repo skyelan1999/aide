@@ -1,0 +1,85 @@
+{
+  "id": "computer-control-unified-permissions-20261105",
+  "request": "电脑控制合并到 Aide 主程序的统一接口，系统授权状态在 Aide 设置中查询和申请；macOS 不再展示独立桥接窗口。",
+  "baseline": "47d1113cfdbfc6d95f7855cd500eaf3872525ee5",
+  "initial_status": "main worktree includes pre-existing untracked build/ (about 1.3 GiB) and prior local-build task record; user development worktree on fix/windows-chat-tabs-20261104 has unrelated existing modifications and is untouched.",
+  "acceptance": [
+    "Aide Settings uses authenticated Aide API to query host computer bridge and platform permission state even when computer control is disabled.",
+    "macOS permission requests for Screen Recording and Accessibility are initiated from Aide Settings; status can be refreshed there.",
+    "macOS bridge no longer presents an independent user-facing application window or Dock item while retaining stable TCC bundle identity.",
+    "Windows and Linux expose their permission/capability state through the same settings API and page.",
+    "AI computer tools, screenshot, allowlist, and per-action confirmation behavior continue to use the unified computer_* interface."
+  ],
+  "scope": [
+    "internal/server/computer_control.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "scripts/native-computer-bridge.swift",
+    "scripts/build-native-computer-bridge.sh",
+    "scripts/computer-bridge-control.sh",
+    "scripts/computer-bridge-linux.js",
+    "native/windows-launcher/computer_bridge.hpp",
+    "docs/plugins/computer-browser-control.md",
+    "docs/tasks/computer-control-unified-permissions-20261105.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Clarified the desired user-facing integration: one Aide interface for computer control and permission status; hide the macOS helper window while preserving OS-level TCC consent.",
+      "evidence": [
+        "Current main already embeds computer_* AI tools and a settings section; the macOS permission UI was still a separate regular app."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Route settings status and permission requests through authenticated Aide API endpoints, which reuse the same token-authenticated host bridge transport as the AI tools. Keep macOS helper bundle identity stable for TCC but run it as an accessory/background agent without a standalone window. Report Windows/Linux capability requirements through the same status shape.",
+      "evidence": [
+        "GET /api/computer-control/status",
+        "POST /api/computer-control/permissions/{permission}",
+        "Existing computer_* calls share callComputerControlBridge."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added unified settings status and permission-request endpoints and UI; removed macOS bridge window, added host permission request routes, normalized platform permission state, and refreshed documentation.",
+      "evidence": [
+        "Source files listed in scope."
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "Passed targeted Go ComputerControl tests, JavaScript syntax checks, macOS helper temporary build and code-signature verification, and git diff whitespace validation. Live permission prompts, rendered Aide Settings, Windows/Linux native runtime behavior, and installed app update were not exercised.",
+      "evidence": [
+        "docker run --rm --pull=never -v <worktree>:/src -w /src --entrypoint /bin/bash golang:1.26-bookworm -c '/usr/local/go/bin/go test -mod=vendor ./internal/server -run ComputerControl -count=1' -> ok aide/internal/server (0.842s)",
+        "node --check internal/server/web/app.js; node --check internal/server/web/locales/en.js; node --check scripts/computer-bridge-linux.js -> pass",
+        "AIDE_NATIVE_BRIDGE_APP=<temporary /tmp bundle> bash scripts/build-native-computer-bridge.sh; codesign --verify --deep --strict -> pass; LSUIElement=true; bundle id local.aide.computer-bridge",
+        "git diff --check -> pass",
+        "Windows/Linux native build and live macOS TCC permission prompt -> not run; current installed Aide and healthy Docker service left untouched"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated current computer-control architecture and legacy settings copy to direct users to Aide Settings.",
+      "evidence": [
+        "docs/plugins/computer-browser-control.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff. No installed helper, Aide data, pre-existing build artifact, or unrelated development branch contents were modified.",
+      "evidence": [
+        "git diff --check passed; existing unrelated artifacts preserved."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No commit, push, install, or release performed.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested integration behavior; no explicit push/release was made in this turn.",
+  "rollback": "Revert the scoped changes on fix/computer-control-settings-permissions-20261105. The installed Aide bridge and current OS TCC grants were not modified.",
+  "handoff": "Source-level tests and temporary macOS build pass. Before release, rebuild/install on each platform and perform rendered Aide Settings plus live Screen Recording/Accessibility prompts and state refresh on macOS; verify Windows and Linux bridge runtime status on their native environments. The currently installed Aide/bridge remains unchanged."
+}

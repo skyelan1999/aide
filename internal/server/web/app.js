@@ -4721,6 +4721,47 @@ function renderCheckboxControl(control) {
 function renderComputerControlSettings() {
   const wrap=el('div','settings-control computer-control-settings');
   const cfg=state.config||{};
+  const permissions=el('section','computer-permissions');
+  const permissionTitle=el('strong','',t('系统授权状态'));
+  const permissionSummary=el('p','muted',t('正在查询电脑控制桥接与系统授权…'));
+  const permissionList=el('div','computer-permission-list');
+  const permissionActions=el('div','computer-permission-actions');
+  const refreshPermissions=el('button','quiet',t('刷新授权状态'));refreshPermissions.type='button';
+  const permissionNames={screenRecording:t('屏幕录制'),accessibility:t('辅助功能')};
+  let permissionBusy=false;
+  const showPermissions=status=>{
+    permissionList.replaceChildren();
+    const platform=status.platform||'';
+    permissionSummary.textContent=platform==='macos'?t('授权由 macOS 管理；在这里申请并查看最新状态。'):platform==='windows'?t('Windows 使用当前桌面用户权限；屏幕捕获与输入操作无需单独授权。'):platform==='linux-x11'?t('Linux 当前通过 X11 会话运行；屏幕捕获和输入使用当前桌面会话权限。'):t('桥接服务已连接。');
+    const items=status.permissions||(platform==='macos'?{screenRecording:{required:true,granted:status.screenRecording===true,supported:true},accessibility:{required:true,granted:status.accessibility===true,supported:true}}:platform==='windows'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:platform==='linux-x11'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:{});
+    for(const key of ['screenRecording','accessibility']){
+      const item=items[key];if(!item)continue;
+      const row=el('div','computer-permission-row');
+      const label=el('span','',permissionNames[key]);
+      const value=el('strong','',item.supported===false?t('当前平台不适用'):item.granted?t('已授权'):item.required?t('未授权'):t('无需单独授权'));
+      row.append(label,value);permissionList.append(row);
+    }
+    permissionActions.replaceChildren();
+    if(platform==='macos'){
+      for(const [key,route] of [['screenRecording','screen-recording'],['accessibility','accessibility']]){
+        const button=el('button','quiet',t('授权{0}',permissionNames[key]));button.type='button';button.disabled=permissionBusy;
+        button.onclick=action(async()=>{
+          if(permissionBusy)return;permissionBusy=true;for(const item of permissionActions.querySelectorAll('button'))item.disabled=true;
+          try{await api('/computer-control/permissions/'+route,{method:'POST',body:'{}'});permissionBusy=false;await loadPermissions();}
+          catch(error){permissionSummary.textContent=t('权限请求失败：{0}',error.message);}
+          finally{permissionBusy=false;for(const item of permissionActions.querySelectorAll('button'))item.disabled=false;}
+        });permissionActions.append(button);
+      }
+    }
+  };
+  const loadPermissions=async()=>{
+    if(permissionBusy)return;
+    try{showPermissions(await api('/computer-control/status'));}
+    catch(error){permissionSummary.textContent=t('电脑控制桥接不可用：{0}',error.message);permissionList.replaceChildren();permissionActions.replaceChildren();}
+  };
+  refreshPermissions.onclick=action(loadPermissions);
+  permissions.append(permissionTitle,permissionSummary,permissionList,permissionActions,refreshPermissions);
+  void loadPermissions();
   const enabledRow=el('label','settings-file-checkbox'),enabled=document.createElement('input');
   enabled.type='checkbox';enabled.checked=cfg.computerControlEnabled===true;
   const enabledCopy=el('span','settings-file-copy');
@@ -4745,7 +4786,7 @@ function renderComputerControlSettings() {
   };
   save.onclick=action(persist);
   enabled.onchange=action(persist);
-  wrap.append(enabledRow,label,apps,hint,save);
+  wrap.append(permissions,enabledRow,label,apps,hint,save);
   return wrap;
 }
 function renderAboutProject(control) {
