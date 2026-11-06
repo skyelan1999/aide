@@ -43,13 +43,13 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "On merged local main, focused Markdown download/PDF layout/inline-image tests pass. 100 MiB VM pipeline test processes all bounded fragments and appends 2,136 pages into one output; jsPDF EmbeddedFiles/Filespec/GoToE payload test passes. Repo quick profile had one unrelated baseline failure in starmap-frame-work.test.cjs, reproduced against unmodified origin/main.",
+      "summary": "Focused Markdown export/layout/image tests pass, including 100 MiB mocked rendering and jsPDF embedded attachment structures. Full `python3 scripts/agent-route.py verify quick` now passes all configured checks after repairing the pre-existing starmap frame test fixture to initialize cosmicLensAssignmentCamera and cosmicLensAssignmentScene in its VM context.",
       "evidence": [
-        "main: node scripts/markdown-download-export.test.js PASS",
-        "main: node scripts/markdown-pdf-layout.test.cjs PASS",
-        "main: node scripts/markdown-inline-image.test.cjs PASS",
-        "main: git diff --check PASS",
-        "python3 scripts/agent-route.py verify quick: one failure, scripts/starmap-frame-work.test.cjs; same failure reproduced on origin/main 6d6060dfeaca77b148f3d146de126238cb791131"
+        "node scripts/markdown-download-export.test.js PASS",
+        "node scripts/markdown-pdf-layout.test.cjs PASS",
+        "node scripts/markdown-inline-image.test.cjs PASS",
+        "node scripts/starmap-frame-work.test.cjs PASS after VM fixture initialization repair",
+        "python3 scripts/agent-route.py verify quick PASS: fingerprint 00d9b1ba4897f4d2e3e84d21379544ea7238c981aeb41820c7fb3505ec53f689, HEAD 20dce009fbe8bff55d559b171455cc11787e5e02"
       ]
     },
     "documentation": {
@@ -78,5 +78,5 @@
   },
   "release_authorization": "用户消息：“测试一下，没问题了合并到main，着急用。”授权本地合并；未授权推送或发布。",
   "rollback": "Revert the scoped Markdown export, localization, cache-version, architecture and task-ledger changes. No user file is modified by PDF export.",
-  "handoff": "Merged into local main at a7e6c18e. Focused export, PDF layout, inline image and 100 MiB mocked-render pipeline tests pass, including jsPDF EmbeddedFiles/Filespec/GoToE structure. No live Aide browser export from a real 100 MiB mixed-media document was run. PDF readers must support EmbeddedFiles and GoToE to open linked attachments. The repository quick profile still has one independently reproduced main-baseline failure: starmap-frame-work.test.cjs references cosmicLensAssignmentScene without defining it in its VM."
+  "handoff": "Merged to local main. The repo quick profile now passes after fixing the starmap frame test fixture. Focused 100 MiB mocked-render and jsPDF attachment structure tests pass. No live Aide browser export from a real 100 MiB mixed-media document was run. PDF readers need EmbeddedFiles and GoToE support to open linked attachments."
 }
