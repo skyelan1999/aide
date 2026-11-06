@@ -81,7 +81,7 @@
   },
   "release_authorization": "",
   "rollback": "Do not disturb docs/tasks/windows-build-desktop-stop-20261106.json or its Windows source/doc edits. Revert only the Markdown PDF implementation and documentation listed in this task if needed.",
-  "handoff": "Issue #813 remains open. Vector implementation and docs are in the shared main worktree but uncommitted. Browser export acceptance remains outstanding: verify selectable/searchable CJK, stable table columns/repeated headers, vector SVG, image sizing, clickable embedded attachments, and a 100 MiB Markdown document. Windows task edits remain untouched.",
+  "handoff": "Source-level complex Chromium export passes after CSS color normalization. Rebuild/restart or refresh the running Aide service before end-user acceptance: it currently serves stale markdown-export.js?v=11 versus source v18. Existing layout/download tests assert legacy raster internals and need migration to vector PDF assertions; do not count those as runtime regressions.",
   "issue": {
     "repository": "skyelan1999/aide",
     "number": 813,
@@ -89,6 +89,18 @@
     "account": "skyelan1999",
     "related": [
       792
+    ]
+  },
+  "verification": {
+    "status": "source_browser_pass_live_app_stale",
+    "summary": "使用当前源码在隔离 Chromium 浏览器导出 345,382 字节复杂 Markdown，生成 238 页、656,862 字节 PDF；修复 rgb/rgba CSS 颜色解析后重跑无浏览器或控制台错误。PDF 文本可提取（337,886 字符、238 页均有文本），表格边框和 SVG 矢量路径存在，附件注释可提取原始字节。运行中 Aide 服务仍提供 markdown-export.js?v=11，而当前仓库为 v18，且桌面窗口停在连接本地工作台；因此尚不能声称已在用户当前 Aide 实例验收。",
+    "evidence": [
+      "Temporary fixture /tmp/aide-complex-markdown.md (345,382 bytes) includes Chinese, 7-column table, code, SVG flowchart, image, embedded attachment, and 1,900 long paragraphs; fixture and output stay outside repository.",
+      "Headless Chromium source harness: /tmp/aide-pdf-browser/run-complex.cjs; output /tmp/aide-complex-export.pdf, 238 pages, 656,862 bytes, zero page errors and zero console errors.",
+      "PDF structure: 337,886 extractable text characters across all 238 pages; page 3 has 71 vector path operators; attachment.txt annotation stores 43 original bytes including Chinese content.",
+      "node --check internal/server/web/markdown-export.js and git diff --check passed.",
+      "scripts/markdown-pdf-layout.test.cjs fails because it extracts the removed legacy sliceText implementation; the vector renderer no longer defines sliceText. Existing scripts/markdown-download-export.test.js also asserts old raster-JPEG output and is not a valid test for the selected vector implementation.",
+      "Live https://127.0.0.1:9999 serves markdown-export.js?v=11 while current source index.html requests v18; actual app window showed connecting to local workbench."
     ]
   }
 }
