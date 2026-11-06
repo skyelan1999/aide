@@ -1,0 +1,79 @@
+{
+  "id": "windows-build-desktop-stop-20261106",
+  "request": "Windows在build中启动新编好的程序之前总会受到之前未关闭导致启动失败的问题",
+  "baseline": "298a728860a5c2ebaf9699500a35b184b1881975",
+  "initial_status": "Clean main at baseline 298a728860a5c2ebaf9699500a35b184b1881975 before this task; four scoped files now modified during this task.",
+  "acceptance": [
+    "Windows desktop startup records its own PID and process creation time only after obtaining the per-installation single-instance mutex.",
+    "Build bootstrap sends WM_CLOSE to the tracked instance, keeps retrying while startup has not created its window yet, and waits for the tracked process handle to exit before replacing the launcher.",
+    "If the instance cannot exit (including an unresolved unsaved-edit dialog), bootstrap fails with actionable text and leaves the prior launcher intact; no force-kill is used.",
+    "Windows native build and regression evidence confirm both the startup race and normal graceful-close paths."
+  ],
+  "scope": [
+    "native/windows-launcher/desktop.hpp",
+    "native/windows-launcher/main.cpp",
+    "docs/architecture/windows-desktop.md",
+    "docs/architecture/launcher-contract.md",
+    "docs/tasks/windows-build-desktop-stop-20261106.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "记录用户报告的 Windows build 旧桌面实例未退出导致新程序启动失败；集中 Issue #812 已创建。",
+      "evidence": [
+        "User report: Windows build repeatedly fails when an earlier Aide program remains open.",
+        "Issue https://github.com/skyelan1999/aide/issues/812"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "桌面子进程在处理启动参数后、服务健康检查前，先获取本安装单实例 mutex 并登记 PID/创建时间；构建端按状态收据获取进程句柄，重试 WM_CLOSE 并有界等待。旧版本没有收据时，按安装目录派生窗口类名并短暂等待窗口出现。",
+      "evidence": [
+        "Inspected scripts/windows-bootstrap.bat, native/windows-launcher/main.cpp desktop-stop/build flow, Desktop::run, and Windows desktop architecture docs."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增启动早期单实例锁和桌面 PID/创建时间收据；构建端对已登记进程持续请求正常关闭并等待实际退出，旧版本无收据时兼容按窗口关闭。超时明确保留旧程序。",
+      "evidence": [
+        "Changed native/windows-launcher/desktop.hpp and native/windows-launcher/main.cpp."
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未运行 Windows 原生编译或运行回归；当前环境为 macOS，且本轮请求没有要求测试。",
+      "evidence": [
+        "Windows desktop runner/runtime acceptance is not available in this session.",
+        "Developer instruction forbids running tests unless the user asks for testing/verification."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构文档说明启动早期登记、窗口出现前的关闭等待和超时保留旧程序行为。",
+      "evidence": [
+        "Updated docs/architecture/windows-desktop.md and docs/architecture/launcher-contract.md."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已审阅差异；仅有 Windows 桌面生命周期代码、两处架构说明和本任务记录；git diff --check 通过。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、未推送、未合并；用户本轮没有针对该修复授权发布操作。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped changes in main.cpp, desktop.hpp, and the two architecture pages; remove desktop-status.json handling to return to previous window-only shutdown behavior. No data format migration or user data changes.",
+  "handoff": "Issue #812 remains open pending Windows build/desktop regression. Verify startup-window race, graceful close, dirty-page cancel/timeout, and successful new-process launch on Windows before closing the issue or publishing.",
+  "issue": {
+    "repository": "skyelan1999/aide",
+    "number": 812,
+    "url": "https://github.com/skyelan1999/aide/issues/812",
+    "account": "skyelan1999"
+  }
+}

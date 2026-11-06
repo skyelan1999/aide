@@ -2,7 +2,7 @@
 (() => {
  'use strict';
  const LIMIT=32*1024*1024, PDF_ATTACHMENT_LIMIT=64*1024*1024, PDF_ATTACHMENT_TOTAL=256*1024*1024, PDF_ATTACHMENT_COUNT=256;
- const PDF_CHUNK_CHARS=192*1024, WIDTH=794, PAGE=987, PDF_SCALE=1.25, PDF_JPEG_QUALITY=0.82;
+ const PDF_CHUNK_CHARS=192*1024, WIDTH=794, PAGE=987;
  let active=null, menu=null;
  const css=`*{box-sizing:border-box;max-width:100%}body{margin:0;width:794px;padding:48px 60px;color:#202630;background:#fff;font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}main{min-width:0;overflow-wrap:anywhere}h1,h2,h3,h4{line-height:1.3}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}img,svg{max-width:100%!important;height:auto;object-fit:contain}pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace;padding:14px;background:#f3f5f7;border:1px solid #718096;border-radius:6px}table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;font-size:14px;border:1.25px solid #718096}th,td{border:1.25px solid #718096!important;padding:8px;text-align:left;overflow-wrap:anywhere;word-break:break-word}blockquote{margin:16px 0;padding-left:16px;border-left:3px solid #8295ab;color:#46505e}a{color:#355f86;text-decoration:none}hr{border:0;border-top:1px solid #cdd4dd}button,nav,.md-outline{display:none!important}`;
  function closeMenu(){if(!menu)return;const {host,button,dispose}=menu;menu=null;dispose();host.remove();button.setAttribute('aria-expanded','false');button.focus();}
@@ -79,7 +79,7 @@
   zip.file(nameOf(o.title),source);zip.file('export-manifest.json',JSON.stringify({format:1,resources:[...paths.values()],externalResources:[...external],note:'当前 Markdown 草稿与直接引用资源；外部链接保留，未下载；不递归打包链接文档内的资源。'},null,2));
   return job.wait(zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:3}}));
  }
- // Preflight before recursive cloning, page slicing or html2canvas traversal.
+ // Preflight before rendering or converting untrusted document HTML.
  function validateDOM(root){
   const pending=[{node:root,depth:0}];let count=0;
   while(pending.length){
@@ -139,9 +139,8 @@
   body.querySelectorAll('script,iframe,object,embed,form,input,button,textarea,select').forEach(e=>e.remove());
   for(const e of body.querySelectorAll('*'))for(const a of [...e.attributes])if(/^on/i.test(a.name)||['srcdoc','style','srcset'].includes(a.name))e.removeAttribute(a.name);
   doc.body.append(body);if(o.renderDiagrams)await job.wait(o.renderDiagrams(body));validateDOM(body);
-  // Keep print-critical paints on the export snapshot itself. html2canvas
-  // rasterizes a pruned, cross-frame clone for each PDF page; relying only on
-  // stylesheet selectors caused table/code borders to disappear in that clone.
+  // Keep print-critical paints on the snapshot as inline styles so the vector
+  // HTML-to-PDF converter sees the table and code borders without app CSS.
   for(const table of body.querySelectorAll('table')){
    table.style.borderCollapse='collapse';table.style.width='100%';table.style.tableLayout='fixed';table.style.border='1px solid #718096';
    for(const cell of table.querySelectorAll('th,td')){cell.style.border='1px solid #718096';cell.style.padding='8px';cell.style.textAlign='left';cell.style.overflowWrap='anywhere';cell.style.wordBreak='break-word';}
@@ -163,6 +162,36 @@
   for(const img of body.querySelectorAll('img'))if(img.naturalWidth*img.naturalHeight>24000000)throw Error(uiTextMarkdownExport('图片像素过大，请缩小后导出'));
   return doc.body;
  }
+ let vectorPdfReady=null;
+ function base64FromBytes(bytes){let out='';for(let i=0;i<bytes.length;i+=0x6000)out+=String.fromCharCode(...bytes.subarray(i,Math.min(i+0x6000,bytes.length)));return btoa(out);}
+ async function loadVectorPdf(job,o){
+  if(!vectorPdfReady)vectorPdfReady=(async()=>{
+   await job.wait(o.load('/vendor/markdown-export/pdfmake.min.js',()=>!!window.pdfMake?.createPdf));
+   await job.wait(o.load('/vendor/markdown-export/html-to-pdfmake.js',()=>!!window.htmlToPdfmake));
+   await job.wait(o.load('/vendor/markdown-export/pdf-lib.min.js',()=>!!window.PDFLib?.PDFDocument));
+   const response=await job.wait(fetch('/vendor/markdown-export/NotoSansSC-VF.ttf',{signal:job.controller.signal}));if(!response.ok)throw Error('中文字库加载失败');
+   const font=base64FromBytes(new Uint8Array(await job.wait(response.arrayBuffer())));
+   window.pdfMake.addVirtualFileSystem({'NotoSansSC-VF.ttf':font});
+   window.pdfMake.addFonts({NotoSansSC:{normal:'NotoSansSC-VF.ttf',bold:'NotoSansSC-VF.ttf',italics:'NotoSansSC-VF.ttf',bolditalics:'NotoSansSC-VF.ttf'}});
+  })().catch(error=>{vectorPdfReady=null;throw error;});
+  await job.wait(vectorPdfReady);
+ }
+ function vectorPdfDefinition(body,attachments=[]){
+  for(const element of body.querySelectorAll('img,svg')){const box=element.getBoundingClientRect();if(box.width&&box.height){element.style.setProperty('width',box.width+'px','important');element.style.setProperty('height',box.height+'px','important');}}
+  for(const element of body.querySelectorAll('*')){const style=element.ownerDocument.defaultView.getComputedStyle(element);for(const [source,target] of [['color','color'],['backgroundColor','background-color'],['fontSize','font-size'],['fontWeight','font-weight'],['fontStyle','font-style'],['textAlign','text-align'],['textDecoration','text-decoration'],['verticalAlign','vertical-align'],['whiteSpace','white-space'],['border','border'],['borderTop','border-top'],['borderRight','border-right'],['borderBottom','border-bottom'],['borderLeft','border-left'],['padding','padding']]){const value=style[source];if(value&&value!=='none'&&value!=='normal'&&value!=='rgba(0, 0, 0, 0)')element.style.setProperty(target,value);}}
+  const converted=window.htmlToPdfmake(body.innerHTML,{window:body.ownerDocument.defaultView,tableAutoSize:true,defaultStyles:{h1:{fontSize:24,bold:true,margin:[0,18,0,10]},h2:{fontSize:20,bold:true,margin:[0,16,0,8]},h3:{fontSize:16,bold:true,margin:[0,12,0,6]},h4:{fontSize:13,bold:true,margin:[0,10,0,5]},h5:{fontSize:11,bold:true,margin:[0,8,0,4]},h6:{fontSize:10,bold:true,margin:[0,8,0,4]},p:{margin:[0,0,0,8]},pre:{fontSize:8,margin:[0,6,0,10],fillColor:'#f3f5f7',border:[true,true,true,true],borderColor:'#718096',padding:8},blockquote:{color:'#46505e',margin:[12,0,12,0],italics:true},th:{bold:true,fillColor:'#edf1f5',margin:[5,4,5,4]},td:{margin:[5,4,5,4]},table:{margin:[0,8,0,10]},a:{color:'#355f86',decoration:'underline'}}});
+  const content=Array.isArray(converted)?converted:converted?.content||[converted];
+  const tables=[...body.querySelectorAll('table')];let tableIndex=0;const pending=[content];while(pending.length){const value=pending.pop();if(!value||typeof value!=='object')continue;if(Array.isArray(value)){for(let i=value.length-1;i>=0;i--)pending.push(value[i]);continue;}if(value.table?.body){const source=tables[tableIndex++],rows=[...(source?.rows||[])],first=rows[0],cells=first?[...first.cells]:[],count=Math.max(0,...rows.map(row=>[...row.cells].reduce((sum,cell)=>sum+(cell.colSpan||1),0)));if(cells.length&&count){const widths=Array(count).fill(0);let column=0;for(const cell of cells){const span=cell.colSpan||1,each=cell.getBoundingClientRect().width/span;for(let i=0;i<span&&column<count;i++)widths[column++]=each;}for(;column<count;column++)widths[column]=widths[column-1]||1;const total=widths.reduce((sum,width)=>sum+width,0)||1;value.table.widths=widths.map(width=>(width/total*100).toFixed(3)+'%');}const head=source?.querySelectorAll('thead tr').length||0;if(head)value.table.headerRows=head;}const children=Object.values(value);for(let i=children.length-1;i>=0;i--)if(children[i]&&typeof children[i]==='object')pending.push(children[i]);}
+  if(attachments.length){content.push({text:'附件',fontSize:18,bold:true,margin:[0,18,0,8]});for(const item of attachments)content.push({columns:[{text:item.name,width:'*',fontSize:10,id:'aide-attachment-'+item.index},{attachment:{src:item.dataUrl,name:item.name,description:item.name},icon:'Paperclip',width:24}],columnGap:8,margin:[0,0,0,6]});}
+  const landscape=[...body.querySelectorAll('table')].some(table=>[...table.rows].some(row=>[...row.cells].reduce((sum,cell)=>sum+(cell.colSpan||1),0)>5));
+  return{pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',pageMargins:[42,42,42,42],defaultStyle:{font:'NotoSansSC',fontSize:10,lineHeight:1.25,color:'#202630'},styles:{'html-h1':{fontSize:24,bold:true},'html-h2':{fontSize:20,bold:true},'html-h3':{fontSize:16,bold:true},'html-pre':{fontSize:8},'html-th':{bold:true}},content};
+ }
+ async function renderVectorChunk(html,o,job,attachments=[]){const body=await snapshot(o,job,html);return job.wait(window.pdfMake.createPdf(vectorPdfDefinition(body,attachments)).getBlob());}
+ async function mergeVectorPdf(parts,last,stem,job){
+  const {PDFDocument}=window.PDFLib,target=await job.wait(PDFDocument.load(await job.wait(last.arrayBuffer())));let index=0;
+  for(const bytes of parts){if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');const source=await job.wait(PDFDocument.load(bytes)),pages=await job.wait(target.copyPages(source,source.getPageIndices()));for(const page of pages)target.insertPage(index++,page);}
+  target.setTitle(stem);target.setCreator('aide');return new Blob([await job.wait(target.save({useObjectStreams:true}))],{type:'application/pdf'});
+ }
  async function run(format,o,progress=()=>{},shared=null){
   if(!shared)close();if(!o.valid())return;const job=shared?.job||{controller:new AbortController()};if(!job.wait)job.wait=p=>new Promise((resolve,reject)=>{const signal=job.controller.signal,cancel=()=>{signal.removeEventListener('abort',cancel);reject(new DOMException('Cancelled','AbortError'));};signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel();Promise.resolve(p).then(v=>{signal.removeEventListener('abort',cancel);resolve(v);},e=>{signal.removeEventListener('abort',cancel);reject(e);});});active=job;const alive=()=>active===job&&!job.controller.signal.aborted&&o.valid();
   // Abort stale/locked documents; bound network operations independently of page lifetime.
@@ -170,163 +199,28 @@
   const name=nameOf(o.title),stem=name.replace(/\.(md|markdown)$/i,'');
   try{
    if(format==='pdf'&&!shared){
-    await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js?v=2',()=>!!window.html2canvas));
-    await job.wait(o.load('/vendor/markdown-export/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF));
+    await loadVectorPdf(job,o);
     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},6*60*60*1000);
-    const PdfCtor=window.jspdf.jsPDF,pdf=new PdfCtor({unit:'mm',format:'a4',compress:true});
-    if(!pdf)throw Error('PDF renderer missing');pdf.setProperties({title:stem,creator:'aide'});
-    const state={job,pdf,hasPages:false,pageNumber:0,chunkNumber:0,attachmentRects:new Map(),imageBudget:{total:0}};state.attachments=await preparePdfAttachments(String(o.markdown),o,job);for(const item of state.attachments){item.binary=await attachmentBytes(item.blob);item.blob=null;}registerPdfAttachments(pdf,state.attachments,state);
-    const appendix=state.attachments.length?'\n\n---\n\n## 附件\n\n'+state.attachments.map(item=>'- ['+item.name.replace(/[\\[\]]/g,'\\$&')+'](#aide-attachment-'+item.index+')').join('\n')+'\n':'';
-    let pending=null,index=0;for(const fragment of markdownFragments(String(o.markdown),PDF_CHUNK_CHARS)){
-     if(pending!==null){if(!alive())throw new DOMException('Cancelled','AbortError');const html=o.renderMarkdown?o.renderMarkdown(pending):o.html,chunk=++state.chunkNumber;await run('pdf',{...o,markdown:pending,html,renderMarkdown:null,imageBudget:state.imageBudget},(page,total)=>progress(page,total,chunk),state);index++;}pending=fragment;
-    }
-    if(pending!==null){const final=pending+appendix,html=o.renderMarkdown?o.renderMarkdown(final):o.html,chunk=++state.chunkNumber;await run('pdf',{...o,markdown:final,html,renderMarkdown:null,imageBudget:state.imageBudget},(page,total)=>progress(page,total,chunk),state);index++;}
-    if(!index){const final=appendix||'',html=o.renderMarkdown?o.renderMarkdown(final):o.html,chunk=++state.chunkNumber;await run('pdf',{...o,markdown:final,html,renderMarkdown:null,imageBudget:state.imageBudget},(page,total)=>progress(page,total,chunk),state);}
-    const blob=pdf.output('blob');if(alive())download(blob,stem+'.pdf');return;
+    const attachments=await preparePdfAttachments(String(o.markdown),o,job);for(const item of attachments){item.dataUrl=await imageDataURL(item.blob,job.controller.signal);item.blob=null;}
+    const prior=[],imageBudget={total:0};let pending=null,chunk=0,last=null;
+    const emit=async(fragment,isLast)=>{if(!alive())throw new DOMException('Cancelled','AbortError');const html=o.renderMarkdown?o.renderMarkdown(fragment):o.html;last=await renderVectorChunk(html,{...o,markdown:fragment,renderMarkdown:null,imageBudget},job,isLast?attachments:[]);chunk++;progress(chunk,chunk,chunk);};
+    for(const fragment of markdownFragments(String(o.markdown),PDF_CHUNK_CHARS)){if(pending!==null){await emit(pending,false);prior.push(new Uint8Array(await job.wait(last.arrayBuffer())));}pending=fragment;}
+    if(pending!==null)await emit(pending,true);else await emit('',true);
+    const blob=await mergeVectorPdf(prior,last,stem,job);if(alive())download(blob,stem+'.pdf');return;
    }
    let blob,extension;
    if(format==='md'){blob=new Blob([o.markdown],{type:'text/markdown;charset=utf-8'});extension='md';}
    else if(format==='zip'){blob=await exportZIP(o,job);extension='zip';}
-   else{
-    if(format==='pdf'&&!shared){
-     const estimatedPages=Math.max(1,Math.ceil(String(o.markdown||'').length/2500));
-     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+estimatedPages*2000));
-    }
+   else if(format==='png'){
+    if(shared)throw Error('PNG export cannot use a shared PDF renderer');
     await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js?v=2',()=>!!window.html2canvas));
-    if(format==='pdf')await job.wait(o.load('/vendor/markdown-export/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF));
     const body=await snapshot(o,job,o.renderMarkdown?o.renderMarkdown(o.markdown):o.html),height=Math.ceil(body.scrollHeight);
-    // Long PDFs are rendered a page at a time. Give them a proportional
-    // deadline instead of rejecting at an arbitrary document-height limit.
-    if(format!=='pdf'&&height>60000)throw Error(uiTextMarkdownExport('文档过长，请拆分后导出'));
-    // Rasterize only the blocks visible on this page. Passing the full document
-    // to html2canvas for every page makes its cloned DOM grow with the entire
-    // document and can exhaust Safari's memory on long Markdown files.
-    const sourceRoot=body.children[0]||body,sourceBox=sourceRoot.getBoundingClientRect();
-    const blocks=[...sourceRoot.children].map(node=>{const r=node.getBoundingClientRect();return{node,top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top,left:r.left-sourceBox.left,width:r.width,height:r.height};});
-    const measured=new WeakMap(),childCursor=new WeakMap();
-    for(const block of blocks)if(block.height>PAGE){const pending=[block.node];while(pending.length){const node=pending.pop();if(node.nodeType!==1)continue;measured.set(node,node.getBoundingClientRect());for(const child of node.children)pending.push(child);}}
-    const pageRanges=[],breakSpans=[];
-    if(format==='pdf'){
-     // Avoid cutting a line/short table row/list item/image in half. Measure
-     // once, then advance through the intervals with the page cursor.
-     const addBreak=r=>{if(r.height>0&&r.height<=PAGE)breakSpans.push({top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top});};
-     for(const node of sourceRoot.querySelectorAll('tr,li,img,svg'))addBreak(node.getBoundingClientRect());
-     for(let i=0;i<sourceRoot.children.length-1;i++){
-      const heading=sourceRoot.children[i];if(!/^H[1-6]$/.test(heading.tagName))continue;
-      const first=heading.getBoundingClientRect(),next=sourceRoot.children[i+1].getBoundingClientRect(),top=first.top-sourceBox.top,bottom=next.bottom-sourceBox.top;
-      if(bottom>top&&bottom-top<=PAGE)breakSpans.push({top,bottom});
-     }
-     const walker=sourceRoot.ownerDocument.createTreeWalker(sourceRoot,4);
-     while(walker.nextNode()){const node=walker.currentNode;if(!node.nodeValue.trim()||node.parentElement?.closest('svg'))continue;const range=node.ownerDocument.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())addBreak(r);}
-     breakSpans.sort((a,b)=>a.top-b.top||a.bottom-b.bottom);
-     let out=0;for(const span of breakSpans){const last=breakSpans[out-1];if(last&&span.top<last.bottom-.25)last.bottom=Math.max(last.bottom,span.bottom);else breakSpans[out++]=span;}breakSpans.length=out;
-    }
-    if(format==='pdf'){
-     const contentHeight=blocks.length?Math.max(1,blocks[blocks.length-1].bottom):Math.max(1,height);
-     let y=0,scanBlock=0,scanBreak=0;
-     while(y<contentHeight){while(scanBlock<blocks.length&&blocks[scanBlock].bottom<=y)scanBlock++;let end=Math.min(y+PAGE,contentHeight);
-      // Match the render pass: keep nearby short blocks together when possible.
-      for(let i=scanBlock;i<blocks.length&&blocks[i].top<end;i++){const b=blocks[i];if(b.top>y+PAGE*.65&&b.top<end&&b.bottom>end&&b.height<PAGE)end=Math.floor(b.top);}
-      while(scanBreak<breakSpans.length&&breakSpans[scanBreak].bottom<=y)scanBreak++;
-      for(let i=scanBreak;i<breakSpans.length&&breakSpans[i].top<end;i++){const span=breakSpans[i];if(span.bottom>end&&span.top>y+PAGE*.65)end=span.top;}
-      end=Math.max(y+1,end);pageRanges.push({y,height:end===contentHeight?Math.max(end-y,PAGE):end-y});y=end;
-     }
-     if(!shared){clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+pageRanges.length*2000));}
-    }
-    let firstBlock=0;
-    const renderFrame=document.createElement('iframe');renderFrame.className='markdown-print-frame';renderFrame.setAttribute('aria-hidden','true');renderFrame.tabIndex=-1;document.body.append(renderFrame);job.renderFrame=renderFrame;
-    const renderDoc=renderFrame.contentDocument;renderDoc.open();renderDoc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');renderDoc.close();const renderStyle=renderDoc.createElement('style');renderStyle.textContent=css+'html,body{margin:0!important;padding:0!important;width:'+WIDTH+'px!important;min-height:0!important}';renderDoc.head.append(renderStyle);
-    const pageSlice=(y,h)=>{
-     while(firstBlock<blocks.length&&blocks[firstBlock].bottom<=y)firstBlock++;
-     const page=renderDoc.createElement('main');page.className='markdown-export-page';page.style.cssText=`position:relative;box-sizing:border-box;width:${WIDTH}px;height:${h}px;overflow:hidden;background:#fff;margin:0;padding:0`;
-     // Every retained box uses source coordinates. Mixing normal-flow clones
-     // with absolute oversized wrappers moves later headings back over the list.
-     const place=(clone,r,parent)=>{
-      clone.style.position='absolute';clone.style.boxSizing='border-box';
-      clone.style.left=(r.left-parent.left)+'px';clone.style.top=(r.top-parent.top)+'px';
-      clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.margin='0';
-      return clone;
-     };
-     const sliceText=(node,parent)=>{
-      const text=node.nodeValue||'';if(!text)return null;
-      const range=node.ownerDocument.createRange(),style=node.ownerDocument.defaultView.getComputedStyle(node.parentElement);
-      const rectAt=index=>{range.setStart(node,index);range.setEnd(node,index+1);return range.getBoundingClientRect();};
-      const boundary=(target,after)=>{let lo=0,hi=text.length;while(lo<hi){const mid=(lo+hi)>>1,r=rectAt(mid);if(after?r.top<target:r.bottom<=target)lo=mid+1;else hi=mid;}return lo;};
-      let from=boundary(sourceBox.top+y,false);const to=boundary(sourceBox.top+y+h,true),fragment=renderDoc.createDocumentFragment();
-      while(from<to){
-       const first=rectAt(from);let lo=from+1,hi=to;
-       while(lo<hi){const mid=(lo+hi)>>1;if(Math.abs(rectAt(mid).top-first.top)<.5)lo=mid+1;else hi=mid;}
-       const end=lo;range.setStart(node,from);range.setEnd(node,end);const r=range.getBoundingClientRect();
-       if(r.width&&r.height){
-        const span=renderDoc.createElement('span');span.textContent=text.slice(from,end);
-        if(!/^(pre|pre-wrap|break-spaces)$/.test(style.whiteSpace))span.textContent=span.textContent.replace(/\s+/g,' ');
-        place(span,r,parent);span.style.width='max-content';span.style.whiteSpace='pre';span.style.font=style.font;
-        span.style.lineHeight=r.height+'px';span.style.color=style.color;span.style.letterSpacing=style.letterSpacing;span.style.textDecoration=style.textDecoration;span.style.wordSpacing=style.wordSpacing;span.style.direction=style.direction;
-        fragment.append(span);
-       }
-       from=end;
-      }
-      return fragment;
-     };
-     const sliceNode=(node,parent)=>{
-      if(node.nodeType===3)return sliceText(node,parent);
-      if(node.nodeType!==1)return null;
-      const r=measured.get(node)||node.getBoundingClientRect(),top=r.top-sourceBox.top,bottom=r.bottom-sourceBox.top;if(bottom<=y||top>=y+h)return null;
-      const style=node.ownerDocument.defaultView.getComputedStyle(node),inline=style.display==='inline';
-      const children=[...node.childNodes||[]];
-      // Preserve small formatting subtrees even across the page boundary. The
-      // page viewport clips them; rebuilding inline children would rewrap them.
-      if((!inline&&r.height<=PAGE)||!children.length||node.tagName==='svg'||node.tagName==='SVG'){
-       const clone=place(node.cloneNode(true),r,parent);
-       if(['TABLE','THEAD','TBODY','TFOOT','TR'].includes(node.tagName)){
-        // A pruned table must not recalculate column widths from this page's rows.
-        const sourceCells=node.querySelectorAll('th,td');clone.querySelectorAll('th,td').forEach((cell,i)=>{cell.style.width=sourceCells[i].getBoundingClientRect().width+'px';cell.style.minWidth=cell.style.width;});
-       }
-       return clone;
-      }
-      const clone=inline?renderDoc.createElement('span'):node.cloneNode(false);place(clone,r,parent);
-      if(inline){clone.style.font=style.font;clone.style.color=style.color;clone.style.lineHeight=style.lineHeight;clone.style.textDecoration=style.textDecoration;}
-      // Absolute offsets refer to the padding box, not the source border box.
-      const origin={left:r.left+(parseFloat(style.borderLeftWidth)||0),top:r.top+(parseFloat(style.borderTopWidth)||0)};
-      let state=childCursor.get(node)||{index:0,ordinal:0},childIndex=state.index,ordinal=state.ordinal,resume=null;
-      while(childIndex<children.length){const child=children[childIndex];let childRect;
-       if(child.nodeType===1)childRect=measured.get(child)||child.getBoundingClientRect();
-       else if(child.nodeType===3&&child.nodeValue){const range=node.ownerDocument.createRange();range.selectNodeContents(child);childRect=range.getBoundingClientRect();}
-       if(!childRect||!childRect.height){childIndex++;continue;}
-       const childTop=childRect.top-sourceBox.top,childBottom=childRect.bottom-sourceBox.top;if(childTop>=y+h)break;
-       if(childBottom>y){const copy=sliceNode(child,origin);if(copy){
-        if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')copy.setAttribute('value',child.getAttribute('value')||Number(node.getAttribute('start')||1)+ordinal);
-        clone.append(copy);
-       }}
-       // Parallel table cells may all cross the page bottom. Keep scanning
-       // visible siblings, but resume at the first unfinished child next page.
-       if(childBottom>y+h&&!resume)resume={index:childIndex,ordinal};
-       if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')ordinal++;childIndex++;
-      }
-      childCursor.set(node,resume||{index:childIndex,ordinal});return clone;
-     };
-     for(let i=firstBlock;i<blocks.length&&blocks[i].top<y+h;i++){
-      const b=blocks[i];if(b.bottom<=y)continue;const clone=sliceNode(b.node,{left:sourceBox.left,top:sourceBox.top+y});if(clone)page.append(clone);
-     }
-     renderDoc.body.replaceChildren(page);return page;
-    };
-    const render=async(page,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(page,{backgroundColor:'#fff',scale:PDF_SCALE,width:WIDTH,height:h,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000,signal:job.controller.signal});};
-    if(format==='png'){
-     if(height>10000)throw Error(uiTextMarkdownExport('长图超过 10000 像素，请选择分页 PDF'));if(!alive())throw new DOMException('Cancelled','AbortError');const canvas=await job.wait(window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000,signal:job.controller.signal}));try{blob=await job.wait(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error(uiTextMarkdownExport('图片生成失败'))),'image/png')));}finally{canvas.width=canvas.height=0;}extension='png';
-    }else{
-     const pdf=shared?.pdf||new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});if(!shared)pdf.setProperties({title:stem,creator:'aide'});
-     let pageNo=0;
-     for(const range of pageRanges){const {y,height:h}=range,slice=pageSlice(y,h);
-      progress(pageNo+1,pageRanges.length);
-      // Let the progress state paint before starting another expensive canvas render.
-      await job.wait(new Promise(resolve=>requestAnimationFrame(()=>resolve())));
-      // The bundled renderer observes this job's signal and releases its own
-      // clone/canvas resources. Also settle UI waits when native encoding stalls.
-      const canvas=await job.wait(render(slice,h));try{if(shared?shared.hasPages:pageNo>0)pdf.addPage();if(shared)shared.hasPages=true;pageNo++;if(shared?.attachments?.length){const rects=[];for(const link of slice.querySelectorAll('a[href^="#aide-attachment-"]')){const match=link.getAttribute('href').match(/^#aide-attachment-(\d+)$/),r=link.getBoundingClientRect();if(match&&r.width&&r.height)rects.push({index:Number(match[1]),left:r.left-slice.getBoundingClientRect().left,top:r.top-slice.getBoundingClientRect().top,width:r.width,height:r.height});}if(rects.length)shared.attachmentRects.set((shared.pageNumber||0)+1,rects);}pdf.addImage(canvas.toDataURL('image/jpeg',PDF_JPEG_QUALITY),'JPEG',12,12,186,h/WIDTH*186,undefined,'FAST');if(shared)shared.pageNumber=(shared.pageNumber||0)+1;}finally{slice.remove();canvas.width=canvas.height=0;}
-     }
-     if(shared)return;blob=pdf.output('blob');extension='pdf';
-    }
-   }
+    if(height>10000)throw Error(uiTextMarkdownExport('长图超过 10000 像素，请选择分页 PDF'));
+    if(!alive())throw new DOMException('Cancelled','AbortError');
+    const canvas=await job.wait(window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000,signal:job.controller.signal}));
+    try{blob=await job.wait(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error(uiTextMarkdownExport('图片生成失败'))),'image/png')));}finally{canvas.width=canvas.height=0;}
+    extension='png';
+   }else throw Error('Unsupported export format');
    if(alive())download(blob,format==='md'?name:stem+'.'+extension);
   }catch(e){if(job.timedOut)throw Error(uiTextMarkdownExport('导出超时，请检查资源连接或拆分文档'));throw e;}finally{if(!shared){clearInterval(guard);clearTimeout(timeout);job.controller.abort();job.frame?.remove();job.renderFrame?.remove();if(active===job)active=null;}else{job.frame?.remove();job.renderFrame?.remove();job.frame=job.renderFrame=null;}}
  }
@@ -337,7 +231,7 @@
    const host=document.createElement('div');host.className='markdown-export-menu';host.setAttribute('role','menu');host.setAttribute('aria-label',t('导出'));button.parentNode.append(host);
    const formats=[['pdf','PDF','直接下载 · 分页文档'],['md','Markdown','下载原文 · .md'],['zip','Markdown + 资源','图片与附件 · .zip'],['png','PNG 图片','渲染为一张长图']];
    for(const [format,label,description] of formats){const item=document.createElement('button');item.type='button';item.setAttribute('role','menuitem');const badge=document.createElement('span');badge.className='markdown-export-format';badge.textContent=format.toUpperCase();const text=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=t(label);small.textContent=t(description);text.append(strong,small);item.append(badge,text);host.append(item);
-    item.onclick=async()=>{const o=options();closeMenu();if(!o)return;button.disabled=true;button.setAttribute('aria-busy','true');const progress=document.createElement('span');progress.className='markdown-export-status';progress.setAttribute('role','status');progress.setAttribute('aria-live','polite');progress.textContent=t('准备导出…');button.insertAdjacentElement('afterend',progress);try{await run(format,o,(current,total,chunk)=>{progress.textContent=chunk?t('正在渲染片段 {chunk} · 第 {current}/{total} 页').replace('{chunk}',String(chunk)).replace('{current}',String(current)).replace('{total}',String(total)):t('正在渲染第 {current}/{total} 页').replace('{current}',String(current)).replace('{total}',String(total));button.setAttribute('aria-valuetext',progress.textContent);});}catch(e){if(e.name!=='AbortError')error(e);}finally{button.disabled=false;button.removeAttribute('aria-busy');button.removeAttribute('aria-valuetext');progress.remove();}};
+    item.onclick=async()=>{const o=options();closeMenu();if(!o)return;button.disabled=true;button.setAttribute('aria-busy','true');const progress=document.createElement('span');progress.className='markdown-export-status';progress.setAttribute('role','status');progress.setAttribute('aria-live','polite');progress.textContent=t('准备导出…');button.insertAdjacentElement('afterend',progress);try{await run(format,o,(current,total,chunk)=>{progress.textContent=chunk?t('正在转换 Markdown 片段 {chunk}…').replace('{chunk}',String(chunk)).replace('{current}',String(current)).replace('{total}',String(total)):t('正在渲染第 {current}/{total} 页').replace('{current}',String(current)).replace('{total}',String(total));button.setAttribute('aria-valuetext',progress.textContent);});}catch(e){if(e.name!=='AbortError')error(e);}finally{button.disabled=false;button.removeAttribute('aria-busy');button.removeAttribute('aria-valuetext');progress.remove();}};
    }
    const outside=e=>{if(!host.contains(e.target)&&e.target!==button)closeMenu();};const key=e=>{if(e.key==='Escape'){e.preventDefault();closeMenu();}else if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();const items=[...host.children],i=items.indexOf(document.activeElement);items[(i+(e.key==='ArrowDown'?1:items.length-1)+items.length)%items.length].focus();}else if(e.key==='Tab')closeMenu();};
    const blur=()=>closeMenu();document.addEventListener('pointerdown',outside);host.addEventListener('keydown',key);window.addEventListener('resize',blur);

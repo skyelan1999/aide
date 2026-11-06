@@ -43,6 +43,7 @@ struct Handle {
  Handle(const Handle&)=delete; Handle& operator=(const Handle&)=delete;
  bool valid()const{return h && h!=INVALID_HANDLE_VALUE;}
 };
+Handle desktopOwnership;
 std::wstring wide(const std::string& s){
  if(s.empty())return {};
  int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),int(s.size()),nullptr,0);
@@ -527,7 +528,7 @@ public:
   auto loader=profile/(L"WebView2Loader-"+wide(embedded_webview_loader_sha256)+L".dll");realPath(loader);
   if(!fs::exists(loader))write(loader,std::string(reinterpret_cast<const char*>(aide_webview_loader_begin),size_t(aide_webview_loader_end-aide_webview_loader_begin)));
   if(sha256(loader)!=embedded_webview_loader_sha256)throw std::runtime_error("Desktop loader checksum mismatch");
-  auto origin="https://localhost:"+std::to_string(port);aide_desktop::Desktop desktop(wide(origin),wide(loginLink(origin+"/",desktopToken())),profile,wide(key),cert.out,computerBridgeToken());return desktop.run(loader);
+  auto origin="https://localhost:"+std::to_string(port);aide_desktop::Desktop desktop(wide(origin),wide(loginLink(origin+"/",desktopToken())),profile,wide(key),cert.out,computerBridgeToken(),stateRoot/L"desktop-status.json");return desktop.run(loader,desktopOwnership.valid());
  }
 
  void start(){
@@ -553,6 +554,10 @@ public:
 inline void nativeRecordStopBlocker(const std::string& reason);
 #include "host_scheduler.hpp"
 #include "stop_recovery.hpp"
+struct DesktopRegistration{
+ fs::path file;uint64_t created=0;DWORD pid=0;
+ ~DesktopRegistration(){if(file.empty())return;try{auto value=parseJson(read(file,4096));if(value.value("pid",0u)==pid&&value.value("created",uint64_t(0))==created)fs::remove(file);}catch(...){}}
+};
 int selfTest(){
  auto base=std::string("https://localhost:8098/");auto token=std::string(32,'a')+"+/=#";auto link=loginLink(base,token);if(link!=base+"#token="+std::string(32,'a')+"%2B%2F%3D%23"||loginLink(base,"short")!=base)throw std::runtime_error("Automatic sign-in URL encoding failed");
  bool redacted=false;try{parseJson("{private-configuration-sentinel");}catch(const std::exception& e){redacted=std::string(e.what()).find("sentinel")==std::string::npos;}if(!redacted)throw std::runtime_error("JSON error redaction failed");
@@ -582,6 +587,7 @@ int wmain(int argc,wchar_t** argv){
  SetConsoleOutputCP(CP_UTF8);WSADATA data{};if(WSAStartup(MAKEWORD(2,2),&data))return 1;
  bool pause=false,desktopAction=false;DWORD ids[2];if(GetConsoleProcessList(ids,2)==1)pause=true;
  try{
+  DesktopRegistration desktopRegistration;
   fs::path root=module().parent_path();std::wstring action=L"start";std::string generation;bool noBrowser=false,force=false,dryRun=false;
   for(int i=1;i<argc;i++){
    std::wstring a=argv[i];
@@ -601,9 +607,22 @@ int wmain(int argc,wchar_t** argv){
   }
   desktopAction=action==L"desktop";
   if(action==L"desktop-stop"){
-   auto directory=fs::absolute(root)/L".aide-data/native/desktop";auto identityFile=directory/L"identity";realPath(directory);realPath(identityFile);
-   if(!fs::exists(identityFile))return 0;auto name=L"AideDesktop_"+wide(sha256(identityFile));auto window=FindWindowW(name.c_str(),nullptr);if(!window)return 0;
-   PostMessageW(window,WM_CLOSE,0,0);for(int i=0;i<200&&IsWindow(window);i++)Sleep(100);if(IsWindow(window))throw std::runtime_error("Quit Aide or resolve unsaved edits before updating the desktop");return 0;
+   auto base=fs::absolute(root)/L".aide-data/native";auto directory=base/L"desktop";auto identityFile=directory/L"identity";auto ownerFile=base/L"desktop-status.json";realPath(root/L".aide-data");realPath(base);realPath(directory);realPath(identityFile);realPath(ownerFile);
+   if(!fs::exists(directory))return 0;if(!fs::exists(identityFile)){auto identity=fs::weakly_canonical(root).wstring();if(!identity.empty())CharLowerBuffW(identity.data(),DWORD(identity.size()));write(identityFile,utf8(identity));}auto name=L"AideDesktop_"+wide(sha256(identityFile));Handle process;DWORD ownerPid=0;
+   if(fs::exists(ownerFile)){
+    auto owner=parseJson(read(ownerFile,4096));if(!owner.is_object()||owner.value("version",0)!=1||!owner.contains("pid")||!owner["pid"].is_number_unsigned()||!owner.contains("created")||!owner["created"].is_number_unsigned())throw std::runtime_error("Invalid Aide desktop process receipt; refusing to replace the running program");
+    ownerPid=owner["pid"].get<DWORD>();auto ownerCreated=owner["created"].get<uint64_t>();process.h=OpenProcess(SYNCHRONIZE|PROCESS_QUERY_LIMITED_INFORMATION,FALSE,ownerPid);
+    if(process.valid()){if(nativeIdentity(process.h,ownerPid)["created"]!=ownerCreated){CloseHandle(process.h);process.h=INVALID_HANDLE_VALUE;ownerPid=0;fs::remove(ownerFile);}}
+    else if(GetLastError()==ERROR_INVALID_PARAMETER){ownerPid=0;fs::remove(ownerFile);}else throw winFailure("Cannot inspect the Aide desktop process",GetLastError());
+   }
+   auto started=GetTickCount64(),deadline=started+30000;uint64_t nextClose=0;HWND lastWindow=nullptr;
+   while(GetTickCount64()<deadline){
+    auto window=FindWindowW(name.c_str(),nullptr);if(window){DWORD windowPid=0;GetWindowThreadProcessId(window,&windowPid);if(!ownerPid||windowPid==ownerPid){lastWindow=window;if(GetTickCount64()>=nextClose){if(!PostMessageW(window,WM_CLOSE,0,0)&&IsWindow(window))throw winFailure("Cannot request Aide desktop close",GetLastError());nextClose=GetTickCount64()+500;}}}
+    if(process.valid()&&WaitForSingleObject(process.h,100)==WAIT_OBJECT_0){fs::remove(ownerFile);return 0;}
+    if(!process.valid()&&(!lastWindow||!IsWindow(lastWindow))&&GetTickCount64()-started>=2000)return 0;
+    Sleep(100);
+   }
+   throw std::runtime_error("Aide desktop did not exit within 30 seconds. Resolve any unsaved-edit prompt, then retry the build; the previous program was not replaced.");
   }
   auto compiledRoot=fs::absolute(root)/L".aide-data/native";auto compiledReceipt=compiledRoot/L"compiled-launcher.json";
   realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
@@ -623,6 +642,12 @@ int wmain(int argc,wchar_t** argv){
    status["stopRequired"]=fs::exists(stateRoot/L"host-stop-required");if(status["stopRequired"].get<bool>()){status["stopRequiredReason"]=aide_host::diagnostic(read(stateRoot/L"host-stop-required",8192),{},512);status["recoveryCommand"]="recover-stop";}std::cout<<status.dump(2)<<'\n';return 0;
   }
   Launcher app(root);app.noBrowser=noBrowser;app.force=force;app.openExisting=action==L"start";privateDirectory(app.root/L".aide-data");stateRoot=app.root/L".aide-data/native";privateDirectory(stateRoot);nativeStopPath=stateRoot/L"stop";
+  if(action==L"desktop"){
+   auto directory=stateRoot/L"desktop";privateDirectory(directory);auto identity=fs::weakly_canonical(app.root).wstring();if(!identity.empty())CharLowerBuffW(identity.data(),DWORD(identity.size()));auto identityFile=directory/L"identity";write(identityFile,utf8(identity));auto className=L"AideDesktop_"+wide(sha256(identityFile));
+   desktopOwnership.h=CreateMutexW(nullptr,TRUE,(L"Local\\"+className).c_str());if(!desktopOwnership.valid())throw winFailure("Desktop ownership unavailable",GetLastError());
+   if(GetLastError()==ERROR_ALREADY_EXISTS){CloseHandle(desktopOwnership.h);desktopOwnership.h=INVALID_HANDLE_VALUE;auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}return 0;}
+   FILETIME created{},exited{},kernel{},user{};if(!GetProcessTimes(GetCurrentProcess(),&created,&exited,&kernel,&user))throw std::runtime_error("Cannot identify desktop process lifetime");auto creation=(uint64_t(created.dwHighDateTime)<<32)|created.dwLowDateTime;auto ownerFile=stateRoot/L"desktop-status.json";write(ownerFile,json{{"version",1},{"pid",GetCurrentProcessId()},{"created",creation}}.dump());desktopRegistration.file=ownerFile;desktopRegistration.created=creation;desktopRegistration.pid=GetCurrentProcessId();
+  }
   if(action==L"verify")return app.verify();
   if(action==L"supervise"){pause=false;SetConsoleCtrlHandler(nativeConsoleControl,TRUE);return nativeSupervise(app);}
   if(action==L"worker-port"||action==L"worker-update"){pause=false;if(!std::regex_match(generation,std::regex("[a-f0-9]{32}")))throw std::runtime_error("Missing native worker generation");return nativeWorkerLoop(app,action==L"worker-port"?"port":"update",generation);}

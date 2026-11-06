@@ -20,14 +20,14 @@ inline std::vector<BYTE> certificate(const std::string& pem) {
 struct Desktop {
  struct Tab {Ptr<ICoreWebView2Controller> controller;Ptr<ICoreWebView2> web;bool closed=false,closing=false;unsigned generation=0;std::wstring title=L"Aide";};
  struct Reply {std::shared_ptr<Tab> tab;unsigned generation;std::string id;json value;std::shared_ptr<Hello::Operation> operation;};
- HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile;std::vector<BYTE> pin;
+ HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile,statusFile;std::vector<BYTE> pin;
  Ptr<ICoreWebView2Environment> environment;std::vector<std::shared_ptr<Tab>> tabs;
  Chrome chrome;Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
  ComputerBridge computer;
  HMODULE loader=nullptr;HICON smallIcon=nullptr,bigIcon=nullptr;
  ~Desktop(){if(smallIcon)DestroyIcon(smallIcon);if(bigIcon)DestroyIcon(bigIcon);}
  void icons(){auto instance=GetModuleHandleW(nullptr);auto small=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(16),chrome.px(16),0)),big=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(32),chrome.px(32),0));if(small){SendMessageW(window,WM_SETICON,ICON_SMALL,reinterpret_cast<LPARAM>(small));if(smallIcon)DestroyIcon(smallIcon);smallIcon=small;}if(big){SendMessageW(window,WM_SETICON,ICON_BIG,reinterpret_cast<LPARAM>(big));if(bigIcon)DestroyIcon(bigIcon);bigIcon=big;}}
- Desktop(std::wstring address,std::wstring initial,fs::path directory,std::wstring identity,std::string pem,std::string computerToken):origin(std::move(address)),entry(std::move(initial)),className(L"AideDesktop_"+identity),profile(std::move(directory)),pin(certificate(pem)),computer(std::move(computerToken)){}
+ Desktop(std::wstring address,std::wstring initial,fs::path directory,std::wstring identity,std::string pem,std::string computerToken,fs::path status={}):origin(std::move(address)),entry(std::move(initial)),className(L"AideDesktop_"+identity),profile(std::move(directory)),statusFile(std::move(status)),pin(certificate(pem)),computer(std::move(computerToken)){}
  void post(std::function<void()> fn){auto task=new std::function<void()>(std::move(fn));if(!PostMessageW(window,WM_APP+2,0,reinterpret_cast<LPARAM>(task)))delete task;}
  void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
@@ -156,9 +156,13 @@ struct Desktop {
   }
   return DefWindowProcW(hwnd,message,w,l);
  }
- int run(const fs::path& dll){
-  auto mutexName=L"Local\\"+className;Handle mutex(CreateMutexW(nullptr,FALSE,mutexName.c_str()));if(!mutex.h)throw std::runtime_error("Desktop ownership unavailable");
-  if(GetLastError()==ERROR_ALREADY_EXISTS){auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}return 0;}
+ int run(const fs::path& dll,bool alreadyRegistered=false){
+  Handle mutex;if(!alreadyRegistered&&!desktopOwnership.valid()){auto mutexName=L"Local\\"+className;mutex.h=CreateMutexW(nullptr,FALSE,mutexName.c_str());if(!mutex.h)throw std::runtime_error("Desktop ownership unavailable");
+   if(GetLastError()==ERROR_ALREADY_EXISTS){auto existing=FindWindowW(className.c_str(),nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);}return 0;}}
+  FILETIME created{},exited{},kernel{},user{};if(!GetProcessTimes(GetCurrentProcess(),&created,&exited,&kernel,&user))throw std::runtime_error("Cannot identify desktop process lifetime");
+  auto creation=(uint64_t(created.dwHighDateTime)<<32)|created.dwLowDateTime;
+  struct OwnerReceipt{fs::path file;uint64_t created;~OwnerReceipt(){if(file.empty())return;try{auto value=json::parse(read(file,4096),nullptr,false);if(value.is_object()&&value.value("pid",0u)==GetCurrentProcessId()&&value.value("created",uint64_t(0))==created)fs::remove(file);}catch(...){}}} ownerReceipt{statusFile,creation};
+  if(!alreadyRegistered&&!statusFile.empty())write(statusFile,json{{"version",1},{"pid",GetCurrentProcessId()},{"created",creation}}.dump());
   checked(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED),"Desktop COM unavailable");SetCurrentProcessExplicitAppUserModelID(className.c_str());INITCOMMONCONTROLSEX controls{sizeof(controls),ICC_TAB_CLASSES};InitCommonControlsEx(&controls);
   WNDCLASSW cls{};cls.lpfnWndProc=procedure;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=className.c_str();cls.hCursor=LoadCursorW(nullptr,IDC_ARROW);cls.hbrBackground=nullptr;cls.hIcon=LoadIconW(cls.hInstance,MAKEINTRESOURCEW(201));RegisterClassW(&cls);
   RECT work{0,0,1412,932};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);int width=std::min(1380,std::max(320,int(work.right-work.left)-32)),height=std::min(900,std::max(240,int(work.bottom-work.top)-32));

@@ -24,7 +24,7 @@ Mac 源码版的显式 `build` 同步编译安装 WKWebView 桌面宿主；日�
 
 Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/646)。根目录 BAT 经统一 CMD 入口调用原生 EXE，并显示操作和退出码；通过双击（`cmd /c`）启动时会停留等待确认，自动化设置 `AIDE_LAUNCHER_NO_PAUSE=1` 可禁用停留，仍保留真实退出码。
 
-源码更新后运行 `build.bat`，不必手动删除 EXE。显式 `build/clean` 总是从当前源码编译原生启动器，在成功编译且本安装后台控制器确认停止后替换旧 EXE，然后执行运行镜像构建。失败保留旧 EXE 和持久数据，不转用 Release。普通 `start/stop/verify` 等入口检测旧版启动器并提示先 build；`start` 不编译。旧编译收据不再使 build/clean 回到旧 EXE；普通委派也会检查原生命令版本。
+源码更新后运行 `build.bat`，不必手动删除 EXE。显式 `build/clean` 总是从当前源码编译原生启动器，在替换旧 EXE 前会关闭本安装桌面并等待其登记的 PID/创建时间对应进程退出，同时确认后台控制器停止，然后执行运行镜像构建。旧桌面仍在启动时也会等待窗口出现并发送关闭请求；超时或未保存确认未处理时保留旧 EXE 和数据，不强制终止进程，也不转用 Release。普通 `start/stop/verify` 等入口检测旧版启动器并提示先 build；`start` 不编译。旧编译收据不再使 build/clean 回到旧 EXE；普通委派也会检查原生命令版本。
 
 活动根目录及 `scripts/` 中的 PS1 已迁入 `scripts/fixtures/legacy-windows/`，仅供历史兼容回归，不进入 Docker 上下文、Release 包或源码构建身份。当前 Git 源码的 `.bat`、原生 EXE 和新打包入口都不调用 PowerShell。原生失败信息写入 `.aide-data/native/launcher.log`；启动器尚未编译或 Docker bootstrap 失败时，CMD 窗口显示实际错误和失败退出码。
 

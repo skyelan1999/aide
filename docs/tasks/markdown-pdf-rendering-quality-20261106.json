@@ -1,0 +1,94 @@
+{
+  "id": "markdown-pdf-rendering-quality-20261106",
+  "request": "Md导出pdf失真，需要以最高质量最好渲染导出，表格也出现了异常",
+  "baseline": "298a728860a5c2ebaf9699500a35b184b1881975",
+  "initial_status": "Inherited uncommitted Windows startup work: M docs/architecture/launcher-contract.md; M docs/architecture/windows-desktop.md; M native/windows-launcher/desktop.hpp; M native/windows-launcher/main.cpp; ?? docs/tasks/windows-build-desktop-stop-20261106.json. No inherited files changed for this task.",
+  "acceptance": [
+    "PDF pages must not be rasterized as whole-page images; text remains selectable/searchable and text/lines/tables/diagrams preserve vector output where supported.",
+    "Table layout has stable source column widths across pages, readable borders, and no overlap/clipping; wide tables get an intentional page-fit policy.",
+    "Images remain separate embedded images with preserved aspect ratio and sufficient source resolution; export fidelity is not obtained by converting the page to a bitmap.",
+    "Preserve support for 100 MiB Markdown and previously requested embedded attachment files/clickable retrieval, or record a concrete platform/API limitation and obtain user direction before removing that requirement.",
+    "Run current Chromium/Safari or supported-browser export and inspect the produced PDF structure and rendered pages before calling it accepted."
+  ],
+  "scope": [
+    "internal/server/web/markdown-export.js",
+    "internal/server/web/markdown-export.css",
+    "internal/server/web/vendor/markdown-export/README.md",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-pdf-rendering-quality-20261106.json",
+    "scripts/markdown-pdf-layout.test.cjs",
+    "scripts/markdown-download-export.test.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告 PDF 失真、表格异常，并明确禁止整页图片型 PDF。将可选/可搜索文字、表格列宽与保留大文档/内嵌附件要求纳入验收。",
+      "evidence": [
+        "User reports degraded Markdown PDF rendering and table anomalies.",
+        "User clarified: “不要做成图片型pdf”.",
+        "Issue https://github.com/skyelan1999/aide/issues/813; prior related issue #792 is closed."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用户确认保留附件内嵌并采用矢量生成器。采用 pdfmake 渲染 HTML 文字、表格和 SVG，pdf-lib 合并约 192 Ki 字符片段；Noto Sans SC 随包提供。",
+      "evidence": [
+        "Source inspection: internal/server/web/markdown-export.js lines 5, 142-147, 313-325 and attachment catalog code.",
+        "Architecture docs confirm current PDF is raster and previous browser print flow was replaced.",
+        "Official pdfmake docs: https://pdfmake.github.io/docs/0.3/ (vector/document generation and font embedding), https://pdfmake.github.io/docs/0.3/document-definition-object/attachments/ (embedded files and file annotations).",
+        "Official browser print API documentation says window.print opens the print dialog and returns no PDF bytes: https://developer.mozilla.org/en-US/docs/Web/API/Window/print.",
+        "User selected: “保留附件内嵌，改用矢量生成器”."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "PDF 导出已切换至 pdfmake 矢量文本/表格/SVG，保留分片合并、中文字体、图像独立嵌入及 PDF 附件注释。PNG 单图仍由 html2canvas 渲染。",
+      "evidence": [
+        "internal/server/web/markdown-export.js no longer calls html2canvas or jsPDF for PDF output.",
+        "Vendored pdfmake 0.3.13, html-to-pdfmake 2.5.29, pdf-lib 1.17.1 and Noto Sans SC variable font with licenses/checksums.",
+        "The code renders each bounded Markdown fragment separately and prepends merged pages into the last PDF, which carries embedded file attachment annotations."
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未运行测试套件或浏览器导出；用户未在本请求中要求测试，仍需真实浏览器验收 PDF 文本可选、表格、SVG、附件提取和 100 MiB 路径。",
+      "evidence": [
+        "Static JavaScript syntax check: node --check internal/server/web/markdown-export.js passed.",
+        "git diff --check passed.",
+        "No test command or browser export was run."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 Markdown 导出架构说明、历史栅格实现标记和依赖说明。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "internal/server/web/vendor/markdown-export/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留 Windows 启动器任务的所有未提交改动；PDF 路径移除运行时整页栅格化，PNG 继续使用 html2canvas。",
+      "evidence": [
+        "git diff --check passed."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、未合并或推送；本轮没有明确发布授权。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Do not disturb docs/tasks/windows-build-desktop-stop-20261106.json or its Windows source/doc edits. Revert only the Markdown PDF implementation and documentation listed in this task if needed.",
+  "handoff": "Issue #813 remains open. Vector implementation and docs are in the shared main worktree but uncommitted. Browser export acceptance remains outstanding: verify selectable/searchable CJK, stable table columns/repeated headers, vector SVG, image sizing, clickable embedded attachments, and a 100 MiB Markdown document. Windows task edits remain untouched.",
+  "issue": {
+    "repository": "skyelan1999/aide",
+    "number": 813,
+    "url": "https://github.com/skyelan1999/aide/issues/813",
+    "account": "skyelan1999",
+    "related": [
+      792
+    ]
+  }
+}
