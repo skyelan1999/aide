@@ -1,0 +1,79 @@
+{
+  "id": "markdown-pdf-bundle-100m-20261106",
+  "request": "超大 Markdown 文档（至少 100 MiB）包含内嵌图片和附件时支持导出 PDF；附件随 PDF 一并打包，并允许从 PDF 点击链接下载附件。",
+  "baseline": "6d6060dfeaca77b148f3d146de126238cb791131",
+  "initial_status": "?? build/\n?? docs/tasks/main-local-build-20261105.json",
+  "acceptance": [
+    "Markdown PDF export accepts and completes documents of at least 100 MiB without asking users to split solely because of Markdown text length or DOM node count; mixed text, tables, code, diagrams, images and local attachments remain represented.",
+    "Directly referenced local attachments are embedded in the generated PDF, listed in a clear appendix, and exposed as clickable PDF links that open/save the corresponding embedded file; external URLs are kept external and never fetched as local files.",
+    "Attachment names and paths are sanitized, duplicate references are embedded once, and output remains a single downloadable PDF with no workspace sidecar files.",
+    "Existing cancellation, lock, source identity, image/resource failure, PDF layout, and progress behaviors remain intact; resource-specific limits are explicit and do not impose the old 32 MiB cap on the Markdown text itself."
+  ],
+  "scope": [
+    "internal/server/web/markdown-export.js",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-pdf-bundle-100m-20261106.json",
+    "scripts/markdown-download-export.test.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requires PDF export for Markdown documents at least 100 MiB that contain mixed embedded images and linked files, and wants referenced attachments bundled inside the PDF with clickable download/open links. Keep it a single PDF download and do not require manual splitting.",
+      "evidence": [
+        "Observed existing PDF export is browser-side and paginated; `validateDOM` rejects over 50,000 nodes, image rendering totals are capped at 32 MiB, and ZIP resource export has 64-item/32-MiB limits. Existing PDF does not embed attachments."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "For PDF, split the source at bounded line/block boundaries (preserving/reopening fenced code and repeating reference definitions/table headers when a boundary falls inside them), render and paginate each bounded fragment into one jsPDF document, then discard its DOM before continuing. Keep page canvas and per-chunk image budgets. Embed unique local reference blobs as PDF EmbeddedFile/Filespec objects in the catalog and render an attachment appendix with native clickable FileAttachment annotations; retain external links unchanged. This avoids enlarging the editor, backend, or unrelated ZIP resource limit.",
+      "evidence": [
+        "Local text file content is already resident in the Markdown editor; incremental parsing prevents a second full-document HTML DOM.",
+        "jsPDF 4.2.1 putPage/putCatalog events and EmbeddedFile/Filespec objects are used to associate native GoToE annotations with the embedded attachment catalog."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "PDF export now splits Markdown into approximately 192 Ki-character fragments and appends all fragment pages to one jsPDF. Directly linked local non-image files are deduplicated, path-resolved and sanitized, embedded in the PDF catalog with GoToE link annotations in a final appendix. External URLs stay untouched. Image bytes remain globally capped at 32 MiB; embedded files are capped at 64 MiB each, 256 items and 256 MiB aggregate.",
+      "evidence": [
+        "internal/server/web/markdown-export.js",
+        "internal/server/web/app.js: Markdown rendering is lazy per PDF fragment"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Added and passed an end-to-end 100 MiB PDF export control-flow test with the VM DOM/canvas harness: all Markdown fragments rendered, 2,136 page images appended into one PDF output, and one download issued. A real jsPDF 4.2.1 test generated an attachment PDF and verified embedded bytes, EmbeddedFiles/Filespec catalog and GoToE link annotation; attachment dedupe and external/image exclusion pass. Existing PDF layout and inline-image tests pass. Repo-wide quick ran 322 checks but reports one unrelated failure in scripts/starmap-frame-work.test.cjs (ReferenceError: cosmicLensAssignmentScene), reproduced on unchanged origin/main 6d6060dfeaca77b148f3d146de126238cb791131. This harness is not real browser/canvas acceptance.",
+      "evidence": [
+        "node scripts/markdown-download-export.test.js PASS (100 MiB mocked render pipeline + jsPDF embedded attachment structures)",
+        "node scripts/markdown-pdf-layout.test.cjs PASS",
+        "node scripts/markdown-inline-image.test.cjs PASS",
+        "python3 scripts/agent-route.py verify quick: 321/322 commands PASS; only unrelated starmap-frame-work.test.cjs failure reproduced on origin/main"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Markdown export architecture documentation with fragment sizing, resource limits, timeout and PDF-reader attachment-action compatibility.",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Preserved pre-existing untracked build/ and docs/tasks/main-local-build-20261105.json; no build artifacts or user documents were changed.",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User explicitly authorized merge to main after tests; preparing the reviewed commit and local fast-forward merge. No push or hosted release requested.",
+      "evidence": [
+        "User message: 测试一下，没问题了合并到main，着急用。"
+      ]
+    }
+  },
+  "release_authorization": "用户消息：“测试一下，没问题了合并到main，着急用。”授权本地合并；未授权推送或发布。",
+  "rollback": "Revert the scoped Markdown export, localization, cache-version, architecture and task-ledger changes. No user file is modified by PDF export.",
+  "handoff": "Automated mocked rendering verified a complete 100 MiB export flow and one-PDF download; jsPDF attachment catalog/payload/GoToE action verified. No live Aide browser export with real mixed-media rendering was run. A PDF reader must support EmbeddedFiles and GoToE to open linked attachments. Repo quick has one baseline failure reproduced on origin/main: starmap-frame-work.test.cjs references cosmicLensAssignmentScene without defining it in the test VM."
+}

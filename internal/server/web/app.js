@@ -9844,7 +9844,7 @@ for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','e
  const exportButton=$(editorId==='editor'?'editor-export-pdf':'file-view-export-pdf');
  window.AideMarkdownExport.bind({button:exportButton,t,error:e=>toast(e.message),options:()=>{
   const spec=getSpec();if(!spec)return null;
-  return {title:spec.path,markdown:$(editorId).value,html:renderMarkdown($(editorId).value,false,spec.path,spec),valid:()=>getSpec()===spec&&(panelId==='editor-dialog'?$(panelId).open:!$(panelId).classList.contains('hidden'))&&!lockScreen.locked&&!!state.token,
+  return {title:spec.path,markdown:$(editorId).value,renderMarkdown:markdown=>renderMarkdown(markdown,false,spec.path,spec),valid:()=>getSpec()===spec&&(panelId==='editor-dialog'?$(panelId).open:!$(panelId).classList.contains('hidden'))&&!lockScreen.locked&&!!state.token,
    load:ensureVendorScript,resolve:ref=>resolveMarkdownImagePath(spec.path,ref),fetchResource:(path,signal)=>fetch(fileRawUrl(path,spec.root,spec.source,spec),{signal}),
    renderDiagrams:host=>window.AideMarkdownDiagrams.render(host,{load:ensureVendorScript,dark:false,errorText:t('流程图渲染失败'),strict:true})
   };
