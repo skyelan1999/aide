@@ -39,11 +39,11 @@ case "$MODE" in
       /usr/bin/open -g "$NATIVE_APP"
       for _ in {1..30}; do
         if TOKEN="$TOKEN" node -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(async r=>{const x=await r.json();process.exit(r.ok&&x.service==="aide-native-computer-bridge"?0:1)}).catch(()=>process.exit(1))' 2>/dev/null; then
-          echo "Aide Computer Bridge 已就绪；在独立应用中申请屏幕录制和辅助功能权限。"; exit 0
+          echo "Aide 电脑控制服务已就绪；请在 Aide 设置 → 电脑控制中查看并申请系统授权。"; exit 0
         fi
         sleep 0.2
       done
-      echo "独立电脑桥接启动失败，请查看 Aide Computer Bridge 窗口状态。" >&2; exit 1
+      echo "电脑控制服务启动失败；请在 Aide 设置中刷新授权状态，并检查桥接日志。" >&2; exit 1
     fi
     if [[ -s "$PID_FILE" ]]; then
       OLD_PID="$(cat "$PID_FILE" 2>/dev/null || true)"

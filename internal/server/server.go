@@ -1522,6 +1522,8 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "capabilities": map[string]int{"messageBridgeProtocol": messaging.LANBridgeProtocolVersion, "remoteAccessProtocol": messaging.LANRemoteAccessProtocolVersion}, "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/computer-control/status", a.computerControlStatus)
+	mux.HandleFunc("POST /api/computer-control/permissions/{permission}", a.computerControlPermission)
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-call/socket", a.assistantRealtimeSocket)
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-call", a.assistantRealtimeStatus)
 	mux.HandleFunc("GET /api/knowledge-map/index-policy", a.getKnowledgeIndexPolicy)

@@ -2,6 +2,8 @@
 
 # Aide 浏览器与电脑控制
 
+> 2026-11-05 更新：电脑控制是 Aide 内置能力，模型调用和设置页共用 Aide 的 `computer_*` 工具/API；权限状态通过已鉴权的 `/api/computer-control/status` 查询。macOS 的 TCC 权限代理保留稳定 bundle identity，但以隐藏后台代理运行，不再展示独立桥接窗口；屏幕录制和辅助功能状态、申请入口统一在 Aide 设置 → 电脑控制。Windows/Linux 的平台状态也由同一设置面板查询。截图由 `computer_snapshot` 交给视觉证据管线。点击、输入、按键仍逐次经 Aide 确认。三端真机验收仍需在各自桌面环境完成。
+
 > 2026-11-03 更新：电脑控制迁入 Aide 内置工具，设置使用 Aide 全局设置；旧插件设置在首次启动时迁移并从插件注册表移除。通用设置界面供 Web、macOS、Windows 桌面共用。`computer_snapshot` 会把 PNG/JPEG 截图送入视觉证据管线，由支持图像输入的模型分析。macOS 使用现有原生屏幕录制/辅助功能桥接；Windows 桥接随 Aide 桌面应用启动，支持截图、点击、输入和有限按键；Linux 桥接需 X11、`xdotool` 与 ImageMagick，Wayland 暂不支持。Windows/Linux 当前不提供辅助功能控件树，只能通过截图观察。三端真实设备验收尚未完成。下面较早的记录作为历史设计保留。
 
 > 当前状态（2026-10-07）：生产 Aide 已启用浏览器控制和电脑控制。浏览器使用独立无头 Chromium；真实网页读取与模型调用通过。原生电脑桥接已获屏幕录制、辅助功能权限，窗口截图、点击、中文输入、回车、文字读回及模型调用通过。下方早期“未验收/停用”描述为阶段记录，以最新验收报告为准。Safari WebDriver、模型视觉输入、下载/上传仍未完成。
@@ -129,3 +131,7 @@ The local bridge bundle is ad-hoc signed. Without an explicit designated require
 The permission window now refreshes every two seconds and when it becomes active after returning from System Settings. A false Screen Recording preflight is shown as “not detected” with the relaunch guidance because the current process may need to be restarted after the macOS setting changes. The authenticated `/healthz` response still reports the permissions observed by the running process; it does not cache them.
 
 Observed on this machine before installing the fix: `/healthz` reported Accessibility=true and Screen Recording=false. `codesign -dr -` showed the installed app designated by cdhash `df2d9ac14bed81680cc21eeffce58ebb54ce3ba3`. The fixed bridge is now installed and `/healthz` reports both permissions false under the new identity. The user must re-enable them once; actual post-grant refresh and real capture remain NOT_RUN.
+
+## 2026-11-05: Aide-owned permission interface
+
+The prior bridge window has been removed from the macOS helper. The signed helper keeps its stable TCC identity and runs as a hidden accessory process; Aide settings now queries `/api/computer-control/status` and sends permission requests through `/api/computer-control/permissions/{permission}`. These routes reuse the same authenticated host-bridge transport as the `computer_*` tools. Windows and Linux bridge health responses expose the same settings capability shape; those operating systems do not use the macOS Screen Recording/Accessibility grants. The source changes have not yet been built or exercised on real devices, so installed-app behavior remains NOT_RUN.
