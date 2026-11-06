@@ -43,12 +43,13 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Added and passed an end-to-end 100 MiB PDF export control-flow test with the VM DOM/canvas harness: all Markdown fragments rendered, 2,136 page images appended into one PDF output, and one download issued. A real jsPDF 4.2.1 test generated an attachment PDF and verified embedded bytes, EmbeddedFiles/Filespec catalog and GoToE link annotation; attachment dedupe and external/image exclusion pass. Existing PDF layout and inline-image tests pass. Repo-wide quick ran 322 checks but reports one unrelated failure in scripts/starmap-frame-work.test.cjs (ReferenceError: cosmicLensAssignmentScene), reproduced on unchanged origin/main 6d6060dfeaca77b148f3d146de126238cb791131. This harness is not real browser/canvas acceptance.",
+      "summary": "On merged local main, focused Markdown download/PDF layout/inline-image tests pass. 100 MiB VM pipeline test processes all bounded fragments and appends 2,136 pages into one output; jsPDF EmbeddedFiles/Filespec/GoToE payload test passes. Repo quick profile had one unrelated baseline failure in starmap-frame-work.test.cjs, reproduced against unmodified origin/main.",
       "evidence": [
-        "node scripts/markdown-download-export.test.js PASS (100 MiB mocked render pipeline + jsPDF embedded attachment structures)",
-        "node scripts/markdown-pdf-layout.test.cjs PASS",
-        "node scripts/markdown-inline-image.test.cjs PASS",
-        "python3 scripts/agent-route.py verify quick: 321/322 commands PASS; only unrelated starmap-frame-work.test.cjs failure reproduced on origin/main"
+        "main: node scripts/markdown-download-export.test.js PASS",
+        "main: node scripts/markdown-pdf-layout.test.cjs PASS",
+        "main: node scripts/markdown-inline-image.test.cjs PASS",
+        "main: git diff --check PASS",
+        "python3 scripts/agent-route.py verify quick: one failure, scripts/starmap-frame-work.test.cjs; same failure reproduced on origin/main 6d6060dfeaca77b148f3d146de126238cb791131"
       ]
     },
     "documentation": {
@@ -66,14 +67,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User explicitly authorized merge to main after tests; preparing the reviewed commit and local fast-forward merge. No push or hosted release requested.",
+      "status": "pass",
+      "summary": "Fast-forward merged locally into main after updating it to origin/main. Feature commit a7e6c18e is on main. No push or hosted release was requested or performed.",
       "evidence": [
-        "User message: 测试一下，没问题了合并到main，着急用。"
+        "main HEAD contains a7e6c18e feat(markdown): bundle large PDF exports and attachments",
+        "main was fast-forwarded from origin/main 6d6060dfeaca77b148f3d146de126238cb791131",
+        "Focused Markdown tests pass on main"
       ]
     }
   },
   "release_authorization": "用户消息：“测试一下，没问题了合并到main，着急用。”授权本地合并；未授权推送或发布。",
   "rollback": "Revert the scoped Markdown export, localization, cache-version, architecture and task-ledger changes. No user file is modified by PDF export.",
-  "handoff": "Automated mocked rendering verified a complete 100 MiB export flow and one-PDF download; jsPDF attachment catalog/payload/GoToE action verified. No live Aide browser export with real mixed-media rendering was run. A PDF reader must support EmbeddedFiles and GoToE to open linked attachments. Repo quick has one baseline failure reproduced on origin/main: starmap-frame-work.test.cjs references cosmicLensAssignmentScene without defining it in the test VM."
+  "handoff": "Merged into local main at a7e6c18e. Focused export, PDF layout, inline image and 100 MiB mocked-render pipeline tests pass, including jsPDF EmbeddedFiles/Filespec/GoToE structure. No live Aide browser export from a real 100 MiB mixed-media document was run. PDF readers must support EmbeddedFiles and GoToE to open linked attachments. The repository quick profile still has one independently reproduced main-baseline failure: starmap-frame-work.test.cjs references cosmicLensAssignmentScene without defining it in its VM."
 }
