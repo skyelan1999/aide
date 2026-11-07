@@ -1,6 +1,6 @@
 # Aide local UI corrections
 
-Cycle 84 keeps vendored source and the four app/integrate/viewer bundles in sync. `mxgraph/mxClient.js` is unchanged. The synchronization tool requires complete identifier boundaries and the last PrintDialog.create override; base mxGraph methods must never be matched as Graph methods.
+Cycle 84 keeps vendored source and the four app/integrate/viewer bundles in sync. A comparison with the verified v31.5.2 WAR also found `mxgraph/mxClient.js` differs from upstream; the earlier “unchanged” claim was incorrect. The synchronization tool requires complete identifier boundaries and the last PrintDialog.create override; base mxGraph methods must never be matched as Graph methods.
 
 - #452: malformed URI-list UTF-8 keeps the original URI; drop processing completes and consumes the event.
 - #453/#454/#466: stencil custom color names, shape-picker object fields, and page IDs retain prototype-named keys.

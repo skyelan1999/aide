@@ -1,0 +1,128 @@
+[
+  {
+    "package": "marked",
+    "version": "12.0.2",
+    "source": "https://registry.npmjs.org/marked/-/marked-12.0.2.tgz#package/LICENSE.md",
+    "path": "legal/third_party/npm/marked/LICENSE.md",
+    "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+  },
+  {
+    "package": "jszip",
+    "version": "3.10.1",
+    "source": "https://registry.npmjs.org/jszip/-/jszip-3.10.1.tgz#package/LICENSE.markdown",
+    "path": "legal/third_party/npm/jszip/LICENSE.markdown",
+    "sha256": "566c953c6090b1218ca6217dd7359d45dde46581968586dc607d59a78af6a9c4"
+  },
+  {
+    "package": "highlight.js",
+    "version": "11.9.0",
+    "source": "https://registry.npmjs.org/highlight.js/-/highlight.js-11.9.0.tgz#package/LICENSE",
+    "path": "legal/third_party/npm/highlight.js/LICENSE",
+    "sha256": "6c081431591d9df696c82dc598fe1423765b8a299b200ed00b281afd0f64c490"
+  },
+  {
+    "package": "docx-preview",
+    "version": "0.3.2",
+    "source": "https://registry.npmjs.org/docx-preview/-/docx-preview-0.3.2.tgz#package/LICENSE",
+    "path": "legal/third_party/npm/docx-preview/LICENSE",
+    "sha256": "8668bf4417d161e4eb4d47d6044526e4914d9eb3c748573d9bb7e87708c1253f"
+  },
+  {
+    "package": "playwright",
+    "version": "1.63.0",
+    "source": "https://registry.npmjs.org/playwright/-/playwright-1.63.0.tgz#package/LICENSE",
+    "path": "legal/third_party/npm/playwright/LICENSE",
+    "sha256": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb"
+  },
+  {
+    "package": "playwright",
+    "version": "1.63.0",
+    "source": "https://registry.npmjs.org/playwright/-/playwright-1.63.0.tgz#package/NOTICE",
+    "path": "legal/third_party/npm/playwright/NOTICE",
+    "sha256": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d"
+  },
+  {
+    "package": "playwright",
+    "version": "1.63.0",
+    "source": "https://registry.npmjs.org/playwright/-/playwright-1.63.0.tgz#package/ThirdPartyNotices.txt",
+    "path": "legal/third_party/npm/playwright/ThirdPartyNotices.txt",
+    "sha256": "b17ac0bd6f4b8207e440639cc8e0ba1bf1d9eaf9b12236764ab93b346c7abd8e"
+  },
+  {
+    "package": "playwright-core",
+    "version": "1.63.0",
+    "source": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.63.0.tgz#package/LICENSE",
+    "path": "legal/third_party/npm/playwright-core/LICENSE",
+    "sha256": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb"
+  },
+  {
+    "package": "playwright-core",
+    "version": "1.63.0",
+    "source": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.63.0.tgz#package/NOTICE",
+    "path": "legal/third_party/npm/playwright-core/NOTICE",
+    "sha256": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d"
+  },
+  {
+    "package": "playwright-core",
+    "version": "1.63.0",
+    "source": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.63.0.tgz#package/ThirdPartyNotices.txt",
+    "path": "legal/third_party/npm/playwright-core/ThirdPartyNotices.txt",
+    "sha256": "a549d329bad8806fe279f0ecae0fc0270dec7e7c2dc8ec10f90e394f7c32b144"
+  },
+  {
+    "package": "openpyxl",
+    "version": "3.1.5",
+    "source": "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz#openpyxl-3.1.5/LICENCE.rst",
+    "path": "legal/third_party/pypi/openpyxl/LICENCE.rst",
+    "sha256": "0c84bb42f5d367e5ebf9fc2dde35b16141df5ee0fdc189250858bc6c5560f69e"
+  },
+  {
+    "package": "et_xmlfile",
+    "version": "2.0.0",
+    "source": "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz#et_xmlfile-2.0.0/LICENCE.python",
+    "path": "legal/third_party/pypi/et_xmlfile/LICENCE.python",
+    "sha256": "4ccdaaebc0f44b83720ec0399bb7ab329adce067dd62f73c5535a2dc05628ab2"
+  },
+  {
+    "package": "et_xmlfile",
+    "version": "2.0.0",
+    "source": "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz#et_xmlfile-2.0.0/LICENCE.rst",
+    "path": "legal/third_party/pypi/et_xmlfile/LICENCE.rst",
+    "sha256": "0c84bb42f5d367e5ebf9fc2dde35b16141df5ee0fdc189250858bc6c5560f69e"
+  },
+  {
+    "package": "mermaid",
+    "version": "10.9.8",
+    "source": "https://raw.githubusercontent.com/mermaid-js/mermaid/v10.9.8/LICENSE",
+    "path": "legal/third_party/npm/mermaid/LICENSE",
+    "sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+  },
+  {
+    "package": "sherpa-onnx",
+    "version": "1.13.8",
+    "source": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/v1.13.8/LICENSE",
+    "path": "legal/third_party/runtime/sherpa-onnx/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "package": "pdfjs-dist",
+    "version": "4.4.168",
+    "source": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.4.168.tgz#package/LICENSE",
+    "path": "legal/third_party/npm/pdfjs-dist/LICENSE",
+    "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+  },
+  {
+    "package": "onnxruntime",
+    "version": "1.28.2 (read from bundled libonnxruntime.so OrtGetApiBase/GetVersionString)",
+    "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/LICENSE",
+    "path": "legal/third_party/runtime/onnxruntime/LICENSE",
+    "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+  },
+  {
+    "package": "onnxruntime",
+    "version": "1.28.2 (read from bundled libonnxruntime.so OrtGetApiBase/GetVersionString)",
+    "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/ThirdPartyNotices.txt",
+    "path": "legal/third_party/runtime/onnxruntime/ThirdPartyNotices.txt",
+    "sha256": "0e07b95f3a8d6230037707c5c4a2b554d12c4cb67369669ac255635528ffcee2"
+  }
+]

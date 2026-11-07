@@ -1,0 +1,257 @@
+{
+  "scope": "source-backed license and notice texts; see audit for unresolved components",
+  "files": [
+    {
+      "source_path": "LICENSE",
+      "sha256": "b868596f9807363374cfdcd4995f63bddbf25cfdf1f9ee5959b64f79c663fc7e"
+    },
+    {
+      "source_path": "internal/server/code_analysis/ACORN-LICENSE",
+      "sha256": "76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/LICENSE",
+      "sha256": "e5abace1fcf9948118da0b4398ffd6a83bb14e73221ff658ae4eaa72e9f9fd3d"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/NOTICE.txt",
+      "sha256": "6dc1dbb0aba15bf62350b5763166396bb3bce0ef8b2776f287fac2941ffe4102"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/img/LICENSE",
+      "sha256": "55f8931a59e1f6e3ffff6c950c44339981c4806925ac0d97517a71164b0ca2ea"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/js/libavoid-js/LICENSE",
+      "sha256": "6da7ddf40cfea6f568961825b14478e879875f6ad033fad57889ae5bd52103f4"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/js/plantuml/re2js-LICENSE.txt",
+      "sha256": "b80a94f2c3c0b8bd6af849511cef624ad9feecbc0151d08bacad86ebab4cb46e"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/js/re2js/LICENSE",
+      "sha256": "b80a94f2c3c0b8bd6af849511cef624ad9feecbc0151d08bacad86ebab4cb46e"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/shapes/LICENSE",
+      "sha256": "55f8931a59e1f6e3ffff6c950c44339981c4806925ac0d97517a71164b0ca2ea"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/stencils/LICENSE",
+      "sha256": "f4098ff053b5954abbf69b15811ef06cd277847ca49934beda355c3d841ebdac"
+    },
+    {
+      "source_path": "internal/server/web/vendor/drawio/templates/LICENSE",
+      "sha256": "ee8790799bd0e807be1058ab1db714b61d5908ded4f8ed3c239f9827c52c1076"
+    },
+    {
+      "source_path": "internal/server/web/vendor/dxf-parser/LICENSE",
+      "sha256": "56eb37102e6e49ce363e8021f017fe0a6de61d3705273bed307110a3386cb42f"
+    },
+    {
+      "source_path": "internal/server/web/vendor/markdown-export/html-to-pdfmake-LICENSE",
+      "sha256": "e07e98b3c5848b8230e914f12042a19d5dc57ed845c3bd29c1a13fb481035964"
+    },
+    {
+      "source_path": "internal/server/web/vendor/markdown-export/html2canvas-LICENSE",
+      "sha256": "86200ce4e92d9a22c41c8647a55f7a5fddff304ff89b4d36ecc699ed8c123d2c"
+    },
+    {
+      "source_path": "internal/server/web/vendor/markdown-export/jspdf-LICENSE",
+      "sha256": "dc388ec35ff463288cdde3588a36fd4ed12a45deff053243b37309acc9ef583b"
+    },
+    {
+      "source_path": "internal/server/web/vendor/markdown-export/pdf-lib-LICENSE.md",
+      "sha256": "f2c9fc00fdb66eb99ac156ba52d734af66d8d309f65753ae809ad34ee2883bcb"
+    },
+    {
+      "source_path": "internal/server/web/vendor/markdown-export/pdfmake-LICENSE",
+      "sha256": "ab919430421c2e244dbb8694d70916eae16235b75c0ea07e9a6c67cd4265c954"
+    },
+    {
+      "source_path": "internal/server/web/vendor/mermaid-katex-LICENSE.txt",
+      "sha256": "766ccc1f306c885aa45542a9846bbd0a505b27a0374f146778171c2254ce18e3"
+    },
+    {
+      "source_path": "internal/server/web/vendor/mobile-capture/LICENSE-zxing-browser",
+      "sha256": "4c26c3077daa7ce4d56ad91f279fafc395bf33c3a0f1ba9ab8cf511bad148ea5"
+    },
+    {
+      "source_path": "internal/server/web/vendor/mobile-capture/LICENSE-zxing-library",
+      "sha256": "849b3ff4527ff587eecc78736b5685bbba7a44b071f3b944da914e832292f6c0"
+    },
+    {
+      "source_path": "internal/server/web/vendor/pdfjs/openjpeg/LICENSE_OPENJPEG",
+      "sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6"
+    },
+    {
+      "source_path": "internal/server/web/vendor/pdfjs/openjpeg/LICENSE_PDFJS_OPENJPEG",
+      "sha256": "717fc62da03292dbb4dd0c8280bd4ce7bb8550dcf31d772bc93455fb50313425"
+    },
+    {
+      "source_path": "internal/server/web/vendor/three-LICENSE.txt",
+      "sha256": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    },
+    {
+      "source_path": "internal/server/web/vendor/urdf-loader/LICENSE",
+      "sha256": "12ab00e5637ce70e16be1f6693dfa5f9b7a4fe0f5f976a0329477d0c32d53e86"
+    },
+    {
+      "source_path": "legal/third_party/npm/docx-preview/LICENSE",
+      "sha256": "8668bf4417d161e4eb4d47d6044526e4914d9eb3c748573d9bb7e87708c1253f"
+    },
+    {
+      "source_path": "legal/third_party/npm/highlight.js/LICENSE",
+      "sha256": "6c081431591d9df696c82dc598fe1423765b8a299b200ed00b281afd0f64c490"
+    },
+    {
+      "source_path": "legal/third_party/npm/jszip/LICENSE.markdown",
+      "sha256": "566c953c6090b1218ca6217dd7359d45dde46581968586dc607d59a78af6a9c4"
+    },
+    {
+      "source_path": "legal/third_party/npm/marked/LICENSE.md",
+      "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+    },
+    {
+      "source_path": "legal/third_party/npm/mermaid/LICENSE",
+      "sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+    },
+    {
+      "source_path": "legal/third_party/npm/pdfjs-dist/LICENSE",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "source_path": "legal/third_party/npm/playwright/LICENSE",
+      "sha256": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb"
+    },
+    {
+      "source_path": "legal/third_party/npm/playwright/NOTICE",
+      "sha256": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d"
+    },
+    {
+      "source_path": "legal/third_party/npm/playwright/ThirdPartyNotices.txt",
+      "sha256": "b17ac0bd6f4b8207e440639cc8e0ba1bf1d9eaf9b12236764ab93b346c7abd8e"
+    },
+    {
+      "source_path": "legal/third_party/npm/playwright-core/LICENSE",
+      "sha256": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb"
+    },
+    {
+      "source_path": "legal/third_party/npm/playwright-core/NOTICE",
+      "sha256": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d"
+    },
+    {
+      "source_path": "legal/third_party/npm/playwright-core/ThirdPartyNotices.txt",
+      "sha256": "a549d329bad8806fe279f0ecae0fc0270dec7e7c2dc8ec10f90e394f7c32b144"
+    },
+    {
+      "source_path": "legal/third_party/pypi/et_xmlfile/LICENCE.python",
+      "sha256": "4ccdaaebc0f44b83720ec0399bb7ab329adce067dd62f73c5535a2dc05628ab2"
+    },
+    {
+      "source_path": "legal/third_party/pypi/et_xmlfile/LICENCE.rst",
+      "sha256": "0c84bb42f5d367e5ebf9fc2dde35b16141df5ee0fdc189250858bc6c5560f69e"
+    },
+    {
+      "source_path": "legal/third_party/pypi/openpyxl/LICENCE.rst",
+      "sha256": "0c84bb42f5d367e5ebf9fc2dde35b16141df5ee0fdc189250858bc6c5560f69e"
+    },
+    {
+      "source_path": "legal/third_party/runtime/onnxruntime/LICENSE",
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "source_path": "legal/third_party/runtime/onnxruntime/ThirdPartyNotices.txt",
+      "sha256": "0e07b95f3a8d6230037707c5c4a2b554d12c4cb67369669ac255635528ffcee2"
+    },
+    {
+      "source_path": "legal/third_party/runtime/sherpa-onnx/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_path": "native/windows-launcher/third_party/LICENSE.json",
+      "sha256": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603"
+    },
+    {
+      "source_path": "native/windows-launcher/third_party/miniz/LICENSE",
+      "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3"
+    },
+    {
+      "source_path": "vendor/github.com/fxamacker/cbor/v2/LICENSE",
+      "sha256": "78cad457d5ea7318230f3d969d4cdf29cef45524a1fc8ca3a97646da1ad7a841"
+    },
+    {
+      "source_path": "vendor/github.com/go-viper/mapstructure/v2/LICENSE",
+      "sha256": "22adc4abdece712a737573672f082fd61ac2b21df878efb87ffcff4354a07f26"
+    },
+    {
+      "source_path": "vendor/github.com/go-webauthn/webauthn/LICENSE",
+      "sha256": "5e0435d30b066b2e518bc6e7b6980147f454044123bdc18fbe6a6c599160531c"
+    },
+    {
+      "source_path": "vendor/github.com/go-webauthn/x/LICENSE",
+      "sha256": "3b6f3112ab7231f5b47b7c6c2c626d0ed0622b787b508e732d2cecc4e448a463"
+    },
+    {
+      "source_path": "vendor/github.com/go-webauthn/x/crypto/secp256k1/LICENSE",
+      "sha256": "480be5fb1be03ff19fd71d863f453f16262e98d4e568f5bccfcb7aa3ccf8cf0d"
+    },
+    {
+      "source_path": "vendor/github.com/go-webauthn/x/revoke/LICENSE",
+      "sha256": "dc439285c60b63ec585769cf151a03345654a78271cdfd56250f59f1175fba88"
+    },
+    {
+      "source_path": "vendor/github.com/golang-jwt/jwt/v5/LICENSE",
+      "sha256": "fe26ca41577b9b2b4448050a24b25e5753af66b5d5945d5d36094e7790bfcb2f"
+    },
+    {
+      "source_path": "vendor/github.com/google/go-tpm/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_path": "vendor/github.com/google/uuid/LICENSE",
+      "sha256": "0a8d61ed3cbfd5312326e8126c31ce9c627a283adc99131b56896d29ada04b2d"
+    },
+    {
+      "source_path": "vendor/github.com/gorilla/websocket/LICENSE",
+      "sha256": "2be1b548b0387ca8948e1bb9434e709126904d15f622cc2d0d8e7f186e4d122d"
+    },
+    {
+      "source_path": "vendor/github.com/kr/fs/LICENSE",
+      "sha256": "dd26a7abddd02e2d0aba97805b31f248ef7835d9e10da289b22e3b8ab78b324d"
+    },
+    {
+      "source_path": "vendor/github.com/philhofer/fwd/LICENSE.md",
+      "sha256": "430da36bd967b28fc662f05e9245306da10941e93911052114a20ef10e4410f8"
+    },
+    {
+      "source_path": "vendor/github.com/pkg/sftp/LICENSE",
+      "sha256": "f5b5087b8e596d015cfea7db26527fe67a196c18ca37415c288dd2534ff74c37"
+    },
+    {
+      "source_path": "vendor/github.com/skip2/go-qrcode/LICENSE",
+      "sha256": "4cdab772de606bdf53e174b2f5d6a2c398156380ca1f763122198cece531d02c"
+    },
+    {
+      "source_path": "vendor/github.com/tinylib/msgp/LICENSE",
+      "sha256": "17df22e31ef6a84f70909eed5185f41443a03dd05b14e8dec319d5c2bd7d7b3b"
+    },
+    {
+      "source_path": "vendor/github.com/x448/float16/LICENSE",
+      "sha256": "a555f1194fdac34da70fb416968f7e2217b02352c26c1eac2fa45fcb4290ae8d"
+    },
+    {
+      "source_path": "vendor/github.com/yuin/goldmark/v2/LICENSE",
+      "sha256": "c1d6f653c38c80294dc7994647ba0dcc508ce64a86996303c804efa2f7982bff"
+    },
+    {
+      "source_path": "vendor/golang.org/x/crypto/LICENSE",
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_path": "vendor/golang.org/x/sys/LICENSE",
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    }
+  ]
+}

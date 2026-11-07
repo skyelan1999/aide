@@ -49,6 +49,11 @@ COPY go.sum ./
 COPY vendor ./vendor
 COPY cmd ./cmd
 COPY internal ./internal
+COPY LICENSE ./LICENSE
+COPY legal/third_party ./legal/third_party
+COPY native/windows-launcher/third_party ./native/windows-launcher/third_party
+COPY scripts/stage-third-party-licenses.py ./scripts/stage-third-party-licenses.py
+RUN python3 scripts/stage-third-party-licenses.py /opt/aide/licenses
 COPY plugins/testdata ./plugins/testdata
 COPY scripts/office ./scripts/office
 COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs
@@ -188,8 +193,8 @@ RUN set -ux; \
 # 2.6) Office 工具脚本（#63）：aide 经 os/exec 调用（docx_structure/comments 等）。
 #      查找顺序：$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office（dev 挂仓）→ 本目录。
 COPY scripts/office /opt/aide/office-scripts
-COPY vendor/github.com/yuin/goldmark/v2/LICENSE /opt/aide/licenses/goldmark.txt
-COPY vendor/github.com/gorilla/websocket/LICENSE /opt/aide/licenses/gorilla-websocket.txt
+COPY --from=build /opt/aide/licenses /opt/aide/licenses
+COPY --from=node /usr/local/LICENSE /opt/aide/licenses/platform/node-LICENSE
 
 # Host checkouts may have private modes (for example after iCloud download).
 # Only shipped public application assets need to be readable by USER aide.

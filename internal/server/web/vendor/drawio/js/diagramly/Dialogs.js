@@ -1,3 +1,4 @@
+/* Modified by Aide; change notice added 2026-11-07. See NOTICE.txt and the pinned upstream comparison. */
 /**
  * Copyright (c) 2006-2020, JGraph Holdings Ltd
  * Copyright (c) 2006-2020, draw.io AG

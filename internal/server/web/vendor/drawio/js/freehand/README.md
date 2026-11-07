@@ -1,3 +1,4 @@
+<!-- Modified by Aide; change notice added 2026-11-07. See NOTICE.txt and the pinned upstream comparison. -->
 Use babeljs.io to convert for IE11, but disable it in IE11 as Math.hypot is missing.
 
 Local sharp-corner correction (#249): use the current segment vector for the cap,

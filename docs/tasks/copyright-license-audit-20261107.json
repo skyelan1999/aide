@@ -1,0 +1,83 @@
+{
+  "id": "copyright-license-audit-20261107",
+  "request": "Audit and integrate Aide copyright, draw.io modification notices, third-party distribution license texts, and source provenance into main while preserving pre-existing uncommitted work.",
+  "baseline": "9aef74ff7ae525a636d5f6fd6d62b42982655585",
+  "initial_status": "M docs/architecture.md\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/workbench.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/task-action-hub.test.cjs\n?? docs/tasks/computer-control-app-approval-20261106.json\n?? docs/tasks/computer-control-settings-20261106.json\n?? docs/tasks/main-update-20261106.json\n?? internal/server/computer_control_approval_test.go\n?? native/macos-desktop/computer_control.swift",
+  "git_snapshot": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide-audit-snapshots/pre-copyright-license-audit-20261107T111201+0800",
+  "acceptance": [
+    "Preserve baseline HEAD, branch, tracked diffs, and all pre-existing untracked files without overwriting or staging them",
+    "Inventory third-party components actually present in source, Docker runtime, and offline distribution paths, with version, origin, license and accessible license-text evidence or an explicit gap",
+    "Preserve evidence of Aide-owned work, DeepSeek Harness MIT reference, other upstream provenance, check CodeStory Aide AGPL reuse, and distinguish code evidence from contributor or commissioned-work ownership evidence",
+    "Deliver the audit findings and proposed diff before applying a narrowly scoped fix; do not rename the product or delete code automatically",
+    "Run relevant checks after changes and record remaining legal and market-search limits with accurate evidence limits"
+  ],
+  "scope": [
+    "docs/tasks/copyright-license-audit-20261107.json",
+    "docs/reviews/2026-11-07-copyright-license-audit/",
+    "internal/server/web/vendor/drawio/NOTICE.txt",
+    "internal/server/web/vendor/drawio/AIDE_UI_PATCHES.md",
+    "distribution license/notice packaging scripts and tests only after audit diff review",
+    "Dockerfile",
+    "scripts/aide.sh",
+    "scripts/stage-third-party-licenses.py",
+    "legal/third_party/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Copyright, license distribution and provenance audit completed; baseline Git state preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-07-copyright-license-audit/report.md",
+        "git_snapshot"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Audit and concrete proposed diff recorded before implementation.",
+      "evidence": [
+        "docs/reviews/2026-11-07-copyright-license-audit/proposed-diff.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Draw.io NOTICE and 136 file markers corrected; 63 source-backed license/notice texts staged in source, Docker, and export-bundle path. Editor branding and ownership changes intentionally deferred.",
+      "evidence": [
+        "drawio-comparison-after.json",
+        "source-license-manifest.json",
+        "Dockerfile",
+        "scripts/stage-third-party-licenses.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Isolated linux/arm64 Docker runtime build, go vet/build, image readback of 63/63 texts and 141 Debian copyright files, 133 modified JS syntax checks, Python/shell syntax, and diff check passed. Full Go tests, browser, and actual offline archive were not run.",
+      "evidence": [
+        "aide:copyright-main-check-20261107",
+        "docs/reviews/2026-11-07-copyright-license-audit/report.md",
+        "docs/reviews/2026-11-07-copyright-license-audit/codestory-exact-blob-check.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Auditable report, before/after draw.io hashes, runtime inventory, text sources, and staged manifest saved.",
+      "evidence": [
+        "docs/reviews/2026-11-07-copyright-license-audit/"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Baseline tracked and untracked work preserved; integration commit stages only audit-related files and the packaging hunks in scripts/aide.sh.",
+      "evidence": [
+        "git_snapshot"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User authorized integration into main only; no push, tag, release or runtime activation requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Integration into local main authorized by user; no push, tag, release, or runtime activation requested.",
+  "rollback": "",
+  "handoff": "Copyright/license changes may be integrated locally into main. Full Go tests, browser acceptance, multi-architecture image checks and a real offline archive remain outstanding before release."
+}

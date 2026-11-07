@@ -1,3 +1,4 @@
+/* Modified by Aide; change notice added 2026-11-07. See NOTICE.txt and the pinned upstream comparison. */
 /**
  * Orchestrates animated GIF export of flow animations.
  * Captures frames by stepping stroke-dashoffset values on animated edges

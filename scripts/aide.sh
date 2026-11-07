@@ -9,9 +9,9 @@ if [[ "$MODE" == start-built ]]; then START_BUILT=1; MODE=start; fi
 # 哈希写进镜像 label aide.srcsha，供显式 build 和打包核对当前输入。
 source_sha() {
   (
-    find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
+    find cmd internal vendor scripts/office legal/third_party docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
-    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.py
+    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.py scripts/stage-third-party-licenses.py
     for extra in native/macos-desktop/main.swift native/macos-desktop/biometrics.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js scripts/native-computer-bridge.swift scripts/build-native-computer-bridge.sh stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
@@ -453,8 +453,7 @@ case "$MODE" in
     cp docker/offline.env.example "$BUNDLE/.env.example"
     cp docker/OFFLINE.md "$BUNDLE/README.md"
     cp LICENSE "$BUNDLE/"
-    mkdir -p "$BUNDLE/licenses"
-    cp vendor/github.com/yuin/goldmark/v2/LICENSE "$BUNDLE/licenses/goldmark.txt"
+    python3 scripts/stage-third-party-licenses.py "$BUNDLE/licenses"
     printf '%s %s %s v%s\n' "$BUNDLE_TAG" "$IMAGE_ID" "$PLATFORM" "$VERSION" > "$BUNDLE/.aide-image"
     printf 'version=%s\nimage=%s\nplatform=%s\nsrcsha=%s\n' "$VERSION" "$IMAGE_ID" "$PLATFORM" \
       "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" > "$BUNDLE/BUILD.txt"

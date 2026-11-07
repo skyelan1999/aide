@@ -8,4 +8,15 @@ Downloaded: 2026-09-25
 SHA256(draw.war): abd58ad15baef57f43acb79a56350ba8900a8b6fabe94391d8906148fe64e264
 
 This product includes software developed by JGraph Ltd.
-Modifications: None (unmodified official static webapp build, vendored for offline use).
+Modifications: This is an Aide-modified build of the official v31.5.2 webapp.
+The upstream WAR SHA-256 above was verified on 2026-11-07. A byte comparison
+found 136 changed upstream files. Each changed file carries an Aide change
+notice; the path and original/modified SHA-256 evidence is recorded in
+docs/reviews/2026-11-07-copyright-license-audit/drawio-comparison-before.json.
+Changes include Aide integration, local bug fixes and rebuilt JavaScript
+bundles. Aide is not made, sponsored or endorsed by draw.io Ltd.
+
+The upstream copyright and Apache License 2.0 remain in effect. Additional
+licenses and attribution apply to bundled assets and libraries; see the
+LICENSE files under img/, shapes/, stencils/, templates/, js/libavoid-js/ and
+js/re2js/, and the notices beside other vendored JavaScript files.
