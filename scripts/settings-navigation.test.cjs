@@ -7,15 +7,38 @@ const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.jso
 const context=vm.createContext({window:{}});
 vm.runInContext(fs.readFileSync('internal/server/web/settings-navigation.js','utf8'),context);
 const navigation=context.window.AideSettingsNavigation;
-test('all original settings remain reachable exactly once in eight groups',()=>{
+test('all settings remain reachable exactly once in seven ordered groups',()=>{
  const model=navigation.build(schema),ids=model.groups.flatMap(group=>group.pages.map(page=>page.id));
- assert.equal(model.groups.length,8);assert.equal(ids.length,model.pages.length);assert.equal(new Set(ids).size,ids.length);
+ assert.deepEqual(model.groups.map(group=>group.id),['general','files','ai','assistant','communication','data','system']);
+ assert.equal(ids.length,model.pages.length);assert.equal(new Set(ids).size,ids.length);
  for(const section of schema.sections){
   const page=navigation.resolve(model,section.id,'');assert.equal(page.sectionId,section.id);
   for(const child of section.children||[])assert.equal(navigation.resolve(model,section.id,child.id).id,child.id);
  }
  assert.equal(model.groups.find(group=>group.id==='system').pages.find(page=>page.id==='interface-tests').sectionId,'accessibility');
  assert.equal(model.groups.find(group=>group.id==='general').pages.some(page=>page.id==='interface-tests'),false);
+ assert.deepEqual(model.groups.find(group=>group.id==='ai').pages.map(page=>page.id),['model-profiles','execution-policy','permissions','agent-management','computer-control']);
+});
+test('search finds pages by title and control while retaining group mapping',()=>{
+ const model=navigation.build(schema);
+ assert.deepEqual(navigation.search(model,'电脑控制').map(item=>item.page.id),['computer-control']);
+ assert.deepEqual(navigation.search(model,'日志级别').map(item=>item.page.id),[]);
+ assert.deepEqual(navigation.search(model,'系统日志').map(item=>item.page.id),['system-logs']);
+ assert.deepEqual(navigation.search(model,'沙箱模式').map(item=>item.page.id),['permissions']);
+ assert.equal(navigation.search(model,'  ').length,0);
+});
+test('every schema control has a renderer and key API routes exist',()=>{
+ const app=fs.readFileSync('internal/server/web/app.js','utf8');
+ const server=fs.readFileSync('internal/server/server.go','utf8');
+ for(const section of schema.sections)for(const page of section.children||[section])for(const control of page.controls||[]){
+  const type=control.type;
+  assert(type,`missing type: ${control.id}`);
+  assert(app.includes(`'${type}':`)||app.includes(`"${type}":`)||app.includes(`${type}:`)||app.includes(`controlRenderers['${type}']`),`missing renderer: ${type} (${control.id})`);
+ }
+ for(const path of ['/api/settings','/api/computer-control/status','/api/system-logs','/api/updates/slots','/api/profiles']){
+  assert(server.includes(path),`server route missing: ${path}`);
+  assert(app.includes(path.replace('/api','')),`UI mapping missing: ${path}`);
+ }
 });
 test('new sections and unknown legacy links have a safe reachable destination',()=>{
  const model=navigation.build({...schema,sections:[...schema.sections,{id:'future',title:'Future',controls:[]}]});

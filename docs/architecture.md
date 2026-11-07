@@ -174,14 +174,14 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 共享布局补充规则在700px及以下统一单列与92px双行顶栏，避免被旧601～950px侧栏网格覆盖。背景强度偏好 `backgroundStrength` 为10～50的整数，默认22；仅改变装饰层遮罩，播放器与素材URL不重建。参见[协调性补充需求](prd/2026-10-16-workbench-harmony.md)与[组件验收](reviews/2026-10-16/workbench-harmony.md)。
 
 ```json
-{"version":1,"theme":"system","palette":"blue"}
+{"version":1,"theme":"system","palette":"modern"}
 ```
 
-`theme` 为 light/dark/system，`palette` 为 blue/comfort/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。配色与明暗各一排三项，使用原有 `aideUI` 存储接口保存。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 的 navigation 将设置归为通用、文件与知识、AI 与权限、助理与语音、消息与通知、数据与账户、系统七类，每类用次级导航显示原页面。`settings-navigation.js` 保留原 section/child ID 的快捷入口兼容；接口测试归入系统，无障碍保留在通用。外观的配色与明暗独立选择，沿用原有 palette/theme 值；高级控件通过 details 按需初始化，不改变保存与授权规则。
+`theme` 为 light/dark/system，`palette` 为 comfort/green/professional/modern。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。配色与明暗分别选择，使用原有 `aideUI` 存储接口保存。旧值仍经 `settings-init.js` 迁移；`settings-schema.json` 的 navigation 将设置归为通用、文件与知识、AI 与权限、助理与语音、消息与通知、数据与账户、系统七类。电脑控制与执行权限放在同一组；账户先于归档和备份，系统页先列更新与诊断，再列日志和用量。`settings-navigation.js` 保留原 section/child ID 的快捷入口兼容，并按页面标题、描述及控件文案搜索；接口测试归入系统，无障碍保留在通用。高级控件通过 details 按需初始化，不改变保存与授权规则。
 
 消息、插件与文件侧栏标题统一为 42px；触摸设备为 46px。顶部切换按钮统一 36px，消息使用共享18px圆角对话图标。搜索输入宽度跟随容器，独立显示快捷键，避免挤入轨迹按钮；紧凑视口保留图标与可访问名称。文件根目录切换按钮最小 28px，路径与搜索行收紧内边距；触摸设备主要按钮 34px。规则统一在 `style.css` 的 `#file-panel` 范围内，适用于经典与专业外观，不改变文件列表行样式。
 
-工作台共用几何样式由 `workbench.css` 统一图标、按钮、正文宽度与设置导航；聊天滚动区底部用32px透明遮罩柔化输入框上方的卡片裁切，尾部保留40px内边距以完整显示最后内容，强制颜色模式关闭遮罩。窄屏设置导航横向滚动，正文单独纵向滚动。外观设置使用 `background: off | aurora | studio | local`；未设置或无效值默认静域 `studio`，保留已存的有效选择。动效统一跟随系统默认，尊重 `prefers-reduced-motion`；不再提供单独的动效强度选择，旧手动值在读取、设置和跨标签同步时归一为 `system`。背景模块 `workbench-background.js` 只装饰页面，不参与会话或模型请求；本地素材存在浏览器 IndexedDB，最多30 MiB。图片/视频使用 Blob URL，关闭、更换或离开页面时释放。后台、锁屏和减少动态效果时暂停视频与流光、卸载 GIF/WebP。CSP 仅向图片与媒体开放 blob，脚本和连接仍为同源。操作与验收见[工作台打磨需求](prd/2026-10-16-workbench-polish.md)。
+工作台共用几何样式由 `workbench.css` 统一图标、按钮、正文宽度与设置导航；聊天滚动区底部用32px透明遮罩柔化输入框上方的卡片裁切，尾部保留40px内边距以完整显示最后内容，强制颜色模式关闭遮罩。窄屏设置搜索在上方，分类结果横向滚动，正文单独纵向滚动；设置弹窗保持在视口内。外观设置使用 `background: off | aurora | studio | local`；未设置或无效值默认静域 `studio`，保留已存的有效选择。动效统一跟随系统默认，尊重 `prefers-reduced-motion`；不再提供单独的动效强度选择，旧手动值在读取、设置和跨标签同步时归一为 `system`。背景模块 `workbench-background.js` 只装饰页面，不参与会话或模型请求；本地素材存在浏览器 IndexedDB，最多30 MiB。图片/视频使用 Blob URL，关闭、更换或离开页面时释放。后台、锁屏和减少动态效果时暂停视频与流光、卸载 GIF/WebP。CSP 仅向图片与媒体开放 blob，脚本和连接仍为同源。操作与验收见[工作台打磨需求](prd/2026-10-16-workbench-polish.md)。
 
 ## 本任务自动命令审批
 

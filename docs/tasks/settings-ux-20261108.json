@@ -1,0 +1,84 @@
+{
+  "id": "settings-ux-20261108",
+  "request": "把设置页的无用按钮去掉，重排菜单和顺序，补全逻辑，检查接口映射并增强能力",
+  "baseline": "1f3bf96f0ce5a176b443e39b93411cef969e543d",
+  "initial_status": "main 与 origin/main 一致；任务开始时工作树无修改或未跟踪文件。",
+  "acceptance": [
+    "设置菜单分组和次序符合使用路径，原有页面与深层入口仍可到达。",
+    "设置搜索可按页面及控件文案定位，桌面和窄屏均能点击结果并恢复分类列表。",
+    "无响应按钮不会展示；模型连接入口能进入原配置弹窗。",
+    "设置控件类型均有渲染器，关键 API 路由与前端引用一致；相关测试和文档检查通过。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/workbench.css",
+    "internal/server/web/settings-navigation.js",
+    "internal/server/web/settings-schema.json",
+    "scripts/settings-navigation.test.cjs",
+    "scripts/ui-response-latency.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/settings-ux-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "限定为设置页信息架构、无响应入口、搜索和接口映射；不改权限策略或用户设置数据。",
+      "evidence": [
+        "2026-11-08 任务原话；基线 main 1f3bf96f，干净工作树"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留原 section/child ID 和现有页面渲染器；七组导航，搜索仅筛选导航，不重建表单。",
+      "evidence": [
+        "settings-schema.json、settings-navigation.js、app.js 现有调用链"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "电脑控制并入 AI 与权限；账户和系统页重排；加入搜索及窄屏布局修复；不可用的崩溃诊断入口不渲染；模型连接入口避免弹窗叠加。 关闭设置页时清理订阅与 resize 监听；窄屏次级导航改为单行滚动并显示当前项。",
+      "evidence": [
+        "Git 工作树差异：设置源码、CSS 与 i18n"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "设置相关源码、隔离浏览器和已解锁 Aide 的真实菜单操作均通过。PlantUML 测试在 Node 24 的 V8 GC 中两次崩溃；仅为该项门禁加 --jitless 后，全仓快速门禁 322/322 通过。实际设置保存和后台重新编译未测试。",
+      "evidence": [
+        "node --test scripts/settings-navigation.test.cjs：8/8 通过",
+        "node --check app.js、settings-navigation.js、locales/en.js：通过",
+        "python3 scripts/agent-route.py verify quick：322/322 通过，收据 .agent-state/verify-20261107T215203513037Z.log",
+        "Node 24.19.0 崩溃报告 node-2026-11-08-034814.ips、node-2026-11-08-035140.ips：V8 MarkCompact 栈 EXC_BAD_ACCESS；PlantUML 用例单独连续运行 100 次通过，全局 --jitless 会使其他用例超时，因此仅该检查关闭 JIT。",
+        "Playwright 隔离浏览器：1280x900、390x844，七组、搜索沙箱模式、进入电脑控制、Escape 清除搜索、窄屏次级导航当前项可见、无横向溢出、无 pageerror；登录弹窗/锁屏在隔离测试页内屏蔽，未验证真实登录态。",
+        "Aide 实际窗口：解锁并刷新后，搜索沙箱模式进入权限管理、切换电脑控制、Escape 恢复七组、系统子菜单及日志页均可到达；未修改用户设置。localhost:9999 返回的 app.js、schema、导航脚本、样式和英文文案与工作树哈希一致。",
+        "关键 API 路由及所有控件类型静态映射断言通过"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新架构文档中的现行配色、导航、搜索和窄屏行为。",
+      "evidence": [
+        "python3 scripts/check_docs.py：495 Markdown、2369 本地链接，通过"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅保留任务相关源码、测试和任务记录；未清理用户数据。",
+      "evidence": [
+        "git diff --check：通过；变更范围人工核对"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前本地服务已直接提供最新前端资源；未重新编译后台、升版或创建 GitHub Release。设置保存行为未写入测试数据。源码提交与推送单独记录在 handoff。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "2026-11-08 用户要求将本轮改动合并并推送到 main；未要求升版或创建 GitHub Release。",
+  "rollback": "若需撤销本次源码改动，按最终提交差异回退；当前未替换运行实例。",
+  "handoff": "设置页源码、真实 Aide 菜单操作及 322 项快速门禁通过；当前本地服务已加载前端资源。后台重编译和设置保存持久化未执行；本轮提交推送结果待记录。"
+}

@@ -531,12 +531,13 @@
     {
       "id": "ai",
       "title": "AI 与权限",
-      "description": "模型参数、执行方式与管理授权",
+      "description": "模型、执行权限与电脑控制",
       "pages": [
         "model-profiles",
         "execution-policy",
         "permissions",
-        "agent-management"
+        "agent-management",
+        "computer-control"
       ]
     },
     {
@@ -563,21 +564,21 @@
       "title": "数据与账户",
       "description": "会话归档、配置备份与账户安全",
       "pages": [
+        "account",
         "sessions-data",
         "backup",
-        "account",
         "danger"
       ]
     },
     {
       "id": "system",
       "title": "系统",
-      "description": "用量、日志、升级与诊断",
+      "description": "更新、诊断、日志与用量",
       "pages": [
-        "stats",
-        "system-logs",
         "software-updates",
         "interface-tests",
+        "system-logs",
+        "stats",
         "about"
       ]
     }

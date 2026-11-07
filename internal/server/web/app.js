@@ -5508,7 +5508,7 @@ function renderMarkdownHistoryControl() {
 }
 function renderModelConnectionsControl(control) {
   const wrap=el('div','settings-control');
-  const button=el('button','quiet',control.label);button.type='button';button.onclick=openSettings;
+  const button=el('button','quiet',t('管理模型连接…'));button.type='button';button.onclick=()=>{closeSettingsSheet();openSettings();};
   wrap.append(el('p','section-desc',t('管理提供商、API 密钥和可用模型。')),button);return wrap;
 }
 const controlRenderers = { 'computer-control': renderComputerControlSettings, 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
@@ -5529,8 +5529,10 @@ function renderSystemLogsControl() {
   const refresh = el('button', 'quiet', t('刷新'));
   const download = el('button', 'primary', t('下载日志'));
   const crashDiagnostics = el('button', 'quiet', t('崩溃与异常诊断'));
-  crashDiagnostics.type = 'button'; crashDiagnostics.onclick = () => window.AideCrash?.open();
-  toolbar.append(filter, refresh, download, crashDiagnostics);
+  if (typeof window.AideCrash?.open === 'function') {
+    crashDiagnostics.type = 'button'; crashDiagnostics.onclick = () => window.AideCrash.open();
+    toolbar.append(filter, refresh, download, crashDiagnostics);
+  } else toolbar.append(filter, refresh, download);
   const range = el('div', 'system-logs-range');
   const startField = el('label', 'system-logs-date-field');
   const startLabel = el('span', '', t('开始日期时间'));
@@ -5682,15 +5684,18 @@ function renderControlsInto(host, controls, description) {
     host.append(node);
   }
 }
-function renderSettingsSheet() {
-  const nav = $('settings-nav');
-  const content = $('settings-content');
-  // 每次重渲染前退订上一批 segmented 控制的 aideUI 订阅与 resize 监听，避免反复打开累积
+function cleanupSettingsRefreshers() {
+  // 关闭或重渲染时都退订，避免隐藏的设置页继续监听外观和窗口变化。
   for (const r of settingsPanel.refreshers) {
     try { if (r.unsub) r.unsub(); } catch (_) {}
     window.removeEventListener('resize', r.apply);
   }
   settingsPanel.refreshers = [];
+}
+function renderSettingsSheet() {
+  const nav = $('settings-nav');
+  const content = $('settings-content');
+  cleanupSettingsRefreshers();
   nav.replaceChildren();
   content.replaceChildren();
   for(const save of settingsAutosaves)save.cleanup();
@@ -5701,10 +5706,28 @@ function renderSettingsSheet() {
   settingsPanel.active=page.sectionId;settingsPanel.activeChild=page.childId;
   const group=model.groups.find(group=>group.pages.some(item=>item.id===page.id));
   const select = target => {settingsPanel.active=target.sectionId;settingsPanel.activeChild=target.childId;renderSettingsSheet();$('settings-content').scrollTop=0;};
-  for(const item of model.groups){
-    const button=el('button','settings-nav-item'+(item.id===group.id?' active':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===group.id?'page':'false');
-    button.onclick=()=>{const remembered=settingsPanel.groupPages?.[item.id];select(item.pages.find(page=>page.id===remembered)||item.pages[0]);};nav.append(button);
-  }
+  const search=el('input','settings-nav-search');search.type='search';search.placeholder=t('搜索设置');search.setAttribute('aria-label',t('搜索设置'));search.value=settingsPanel.search||'';
+  const navList=el('div','settings-nav-list');nav.append(search,navList);
+  const renderNavList=()=>{
+    navList.replaceChildren();
+    const query=search.value.trim();settingsPanel.search=query;
+    if(query){
+      const matches=window.AideSettingsNavigation.search(model,query);
+      if(!matches.length){navList.append(el('p','settings-nav-empty',t('没有匹配的设置项')));return;}
+      for(const match of matches){
+        const button=el('button','settings-nav-item settings-nav-result'+(match.page.id===page.id?' active':''));button.type='button';
+        button.append(el('span','',match.page.title),el('small','',match.group.title));
+        button.setAttribute('aria-current',match.page.id===page.id?'page':'false');button.onclick=()=>select(match.page);navList.append(button);
+      }
+      return;
+    }
+    for(const item of model.groups){
+      const button=el('button','settings-nav-item'+(item.id===group.id?' active':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===group.id?'page':'false');
+      button.onclick=()=>{const remembered=settingsPanel.groupPages?.[item.id];select(item.pages.find(page=>page.id===remembered)||item.pages[0]);};navList.append(button);
+    }
+  };
+  search.addEventListener('input',renderNavList);search.addEventListener('keydown',event=>{if(event.key==='Escape'&&search.value){event.stopPropagation();search.value='';renderNavList();}});
+  renderNavList();
   (settingsPanel.groupPages ||= {})[group.id]=page.id;
   const heading=el('div','settings-page-heading');heading.append(el('h3','settings-page-title',group.title),el('p','section-desc',group.description||''));content.append(heading);
   const sub=el('nav','settings-subnav');sub.setAttribute('aria-label',group.title);
@@ -5712,6 +5735,7 @@ function renderSettingsSheet() {
     const button=el('button','settings-subnav-item'+(item.id===page.id?' active':'')+(item.id==='danger'?' danger-text':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===page.id?'page':'false');button.onclick=()=>select(item);sub.append(button);
   }
   content.append(sub);
+  if(window.matchMedia?.('(max-width: 600px)').matches)requestAnimationFrame(()=>sub.querySelector('.active')?.scrollIntoView({block:'nearest',inline:'nearest'}));
   const body=el('section','settings-page-body');body.setAttribute('aria-label',page.title);content.append(body);
   if(page.id==='notifications')document.getElementById('reminder-center')?.messageUI?.renderNotifications(body);
   else if(page.id==='messages')document.getElementById('reminder-center')?.messageUI?.renderSettings(body);
@@ -5747,6 +5771,8 @@ async function openSettingsSheet() {
 function closeSettingsSheet() {
   void flushSettingsAutosaves().catch(()=>{});
   settingsPanel.openSequence=(settingsPanel.openSequence||0)+1;
+  settingsPanel.search='';
+  cleanupSettingsRefreshers();
   $('settings-content').removeAttribute('aria-busy');
   setSettingsOpen(false);
   // 鼠标点击打开设置后，关闭时不要再 focus() 触发按钮，否则品牌按钮会残留

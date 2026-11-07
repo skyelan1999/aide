@@ -1181,6 +1181,7 @@
       ],
       [
         "node",
+        "--jitless",
         "scripts/test_plantuml_converter_issues.cjs"
       ],
       [

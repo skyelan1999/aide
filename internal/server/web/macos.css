@@ -176,6 +176,12 @@ h1 span { color: var(--brand); }
 .sheet-eyebrow { color: var(--muted); font-size: 9px; letter-spacing: 1.6px; margin-bottom: 6px; }
 .settings-body { margin: 0; min-height: 330px; overflow: hidden; }
 .settings-nav { width: 164px; padding: 18px 12px; gap: 4px; border-right: 1px solid var(--line); background: var(--panel-alt); }
+.settings-nav-search { width: 100%; height: 36px; min-width: 0; flex: none; padding: 7px 10px; margin-bottom: 8px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 9px; font: inherit; font-size: 12px; }
+.settings-nav-search:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.settings-nav-list { display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.settings-nav-result { display: flex; flex-direction: column; gap: 3px; }
+.settings-nav-result small { color: var(--muted); font-size: 10px; font-weight: 400; }
+.settings-nav-empty { color: var(--muted); font-size: 11px; line-height: 1.5; padding: 8px; }
 .settings-nav-item { font-size: 13px; padding: 10px 12px; border-radius: 8px; }
 .settings-nav-item.active { font-weight: 550; }
 .settings-content { padding: 24px; max-height: min(65dvh, 580px); overscroll-behavior: contain; }
@@ -279,10 +285,14 @@ dialog label, dialog p { font-size: 12px; }
  .terminal-heading { padding: 10px 18px max(10px, env(safe-area-inset-bottom)); }
  .composer-note { font-size: 9px; }
  .user-message { margin-left: 8%; }
- .settings-sheet, .settings-sheet.sheet-wide { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 15px; }
+ .settings-sheet, .settings-sheet.sheet-wide { left: 50%; top: 50%; width: calc(100vw - 24px); height: min(720px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px); border-radius: 15px; }
  .sheet-head { padding: 17px 18px; }
  .settings-body { flex-direction: column; min-height: 0; }
  .settings-nav { width: 100%; flex-direction: row; flex-shrink: 0; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--line); gap: 4px; overflow-x: auto; }
+ .settings-nav { flex-direction: column; height: auto; overflow: hidden; }
+ .settings-nav-search { margin-bottom: 2px; }
+ .settings-nav-list { flex: 0 0 auto; min-height: 36px; flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+ .settings-nav-result { min-width: 120px; }
  .settings-nav-item { white-space: nowrap; font-size: 12px; padding: 8px 10px; }
  .settings-content { padding: 19px 16px; max-height: 60dvh; }
  .sheet-foot { padding: 12px 18px; }
@@ -571,7 +581,7 @@ button.quiet, .quiet {
   .composer-note { align-items: flex-start; flex-direction: column; }
   .composer-note span { max-width: 100%; white-space: normal; }
   .settings-body { min-width: 0; }
-  .settings-nav { width: 122px; }
+  .settings-nav { width: 100%; }
   .settings-content { padding: 16px 12px; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

@@ -21,5 +21,14 @@
       || model.pages.find(page => page.sectionId === sectionId)
       || model.pages[0];
   }
-  window.AideSettingsNavigation = {build,resolve};
+  function search(model, query) {
+    const needle = String(query || '').trim().toLocaleLowerCase();
+    if (!needle) return [];
+    return model.groups.flatMap(group => group.pages.filter(page => {
+      const terms = [group.title, page.title, page.description,
+        ...(page.controls || []).flatMap(control => [control.label, control.description])];
+      return terms.some(term => String(term || '').toLocaleLowerCase().includes(needle));
+    }).map(page => ({group, page})));
+  }
+  window.AideSettingsNavigation = {build,resolve,search};
 })();

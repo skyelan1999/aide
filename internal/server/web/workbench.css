@@ -152,7 +152,7 @@ html[data-background-paused] .workbench-background video,html[data-background-pa
 @media(max-width:760px){.settings-body{gap:10px}.settings-nav{width:104px;flex-basis:104px}.topbar{padding-inline:16px}.global-search input{width:110px}}
 @media(max-width:600px){.topbar{padding-inline:12px;gap:8px}.top-actions{gap:6px}.conversation{padding:16px 12px}.composer-wrap{padding:10px 12px 12px}.composer textarea{font-size:16px}.composer-toolbar{gap:6px;flex-wrap:wrap}.composer-note{flex-wrap:wrap}.starter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.starter{padding:12px;min-height:110px}#timeline :is(.chat-answer,.stage-answer){padding:14px}.settings-sheet.sheet-wide{width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}.settings-nav{width:90px;flex-basis:90px}.settings-content{padding-inline:0}.background-options{gap:4px}.background-options button{padding-inline:4px}}
 
-@media(max-width:760px){.settings-body{flex-direction:column;gap:0}.settings-nav{width:100%;flex:0 0 auto;flex-direction:row;overflow-x:auto;padding:8px;gap:4px}.settings-nav button{flex:0 0 auto;white-space:nowrap;padding:8px 10px}.settings-content{padding:14px;flex:1;min-height:0}}
+@media(max-width:760px){.settings-body{flex-direction:column;gap:0}.settings-nav{width:100%;flex:0 0 auto;flex-direction:column;overflow:hidden;padding:8px;gap:4px}.settings-nav-list{flex:0 0 auto;min-height:36px;flex-direction:row;overflow-x:auto;overflow-y:hidden}.settings-nav button{flex:0 0 auto;white-space:nowrap;padding:8px 10px}.settings-content{padding:14px;flex:1;min-height:0}}
 .new-session>.ui-icon,.settings-button>.ui-icon,.terminal-heading .ui-icon{width:17px;height:17px;flex:0 0 17px}
 
 /* Stable shell rhythm. These rules follow the older palette-specific sizing. */
@@ -253,6 +253,7 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
 .settings-subnav{flex-wrap:wrap;gap:6px;padding-bottom:14px;margin-bottom:18px}
 .settings-subnav-item{border:1px solid transparent;line-height:1.5;white-space:normal}
 .settings-subnav-item.active{border-color:var(--line-mid)}
+@media(max-width:600px){.settings-subnav{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}.settings-subnav::-webkit-scrollbar{display:none}.settings-subnav-item{flex:0 0 auto;white-space:nowrap}}
 .settings-page-body{min-width:0}
 .settings-advanced{border:1px solid var(--line-soft);border-radius:10px;margin:12px 0;background:var(--bg-inset)}
 .settings-advanced>summary{padding:12px 14px;cursor:pointer;color:var(--text);font-size:12px;line-height:1.5}
