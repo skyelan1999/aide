@@ -218,6 +218,8 @@ window.aideEnglish = {
   "关闭工作台": "Close workbench",
   "独立插件工作台 · 本地计算": "Independent plugin workbench · local computation",
   "插件工作台 · 本地计算": "Plugin workbench · local computation",
+  "开始本机录音": "Start local recording",
+  "停止本机录音": "Stop local recording",
   "付费筹备中": "Paid edition coming soon",
   "授权安装": "Licensed installation",
   "交付方式": "Delivery",

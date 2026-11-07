@@ -33,6 +33,14 @@ Read the canonical manifest/setting schema and host source for all supported fie
 
 Handler calls have bounded lifetimes (up to 300 s). Built-in `run_shell` uses the configured sandbox mode; `write_file` creates a proposal. Tool results return to the model as tool messages. Existing file-attachment/source permissions still apply.
 
+## On-device transcription in plugin workbenches
+
+A workbench can declare both `"microphone":true` and `"onDeviceSpeech":true` inside its manifest `workbench` object. `onDeviceSpeech` without `microphone` is invalid. These declarations create a scoped MessageChannel even for a plugin with no tools. The sandboxed iframe never receives microphone access or raw audio.
+
+After connecting, check for the `speech.local` handshake capability, then call `await host.speech({action:'prepare',lang:'zh-CN'})`. The host displays a Start local recording button. Recording and system permission prompts begin only after the user clicks that host button. Listen with `host.onEvent` for `{event:'speech.local',result:{state,message,text?}}`; states include `authorizing`, `recording`, `stopped`, and `error`. `host.speech({action:'stop'})` may stop a session, but a plugin request cannot start one. Transcripts can change while recognition runs and should be reviewed before use or saving.
+
+The Mac desktop host requires on-device Chinese recognition; unsupported configurations return an error. Other browsers must support `SpeechRecognition.processLocally` with a locally available Chinese language pack; there is no cloud-recognition fallback. Hiding the page, closing the workbench, or losing its scope stops recording. A recording lasts at most 15 minutes, and event text is capped at 60,000 characters. This capability is separate from assistant listening, TTS, and plugin tool permissions.
+
 ## Services and lifecycle
 
 Modules can declare `provides` and `requires`, each with up to 64 unique service names. Synchronous dependency-ordered `apply(ctx)` registers real values using `ctx.provide` and consumes them using `ctx.consume`. Undeclared consumption, missing/duplicate providers, cycles, unregistered declared services and duplicate tool names fail the surface. Cleanup runs in reverse order.

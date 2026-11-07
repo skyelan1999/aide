@@ -49,6 +49,8 @@ WKWebView 仅对已验证 localhost 原点处理精确叶证书 pin，同时检�
 
 麦克风首次使用由系统和 WebKit 请求授权。代码包含麦克风、摄像头与语音识别的用途说明。存在 WebSocket/getUserMedia/AudioContext/SpeechRecognition API 仅代表可用性探测，不等于真实采集、实时模型通话或厂商连接验收。未授权时不自动采音或替用户点击允许。
 
+插件工作台本机转写另有宿主桥接：只为顶层 Aide 工作台页面注入 `AideNativeSpeech`，通过 `aideLocalSpeech` 消息处理器核对页面与会话；sandbox iframe 不获得此对象或麦克风权限。插件必须声明 `microphone` 与 `onDeviceSpeech`，并经 MessageChannel 请求准备。宿主按钮的真实用户点击和原生确认框之后才启动录音。macOS 27+ 优先使用本机 `SpeechTranscriber`，较早系统使用 `SFSpeechRecognizer` 并强制 `requiresOnDeviceRecognition`；中文本机资源或权限不可用时返回错误。录音最长 15 分钟，关闭/隐藏/锁屏停止，音频只在内存中处理，转写文本由插件按事件接收。源码实现和编译通过不等于本机麦克风真机验收。
+
 ## 验证
 
 ```sh

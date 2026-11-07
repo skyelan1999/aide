@@ -1,6 +1,6 @@
 # User guide
 
-> Operating guidance updated against source `82378d2a` on 31 October 2026. Entry screenshots and their original scope remain from the isolated 17 October instance: [actual screenshots and limits](../ui-evidence.md) · [step-by-step demo](../demo-guide.md). Source behavior, browser observation and release acceptance are separate states.
+> Operating guidance updated against the current source workline on 8 November 2026. Entry screenshots and their original scope remain from the isolated 17 October instance: [actual screenshots and limits](../ui-evidence.md) · [step-by-step demo](../demo-guide.md). Source behavior, browser observation and release acceptance are separate states.
 
 ## Current operation and screenshot reference
 
@@ -31,6 +31,12 @@ This guide describes the public source workline. Published images may differ; ve
 - **Top:** global conversation search, trajectory, and file/plugin panel switches.
 - **Right:** project files or plugins. On narrow screens, open the navigation drawer.
 - **Bottom:** the command panel for manually running commands and inspecting output.
+
+### Local transcription in a plugin workbench
+
+Open an enabled plugin that declares both `microphone` and `onDeviceSpeech`. Once the plugin prepares a request, click the host's Start local recording button. System microphone and speech-recognition permission prompts appear only after that click. Stop with the host button; review the transcript before the plugin saves or submits it. The plugin iframe never receives raw microphone audio.
+
+The Mac desktop host needs installed Chinese on-device speech resources. A browser must support forced local recognition and have the Chinese language pack available; otherwise the request fails without a cloud fallback. Hiding the page, closing the workbench or locking Aide stops recording. Each session lasts at most 15 minutes. See the [plugin protocol](plugin-protocol.md) for the event contract.
 
 ## 2. Choose a language and appearance
 

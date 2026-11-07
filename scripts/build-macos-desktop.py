@@ -136,7 +136,8 @@ def compile_app(root):
             subprocess.run(['iconutil', '-c', 'icns', str(iconset), '-o', str(resources / 'AppIcon.icns')], check=True)
             entitlements = Path(temporary) / 'entitlements.plist'
             entitlements.write_bytes(plistlib.dumps({'com.apple.security.device.audio-input': True,
-                                                     'com.apple.security.device.camera': True}))
+                                                     'com.apple.security.device.camera': True,
+                                                     'com.apple.security.personal-information.speech-recognition': True}))
             for attribute in ('com.apple.FinderInfo', 'com.apple.ResourceFork'):
                 subprocess.run(['xattr', '-dr', attribute, str(staging)], capture_output=True)
             subprocess.run(['codesign', '--force', '--sign', '-', '--identifier', bundle_id(root),

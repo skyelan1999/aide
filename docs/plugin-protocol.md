@@ -317,7 +317,7 @@ entry须为包内普通相对.html路径，禁止隐藏路径、越界、反斜�
 
 入口：已启用插件卡片的“打开工作台”。首版是全屏独立浮层，不是多标签页或独立浏览器窗口。`POST /api/plugins/{id}/workbench/open` 沿用Bearer与同源校验，解锁后返回60秒有效的随机单次页面URL；最多8个未过期入口，绑定插件管理作用域、锁屏代际及HTML内容摘要。`GET /plugin-workbench/{ticket}` 消耗入口，重新核对锁定、插件启用、作用域、路径与内容；失效需从卡片重新打开，不能刷新复用票据。票据不含持久访问令牌，页面与日志不得主动传播该URL。
 
-页面在sandbox iframe中运行，仅allow-scripts/allow-downloads，不允许same-origin、popup、表单或top-navigation；服务端页面CSP限制connect、外部资源、frame、base和object；不授予摄像头、麦克风、剪贴板、USB/串口能力。宿主不向页面注入Bearer、API助手、文件权限、引用或模型上下文。可信插件的Node执行权限不因UI隔离变成进程沙箱；这些CSP/iframe限制也不应宣传为对恶意脚本自导航等行为的完整网络沙箱。
+页面在sandbox iframe中运行，仅allow-scripts/allow-downloads，不允许same-origin、popup、表单或top-navigation；服务端页面CSP限制connect、外部资源、frame、base和object；iframe本身不获得摄像头、麦克风、剪贴板、USB/串口权限。宿主不向页面注入Bearer、API助手、文件权限、引用或模型上下文。需本机转写的插件只能走下文显式声明的宿主按钮与受控桥接。可信插件的Node执行权限不因UI隔离变成进程沙箱；这些CSP/iframe限制也不应宣传为对恶意脚本自导航等行为的完整网络沙箱。
 
 关闭浮层即卸载文档并终止Worker；前端定时检查锁屏、登录状态、恢复作用域和已知启用状态，变化即卸载。首版没有跨标签页插件撤销推送；服务端会拒绝变化后的新入口，但已加载本地计算不能据此视作可远程即时吊销。界面本地数据由插件自行组织，文件导入/下载须用户显式操作；本扩展不提供自动写引用、知识检索或聊天控制通道。
 
@@ -457,6 +457,14 @@ The host keeps per-call rate and key-identity snapshots. Manual provider/key/mod
 独立安装的 `tts-tools` 插件可以声明 `tts_voices`、`tts_generate`，由宿主固定桥接实现。仅工具归属为该启用插件时允许调用。插件不读取或设置密钥；宿主使用所选语音生成模型的提供商保险库凭证。此桥接与助理的默认朗读提供商、音色、API Key 完全独立。`tts_generate` 接收 `text`（1–600 字）、可选 `model`、`voice`、`format`（mp3/wav），当前仅非实时 Qwen-Audio-TTS 3.0/3.1 flash/plus。省略模型时需要支持 speech 评分的 Auto 路由档案。
 
 生成记录在付费提交前保存，同一任务仅生成一个脚本/音色/格式组合；已提交且结果不明确时禁止自动重建。下载会验证服务商存储域、真实格式与文件大小，再写入绑定的本地工作区 `generated/speech/`。read-only 沙箱禁止生成写入，语音查询仍可用。旧宿主执行插件 handler 时明确报不支持，不伪装成功。该工具不实现声音复刻或实时麦克风；默认朗读继续使用既有 TTS 设置。
+
+## 插件工作台本机语音转写
+
+工作台可在 manifest 的 `workbench` 中同时声明 `"microphone":true` 和 `"onDeviceSpeech":true`；单独声明 `onDeviceSpeech` 会被拒绝。仅声明这两项、没有工具的工作台也会获得受限 MessageChannel。iframe 仍无麦克风权限；插件不能自行开始采音或获取原始音频。
+
+插件连接后检查握手中的 `speech.local` 能力，再调用 `await host.speech({action:'prepare',lang:'zh-CN'})`。宿主显示“开始本机录音”；用户亲自点击后才申请系统权限并开始。`host.onEvent` 接收 `{event:'speech.local',result:{state,message,text?}}`，状态包括 `authorizing`、`recording`、`stopped`、`error`。插件可调用 `host.speech({action:'stop'})` 请求停止，但不能通过请求代替用户的开始点击。文本是可变的识别结果，使用前应由用户核对；插件自行决定是否保存或提交文本。
+
+Mac 桌面版使用宿主原生语音识别并要求本机处理；不满足时明确报错。其他浏览器仅在支持 `SpeechRecognition.processLocally` 且中文离线资源可用时启动，否则拒绝，不回退到云端识别。隐藏页面、关闭工作台或作用域失效会停止录音；单段最长 15 分钟，发送给插件的文本最多 60,000 字符。麦克风授权属于设备和系统，声明能力并不自动授予权限。本功能与助理持续语音、TTS 及插件工具执行分别管理。
 
 ## Project briefing message extraction (local candidate)
 

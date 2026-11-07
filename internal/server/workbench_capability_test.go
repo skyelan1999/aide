@@ -6,7 +6,10 @@ import (
 )
 
 func TestIssue88StandaloneWorkbenchCapabilitiesGetBridge(t *testing.T) {
-	for _, kind := range []string{"project", "mobile", "both", "none"} {
+	if err := validatePluginWorkbench(&PluginWorkbench{Protocol: 1, Entry: "ui.html", Title: "Speech", OnDeviceSpeech: true}); err == nil {
+		t.Fatal("on-device speech without microphone declaration was accepted")
+	}
+	for _, kind := range []string{"project", "mobile", "both", "speech", "none"} {
 		t.Run(kind, func(t *testing.T) {
 			a := workbenchFixture(t)
 			for i := range a.pluginRegistry.Plugins {
@@ -14,6 +17,8 @@ func TestIssue88StandaloneWorkbenchCapabilitiesGetBridge(t *testing.T) {
 				if p.ID == "workbench-fixture" {
 					p.Workbench.ProjectMessages = kind == "project" || kind == "both"
 					p.Workbench.MobileCapture = kind == "mobile" || kind == "both"
+					p.Workbench.Microphone = kind == "speech"
+					p.Workbench.OnDeviceSpeech = kind == "speech"
 				}
 			}
 			out := workbenchRequest(a, "POST", "/api/plugins/workbench-fixture/workbench/open", true)
@@ -39,7 +44,7 @@ func TestIssue88StandaloneWorkbenchCapabilitiesGetBridge(t *testing.T) {
 			if opened.Bridge == nil || opened.Bridge.Instance == "" {
 				t.Fatal("declared capability received no bridge")
 			}
-			if len(opened.Bridge.Tools) != 0 || opened.Bridge.Project != (kind != "mobile") || opened.Bridge.Mobile != (kind != "project") {
+			if len(opened.Bridge.Tools) != 0 || opened.Bridge.Project != (kind == "project" || kind == "both") || opened.Bridge.Mobile != (kind == "mobile" || kind == "both") {
 				t.Fatal("bridge advertised wrong capabilities")
 			}
 			requireStatus(t, workbenchRequest(a, "GET", opened.URL, false), 200)

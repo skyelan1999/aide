@@ -1,3 +1,4 @@
+import Speech
 import AppKit
 import AVFoundation
 import CryptoKit
@@ -7,6 +8,109 @@ import WebKit
 import ApplicationServices
 import Network
 import ScreenCaptureKit
+
+struct DesktopSpeechTranscript {
+    private var finalized: [Double: String] = [:]
+    mutating func update(start: Double, isFinal: Bool, value: String) -> String {
+        if isFinal { finalized[start] = value }
+        return String((finalized.keys.sorted().compactMap { finalized[$0] }.joined() + (isFinal ? "" : value)).prefix(60000))
+    }
+}
+
+// Microphone audio remains in memory and is never sent to a remote recognizer.
+final class DesktopLocalSpeech {
+    private let engine = AVAudioEngine()
+    private var request: SFSpeechAudioBufferRecognitionRequest?
+    private var task: SFSpeechRecognitionTask?
+    private var modernStop: (() -> Void)?
+    private var tapped = false
+    private(set) var session = ""
+    private(set) var text = ""
+    private(set) var state = "stopped"
+    private(set) var failure = ""
+    func snapshot() -> [String: Any] { ["state": state, "text": text, "message": failure.isEmpty ? (state == "recording" ? "本机录音中" : "录音已停止，请核对逐字稿") : failure] }
+    func stop() {
+        state = "stopped"
+        engine.stop()
+        modernStop?(); modernStop = nil
+        if tapped { engine.inputNode.removeTap(onBus: 0); tapped = false }
+        request?.endAudio(); request = nil
+        task?.cancel(); task = nil
+        state = "stopped"
+    }
+    @available(macOS 27.0, *)
+    private func startModern(_ key: String, completion: @escaping ([String: Any]) -> Void) {
+        AVCaptureDevice.requestAccess(for: .audio) { allowed in
+            Task { @MainActor in
+                guard self.session == key, self.state == "starting", allowed else { completion(["error": "未获得麦克风权限或请求已撤销"]); return }
+                do {
+                    guard SpeechTranscriber.isAvailable, let locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "zh-CN")) else { completion(["error": "本机中文离线识别不可用"]); return }
+                    guard await SpeechTranscriber.installedLocales.contains(where: { $0.identifier == locale.identifier }) else { completion(["error": "请先在系统中安装中文离线语音资源，再开始录音"]); return }
+                    let transcriber = SpeechTranscriber(locale: locale, preset: .progressiveTranscription)
+                    let analyzer = SpeechAnalyzer(modules: [transcriber])
+                    let converter = try await AnalyzerInputConverter.converter(compatibleWith: [transcriber])
+                    let (stream, continuation) = AsyncStream<AnalyzerInput>.makeStream(bufferingPolicy: .bufferingNewest(8))
+                    try await analyzer.prepareToAnalyze(in: nil)
+                    guard self.session == key, self.state == "starting" else { await analyzer.cancelAndFinishNow(); completion(["error": "录音已取消"]); return }
+                    let results = Task { @MainActor in
+                        var transcript = DesktopSpeechTranscript()
+                        do { for try await result in transcriber.results {
+                            guard self.session == key, self.state != "stopped" else { return }
+                            self.text = transcript.update(start: result.range.start.seconds, isFinal: result.isFinal, value: String(result.text.characters))
+                        }} catch { if self.state != "stopped" { self.failure = error.localizedDescription; self.stop() } }
+                    }
+                    let analysis = Task { do { try await analyzer.start(inputSequence: stream) } catch { await MainActor.run { if self.session == key && self.state != "stopped" { self.failure = error.localizedDescription; self.stop() } } } }
+                    self.modernStop = { continuation.finish(); results.cancel(); analysis.cancel(); Task { await analyzer.cancelAndFinishNow() } }
+                    let input = self.engine.inputNode, format = input.outputFormat(forBus: 0)
+                    guard format.sampleRate > 0, format.channelCount > 0 else { self.stop(); completion(["error": "没有可用麦克风"]); return }
+                    input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, time in
+                        do { for value in try converter.convert(buffer, at: time) { continuation.yield(value) } }
+                        catch { Task { @MainActor in self.failure = "音频转换失败"; self.stop() } }
+                    }
+                    self.tapped = true; self.engine.prepare(); try self.engine.start(); self.state = "recording"; completion(self.snapshot())
+                } catch { self.stop(); completion(["error": "本机识别无法启动：\(error.localizedDescription)"]) }
+            }
+        }
+    }
+
+    func start(_ key: String, completion: @escaping ([String: Any]) -> Void) {
+        stop(); session = key; text = ""; failure = ""; state = "starting"
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "zh-CN")), recognizer.supportsOnDeviceRecognition else {
+            completion(["error": "此设备的中文离线语音识别不可用，请安装中文语言资源或使用手动记录。"]); return
+        }
+        let alert = NSAlert(); alert.messageText = "开始本机录音与转写？"
+        alert.informativeText = "请确认参与者已同意录音和本机转写。声音仅供本机识别，不保存原始音频。点击停止或切换窗口将结束采集。"
+        alert.addButton(withTitle: "开始录音"); alert.addButton(withTitle: "取消")
+        guard alert.runModal() == .alertFirstButtonReturn else { completion(["error": "录音已取消"]); return }
+        if #available(macOS 27.0, *) { startModern(key, completion: completion); return }
+        SFSpeechRecognizer.requestAuthorization { authorization in
+            DispatchQueue.main.async {
+                guard self.session == key, self.state == "starting" else { completion(["error": "录音请求已撤销"]); return }
+                guard authorization == .authorized else { completion(["error": "未获得语音识别权限，请在系统隐私设置中允许 Aide。"]); return }
+                AVCaptureDevice.requestAccess(for: .audio) { allowed in
+                    DispatchQueue.main.async {
+                        guard self.session == key, self.state == "starting", allowed else { completion(["error": "未获得麦克风权限或请求已撤销。"]); return }
+                        let request = SFSpeechAudioBufferRecognitionRequest()
+                        request.requiresOnDeviceRecognition = true; request.shouldReportPartialResults = true
+                        self.request = request
+                        let input = self.engine.inputNode, format = input.outputFormat(forBus: 0)
+                        guard format.sampleRate > 0, format.channelCount > 0 else { completion(["error": "没有可用的麦克风输入设备"]); return }
+                        input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in request.append(buffer) }; self.tapped = true
+                        self.task = recognizer.recognitionTask(with: request) { result, error in
+                            DispatchQueue.main.async {
+                                guard self.session == key, self.state != "stopped" else { return }
+                                if let result = result { self.text = String(result.bestTranscription.formattedString.prefix(60000)) }
+                                if result?.isFinal == true || error != nil { self.stop(); if let error = error { self.failure = error.localizedDescription } }
+                            }
+                        }
+                        do { self.engine.prepare(); try self.engine.start(); self.state = "recording"; completion(self.snapshot()) }
+                        catch { self.stop(); completion(["error": "无法启动麦克风：\(error.localizedDescription)"]) }
+                    }
+                }
+            }
+        }
+    }
+}
 
 struct DesktopSession: Decodable {
     let origin: String
@@ -67,6 +171,7 @@ enum DesktopPolicy {
 
 final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, WKScriptMessageHandler, WKScriptMessageHandlerWithReply {
+    let localSpeech = DesktopLocalSpeech()
     let root: URL
     let smokeOutput: URL?
     var mainWindow: NSWindow!
@@ -283,6 +388,8 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         if configuredControllers.insert(ObjectIdentifier(controller)).inserted {
             controller.add(self, name: "aideDesktopDiagnostics")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideBiometrics")
+            controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideLocalSpeech")
+            controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window, 'AideNativeSpeech', {value:args=>window.webkit.messageHandlers.aideLocalSpeech.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: """
             if (window === top) {
               const request = (operation, options) => window.webkit.messageHandlers.aideBiometrics.postMessage({operation, options:options || {}}).then(result => {
@@ -514,6 +621,22 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
                                replyHandler: @escaping (Any?, String?) -> Void) {
         func reject(_ error: BiometricFailure, name: String = "NotAllowedError") {
             replyHandler(["error": ["name": name, "message": error.message]], nil)
+        }
+        if message.name == "aideLocalSpeech" {
+            guard let origin = origin, message.frameInfo.isMainFrame,
+                  DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin),
+                  let web = message.webView, let url = web.url, DesktopPolicy.local(url, origin: origin), url.path == "/",
+                  let body = message.body as? [String: Any], body.count <= 2,
+                  let action = body["action"] as? String, ["start", "stop", "status"].contains(action),
+                  let key = body["session"] as? String, key.count == 36 else { replyHandler(["error": "Speech scope rejected"], nil); return }
+            if action == "stop", localSpeech.session == key { localSpeech.stop(); replyHandler(localSpeech.snapshot(), nil); return }
+            guard web === activeWeb, web.window?.isVisible == true else { localSpeech.stop(); replyHandler(["error": "语音窗口已切换，录音已停止"], nil); return }
+            if action == "status" { guard localSpeech.session == key else { replyHandler(["error": "Speech session revoked"], nil); return }; replyHandler(localSpeech.snapshot(), nil); return }
+            if action == "start" { localSpeech.start(key) { value in
+                guard web === self.activeWeb, web.url == url else { self.localSpeech.stop(); replyHandler(["error": "Speech scope revoked"], nil); return }
+                replyHandler(value, nil)
+            }; return }
+            replyHandler(["error": "Speech session rejected"], nil); return
         }
         guard message.name == "aideBiometrics", let origin = origin, message.frameInfo.isMainFrame,
               DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin),
@@ -800,6 +923,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationWillTerminate(_ notification: Notification) {
+        localSpeech.stop()
         computerControlHost?.stop()
         for web in views.values { stopMedia(web) }
         startup?.terminate()

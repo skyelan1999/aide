@@ -8,7 +8,7 @@
    out[side]={path:v.path,source:v.source,directory:v.directory===true};
   }return out.left?out:undefined;
  }
- function close(force=false,reason='close'){if(!active)return;const item=active;if(item.documentDirty&&!force&&!window.confirm(item.services.t('插件中有未保存修改，仍要离开吗？')))return false;active=null;clearInterval(item.timer);if(item.startupTimer)clearTimeout(item.startupTimer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.reviewBack?.remove();item.focus?.focus();item.services.onClose?.(reason,!!item.documentDirty);return true;}
+ function close(force=false,reason='close'){if(!active)return;const item=active;if(item.documentDirty&&!force&&!window.confirm(item.services.t('插件中有未保存修改，仍要离开吗？')))return false;active=null;item.stopSpeech?.();clearInterval(item.timer);if(item.startupTimer)clearTimeout(item.startupTimer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.reviewBack?.remove();item.focus?.focus();item.services.onClose?.(reason,!!item.documentDirty);return true;}
  async function open(plugin,services){
   if(!services.document&&!services.inPage&&services.openPage)return services.openPage(plugin,services.selection);
   if(close(false,'replace')===false)return false;if(services.blocked()||!plugin.enabled)return false;
@@ -17,6 +17,7 @@
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
   title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>{if(close()!==false&&services.inPage)window.close();};
   frame.title=plugin.workbench.title;frame.setAttribute('allow','fullscreen *');frame.setAttribute('allowfullscreen','');frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
+  const speechStart=document.createElement('button'),speechStop=document.createElement('button');speechStart.textContent=services.t('开始本机录音');speechStop.textContent=services.t('停止本机录音');speechStart.hidden=true;speechStop.hidden=true;header.append(speechStart,speechStop);
   header.append(title,notice,button);host.append(header,frame);document.body.append(host);
   const reviewBack=document.createElement('button');reviewBack.type='button';reviewBack.className='plugin-workbench-return';reviewBack.hidden=true;reviewBack.textContent=services.t('返回插件工作台');document.body.append(reviewBack);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);
@@ -27,6 +28,30 @@
 
   const item={host,frame,abort,focus,timer:null,services,plugin,port:null,bridge:null,listener:null,download:null,toolReady:null};active=item;item.reviewBack=reviewBack;const resumeReview=()=>{if(invalid())return;item.reviewing=false;host.hidden=false;reviewBack.hidden=true;};reviewBack.onclick=resumeReview;if(services.document)item.startupTimer=setTimeout(()=>{if(active===item&&!item.port)close(true,'error');},15000);button.focus();
   const invalid=()=>active!==item||services.blocked()||services.scope()!==scope||!services.enabled(plugin.id);
+  let speechSession='',speechRecognition=null,speechPoll=null,speechTimer=null;
+  const speechEvent=(state,message,text)=>{if(!invalid())item.port?.postMessage({protocol:1,event:'speech.local',result:{state,message,...(typeof text==='string'?{text:text.slice(0,60000)}:{})}});};
+  const nativeSpeech=()=>window.AideNativeSpeech;
+  item.stopSpeech=async(reason)=>{clearInterval(speechPoll);clearTimeout(speechTimer);speechPoll=null;speechTimer=null;try{speechRecognition?.stop();if(speechSession){const value=await nativeSpeech()?.({action:'stop',session:speechSession});if(value)speechEvent('stopped',typeof reason==='string'?reason:'本机录音已停止，请核对逐字稿',value.text||'');}}catch(_){}speechSession='';speechRecognition=null;speechStart.hidden=true;speechStop.hidden=true;};
+  speechStop.onclick=event=>{if(event.isTrusted)void item.stopSpeech();};
+  speechStart.onclick=async event=>{if(!event.isTrusted||invalid()||!plugin.workbench.microphone||!plugin.workbench.onDeviceSpeech)return;speechStart.hidden=true;try{
+   if(nativeSpeech()){
+    const session=crypto.randomUUID();speechSession=session;
+    speechEvent('authorizing','正在等待系统麦克风和语音识别授权…');
+    let authorizationTimer;const value=await Promise.race([nativeSpeech()({action:'start',session}),new Promise((_,reject)=>{authorizationTimer=setTimeout(()=>reject(Error('系统语音授权超时。请在系统设置 → 隐私与安全性 → 语音识别中检查 Aide 权限后重试。')),20000);})]).finally(()=>clearTimeout(authorizationTimer));
+    if(invalid()||speechSession!==session){await nativeSpeech()({action:'stop',session});return;}
+    if(value.error)throw Error(value.error);speechStop.hidden=false;speechEvent('recording','本机录音中');
+    speechPoll=setInterval(async()=>{if(invalid()){void item.stopSpeech();return;}try{const value=await nativeSpeech()({action:'status',session});if(speechSession!==session)return;if(value.error)throw Error(value.error);speechEvent(value.state,value.message||'本机录音中',value.text);if(value.state!=='recording')void item.stopSpeech();}catch(error){speechEvent('error',error.message);void item.stopSpeech();}},350);
+   }else{
+    const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!Ctor||!('processLocally' in Ctor.prototype))throw Error('当前浏览器不支持强制离线识别。请使用 Aide Mac 桌面版或支持本机识别的浏览器。');
+    if(typeof Ctor.available==='function'&&await Ctor.available({langs:['zh-CN'],processLocally:true})!=='available')throw Error('本机中文离线语言包不可用，请先安装对应语言包。');
+    if(invalid())return;const recognition=new Ctor();speechRecognition=recognition;recognition.processLocally=true;recognition.lang='zh-CN';recognition.continuous=true;recognition.interimResults=true;
+    recognition.onresult=e=>{const text=Array.from(e.results).map(r=>r[0]?.transcript||'').join('');speechEvent('recording','本机录音中',text);};recognition.onerror=e=>{speechEvent('error','本机语音失败：'+e.error);void item.stopSpeech();};recognition.onend=()=>speechEvent('stopped','录音已停止，请核对逐字稿');recognition.start();speechStop.hidden=false;speechEvent('recording','本机录音中');
+   }
+   speechTimer=setTimeout(()=>{speechEvent('stopped','已达到15分钟单段录音上限');void item.stopSpeech();},15*60*1000);
+  }catch(error){speechEvent('error',error.message);void item.stopSpeech(error.message);services.toast(error.message);}};
+  const stopOnHide=()=>{if(document.hidden)void item.stopSpeech();};document.addEventListener('visibilitychange',stopOnHide,{signal:abort.signal});
+
   // Presentation only: never expose host credentials, settings, or arbitrary CSS.
   const themeKeys=['bg','panel','surface','field','text','muted','line','field-border','brand-hi','brand-text','on-brand','chip-bg','selected','focus-ring','danger','warn','success'];
   const sendTheme=()=>{item.themeFrame=null;if(invalid()||!item.themeReady)return;const root=document.documentElement,style=getComputedStyle(root),colors={};for(const key of themeKeys)colors[key]=style.getPropertyValue('--'+key).trim();frame.contentWindow.postMessage({type:'aide.workbench.theme',protocol:1,theme:root.dataset.theme==='light'?'light':'dark',palette:['comfort','green','professional','modern'].includes(root.dataset.palette)?root.dataset.palette:'modern',colors},'*');};
@@ -74,6 +99,13 @@
       if(busy){send({requestId:m.requestId,status:'error',error:'A call is already pending'});return;}
       if(sequenced){const match=/^r_([1-9][0-9]{0,14})$/.exec(m.requestId),number=match?Number(match[1]):0;if(!Number.isSafeInteger(number)||number<=highest){send({requestId:m.requestId,status:'error',error:'Invalid or replayed sequence'});return;}highest=number;}
       else{if(seen.has(m.requestId)||seen.size>=128){send({requestId:m.requestId,status:'error',error:'Duplicate or exhausted request'});return;}seen.add(m.requestId);}
+      if(m.method==='speech.local'){
+       if(plugin.workbench.microphone!==true||plugin.workbench.onDeviceSpeech!==true){send({requestId:m.requestId,status:'error',error:'Speech capability not declared'});return;}
+       if(m.arguments?.action==='stop'){void item.stopSpeech();send({requestId:m.requestId,status:'result',result:{stopped:true}});return;}
+       if(m.arguments?.action!=='prepare'||m.arguments?.lang!=='zh-CN'){send({requestId:m.requestId,status:'error',error:'Invalid speech request'});return;}
+       speechStart.hidden=false;send({requestId:m.requestId,status:'result',result:{prepared:true}});return;
+      }
+      if(m.method==='document.dirty'){item.documentDirty=m.arguments?.dirty===true;send({requestId:m.requestId,status:'result',result:{dirty:item.documentDirty}});return;}
       const documentMethods=['document.package.info','document.package.read','document.info','document.read','document.save.begin','document.save.chunk','document.save.request','document.save.abort','document.dirty','document.error'];
       if((!['tool.call','proposal.status','file.target','file.save',...(b.hostComponent===true&&plugin.id==='codex-bridge'?['host.component']:[]),...(b.projectMessages?['project.messages']:[]),...(b.mobileCapture?['capture.control','capture.network']:[]),...(b.professionalWorkflow&&plugin.id==='professional-workflow'?['workflow.control']:[])].includes(m.method)&&!(services.document&&b.document&&documentMethods.includes(m.method)))||(m.method==='tool.call'&&!b.tools.includes(m.tool))){send({requestId:m.requestId,status:'error',error:'Method/tool not permitted'});return;}
       busy=true;try{const body=JSON.stringify({protocol:1,requestId:m.requestId,method:m.method==='file.save'?'file.save.commit':m.method,tool:m.tool,arguments:m.arguments||{},attachments:m.attachments||[],proposalId:m.proposalId});if(body.length>(m.method==='document.save.chunk'?800000:262144))throw Error('Bridge request too large');
@@ -104,7 +136,7 @@
       if(saved.result.warning)services.toast(saved.result.warning);
      }catch(error){if(!invalid())services.toast(error.message);}finally{documentSave.disabled=false;}};
      const sendDocumentEvent=result=>{if(!invalid())item.port?.postMessage({protocol:1,event:'document.saved',result});};
-     item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:[...(b.hostComponent===true&&plugin.id==='codex-bridge'?['host.component.codex-bridge']:[]),'bridge.renew','daemon.detach','file.manual-save',...(b.projectMessages?['project.messages']:[]),...(b.mobileCapture?['capture.auto-network']:[]),...(b.mobileCapture?['capture',...(b.mobileCaptureVersion>=2?['capture.locations','capture.unclassified',...(b.mobileCaptureVersion>=3?['capture.person-binding']:[])]:[])]:[]),...(b.document?['document.read','document.save']:[])],selection:selection(services.selection)},'*',[channel.port2]);
+     item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:[...(plugin.workbench.microphone===true&&plugin.workbench.onDeviceSpeech===true?['speech.local']:[]),...(b.hostComponent===true&&plugin.id==='codex-bridge'?['host.component.codex-bridge']:[]),'bridge.renew','daemon.detach','file.manual-save',...(b.projectMessages?['project.messages']:[]),...(b.mobileCapture?['capture.auto-network']:[]),...(b.mobileCapture?['capture',...(b.mobileCaptureVersion>=2?['capture.locations','capture.unclassified',...(b.mobileCaptureVersion>=3?['capture.person-binding']:[])]:[])]:[]),...(b.document?['document.read','document.save']:[])],selection:selection(services.selection)},'*',[channel.port2]);
     };
    }
    frame.src=result.url;return true;
