@@ -422,7 +422,12 @@ func TestHarnessReadOnlyCommandOptions(t *testing.T) {
 			t.Errorf("write/helper option allowed as read-only: %s", command)
 		}
 	}
-	for _, command := range []string{"find . -type f", "rg needle file.txt", "git branch --show-current", "git remote -v", "go env -json GOPATH"} {
+	for _, command := range []string{"git branch --show-current", "git remote -v"} {
+		if readOnlyAllowed(command) {
+			t.Errorf("Git repository configuration can run helpers without approval: %s", command)
+		}
+	}
+	for _, command := range []string{"find . -type f", "rg needle file.txt", "go env -json GOPATH"} {
 		if !readOnlyAllowed(command) {
 			t.Errorf("ordinary read unexpectedly requires approval: %s", command)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -289,6 +290,14 @@ exit 0
 	if err != nil || code != 0 || !strings.Contains(out, at(`cd '\''/srv/app'\'' && echo agent-remote`)) {
 		t.Fatalf("agent remote command: code=%d err=%v out=%q", code, err, out)
 	}
+	// The command panel pins the ControlMaster socket. The CLI stub above
+	// creates only a marker, so provide a real local socket for that check.
+	listener, err := net.Listen("unix", sshControlSocket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	defer os.Remove(sshControlSocket)
 	// 远程命令（单会话）
 	w = request(a, "POST", "/api/command", map[string]string{"command": "echo hi"})
 	requireStatus(t, w, 200)

@@ -16,7 +16,7 @@ function fakeElement(tagName,ownerDocument){
  const e={nodeType:1,tagName:tagName.toUpperCase(),ownerDocument,children:[],attributes:[],style:{},parentNode:null,append(child){this.children.push(child);child.parentNode=this;},replaceChildren(...children){for(const child of this.children)child.parentNode=null;this.children=[];for(const child of children)this.append(child);},remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(child=>child!==this);},setAttribute(){},querySelectorAll(){return[];},cloneNode(){const copy=fakeElement(this.tagName,ownerDocument);copy.rect=this.rect;return copy;},getBoundingClientRect(){return this.rect||{top:0,bottom:0,left:0,right:0,width:0,height:0};},click(){}};
  Object.defineProperty(e,'childNodes',{get(){return this.children;}});
  Object.defineProperty(e,'scrollHeight',{get(){if(ownerDocument?.isSnapshot&&this.tagName==='MAIN')return 2800;if(ownerDocument?.isSnapshot&&this.tagName==='BODY')return this.children[0]?.scrollHeight||0;return 0;}});
- Object.defineProperty(e,'innerHTML',{set(){if(ownerDocument?.isSnapshot&&this.tagName==='MAIN'){this.rect={top:48,bottom:2848,left:60,right:734,width:674,height:2800};for(const [top,height] of [[0,120],[180,110],[900,150],[1800,150],[2600,200]]){const block=fakeElement('p',ownerDocument);block.rect={top:48+top,bottom:48+top+height,left:60,right:734,width:674,height};this.append(block);}}}});
+ Object.defineProperty(e,'innerHTML',{get(){return this._html||'';},set(value){this._html=value;if(ownerDocument?.isSnapshot&&this.tagName==='MAIN'){this.rect={top:48,bottom:2848,left:60,right:734,width:674,height:2800};for(const [top,height] of [[0,120],[180,110],[900,150],[1800,150],[2600,200]]){const block=fakeElement('p',ownerDocument);block.rect={top:48+top,bottom:48+top+height,left:60,right:734,width:674,height};this.append(block);}}}});
  return e;
 }
 function fakeDocument(isSnapshot=false){
@@ -25,28 +25,25 @@ function fakeDocument(isSnapshot=false){
  if(isSnapshot)doc.body.rect={top:0,bottom:1200,left:0,right:794,width:794,height:1200};return doc;
 }
 function within(promise,label){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' timed out')),5000);})]).finally(()=>clearTimeout(timer));}
-async function verifyPagedPdf(){
- const renderDocs=[],rendered=[],progress=[],pdfInstances=[],renderSignals=[];let downloaded='',downloadedBlob=null,frameNumber=0;
- const hostDocument=fakeDocument();const testWindow={addEventListener(){}};
- class FakePDF{constructor(){this.pages=1;this.images=0;this.imageArgs=[];pdfInstances.push(this);}setProperties(){}addPage(){this.pages++;}addImage(...args){this.images++;this.imageArgs.push(args);}output(){return new Blob(['%PDF-fake']);}}
- const testContext={window:testWindow,document:hostDocument,URL:{createObjectURL:blob=>{downloadedBlob=blob;return 'blob:fixture';},revokeObjectURL(){}},Blob,AbortController,DOMException,setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},requestAnimationFrame:cb=>queueMicrotask(cb)};
+async function verifyVectorPdf(){
+ const definitions=[],progress=[],inserted=[];let downloaded='',downloadedBlob=null,renderCount=0,stall=false,renderStarted;
+ const hostDocument=fakeDocument(),testWindow={addEventListener(){}};
+ const testContext={window:testWindow,document:hostDocument,URL:{createObjectURL:blob=>{downloadedBlob=blob;return 'blob:fixture';},revokeObjectURL(){}},Blob,AbortController,DOMException,btoa,fetch:async()=>({ok:true,arrayBuffer:async()=>new Uint8Array([1,2,3]).buffer}),setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}};
  vm.createContext(testContext);vm.runInContext(source,testContext);
- let hangRender=false,startedResolve;const renderStarted=new Promise(resolve=>{startedResolve=resolve;});
- const render=async(page,options)=>{rendered.push(page);renderSignals.push(options.signal);if(hangRender){startedResolve();return new Promise(()=>{});}return{width:1191,height:Math.ceil(page.style.height||0),toDataURL:(type,quality)=>`data:${type};quality=${quality}`};};
- testWindow.html2canvas=render;
- testWindow.jspdf={jsPDF:FakePDF};
- hostDocument.createElement=tag=>{if(tag==='iframe'){const frame=fakeElement(tag,hostDocument);frame.contentDocument=fakeDocument(frameNumber++%2===0);renderDocs.push(frame.contentDocument);return frame;}const e=fakeElement(tag,hostDocument);if(tag==='a')e.click=()=>{downloaded=e.download;};return e;};
- const result=await testWindow.AideMarkdownExport.run('pdf',{markdown:'long fixture',html:'fixture',title:'long.md',valid:()=>true,load:async(_src,ready)=>{if(!ready())throw Error('renderer missing');},resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))},(page,total)=>progress.push([page,total]));
- assert.equal(downloaded,'long.pdf');assert.equal(rendered.length,4);assert.equal(renderDocs.length,2,'one source frame and one bounded page-render frame');
- assert.deepEqual(Array.from(rendered,n=>n.children.length),[2,1,1,1],'each canvas contains only blocks intersecting its page');
- for(const page of rendered)for(const block of page.children){assert.equal(block.style.position,'absolute','small and large blocks must share source-coordinate positioning');assert.equal(block.style.width,'674px','page width must not reflow narrower source blocks');assert.equal(block.style.margin,'0','source margins are already included in measured offsets');}
- assert.equal(rendered[0].children[1].style.top,'180px','later content retains source Y instead of following a different flow');
- assert.deepEqual(Array.from(progress,p=>p[0]),[1,2,3,4]);assert.deepEqual(Array.from(progress,p=>p[1]),[4,4,4,4],'page total includes keep-together breaks instead of undercounting pages');assert(downloadedBlob instanceof Blob);assert.equal(pdfInstances[0].images,4);assert(pdfInstances[0].imageArgs.every(args=>args[0]==='data:image/jpeg;quality=0.82'&&args[1]==='JPEG'),'PDF pages are encoded as compressed JPEG data');
- let parsedFragments=0;const huge='x'.repeat(100*1024*1024);await testWindow.AideMarkdownExport.run('pdf',{markdown:huge,title:'hundred-megabytes.md',valid:()=>true,load:async(_src,ready)=>{if(!ready())throw Error('renderer missing');},renderMarkdown:()=>{parsedFragments++;return'fixture';},resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))},()=>{});assert(parsedFragments>=500,'100 MiB PDF path renders source through bounded fragments');assert.equal(downloaded,'hundred-megabytes.pdf');assert.equal(pdfInstances[1].images,parsedFragments*4,'fragment pages append to one PDF output');
- hangRender=true;const stalled=testWindow.AideMarkdownExport.run('pdf',{markdown:'long fixture',html:'fixture',title:'stalled.md',valid:()=>true,load:async(_src,ready)=>{if(!ready())throw Error('renderer missing');}},()=>{});try{await within(renderStarted,'page render start');testWindow.AideMarkdownExport.close();await within(assert.rejects(stalled,e=>e.name==='AbortError','closing the export must settle a stalled html2canvas render'),'cancelled render');}finally{testWindow.AideMarkdownExport.close();}
- assert(renderSignals.every(signal=>signal?.aborted),'every renderer receives its cancelled or completed job signal');
- const pngStarted=new Promise(resolve=>{startedResolve=resolve;});
- const png=testWindow.AideMarkdownExport.run('png',{markdown:'fixture',html:'fixture',title:'stalled.md',valid:()=>true,load:async()=>{}});
- try{await within(pngStarted,'PNG render start');testWindow.AideMarkdownExport.close();await within(assert.rejects(png,e=>e.name==='AbortError'),'cancelled PNG render');assert(renderSignals.at(-1).aborted);}finally{testWindow.AideMarkdownExport.close();}
+ testWindow.htmlToPdfmake=()=>[{text:'vector content'}];
+ testWindow.pdfMake={addVirtualFileSystem(){},addFonts(){},createPdf(definition){definitions.push(definition);renderCount++;return{getBlob(){if(stall){renderStarted();return new Promise(()=>{});}return Promise.resolve(new Blob(['%PDF-vector-'+renderCount]));}};}};
+ testWindow.PDFLib={PDFDocument:{async load(){return{getPageIndices(){return[0];},async copyPages(){return[{id:'prior'}];},insertPage(index,page){inserted.push([index,page.id]);},setTitle(value){this.title=value;},setCreator(value){this.creator=value;},async save(){return new Uint8Array([37,80,68,70]);}};}}};
+ hostDocument.createElement=tag=>{if(tag==='iframe'){const frame=fakeElement(tag,hostDocument);frame.contentDocument=fakeDocument();return frame;}const e=fakeElement(tag,hostDocument);if(tag==='a')e.click=()=>{downloaded=e.download;};return e;};
+ const fixture='x'.repeat(400*1024);
+ await testWindow.AideMarkdownExport.run('pdf',{markdown:fixture,html:'<p>fixture</p>',title:'long.md',valid:()=>true,load:async()=>{},renderMarkdown:()=>'<p>fixture</p>',resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))},(...args)=>progress.push(args));
+ assert.equal(downloaded,'long.pdf');assert.equal(definitions.length,3,'large Markdown is converted in bounded vector chunks');
+ assert.equal(inserted.length,2,'earlier chunks are merged into the final PDF');
+ assert.equal(progress.length,3);assert.deepEqual(Array.from(progress,p=>p[0]),[1,2,3]);
+ assert(downloadedBlob instanceof Blob);assert.equal(downloadedBlob.type,'application/pdf');
+ for(const definition of definitions){assert.equal(definition.defaultStyle.font,'NotoSansSC');assert.equal(definition.pageSize,'A4');assert.deepEqual(Array.from(definition.pageMargins),[42,42,42,42]);}
+ stall=true;const started=new Promise(resolve=>{renderStarted=resolve;});
+ const pending=testWindow.AideMarkdownExport.run('pdf',{markdown:'fixture',html:'<p>fixture</p>',title:'stalled.md',valid:()=>true,load:async()=>{},resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))});
+ try{await within(started,'vector render start');testWindow.AideMarkdownExport.close();await within(assert.rejects(pending,e=>e.name==='AbortError'),'cancelled vector render');}finally{testWindow.AideMarkdownExport.close();}
 }
-(async()=>{const pending=context.window.AideMarkdownExport.run('pdf',{valid:()=>true,title:'a.md',load:()=>new Promise(()=>{})});context.window.AideMarkdownExport.close();await assert.rejects(pending,e=>e.name==='AbortError');verifyHundredMiBFragmentation();verifyEmbeddedAttachmentPdf();await verifyPagedPdf();console.log('PASS: 100 MiB source fragmentation, embedded PDF payload/catalog/GoToE link, attachment dedupe and external-link exclusion, direct downloads, resource offsets/code exclusion, cancellation and page-bounded PDF rendering');})().catch(e=>{console.error(e);process.exitCode=1;});
+
+(async()=>{const pending=context.window.AideMarkdownExport.run('pdf',{valid:()=>true,title:'a.md',load:()=>new Promise(()=>{})});context.window.AideMarkdownExport.close();await assert.rejects(pending,e=>e.name==='AbortError');verifyHundredMiBFragmentation();verifyEmbeddedAttachmentPdf();await verifyVectorPdf();console.log('PASS: bounded Markdown fragmentation, embedded PDF attachments, vector PDF chunking/merge, download, references and cancellation');})().catch(e=>{console.error(e);process.exitCode=1;});
