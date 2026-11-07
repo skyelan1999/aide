@@ -1,0 +1,75 @@
+{
+  "id": "orchestration-core-20261107",
+  "request": "核对aide的核心编排能力，提出改进建议；可以，做",
+  "baseline": "fef61b126bcc2d93d82ca1041cf9232b7a05c113",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/markdown-editing-export.md\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-outline.js\n M internal/server/web/settings-schema.json\n M internal/server/web/workbench.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/task-action-hub.test.cjs\n?? docs/tasks/computer-control-app-approval-20261106.json\n?? docs/tasks/computer-control-settings-20261106.json\n?? docs/tasks/main-update-20261106.json\n?? docs/tasks/markdown-reader-controls-20261107.json\n?? docs/tasks/new-session-apple-white-20261107.json\n?? internal/server/computer_control_approval_test.go\n?? native/macos-desktop/computer_control.swift",
+  "acceptance": [
+    "Persist content-free timing after the 12 full-body request snapshot limit without extra hot-path session writes",
+    "Expose normalized, explicitly unverified receipts for both model-only and scratch-environment workers",
+    "Avoid planner calls for narrow trivial requests while preserving substantial and explicit independent work",
+    "Pass focused Go regression tests and vet; record performance limits without claiming unmeasured speedup"
+  ],
+  "scope": [
+    "internal/server orchestration timing, debug export, small-task admission, focused tests",
+    "docs/architecture/orchestration-observability.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "completed",
+      "summary": "Convert four recommendations into measurable timing, bounded receipts and selective planning; retain existing approval and isolation boundaries.",
+      "evidence": [
+        "Prior core orchestration review and current source call chain"
+      ]
+    },
+    "design": {
+      "status": "completed",
+      "summary": "Use task-local bounded content-free events persisted at existing checkpoints and normalized unverified receipts; avoid unmeasured copy redesign.",
+      "evidence": [
+        "docs/architecture/orchestration-observability.md"
+      ]
+    },
+    "implementation": {
+      "status": "completed",
+      "summary": "Instrument model/context/tool/approval/step/queue/copy/worker/collection spans, expose normalized parallel receipts and recent scheduler costs, and skip planning for narrowly identified trivial requests.",
+      "evidence": [
+        "internal/server/orchestration_observability.go",
+        "internal/server/conversation_parallel.go",
+        "internal/server/execution_environments.go"
+      ]
+    },
+    "verification": {
+      "status": "completed",
+      "summary": "Focused Go tests, race tests, go vet, JSON validation and diff formatting passed; live provider and paired throughput benchmark not run.",
+      "evidence": [
+        "go test -mod=vendor -run \"TestOrchestration|TestRecentOrchestration|TestParallelSmallTaskGate|TestShortParallelRequestSkipsPlannerRequest|TestConversationParallel|TestExecutionEnvironment|TestExecutionSchedulerReceipt|TestDebugSessionDataflow\" -count=1 ./internal/server (Docker, passed)",
+        "go test -race -mod=vendor -run \"TestConversationParallelROS2Document|TestExecutionEnvironmentWorkerToolLoopAndRelease|TestExecutionEnvironmentQueueCancellationAndDependency\" -count=1 ./internal/server (Docker, passed)",
+        "go vet -mod=vendor ./internal/server (Docker, passed)",
+        "git diff --check (passed)"
+      ]
+    },
+    "documentation": {
+      "status": "completed",
+      "summary": "Document event meanings, measurement plan and unchanged snapshot semantics.",
+      "evidence": [
+        "docs/architecture/orchestration-observability.md"
+      ]
+    },
+    "cleanup": {
+      "status": "completed",
+      "summary": "Kept all changes in an isolated worktree; original main dirty state unchanged.",
+      "evidence": [
+        "git status --short in both worktrees"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No live Aide rebuild, rollout, 1X/multi-X paired benchmark, merge or push.",
+      "evidence": [
+        "No task-specific release authorization or quality-equivalent speed measurement"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the feature branch commit or omit it from integration; original main worktree was not modified.",
+  "handoff": "Review branch and run repeated paired 1X/multi-X workloads before claiming speedup or changing workspace snapshot isolation."
+}

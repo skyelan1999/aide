@@ -321,6 +321,14 @@ func (p *executionPool) submit(assignment string, dependencies []string) (string
 
 func (p *executionPool) run(j *executionJob) {
 	var err error
+	workerStarted := time.Now()
+	defer func() {
+		outcome := "completed"
+		if err != nil {
+			outcome = "failed"
+		}
+		p.parent.recordOrchestrationEvent(p.task, "worker_run", "environment", workerStarted, outcome)
+	}()
 	defer j.cancel()
 	result := cloneExecutionValue(j.result)
 	defer func() {
@@ -370,7 +378,13 @@ func (p *executionPool) run(j *executionJob) {
 			result.Released = true
 		}
 	}()
+	copyStarted := time.Now()
 	j.base, omitted, err = copyExecutionTree(j.ctx, p.source, work, true)
+	copyOutcome := "completed"
+	if err != nil {
+		copyOutcome = "failed"
+	}
+	p.parent.recordOrchestrationEvent(p.task, "snapshot_copy", "environment", copyStarted, copyOutcome)
 	if err != nil {
 		return
 	}
@@ -575,7 +589,17 @@ func (p *executionPool) collect(ctx context.Context, id string, wait, merge bool
 	return p.collectPaths(ctx, id, wait, merge, versions, nil)
 }
 
-func (p *executionPool) collectPaths(ctx context.Context, id string, wait, merge bool, versions map[string]Change, paths []string) (ExecutionEnvironmentResult, error) {
+func (p *executionPool) collectPaths(ctx context.Context, id string, wait, merge bool, versions map[string]Change, paths []string) (collected ExecutionEnvironmentResult, collectErr error) {
+	if wait || merge {
+		started := time.Now()
+		defer func() {
+			outcome := "completed"
+			if collectErr != nil {
+				outcome = "failed"
+			}
+			p.parent.recordOrchestrationEvent(p.task, "collect", "environment", started, outcome)
+		}()
+	}
 	p.mu.Lock()
 	j := p.jobs[id]
 	p.mu.Unlock()

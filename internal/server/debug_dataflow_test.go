@@ -24,6 +24,8 @@ func TestDebugSessionDataflowDumpIsAuthenticatedAndContentFree(t *testing.T) {
 			Body: json.RawMessage(`{"prompt":"` + secret + `"}`), Outcome: "failed", FailureCode: "CONNECTION_FAILED",
 			At: "2026-11-04T00:00:00Z", CompletedAt: "2026-11-04T00:00:01Z", ElapsedMillis: 1000,
 		}},
+		OrchestrationEvents: []OrchestrationEvent{{Kind: "model_request", Stage: "analysis", StartedAt: "2026-11-04T00:00:00Z", CompletedAt: "2026-11-04T00:00:01Z", ElapsedMillis: 1000, Outcome: "failed"}},
+		Parallel:            &ParallelProgress{Parts: []ParallelPart{{Title: secret, Content: secret, Status: "completed"}}},
 	}
 	a.mu.Lock()
 	a.sessions[sessionID] = &Session{
@@ -65,6 +67,9 @@ func TestDebugSessionDataflowDumpIsAuthenticatedAndContentFree(t *testing.T) {
 	}
 	if dump.Session.MessageContentBytes == 0 || len(dump.ProviderCalls) != 1 || dump.ProviderCalls[0].Status != "failed" {
 		t.Fatalf("missing content-free provider/session metadata: %+v", dump)
+	}
+	if len(dump.Orchestration) != 1 || len(dump.Receipts) != 1 || dump.Receipts[0].ScopeHash == "" || dump.Receipts[0].Verified {
+		t.Fatalf("timing or unverified parallel receipt missing: %+v", dump)
 	}
 	if len(dump.Journal.Events) != 1 || dump.Journal.Events[0].CallID != "call-1" || dump.Journal.Events[0].Step != "step-1" {
 		t.Fatalf("journal identifiers were not projected safely: %+v", dump.Journal)

@@ -242,8 +242,10 @@ type Task struct {
 	Profile              string               `json:"profile,omitempty"`             // 本次生效的 profile id
 	RequestSnapshots     []RequestSnapshot    `json:"requestSnapshots,omitempty"`    // R08-04：实际发出的 Provider 请求快照（首轮+工具续跑）
 	SnapshotsTruncated   bool                 `json:"snapshotsTruncated,omitempty"`  // 快照达到上限后被截断
-	CheckpointMessages   []Message            `json:"checkpointMessages,omitempty"`  // 已完成模型/工具往返，用于暂停后续跑
-	CheckpointStep       string               `json:"checkpointStep,omitempty"`      // 当前未完成阶段；空表示阶段间检查点
+	OrchestrationEvents  []OrchestrationEvent `json:"orchestrationEvents,omitempty"` // Bounded, content-free timing ledger (continues after body snapshots stop).
+	OrchestrationDropped int                  `json:"orchestrationDropped,omitempty"`
+	CheckpointMessages   []Message            `json:"checkpointMessages,omitempty"` // 已完成模型/工具往返，用于暂停后续跑
+	CheckpointStep       string               `json:"checkpointStep,omitempty"`     // 当前未完成阶段；空表示阶段间检查点
 	CanResume            bool                 `json:"canResume,omitempty"`
 	PauseRequested       bool                 `json:"pauseRequested,omitempty"`
 	StopRequested        bool                 `json:"stopRequested,omitempty"`
@@ -756,6 +758,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		a.mu.Unlock()
 	}
 	step := func(name, instruction string, withTools bool) (string, error) {
+		stepStarted := time.Now()
 		a.mu.Lock()
 		index := findStep(name)
 		if index >= 0 && task.Steps[index].Status == "completed" && resumeStep != name {
@@ -808,6 +811,11 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 		a.mu.Lock()
 		task.Steps[index].Content = out
+		stepOutcome := "completed"
+		if err != nil {
+			stepOutcome = "failed"
+		}
+		a.appendOrchestrationEventLocked(task, "step", name, stepStarted, time.Now(), stepOutcome)
 		if err != nil {
 			if (task.PauseRequested || errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(err, errDeliveryIncomplete)) && strings.TrimSpace(out) != "" && len(chain) > 0 {
 				task.CheckpointMessages = append(append([]Message(nil), chain...), Message{Role: "assistant", Content: out}, Message{Role: "user", Content: "上一段正文在暂停时被中断。请接着未完成的位置继续，不要重复已经输出的正文；已完成工具仍以此前结果为准。"})
@@ -2475,11 +2483,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			a.mu.Unlock()
 		}
 		markSnapshotComplete := func(started, completed time.Time, requestErr error, emptyResponse bool) {
-			if snapshotIndex < 0 {
-				return
-			}
 			a.mu.Lock()
-			if snapshotIndex < len(task.RequestSnapshots) {
+			outcome := "completed"
+			if requestErr != nil {
+				outcome = "failed"
+			} else if emptyResponse {
+				outcome = "empty_response"
+			}
+			a.appendOrchestrationEventLocked(task, "model_request", stepName, started, completed, outcome)
+			if snapshotIndex >= 0 && snapshotIndex < len(task.RequestSnapshots) {
 				snapshot := &task.RequestSnapshots[snapshotIndex]
 				snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
 				snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
@@ -4735,8 +4747,15 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 	return b.String()
 }
 
-func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, versions map[string]Change) string {
+func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, versions map[string]Change) (toolResult string) {
 	started := time.Now()
+	defer func() {
+		outcome := "returned"
+		if ctx.Err() != nil {
+			outcome = "interrupted"
+		}
+		a.recordOrchestrationEvent(task, "tool_call", call.Function.Name, started, outcome)
+	}()
 	ctx = withIncidentTask(ctx, task)
 	defer a.observeIncidentPanic(ctx, incident{Module: "tools", Phase: "execute", Tool: call.Function.Name})
 	failure := func(message string) string {
@@ -5515,12 +5534,24 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	a.publishStream(task.ID, streamEvent{Event: "clarification", Question: string(question)})
 	go a.reviewPendingCommand(task)
 	var answer string
+	waitStarted := time.Now()
 	select {
 	case answer = <-ch:
 	case <-ctx.Done():
 		answer = "(用户已取消)"
 	}
 	a.mu.Lock()
+	waitKind := "user_wait"
+	waitStage := "clarification"
+	if approvalQuestion["approvalKind"] == "shell" {
+		waitKind = "approval_wait"
+		waitStage = "shell"
+	}
+	waitOutcome := "answered"
+	if ctx.Err() != nil {
+		waitOutcome = "interrupted"
+	}
+	a.appendOrchestrationEventLocked(task, waitKind, waitStage, waitStarted, time.Now(), waitOutcome)
 	if task.approvalCancel != nil {
 		task.approvalCancel()
 	}

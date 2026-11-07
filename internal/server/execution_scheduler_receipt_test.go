@@ -21,10 +21,11 @@ func TestExecutionSchedulerReceiptRebuildsAfterCompaction(t *testing.T) {
 	p.jobs["ready"].result.Merged = true
 	a.mu.Lock()
 	task.Files = []Change{{Path: "invoices.js", Content: "candidate"}, {Path: "invoices.js", Content: "revision"}, {Path: "old.js", Applied: true}}
+	task.OrchestrationEvents = []OrchestrationEvent{{Kind: "snapshot_copy", ElapsedMillis: 125}}
 	a.mu.Unlock()
 	compressed := []Message{input[0], {Role: "system", Content: "historical summary omits job ids"}, input[1], first[2]}
 	got := p.withSchedulerReceipt(compressed)
-	if len(got) != 4 || !strings.Contains(got[3].Content, `"mergedAsPending":true`) || !strings.Contains(got[3].Content, `"totalPendingPaths":1`) || strings.Contains(got[3].Content, "old.js") || !strings.Contains(got[3].Content, "NOT independently verified") {
+	if len(got) != 4 || !strings.Contains(got[3].Content, `"mergedAsPending":true`) || !strings.Contains(got[3].Content, `"totalPendingPaths":1`) || !strings.Contains(got[3].Content, `"averageMillis":125`) || strings.Contains(got[3].Content, "old.js") || !strings.Contains(got[3].Content, "NOT independently verified") {
 		t.Fatal("receipt duplicated, stale or misrepresented pending work", got)
 	}
 	if len(task.Files) != 3 || task.Files[0].Applied {
