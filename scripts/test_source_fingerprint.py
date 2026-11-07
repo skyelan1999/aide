@@ -32,7 +32,7 @@ class SourceFingerprintTests(unittest.TestCase):
             self.skipTest('Host has no UTF-8 locale with different path collation')
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
+            for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa', 'legal/third_party']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ('launcher-data.sh','launcher-data.py'):
@@ -51,7 +51,7 @@ class SourceFingerprintTests(unittest.TestCase):
     def test_desktop_host_inputs_change_shared_source_identity(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa', 'native/macos-desktop']:
+            for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa', 'legal/third_party', 'native/macos-desktop']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md',
@@ -70,7 +70,7 @@ class SourceFingerprintTests(unittest.TestCase):
     def test_installed_plugin_state_is_excluded(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
+            for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa', 'legal/third_party']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ('launcher-data.sh','launcher-data.py'):

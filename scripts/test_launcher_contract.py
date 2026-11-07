@@ -458,10 +458,14 @@ class ReleaseAssemblyTests(unittest.TestCase):
                     shutil.copy2(path, root / path.name)
             for name in ('version.md','LICENSE','.env.example','.dockerignore','Dockerfile','compose.yaml','go.mod','go.sum',
                          'docker/compose.offline.yaml','docker/offline.env.example','docker/OFFLINE.md',
-                         'docs/architecture/mixsoul.md','vendor/github.com/yuin/goldmark/v2/LICENSE'):
+                         'docs/architecture/mixsoul.md','vendor/github.com/yuin/goldmark/v2/LICENSE',
+                         'internal/server/code_analysis/ACORN-LICENSE',
+                         'internal/server/web/vendor/drawio/LICENSE',
+                         'internal/server/web/vendor/drawio/NOTICE.txt'):
                 target = root / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(ROOT / name, target)
+            shutil.copytree(ROOT / 'legal/third_party', root / 'legal/third_party')
             for name in ('cmd','internal','scripts/office','docker/wheels','docker/sherpa'):
                 (root / name).mkdir(parents=True, exist_ok=True)
             binary = bytearray(128)

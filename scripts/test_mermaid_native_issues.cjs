@@ -2,7 +2,10 @@
 const assert=require('assert/strict'),vm=require('vm'),review=require('./drawio-mermaid-native-review.cjs'),cases=require('./fixtures/mermaid-native-issue-cases.json');
 function layout(c,source){const parsed=c.MermaidParser.parse(source);return c.MermaidLayout.layout(parsed.type,parsed.ir,parsed.config);}
 function nodes(ir){const list=[],stack=[ir];while(stack.length){const n=stack.pop();if(!n||typeof n!=='object')continue;list.push(n);for(const child of n.children||[])stack.push(child);}return list;}
-if(!process.env.AIDE_NATIVE_REVIEW_BASELINE)assert.equal(review.moduleSource('standalone').trim(),review.moduleSource('extensions').trim(),'runtime module mirrors standalone');
+if(!process.env.AIDE_NATIVE_REVIEW_BASELINE){
+ const stripNotice=source=>source.replace(/^\/\* Modified by Aide;[^\n]*\n/,'').trim();
+ assert.equal(stripNotice(review.moduleSource('standalone')),stripNotice(review.moduleSource('extensions')),'runtime module mirrors standalone');
+}
 const results=[];
 for(const copy of ['standalone','extensions'])for(const row of cases){try{const c=review.context(copy),before=vm.runInContext('JSON.stringify(Object.getOwnPropertyNames(Object.prototype).sort())',c);const parsed=c.MermaidParser.parse(row.source),ir=parsed.ir;
  if(row.issue===434){assert.equal(ir.actors[0].links.length,1,'sequence link map not discarded');const git=c.MermaidParser.parse('gitGraph\ncommit id:"hasOwnProperty"\ncommit id:"hasOwnProperty"');assert(git.ir,'duplicate special commit ID supported');}

@@ -2,7 +2,7 @@
 
 const fs = require("fs"), assert = require("assert/strict");
 
-const base = "internal/server/web/vendor/drawio/js/", assembly = fs.readFileSync(base + "orgchart/OrgChart.Layout.min.js", "utf8");
+const base = "internal/server/web/vendor/drawio/js/", assembly = fs.readFileSync(base + "orgchart/OrgChart.Layout.min.js", "utf8").replace(/^\/\* Modified by Aide;[^\n]*\n/, "");
 
 for (const name of [ "extensions.min.js", "integrate.min.js", "orgchart.min.js" ]) {
     const text = fs.readFileSync(base + name, "utf8");
