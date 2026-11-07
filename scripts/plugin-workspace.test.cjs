@@ -1,6 +1,20 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process');
 const host=fs.readFileSync(path.join(__dirname,'../internal/server/plugin_host.js'),'utf8');
+test('plugin binary chunks are bounded, workspace-scoped and preserve exact bytes',()=>{
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'aide-plugin-chunks-'));
+ try{
+  const plugins=path.join(temp,'plugins'),plugin=path.join(plugins,'fixture'),project=path.join(temp,'project');fs.mkdirSync(plugin,{recursive:true});fs.mkdirSync(project);
+  fs.writeFileSync(path.join(project,'bytes.bin'),Buffer.from([0,255,65,0,128]));fs.writeFileSync(path.join(project,'empty.bin'),Buffer.alloc(0));fs.writeFileSync(path.join(temp,'outside.bin'),Buffer.from([42]));fs.symlinkSync(path.join(temp,'outside.bin'),path.join(project,'escape.bin'));
+  fs.writeFileSync(path.join(plugin,'manifest.json'),JSON.stringify({id:'fixture',main:'index.js'}));
+  fs.writeFileSync(path.join(plugin,'index.js'),`module.exports={apply(ctx){ctx.tool({name:'chunk',handler:(args,api)=>({capabilities:api.capabilities,chunk:api.readFileChunk(args.path,args.options)})});}}`);
+  function run(workspace,file,options){const out=path.join(temp,'out.json'),req={plugin:'fixture',tool:'chunk',args:{path:file,options},workspace,enabledPlugins:[{id:'fixture',main:'index.js'}]};cp.execFileSync(process.execPath,['-e',host,'call',plugins,JSON.stringify(req),out]);return JSON.parse(fs.readFileSync(out,'utf8'));}
+  const first=run(project,'bytes.bin',{offset:0,length:2});assert.equal(first.ok,true);assert(first.result.capabilities.includes('plugin-file-chunks-v1'));assert.deepEqual(Buffer.from(first.result.chunk.dataBase64,'base64'),Buffer.from([0,255]));assert.deepEqual([first.result.chunk.offset,first.result.chunk.nextOffset,first.result.chunk.size,first.result.chunk.eof],[0,2,5,false]);
+  const last=run(project,'bytes.bin',{offset:2,length:4});assert.deepEqual(Buffer.from(last.result.chunk.dataBase64,'base64'),Buffer.from([65,0,128]));assert.deepEqual([last.result.chunk.nextOffset,last.result.chunk.eof],[5,true]);
+  assert.deepEqual(run(project,'empty.bin').result.chunk,{dataBase64:'',offset:0,nextOffset:0,size:0,eof:true});
+  for(const [root,file,options] of [[project,'../outside.bin',{}],[project,'escape.bin',{}],[project,'.',{}],[project,'bytes.bin',{offset:-1}],[project,'bytes.bin',{offset:6}],[project,'bytes.bin',{length:524289}],[project,'bytes.bin',{length:0}],['','bytes.bin',{}]])assert.equal(run(root,file,options).ok,false);
+ }finally{fs.rmSync(temp,{recursive:true,force:true});}
+});
 test('plugin helper uses bound project, rejects traversal and symlink escape, and denies empty remote root',()=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'aide-plugin-root-'));try{
  const plugins=path.join(temp,'plugins'),plugin=path.join(plugins,'fixture'),project=path.join(temp,'project');fs.mkdirSync(plugin,{recursive:true});fs.mkdirSync(project);fs.writeFileSync(path.join(project,'file.txt'),'PROJECT');fs.writeFileSync(path.join(temp,'outside.txt'),'PRIVATE');fs.symlinkSync(path.join(temp,'outside.txt'),path.join(project,'escape.txt'));

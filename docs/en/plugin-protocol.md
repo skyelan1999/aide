@@ -26,12 +26,22 @@ Read the canonical manifest/setting schema and host source for all supported fie
 
 | API | Contract |
 | --- | --- |
-| `api.readFile(rel)`, `api.listFiles(rel)` | Direct bounded access to the current local workspace; absolute paths, traversal and symlink escape are rejected. SSH does not silently fall back to a local directory. |
+| `api.readFile(rel)`, `api.listFiles(rel)` | Path-scoped access to the current local workspace; absolute paths, traversal and symlink escape are rejected. SSH does not silently fall back to a local directory. |
+| `api.readFileChunk(rel, {offset?, length?})` | Read bytes from a regular workspace file as Base64, with a 512 KiB limit per call. Feature-detect with `api.capabilities.includes('plugin-file-chunks-v1')`. |
 | `api.proposeWrite(rel, content)`, `api.proposeCommand(cmd)` | Return proposals for the host approval flow. Do not claim the write/command already occurred. |
 | `api.runPython(script, input?, options?)` | Plugin-local Python execution with JSON stdin/stdout; default 60 s, maximum 280 s, stdout up to 8 MiB and stderr up to 64 KiB. No shell argument execution. |
 | `api.log(...)` | Host logging; do not log credentials. |
 
 Handler calls have bounded lifetimes (up to 300 s). Built-in `run_shell` uses the configured sandbox mode; `write_file` creates a proposal. Tool results return to the model as tool messages. Existing file-attachment/source permissions still apply.
+
+`readFileChunk` supports binary assets such as images, PDF and CAD files. `offset` defaults to 0 and must be a nonnegative safe integer no larger than the current file size. `length` defaults to 65,536 bytes and must be between 1 and 524,288. The return value is `{dataBase64,offset,nextOffset,size,eof}`; an offset equal to the file size returns empty data and `eof:true`. Directories, path traversal, symlink escape and an unavailable local workspace are rejected. This adds no write, cross-source or desktop permission. Multiple reads are not a file snapshot: the file may change between chunks, so check `size` and handle version changes. Avoid passing large Base64 chunks directly to the model.
+
+```js
+if (!api.capabilities.includes('plugin-file-chunks-v1')) throw Error('Binary chunks unavailable');
+const part = api.readFileChunk('assets/example.pdf', {offset: 0, length: 65536});
+const bytes = Buffer.from(part.dataBase64, 'base64');
+// Continue from part.nextOffset until part.eof is true.
+```
 
 ## On-device transcription in plugin workbenches
 

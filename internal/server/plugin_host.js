@@ -125,7 +125,7 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext, sourc
     return target;
   };
   return {
-    capabilities: ["plugin-tool-images-v1"],
+    capabilities: ["plugin-tool-images-v1", "plugin-file-chunks-v1"],
     workspaceRoot: workspace,
     terminalContext,
     sources: sourceSocket ? input => new Promise((resolve,reject) => {
@@ -136,6 +136,28 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext, sourc
       });req.setTimeout(95000,()=>req.destroy(Error('Source request timed out')));req.on('error',reject);req.end(data);
     }) : undefined,
     readFile: rel => fs2.readFileSync(safeJoin(rel), 'utf8'),
+    readFileChunk: (rel, options = {}) => {
+      if (!options || typeof options !== 'object' || Array.isArray(options)) throw new Error('文件分块参数无效');
+      const offset = options.offset === undefined ? 0 : options.offset;
+      const length = options.length === undefined ? (64 << 10) : options.length;
+      if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(length) || length < 1 || length > (512 << 10)) throw new Error('文件分块范围无效');
+      const file = safeJoin(rel);
+      const fd = fs2.openSync(file, fs2.constants.O_RDONLY | (fs2.constants.O_NOFOLLOW || 0));
+      try {
+        const stat = fs2.fstatSync(fd);
+        if (!stat.isFile() || !Number.isSafeInteger(stat.size) || offset > stat.size) throw new Error('文件分块目标或偏移无效');
+        const bytes = Buffer.alloc(Math.min(length, stat.size - offset));
+        let read = 0;
+        while (read < bytes.length) {
+          const count = fs2.readSync(fd, bytes, read, bytes.length - read, offset + read);
+          if (!count) break;
+          read += count;
+        }
+        if (read !== bytes.length) throw new Error('文件读取期间发生变化，请重新核对');
+        const nextOffset = offset + read;
+        return {dataBase64: bytes.subarray(0, read).toString('base64'), offset, nextOffset, size: stat.size, eof: nextOffset >= stat.size};
+      } finally { fs2.closeSync(fd); }
+    },
     listFiles: rel => fs2.readdirSync(safeJoin(rel), { withFileTypes: true }).map(e => (e.isDirectory() ? e.name + '/' : e.name)),
     proposeWrite: (rel, content) => ({ proposal: { type: 'file', path: rel, content: String(content) } }),
     proposeCommand: cmd => ({ proposal: { type: 'command', command: String(cmd) } }),

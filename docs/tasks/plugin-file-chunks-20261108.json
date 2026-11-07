@@ -1,0 +1,58 @@
+{
+  "id": "plugin-file-chunks-20261108",
+  "request": "提升一下插件接口能力并更新插件开放支持文档",
+  "baseline": "4fe000e483bec845025e6066b8918883b637b9d6",
+  "initial_status": "",
+  "acceptance": [
+    "插件工具可按当前本地工作区读取普通文件的有界二进制分块，并获得大小、偏移和结束状态",
+    "越界路径、符号链接逃逸、SSH 空根、非法偏移与超限长度均拒绝；旧文本接口保持兼容",
+    "中英文插件协议记录能力探测、调用示例、边界和测试状态"
+  ],
+  "scope": [
+    "internal/server/plugin_host.js",
+    "scripts/plugin-workspace.test.cjs",
+    "docs/plugin-protocol.md",
+    "docs/en/plugin-protocol.md",
+    "docs/tasks/plugin-file-chunks-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户的宽泛插件接口改进要求，选择受控二进制分块读取；已有 readFile 仅按 UTF-8 读取，第三方文件插件缺少可复核的二进制入口。",
+      "evidence": ["internal/server/plugin_host.js:138", "docs/plugin-protocol.md:203"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在现有工具 api 上新增 readFileChunk，沿用工作区绑定和路径校验，限定单次字节预算；返回 JSON 可传输的 base64、文件大小与 EOF，不改变旧接口和审批。",
+      "evidence": ["internal/server/plugin_host.js:114", "scripts/plugin-workspace.test.cjs"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "工具 api 新增 plugin-file-chunks-v1 能力与 readFileChunk；对普通文件提供有界 Base64 分块、nextOffset/size/eof，保持原 readFile/listFiles 和审批语义。",
+      "evidence": ["internal/server/plugin_host.js", "scripts/plugin-workspace.test.cjs"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Node 语法与插件工作区 3 项测试通过；Docker Go 工作区 3 项定向测试通过；仓库 quick 322 项通过；文档链接检查及 git diff --check 通过。未对已运行实例部署或做第三方插件真机验收。",
+      "evidence": ["node --test scripts/plugin-workspace.test.cjs", "docker go test -mod=vendor -count=1 -run TestPluginCurrentWorkspaceFilesPythonAndCWD|TestPluginWorkspaceRootNeverFallsBackForSSH|TestPluginCurrentWorkspaceRejectsLateResult ./internal/server", ".agent-state/verify-20261107T183255735156Z.log", "python3 scripts/check_docs.py", "git diff --check"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文开放协议新增能力探测、参数与返回格式、分块示例、路径和版本一致性边界；修正英文旧接口的误导性 bounded 描述。",
+      "evidence": ["docs/plugin-protocol.md", "docs/en/plugin-protocol.md", "python3 scripts/check_docs.py"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "差异仅含宿主接口、定向测试、中英文协议及本任务记录；没有清理用户数据或覆盖既有文件。",
+      "evidence": ["git status --short --branch", "git diff --check"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本任务不执行版本发布、镜像交付或运行实例替换；Git 提交与推送状态以仓库记录核对。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复本任务涉及的 plugin_host.js、plugin-workspace.test.cjs 和中英文协议文档至基线提交 4fe000e4；不要覆盖其他工作。",
+  "handoff": "接口与文档在 main 上交付；运行中的 Aide 仍需独立构建和端到端第三方插件验收。"
+}

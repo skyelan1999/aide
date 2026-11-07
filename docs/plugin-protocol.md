@@ -201,9 +201,19 @@ ZIP 与上传共用结构、路径、CRC、入口和大小检查，插件 ID 必
 | api | 行为 |
 | --- | --- |
 | `api.readFile(rel)` / `api.listFiles(rel)` | **直接执行**（helper 基于本次调用绑定的当前本地工作区，拒绝绝对路径、..和符号链接越界；SSH不回退本地，且不是独立权限沙箱） |
+| `api.readFileChunk(rel, {offset?, length?})` | **直接只读执行**；按字节偏移读取普通文件，以 Base64 返回二进制数据、文件大小和下一偏移；单次最多 512 KiB。通过 `api.capabilities.includes('plugin-file-chunks-v1')` 探测支持。 |
 | `api.proposeWrite(rel, content)` / `api.proposeCommand(cmd)` | **只生成提案**（返回 `{proposal:{type:"file"|"command",…}}`），由 Go 侧转为待批准提案（P2 原则），模型不得宣称已写入/已执行 |
 | `api.runPython(script, input?, options?)` | 从插件目录启动 Python 3.12，JSON stdin/stdout；默认 60s、最高 280s，stdout ≤8 MiB、stderr ≤64 KiB；无 shell 参数；详见 [Python 工具包](plugins/python-tool-package.md) |
 | `api.log(...)` | 输出宿主日志 |
+
+`readFileChunk` 适用于图片、PDF、CAD 等非 UTF-8 文件。`offset` 缺省为 0，必须是非负安全整数且不超过当前文件大小；`length` 缺省 65,536 字节，范围 1–524,288。返回 `{dataBase64,offset,nextOffset,size,eof}`，`offset === size` 时返回空数据和 `eof:true`。路径遵循 `readFile` 的本地工作区边界；目录、越界、符号链接逃逸和 SSH 空工作区均拒绝。它不授予写入、跨来源或桌面访问权限。连续分块不是文件快照：文件可在两次调用间变化，插件应检查 `size` 并自行处理版本变化；不要把大块 Base64 原样回传模型。
+
+```js
+if (!api.capabilities.includes('plugin-file-chunks-v1')) throw Error('宿主不支持二进制分块读取');
+const part = api.readFileChunk('assets/example.pdf', {offset: 0, length: 65536});
+const bytes = Buffer.from(part.dataBase64, 'base64');
+// 继续读取时使用 part.nextOffset，直到 part.eof 为 true。
+```
 
 aide 内置系统工具与插件工具同环：`list_files`/`read_file` 直接执行；`run_shell` 在容器沙箱内实际执行并回传 stdout/stderr/退出码（受沙箱模式约束：只读模式仅放行 `ls`/`cat`/`git status` 等只读命令，工作区可写模式拦截危险命令，完全访问模式不拦截）；`write_file` 生成提案待用户批准；模型工具循环轮次在 设置→权限管理 配置，默认 60（范围 5–200）。写文件仅允许新文件或已附加文件（P3 原则保留）。工具调用结果经 `role:"tool"` 消息回传模型继续推理。
 
