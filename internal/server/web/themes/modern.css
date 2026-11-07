@@ -1,40 +1,70 @@
-/* Modern: balanced neutral surfaces, tuned for OLED black levels and LCD contrast. */
+/* Modern: neutral surfaces and controls in both appearances. Status colors keep their meaning. */
 html[data-palette="modern"][data-theme="light"] {
-  --bg:#f1f1f2; --bg-inset:#e5e5e7; --field:#ffffff; --panel:#fafafa; --panel-alt:#f4f4f5;
+  --bg:#f5f5f7; --bg-inset:#e9e9ed; --field:#ffffff; --panel:#fafafa; --panel-alt:#f0f0f2;
   --surface:#ffffff; --surface-alt:#f5f5f6; --code-bg:#f0f0f1; --soft:#e9e9eb; --chip-bg:#e4e4e7;
-  --bubble-bg:#e9e9eb; --hover:#e1e1e4; --selected:#dce8f7; --selected-alt:#eef3fa; --mode-active:#e6e9ed;
-  --toast-bg:#202023; --brand-hi:#1769c2; --backdrop:#10101440; --line:#c9c9ce; --field-border:#bdbdc3;
+  --bubble-bg:#ededf0; --hover:#e4e4e8; --selected:#e1e1e6; --selected-alt:#ededf0; --mode-active:#e6e6e9;
+  --toast-bg:#202023; --brand-hi:#343438; --backdrop:#10101440; --line:#c9c9ce; --field-border:#bdbdc3;
   --line-faint:#e1e1e4; --line-soft:#d8d8dc; --line-soft-2:#d4d4d9; --line-soft-3:#d8d8dc; --line-mid:#b9b9c0;
-  --line-chip:#c9c9cf; --line-strong:#9999a2; --line-composer:#b7b7bf; --line-accent:#8ea9cb;
-  --focus-border:#1769c2; --focus-border-2:#1769c2; --danger-line:#dca9a5;
+  --line-chip:#c9c9cf; --line-strong:#9999a2; --line-composer:#b7b7bf; --line-accent:#909097;
+  --focus-border:#606067; --focus-border-2:#606067; --danger-line:#dca9a5;
   --text:#1c1c1e; --text-tab:#29292e; --text-answer:#303035; --text-breadcrumb:#303035; --text-step-summary:#303035;
   --text-step:#303035; --text-settings:#29292e; --text-output:#242428; --text-code:#29292e; --text-file:#29292e;
   --text-terminal:#242428; --text-dialog-label:#29292e; --text-session:#5d5d66; --text-welcome:#5d5d66;
   --text-run-meta:#626269; --text-dialog:#58585f; --muted:#595960; --text-note:#626269; --text-file-icon:#626269;
   --text-faint:#66666e; --text-guide:#5b5b62; --text-guide-foot:#5b5b62; --text-placeholder:#66666e;
   --text-terminal-heading:#66666e; --text-guide-label:#5b5b62; --text-sep:#66666e; --text-arrow:#66666e;
-  --faintest:#6b6b73; --faint:#626269; --brand:#1769c2; --accent:#3479c5; --brand-text:#155da9;
-  --brand-text-chip:#155da9; --brand-text-2:#155da9; --accent-text:#155da9; --on-brand:#fff; --on-accent:#fff;
-  --on-toast:#fff; --focus-ring:#1769c2; --selection:#dce8f7; --scrollbar-thumb:#b0b0b7;
-  --phase-req-bg:rgba(23,105,194,.12); --phase-req-fg:#155da9;
+  --faintest:#6b6b73; --faint:#626269; --brand:#343438; --accent:#606067; --brand-text:#333338;
+  --brand-text-chip:#333338; --brand-text-2:#333338; --accent-text:#333338; --on-brand:#fff; --on-accent:#fff;
+  --on-toast:#fff; --focus-ring:#606067; --selection:#dedee3; --scrollbar-thumb:#b0b0b7; --scrollbar-track:transparent;
+  --danger:#a83c36; --warn:#755512; --success:#4c765a;
+  --shadow-1:#16162912; --shadow-2:#16162924; --shadow-3:#16162930;
+  --phase-req-bg:#e8e8ec; --phase-req-fg:#333338;
+  --phase-design-bg:rgba(139,92,246,.12); --phase-design-fg:#5b21b6;
+  --phase-impl-bg:rgba(245,158,11,.14); --phase-impl-fg:#92400e;
+  --phase-verify-bg:rgba(16,185,129,.14); --phase-verify-fg:#065f46;
+  --phase-rca-bg:rgba(239,68,68,.14); --phase-rca-fg:#b91c1c;
+  --danger-soft:color-mix(in srgb,var(--danger) 9%,transparent);
+  --success-bg:color-mix(in srgb,var(--success) 12%,transparent);
+  --warn-bg:color-mix(in srgb,var(--warn) 12%,transparent);
 }
 html[data-palette="modern"][data-theme="dark"] {
   --bg:#111214; --bg-inset:#191a1c; --field:#202123; --panel:#1c1d1f; --panel-alt:#232426;
   --surface:#27282a; --surface-alt:#232426; --code-bg:#171819; --soft:#2d2e30; --chip-bg:#303134;
-  --bubble-bg:#242527; --hover:#303134; --selected:#26384b; --selected-alt:#292f37; --mode-active:#2b2c2e;
-  --toast-bg:#f5f5f5; --brand-hi:#9fc5ef; --backdrop:#000000a0; --line:#3b3c3f; --field-border:#505155;
+  --bubble-bg:#242527; --hover:#303134; --selected:#343538; --selected-alt:#2c2d30; --mode-active:#303134;
+  --toast-bg:#f5f5f5; --brand-hi:#ededf0; --backdrop:#000000a0; --line:#3b3c3f; --field-border:#505155;
   --line-faint:#2c2d2f; --line-soft:#363739; --line-soft-2:#3a3b3e; --line-soft-3:#363739; --line-mid:#4c4d50;
-  --line-chip:#454649; --line-strong:#68696d; --line-composer:#454649; --line-accent:#6485aa;
-  --focus-border:#80b8f2; --focus-border-2:#80b8f2; --danger-line:#805653;
+  --line-chip:#454649; --line-strong:#68696d; --line-composer:#454649; --line-accent:#85868b;
+  --focus-border:#b7b7bd; --focus-border-2:#b7b7bd; --danger-line:#805653;
   --text:#f3f3f4; --text-tab:#e7e7e9; --text-answer:#dfdfe1; --text-breadcrumb:#dfdfe1; --text-step-summary:#dfdfe1;
   --text-step:#dfdfe1; --text-settings:#e7e7e9; --text-output:#eeeeef; --text-code:#e7e7e9; --text-file:#e7e7e9;
   --text-terminal:#eeeeef; --text-dialog-label:#e7e7e9; --text-session:#c8c8cb; --text-welcome:#c8c8cb;
   --text-run-meta:#b3b3b7; --text-dialog:#c1c1c5; --muted:#c8c8cb; --text-note:#b3b3b7; --text-file-icon:#b3b3b7;
   --text-faint:#a8a8ad; --text-guide:#bdbdc1; --text-guide-foot:#bdbdc1; --text-placeholder:#adadb2;
   --text-terminal-heading:#a8a8ad; --text-guide-label:#bdbdc1; --text-sep:#a3a3a8; --text-arrow:#a3a3a8;
-  --faintest:#a3a3a8; --faint:#b3b3b7; --brand:#3182ce; --accent:#81b6e9; --brand-text:#a9cff5;
-  --brand-text-chip:#c0dcf8; --brand-text-2:#a9cff5; --accent-text:#a9cff5; --on-brand:#fff; --on-accent:#111820;
-  --on-toast:#202023; --focus-ring:#80b8f2; --selection:#2a4967; --scrollbar-thumb:#5d5e62;
-  --phase-req-bg:rgba(86,157,221,.2); --phase-req-fg:#c0dcf8;
+  --faintest:#a3a3a8; --faint:#b3b3b7; --brand:#ededf0; --accent:#c8c8ce; --brand-text:#eeeeef;
+  --brand-text-chip:#eeeeef; --brand-text-2:#eeeeef; --accent-text:#eeeeef; --on-brand:#202023; --on-accent:#202023;
+  --on-toast:#202023; --focus-ring:#b7b7bd; --selection:#44454a; --scrollbar-thumb:#5d5e62; --scrollbar-track:transparent;
+  --danger:#e18c84; --warn:#d5b375; --success:#83b393;
+  --shadow-1:#00000030; --shadow-2:#00000066; --shadow-3:#00000088;
+  --phase-req-bg:#343538; --phase-req-fg:#eeeeef;
+  --phase-design-bg:rgba(167,139,250,.16); --phase-design-fg:#c4b5fd;
+  --phase-impl-bg:rgba(251,191,36,.16); --phase-impl-fg:#fcd34d;
+  --phase-verify-bg:rgba(52,211,153,.16); --phase-verify-fg:#6ee7b7;
+  --phase-rca-bg:rgba(248,113,113,.18); --phase-rca-fg:#fca5a5;
+  --danger-soft:color-mix(in srgb,var(--danger) 16%,transparent);
+  --success-bg:color-mix(in srgb,var(--success) 16%,transparent);
+  --warn-bg:color-mix(in srgb,var(--warn) 16%,transparent);
 }
+html[data-palette="modern"] {
+  --border:var(--line); --bg-sub:var(--bg-inset); --bg-hover:var(--hover); --bg-elevated:var(--surface-alt);
+  --accent-bg:var(--chip-bg); --text-dim:var(--muted); --text-secondary:var(--muted);
+  --panel2:var(--panel); --surface-hover:var(--hover); --radius-card:8px;
+}
+/* Older literal colors are scoped here so other palettes keep their appearance. */
+html[data-palette="modern"] .file-item.selected { background:var(--selected); }
+html[data-palette="modern"] .json-view .json-key { color:var(--brand-text); }
+html[data-palette="modern"] .narration-highlight { box-shadow:0 0 0 2px var(--line-accent),0 10px 28px var(--shadow-1); }
+html[data-palette="modern"] .voice-log-mode.is-queue,
+html[data-palette="modern"] .vh-mode.is-queue { background:var(--selected-alt); color:var(--brand-text); }
+html[data-palette="modern"] .token-stats .balance-account-card { --balance-color:var(--brand-text); }
 .background-options button[data-value="modern"][aria-pressed="true"] { box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 42%,transparent),0 2px 8px color-mix(in srgb,var(--brand) 12%,transparent); }

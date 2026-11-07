@@ -33,6 +33,24 @@ html[data-motion="reduced"] .brand:focus-visible .brand-icon { transform: none; 
 }
 .new-session { margin-bottom: 28px; min-height: 38px; padding: 9px 12px !important; font-size: 13px; }
 .new-session kbd { border-color: color-mix(in srgb, var(--on-brand) 35%, transparent); color: var(--on-brand); }
+html[data-palette="modern"][data-theme="light"] #new-session {
+  background: #fff;
+  border: 1px solid #d5d5db;
+  color: #1c1c1e;
+  box-shadow: 0 1px 3px #16162916, 0 3px 10px #1616290a;
+}
+html[data-palette="modern"][data-theme="light"] #new-session:hover { background: #fafafa; border-color: #bdbdc4; }
+html[data-palette="modern"][data-theme="light"] #new-session:active { background: #ededf0; border-color: #bdbdc4; }
+html[data-palette="modern"][data-theme="light"] #new-session kbd { border-color: #bdbdc4; color: #48484a; }
+html[data-palette="modern"][data-theme="dark"] #new-session {
+  background: #f5f5f7;
+  border-color: #f5f5f7;
+  color: #1d1d1f;
+  box-shadow: 0 1px 3px #0003;
+}
+html[data-palette="modern"][data-theme="dark"] #new-session:hover { background: #fff; border-color: #fff; }
+html[data-palette="modern"][data-theme="dark"] #new-session:active { background: #e8e8ed; border-color: #e8e8ed; }
+html[data-palette="modern"][data-theme="dark"] #new-session kbd { border-color: #a1a1a6; color: #48484a; }
 .section-label { font-size: 11px; letter-spacing: .2px; padding: 0 9px; margin-bottom: 8px; font-weight: 500; }
 button.workspace-label { background: var(--surface); border: 0; padding: 10px 9px; margin-bottom: 0; border-radius: 8px; gap: 10px; }
 button.workspace-label:hover { background: var(--surface); }
