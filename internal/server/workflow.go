@@ -1613,6 +1613,17 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			var browserApprovalURL string
+			if currentQuestion.Kind == "browser-site" && in.Answer == "记住并允许" {
+				var browserQuestion struct {
+					URL string `json:"url"`
+				}
+				if err := json.Unmarshal(t.PendingQuestion, &browserQuestion); err != nil || browserQuestion.URL == "" {
+					fail(w, 409, errors.New("网站授权信息无效，请刷新后重试"))
+					return
+				}
+				browserApprovalURL = browserQuestion.URL
+			}
 			previousMessages, previousUpdated := s.Messages, s.Updated
 			previousReviews := t.ApprovalReviews
 			var approvalQuestion struct {
@@ -1645,6 +1656,15 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 				t.ApprovalReviews = previousReviews
 				fail(w, 500, err)
 				return
+			}
+			if browserApprovalURL != "" {
+				if err := a.rememberBrowserHostLocked(browserApprovalURL); err != nil {
+					s.Messages, s.Updated = previousMessages, previousUpdated
+					t.ApprovalReviews = previousReviews
+					_ = a.save(s)
+					fail(w, 500, err)
+					return
+				}
 			}
 			select {
 			case t.AnswerCh <- in.Answer:
@@ -5349,6 +5369,13 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		if err := a.recoveryOperationError(task, call.Function.Name, args, nil); err != nil {
 			return "错误：" + err.Error()
+		}
+		if pluginID == "browser-control" && call.Function.Name == "browser_read" {
+			var denial string
+			ctx, denial = a.browserReadApproval(ctx, task, args)
+			if denial != "" {
+				return denial
+			}
 		}
 		raw, err := a.callPluginToolContext(ctx, pluginID, call.Function.Name, args)
 		if err != nil {

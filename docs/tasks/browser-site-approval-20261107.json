@@ -1,0 +1,93 @@
+{
+  "id": "browser-site-approval-20261107",
+  "request": "browser_read 读取未列入允许列表的网站时，向用户显示完整网址和域名，请求仅本次允许或记住并允许；拒绝时不访问",
+  "baseline": "18483a58e4d148e1e0ae37ff6367479e9f00204e",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/markdown-editing-export.md\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-outline.js\n M internal/server/web/settings-schema.json\n M internal/server/web/workbench.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/task-action-hub.test.cjs\n?? docs/tasks/computer-control-app-approval-20261106.json\n?? docs/tasks/computer-control-settings-20261106.json\n?? docs/tasks/main-update-20261106.json\n?? docs/tasks/markdown-reader-controls-20261107.json\n?? docs/tasks/new-session-apple-white-20261107.json\n?? internal/server/computer_control_approval_test.go\n?? native/macos-desktop/computer_control.swift",
+  "acceptance": [
+    "browser_read 请求未允许的 HTTP(S) 网站时展示完整网址和精确域名，等待当前会话绑定的用户答复",
+    "拒绝或取消时不调用浏览器插件",
+    "仅本次允许只作用于该完整 URL 的一次工具调用，不写入持久设置",
+    "记住并允许将精确域名写入 browser-control 插件允许列表，后续可在插件设置移除",
+    "现有已允许网站无需新增审批；无效 URL 不触发读取"
+  ],
+  "scope": [
+    "internal/server/browser_site_approval.go",
+    "internal/server/browser_site_approval_test.go",
+    "internal/server/workflow.go 的网站审批接入",
+    "internal/server/plugins.go 的单次调用设置覆盖",
+    "internal/server/web/app.js 和 locales/en.js 的确认卡",
+    "internal/server/web_research.go 的能力说明",
+    "docs/tasks/browser-site-approval-20261107.json",
+    "scripts/task-action-hub.test.cjs 的浏览器审批卡回归"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将用户的问题落实为未允许网站的逐次或记住授权；仅 browser_read，不扩大其他控制工具权限。",
+      "evidence": [
+        "用户当前请求及前一轮无头浏览器实测的 allowlist 拒绝"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用会话绑定审批；单次授权通过服务端 context 只覆盖当前调用设置；记住授权写入插件 registry。",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/plugins.go",
+        "plugins/browser-control/index.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "审批卡、英文文案、后端授权与单次设置覆盖已写入工作树。",
+      "evidence": [
+        "internal/server/browser_site_approval.go",
+        "internal/server/plugins.go",
+        "internal/server/workflow.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go vet、定向 Go 回归、前端语法与审批卡 VM 回归通过；源码构建成功并已启动健康容器。桌面实测 #77：browser_read 请求 github.com 时出现显示完整 URL 的授权卡；选择拒绝后，Aide 报告网页未读取。仅本次允许和记住并允许的行为由隔离 Go 集成测试覆盖，未在真实桌面会话中授予网站访问。",
+      "evidence": [
+        "docker run --rm --pull never -v \"$PWD\":/src -w /src aide-native-go-test:local sh -c \"go vet -mod=vendor ./internal/server && go test -mod=vendor -count=1 -run ... ./internal/server\" => PASS",
+        "node --check internal/server/web/app.js => PASS",
+        "node --check internal/server/web/locales/en.js => PASS",
+        "node --test scripts/task-action-hub.test.cjs => PASS",
+        "git diff --check => PASS",
+        "./build.command => exit 0, Go vet and go build passed, local container recreated and healthy",
+        "bash scripts/aide.sh source-sha matches running image aide.srcsha",
+        "Aide desktop session #77 displayed browser-site card for https://github.com/ with 仅本次允许、记住并允许、拒绝执行",
+        "Desktop refusal returned 用户未授权访问 github.com；网页未读取。 Live approval/denial PASS; live allow-once/remember NOT_RUN"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新网页研究能力说明和任务验收记录。",
+      "evidence": [
+        "internal/server/web_research.go",
+        "docs/tasks/browser-site-approval-20261107.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留初始状态全部修改和未跟踪文件；本任务仅增加审批相关源码、测试和任务记录。",
+      "evidence": [
+        "git status --short --branch reviewed",
+        "No git add, commit, push or clean performed"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地构建入口实际重建了运行容器；未提交、合并、推送或发布。",
+      "evidence": [
+        "./build.command exit 0",
+        "docker ps reports aide-aide-1 healthy"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "撤销本任务对相关函数的增量改动并移除新增 browser_site_approval 文件；保留初始 Git 状态中已有修改和未跟踪文件。",
+  "handoff": "新审批代码已在本地运行镜像；桌面会话 #77 已目视验收网站审批卡及拒绝路径。真实桌面的仅本次允许/记住并允许尚未授权测试；隔离 Go 集成测试已覆盖。"
+}

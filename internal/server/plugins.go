@@ -969,11 +969,21 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	settings := map[string]any{}
 	enabledPlugins := []map[string]any{}
 	for _, p := range a.pluginRegistry.Plugins {
+		pluginSettings := p.Settings
+		if p.ID == "browser-control" && pluginID == "browser-control" && toolName == "browser_read" {
+			if approvedURL, ok := parent.Value(browserReadApprovalKey{}).(string); ok && approvedURL != "" {
+				if rawURL, _ := args["url"].(string); rawURL == approvedURL {
+					if _, host, err := browserReadTarget(approvedURL); err == nil {
+						pluginSettings = browserHostsWith(pluginSettingsOrEmpty(p.Settings), host)
+					}
+				}
+			}
+		}
 		if p.Enabled && (footprint.exclusive || p.ID == pluginID) {
-			enabledPlugins = append(enabledPlugins, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "version": p.Version, "settings": p.Settings})
+			enabledPlugins = append(enabledPlugins, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "version": p.Version, "settings": pluginSettings})
 		}
 		if p.ID == pluginID {
-			settings = pluginSettingsOrEmpty(p.Settings)
+			settings = pluginSettingsOrEmpty(pluginSettings)
 		}
 	}
 	a.mu.Unlock()

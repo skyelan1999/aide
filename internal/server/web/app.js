@@ -2168,6 +2168,10 @@ function renderClarification(run, box, inTaskHub = false) {
     const command = el('details', 'task-command-detail');
     command.append(el('summary', '', t('查看完整命令 · {0} 行', String(q.command || '').split('\n').length)), el('pre', 'approval-command', q.command));
     card.append(el('div', 'task-command-preview', String(q.command || '').split('\n').find(line => line.trim())?.slice(0,240) || ''), command);
+  } else if (q.approvalKind === 'browser-site') {
+    card.append(el('div', 'clarify-question', t('允许读取新网站？')));
+    card.append(el('p', 'approval-help', t('请求域名：{0}', q.host || '')));
+    card.append(el('pre', 'approval-command', q.url || ''));
   } else card.append(el('div', 'clarify-question', q.question));
   const key = `${sessionId}/${run.id}/${q.questionId || q.approvalRound || JSON.stringify(q)}`;
   const disable = value => card.querySelectorAll('button,input,select').forEach(x => x.disabled = value);
@@ -2189,6 +2193,7 @@ function renderClarification(run, box, inTaskHub = false) {
     try {
       await api(`/sessions/${sessionId}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '', questionId: q.questionId || '', remember, expiresAt }) });
       accepted = true; card.remove();
+      if (q.approvalKind === 'browser-site' && text === '记住并允许') void refreshConfig().catch(()=>{});
       if (text === '拒绝') toast(t('已拒绝执行当前命令'));
       refresh();
     } catch (e) {
@@ -2204,9 +2209,14 @@ function renderClarification(run, box, inTaskHub = false) {
   };
   if (q.type === 'confirm') {
     const row = el('div', 'clarify-actions');
-    const ok = el('button', 'primary', t(q.approvalKind === 'shell' ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
+    const ok = el('button', 'primary', t(['shell', 'browser-site'].includes(q.approvalKind) ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
     row.append(ok);
-    if (q.approvalKind === 'shell') {
+    if (q.approvalKind === 'browser-site') {
+      const remember=el('button','quiet approval-remember',t('记住并允许'));remember.onclick=()=>answer('记住并允许');
+      const deny=el('button','approval-deny',t('拒绝执行'));deny.onclick=()=>answer('拒绝');
+      row.append(remember,deny);
+      card.append(row,el('p','approval-help',t('仅本次允许只授权上方网址的本次读取；记住后将精确域名加入浏览器插件允许列表，可在插件设置中移除。跳转到其他域名仍受限制。')));
+    } else if (q.approvalKind === 'shell') {
       const deny = el('button', 'approval-deny', t('拒绝执行')); deny.title=t('拒绝这条命令；命令不会运行'); deny.onclick = () => answer('拒绝');
       row.append(deny);
       card.append(row);
