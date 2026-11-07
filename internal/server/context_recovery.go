@@ -56,6 +56,7 @@ func safeCompactionSplit(messages []Message, cut int) int {
 // returns it after all bounded summaries succeed and the request fits. Session
 // history remains untouched. Preserve current/latest user scope and images.
 func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task) (fitted []Message, fitErr error) {
+	started := time.Now()
 	a.mu.Lock()
 	window := a.modelWindow(cfg.Model)
 	a.mu.Unlock()
@@ -66,6 +67,13 @@ func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Messag
 	if estimateProviderPromptTokens(input, tools)+reserve <= window {
 		return input, nil
 	}
+	defer func() {
+		outcome := "completed"
+		if fitErr != nil {
+			outcome = "failed"
+		}
+		a.recordOrchestrationEvent(task, "context_fit", "active_context", started, outcome)
+	}()
 	if len(input) < 2 {
 		return input, errors.New("当前请求本身超出模型上下文窗口，未裁剪用户请求")
 	}

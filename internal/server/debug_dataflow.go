@@ -21,6 +21,9 @@ type debugDataflowDump struct {
 	Session       debugDataflowSession      `json:"session"`
 	Run           debugDataflowRun          `json:"run"`
 	ProviderCalls []debugDataflowProvider   `json:"providerCalls"`
+	Orchestration []OrchestrationEvent      `json:"orchestrationEvents,omitempty"`
+	Receipts      []OrchestrationReceipt    `json:"orchestrationReceipts,omitempty"`
+	EventsDropped int                       `json:"orchestrationDropped,omitempty"`
 	Steps         []debugDataflowStep       `json:"steps"`
 	ToolUses      []debugDataflowToolUse    `json:"toolUses"`
 	ToolIntents   []debugDataflowToolIntent `json:"unresolvedToolIntents"`
@@ -332,6 +335,9 @@ func (a *App) debugSessionDataflowDump(w http.ResponseWriter, r *http.Request) {
 			out.Timeline = append(out.Timeline, debugDataflowTimeline{At: entry.CompletedAt, Source: "provider", Kind: "response", Status: entry.Status, Index: entry.Index, Step: entry.Step, Model: entry.Model, OutcomeCode: entry.FailureCode})
 		}
 	}
+	out.Orchestration = append([]OrchestrationEvent(nil), task.OrchestrationEvents...)
+	out.Receipts = orchestrationReceipts(task)
+	out.EventsDropped = task.OrchestrationDropped
 	for i, step := range task.Steps {
 		out.Steps = append(out.Steps, debugDataflowStep{
 			Index: i + 1, Label: "step-" + strconv.Itoa(i+1), Status: debugDataflowStatus(step.Status),

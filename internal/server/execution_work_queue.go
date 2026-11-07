@@ -204,8 +204,12 @@ func (p *executionPool) dispatchReadyLocked() {
 			}
 			p.slots <- struct{}{}
 			j.result.Status = "running"
-			j.result.StartedAt = time.Now().UTC().Format(time.RFC3339Nano)
+			started := time.Now()
+			j.result.StartedAt = started.UTC().Format(time.RFC3339Nano)
 			p.parent.mu.Lock()
+			if queuedAt, err := time.Parse(time.RFC3339Nano, j.result.CreatedAt); err == nil {
+				p.parent.appendOrchestrationEventLocked(p.task, "queue_wait", "environment", queuedAt, started, "admitted")
+			}
 			p.task.Environments.Active++
 			p.task.Environments.Peak = max(p.task.Environments.Peak, p.task.Environments.Active)
 			p.parent.mu.Unlock()

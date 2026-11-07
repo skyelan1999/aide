@@ -493,6 +493,31 @@ func parallelClip(text string, limit int) string {
 	}
 	return string(runes[:limit]) + "\n[analysis excerpt truncated; do not assume missing details]"
 }
+
+// Short single requests cannot repay a planner request plus a merge request.
+// Explicit independent items are handled before this gate, and new tool
+// evidence triggers a fresh scheduling decision at the next checkpoint.
+func parallelSmallTask(prompt string, input []Message) bool {
+	prompt = strings.TrimSpace(prompt)
+	lower := strings.ToLower(prompt)
+	for _, substantial := range []string{"文档", "报告", "方案", "设计", "实现", "开发", "分析", "比较", "规划", "调研", "修复", "document", "report", "plan", "design", "implement", "analyze", "compare", "research", "build", "fix"} {
+		if strings.Contains(lower, substantial) {
+			return false
+		}
+	}
+	if len([]rune(prompt)) > 24 || strings.ContainsAny(prompt, "、；;\n") ||
+		strings.Contains(prompt, "和") || strings.Contains(prompt, "与") ||
+		strings.Contains(lower, " and ") {
+		return false
+	}
+	for _, message := range input {
+		if message.Role == "tool" {
+			return false
+		}
+	}
+	return true
+}
+
 func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input []Message, params ProfileParams, purpose string, callContext *RequestContext) (string, error) {
 	a.mu.Lock()
 	window := a.modelWindow(cfg.Model)
@@ -524,6 +549,13 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 	out, calls, usage, err := complete(ctx, cfg, input, params, nil, rec)
 	completed := time.Now()
 	a.mu.Lock()
+	requestOutcome := "completed"
+	if err != nil {
+		requestOutcome = "failed"
+	} else if len(calls) == 0 && strings.TrimSpace(out) == "" {
+		requestOutcome = "empty_response"
+	}
+	a.appendOrchestrationEventLocked(task, "model_request", purpose, started, completed, requestOutcome)
 	if snapshotIndex >= 0 && snapshotIndex < len(task.RequestSnapshots) {
 		snapshot := &task.RequestSnapshots[snapshotIndex]
 		snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
@@ -558,6 +590,14 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 }
 
 func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg Settings, input []Message, params ProfileParams) ([]Message, error) {
+	started := time.Now()
+	defer func() {
+		outcome := "completed"
+		if ctx.Err() != nil {
+			outcome = "interrupted"
+		}
+		a.recordOrchestrationEvent(task, "parallel_prepare", "analysis", started, outcome)
+	}()
 	if err := ctx.Err(); err != nil {
 		return input, err
 	}
@@ -653,6 +693,9 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	a.mu.Unlock()
 	titles := explicitParallelTasks(task.Prompt, limit)
 	directDispatch := len(titles) >= 2
+	if !directDispatch && parallelSmallTask(task.Prompt, input) {
+		return fallback("单项短任务的规划与汇总开销预计高于并行收益，主任务直接处理")
+	}
 	editTargets := parallelEditTargets(task.Prompt, titles)
 	editMode, editBases := a.parallelEditBases(task, editTargets)
 	if editMode && editBases == nil {
