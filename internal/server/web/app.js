@@ -2193,7 +2193,7 @@ function renderClarification(run, box, inTaskHub = false) {
     try {
       await api(`/sessions/${sessionId}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '', questionId: q.questionId || '', remember, expiresAt }) });
       accepted = true; card.remove();
-      if (q.approvalKind === 'browser-site' && text === '记住并允许') void refreshConfig().catch(()=>{});
+      if (['computer-app', 'browser-site'].includes(q.approvalKind) && text === '记住并允许') void refreshConfig().catch(()=>{});
       if (text === '拒绝') toast(t('已拒绝执行当前命令'));
       refresh();
     } catch (e) {
@@ -2209,13 +2209,13 @@ function renderClarification(run, box, inTaskHub = false) {
   };
   if (q.type === 'confirm') {
     const row = el('div', 'clarify-actions');
-    const ok = el('button', 'primary', t(['shell', 'browser-site'].includes(q.approvalKind) ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
+    const ok = el('button', 'primary', t(['shell', 'computer-app', 'browser-site'].includes(q.approvalKind) ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
     row.append(ok);
-    if (q.approvalKind === 'browser-site') {
+    if (q.approvalKind === 'computer-app' || q.approvalKind === 'browser-site') {
       const remember=el('button','quiet approval-remember',t('记住并允许'));remember.onclick=()=>answer('记住并允许');
       const deny=el('button','approval-deny',t('拒绝执行'));deny.onclick=()=>answer('拒绝');
       row.append(remember,deny);
-      card.append(row,el('p','approval-help',t('仅本次允许只授权上方网址的本次读取；记住后将精确域名加入浏览器插件允许列表，可在插件设置中移除。跳转到其他域名仍受限制。')));
+      card.append(row,el('p','approval-help',t(q.approvalKind === 'browser-site' ? '仅本次允许只授权上方网址的本次读取；记住后将精确域名加入浏览器插件允许列表，可在插件设置中移除。跳转到其他域名仍受限制。' : '仅本次允许只授权当前操作；记住后可在电脑控制设置中移除该应用。点击、输入与按键仍需逐次确认。')));
     } else if (q.approvalKind === 'shell') {
       const deny = el('button', 'approval-deny', t('拒绝执行')); deny.title=t('拒绝这条命令；命令不会运行'); deny.onclick = () => answer('拒绝');
       row.append(deny);
@@ -4733,55 +4733,63 @@ function renderComputerControlSettings() {
   const cfg=state.config||{};
   const permissions=el('section','computer-permissions');
   const permissionTitle=el('strong','',t('系统授权状态'));
-  const permissionSummary=el('p','muted',t('正在查询电脑控制桥接与系统授权…'));
+  const permissionSummary=el('p','muted',t('正在查询 Aide 电脑控制与系统授权…'));
   const permissionList=el('div','computer-permission-list');
-  const permissionActions=el('div','computer-permission-actions');
-  const refreshPermissions=el('button','quiet',t('刷新授权状态'));refreshPermissions.type='button';
+  const refreshPermissions=el('button','quiet computer-permission-refresh',t('刷新授权状态'));refreshPermissions.type='button';
+  const permissionHeading=el('div','computer-permission-heading');permissionHeading.append(permissionTitle,refreshPermissions);
   const permissionNames={screenRecording:t('屏幕录制'),accessibility:t('辅助功能')};
   let permissionBusy=false;
   const showPermissions=status=>{
     permissionList.replaceChildren();
     const platform=status.platform||'';
-    permissionSummary.textContent=platform==='macos'?t('授权由 macOS 管理；在这里申请并查看最新状态。'):platform==='windows'?t('Windows 使用当前桌面用户权限；屏幕捕获与输入操作无需单独授权。'):platform==='linux-x11'?t('Linux 当前通过 X11 会话运行；屏幕捕获和输入使用当前桌面会话权限。'):t('桥接服务已连接。');
     const items=status.permissions||(platform==='macos'?{screenRecording:{required:true,granted:status.screenRecording===true,supported:true},accessibility:{required:true,granted:status.accessibility===true,supported:true}}:platform==='windows'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:platform==='linux-x11'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:{});
+    const allGranted=platform==='macos'&&items.screenRecording?.granted===true&&items.accessibility?.granted===true;
+    permissionSummary.textContent=allGranted?t('Aide 已获得所需的 macOS 权限，可以读取允许应用的界面。'):platform==='macos'?t('权限由 Aide 主程序向 macOS 申请。点击申请后会打开对应隐私设置；若列表没有 Aide，点“添加”并选择 ~/Applications/Aide.app，再启用权限。返回后刷新，必要时重启 Aide。'):platform==='windows'?t('Windows 使用当前桌面用户权限；屏幕捕获与输入操作无需单独授权。'):platform==='linux-x11'?t('Linux 当前通过 X11 会话运行；屏幕捕获和输入使用当前桌面会话权限。'):t('电脑控制服务已连接。');
     for(const key of ['screenRecording','accessibility']){
       const item=items[key];if(!item)continue;
       const row=el('div','computer-permission-row');
-      const label=el('span','',permissionNames[key]);
-      const value=el('strong','',item.supported===false?t('当前平台不适用'):item.granted?t('已授权'):item.required?t('未授权'):t('无需单独授权'));
-      row.append(label,value);permissionList.append(row);
-    }
-    permissionActions.replaceChildren();
-    if(platform==='macos'){
-      for(const [key,route] of [['screenRecording','screen-recording'],['accessibility','accessibility']]){
-        const button=el('button','quiet',t('授权{0}',permissionNames[key]));button.type='button';button.disabled=permissionBusy;
+      const info=el('div','computer-permission-info');
+      const label=el('span','computer-permission-name',permissionNames[key]);
+      const value=el('span','computer-permission-state',item.supported===false?t('当前平台不适用'):item.granted?t('已授权'):item.required?t('未授权'):t('无需单独授权'));
+      value.classList.toggle('is-granted',item.granted===true);
+      value.classList.toggle('is-missing',item.required===true&&item.granted!==true);
+      info.append(label,value);row.append(info);
+      if(platform==='macos'){
+        const route=key==='screenRecording'?'screen-recording':'accessibility';
+        const button=el('button','quiet computer-permission-action',item.granted?t('查看设置'):t('授权{0}',permissionNames[key]));button.type='button';button.disabled=permissionBusy;
+        button.classList.toggle('needs-permission',item.granted!==true);
         button.onclick=action(async()=>{
-          if(permissionBusy)return;permissionBusy=true;for(const item of permissionActions.querySelectorAll('button'))item.disabled=true;
-          try{await api('/computer-control/permissions/'+route,{method:'POST',body:'{}'});permissionBusy=false;await loadPermissions();}
+          if(permissionBusy)return;permissionBusy=true;for(const item of permissions.querySelectorAll('button'))item.disabled=true;
+          try{
+            const result=await api('/computer-control/permissions/'+route,{method:'POST',body:'{}'});
+            permissionBusy=false;await loadPermissions();
+            if(result[key]!==true) permissionSummary.textContent=t('Aide 已发起{0}授权。若列表没有 Aide，点“添加”并选择 ~/Applications/Aide.app；开启权限后返回刷新。macOS 需要你手动确认。',permissionNames[key]);
+          }
           catch(error){permissionSummary.textContent=t('权限请求失败：{0}',error.message);}
-          finally{permissionBusy=false;for(const item of permissionActions.querySelectorAll('button'))item.disabled=false;}
-        });permissionActions.append(button);
+          finally{permissionBusy=false;for(const item of permissions.querySelectorAll('button'))item.disabled=false;}
+        });row.append(button);
       }
+      permissionList.append(row);
     }
   };
   const loadPermissions=async()=>{
     if(permissionBusy)return;
     try{showPermissions(await api('/computer-control/status'));}
-    catch(error){permissionSummary.textContent=t('电脑控制桥接不可用：{0}',error.message);permissionList.replaceChildren();permissionActions.replaceChildren();}
+    catch(error){const message=String(error.message||'');permissionSummary.textContent=message.startsWith('Aide 电脑控制服务不可用：')?message:t('Aide 电脑控制服务不可用：{0}',message);permissionList.replaceChildren();}
   };
   refreshPermissions.onclick=action(loadPermissions);
-  permissions.append(permissionTitle,permissionSummary,permissionList,permissionActions,refreshPermissions);
+  permissions.append(permissionHeading,permissionSummary,permissionList);
   void loadPermissions();
   const enabledRow=el('label','settings-file-checkbox'),enabled=document.createElement('input');
   enabled.type='checkbox';enabled.checked=cfg.computerControlEnabled===true;
   const enabledCopy=el('span','settings-file-copy');
   enabledCopy.append(el('strong','',t('启用电脑控制')),el('span','',t('允许 Aide 读取指定应用的界面；点击、输入和按键每次仍需你确认。')));
   enabledRow.append(enabled,enabledCopy);
-  const label=el('label','control-label',t('允许控制的应用'));
+  const label=el('label','control-label',t('已记住的应用'));
   const apps=document.createElement('textarea');apps.id='computer-control-allowed-apps';apps.rows=4;label.htmlFor=apps.id;apps.value=Array.isArray(cfg.computerControlAllowedApps)?cfg.computerControlAllowedApps.join('\n'):'';
   apps.placeholder=t('每行一个应用名称，例如 TextEdit、Safari 或 notepad.exe');
   apps.setAttribute('aria-label',t('允许控制的应用，每行一个'));
-  const hint=el('small','muted',t('仅允许列表中的前台应用。截图只覆盖桥接所支持的应用窗口。'));
+  const hint=el('small','muted',t('Aide 会在首次访问前台应用时请求授权。这里列出已记住的应用，也可手动添加或移除；截图仅覆盖授权应用的窗口。'));
   const save=el('button','quiet',t('保存电脑控制设置'));save.type='button';
   let busy=false;
   const persist=async()=>{
@@ -9508,7 +9516,6 @@ function setupMarkdownPreview(host, text, path, spec, allowLarge = false) {
   host.classList.remove('md-preview-deferred');host._markdownDeferredRender=null;
   host.innerHTML = renderMarkdown(text, false, path, spec);
   host._markdownSourceAnchors = text.length<=MARKDOWN_LIVE_PREVIEW_LIMIT?markdownSourceAnchors(text, host):[];
-  if (fileRenderEnabled('fileMarkdownOutline')) window.AideMarkdownOutline?.mount(host, { title: t('标题目录') });
   const captured = {...spec};
   host.querySelectorAll('a[href^="#"]').forEach(link=>{link.addEventListener('click',event=>{
     event.preventDefault();let id;try{id=decodeURIComponent(link.getAttribute('href').slice(1));}catch{return;}
@@ -9540,6 +9547,12 @@ function setupMarkdownPreview(host, text, path, spec, allowLarge = false) {
     const button=el('button','quiet quiet-sm',t('编辑 draw.io 图'));button.type='button';
     let busy=false;const open=async()=>{if(busy)return;busy=true;button.disabled=true;try{await edit();}catch(e){toast(e.message);}finally{busy=false;button.disabled=false;}};
     button.onclick=open;img.ondblclick=open;wrap.append(button);
+  });
+  if (fileRenderEnabled('fileMarkdownOutline')) window.AideMarkdownOutline?.mount(host, { title: t('标题目录') });
+  window.AideMarkdownReader?.mount(host, {
+    table: t('表格'), zoom: t('缩放'), zoomOut: t('缩小'), zoomIn: t('放大'),
+    actualSize: t('原始大小'), zoomImage: t('放大图片'),
+    imagePreview: t('图片预览'), closePreview: t('关闭预览')
   });
 }
 function decorateGeneratedMedia(body, viewerSpec) {

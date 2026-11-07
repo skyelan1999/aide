@@ -1,0 +1,81 @@
+{
+  "id": "computer-control-settings-20261106",
+  "request": "测一下 Aide 电脑控制功能，然后把电脑控制设置中的授权屏幕录制、授权辅助功能、刷新授权状态按钮做得更美观",
+  "baseline": "9aef74ff7ae525a636d5f6fd6d62b42982655585",
+  "initial_status": "M internal/server/computer_control.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n?? docs/tasks/main-update-20261106.json\n?? native/macos-desktop/computer_control.swift",
+  "acceptance": [
+    "Aide 主程序报告屏幕录制与辅助功能授权状态，并能刷新显示",
+    "允许的前台应用可读取界面与获得有效尺寸的窗口截图，非允许应用被拒绝",
+    "电脑控制权限按钮在已授权与未授权状态下布局清晰，桌面与窄屏可用"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/workbench.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/index.html",
+    "native/macos-desktop/computer_control.swift",
+    "docs/tasks/computer-control-settings-20261106.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户截图测试电脑控制并优化系统授权区按钮；保留逐次操作确认。",
+      "evidence": [
+        "用户本轮请求及截图，当前设置页显示两项已授权"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "权限项改为逐项状态卡，刷新按钮置于区块标题；原生截图从目标进程的可见主层窗口中选择最大面积窗口。",
+      "evidence": [
+        "实测原生截图仅 132×40 像素，原实现选取 content.windows.first"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "授权区改为两张状态卡；刷新按钮移至标题，按授权状态显示查看设置或授权操作；原生宿主改进窗口选择、拒绝自身窗口、接受 IPv4 映射的本机连接。",
+      "evidence": [
+        "internal/server/web/app.js、workbench.css、settings-schema.json、locales/en.js、index.html 已写入",
+        "native/macos-desktop/computer_control.swift 已写入并编译安装"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "当前 macOS 已授权状态的 Aide 桌面功能与视觉验收通过。未授权状态和窄屏仅有代码布局检查；点击、输入、按键未执行。",
+      "evidence": [
+        "授权健康检查 HTTP 200，service=aide-desktop-computer-control，screenRecording=true，accessibility=true；重启后间隔 6 秒连续 3 次均通过",
+        "Aide 设置页实测显示两项已授权，点击刷新后状态仍正确；桌面截图视觉检查通过",
+        "前台文本编辑 inspect HTTP 200、65 个控件；snapshot HTTP 200、1764×896；非允许应用被拒绝",
+        "./build.command 成功（Go vet、Go build；AIDE_RUN_TESTS=0），原生桌面宿主编译与签名验证成功；https://localhost:9999/ 返回 200",
+        "node --check app.js 和 en.js、node scripts/test_i18n.cjs、git diff --check 均通过",
+        "完整 i18n coverage 仍因既有 markdown-export.js 中缺少 Markdown 片段进度文案翻译而失败，与本次改动无关"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录实现、运行验收和未覆盖边界。",
+      "evidence": [
+        "docs/tasks/computer-control-settings-20261106.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留此前已有的工作区改动；未提交、未推送。",
+      "evidence": [
+        "初始 Git 状态已记录；本次仅修改任务 scope 中的文件"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "已将本地源码构建启动并安装 Aide 桌面宿主供当前设备验收；未发布远端版本。",
+      "evidence": [
+        "./build.command 退出 0，容器就绪",
+        "build-macos-desktop.py --install --open 退出 0；最终 AideDesktop 运行并显示权限卡片"
+      ]
+    }
+  },
+  "release_authorization": "用户要求测功能并改善当前运行中 Aide 的按钮样式，授权本地编译与启动验收。",
+  "rollback": "可仅撤销本任务 scope 内 UI、文案与 native/macos-desktop/computer_control.swift 的本轮差异；保留初始工作树其他修改。",
+  "handoff": "本地 Aide 已显示新的授权状态卡，两项 macOS 权限为已授权，刷新正常。前台文本编辑读取与 1764×896 截图通过，非允许应用被拒绝。构建后需重启 AideDesktop 才恢复 17778 监听响应；已重启并连续复核。未执行点击/输入/按键和未授权状态实测，也未做窄屏实际视觉验收。"
+}

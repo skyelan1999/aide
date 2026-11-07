@@ -23,6 +23,13 @@ const all=(n,tag)=>n.children.flatMap(c=>[...(c.tag===tag?[c]:[]),...all(c,tag)]
  state.session={id:'s',runs:[run]};run.status='running';run.parallelism=10;state.runPhase.r={tools:[{tool:'read_file',status:'running'}]};ctx.syncTaskActionHub(run);assert.match($('run-control-activity').textContent,/read_file.*10/);assert(slot.hidden);
  run.status='awaiting_clarification';
  for(const [label,answer] of [['仅本次允许','确认'],['记住并允许','记住并允许'],['拒绝执行','拒绝']]){
+   run.pendingQuestion={type:'confirm',approvalKind:'computer-app',question:'允许 TextEdit？',app:'TextEdit',appRule:'bundle:com.apple.TextEdit',questionId:'app-'+answer,approvalRound:'3'};
+   const box=new Node();ctx.renderClarification(run,box,true);
+   const buttons=all(box,'button');assert.deepEqual(buttons.map(b=>b.textContent),['仅本次允许','记住并允许','拒绝执行']);
+   await buttons.find(b=>b.textContent===label).onclick();
+   assert.equal(calls.at(-1).body.answer,answer);assert.equal(calls.at(-1).body.remember,false);
+ }
+ for(const [label,answer] of [['仅本次允许','确认'],['记住并允许','记住并允许'],['拒绝执行','拒绝']]){
    const url='https://github.com/skyelan1999/aide?tab=readme';
    run.pendingQuestion={type:'confirm',approvalKind:'browser-site',question:'允许读取？',host:'github.com',url,questionId:'site-'+answer,approvalRound:'4'};
    const box=new Node();ctx.renderClarification(run,box,true);

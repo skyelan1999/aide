@@ -1,0 +1,68 @@
+{
+  "id": "new-session-apple-white-20261107",
+  "request": "将截图当前深色主题左侧新建会话按钮的蓝色改为苹果白色，其他主题和按钮不变",
+  "baseline": "ea5e7dc30b77668d0f6f8cb521a48004ad4cd212",
+  "initial_status": "M docs/architecture.md\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/workbench.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/task-action-hub.test.cjs\n?? docs/tasks/computer-control-app-approval-20261106.json\n?? docs/tasks/computer-control-settings-20261106.json\n?? docs/tasks/main-update-20261106.json\n?? internal/server/computer_control_approval_test.go\n?? native/macos-desktop/computer_control.swift",
+  "acceptance": [
+    "现代配色的深色模式下，新建会话按钮显示苹果风格浅白底与深色文字，快捷键提示清晰可读。",
+    "现代浅色与专业深色模式的新建会话按钮保留原有配色。",
+    "仅修改目标按钮样式，不改变按钮行为或其他工作区改动。"
+  ],
+  "scope": [
+    "internal/server/web/macos.css 中新建会话按钮的现代深色主题样式",
+    "docs/tasks/new-session-apple-white-20261107.json 任务记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户指定截图按钮，并进一步限定为当前主题；界面确认当前为现代配色、深色模式。",
+      "evidence": [
+        "Aide 外观设置：现代=选中，深色=选中；2026-11-07"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用现代深色组合与 #new-session 精确限定颜色，保留其他主题和全局 primary 按钮样式。",
+      "evidence": [
+        "internal/server/web/macos.css:34-44"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "按钮默认浅白底深字，悬停为白色，按下为浅灰色，快捷键提示为深灰色。",
+      "evidence": [
+        "git diff -- internal/server/web/macos.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "静态页面加载实际 CSS 后，现代深色背景 rgb(245,245,247)、文字 rgb(29,29,31)；现代浅色和专业深色保持原渐变；git diff --check 通过。运行中的 Aide 未重建，未在已安装实例中验收。",
+      "evidence": [
+        "本地浏览器预览 / .preview-new-session.html，2026-11-07，临时文件已删除",
+        "git diff --check -- internal/server/web/macos.css"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "仅视觉样式调整，任务记录已记载目标、范围、证据和限制。",
+      "evidence": [
+        "docs/tasks/new-session-apple-white-20261107.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时预览页已删除，临时 HTTP 服务已停止；既有未提交及未跟踪文件未清理。",
+      "evidence": [
+        "git status --short -- internal/server/web/macos.css internal/server/web/.preview-new-session.html docs/tasks/new-session-apple-white-20261107.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本任务仅修改源码，未请求构建、安装、发布或推送。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "未请求",
+  "rollback": "移除 macos.css 中针对现代深色 #new-session 的新增规则。",
+  "handoff": "源码样式已修改并完成隔离浏览器预览；当前运行的 Aide 仍需后续构建/刷新才能加载。"
+}

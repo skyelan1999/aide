@@ -4,6 +4,9 @@ import CryptoKit
 import Foundation
 import Security
 import WebKit
+import ApplicationServices
+import Network
+import ScreenCaptureKit
 
 struct DesktopSession: Decodable {
     let origin: String
@@ -71,6 +74,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var session: DesktopSession?
     var origin: URL?
     var startup: Process?
+    var computerControlHost: AideComputerControlHost?
     var statusLabel: NSTextField?
     var retryButton: NSButton?
     var pageErrors = 0
@@ -101,6 +105,22 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         mainWindow.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         connect()
+    }
+
+    func startComputerControlHost() {
+        // connect() also runs after a service restart; retain the existing listener.
+        guard computerControlHost == nil else { return }
+        let envFile = root.appendingPathComponent(".env")
+        guard let contents = try? String(contentsOf: envFile, encoding: .utf8),
+              let line = contents.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix("AIDE_COMPUTER_BRIDGE_TOKEN=") }) else {
+            fputs("Aide computer control is unavailable: local token is not configured.\n", stderr)
+            return
+        }
+        let token = String(line.dropFirst("AIDE_COMPUTER_BRIDGE_TOKEN=".count)).trimmingCharacters(in: CharacterSet(charactersIn: " \"'"))
+        guard token.count >= 32 else { fputs("Aide computer control is unavailable: invalid local token.\n", stderr); return }
+        let host = AideComputerControlHost(token: token)
+        do { try host.start(); computerControlHost = host }
+        catch { fputs("Aide computer control failed to start: \(error.localizedDescription)\n", stderr) }
     }
 
     func makeWindow() -> NSWindow {
@@ -228,6 +248,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
                     self.startup = nil
                     self.session = session
                     self.origin = origin
+                    self.startComputerControlHost()
                     let web = self.makeWebView(configuration: WKWebViewConfiguration(), window: self.mainWindow)
                     var url = URLComponents(url: origin, resolvingAgainstBaseURL: false)!
                     url.fragment = "token=" + session.token
@@ -779,6 +800,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationWillTerminate(_ notification: Notification) {
+        computerControlHost?.stop()
         for web in views.values { stopMedia(web) }
         startup?.terminate()
     }

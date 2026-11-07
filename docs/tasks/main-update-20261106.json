@@ -1,0 +1,80 @@
+{
+  "id": "main-update-20261106",
+  "request": "把aide更新到main最新",
+  "baseline": "9aef74ff7ae525a636d5f6fd6d62b42982655585",
+  "initial_status": "Before update: branch fix/windows-chat-tabs-20261104 at eed966de; many tracked and untracked edits. Fetched origin/main at 9aef74ff. Main was already checked out in /tmp/aide-main-merge-20261106.",
+  "acceptance": [
+    "CloudDocs Aide checkout is on main and HEAD exactly matches fetched origin/main.",
+    "Pre-existing tracked and untracked user work is preserved for later recovery.",
+    "Do not claim the running desktop/service was rebuilt unless actually rebuilt and checked."
+  ],
+  "scope": [
+    "Git branch and upstream synchronization for the CloudDocs Aide checkout",
+    "Local preservation of pre-existing work",
+    "Task handoff record"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将“更新到 main 最新”按本地 CloudDocs 源码工作区切换到 main 并同步最新远端提交理解。",
+      "evidence": [
+        "User request: 把aide更新到main最新."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先将原分支所有已跟踪、未跟踪改动打包进 Git stash，再释放 main 分支在临时 worktree 的占用并切换 CloudDocs checkout。",
+      "evidence": [
+        "stash: preserve-work-before-main-update-2026-11-06",
+        "/tmp/aide-main-merge-20261106 retained at the same commit in detached mode."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "CloudDocs checkout 已切到 main；HEAD 与 origin/main 均为 9aef74ff7ae525a636d5f6fd6d62b42982655585。",
+      "evidence": [
+        "git switch main: Switched to branch main; branch up to date with origin/main."
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "镜像源码构建成功，Aide 容器健康，工作台服务返回 status=ok，前端现提供 markdown-export.js?v=18。未运行完整自动化测试；启动 healthz 同时报告 integrity=degraded，需与既有隔离会话记录一起解读。",
+      "evidence": [
+        "首次失败的原因是宿主机可用空间 16.4 GiB，小于 20 GiB 门槛。",
+        "Aide 专用 BuildKit 定向回收 24 小时前普通构建层，BuildKit 报告回收 3.469 GB；宿主机可用空间随后升至约 31.8 GiB。未删容器、镜像、卷或 cache mounts。",
+        "./build.command 成功：AIDE_RUN_TESTS=0，Go vet 和 Go build 完成；新镜像 aide:source-0653b625c3392f1386bd，ID sha256:36b2a609fefe85a877f4b0b4be5aee40d1e0a7e494abdcd266b9e692b7cb0c98。",
+        "docker ps 报 aide-aide-1 Up (healthy)；https://127.0.0.1:9999/healthz 返回 status=ok，index 引用 markdown-export.js?v=18；AideDesktop 进程正在运行。",
+        "healthz 的 integrity 值为 degraded。存储区恢复日志已有 2026-10-24 和 2026-11-02 的会话文件隔离记录；本次未改动或清除隔离数据。",
+        "Installed native bridge executable was dated 2026-10-31 and its Info.plist had no LSUIElement; main build.command only relaunched the existing bundle, it does not rebuild this helper.",
+        "Rebuilt and restarted only the macOS native bridge from main: scripts/build-native-computer-bridge.sh, codesign --verify --deep --strict passed; installed Info.plist now has LSUIElement=true and display name Aide Computer Control Service.",
+        "Authenticated GET /api/computer-control/status via Aide returned available=true, service=aide-native-computer-bridge; permission state appears through the unified Aide API (both OS grants are currently false).",
+        "The background service is listening on 17778 after restart; helper source has no standalone window UI. The remaining helper process is retained as the macOS TCC permission broker."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录了同步证据和运行中服务尚未更新的边界。",
+      "evidence": [
+        "docs/tasks/main-update-20261106.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未删除原分支文件；全部未提交工作由 stash 保存。",
+      "evidence": [
+        "stash@{0}: On fix/windows-chat-tabs-20261104: preserve-work-before-main-update-2026-11-06"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "当前 main 源码已构建为本机 Aide 源码镜像并启动；未创建 Git 提交或推送。",
+      "evidence": [
+        "当前工作区 HEAD 与 origin/main 同为 9aef74ff7ae525a636d5f6fd6d62b42982655585。",
+        "构建标记带 -dirty 后缀，仅因本任务的本地 docs/tasks 记录未提交；代码源码指纹对应当前 main。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "To resume prior edits: git stash apply stash@{0} while on fix/windows-chat-tabs-20261104; inspect conflicts before dropping the stash.",
+  "handoff": "CloudDocs checkout and running Aide now use main commit 9aef74ff; Docker service on port 9999 is healthy and serves markdown-export.js?v=18. Build reclaimed 3.469 GB from this Aide installation BuildKit cache; no containers/images/volumes/cache mounts or user data were deleted. Docker health is healthy and /healthz status=ok, but /healthz integrity=degraded; prior quarantined session files remain in .aide-data/storage/data/.integrity/recovery.log and were preserved. Prior feature edits remain safely in stash preserve-work-before-main-update-2026-11-06. Follow-up: rebuilt the stale visible Oct 31 macOS bridge helper from main source; its current bundle is LSUIElement=true, has no separate window UI, and Aide Settings API reports the live permissions. The background native broker remains intentionally running for macOS Screen Recording/Accessibility authorization."
+}

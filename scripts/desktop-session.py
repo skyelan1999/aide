@@ -58,7 +58,7 @@ def session(root, start=False, command=run, health=host_health):
         for directory in (root / '.aide-data', root / '.aide-data/desktop'):
             if directory.is_symlink():
                 raise ValueError('Desktop state must not be a symbolic link')
-        env = dict(os.environ, AIDE_OPEN_BROWSER='0')
+        env = dict(os.environ, AIDE_OPEN_BROWSER='0', AIDE_DESKTOP_SESSION='1')
         result = subprocess.run(['bash', 'scripts/aide.sh', 'start'], cwd=root, env=env,
                                 text=True, capture_output=True, timeout=240)
         logs = root / '.aide-data/desktop'

@@ -267,7 +267,7 @@
     {
       "id": "computer-control",
       "title": "电脑控制",
-      "description": "电脑控制已整合为 Aide 内置能力。系统授权状态与申请入口在此设置中；每次点击、输入或按键仍会单独请求确认，截图可交给视觉模型分析。Linux 需要 X11；Windows 桥接随 Aide 桌面应用运行。",
+      "description": "电脑控制已整合为 Aide 内置能力。系统授权状态与申请入口在此设置中；每次点击、输入或按键仍会单独请求确认，截图可交给视觉模型分析。Linux 需要 X11；Windows 电脑控制随 Aide 桌面应用运行。",
       "controls": [
         {
           "id": "computer-control-settings",

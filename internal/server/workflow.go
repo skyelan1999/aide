@@ -1613,6 +1613,7 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			var appApprovalTarget *computerControlTarget
 			var browserApprovalURL string
 			if currentQuestion.Kind == "browser-site" && in.Answer == "记住并允许" {
 				var browserQuestion struct {
@@ -1623,6 +1624,17 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				browserApprovalURL = browserQuestion.URL
+			}
+			if currentQuestion.Kind == "computer-app" && in.Answer == "记住并允许" {
+				var appQuestion struct {
+					Name string `json:"app"`
+					Rule string `json:"appRule"`
+				}
+				if err := json.Unmarshal(t.PendingQuestion, &appQuestion); err != nil || appQuestion.Name == "" || appQuestion.Rule == "" {
+					fail(w, 409, errors.New("应用授权信息无效，请刷新后重试"))
+					return
+				}
+				appApprovalTarget = &computerControlTarget{Name: appQuestion.Name, Rule: appQuestion.Rule}
 			}
 			previousMessages, previousUpdated := s.Messages, s.Updated
 			previousReviews := t.ApprovalReviews
@@ -1656,6 +1668,15 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 				t.ApprovalReviews = previousReviews
 				fail(w, 500, err)
 				return
+			}
+			if appApprovalTarget != nil {
+				if err := a.rememberComputerControlAppLocked(*appApprovalTarget); err != nil {
+					s.Messages, s.Updated = previousMessages, previousUpdated
+					t.ApprovalReviews = previousReviews
+					_ = a.save(s)
+					fail(w, 500, err)
+					return
+				}
 			}
 			if browserApprovalURL != "" {
 				if err := a.rememberBrowserHostLocked(browserApprovalURL); err != nil {
@@ -2017,7 +2038,7 @@ func (a *App) toolListHint() string {
 	hint := "list_sources（引用来源）; list_files, read_file（直接执行）; write_file（生成提案待批准）; run_shell（沙箱内实际执行并返回输出）"
 	hint += "; browse_plugin_market（内置只读市场列表、搜索和详情；未安装插件也可使用）"
 	hint += "; route_plugins（按需求发现并加载插件工具，不自动扩大权限）"
-	hint += "; computer_status / computer_inspect / computer_snapshot（Aide 设置开启电脑控制后可用，截图可交由视觉模型分析）"
+	hint += "; computer_status / computer_open_browser / computer_inspect / computer_snapshot（Aide 设置开启电脑控制后可用；从 Aide 打开本机 Safari 或 Chrome 用 computer_open_browser，可在该工具的 url 参数中传入用户要求的完整 http(s) 网址并逐次确认；不要直接 inspect Aide 自身；读取浏览器前须用户授权）"
 	return hint
 }
 
@@ -5328,18 +5349,53 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return a.recordVerification(str("title"), rawStr("content"), str("reqId"), str("designId"), str("implId"))
 	case "record_problem_report":
 		return a.recordProblemReport(str("title"), rawStr("content"), str("diagramPath"))
-	case "computer_status", "computer_inspect", "computer_snapshot", "computer_click", "computer_type", "computer_key":
-		if computerControlNeedsConfirmation(call.Function.Name) {
+	case "computer_status", "computer_open_browser", "computer_inspect", "computer_snapshot", "computer_click", "computer_type", "computer_key":
+		var target computerControlTarget
+		approvedRule := ""
+		if call.Function.Name != "computer_status" && call.Function.Name != "computer_open_browser" {
 			a.mu.Lock()
-			args["allowedApps"] = append([]string(nil), a.settings.ComputerControlAllowedApps...)
+			enabled := a.settings.ComputerControlEnabled
+			apps := append([]string(nil), a.settings.ComputerControlAllowedApps...)
 			a.mu.Unlock()
-			question, _ := json.Marshal(map[string]any{"question": computerControlConfirmationText(call.Function.Name, args), "type": "confirm"})
+			if !enabled {
+				return failure("电脑控制未在 Aide 设置中启用")
+			}
+			var discoverErr error
+			target, discoverErr = discoverComputerControlTarget(ctx)
+			if discoverErr != nil && (len(apps) == 0 || !computerControlDiscoveryUnsupported(discoverErr)) {
+				return failure("发现目标应用失败：" + discoverErr.Error() + "。若 Aide 正在前台且需要打开浏览器，请先调用 computer_open_browser；电脑控制不会读取 Aide 自身窗口")
+			}
+			if discoverErr == nil && !computerAppAllowed(apps, target) {
+				question, _ := json.Marshal(map[string]any{
+					"question": "Aide 发现前台应用「" + target.Name + "」（" + target.Rule + "）。允许读取它的界面并按后续逐次确认执行操作吗？",
+					"type":     "confirm", "approvalKind": "computer-app", "app": target.Name, "appRule": target.Rule,
+				})
+				answer := a.awaitUserAnswer(ctx, task, question)
+				switch answer {
+				case "确认":
+					approvedRule = target.Rule
+				case "记住并允许":
+					approvedRule = target.Rule
+				default:
+					return "用户未授权 Aide 访问应用「" + target.Name + "」；未读取或操作该应用。"
+				}
+			}
+		}
+		if computerControlNeedsConfirmation(call.Function.Name) {
+			confirmationArgs := make(map[string]any, len(args)+1)
+			for key, value := range args {
+				confirmationArgs[key] = value
+			}
+			if target.Name != "" {
+				confirmationArgs["app"] = target.Name
+			}
+			question, _ := json.Marshal(map[string]any{"question": computerControlConfirmationText(call.Function.Name, confirmationArgs), "type": "confirm"})
 			if answer := a.awaitUserAnswer(ctx, task, question); answer != "确认" {
 				return "用户未批准电脑操作；操作未执行。"
 			}
 			args["approved"] = true
 		}
-		raw, err := a.callComputerControlTool(ctx, call.Function.Name, args)
+		raw, err := a.callComputerControlTool(ctx, call.Function.Name, args, target, approvedRule)
 		if err != nil {
 			return failure("电脑控制工具失败：" + err.Error())
 		}

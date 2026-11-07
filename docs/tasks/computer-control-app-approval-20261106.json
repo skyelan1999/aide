@@ -1,0 +1,56 @@
+{
+  "id": "computer-control-app-approval-20261106",
+  "request": "允许的应用可以让aide自主发现，像授权命令那样授权吗",
+  "baseline": "9aef74ff7ae525a636d5f6fd6d62b42982655585",
+  "initial_status": "M internal/server/computer_control.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/workbench.css\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n?? docs/tasks/computer-control-settings-20261106.json\n?? docs/tasks/main-update-20261106.json\n?? native/macos-desktop/computer_control.swift",
+  "acceptance": [
+    "Aide can discover the foreground app identity without reading its window",
+    "An unapproved app prompts the user before inspect, screenshot, or input",
+    "Allow once applies only to the current tool call; remember persists the app identity; deny performs no operation",
+    "Input actions still require their separate per-action confirmation",
+    "The native host checks the approved process identity before reading or acting, and rejects a changed target",
+    "When Aide is foreground, it can request approval to open Safari or Chrome and then discover that browser without manual allowlist edits",
+    "A failed foreground discovery does not silently fall back to the manual allowlist unless the host explicitly lacks the discovery route"
+  ],
+  "scope": ["internal/server/computer_control.go", "internal/server/computer_control_test.go", "internal/server/workflow.go", "internal/server/web_research.go", "internal/server/web/app.js", "internal/server/web/locales/en.js", "internal/server/web/index.html", "native/macos-desktop/computer_control.swift", "docs/architecture.md", "focused tests and this task record"],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Foreground app discovery and explicit app-level approval are required before content access; existing manual app rules remain compatible.",
+      "evidence": ["User request and current computer-control UI screenshot", "internal/server/computer_control.go and native/macos-desktop/computer_control.swift baseline"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native host returns app metadata only; workflow asks for one-call or remembered grant; native operations bind PID and app rule and retain separate input confirmation. 2026-11-07 follow-up adds an explicitly confirmed Safari/Chrome launch path for requests made while Aide itself is foreground and restricts legacy fallback to unsupported discovery routes.",
+      "evidence": ["internal/server/workflow.go", "native/macos-desktop/computer_control.swift"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added the confirmed Safari/Chrome launch tool with an optional validated http(s) URL, CMD+L support, AX window fallback, actionable discovery errors, and idempotent native bridge startup during service reconnect. Manual-list fallback now applies only when the native discovery route is unsupported. Rebuilt and installed the native app and source container.",
+      "evidence": ["native/macos-desktop/computer_control.swift", "internal/server/computer_control.go", "internal/server/workflow.go", "internal/server/web/app.js"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Go tests, Swift typecheck, native installation, source-container rebuild, and live Safari URL opening passed. The user selected a remembered Safari grant; Aide then read Safari's address bar. After the final listener fix and complete rebuild, a fresh live Aide request returned computer_status ok, opened Safari at https://github.com, and read the same URL from Safari's address bar. Build-time service reconnect initially caused a second native listener to fail with Address already in use; the native host now starts only once, and a complete rebuild left the bridge reachable from the container. Deny and changed-foreground UI cases remain untested. The broad quick suite failed on an unrelated missing English Markdown-export translation.",
+      "evidence": ["go test -mod=vendor ./internal/server -run 'TestComputerControl|TestComputerAppApproval|TestComposerApproval' -count=1 passed", "go test -mod=vendor ./internal/server -run 'TestComputerBrowser|TestComputerControl|TestComputerAppApproval' -count=1 passed in the golang:1.26-bookworm container", "swiftc -typecheck native/macos-desktop/main.swift native/macos-desktop/biometrics.swift native/macos-desktop/computer_control.swift passed", "node --check internal/server/web/app.js passed", "node scripts/task-action-hub.test.cjs passed", "python3 scripts/build-macos-desktop.py --root . --install --open passed and restarted AideDesktop", "Live Aide chat before listener fix: computer_status and computer_open_browser failed with EOF from host.docker.internal:17778 despite port listener; Aide process restart restored bridge", "Temporary native trace after build reproduced listener state failed(POSIXErrorCode(rawValue: 48): Address already in use); service reconnect called startComputerControlHost a second time", "Direct native /v1/open-browser: approved=false rejected; approved=true opened Safari with rule=bundle:com.apple.Safari", "CUA live chat: after remembered Safari grant, computer_inspect succeeded and exposed Safari's AX smart search field", "CUA live chat: computer_open_browser(browser=Safari, url=https://github.com) returned opened=true; computer_inspect read AX smart search field value https://github.com and GitHub home page", "After idempotent-start fix, ./build.command completed exit 0; aide-aide-1 healthy; host unauthenticated /healthz returned HTTP 401 and authenticated container GET returned HTTP 200 with screenRecording and accessibility true", "After final build, a fresh Aide chat returned computer_status ok:true, computer_open_browser opened:true for Safari and https://github.com, and computer_inspect read Safari's AX smart search field value https://github.com", "python3 scripts/agent-route.py verify quick failed on missing en locale for Markdown export string; .agent-state/verify-20261107T022602058595Z.log"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented discovery, grants, target binding, and legacy platform fallback.",
+      "evidence": ["docs/architecture.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No commit or push; unrelated worktree edits and data were preserved. Old Docker builder cache was pruned to satisfy build space, and the launcher reclaimed one obsolete runtime image after health check.",
+      "evidence": ["git status --short", "./build.command completed with exit code 0"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Installed the updated local Aide app and source container only; no public release, commit, or push was requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "local build and installation implied by implementation and testing request; no publication authorized",
+  "rollback": "Restore the previous installed Aide.app and source container image if needed; remove the dynamic approval changes from this worktree while preserving unrelated edits.",
+  "handoff": "The remembered Safari grant, direct URL opening, and bridge reachability after a full rebuild were verified. Deny and changed-foreground UI cases remain to be exercised."
+}

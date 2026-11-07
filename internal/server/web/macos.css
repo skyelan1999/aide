@@ -649,30 +649,51 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 /* Markdown reading: quiet, hierarchical outline kept beside the document. */
 .md-preview-outline { container-type: inline-size; container-name: markdown-reader; }
 .file-view-preview.md-preview-outline { max-width: 1180px; }
-.md-reader { display: grid; grid-template-columns: 144px minmax(0, 1fr); gap: 16px; align-items: start; }
+.md-reader { display: grid; grid-template-columns: 218px minmax(0, 1fr); gap: 20px; align-items: start; }
+.md-reader-controls { grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 5px; position: sticky; top: 0; z-index: 3; min-height: 38px; padding: 2px 0 8px; background: var(--bg); }
+.md-reader-controls button { min-width: 30px; min-height: 28px; padding: 3px 8px; font-variant-numeric: tabular-nums; }
+.md-reader-controls .md-reader-zoom-value { min-width: 54px; }
+.md-reader-controls-header { position: static; flex: 0 0 auto; gap: 2px; min-height: 36px; padding: 2px; border: 1px solid var(--line-soft); border-radius: 11px; background: var(--bg-inset); }
+.md-reader-controls-header button { min-height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); }
+.md-reader-controls-header button:hover { background: var(--selected); color: var(--text); }
+.md-reader-controls-header .md-reader-zoom-value { color: var(--text); font-weight: 600; }
+.md-reader-no-outline > .md-reader-content { grid-column: 1 / -1; }
 .md-reader-content { min-width: 0; overflow-wrap: anywhere; }
+.md-table-scroll { max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; margin: 10px 0; }
+:is(.file-view-preview,.editor-preview).md-body .md-table-scroll table { display: table; width: max-content; min-width: 100%; max-width: none; margin: 0; overflow: visible; }
+.md-table-scroll :is(th,td) { vertical-align: top; }
 /* Scale embedded document images to the reading column, preserving aspect ratio. */
 :is(.file-view-preview,.editor-preview).md-body img:not(.img-preview) { max-width: 100%; height: auto; }
+.md-image-zoomable { cursor: zoom-in; }
+.md-image-zoomable:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+.md-image-lightbox { position: fixed; inset: 0; width: max-content; max-width: calc(100vw - 40px); max-height: calc(100dvh - 40px); margin: auto; padding: 40px 16px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--text); box-shadow: 0 24px 80px #0008; overflow: auto; }
+.md-image-lightbox::backdrop { background: #000b; }
+.md-image-lightbox img { display: block; width: auto; height: auto; max-width: calc(100vw - 72px); max-height: calc(100dvh - 120px); margin: auto; object-fit: contain; }
+.md-image-lightbox p { max-width: 80ch; margin: 10px auto 0; text-align: center; overflow-wrap: anywhere; font-size: 12px; }
+.md-image-lightbox-close { position: absolute; right: 9px; top: 7px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px; background: var(--surface); color: var(--text); font-size: 22px; cursor: pointer; }
+.md-image-lightbox-close:hover { background: var(--hover); }
 .md-reader-content > :first-child { margin-top: 0; }
 .md-reader-content :is(h1,h2,h3,h4,h5,h6):focus { outline: none; }
 .md-reader-content :is(h1,h2,h3,h4,h5,h6):focus-visible { outline: 2px solid var(--brand); outline-offset: 5px; border-radius: 3px; }
-.md-outline { position: sticky; top: 0; align-self: start; margin: 0; padding: 0; border: 0; color: var(--muted, var(--text)); font-size: 12px; line-height: 1.5; background: var(--panel, var(--bg)); border-radius: 8px; z-index: 1; }
-.md-outline > summary { cursor: pointer; padding: 10px 8px; color: var(--text); font-size: 12px; font-weight: 600; letter-spacing: .04em; }
-.md-outline nav { max-height: 34dvh; overflow: auto; overscroll-behavior: contain; padding: 2px 0 6px; }
+.md-outline { position: sticky; top: 8px; align-self: start; display: flex; flex-direction: column; height: max(140px, calc(var(--md-preview-height, 70dvh) - var(--md-reader-toolbar-height, 0px))); min-height: 0; margin: 0 0 24px; padding: 0; border: 1px solid var(--line-soft); color: var(--muted, var(--text)); font-size: 12px; line-height: 1.5; background: var(--panel, var(--bg)); border-radius: 10px; z-index: 1; }
+.md-outline > summary { cursor: pointer; padding: 12px 12px 9px; color: var(--text); font-size: 12px; font-weight: 650; letter-spacing: .04em; }
+.md-outline nav { flex: 1; min-height: 0; max-height: calc(var(--md-preview-height, 70dvh) - var(--md-reader-toolbar-height, 0px) - 46px); overflow: auto; overscroll-behavior: contain; padding: 4px 6px 12px; }
 .md-outline ol { display:flex; flex-direction:column; margin: 0 !important; padding: 0 !important; list-style: none; }
 .md-outline li { margin: 0 !important; padding: 0 !important; list-style: none; }
-.md-outline a { display: -webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; padding: 4px 6px 4px calc(6px + var(--heading-depth) * 8px); border-left: 2px solid transparent; color: var(--muted, var(--text)); text-decoration: none !important; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; transition: color .16s ease, background .16s ease; }
+.md-outline a { display: block; padding: 7px 8px 7px calc(8px + var(--heading-depth) * 10px); border-left: 2px solid transparent; border-radius: 6px; color: var(--muted, var(--text)); text-decoration: none !important; font-size: 12px; line-height: 1.45; white-space: normal; overflow-wrap: break-word; transition: color .16s ease, background .16s ease; }
+.md-outline li[data-level="1"] a { margin-bottom: 6px; padding-top: 9px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); border-radius: 6px 6px 0 0; color: var(--text); font-weight: 600; }
+.md-outline li[data-level="2"] a { font-weight: 520; }
 .md-outline a:hover { color: var(--text); background: var(--selected); }
 .md-outline a.active { color: var(--brand-text, var(--brand)); border-left-color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, transparent); }
 .md-outline a:focus-visible, .md-outline summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 4px; }
-.md-reader.md-reader-medium { grid-template-columns: 112px minmax(0, 1fr); gap: 12px; }
+.md-reader.md-reader-medium { grid-template-columns: 160px minmax(0, 1fr); gap: 14px; }
 .md-reader.md-reader-compact { display: block; position: relative; }
-.md-reader-compact > .md-outline { float: right; width: 36px; height: 36px; margin: 0 0 0 8px; border: 1px solid var(--line); }
+.md-reader-compact > .md-outline { float: right; display: block; width: 36px; height: 36px; top: 0; margin: 0 0 0 8px; border: 1px solid var(--line); overflow: visible; }
 .md-reader-compact > .md-outline > summary { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; font-size: 0; list-style: none; }
 .md-reader-compact > .md-outline > summary::-webkit-details-marker { display: none; }
 .md-reader-compact > .md-outline > summary::after { content: '☷'; font-size: 21px; line-height: 1; font-weight: 400; }
 .md-reader-compact > .md-outline[open] { z-index: 4; }
-.md-reader-compact > .md-outline nav { position: absolute; right: 0; top: 42px; width: min(220px, 52cqi); max-height: 34dvh; padding: 6px; background: var(--panel, var(--bg)); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px #0002; }
+.md-reader-compact > .md-outline nav { position: absolute; right: 0; top: 42px; width: min(220px, 52cqi); max-height: min(70dvh, var(--md-preview-height, 70dvh)); padding: 6px; background: var(--panel, var(--bg)); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px #0002; }
 @media (prefers-reduced-motion: reduce) { .md-outline a { transition: none; } }
 
 .md-media-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 9px 0; flex: 0 0 auto; border-bottom: 1px solid var(--line); }
@@ -848,7 +869,7 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 
 /* Split Markdown outline docks to the pane divider without reserving a column. */
 .md-reader.md-reader-docked { display: block; }
-.md-split > .md-outline-dock { grid-column: 2; grid-row: 2; align-self: center; justify-self: start; position: relative; top: auto; margin: 0; width: 30px; z-index: 8; border: 1px solid var(--line); border-left: 0; border-radius: 0 9px 9px 0; box-shadow: 2px 2px 8px #0001; }
+.md-split > .md-outline-dock { grid-column: 2; grid-row: 2; align-self: center; justify-self: start; position: relative; display: block; height: auto; top: auto; margin: 0; width: 30px; z-index: 8; border: 1px solid var(--line); border-left: 0; border-radius: 0 9px 9px 0; box-shadow: 2px 2px 8px #0001; }
 .md-outline-dock > summary { display: grid; place-items: center; width: 29px; min-height: 76px; padding: 10px 6px; writing-mode: vertical-rl; list-style: none; font-size: 11px; letter-spacing: .12em; color: var(--muted, var(--text)); transition: color .16s ease, background .16s ease; }
 .md-outline-dock > summary::-webkit-details-marker { display: none; }
 .md-outline-dock > summary:hover, .md-outline-dock[open] > summary { color: var(--brand-text, var(--brand)); background: var(--selected); border-radius: 0 9px 9px 0; }

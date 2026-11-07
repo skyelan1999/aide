@@ -12,7 +12,7 @@ source_sha() {
     find cmd internal vendor scripts/office legal/third_party docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.py
-    for extra in scripts/stage-third-party-licenses.py native/macos-desktop/main.swift native/macos-desktop/biometrics.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js scripts/native-computer-bridge.swift scripts/build-native-computer-bridge.sh stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
+    for extra in scripts/stage-third-party-licenses.py native/macos-desktop/main.swift native/macos-desktop/biometrics.swift native/macos-desktop/computer_control.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js scripts/native-computer-bridge.swift scripts/build-native-computer-bridge.sh stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -288,6 +288,7 @@ case "$MODE" in
       fi
     fi
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
+    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/computer-bridge-control.sh stop || true; fi
     REUSE_RUNNING=0
     source scripts/prebuilt-image.sh
     if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && launcher_running_ready "$DOCKER_BIN"; then
@@ -325,7 +326,9 @@ case "$MODE" in
     if [[ "$REUSE_RUNNING" != 1 ]]; then
     bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
     if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs start --root "$PROJECT_DIR" --image "$IMG" || echo "Codex host component unavailable; see launcher output."; else echo "Codex Bridge requires host Node.js 18+."; fi
-    if [[ ("$(uname -s)" == Darwin || "$(uname -s)" == Linux) ]] && command -v node >/dev/null 2>&1; then
+    if [[ "$(uname -s)" == Darwin ]]; then
+      echo "电脑控制由 Aide 桌面主程序提供；独立桥接已停用。"
+    elif [[ "$(uname -s)" == Linux ]] && command -v node >/dev/null 2>&1; then
       bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
     fi
     if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then

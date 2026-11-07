@@ -1,0 +1,107 @@
+{
+  "id": "markdown-reader-controls-20261107",
+  "request": "Markdown文件预览增加图片放大、全文缩放、修复表格渲染、目录高度自适应及滚动高亮跟随",
+  "refinement_request": "将缩放比例移到最上方操作栏；目录底部留白，并改善标题目录的宽度、层级与长标题换行。",
+  "baseline": "ea5e7dc30b77668d0f6f8cb521a48004ad4cd212",
+  "initial_status": "M docs/architecture.md\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-schema.json\n M internal/server/web/workbench.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/task-action-hub.test.cjs\n?? docs/tasks/computer-control-app-approval-20261106.json\n?? docs/tasks/computer-control-settings-20261106.json\n?? docs/tasks/main-update-20261106.json\n?? docs/tasks/new-session-apple-white-20261107.json\n?? internal/server/computer_control_approval_test.go\n?? native/macos-desktop/computer_control.swift",
+  "acceptance": [
+    "Markdown 预览中的普通图片可通过鼠标和键盘打开可关闭的大图预览；不改动文件内容。",
+    "Markdown 正文可放大、缩小并一键恢复 100%，控件在独立文件页和编辑器预览可用。",
+    "表格填满可用宽度；宽表只在表格区域横向滚动，不出现右侧空白框或裁剪。",
+    "桌面目录高度随预览区域变化，文档滚动时高亮对应标题且高亮项始终处于目录可视区。",
+    "窄屏、左右对比模式和无标题文档仍可阅读，既有未提交改动保留。"
+  ],
+  "scope": [
+    "internal/server/web/markdown-outline.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/app.js 中 Markdown 预览挂载调用",
+    "internal/server/web/index.html 中脚本版本",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-reader-controls-20261107.json",
+    "变化相关的测试"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "从截图和请求确定图片预览、正文缩放、表格宽度、目录自适应与高亮跟随五项验收；覆盖两处 Markdown 预览。",
+      "evidence": [
+        "用户截图 2026-11-07",
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/style.css:73"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 Markdown 渲染后的文件预览入口；缩放只作用正文，目录与工具栏留在原尺寸，表格单独横向滚动；不改聊天 Markdown。",
+      "evidence": [
+        "internal/server/web/app.js:9506",
+        "internal/server/web/markdown-outline.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现图片大图预览、正文分级缩放、表格宽度修复、目录动态高度和当前标题自动留在目录可视区；缩放控件移入顶部操作栏，目录加宽并留出底部间距，长标题自然换行、按层级排版；补齐英文标签与静态资源版本。",
+      "evidence": [
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/macos.css",
+        "internal/server/web/app.js",
+        "internal/server/web/locales/en.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Node 对 markdown-outline.js、app.js、en.js 的语法检查与 git diff --check 通过；浏览器合成夹具在 1280×800、390×800 验证表格、目录、缩放、图片弹窗和无标题状态。布局细化后又在 1440×900、390×900 检查顶部控件、目录末尾高亮可见、长标题换行及缩放恢复。实际 OFFICIAL_PARAMS_avata360.md 文件页刷新后已目视确认布局；该文档未包含可点选的嵌入图片。",
+      "evidence": [
+        "1280x800: host 720px; outline 658px; nav 618px; table 948px/region 948px",
+        "文档末尾: active Section 18; navScroll 127px; active link inside nav",
+        "390x800: compact TOC opens, wide table 898px in 350px scroll region",
+        "zoom 110% and reset 100%; image click/Enter/close/Escape; no-heading reader full width",
+        "node --check internal/server/web/markdown-outline.js",
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/locales/en.js",
+        "git diff --check",
+        "node --test scripts/markdown-scroll-sync.test.cjs: pass",
+        "node --test scripts/markdown-live-preview.test.cjs: pass",
+        "1440x900: zoom control in file-view-head-actions, no header overflow; outline 218px wide; long title not clipped; last active title visible with navScroll=1085",
+        "390x900: top zoom control does not overflow; compact TOC opens and last active title visible with navScroll=1187",
+        "real Aide file page OFFICIAL_PARAMS_avata360.md: refreshed and visually confirmed top zoom control, wrapped TOC titles and bottom gap"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 Markdown 编辑与导出架构文档，记录阅读交互、适用范围和实际验收边界。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "删除临时 HTML/SVG 夹具并关闭 127.0.0.1:18767 临时服务；确认原有未提交与未跟踪工作保持。",
+      "evidence": [
+        "git status --short --untracked-files=all",
+        "git diff --check"
+      ]
+    },
+    "local_activation": {
+      "status": "pass",
+      "summary": "2026-11-07 针对布局细化重新执行 ./build.command，构建、安装并启动本地 Aide；新容器健康，源码指纹与镜像标签一致。实际 Markdown 文件页已刷新并目视验收布局。构建包含整个未提交工作树，未提交或推送。",
+      "evidence": [
+        "./build.command: exit 0; AIDE_RUN_TESTS=0; go vet 与 Go build 通过",
+        "aide-aide-1 image sha256:2c390de57bdb35bc3b0d918b2c9e18a3b0d721de43aa3b3e228e280a42387f8b; healthy",
+        "source SHA 与 aide.srcsha 均为 068bbf6ebfd773b8ce4c16f6021061d3db5eb342e27ad6c64e3b1aac4fec34ea",
+        "https://127.0.0.1:9999/healthz: status=ok, integrity=degraded",
+        "HTTPS 静态资源 markdown-outline.js、macos.css、app.js、locales/en.js、index.html 与当前源码 SHA-256 一致",
+        "Aide 实际 OFFICIAL_PARAMS_avata360.md 文件页刷新后，顶部缩放栏与目录新排版可见"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅本地构建并安装；未提交、推送或公开发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "撤销本任务对 markdown-outline.js、macos.css、app.js Markdown 预览入口、en.js 新词条、index.html 四个资源版本及本任务文档的增量；勿覆盖这些文件已有未提交内容。",
+  "handoff": "本地 Aide 已重建、启动并刷新；OFFICIAL_PARAMS_avata360.md 实际文件页的顶部缩放栏与目录新排版已目视确认。图片大图交互仍以夹具验证为准。未提交或推送。"
+}
