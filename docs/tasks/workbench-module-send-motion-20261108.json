@@ -1,0 +1,93 @@
+{
+  "id": "workbench-module-send-motion-20261108",
+  "request": "优化所有主要模块间的动画切换；发送按钮点击后变成流光并生成上方消息框",
+  "baseline": "f3e1f70b3b53f61b19811af2c5f2e8909fc5dc48",
+  "initial_status": "在独立工作树 feat/trajectory-transitions-20261108 实施；原 aide 检出区的未提交内容未触碰。",
+  "acceptance": [
+    "顶部文件/插件/消息模块、对话/工作流、文件工作目录/引用和插件已安装/市场切换具有统一的短促过渡，不改变布局与交互顺序。",
+    "发送请求等待期间按钮呈流光；仅服务端成功且实际消息框已渲染时光点落到该框；失败、切换会话或没有落点时不留假消息和残留光效。",
+    "窄屏、明暗主题与减少动态效果设置下仍可操作。"
+  ],
+  "scope": [
+    "internal/server/web/experience.js",
+    "internal/server/web/experience.css",
+    "internal/server/web/app.js",
+    "internal/server/web/plugin-market.js",
+    "internal/server/web/index.html",
+    "scripts/experience-runtime.test.cjs",
+    "scripts/session-review.test.cjs",
+    "docs/tasks/workbench-module-send-motion-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户澄清覆盖主要工作台模块切换及发送到真实消息框的动效；保留原布局。",
+      "evidence": [
+        "用户本轮澄清",
+        "docs/agent/WORKFLOW.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "共用 experience.js 的动效门控；选中块只移动视觉层；消息确认后才飞行，失败仅清理按钮状态。",
+      "evidence": [
+        "internal/server/web/experience.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现模块选中滑块、内容短过渡、发送流光与消息落点，保留减少动态效果和登录/锁屏门控。",
+      "evidence": [
+        "internal/server/web/experience.js",
+        "internal/server/web/experience.css",
+        "internal/server/web/app.js",
+        "internal/server/web/plugin-market.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "定向语法和 VM 测试通过；隔离 Chrome 用当前工作树资源实测成功/失败提交、桌面明色、窄屏暗色和减少动态效果；仓库 quick 门禁 322 项全部通过。此验收不等于当前运行服务已更新。",
+      "evidence": [
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/experience.js",
+        "node --check internal/server/web/plugin-market.js",
+        "node scripts/test_ui_click_latency.cjs",
+        "node scripts/tts-playback.test.cjs",
+        "node scripts/experience-runtime.test.cjs",
+        "node --test scripts/experience-runtime.test.cjs scripts/session-review.test.cjs",
+        "隔离 Chrome 通过 /tmp/aide-motion-submit.cjs 与 /tmp/aide-motion-submit-fail.cjs 验证提交状态，所有 POST 均由测试页拦截",
+        "隔离 Chrome 通过 /tmp/aide-motion-more.cjs 验证窄屏暗色和减少动态效果",
+        ".agent-state/workbench-motion-desktop.png",
+        ".agent-state/workbench-motion-mobile-dark.png",
+        ".agent-state/verify-20261108T082454442423Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务记录说明验收、边界和未发布状态；无新增公共接口。",
+      "evidence": [
+        "docs/tasks/workbench-module-send-motion-20261108.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "独立工作树内仅保留范围内源码、测试和任务记录；浏览器测试截图保留在忽略的 .agent-state。",
+      "evidence": [
+        "git status --short",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地 main 已快进合并 f3e1f70b 与 d37674c6；尚未推送、重建或发布运行实例。",
+      "evidence": [
+        "git log -3 --oneline",
+        "git status --short --branch"
+      ]
+    }
+  },
+  "release_authorization": "用户先后要求“合并到main”和“在当前aide目录切换到main最新”；未要求推送或部署。",
+  "rollback": "本地 main 合并前为 b82120e5；原目录未提交内容在 /Users/skyelan/WorkTrees/aide-safety/2026-11-08-motion-main-sync 和 stash f19f0a3f 留存。",
+  "handoff": "当前 aide 目录位于 main，包含远端 origin/main 截至 2026-11-08 的更新及两项动效提交；本地 main 尚未推送，运行服务未重建。原目录的 19 个脏文件与 origin/main 完全一致，已备份并暂存，更新后工作树清洁。"
+}
