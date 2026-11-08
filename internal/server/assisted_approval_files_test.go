@@ -101,6 +101,38 @@ func TestAssistedApprovalLocalFiles(t *testing.T) {
 	}
 }
 
+func TestAssistedApprovalRoutineNewDocument(t *testing.T) {
+	a := testApp(t)
+	docs := bindProposalDocs(t, a, "docs")
+	_, task := documentProposalTask(a)
+	if _, err := proposeDocument(a, task, nil, "report.md", "# Report\n"); err != nil {
+		t.Fatal(err)
+	}
+	// No model endpoint is configured: routine creation must not require a
+	// second model response, while the bound target is still version checked.
+	a.reviewPendingFiles(context.Background(), task)
+	b, err := os.ReadFile(filepath.Join(docs, "report.md"))
+	if err != nil || string(b) != "# Report\n" || !task.Applied || task.Status != "completed" {
+		t.Fatalf("routine document not applied: %q %v", b, err)
+	}
+	if n := len(task.ApprovalReviews); n != 1 || task.ApprovalReviews[0].Source != "system" || task.ApprovalReviews[0].Status != "approved" {
+		t.Fatalf("approval receipt: %+v", task.ApprovalReviews)
+	}
+}
+
+func TestRoutineNewDocumentBatchRejectsReplacementAndExecutable(t *testing.T) {
+	for _, files := range [][]Change{
+		{{Source: systemDocsSource, Path: "existing.md", Content: "x", BaseHash: "old"}},
+		{{Source: systemDocsSource, Path: "script.sh", Content: "echo x"}},
+		{{Source: systemDocsSource, Path: "../outside.md", Content: "x"}},
+		{{Source: systemDocsSource, Path: "valid.md", Content: "x"}, {Path: "other.md", Content: "x"}},
+	} {
+		if routineNewDocumentBatch(files) {
+			t.Fatalf("unsafe batch accepted: %+v", files)
+		}
+	}
+}
+
 func TestReviewedFileResult(t *testing.T) {
 	for _, mode := range []string{"pending", "applied", "changed", "switched"} {
 		t.Run(mode, func(t *testing.T) {
@@ -153,5 +185,41 @@ func TestReviewedFileResult(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestReviewedFileResultRefreshesAfterManualApplication(t *testing.T) {
+	a := testApp(t)
+	task := &Task{ID: "receipt-refresh", AutoReview: true, Status: "awaiting_approval", WorkspaceID: a.wsID(), Files: []Change{{Path: "qa.md", Content: "QA"}}}
+	s := &Session{ID: "receipt-refresh-owner", Runs: []*Task{task}, Messages: []Message{{Role: "assistant", Content: "Original answer"}}}
+	a.sessions[s.ID] = s
+	a.recordReviewedFileResult(task)
+	if len(task.Steps) != 1 || !strings.Contains(task.Steps[0].Content, "尚未全部应用") {
+		t.Fatal("missing initial pending receipt")
+	}
+	if err := os.WriteFile(filepath.Join(a.workPath, "qa.md"), []byte("QA"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	task.Applied, task.Files[0].Applied = true, true
+	a.recordReviewedFileResult(task)
+	if len(task.Steps) != 1 || len(s.Messages) != 2 || !strings.Contains(task.Steps[0].Content, "读回一致") || s.Messages[1].Content != task.Steps[0].Content {
+		t.Fatalf("stale receipt after apply: %+v %+v", task.Steps, s.Messages)
+	}
+}
+
+func TestManualApplyRefreshesPendingDocumentReceipt(t *testing.T) {
+	a := testApp(t)
+	docs := bindProposalDocs(t, a, "docs")
+	s, task := documentProposalTask(a)
+	if _, err := proposeDocument(a, task, nil, "report.md", "# Report\n"); err != nil {
+		t.Fatal(err)
+	}
+	a.recordReviewedFileResult(task)
+	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/apply", nil), 200)
+	if _, err := os.Stat(filepath.Join(docs, "report.md")); err != nil {
+		t.Fatal(err)
+	}
+	if len(task.Steps) != 1 || !strings.Contains(task.Steps[0].Content, "读回一致") || strings.Contains(task.Steps[0].Content, "尚未全部应用") {
+		t.Fatalf("manual application left stale receipt: %+v", task.Steps)
 	}
 }

@@ -853,13 +853,13 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		_, err = step("plan", planInstruction, true)
 		if err == nil {
 			var proposal string
-			proposal, err = step("propose", `Generate an implementation proposal. Return ONLY a JSON object: {"summary":"...","files":[{"path":"relative/path","content":"complete new file content"}],"commands":["suggested test command"]}. Never include markdown fences. You may propose modifying an existing workspace file only if you inspected it with read_file during this task or it was attached to this task; do not overwrite uninspected files. New files are allowed. Paths must be relative to /workspace, never /context. Do not propose secrets, .env, .git or binary files. If context is insufficient, leave files empty and explain in summary. Commands are suggestions, not executions.`, false)
+			proposal, err = step("propose", `Generate an implementation proposal. Return ONLY a JSON object: {"summary":"...","files":[{"path":"relative/path","content":"complete new file content"}],"commands":["suggested test command"]}. Never include markdown fences. You may propose modifying an existing workspace file only if you inspected it with read_file during this task or it was attached to this task; do not overwrite uninspected files. New files are allowed. Paths must be relative to /workspace, never /context. Do not propose secrets, .env, .git or binary files. If context is insufficient, leave files empty and explain in summary. If only part of the request can be fulfilled, propose the independently useful remainder when possible, and explain the omitted part once. Do not invent a file solely to repeat a limitation. Commands are suggestions, not executions.`, false)
 			if err == nil {
 				err = a.acceptProposal(s, task, proposal, versions)
 			}
 		}
 		if err == nil {
-			answer, err = step("review", "审查上述计划和 JSON 修改方案：指出功能缺陷、路径风险和需要运行的验证步骤。所有文件仍然只是提案，任何命令都没有被运行；不要宣称测试通过。用中文给出简明结论。", true)
+			answer, err = step("review", "审查上述计划和 JSON 修改方案，先说明已形成的可交付内容及其是否满足用户目标，再指出确实影响交付的功能缺口、路径风险和需要运行的验证步骤。对于可独立完成的部分，给出具体补全建议；必要的范围限制只说明一次，不要反复用泛泛的提醒替代方案。如果 files 和 commands 均为空，明确说明没有实现提案，不要把审查写成已交付。所有文件仍然只是提案，任何命令都没有被运行；不要宣称测试通过。用中文给出简明结论。", true)
 		}
 	}
 	a.mu.Lock()
@@ -1737,6 +1737,22 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 		}
 		return a.persistApprovalReceiptLocked(task, record)
 	})
+	// A manual application may follow a previously recorded "still pending"
+	// assisted-review receipt. Refresh that receipt with the verified disk state.
+	a.mu.Lock()
+	var appliedTask *Task
+	if s := a.sessions[r.PathValue("id")]; s != nil {
+		for _, task := range s.Runs {
+			if task.ID == r.PathValue("run") && task.Applied {
+				appliedTask = task
+				break
+			}
+		}
+	}
+	a.mu.Unlock()
+	if appliedTask != nil {
+		a.recordReviewedFileResult(appliedTask)
+	}
 }
 
 func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard func(*Task) error) {

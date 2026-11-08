@@ -960,8 +960,13 @@ async function selectSession(id) {
     state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0;
   }
   try {
-    const savedDraft=window.AideContinuity?await AideContinuity.readTab(recoveryScope(),'chat',id).catch(()=>null):null;
-    const loaded = await getSessionWindow(id);
+    // Start the server request before IndexedDB recovery. A slow first draft
+    // read must not postpone the network request for the selected session.
+    const loadedPromise = getSessionWindow(id);
+    const savedDraftPromise = window.AideContinuity
+      ? AideContinuity.readTab(recoveryScope(),'chat',id).catch(()=>null)
+      : Promise.resolve(null);
+    const [loaded,savedDraft] = await Promise.all([loadedPromise,savedDraftPromise]);
     if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
     const json = sessionRevision(loaded);
     const changed = json !== state.sessionJSON;
@@ -989,9 +994,19 @@ async function selectSession(id) {
     schedulePoll();
     $('prompt').focus(); // 不等待侧栏刷新即可继续输入
     if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
-    // 「已读」写入可能串行占用服务端锁；首屏读取及渲染完成后再执行。
-    api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) })
-      .then(() => loadSessions()).catch(() => {});
+    // Already-read sessions need no disk write. The global sessions-changed
+    // event refreshes the list when appropriate; avoid another unconditional
+    // list fetch and full sidebar rebuild after every navigation.
+    if (!loaded.checked) {
+      api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) })
+        .then(() => {
+          for (const item of document.querySelectorAll('.session-item[data-session-id]')) {
+            if (item.dataset.sessionId !== id) continue;
+            item.classList.remove('status-completed');
+            item.querySelector('.session-dot.dot-done')?.remove();
+          }
+        }).catch(() => {});
+    }
   } finally {
     if (seq === sessionSeq.value) {
       state.pendingSessionId = '';
@@ -9932,7 +9947,7 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
   if (bodyNode) ev.append(bodyNode);
   return ev;
 }
-let trajView = "history"; // history | calls | outcome（一级）
+let trajView = "history"; // history | review | calls | outcome（一级）
 let trajOutcomeRun = null;
 let trajectoryGeneration = 0;
 let trajFmt = "md"; // md | json（历史视图格式，二级）
@@ -9943,9 +9958,17 @@ function renderTrajectory() {
   host.replaceChildren();
   const fmtSeg = $('traj-fmt-seg');
   fmtSeg?.classList.toggle('hidden', trajView !== 'history');
-  $('trajectory-export').classList.toggle('hidden', trajView === 'outcome');
+  $('trajectory-export').classList.toggle('hidden', trajView === 'outcome' || trajView === 'review');
   $('compact-button').classList.toggle('hidden', trajView !== 'history');
   const session = state.session;
+  if (trajView === 'review' && session) {
+    window.AideSessionReview.mount(host, session, {t, loadOlder: action(async () => {
+      state.historyLimit = Math.min(2000, state.historyLimit + SESSION_HISTORY_PAGE);
+      await selectSession(session.id);
+      if (state.session?.id === session.id && trajView === 'review') renderTrajectory();
+    })});
+    return;
+  }
   if (!session || (session.kind === 'assistant' ? !session.messages?.length : !session.runs?.length)) {
     host.append(el('p', 'muted', t("当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。")));
     return;
@@ -10198,7 +10221,7 @@ $('trajectory-export').onclick = action(() => {
     toast(t("已导出会话为 Markdown"));
   }
 });
-// 轨迹一级视图：历史 / 调用记录 / 成果舱；历史二级格式：Markdown / JSON
+// 轨迹一级视图：历史 / 会话评审 / 调用记录 / 输入与输出；历史二级格式：Markdown / JSON
 function ensureTrajectoryTabs() {
   const mainSeg = document.querySelector('.traj-main-seg');
   if (mainSeg && !mainSeg.dataset.bound) {

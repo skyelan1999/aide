@@ -200,7 +200,8 @@ func (a *App) baseSystemPrompt() string {
 		}
 		return p
 	}
-	return systemPrompt // aide 工作人格的开发助手设定（workflow.go）
+	return systemPrompt + `
+For requested documents, deliver a useful artifact with the requested decisions, architecture, assumptions, tradeoffs, and acceptance criteria. Put a necessary scope limitation in one short section; do not repeat it in every paragraph or substitute generic cautions for the work you can do. Keep estimates visibly separate from measurements. If a requested part cannot be supplied, complete the remaining useful scope and describe the gap once.` // aide 工作人格的开发助手设定（workflow.go）
 }
 
 // personaListOut 返回人格列表（不含明文），供前端切换器渲染。调用方需持有 a.mu。

@@ -1,0 +1,57 @@
+{
+  "id": "session-switch-responsiveness-20261108",
+  "request": "你看下界面会话切换不灵敏",
+  "baseline": "b82120e599bfaefa56bf01b132822d8510c180ae",
+  "initial_status": "## main...origin/main (clean at intake)",
+  "acceptance": [
+    "Switching highlights the target immediately and stale responses cannot replace a newer selection.",
+    "The selected session GET starts without waiting for IndexedDB draft recovery; draft content and attachments remain recoverable.",
+    "Already-checked sessions do not trigger a redundant disk write or unconditional sidebar reload.",
+    "A newly checked session clears its local unread highlight and dot after the write succeeds."
+  ],
+  "scope": [
+    "internal/server/web/app.js: session selection request order and read receipt",
+    "scripts/test_ui_click_latency.cjs: focused selection regression",
+    "docs/tasks/session-switch-responsiveness-20261108.json: evidence and handoff"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports that switching between existing conversations feels slow. Preserve in-progress drafts and existing API behavior while shortening the navigation path.",
+      "evidence": ["User request on 2026-11-08", "Baseline b82120e599bfaefa56bf01b132822d8510c180ae; clean working tree at intake"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "The UI awaited draft recovery before issuing the session GET and refreshed the complete list after each check PATCH. Start independent reads together; skip the write for sessions already checked and let the existing sessions-changed event handle list synchronization.",
+      "evidence": ["internal/server/web/app.js: selectSession, loadSessions, scheduleSessionsRefresh", "internal/server/server.go: getSession, patchSession"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Parallelized the independent detail and draft reads. Checked status now controls the read receipt; the receipt clears the local unread highlight and dot without a second unconditional list request.",
+      "evidence": ["internal/server/web/app.js", "scripts/test_ui_click_latency.cjs"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused synthetic click regression and repository quick gate pass. New code has not yet been loaded into the running Aide instance; live desktop switch latency has not been measured. A read-only attempt to click a session in the current desktop UI was interrupted when that UI state changed during the operation, so it is not acceptance evidence.",
+      "evidence": ["node scripts/test_ui_click_latency.cjs: PASS", "node --check internal/server/web/app.js: PASS", "git diff --check: PASS", "python3 scripts/agent-route.py verify quick: PASS, fingerprint d1aaa515e532ffb720059357137f44b7fc1dcae444be18317bb224831b115cea, log .agent-state/verify-20261108T041735924007Z.log"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded scope, exact changed behavior, validation, and live acceptance boundary in this task record.",
+      "evidence": ["docs/tasks/session-switch-responsiveness-20261108.json"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed the three-file diff and retained the working tree for live acceptance; no user data or existing session files were changed.",
+      "evidence": ["git diff --check: PASS"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No commit, push, release, or restart was requested. A read-only desktop inspection showed a different Aide task actively running, so that instance was left undisturbed and still serves the previous build.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Source-level responsiveness fix is ready for live acceptance. The existing Aide instance still serves the previous build; do not claim observed latency improvement until it is rebuilt/reloaded and click-to-content timings are compared in the running UI. Preserve the user's active Aide task and draft during that handoff."
+}
