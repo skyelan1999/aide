@@ -9,11 +9,16 @@ for(const mode of ['normal','hidden','reduced']){
  vm.createContext(context);vm.runInContext(source,context,{filename:'experience.js'});
  const api=context.aideExperience;
  assert(api,mode+': complete script creates the API');assert.equal(root.dataset.motionLayer,'ready');
- for(const name of ['leave','settle','reopen','changePanels'])assert.equal(typeof api[name],'function',name);
+ for(const name of ['leave','settle','reopen','changePanels','revealContent','beginSend'])assert.equal(typeof api[name],'function',name);
  assert.equal(api.replay,undefined,'removed replay API stays removed');
  let closed=0,changed=0;
  const finish=api.leave(null,()=>closed++);finish();api.settle(null);api.reopen(null);api.changePanels(()=>changed++);
  assert.equal(closed,1);assert.equal(changed,1,'panel mutation is immediate');
+ const classes=new Set(),button={classList:{add:name=>classes.add(name),remove:name=>classes.delete(name)}};
+ const send=api.beginSend(button);
+ assert.equal(classes.has('send-beaming'),mode==='normal','send motion follows visibility and reduced-motion preference');
+ send.land(null);
+ assert.equal(classes.has('send-beaming'),false,'missing or failed message leaves no active glow');
  context.aideExperience=null;vm.runInContext(source,context);assert.equal(typeof context.aideExperience.leave,'function','null API initializes');context.aideExperience=api;
  api.extension='retained';vm.runInContext(source,context);assert.equal(context.aideExperience,api,'preserve existing API identity');assert.equal(api.extension,'retained');
 }

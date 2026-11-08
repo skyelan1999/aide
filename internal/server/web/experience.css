@@ -56,6 +56,21 @@ html[data-motion-layer="ready"] .strategy-menu,
 html[data-motion-layer="ready"] .session-menu,
 html[data-motion-layer="ready"] .file-ctx-menu{animation:none!important}
 [data-ui-exiting="true"]{pointer-events:none!important;user-select:none!important}
+/* One sliding selection surface across the workbench's main module switches. */
+.panel-switch.motion-segment-ready,.mode-switch.motion-segment-ready,.root-tabs.motion-segment-ready,#plugin-mode-tabs.motion-segment-ready{position:relative;isolation:isolate}
+.panel-switch.motion-segment-ready::before,.mode-switch.motion-segment-ready::before,.root-tabs.motion-segment-ready::before,#plugin-mode-tabs.motion-segment-ready::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:var(--motion-segment-width);transform:translate3d(var(--motion-segment-x),0,0);border-radius:inherit;background:var(--selected);box-shadow:0 1px 3px var(--shadow-1);pointer-events:none;transition:transform 230ms var(--motion-ease),width 230ms var(--motion-ease)}
+#plugin-mode-tabs.motion-segment-ready::before{top:8px;bottom:8px;border-radius:8px}
+.panel-switch.motion-segment-ready.motion-segment-initial::before,.mode-switch.motion-segment-ready.motion-segment-initial::before,.root-tabs.motion-segment-ready.motion-segment-initial::before,#plugin-mode-tabs.motion-segment-ready.motion-segment-initial::before{transition:none}
+.panel-switch.motion-segment-ready button,.mode-switch.motion-segment-ready button,.root-tabs.motion-segment-ready button,#plugin-mode-tabs.motion-segment-ready button{position:relative;z-index:1}
+.panel-switch.motion-segment-ready .quiet.active,.mode-switch.motion-segment-ready button.active,.root-tabs.motion-segment-ready button.active,#plugin-mode-tabs.motion-segment-ready button[aria-selected="true"]{background:transparent;box-shadow:none}
+#file-panel .root-tabs.motion-segment-ready button.active{box-shadow:none}
+#send.send-beaming{position:relative;isolation:isolate;overflow:hidden;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-hi) 20%,transparent),0 0 18px color-mix(in srgb,var(--brand-hi) 32%,transparent)}
+#send.send-beaming::before{content:"";position:absolute;inset:-20%;background:linear-gradient(110deg,transparent 30%,color-mix(in srgb,var(--on-brand) 72%,transparent) 50%,transparent 70%);transform:translateX(-120%);animation:send-beam 900ms ease-in-out infinite;pointer-events:none}
+@keyframes send-beam{to{transform:translateX(120%)}}
+.send-light-flight{position:fixed;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--on-brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand-hi) 38%,transparent),0 0 16px 7px color-mix(in srgb,var(--brand-hi) 56%,transparent);pointer-events:none;z-index:90}
+html[data-motion="reduced"] #send.send-beaming::before,html[data-ui-paused] #send.send-beaming::before{animation:none}
+html[data-motion="reduced"] .motion-segment-ready::before,html[data-ui-paused] .motion-segment-ready::before{transition:none}
+@media(prefers-reduced-motion:reduce){#send.send-beaming::before{animation:none}.motion-segment-ready::before{transition:none}}
 @media(min-width:951px){
  #file-panel,#plugin-panel,#reminder-center{grid-column:3;grid-row:1;min-width:0;overflow:hidden}
 }

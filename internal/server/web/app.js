@@ -989,6 +989,7 @@ async function selectSession(id) {
     scheduleChatRecovery();
     if (loaded.pendingPrompt && !$('prompt').value.trim()) $('prompt').value = loaded.pendingPrompt;
     if (changed || !sameSession) renderSession(); // 数据未变时跳过重渲染，点击更轻快
+    if (!sameSession) window.aideExperience?.revealContent($('timeline'));
     if(loaded.kind==='assistant')window.aideAssistantLiveSync?.();
     refreshCompactInfo();
     schedulePoll();
@@ -3498,7 +3499,7 @@ function applyReferenceTerminology() {
 applyReferenceTerminology();
 // 点击 dialog 遮罩关闭弹窗（事件委托，覆盖所有静态及动态 dialog）
 document.addEventListener('click', e => { if (e.target.tagName === 'DIALOG' && e.target.open) e.target.close(); });
-document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { rememberFileLocation(); state.root = b.dataset.root; if (state.root === 'context' && !state.source) state.source = defaultContextSourceID(); restoreFileLocation(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }, {feedback:false}));
+document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { rememberFileLocation(); state.root = b.dataset.root; if (state.root === 'context' && !state.source) state.source = defaultContextSourceID(); restoreFileLocation(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); window.aideExperience?.revealContent($('files')); }, {feedback:false}));
 function syncPanelButtons() {
   const plugins = document.body.classList.contains('plugins-mode');
   const reminders = document.body.classList.contains('reminders-mode');
@@ -3797,6 +3798,7 @@ $('task-form').onsubmit = action(async event => {
   const prompt = $('prompt').value.trim(); if (!prompt) return;
   if (state.mode!=='pw' && !state.config?.configured) { openSettings(); return; }
   if (state.previewOverLimit) { toast(t("上下文预算超限：请缩短任务或减少附件后再发送")); return; }
+  const sendMotion = window.aideExperience?.beginSend($('send'));
   state.submitting = true;
   updateSendEnabled(); // 先显示提交态，再等待创建会话/启动任务请求
   cancelContextPreview(); // 输入防抖请求不再和正式发送争用服务端会话锁
@@ -3845,6 +3847,9 @@ $('task-form').onsubmit = action(async event => {
           else speakReply(resp.reply);
         }
         // 按 action 分流提示
+        if (state.session?.id === target.id && resp.action !== 'silent' && resp.action !== 'ignore') {
+          sendMotion?.land([...($('timeline')?.querySelectorAll('.assistant-msg .am-text') || [])].at(-1));
+        }
         if (resp.action === 'dispatch' && resp.dispatched) {
           if (resp.dispatched.started) toast(t('已启动 aide 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
           else toast(t('已创建 aide 会话 #{0}，但任务未启动：{1}', resp.dispatched.number || '?', resp.dispatched.startError || t('请检查模型配置')));
@@ -3877,6 +3882,10 @@ $('task-form').onsubmit = action(async event => {
       await selectSession(target.id);
       reconcileAvatarRun(submitted.id || submitted.runId);
       $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: 'instant' });
+      const runId = submitted.id || submitted.runId;
+      const bubble = [...($('timeline')?.querySelectorAll('article.run[data-run]') || [])]
+        .find(box => box.dataset.run === runId)?.querySelector('.user-message');
+      sendMotion?.land(bubble);
     }
   } catch (err) {
     if (stopContextCompactionWatch) { await stopContextCompactionWatch(); stopContextCompactionWatch = null; }
@@ -3888,7 +3897,7 @@ $('task-form').onsubmit = action(async event => {
       await loadSessions().catch(() => {});
     }
     throw err;
-  } finally { if (stopContextCompactionWatch) await stopContextCompactionWatch(); state.submitting = false; updateSendEnabled(); setSendMode(state.busy); }
+  } finally { sendMotion?.cancel(); if (stopContextCompactionWatch) await stopContextCompactionWatch(); state.submitting = false; updateSendEnabled(); setSendMode(state.busy); }
 });
   $('queue-toggle')?.addEventListener('click', () => { state.queueMode = !state.queueMode; $('queue-toggle').classList.toggle('active', state.queueMode); setSendMode(state.busy); });
   $('prompt').addEventListener('keydown', event => {

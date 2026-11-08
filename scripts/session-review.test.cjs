@@ -46,7 +46,7 @@ test('empty and running sessions do not acquire fabricated timing', () => {
 
 test('trajectory loads the review module before app.js and exposes the tab', () => {
   const html = fs.readFileSync(path.join(__dirname, '../internal/server/web/index.html'), 'utf8');
-  assert.match(html, /session-review\.js\?v=1[^]*app\.js\?v=254/);
+  assert.match(html, /session-review\.js\?v=1[^]*app\.js\?v=255/);
   assert.match(html, /data-view="review"[^>]*data-i18n="会话评审"/);
 });
 

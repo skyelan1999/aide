@@ -34,7 +34,7 @@
  const media=window.matchMedia?.('(prefers-reduced-motion: reduce)');
  const finePointer=window.matchMedia?.('(hover: hover) and (pointer: fine)');
  const nativeDialogMotion=!!window.CSS?.supports('transition-behavior','allow-discrete');
- const surfaces=new Map(),running=new Map(),exits=new Map();
+ const surfaces=new Map(),running=new Map(),exits=new Map(),segmentSyncs=[];
  const sideIDs=new Set(['file-panel','plugin-panel','reminder-center']);
  const dialogIDs=new Set(['settings-dialog','editor-dialog','rca-dialog','new-file-dialog','new-folder-dialog','file-properties-dialog','plugin-settings-dialog','plugin-upload-dialog','ws-browse-dialog','source-dialog','reminder-alert']);
  const fixedIDs=new Set([...sideIDs,'strategy-menu','search-results','terminal-body','reminder-form']);
@@ -124,6 +124,7 @@
   settlePanels();
   for(const id of sideIDs){const node=document.getElementById(id);if(node)settle(node);}
   update(); // Mode, selected button, accessibility and focus state update immediately.
+  for(const sync of segmentSyncs)sync();
   const after=activePanel(),gridEnd=getComputedStyle(body).gridTemplateColumns;
   if(before===after||!allowed()){scan();return;}
   const finishExit=wasVisible?leave(before,null,{kind:'side',snapshot}):()=>{};
@@ -139,6 +140,69 @@
   panelTransition=finish;
   const animation=body.animate([{gridTemplateColumns:start.join(' ')},{gridTemplateColumns:end.join(' ')}],{duration:180,easing:'cubic-bezier(.22,1,.36,1)'});
   running.set(body,animation);animation.finished.then(finish,()=>{});timer=setTimeout(finish,200);
+ }
+ function revealContent(node,direction=1){
+  if(!node||!allowed()||!visible(node)||typeof node.animate!=='function')return;
+  cancel(node);
+  const animation=node.animate([
+   {opacity:.72,transform:`translate3d(${direction*6}px,0,0)`},
+   {opacity:1,transform:'translate3d(0,0,0)'}
+  ],{duration:190,easing:'cubic-bezier(.22,1,.36,1)'});
+  running.set(node,animation);
+  animation.finished.then(()=>{if(running.get(node)===animation)running.delete(node);},()=>{});
+ }
+ function bindSegment(node){
+  let scheduled=0;
+  const selected=()=>node.querySelector('button[aria-selected="true"]')||node.querySelector('button.active');
+  const sync=()=>{
+   scheduled=0;
+   if(!node.isConnected||!visible(node))return;
+   const button=selected();if(!button||!button.offsetWidth)return;
+   if(!node.classList.contains('motion-segment-ready'))node.classList.add('motion-segment-initial');
+   node.style.setProperty('--motion-segment-x',button.offsetLeft+'px');
+   node.style.setProperty('--motion-segment-width',button.offsetWidth+'px');
+   node.classList.add('motion-segment-ready');
+   if(node.classList.contains('motion-segment-initial'))requestAnimationFrame(()=>node.classList.remove('motion-segment-initial'));
+  };
+  const queueSync=()=>{if(!scheduled)scheduled=requestAnimationFrame(sync);};
+  segmentSyncs.push(queueSync);
+  new MutationObserver(queueSync).observe(node,{subtree:true,childList:true,attributes:true,attributeFilter:['class','aria-selected','hidden']});
+  if(window.ResizeObserver)new ResizeObserver(queueSync).observe(node);
+  sync();
+ }
+ for(const selector of ['.panel-switch','.mode-switch','.root-tabs','#plugin-mode-tabs']){
+  const node=document.querySelector?.(selector);if(node)bindSegment(node);
+ }
+ function beginSend(button){
+  let active=true;
+  if(allowed())button?.classList.add('send-beaming');
+  const clear=()=>{active=false;button?.classList.remove('send-beaming');};
+  return {cancel:clear,land(target){
+   if(!active)return;
+   clear();
+   if(!target||!allowed()||!visible(target)||typeof target.animate!=='function'||!button?.isConnected)return;
+   const from=button.getBoundingClientRect(),to=target.getBoundingClientRect();
+   if(to.bottom<0||to.top>innerHeight||document.querySelector('.settings-sheet.open,.trajectory-sheet.open,.workspace-sheet.open'))return;
+   const origin={x:from.left+from.width/2,y:from.top+from.height/2};
+   const destination={x:to.right-Math.min(24,to.width/3),y:to.top+Math.min(26,to.height/2)};
+   const light=document.createElement('span');light.className='send-light-flight';light.setAttribute('aria-hidden','true');
+   light.style.left=origin.x+'px';light.style.top=origin.y+'px';document.body.append(light);
+   const dx=destination.x-origin.x,dy=destination.y-origin.y;
+   const flight=light.animate([
+    {opacity:.15,transform:'translate3d(0,0,0) scale(.65)'},
+    {opacity:1,transform:`translate3d(${dx*.55}px,${dy*.55}px,0) scale(1.2)`,offset:.55},
+    {opacity:0,transform:`translate3d(${dx}px,${dy}px,0) scale(.7)`}
+   ],{duration:390,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
+   const removeLight=()=>light.remove();
+   flight.finished.then(removeLight,removeLight);
+   setTimeout(removeLight,560); // A paused animation cannot leave a floating light behind.
+   const arrive=target.animate([
+    {opacity:0,transform:'translate3d(0,8px,0) scale(.975)',offset:0},
+    {opacity:0,transform:'translate3d(0,8px,0) scale(.975)',offset:.4},
+    {opacity:1,transform:'translate3d(0,0,0) scale(1)',offset:1}
+   ],{duration:390,easing:'cubic-bezier(.22,1,.36,1)'});
+   arrive.finished.catch(()=>{});
+  }};
  }
  function scan(){
   scheduled=0;
@@ -212,6 +276,6 @@
  },{capture:true,passive:true});
  window.addEventListener('resize',()=>{resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);});
  // Navigation owns this API even when the optional intro does not run.
- window.aideExperience=Object.assign(window.aideExperience||{},{leave,settle,reopen,changePanels});
+ window.aideExperience=Object.assign(window.aideExperience||{},{leave,settle,reopen,changePanels,revealContent,beginSend});
  root.dataset.motionLayer='ready';
 })();
