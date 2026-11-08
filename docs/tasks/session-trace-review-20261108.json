@@ -1,0 +1,84 @@
+{
+  "id": "session-trace-review-20261108",
+  "request": "在轨迹里加入会话状态评审视图：状态、时间线、事件详情",
+  "baseline": "b82120e599bfaefa56bf01b132822d8510c180ae",
+  "initial_status": "M internal/server/web/app.js\n M scripts/test_ui_click_latency.cjs\n?? docs/tasks/session-switch-responsiveness-20261108.json",
+  "acceptance": [
+    "轨迹新增会话评审视图，显示本会话状态、模型、执行环境、轮次、工具数和用量",
+    "按已保存编排事件绘制时间轴；可选择轮次和事件查看阶段、结果、开始结束时间与耗时，并可缩放",
+    "旧会话缺少编排记录时仅使用请求快照的计时元数据；不显示提示词、工具参数或正文",
+    "环境状态和任务结束时间没有来源时明确显示未记录，不推测",
+    "桌面与窄屏可操作；英文文案与回归检查通过；保留既有未提交改动"
+  ],
+  "scope": [
+    "internal/server/web/app.js 中轨迹入口接线",
+    "internal/server/web/index.html 中轨迹标签及资源引用",
+    "internal/server/web/session-review.js 与 session-review.css",
+    "internal/server/web/locales/en.js 的相关翻译",
+    "scripts/session-review.test.cjs 与本任务记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户截图抽取会话概览、状态、时间轴、轮次和事件详情；不复制 OpenAI 托管环境字段含义。",
+      "evidence": [
+        "用户请求与现有轨迹界面"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 Session/Task 已有状态、TokenUsage 和无正文的 OrchestrationEvent；旧数据只读请求快照计时元数据。无数据明确标记。无需服务端迁移。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/workflow.go",
+        "internal/server/orchestration_observability.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增独立会话评审模块与样式，接入轨迹第四个标签、英文文案和分页加载。",
+      "evidence": [
+        "internal/server/web/session-review.js",
+        "internal/server/web/session-review.css",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向测试、语法、翻译覆盖、仓库 quick 门禁和独立浏览器组件交互通过；真实 Aide 运行实例尚未加载新代码，集成验收待维护窗口。",
+      "evidence": [
+        "node --test scripts/session-review.test.cjs: 5/5 pass",
+        "node --check app.js/session-review.js/en.js: pass",
+        "node scripts/test_i18n_coverage.cjs: pass",
+        "浏览器独立组件页 960x720/390x844：缩放、轮次、事件详情与布局通过",
+        "python3 scripts/agent-route.py verify quick: exit 0, .agent-state/verify-20261108T043505217538Z.log",
+        "独立组件页面：960x720 时间轴缩放、轮次和事件详情点选；390x844 无页面横向溢出且轮次切换成功"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务记录写明实现范围、数据来源及验收边界。",
+      "evidence": [
+        "docs/tasks/session-trace-review-20261108.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "逐项检查本任务新文件与接线；先前会话切换改动和任务记录仍保留。独立浏览器标签和临时 QA 服务已关闭。",
+      "evidence": [
+        "git diff --check: pass",
+        "git status --short: 既有 app.js/test_ui_click_latency 改动与任务记录仍存在"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未请求提交、合并、推送或替换运行服务；现有 Aide 会话仍在运行。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "未授权本任务发布或部署",
+  "rollback": "仅撤销本任务新增的 session-review 模块/样式、轨迹接入、对应翻译和测试；不触碰任务开始前的会话切换改动。",
+  "handoff": "前端源码已完成并通过组件测试与 quick 门禁；真实 Aide 实例尚未加载。需在不打断现有任务的维护窗口构建并做轨迹页集成验收；没有提交或推送。"
+}

@@ -36,10 +36,15 @@ func (a *App) recordReviewedFileResult(task *Task) {
 	if s == nil || !task.AutoReview || len(task.Files) == 0 {
 		return
 	}
-	for _, step := range task.Steps {
+	existing := -1
+	for i, step := range task.Steps {
 		if step.Name == "file_application_receipt" {
-			return
+			existing = i
+			break
 		}
+	}
+	if existing >= 0 && !task.Applied {
+		return
 	}
 	var lines []string
 	status := "completed"
@@ -63,8 +68,19 @@ func (a *App) recordReviewedFileResult(task *Task) {
 	}
 	content := "### 系统应用回执（模型回复后的实际状态）\n\n" + strings.Join(lines, "\n")
 	step := Step{Name: "file_application_receipt", Status: status, Content: content}
-	task.Steps = append(task.Steps, step)
-	s.Messages = append(s.Messages, Message{Role: "assistant", Content: content})
+	if existing >= 0 {
+		old := task.Steps[existing].Content
+		task.Steps[existing] = step
+		for i := len(s.Messages) - 1; i >= 0; i-- {
+			if s.Messages[i].Role == "assistant" && s.Messages[i].Content == old {
+				s.Messages[i].Content = content
+				break
+			}
+		}
+	} else {
+		task.Steps = append(task.Steps, step)
+		s.Messages = append(s.Messages, Message{Role: "assistant", Content: content})
+	}
 	if err := a.save(s); err != nil {
 		task.Error = "应用回执保存失败：" + err.Error()
 	}

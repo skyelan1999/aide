@@ -53,12 +53,23 @@ func TestLocalCacheCommandAndMemoryAgree(t *testing.T) {
 	if err := a.applyWorkspaceConfig(); err != nil {
 		t.Fatal(err)
 	}
-	if a.memoryPath() != filepath.Join(target, "aide", "memory.md") {
+	if a.memoryPath() != filepath.Join(target, ".cache", "aide", "memory.md") {
 		t.Fatal(a.memoryPath())
 	}
 	a.settings.SandboxMode = "danger-full-access"
 	out, _, err := a.execShellCommand(context.Background(), nil, "printf '%s' \"$AIDE_CACHE\"")
-	if err != nil || out != target {
+	if err != nil || out != filepath.Join(target, ".cache") {
 		t.Fatalf("cache environment %q %v", out, err)
+	}
+}
+
+func TestLocalCacheDirectoryKeepsExplicitDotCache(t *testing.T) {
+	for input, want := range map[string]string{
+		"/project":        "/project/.cache",
+		"/project/.cache": "/project/.cache",
+	} {
+		if got := localCacheDirectory(input); got != want {
+			t.Fatalf("%s: got %s, want %s", input, got, want)
+		}
 	}
 }

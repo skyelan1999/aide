@@ -327,7 +327,17 @@ func (a *App) cwdPromptLineLocked() string {
 	if dir == "" {
 		dir = "/workspace"
 	}
-	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。临时辅助脚本、生成的中间文件和项目记忆放在项目 .cache/aide/ 下；用户要求交付的正式文件仍写到其指定位置。"
+	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。临时辅助脚本和项目记忆放在 $AIDE_CACHE/aide/ 下，不要自行在工作目录创建 .cache；用户要求交付的正式文件仍写到其指定位置。"
+}
+
+// The local cache picker selects a parent folder. Keep explicit .cache paths
+// compatible with older configurations and avoid nesting .cache/.cache.
+func localCacheDirectory(selected string) string {
+	selected = filepath.Clean(selected)
+	if filepath.Base(selected) == ".cache" {
+		return selected
+	}
+	return filepath.Join(selected, ".cache")
 }
 
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
@@ -392,7 +402,7 @@ func (a *App) applyWorkspaceConfig() error {
 		// 建档与项目记忆通过 SFTP 同步到配置目录，本地副本按项目和缓存路径隔离。
 		cacheContainer = filepath.Join(a.dataPath, "cache", "remote-projects", hash([]byte(a.wsID()+"|"+a.workspaceRemoteCachePath())))
 	} else if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
-		cacheContainer = cp
+		cacheContainer = localCacheDirectory(cp)
 	} else if _, _, _, mounted := a.localMountPath(a.wsConfig.Workspace.Path); mounted {
 		cacheContainer = filepath.Join(a.dataPath, "cache", "projects", hash([]byte(a.wsID())))
 	} else if a.containerAbs != "" && a.containerAbs != a.workPath {

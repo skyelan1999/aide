@@ -1,0 +1,78 @@
+{
+  "id": "folder-approval-doc-quality-20261108",
+  "request": "修复创建文件夹落盘位置、读写目录文件审批过严，并改进文档生成质量与重复防御性表述",
+  "baseline": "b82120e599bfaefa56bf01b132822d8510c180ae",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M scripts/test_ui_click_latency.cjs\n?? docs/tasks/session-switch-responsiveness-20261108.json\n?? docs/tasks/session-trace-review-20261108.json\n?? internal/server/web/session-review.css\n?? internal/server/web/session-review.js\n?? scripts/session-review.test.cjs",
+  "acceptance": [
+    "本地缓存选择父目录时实际使用其下 .cache；直接选择 .cache 不重复嵌套；默认路径保持兼容",
+    "辅助审批开启时，绑定的本地读写自动系统文档中新建普通 Markdown 可落盘；已有文件、混合提案和只读环境仍走原门禁",
+    "人工补应用文件后，系统回执反映实际读回状态，不保留过时的未应用结论",
+    "文档生成提示要求具体方案与一次性范围说明；现有草案改写成可评审结构并保留原始备份",
+    "保留开始时既有未提交改动；定向 Go 测试、文档校验和差异检查记录真实结果"
+  ],
+  "scope": [
+    "internal/server/workspace_config.go 缓存路径与提示",
+    "internal/server/assisted_approval_files.go 新 Markdown 应用",
+    "internal/server/approval_file_result.go 与 workflow.go 回执更新",
+    "internal/server/persona.go 文档质量提示",
+    "相关 Go 测试、设置文案和文档",
+    "用户工作区中已存在的 DESIGN-001 草案（原文备份到仓库忽略的 .agent-state）"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "以用户补充澄清为准：所选本地缓存目录是 .cache 的父目录；RW 文档减少重复审批；保留既有文件门禁。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "本地路径只在未直接选到 .cache 时追加该目录；新 Markdown 走受约束确定性应用；手动补应用刷新回执。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已改缓存解析、模型路径提示、辅助审批、应用回执、设置文案和文档生成提示；用户草案已改写且备份。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向 Go 回归、仓库 quick 验证和文档检查通过；本机源码镜像已重建并运行。缓存父目录语义通过真实设置页与宿主/容器目录检查。真实 Luna 1X 默认聊天在当前工作区生成 48 小时环境传感器记录器文档，包含具体架构、容量/电源算例、故障状态和验收矩阵；辅助审批自动应用后，系统回执确认 12281 字节写入并读回一致。三阶段工作流的提案/审查提示已修正，机械回归通过，但该分支尚未用真实 Luna 单独验收。完整 internal/server 包测试在 600 秒超时。",
+      "evidence": [
+        "Docker aide-native-go-test:local, targeted Go tests PASS",
+        "python3 scripts/agent-route.py verify quick PASS, 20261108T050205807248Z, fingerprint 6343a493587231926154f5ec2b26122e4e46fb891a162a4b83f1fbd7fb8312e2",
+        "python3 scripts/check_docs.py PASS",
+        "node --check internal/server/web/app.js PASS",
+        "git diff --check PASS",
+        "AIDE_OPEN_BROWSER=0 ./build.command PASS; running image sha256:a6128870ae07659386a551affd766b35e4e4dad9dc12d82bfa66aa13c339ed05, health=healthy",
+        "Aide UI: cache parent /Users/skyelan/Pleasure Taser shown with updated label; Save configuration displayed success",
+        "Host and container: /Users/skyelan/Pleasure Taser/.cache/aide exists; /Users/skyelan/Pleasure Taser/.cache/.cache absent; prior sibling aide/ unchanged",
+        "go test ./internal/server -count=1 FAILED: package test timeout after 600.059s; scoped tests had passed",
+        "go test ./internal/server -run ^TestWorkflowApprovalConflictAndPersistence$ -count=1 PASS in Docker aide-native-go-test:local",
+        "go test ./internal/server -run ^TestModelLedWorkflowCompatibility$ -count=1 PASS in Docker aide-native-go-test:local",
+        "AIDE_OPEN_BROWSER=0 ./build.command PASS; image sha256:bc70082d2e91e24d6bf983f9e460dd29e57052d73386439c161f4c9f1ceeb835, aide-aide-1 healthy",
+        "Live Aide Luna 1X default chat: docs/QA-20261108-48h-logger.md created under /Users/skyelan/Pleasure Taser/docs; 12281 bytes, SHA-256 1d25e97478a45b7289c06e9f6cfdb5b1b0237ce09e87ef917fd9932e25789d67; automatic application and readback confirmed by Aide receipt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "user-guide 和 architecture 已说明本地缓存与新 Markdown 审批语义；任务记录保存当前证据。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已核对起始 Git 状态；未触碰既有会话切换与轨迹相关未提交文件。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本机源码构建已更新运行容器；未提交、推送、升版或发布。",
+      "evidence": [
+        "previous running image sha256:9007fe2fc83de9743f9b63860652bd5242cd88b48880985bff00d4d4398a727c; current image sha256:a6128870ae07659386a551affd766b35e4e4dad9dc12d82bfa66aa13c339ed05",
+        "current running image sha256:bc70082d2e91e24d6bf983f9e460dd29e57052d73386439c161f4c9f1ceeb835"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "源码可按单文件差异回退；用户草案原文保存在 .agent-state/user-doc-backups/DESIGN-001-48小时采集与电源详细方案-20261108.md；未删除既有目录或文件。",
+  "handoff": "Aide 当前本机源码镜像已加载缓存与文档质量改动。缓存路径和辅助审批新 Markdown 落盘通过真实环境验收；安全范围内的 Luna 文档回归生成了可复核的具体方案。三阶段工作流提示已修正并通过机械测试，尚缺真实 Luna 单独验收；完整 Go 包测试 10 分钟超时。原有未提交会话切换和轨迹工作保留。"
+}

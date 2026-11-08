@@ -1,0 +1,82 @@
+{
+  "id": "local-features-main-merge-20261108",
+  "request": "合并当前已保存的缓存路径、辅助审批与文档质量、会话切换响应、会话评审改动到 main，并保留原工作区未提交内容",
+  "baseline": "8dbc1d63e4a55f93c2e3d28842939f900fea70f3",
+  "initial_status": "M  docs/architecture.md\nM  docs/user-guide.md\nM  internal/server/approval_file_result.go\nM  internal/server/assisted_approval_files.go\nM  internal/server/assisted_approval_files_test.go\nM  internal/server/persona.go\nM  internal/server/project_cache_test.go\nM  internal/server/web/app.js\nM  internal/server/web/index.html\nM  internal/server/web/locales/en.js\nM  internal/server/workflow.go\nM  internal/server/workspace_config.go\nM  scripts/test_ui_click_latency.cjs\n?? docs/tasks/folder-approval-doc-quality-20261108.json\n?? docs/tasks/session-switch-responsiveness-20261108.json\n?? docs/tasks/session-trace-review-20261108.json\n?? internal/server/web/session-review.css\n?? internal/server/web/session-review.js\n?? scripts/session-review.test.cjs",
+  "acceptance": [
+    "原工作区 13 个已修改文件和 6 个未跟踪文件在接入前保存快照，原工作区不被覆盖",
+    "在最新 origin/main 上无冲突集成上述 19 个文件及三个既有任务记录",
+    "缓存/审批定向 Go 测试、会话切换和会话评审前端回归、仓库 quick 门禁通过",
+    "通过 PR 合并至远端 main，并核对 main 包含集成提交；现有运行服务不自动替换"
+  ],
+  "scope": [
+    "上述 19 个原工作区文件",
+    "本任务记录",
+    "隔离工作树的 Git 提交、PR 和远端 main 合并"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求合并到 main；以三个既有任务记录与当前原工作区状态为范围，保留用户工作。",
+      "evidence": [
+        "本轮用户消息：合并到main",
+        "原工作区 git status --short"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先用本地归档和补丁保存原状，再从最新 origin/main 创建隔离工作树；仅在隔离工作树合入。",
+      "evidence": [
+        "本地归档 /Users/skyelan/WorkTrees/aide-local-uncommitted-20261108.tar.gz",
+        "原工作区 .agent-state/local-merge-manifest-20261108.json",
+        "origin/main 8dbc1d63e4a55f93c2e3d28842939f900fea70f3"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "19 个文件已在隔离分支干净应用；原工作区未修改。",
+      "evidence": [
+        "git apply --3way: 13 files clean",
+        "6 untracked files copied individually"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "定向与 quick 检查通过；真实运行中的 Aide 尚未加载本分支新前端，集成 UI 验收留待部署时。",
+      "evidence": [
+        "node --test scripts/session-review.test.cjs: 5/5 pass",
+        "node scripts/test_ui_click_latency.cjs: pass",
+        "node --check app.js/session-review.js/en.js: pass",
+        "Docker aide:release-ci-test-tools: focused internal/server Go tests pass",
+        "python3 scripts/check_docs.py: pass",
+        "python3 scripts/agent-route.py verify quick: pass, fingerprint 4909da07b939d181095cd5f37c7a63c5d1fb9efa7f377663e0d08f1d8aa20b53",
+        "隔离 Chrome 组件页 1200x800/390x844: 时间轴缩放 150%、事件详情 7 字段、无水平溢出；截图留于隔离工作树 .agent-state/"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "既有三个任务记录和用户指南、架构说明一并集成；此记录说明合并与运行验收边界。",
+      "evidence": [
+        "docs/tasks/folder-approval-doc-quality-20261108.json",
+        "docs/tasks/session-switch-responsiveness-20261108.json",
+        "docs/tasks/session-trace-review-20261108.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅新增文件归属，未清理或覆盖原工作区文件。",
+      "evidence": [
+        "git diff --check pass",
+        "git diff --cached --check pass"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户授权合并至 main；PR、远端合并与最终 SHA 核对待执行。本任务不升版、不替换运行镜像。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "本轮用户消息：合并到main",
+  "rollback": "如需回退远端提交，应以新 PR 逆向提交；原工作区快照与未提交文件仍保留。",
+  "handoff": "隔离分支准备提交并走 PR；合并后核对远端 main。真实 Aide 运行实例尚未载入本分支新会话评审与切换 UI。"
+}

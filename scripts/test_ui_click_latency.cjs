@@ -61,6 +61,8 @@ async function testSessionSelection() {
   assert.equal(s2.classList.contains('loading'), true);
   assert.equal(nodes.conversation.attributes['aria-busy'], 'true');
   assert.deepEqual(requests, [['/sessions/s2?limit=30','GET']], 'checked write must not precede GET');
+  s2.classList.add('status-completed');
+  s2.querySelector = selector => selector === '.session-dot.dot-done' ? {remove() { s2.dotRemoved = true; }} : null;
   gets.get('/sessions/s2?limit=30').resolve({id:'s2',title:'s2',runs:[]});
   await first;
   assert.equal(state.session.id, 's2');
@@ -68,6 +70,8 @@ async function testSessionSelection() {
   assert.equal(s2.classList.contains('loading'), false);
   assert.equal(nodes.conversation.attributes['aria-busy'], 'false');
   assert.equal(requests.some(([url, method]) => url === '/sessions/s2' && method === 'PATCH'), true);
+  assert.equal(s2.classList.contains('status-completed'), false, 'successful read receipt clears the local unread highlight');
+  assert.equal(s2.dotRemoved, true, 'successful read receipt clears the local unread dot');
 
   const old = context.selectSession('s1');
   const latest = context.selectSession('s3');
@@ -92,6 +96,7 @@ async function testSessionSelection() {
   context.recoveryScope = () => 'workspace-fixture';
   const recovering = context.selectSession('s1');
   assert.equal(s1.classList.contains('active'), true);
+  assert.ok(gets.has('/sessions/s1?limit=30'), 'session GET must start while draft recovery is pending');
   const priorPosts = requests.filter(([,method]) => method === 'POST').length;
   recovery.resolve({text:'Recovered draft', attachments:[{name:'note.md'}],start:3,end:3,scroll:20});
   await new Promise(resolve => setImmediate(resolve));
@@ -106,6 +111,15 @@ async function testSessionSelection() {
   assert.equal(nodes.prompt.value, 'Recovered draft');
   assert.equal(state.attachments[0].name, 'note.md');
   assert.equal(requests.filter(([,method]) => method === 'POST').length, priorPosts, 'recovery never submits a task');
+
+  const checksBefore = requests.filter(([,method]) => method === 'PATCH').length;
+  const alreadyRead = context.selectSession('s2');
+  gets.get('/sessions/s2?limit=30').resolve({id:'s2',title:'s2',runs:[],checked:true});
+  await alreadyRead;
+  assert.equal(requests.filter(([,method]) => method === 'PATCH').length, checksBefore,
+    'returning to an already-read session must not rewrite it');
+  assert.equal(requests.some(([url]) => url === 'list'), false,
+    'navigation must not unconditionally refetch and rebuild the entire sidebar');
 }
 
 async function testNavigationDraftPersistence() {

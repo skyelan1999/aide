@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -46,6 +47,22 @@ func (a *App) prepareAssistedLocalProposalLocked(f Change) (Change, bool) {
 	return f, true
 }
 
+// An explicitly enabled assisted policy may apply ordinary new Markdown
+// documents in the configured writable document binding without a second
+// model call. Existing files and mixed batches still require review.
+func routineNewDocumentBatch(files []Change) bool {
+	if len(files) == 0 {
+		return false
+	}
+	for _, f := range files {
+		if f.Source != systemDocsSource || f.Applied || f.BaseHash != "" || f.Before != "" || f.Content == "" ||
+			len(f.Content) > 64<<10 || strings.ToLower(path.Ext(f.Path)) != ".md" || safePath(f.Path) != nil {
+			return false
+		}
+	}
+	return true
+}
+
 func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	if a.applyRememberedFiles(task) {
 		return
@@ -81,7 +98,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	}
 	sandbox, workspaceMode := sandboxMode(a.settings.SandboxMode), a.workspaceMode()
 	workspaceID, workspaceRevision := a.wsID(), a.wsRevision
-	eligible := keyErr == nil && authorized && sandbox != "read-only" && workspaceMode != "ssh"
+	eligible := authorized && sandbox != "read-only" && workspaceMode != "ssh"
 	paths := []string{}
 	for i, f := range files {
 		if f.Source == "" {
@@ -101,6 +118,10 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	if task.AssistantManaged && a.settings.AssistantAutoReview {
 		record.Source = "assistant"
 	}
+	routineDocument := eligible && routineNewDocumentBatch(files)
+	if routineDocument {
+		record.Source = "system"
+	}
 	if len(task.ApprovalReviews) >= 50 {
 		task.ApprovalReviews = task.ApprovalReviews[len(task.ApprovalReviews)-49:]
 	}
@@ -116,7 +137,10 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	approved := false
 	reason := "现有文件、远程目标、只读沙箱、符号链接或已变化的提案需要手动确认"
 	var usage TokenUsage
-	if eligible {
+	if routineDocument {
+		approved = true
+		reason = "已启用辅助审批；仅创建绑定的本地读写目录中的新 Markdown 文档，目标与版本在应用时再次校验"
+	} else if eligible && keyErr == nil {
 		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "apply exact local workspace file proposals; configured document sources may create new files only", "executionIntent": fileApprovalExecutionIntent(files), "sandboxMode": sandbox, "workspaceMode": workspaceMode, "files": files, "documentDestination": "仅认可已记录的本地目标；已有工作区文件修改必须是用户明确要求，且 Before 与 BaseHash 对应将再次校验的原文"})
 		if len(payload) <= 64000 {
 			out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy + "\n本次待审对象是 files 提案，不是 shell command。逐项判断路径、原文、完整新内容及用户授权。只有低/中风险且目标精确时才批准。"}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
