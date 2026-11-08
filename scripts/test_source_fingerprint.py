@@ -35,7 +35,7 @@ class SourceFingerprintTests(unittest.TestCase):
             for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa', 'legal/third_party']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
-            for name in ('launcher-data.sh','launcher-data.py'):
+            for name in ('version.sh','launcher-data.sh','launcher-data.py'):
                 shutil.copy2(ROOT/'scripts'/name, root/'scripts'/name)
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md',
                          'internal/A.go', 'internal/a.go']:
@@ -55,11 +55,15 @@ class SourceFingerprintTests(unittest.TestCase):
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md',
-                         'scripts/launcher-data.sh', 'scripts/launcher-data.py']:
+                         'scripts/version.sh', 'scripts/launcher-data.sh', 'scripts/launcher-data.py']:
                 (root/name).write_text(name)
             def fingerprint():
                 return subprocess.check_output(['bash', 'scripts/aide.sh', 'source-sha'], cwd=root, text=True)
             previous = fingerprint()
+            (root/'scripts/version.sh').write_text('changed version calculation')
+            current = fingerprint()
+            self.assertNotEqual(previous, current, 'scripts/version.sh')
+            previous = current
             for name in ['native/macos-desktop/main.swift', 'native/macos-desktop/biometrics.swift', 'desktop.command', 'scripts/build-macos-desktop.py',
                          'scripts/desktop-session.py', 'scripts/render-computer-bridge-icon.swift']:
                 (root/name).write_text('fixture')
@@ -73,7 +77,7 @@ class SourceFingerprintTests(unittest.TestCase):
             for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa', 'legal/third_party']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
-            for name in ('launcher-data.sh','launcher-data.py'):
+            for name in ('version.sh','launcher-data.sh','launcher-data.py'):
                 shutil.copy2(ROOT/'scripts'/name, root/'scripts'/name)
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md']:
                 (root/name).write_text(name)
