@@ -117,12 +117,22 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User authorized source main commit and push. Binary release/full release matrix not requested and not performed.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Source-only delivery: commit 90b06494093da4568e860ebc76915a69cd77d40c pushed to origin/main and exact remote SHA verified. No version bump, binary publication or full Release matrix. Repository reported PR/gate rule bypass on authorized direct main push.",
+      "evidence": [
+        "git push origin main: 3edafef7..90b06494",
+        "git ls-remote origin refs/heads/main: 90b06494093da4568e860ebc76915a69cd77d40c"
+      ]
     }
   },
   "release_authorization": "User: 和到main然后推送",
   "rollback": "Revert the source integration commit on a new authorized task; retain runtime data. No force push, reset or clean.",
-  "handoff": "Source integration only; no public release or version bump."
+  "handoff": "Source feature commit is on origin/main; current local instance and data preserved. This ledger followup is documentation only. Public release not requested; broader hardware/autonomy limits remain recorded.",
+  "source_delivery": {
+    "commit": "90b06494093da4568e860ebc76915a69cd77d40c",
+    "branch": "main",
+    "remote": "origin/main",
+    "remote_verified": true,
+    "note": "Direct source push accepted with repository rule bypass notice: PR and required gate were not enforced for this push. Local matching quick/focused/native/live checks passed; public Release not run."
+  }
 }
