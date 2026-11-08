@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -90,35 +92,11 @@ func (a *App) workbenchPageLocked(id string) ([]byte, error) {
 		return nil, errors.New("插件未启用或未声明工作台")
 	}
 	dir := filepath.Join(a.pluginsPath, id)
-	info, e := os.Lstat(dir)
-	if e != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return nil, errors.New("插件目录无效")
-	}
-	current := dir
-	for _, part := range strings.Split(spec.Entry, "/") {
-		current = filepath.Join(current, part)
-		i, e := os.Lstat(current)
-		if e != nil || i.Mode()&os.ModeSymlink != 0 {
-			return nil, errors.New("工作台不允许符号链接")
-		}
-	}
-	root, e := os.OpenRoot(dir)
+	b, e := retryWorkbenchPageRead(func() ([]byte, error) {
+		return readPluginWorkbenchPage(dir, spec.Entry)
+	})
 	if e != nil {
 		return nil, e
-	}
-	defer root.Close()
-	f, e := root.Open(spec.Entry)
-	if e != nil {
-		return nil, e
-	}
-	defer f.Close()
-	st, e := f.Stat()
-	if e != nil || !st.Mode().IsRegular() || st.Size() > maxWorkbenchHTML {
-		return nil, errors.New("工作台 HTML 无效或过大")
-	}
-	b, e := io.ReadAll(io.LimitReader(f, maxWorkbenchHTML+1))
-	if e != nil || len(b) == 0 || len(b) > maxWorkbenchHTML {
-		return nil, errors.New("工作台 HTML 无效或过大")
 	}
 	if id == "professional-workflow" {
 		if !a.pwEnabledLocked() {
@@ -127,6 +105,69 @@ func (a *App) workbenchPageLocked(id string) ([]byte, error) {
 		if err := verifyPWWorkbenchPage(dir, b); err != nil {
 			return nil, err
 		}
+	}
+	return b, nil
+}
+
+func retryWorkbenchPageRead(read func() ([]byte, error)) ([]byte, error) {
+	for attempt := 0; attempt < 3; attempt++ {
+		page, err := read()
+		if err == nil {
+			return page, nil
+		}
+		if !errors.Is(err, syscall.EIO) {
+			return nil, err
+		}
+		if attempt == 2 {
+			return nil, fmt.Errorf("工作台文件读取发生 I/O 错误，请稍后重试: %w", err)
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	panic("unreachable")
+}
+
+func readPluginWorkbenchPage(dir, entry string) ([]byte, error) {
+	info, e := os.Lstat(dir)
+	if e != nil {
+		return nil, e
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return nil, errors.New("插件目录无效")
+	}
+	current := dir
+	for _, part := range strings.Split(entry, "/") {
+		current = filepath.Join(current, part)
+		i, e := os.Lstat(current)
+		if e != nil {
+			return nil, e
+		}
+		if i.Mode()&os.ModeSymlink != 0 {
+			return nil, errors.New("工作台不允许符号链接")
+		}
+	}
+	root, e := os.OpenRoot(dir)
+	if e != nil {
+		return nil, e
+	}
+	defer root.Close()
+	f, e := root.Open(entry)
+	if e != nil {
+		return nil, e
+	}
+	defer f.Close()
+	st, e := f.Stat()
+	if e != nil {
+		return nil, e
+	}
+	if !st.Mode().IsRegular() || st.Size() > maxWorkbenchHTML {
+		return nil, errors.New("工作台 HTML 无效或过大")
+	}
+	b, e := io.ReadAll(io.LimitReader(f, maxWorkbenchHTML+1))
+	if e != nil {
+		return nil, e
+	}
+	if len(b) == 0 || len(b) > maxWorkbenchHTML {
+		return nil, errors.New("工作台 HTML 无效或过大")
 	}
 	return b, nil
 }

@@ -2,10 +2,12 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -20,6 +22,36 @@ func workbenchFixture(t *testing.T) *App {
 	os.WriteFile(filepath.Join(dir, "ui.html"), []byte("<!doctype html><title>fixture</title><p>local computation</p>"), 0644)
 	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, PluginManifest{ID: "workbench-fixture", Name: "Workbench", Enabled: true, Main: "index.js", Workbench: &PluginWorkbench{Protocol: 1, Entry: "ui.html", Title: "Fixture"}})
 	return a
+}
+
+func TestWorkbenchReadRetryOnlyForIOErrors(t *testing.T) {
+	reads := 0
+	page, err := retryWorkbenchPageRead(func() ([]byte, error) {
+		reads++
+		if reads == 1 {
+			return nil, syscall.EIO
+		}
+		return []byte("ready"), nil
+	})
+	if err != nil || string(page) != "ready" || reads != 2 {
+		t.Fatalf("transient I/O read: page=%q reads=%d err=%v", page, reads, err)
+	}
+	reads = 0
+	_, err = retryWorkbenchPageRead(func() ([]byte, error) {
+		reads++
+		return nil, syscall.EIO
+	})
+	if reads != 3 || !errors.Is(err, syscall.EIO) || !strings.Contains(err.Error(), "I/O 错误") {
+		t.Fatalf("persistent I/O read: reads=%d err=%v", reads, err)
+	}
+	reads = 0
+	_, err = retryWorkbenchPageRead(func() ([]byte, error) {
+		reads++
+		return nil, os.ErrPermission
+	})
+	if reads != 1 || !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("non-I/O read: reads=%d err=%v", reads, err)
+	}
 }
 func workbenchRequest(a *App, method, url string, auth bool) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(method, url, nil)

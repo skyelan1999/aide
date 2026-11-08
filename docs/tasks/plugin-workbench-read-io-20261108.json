@@ -1,0 +1,57 @@
+{
+  "id": "plugin-workbench-read-io-20261108",
+  "request": "ProfessionalProject 工作台 HTML 无效或过大误报：区分读取错误并对短暂 I/O 错误有限重试",
+  "baseline": "72fa1eae284bf72034dfe54c55a3a9c35434ab57",
+  "initial_status": "main clean at 72fa1eae; live Aide healthy, ProfessionalProject workbench screenshot reported invalid-or-too-large HTML",
+  "acceptance": [
+    "Unreferenced temporary audit/SSH images are removed without deleting running images, stopped containers, volumes, or useful build bases",
+    "A transient workbench file I/O error is retried a bounded number of times",
+    "Persistent file I/O errors are reported as read failures, while size/type and symlink limits remain enforced",
+    "Changed Go code formats and focused workbench tests pass; live runtime health is checked separately"
+  ],
+  "scope": [
+    "Docker image cleanup limited to inspected, unreferenced temporary images",
+    "internal/server/plugin_workbench.go and plugin_workbench_test.go",
+    "docs/tasks/plugin-workbench-read-io-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Existing HTML was 358233 bytes, regular, below the 2 MiB limit; a container read returned EIO once and a repeat succeeded.",
+      "evidence": ["stat plugins/professional-project/workbench.html", "docker exec aide-aide-1 sha256sum /workspace/plugins/professional-project/workbench.html"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Retry only EIO up to three complete safe opens, then report a distinct read error; retain file type, size, and symlink checks.",
+      "evidence": ["internal/server/plugin_workbench.go"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented bounded EIO retry and corrected misleading error classification.",
+      "evidence": ["internal/server/plugin_workbench.go", "internal/server/plugin_workbench_test.go"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Five focused workbench tests and the repository quick gate passed; Go vet and build passed in ./build.command. Live ProfessionalProject workbench reopened, connected, and loaded preferences on retry. Broader bridge tests failed on a missing plugin-host fixture, outside this code path. A selected .pp project was not opened in this check.",
+      "evidence": ["docker run golang:1.26-bookworm go test -mod=vendor -run focused workbench cases ./internal/server: PASS", "python3 scripts/agent-route.py verify quick: PASS, fingerprint 3e617339961614d6bfb8d62c98399452134e20634348c6451e4d04c0edd66a79", "./build.command: PASS, AIDE_RUN_TESTS=0", "Aide UI: ProfessionalProject connected at v0.4.16 and autosave preference loaded", "git diff --check: PASS"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Task record describes behavior and test limits.",
+      "evidence": ["docs/tasks/plugin-workbench-read-io-20261108.json"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Four unreferenced tagged temporary Aide audit/SSH images removed; the launcher also removed one obsolete runtime image. Dangling image prune reclaimed 0 B. Running images, stopped-container dependencies, useful build bases, volumes, and user data were retained.",
+      "evidence": ["docker image rm on four inspected temporary image tags: PASS", "docker image prune --force: Total reclaimed space 0B", "df -k /: 26130692 KiB available after rebuild", "git status --short --branch: only two code files and this task record changed"]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User authorized merging this change to main and pushing. Local source build and restart completed, but the pre-commit build reports degraded integrity because its commit identity is dirty. Commit, push, and clean-identity rebuild remain to verify.",
+      "evidence": ["User request: 合并推送", "curl -ksS https://localhost:9999/healthz: status ok, integrity degraded"]
+    }
+  },
+  "release_authorization": "2026-11-08 user request: 合并推送 (commit to current main and push; no GitHub Release requested)",
+  "rollback": "The current running image can be replaced by the prior source build if needed; retain the existing Docker volume and historical plugin cache. Source changes are confined to the two workbench Go files.",
+  "handoff": "ProfessionalProject workbench opened and connected after local rebuild. Its history preference initially returned EIO from the iCloud-backed plugin cache; host-side read then allowed all 139 cache files to be read in the container and the workbench loaded preferences. This may recur if cloud-backed files become temporarily unreadable. No personal project data, Docker volumes, or stopped QA containers were deleted."
+}
