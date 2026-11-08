@@ -1,0 +1,84 @@
+{
+  "id": "issue-audit-nonplugin-nonwindows-20261108",
+  "request": "评审issue里非插件非Windows环境的问题，合并后能关闭的关闭，需要修复的进行评估修复，是否在当前版本还有该问题，如果仍存在，修复测试并提交合并到main后关闭，今天要把所有能在当前关闭掉的问题关闭",
+  "baseline": "b82120e599bfaefa56bf01b132822d8510c180ae",
+  "initial_status": "主工作树 main@b82120e5，13 个已跟踪修改及 6 个未跟踪文件（会话切换、轨迹、审批、文档等）；隔离工作树 fix/nonplugin-issue-audit-20261108 从 origin/main 创建，起始仅任务 JSON 未跟踪。",
+  "acceptance": [
+    "对 2026-11-08 当前全部 open Issue 盘点，排除插件及 Windows 专属条目；记录每条非范围项理由",
+    "只有当前 main 已包含修复且 issue 特定验收证据充分时关闭，注明提交/测试/运行范围",
+    "仍存在且可在当前环境安全修复的缺陷，先复现，再在隔离工作树修复并跑定向回归，提交合并推送 main 后关闭",
+    "无法复现、上游内嵌依赖待升级、需外部环境或证据不足的条目保持 open，记录原因和下一步",
+    "原 main 未提交与未跟踪文件完全保留；最终核对 GitHub 状态、main SHA 和工作树状态"
+  ],
+  "scope": [
+    "skyelan1999/aide 开放 Issue 中非插件、非 Windows 专属问题",
+    "隔离工作树中的范围内源码、测试、必要文档与本任务记录",
+    "GitHub Issue 评论与状态；经验证后可合并推送到 main",
+    "不修改原主工作树已有未提交/未跟踪文件，不处理插件仓库或 Windows 专属缺陷，不因静态推断关闭 Issue"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "当前 111 条 open Issue；按标题/正文与所属模块排除插件和 Windows 专属。账号 skyelan1999 已通过 gh api user 确认，原主工作树保存原状，隔离工作树从 b82120e5 创建。",
+      "evidence": [
+        "GitHub open issues pages 1-4 on 2026-11-08: 100+11+0+0",
+        "gh api user --jq .login => skyelan1999",
+        "git ls-remote origin refs/heads/main => b82120e599bfaefa56bf01b132822d8510c180ae",
+        "git worktree add fix/nonplugin-issue-audit-20261108 from origin/main"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "从 111 个 open 列表条目中区分 5 个 PR、11 个插件项、4 个 Windows 专属项；91 个 Issue 在范围。只有主干含修复且定向验证通过才关闭。",
+      "evidence": [
+        "docs/reviews/2026-11-08-nonplugin-issue-audit.json",
+        "docs/reviews/2026-11-08-nonplugin-issue-audit.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "#815、#82 确认主干已有修复并留评论关闭；#795 在独立分支修复 source_sha 输入和测试夹具。其余范围内 Issue 保留开放。",
+      "evidence": [
+        "#815 comment https://github.com/skyelan1999/aide/issues/815#issuecomment-6718070426",
+        " #82 comment https://github.com/skyelan1999/aide/issues/82#issuecomment-6718127121",
+        "scripts/aide.sh",
+        "scripts/test_source_fingerprint.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "#815 Node 翻译覆盖与实际英文翻译探针通过；#82 隔离 Go 1.26 专项测试通过；#795 指纹变更/恢复探针与 Python 夹具通过；全仓 quick 门禁复跑通过。未运行 #813 所要求的 100 MiB 实际工作台验收。",
+      "evidence": [
+        "node scripts/test_i18n_coverage.cjs: PASS 3742 sites",
+        "en.js+i18n.js en probe: Converting Markdown chunk 2…",
+        "docker run --network none aide:release-ci-test-tools go test ./internal/server -run ^TestIssue82 -count=1: PASS",
+        "python3 scripts/test_source_fingerprint.py: 4 tests PASS",
+        "bash scripts/aide.sh source-sha: version.sh edit changes hash, restore restores hash",
+        ".agent-state/verify-20261108T061533656318Z.log: quick exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "逐项 JSON 清单与范围/证据汇总已写入；保留项明确不宣称问题消失。",
+      "evidence": [
+        "docs/reviews/2026-11-08-nonplugin-issue-audit.json",
+        "docs/reviews/2026-11-08-nonplugin-issue-audit.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅临时修改独立工作树的 scripts/version.sh 做指纹回归，finally 已恢复；原主工作树和运行服务未动。",
+      "evidence": [
+        "git status --short in isolated worktree shows only intended 5 files"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "待将 #795 修复提交、合并推送 main 后关闭对应 Issue；不发布版本。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户本轮明确要求修复后提交、合并推送 main，并关闭可关闭的 Issue。",
+  "rollback": "范围内修复均在隔离分支提交，可按提交回滚；原 main 工作树与运行服务保留。",
+  "handoff": "待合并 #795 后更新报告、远程 SHA 与 Issue 状态；#813 和其余未验证条目保持开放。"
+}

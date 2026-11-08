@@ -1,0 +1,811 @@
+{
+  "date": "2026-11-08 Asia/Shanghai",
+  "repository": "skyelan1999/aide",
+  "baseline": "b82120e599bfaefa56bf01b132822d8510c180ae",
+  "method": "GitHub open-issues REST pages 1-2; pull requests filtered; family triage does not assert every issue is reproduced",
+  "summary": {
+    "open_at_fetch": 110,
+    "open_issues_excluding_prs": 105,
+    "scope_counts": {
+      "pdf_decoder": 69,
+      "plugin": 11,
+      "core": 22,
+      "windows": 4,
+      "pull_request": 5
+    },
+    "status_counts": {
+      "retain_no_issue_specific_resolution_verified": 85,
+      "excluded": 20,
+      "closed_verified_main": 2,
+      "retain_live_pdf_acceptance_pending": 1,
+      "retain_ai_visibility_gap_present": 1,
+      "fix_verified_pending_main": 1,
+      "retain_browser_reproduction_pending": 1
+    },
+    "initial_open_including_prs": 111,
+    "open_at_fetch_after_815_closed": 110,
+    "in_scope_issues_in_snapshot": 91,
+    "in_scope_open_after_82_close": 89
+  },
+  "issues": [
+    {
+      "number": 823,
+      "title": "[P3] Ignore later COLR boxes after an unsupported first METH",
+      "url": "https://github.com/skyelan1999/aide/issues/823",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 822,
+      "title": "[P3] Stop HT MagSgn decoding after the permitted synthetic byte",
+      "url": "https://github.com/skyelan1999/aide/issues/822",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 821,
+      "title": "Stale AIDE-managed Xpra lease credentials remain after runtime restart",
+      "url": "https://github.com/skyelan1999/aide/issues/821",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 820,
+      "title": "AIDE-managed Xpra clipboard APIs are denied in the isolated Workbench viewer",
+      "url": "https://github.com/skyelan1999/aide/issues/820",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 819,
+      "title": "[P3] Support T.814 MIXED HT code-block signaling",
+      "url": "https://github.com/skyelan1999/aide/issues/819",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 818,
+      "title": "Opening a managed X Server viewer pauses Terminal Workbench bridge polling",
+      "url": "https://github.com/skyelan1999/aide/issues/818",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 817,
+      "title": "AIDE Terminal X Server opens a viewer but reports “Assignment to constant variable”",
+      "url": "https://github.com/skyelan1999/aide/issues/817",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 815,
+      "title": "[英文界面] Markdown PDF 分段导出进度仍显示中文",
+      "url": "https://github.com/skyelan1999/aide/issues/815",
+      "scope": "core",
+      "status": "closed_verified_main",
+      "evidence": "24787b524; Node i18n coverage and en.js+i18n.js runtime translation probe on 2026-11-08"
+    },
+    {
+      "number": 814,
+      "title": "[P3] Propagate failed sYCC conversion allocations before emitting RGBA",
+      "url": "https://github.com/skyelan1999/aide/issues/814",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 813,
+      "title": "Markdown PDF 导出失真且表格列宽异常，需输出可选文字的矢量 PDF",
+      "url": "https://github.com/skyelan1999/aide/issues/813",
+      "scope": "core",
+      "status": "retain_live_pdf_acceptance_pending"
+    },
+    {
+      "number": 812,
+      "title": "Windows build 启动新桌面实例前未可靠等待旧实例退出",
+      "url": "https://github.com/skyelan1999/aide/issues/812",
+      "scope": "windows",
+      "status": "excluded"
+    },
+    {
+      "number": 811,
+      "title": "[Windows] Preserve vendored JavaScript bytes with core.autocrlf enabled",
+      "url": "https://github.com/skyelan1999/aide/issues/811",
+      "scope": "windows",
+      "status": "excluded"
+    },
+    {
+      "number": 809,
+      "title": "Terminal X Server viewer toolbar obscures remote windows at display origin",
+      "url": "https://github.com/skyelan1999/aide/issues/809",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 808,
+      "title": "[P3] Avoid forming an out-of-object pointer in terminal HT SPP",
+      "url": "https://github.com/skyelan1999/aide/issues/808",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 807,
+      "title": "[P3] Check JPX input length before reading format signatures",
+      "url": "https://github.com/skyelan1999/aide/issues/807",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 806,
+      "title": "[P3] Avoid forming an out-of-object pointer in the PTERM check",
+      "url": "https://github.com/skyelan1999/aide/issues/806",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 805,
+      "title": "[Bug] Use Unicode full case folding for StarLink search",
+      "url": "https://github.com/skyelan1999/aide/issues/805",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 804,
+      "title": "[Bug] Normalize canonically equivalent Unicode in StarLink search",
+      "url": "https://github.com/skyelan1999/aide/issues/804",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 803,
+      "title": "[P2] Honor Matte and unpremultiply JPX samples for SMaskInData 2",
+      "url": "https://github.com/skyelan1999/aide/issues/803",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 802,
+      "title": "[P2] Allow plugin workbench routes in the default local workspace",
+      "url": "https://github.com/skyelan1999/aide/issues/802",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 801,
+      "title": "[Feature] Index TypeScript and TSX symbols for StarLink graph paths",
+      "url": "https://github.com/skyelan1999/aide/issues/801",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 800,
+      "title": "[P2] Apply target architecture feature defaults to build-tag selection",
+      "url": "https://github.com/skyelan1999/aide/issues/800",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 799,
+      "title": "[P2] Match Go cgo defaults for cross-target type snapshots",
+      "url": "https://github.com/skyelan1999/aide/issues/799",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 798,
+      "title": "[P2] Exclude Go test files from production type snapshot binding",
+      "url": "https://github.com/skyelan1999/aide/issues/798",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 797,
+      "title": "[P2] Apply Go build constraints before type binding indexed calls",
+      "url": "https://github.com/skyelan1999/aide/issues/797",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 796,
+      "title": "[Bug] Knowledge-map updates expose sources hidden from AI",
+      "url": "https://github.com/skyelan1999/aide/issues/796",
+      "scope": "core",
+      "status": "retain_ai_visibility_gap_present"
+    },
+    {
+      "number": 795,
+      "title": "[P3] Include version calculation in the source-build freshness hash",
+      "url": "https://github.com/skyelan1999/aide/issues/795",
+      "scope": "core",
+      "status": "fix_verified_pending_main"
+    },
+    {
+      "number": 791,
+      "title": "Audit plugin SSH boundaries and repair public plugin gate",
+      "url": "https://github.com/skyelan1999/aide/pull/791",
+      "scope": "pull_request",
+      "status": "excluded"
+    },
+    {
+      "number": 790,
+      "title": "Plugin compatibility: support authorized SSH workspaces and references",
+      "url": "https://github.com/skyelan1999/aide/issues/790",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 776,
+      "title": "大文件下载浏览器回归在重载续传时 Chromium 退出",
+      "url": "https://github.com/skyelan1999/aide/issues/776",
+      "scope": "core",
+      "status": "retain_browser_reproduction_pending"
+    },
+    {
+      "number": 773,
+      "title": "[P3] Revalidate local mount source paths before Compose starts",
+      "url": "https://github.com/skyelan1999/aide/issues/773",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 763,
+      "title": "[P3] Distinguish a reused PID before retaining the helper lock",
+      "url": "https://github.com/skyelan1999/aide/issues/763",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 762,
+      "title": "[P2] Keep the LAN message bridge consistent when mount apply fails",
+      "url": "https://github.com/skyelan1999/aide/issues/762",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 751,
+      "title": "Windows 源码安装：补齐独立应用窗口与插件应用内标签体验",
+      "url": "https://github.com/skyelan1999/aide/issues/751",
+      "scope": "windows",
+      "status": "excluded"
+    },
+    {
+      "number": 710,
+      "title": "[P2] Honor the numeric value of /SMaskInData in JPXDecode images",
+      "url": "https://github.com/skyelan1999/aide/issues/710",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 708,
+      "title": "[P2] Preserve HT cleanup/refinement segments across quality layers",
+      "url": "https://github.com/skyelan1999/aide/issues/708",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 707,
+      "title": "[P3] Abort JPX decode after tag-tree node allocation failure",
+      "url": "https://github.com/skyelan1999/aide/issues/707",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 705,
+      "title": "[P2] Use neutral chroma for odd-origin subsampled sYCC edge pixels",
+      "url": "https://github.com/skyelan1999/aide/issues/705",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 704,
+      "title": "[P2] Keep host bridge PID files tied to the listening process",
+      "url": "https://github.com/skyelan1999/aide/issues/704",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 701,
+      "title": "[P2] Make stale helper lock cleanup atomic against a replacement owner",
+      "url": "https://github.com/skyelan1999/aide/issues/701",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 700,
+      "title": "[P2] Convert sYCC color channels before emitting JPX opacity RGBA",
+      "url": "https://github.com/skyelan1999/aide/issues/700",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 697,
+      "title": "[P2] Confine SFTP reference writes to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/697",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 695,
+      "title": "[P2] Confine SSH workspace mutations to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/695",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 694,
+      "title": "[P2] Confine SFTP reference text reads to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/694",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 693,
+      "title": "[P2] Convert e-sYCC output to standard sRGB",
+      "url": "https://github.com/skyelan1999/aide/issues/693",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 692,
+      "title": "[P2] Preserve JPX opacity channel in CMYK images with SMaskInData",
+      "url": "https://github.com/skyelan1999/aide/issues/692",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 691,
+      "title": "[P2] Confine SFTP workspace reads to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/691",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 690,
+      "title": "[P2] Normalize signed samples in automatic CMYK JPX conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/690",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 689,
+      "title": "[P2] Avoid signed overflow in precision-31 sYCC RGB sums",
+      "url": "https://github.com/skyelan1999/aide/issues/689",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 688,
+      "title": "[P2] Preserve e-sYCC color handling for subsampled JPX components",
+      "url": "https://github.com/skyelan1999/aide/issues/688",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 687,
+      "title": "[P2] Stop scaling the freed K component after CMYK conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/687",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 686,
+      "title": "[P2] Bound temporary sYCC output planes for attacker-controlled JPX dimensions",
+      "url": "https://github.com/skyelan1999/aide/issues/686",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 684,
+      "title": "[P3] Free MCT payloads when record-array growth fails",
+      "url": "https://github.com/skyelan1999/aide/issues/684",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 683,
+      "title": "[P2] Bound per-tile copies of attacker-controlled MCT payloads in JPX",
+      "url": "https://github.com/skyelan1999/aide/issues/683",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 682,
+      "title": "[P3] Clean nested resources when the outer precinct array cannot grow",
+      "url": "https://github.com/skyelan1999/aide/issues/682",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 681,
+      "title": "[P2] Normalize sYCC channels using each component's precision",
+      "url": "https://github.com/skyelan1999/aide/issues/681",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 680,
+      "title": "[P3] Reject PLM marker sequences with unterminated packet lengths",
+      "url": "https://github.com/skyelan1999/aide/issues/680",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 679,
+      "title": "[P3] Reject reserved ST=3 in JPEG 2000 TLM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/679",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 677,
+      "title": "[P2] Bound PDF.js RunLengthDecode stream expansion",
+      "url": "https://github.com/skyelan1999/aide/issues/677",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 675,
+      "title": "[P3] Require IHDR to be the first JP2H child box",
+      "url": "https://github.com/skyelan1999/aide/issues/675",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 674,
+      "title": "PTERM warning gate uses component 0 style for every component",
+      "url": "https://github.com/skyelan1999/aide/issues/674",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 672,
+      "title": "Record completed issue audit, main sync and compatibility acceptance",
+      "url": "https://github.com/skyelan1999/aide/pull/672",
+      "scope": "pull_request",
+      "status": "excluded"
+    },
+    {
+      "number": 671,
+      "title": "Fix Codex Bridge reasoning effort alignment",
+      "url": "https://github.com/skyelan1999/aide/pull/671",
+      "scope": "pull_request",
+      "status": "excluded"
+    },
+    {
+      "number": 670,
+      "title": "Add plugin-declared Safari account balance sync (#667)",
+      "url": "https://github.com/skyelan1999/aide/pull/670",
+      "scope": "pull_request",
+      "status": "excluded"
+    },
+    {
+      "number": 669,
+      "title": "Keep eYCC SIMD and scalar tail conversion consistent",
+      "url": "https://github.com/skyelan1999/aide/issues/669",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 665,
+      "title": "[P2] Store full-stripe HT SPP membership updates in mbr, not sigma",
+      "url": "https://github.com/skyelan1999/aide/issues/665",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 660,
+      "title": "[P2] Verify Sherpa-ONNX release archives before embedding them",
+      "url": "https://github.com/skyelan1999/aide/issues/660",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 659,
+      "title": "[P2] Bound quadratic CDEF completeness scans during JP2 decode",
+      "url": "https://github.com/skyelan1999/aide/issues/659",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 658,
+      "title": "[P2] Pin Docker base images to immutable digests in release builds",
+      "url": "https://github.com/skyelan1999/aide/issues/658",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 657,
+      "title": "[P2] Pin GitHub Actions to immutable commits in release workflows",
+      "url": "https://github.com/skyelan1999/aide/issues/657",
+      "scope": "core",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 653,
+      "title": "[P2] Widen reversible DC-level shift addition before clamping",
+      "url": "https://github.com/skyelan1999/aide/issues/653",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 652,
+      "title": "[P3] Check Tier-2 segment lengths without out-of-array pointer arithmetic",
+      "url": "https://github.com/skyelan1999/aide/issues/652",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 651,
+      "title": "[P3] Keep the HT reverse VLC cursor within the code-block buffer",
+      "url": "https://github.com/skyelan1999/aide/issues/651",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 648,
+      "title": "[P3] Avoid advancing whole-tile output pointer beyond one-past after the final row",
+      "url": "https://github.com/skyelan1999/aide/issues/648",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 642,
+      "title": "[P2] Validate JPEG 2000 segmentation symbols during cleanup pass",
+      "url": "https://github.com/skyelan1999/aide/issues/642",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 641,
+      "title": "[P2] Reset the cached OpenJPEG Wasm module after RuntimeError",
+      "url": "https://github.com/skyelan1999/aide/issues/641",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 634,
+      "title": "[P3] Avoid beyond-array cursor increments in full-stripe HT MRP loop",
+      "url": "https://github.com/skyelan1999/aide/issues/634",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 633,
+      "title": "[P3] Avoid beyond-array pointer arithmetic in terminal HT MRP loop",
+      "url": "https://github.com/skyelan1999/aide/issues/633",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 629,
+      "title": "[P2] Bound JPEG 2000 packet-iterator memory by layer and precinct counts",
+      "url": "https://github.com/skyelan1999/aide/issues/629",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 627,
+      "title": "[P2] Normalize signed JPX grayscale samples before RGBA conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/627",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 626,
+      "title": "[P2] Bound OpenJPEG Tier-2 unary increments before overflow",
+      "url": "https://github.com/skyelan1999/aide/issues/626",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 625,
+      "title": "[P2] Preserve fractional values in irreversible MCT offset arrays",
+      "url": "https://github.com/skyelan1999/aide/issues/625",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 624,
+      "title": "[P2] Decode JPEG 2000 inclusion layers above 999 correctly",
+      "url": "https://github.com/skyelan1999/aide/issues/624",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 623,
+      "title": "[P2] Advance the MCC record pointer when selecting an MCO transform",
+      "url": "https://github.com/skyelan1999/aide/issues/623",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 622,
+      "title": "[P2] Abort JPX decode when output component-header allocation fails",
+      "url": "https://github.com/skyelan1999/aide/issues/622",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 621,
+      "title": "[P1] Prevent HTJ2K terminal SPP writes past the coefficient allocation",
+      "url": "https://github.com/skyelan1999/aide/issues/621",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 618,
+      "title": "[P2] Avoid wrapped packet indexes aliasing distinct JPEG 2000 packets",
+      "url": "https://github.com/skyelan1999/aide/issues/618",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 614,
+      "title": "[P2] Bounds-check packet precinct indexes before array access",
+      "url": "https://github.com/skyelan1999/aide/issues/614",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 612,
+      "title": "[Codex Bridge] Windows Install appears unresponsive and remains Not installed",
+      "url": "https://github.com/skyelan1999/aide/issues/612",
+      "scope": "windows",
+      "status": "excluded"
+    },
+    {
+      "number": 608,
+      "title": "[P2] Reject unsupported PCLR precision instead of truncating palette values",
+      "url": "https://github.com/skyelan1999/aide/issues/608",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 607,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPT headers",
+      "url": "https://github.com/skyelan1999/aide/issues/607",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 602,
+      "title": "[Codex Bridge] GUI-launched bridge cannot locate Codex CLI and returns 502 for model catalog",
+      "url": "https://github.com/skyelan1999/aide/issues/602",
+      "scope": "plugin",
+      "status": "excluded"
+    },
+    {
+      "number": 597,
+      "title": "[P2] Bound JP2 PCLR channel expansion to prevent excessive Wasm memory growth",
+      "url": "https://github.com/skyelan1999/aide/issues/597",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 594,
+      "title": "[P3] Free nested decoder allocations when precinct code-block growth fails",
+      "url": "https://github.com/skyelan1999/aide/issues/594",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 593,
+      "title": "[P2] Cap main-header marker-index growth from repeated COM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/593",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 592,
+      "title": "[P3] Reject reserved ROI styles in RGN markers",
+      "url": "https://github.com/skyelan1999/aide/issues/592",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 591,
+      "title": "[P3] Reject unsupported progression-order values in POC markers",
+      "url": "https://github.com/skyelan1999/aide/issues/591",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 590,
+      "title": "[P2] Check Wasm32 calloc byte-size overflow in JPEG 2000 packet iterator",
+      "url": "https://github.com/skyelan1999/aide/issues/590",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 582,
+      "title": "[P2] Sign-extend signed int16 MCT offsets before conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/582",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 579,
+      "title": "[P2] Bound ICC profile copies during JP2 header parsing",
+      "url": "https://github.com/skyelan1999/aide/issues/579",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 578,
+      "title": "[P3] Check signed arithmetic in reversible MCT decoding",
+      "url": "https://github.com/skyelan1999/aide/issues/578",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 576,
+      "title": "[P2] Bound Tier-2 segment growth from attacker-declared coding passes",
+      "url": "https://github.com/skyelan1999/aide/issues/576",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 574,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPM headers",
+      "url": "https://github.com/skyelan1999/aide/issues/574",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 573,
+      "title": "[P2] Cap per-tile JPX metadata allocation from SIZ tile counts",
+      "url": "https://github.com/skyelan1999/aide/issues/573",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 572,
+      "title": "[P2] Bound memory growth from oversized JP2 FTYP compatibility lists",
+      "url": "https://github.com/skyelan1999/aide/issues/572",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 571,
+      "title": "[P3] Avoid using the old MCT base pointer after realloc in bundled OpenJPEG",
+      "url": "https://github.com/skyelan1999/aide/issues/571",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 570,
+      "title": "[P2] Upsample subsampled JPX component planes before copying",
+      "url": "https://github.com/skyelan1999/aide/issues/570",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 569,
+      "title": "[P2] Check OpenJPEG input allocation before copying into Wasm",
+      "url": "https://github.com/skyelan1999/aide/issues/569",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 568,
+      "title": "[P2] Cap SIZ-derived JPX component buffers during tile updates",
+      "url": "https://github.com/skyelan1999/aide/issues/568",
+      "scope": "pdf_decoder",
+      "status": "retain_no_issue_specific_resolution_verified"
+    },
+    {
+      "number": 370,
+      "title": "fix(windows): prevent slot recovery from remaining at 95% without a result",
+      "url": "https://github.com/skyelan1999/aide/pull/370",
+      "scope": "pull_request",
+      "status": "excluded"
+    },
+    {
+      "number": 82,
+      "title": "[P2] In-flight SSH tasks can access the newly selected workspace",
+      "url": "https://github.com/skyelan1999/aide/issues/82",
+      "scope": "core",
+      "status": "closed_verified_main",
+      "evidence": "502cad907; offline Go 1.26 TestIssue82* passes on 2026-11-08"
+    }
+  ]
+}
