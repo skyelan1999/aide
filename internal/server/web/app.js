@@ -2168,12 +2168,13 @@ function renderClarification(run, box, inTaskHub = false) {
   const questionScope = typeof recoveryScope === 'function' ? recoveryScope() : '';
   const pendingSnapshot = JSON.stringify(run.pendingQuestion);
   let q; try { q = typeof run.pendingQuestion === 'string' ? JSON.parse(run.pendingQuestion) : run.pendingQuestion; } catch (e) { return; }
-  if (q.approvalKind === 'shell' && run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
+  const assistedAction = ['shell', 'browser-site', 'browser-action', 'computer-app', 'computer-action'].includes(q.approvalKind);
+  if (assistedAction && run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
     const status = el('div', 'approval-review');
     status.setAttribute('role', 'status');
     status.append(el('p', '', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作')));
-    renderApprovalIntent(status, shellApprovalExecutionIntentForUI(run, q));
-    status.append(el('pre', 'approval-command', q.command));
+    if (q.approvalKind === 'shell') renderApprovalIntent(status, shellApprovalExecutionIntentForUI(run, q));
+    status.append(el('pre', 'approval-command', q.approvalKind === 'shell' ? q.command : q.question));
     box.append(status); return;
   }
   const card = el('div', q.approvalKind === 'shell' ? 'clarify-card shell-approval-card' : 'clarify-card');
@@ -6025,7 +6026,7 @@ function refreshStrategyUI() {
     approvalCol.append(
       strategyMenuOption('approval', 'manual', t('手动审批'), t('未记住的操作由你确认'), !enabled, busy),
       strategyMenuOption('approval', 'assisted', t('辅助审批'), t('所有会话立即生效'), enabled, busy),
-      el('small', 'strategy-approval-note', t('独立审核具体命令，不确定时转人工；审核使用当前模型并计入用量。'))
+      el('small', 'strategy-approval-note', t('独立审核具体命令、网页访问和电脑操作；不确定时转人工，审核计入用量。'))
     );
     if (state.approvalPolicy?.rememberedRules) {
       const manage=el('button','strategy-option',t('管理审批授权'));
@@ -9959,6 +9960,7 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
 let trajView = "history"; // history | review | calls | outcome（一级）
 let trajOutcomeRun = null;
 let trajectoryGeneration = 0;
+const trajectoryJournalCache = new Map();
 let trajFmt = "md"; // md | json（历史视图格式，二级）
 let trajectoryViewAnimation = null;
 function syncTrajectorySelection(seg) {
@@ -9994,11 +9996,41 @@ function renderTrajectory() {
   $('compact-button').classList.toggle('hidden', trajView !== 'history');
   const session = state.session;
   if (trajView === 'review' && session) {
-    window.AideSessionReview.mount(host, session, {t, loadOlder: action(async () => {
+    const generation = trajectoryGeneration;
+    const mountReview = journals => window.AideSessionReview.mount(host, session, {t, journals, loadOlder: action(async () => {
       state.historyLimit = Math.min(2000, state.historyLimit + SESSION_HISTORY_PAGE);
       await selectSession(session.id);
       if (state.session?.id === session.id && trajView === 'review') renderTrajectory();
     })});
+    const journals = {};
+    const missing = [];
+    for (const run of session.runs || []) {
+      if (!run?.id || !run.executionSequence) continue;
+      const key = [session.id, run.id, run.executionSequence].join(':');
+      if (trajectoryJournalCache.has(key)) journals[run.id] = trajectoryJournalCache.get(key);
+      else missing.push({run, key});
+    }
+    mountReview(journals);
+    if (missing.length) (async () => {
+      for (const {run, key} of missing) {
+        const events = [];
+        let after = 0, warning = '';
+        try {
+          for (let page = 0; page < 20; page++) {
+            const result = await api('/sessions/' + encodeURIComponent(session.id) + '/runs/' +
+              encodeURIComponent(run.id) + '/journal?limit=1000&after=' + after);
+            events.push(...(result.events || []));
+            warning = result.warning || '';
+            if (!result.hasMore || result.next === after) break;
+            after = result.next;
+          }
+        } catch (_) { warning = t('执行日志暂时无法载入'); }
+        const journal = {events, warning};
+        journals[run.id] = journal;
+        trajectoryJournalCache.set(key, journal);
+      }
+      if (generation === trajectoryGeneration && state.session?.id === session.id && trajView === 'review') mountReview(journals);
+    })();
     return;
   }
   if (!session || (session.kind === 'assistant' ? !session.messages?.length : !session.runs?.length)) {

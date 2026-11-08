@@ -124,7 +124,7 @@ func hasPendingApproval(task *Task) bool {
 	var question struct {
 		Kind string `json:"approvalKind"`
 	}
-	return json.Unmarshal(task.PendingQuestion, &question) == nil && question.Kind == "shell"
+	return json.Unmarshal(task.PendingQuestion, &question) == nil && (question.Kind == "shell" || surfaceApprovalKind(question.Kind))
 }
 
 func (a *App) changeGlobalApprovalMode(w http.ResponseWriter, enabled bool) {
@@ -176,7 +176,11 @@ func (a *App) changeGlobalApprovalMode(w http.ResponseWriter, enabled bool) {
 	a.broadcastApprovalPolicy()
 	a.broadcastSessionsChanged("")
 	for _, task := range pending {
-		go func(t *Task) { a.reviewPendingCommand(t); a.reviewPendingFiles(context.Background(), t) }(task)
+		go func(t *Task) {
+			a.reviewPendingCommand(t)
+			a.reviewPendingSurfaceAction(t)
+			a.reviewPendingFiles(context.Background(), t)
+		}(task)
 	}
 	if persistenceError != nil {
 		fail(w, 500, errors.New("全局模式已保存并生效，但部分会话快照保存失败"))

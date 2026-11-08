@@ -46,11 +46,25 @@ test('empty and running sessions do not acquire fabricated timing', () => {
 
 test('trajectory loads the review module before app.js and exposes the tab', () => {
   const html = fs.readFileSync(path.join(__dirname, '../internal/server/web/index.html'), 'utf8');
-  assert.match(html, /session-review\.js\?v=1[^]*app\.js\?v=255/);
+  assert.match(html, /session-review\.js\?v=3[^]*app\.js\?v=257/);
   assert.match(html, /data-view="review"[^>]*data-i18n="会话评审"/);
 });
 
-test('timeline, event details, and zoom controls respond to selection', () => {
+test('execution journal provides dispatch and result order for older calls', () => {
+  const run = {id:'run', status:'completed', created:'2026-11-08T00:00:00Z', prompt:'please inspect',
+    toolUses:[{tool:'read_file', args:'{"path":"a.md"}', preview:'file contents'}],
+    orchestrationEvents:[{kind:'model_request', stage:'chat', startedAt:'2026-11-08T00:00:01Z', completedAt:'2026-11-08T00:00:02Z', elapsedMillis:1000}],
+    steps:[{name:'chat', outputSegments:[{content:'done', at:'2026-11-08T00:00:05Z'}]}]};
+  const result = review.build({runs:[run]}, {run:{events:[
+    {kind:'tool_dispatch', callId:'c1', tool:'read_file', at:'2026-11-08T00:00:03Z'},
+    {kind:'tool_result', callId:'c1', tool:'read_file', at:'2026-11-08T00:00:04Z'},
+  ]}});
+  assert.deepEqual(result.turns[0].flow.map(row => row.type), ['input','model','tool','tool_result','assistant']);
+  assert.equal(result.turns[0].flow[3].at, Date.parse('2026-11-08T00:00:04Z'));
+  assert.equal(result.turns[0].flow[2].args, '{"path":"a.md"}');
+});
+
+test('review displays complete flow with search and collapsible turns', () => {
   class Node {
     constructor(tag) { this.tag = tag; this.children = []; this.style = {}; this.attributes = {}; this.className = ''; this.textContent = ''; this.scrollLeft = 0; }
     append(...children) { this.children.push(...children); }
@@ -76,19 +90,19 @@ test('timeline, event details, and zoom controls respond to selection', () => {
     };
     assert.equal(result.turns.length, 2);
     assert.ok(find(host, 'sr-status-failed'));
-    const track = find(host, 'sr-track');
-    assert.equal(track.style.width, '100%');
-    const controls = find(host, 'sr-controls');
-    controls.children[2].onclick();
-    assert.equal(track.style.width, '150%');
-    controls.children[0].onclick();
-    assert.equal(track.style.width, '100%');
-    const turns = find(host, 'sr-turns');
-    turns.children[0].onclick();
-    assert.equal(find(host, 'sr-detail-head').children[0].textContent, '第 1 轮 · 已完成');
-    const marker = find(host, 'sr-event-segment-model_request');
-    marker.onclick({stopPropagation() {}});
-    assert.equal(find(host, 'sr-event-info').children.length, 7);
+    assert.equal(find(host, 'sr-flow-overview').children.length, 4);
+    const transcript = find(host, 'sr-transcript');
+    assert.equal(transcript.children.length, 2);
+    const collapse = find(host, 'sr-toolbar').children[2];
+    collapse.onclick();
+    assert.equal(find(host, 'sr-turn-rows').hidden, true);
+    collapse.onclick();
+    assert.equal(find(host, 'sr-turn-rows').hidden, false);
+    const search = find(host, 'sr-search');
+    search.value = 'run_shell';
+    search.oninput();
+    assert.equal(transcript.children.length, 1);
+    assert.equal(find(host, 'sr-turn-title').textContent, '第 2 轮 · 失败');
   } finally {
     global.document = previousDocument;
   }

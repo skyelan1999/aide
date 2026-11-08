@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // OutputSegment is a visible main-chat response, separate from reasoning and
@@ -11,6 +12,7 @@ type OutputSegment struct {
 	ID      string `json:"id"`
 	Round   int    `json:"round"`
 	Content string `json:"content"`
+	At      string `json:"at,omitempty"` // 正文落盘时间；旧记录留空
 }
 
 func (a *App) saveOutputSegment(task *Task, index, round int, text string) error {
@@ -27,7 +29,7 @@ func (a *App) saveOutputSegment(task *Task, index, round int, text string) error
 		a.mu.Unlock()
 		return fmt.Errorf("阶段正文没有有效的所属会话")
 	}
-	segment := OutputSegment{ID: newID(), Round: round, Content: text}
+	segment := OutputSegment{ID: newID(), Round: round, Content: text, At: time.Now().UTC().Format(time.RFC3339Nano)}
 	step := &task.Steps[index]
 	step.OutputSegments = append(step.OutputSegments, segment)
 	if err := a.save(session); err != nil {

@@ -57,10 +57,12 @@ type Change struct {
 	NoSymlinks bool `json:"noSymlinks,omitempty"` // captured host file-binding constraint
 }
 type ToolUse struct {
-	Tool    string `json:"tool"`
-	Args    string `json:"args,omitempty"`
-	Result  string `json:"result,omitempty"`  // 完整原始结果（R05 证据链：计量与验收依据）
-	Preview string `json:"preview,omitempty"` // 界面展示用截断预览
+	Tool        string `json:"tool"`
+	Args        string `json:"args,omitempty"`
+	Result      string `json:"result,omitempty"`  // 完整原始结果（R05 证据链：计量与验收依据）
+	Preview     string `json:"preview,omitempty"` // 界面展示用截断预览
+	CallID      string `json:"callId,omitempty"`
+	CompletedAt string `json:"completedAt,omitempty"` // 已保存结果的时间；旧记录留空
 	// #45 子 agent 调用归属：Who="main" 主 Agent 自身调用（含 spawn_subagent）；
 	// Who="sub" 子会话内部调用。历史数据 Who 为空时按 main 处理。
 	Who            string `json:"who,omitempty"`
@@ -2963,7 +2965,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			// Result 保留完整原始结果（计量/验收依据）；Preview 供界面展示
 			// #45：子任务记录的工具调用归属到对应子 Agent（带会话编号/标题），
 			// 主任务自身调用（含 spawn_subagent）归主 Agent。
-			tu := ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: result, Preview: display}
+			tu := ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: result, Preview: display, CallID: call.ID, CompletedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 			if task.ParentSessionID != "" {
 				tu.Who = "sub"
 				tu.ChildSessionID = task.ChildSessionID
@@ -5424,7 +5426,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			if target.Name != "" {
 				confirmationArgs["app"] = target.Name
 			}
-			question, _ := json.Marshal(map[string]any{"question": computerControlConfirmationText(call.Function.Name, confirmationArgs), "type": "confirm"})
+			approvalArgs := confirmationArgs
+			if call.Function.Name == "computer_type" {
+				approvalArgs = map[string]any{"app": target.Name}
+			}
+			question, _ := json.Marshal(map[string]any{"question": computerControlConfirmationText(call.Function.Name, confirmationArgs), "type": "confirm", "approvalKind": "computer-action", "tool": call.Function.Name, "actionArgs": approvalArgs})
 			if answer := a.awaitUserAnswer(ctx, task, question); answer != "确认" {
 				return "用户未批准电脑操作；操作未执行。"
 			}
@@ -5449,9 +5455,18 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		// fresh, visible confirmation for every navigation or page interaction;
 		// the plugin must not be able to self-assert approval.
 		if (pluginID == "browser-control" && browserToolRequiresConfirmation(call.Function.Name)) || (pluginID == "computer-control" && computerToolRequiresConfirmation(call.Function.Name)) {
+			approvalArgs := args
+			if call.Function.Name == "browser_fill" {
+				approvalArgs = map[string]any{}
+			}
+			approvalKind := "browser-action"
+			if pluginID == "computer-control" {
+				approvalKind = "computer-action"
+			}
 			question, _ := json.Marshal(map[string]any{
-				"question": pluginActionConfirmationText(pluginID, call.Function.Name, args),
-				"type":     "confirm",
+				"question":     pluginActionConfirmationText(pluginID, call.Function.Name, args),
+				"type":         "confirm",
+				"approvalKind": approvalKind, "tool": call.Function.Name, "actionArgs": approvalArgs,
 			})
 			if answer := a.awaitUserAnswer(ctx, task, question); answer != "确认" {
 				return "用户未批准控制操作；操作未执行。"
@@ -5567,7 +5582,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	}
 	task.PendingQuestion = question
 	task.ApprovalState = ""
-	if approvalQuestion["approvalKind"] == "shell" {
+	if approvalQuestion["approvalKind"] == "shell" || surfaceApprovalKind(approvalQuestion["approvalKind"]) {
 		task.ApprovalState = "manual"
 		if task.AutoReview {
 			task.ApprovalState = "reviewing"
@@ -5605,6 +5620,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	a.mu.Unlock()
 	a.publishStream(task.ID, streamEvent{Event: "clarification", Question: string(question)})
 	go a.reviewPendingCommand(task)
+	go a.reviewPendingSurfaceAction(task)
 	var answer string
 	waitStarted := time.Now()
 	select {
@@ -5615,9 +5631,9 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	a.mu.Lock()
 	waitKind := "user_wait"
 	waitStage := "clarification"
-	if approvalQuestion["approvalKind"] == "shell" {
+	if approvalQuestion["approvalKind"] == "shell" || surfaceApprovalKind(approvalQuestion["approvalKind"]) {
 		waitKind = "approval_wait"
-		waitStage = "shell"
+		waitStage = fmt.Sprint(approvalQuestion["approvalKind"])
 	}
 	waitOutcome := "answered"
 	if ctx.Err() != nil {

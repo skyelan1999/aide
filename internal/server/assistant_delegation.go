@@ -44,7 +44,11 @@ func (a *App) refreshAssistantReviewsLocked() {
 				continue
 			}
 			if task.AutoReview && hasPendingApproval(task) {
-				go func(t *Task) { a.reviewPendingCommand(t); a.reviewPendingFiles(context.Background(), t) }(task)
+				go func(t *Task) {
+					a.reviewPendingCommand(t)
+					a.reviewPendingSurfaceAction(t)
+					a.reviewPendingFiles(context.Background(), t)
+				}(task)
 			}
 		}
 	}

@@ -17,6 +17,10 @@ type approvalVerdict struct {
 // Retry empty/format recovery once, never retry an explicit manual verdict
 // into approval. Both calls share the original review deadline and no tools.
 func reviewApproval(ctx context.Context, cfg Settings, messages []Message) (bool, string, TokenUsage) {
+	return reviewApprovalWithScope(ctx, cfg, messages, true)
+}
+
+func reviewApprovalWithScope(ctx context.Context, cfg Settings, messages []Message, requireWorkspace bool) (bool, string, TokenUsage) {
 	var usage TokenUsage
 	reason := "审核响应无效，请手动确认"
 	for attempt, budget := range []int{512, 2048} {
@@ -48,7 +52,7 @@ func reviewApproval(ctx context.Context, cfg Settings, messages []Message) (bool
 				return false, v.Reason, usage
 			}
 			if parsed && strings.TrimSpace(v.Reason) != "" && v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium" || v.Risk == "high") {
-				return v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium") && v.WithinWorkspace && v.Authorized, v.Reason, usage
+				return v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium") && (!requireWorkspace || v.WithinWorkspace) && v.Authorized, v.Reason, usage
 			}
 			reason = "审核模型返回的审批格式无效，请手动确认"
 		}

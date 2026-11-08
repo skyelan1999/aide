@@ -1,0 +1,59 @@
+{
+  "id": "session-review-assisted-approval-20261108",
+  "request": "参照 DSH 轨迹呈现整个会话调用流程；将电脑控制和浏览器访问加入辅助审批；只在当前本地 Aide 测试，不单开浏览器或 Docker 容器",
+  "baseline": "071625269a20f07419ccbe185a778fd589040040",
+  "initial_status": "main clean, origin/main aligned at 071625269a20f07419ccbe185a778fd589040040",
+  "acceptance": [
+    "会话评审上方按输入、模型、工具显示活动概览，下方按轮次和调用顺序显示输入、模型请求、工具调用、工具结果及助手输出；支持搜索、折叠和展开详情",
+    "历史记录的工具执行日志用于补齐顺序与时间，无法对应的记录标明时间未记录；在当前运行的本地 Aide 中验收，不启用独立浏览器或新增 Docker 容器",
+    "辅助审批启用时，电脑控制与网页访问的单次审批进入独立审核；明确授权的低风险操作可自动通过，高风险、缺乏目标或审核失败回退人工；不得持久授予应用或域名权限",
+    "审批决定与操作绑定并持久记录；关闭辅助审批时维持既有人工审批；相关 Go/JS 测试通过"
+  ],
+  "scope": [
+    "internal/server/web/session-review.js and .css, related frontend tests and asset versions",
+    "internal/server assisted approval and browser/computer action approval paths, focused tests",
+    "docs/tasks/session-review-assisted-approval-20261108.json and necessary user documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Based on the user screenshots and explicit follow-up request; preserve exact target checks and manual fallback.",
+      "evidence": [
+        "User screenshots 2026-11-08 08:42 and 08:43, plus request to add assisted approval for computer control and browser access."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use saved orchestration timing and execution journal for the session flow; bind assisted approval to an exact one-shot surface action with manual fallback.",
+      "evidence": ["internal/server/web/session-review.js", "internal/server/assisted_approval_surface.go"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Three-lane overview, chronological per-turn rows, journal correlation and bounded browser/computer assisted review are implemented in source.",
+      "evidence": ["internal/server/web/session-review.js", "internal/server/web/app.js", "internal/server/assisted_approval_surface.go"]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "Existing local Aide build completed Go vet and compilation; six Node review tests pass in the existing aide-aide-1 container; native Aide visually shows the three-lane overview and six-turn flow. A real model-driven assisted approval remains unverified because the local session hit an upstream model connection timeout.",
+      "evidence": ["scripts/session-review.test.cjs", "internal/server/assisted_approval_surface_test.go"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "The user guide explains session flow and one-shot assisted approval limits.",
+      "evidence": ["docs/user-guide.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No separate Aide service or test container was retained; build replaced the existing local Aide instance and recycled one obsolete runtime image.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Scoped source changes delivered as a local main commit. Remote push and live model-driven assisted approval are separate gates.",
+      "evidence": ["git main"]
+    }
+  },
+  "release_authorization": "User requested merge into main; remote push was not requested in this turn.",
+  "rollback": "Revert this scoped main commit if needed; do not delete session data.",
+  "handoff": "Local Aide UI is loaded; real model-driven assisted approval remains to be exercised when model connectivity is available."
+}
