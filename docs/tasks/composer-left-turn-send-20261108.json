@@ -72,7 +72,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "仅暂存本任务动效源码、测试、任务记录，以及 quick 所需的最小翻译目录修正；无第二个运行实例。",
+      "summary": "本任务修改已提交 main；保留本机服务与验收证据，未启动第二个实例。",
       "evidence": [
         "git status --short",
         "git diff --check",
@@ -80,15 +80,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "当前 main 与 origin/main 基线一致；正在完成提交前快速检查，随后提交本任务范围并推送。",
+      "status": "pass",
+      "summary": "按用户授权完成源码提交并推送 main；不升版、不打标签或创建 GitHub Release。",
       "evidence": [
-        "git fetch origin main",
-        "git rev-list --left-right --count HEAD...origin/main：0 0"
+        "git commit：5de8d98b feat: refine composer send and stop light motion",
+        "git push origin main：退出 0，远端 main 从 0a7253b9 更新到 5de8d98b",
+        "提交前 verify quick 全部通过；本机动效验收见 verification 阶段。",
+        "远端接受维护者直接推送，同时提示绕过 PR 与 gate 规则；未声称远端 gate 已通过。"
       ]
     }
   },
   "release_authorization": "用户明确要求：合并到main并推送。仅授权源码提交与推送，本轮不创建版本标签或 GitHub Release。",
   "rollback": "回退本任务的 experience.js、experience.css、app.js、index.html、测试与任务记录，再用 build.command 更新现有本机实例；保留用户其他修改。",
-  "handoff": "细亮芯、渐淡长拖尾与连续折返已在现有本机 Aide 复验；用户已授权提交 main 并推送，源码交付进行中。"
+  "handoff": "动效源码提交 5de8d98b 已推送 origin/main；本文件随后补记源码交付结果。本机运行的是先前已验收的动效构建，本轮最小翻译修正与缓存版本未重建到本机；浅色与移动布局未重验，未发布新版本。"
 }
