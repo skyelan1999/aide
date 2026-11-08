@@ -1,0 +1,94 @@
+{
+  "id": "composer-left-turn-send-20261108",
+  "request": "发送箭头化作较宽的流光，沿上方运行条向左蔓延并折返至停止本轮；点击停止后在左端折回输入区。节奏放慢、动作优雅。 用户补充：优雅的味有了，高级还差点。",
+  "baseline": "0a7253b9896f7a1f725768acdc899a22164e1490",
+  "initial_status": "main 与 origin/main 一致，工作树清洁；本轮开始于 0a7253b9896f7a1f725768acdc899a22164e1490。",
+  "acceptance": [
+    "发送时箭头转为较宽流光，左转沿运行条上沿行进到左端，随后折返至停止本轮；短任务无停止按钮时衔接到新消息。",
+    "点击停止本轮后，光效沿运行条向左行进，再折回下方输入区；失败、切换会话、隐藏或减少动态效果下无残留。",
+    "保留原有布局、键盘发送、运行控制与按钮状态；只在当前本机 Aide 实例验收。",
+    "流光使用细亮芯与渐淡长拖尾，发送左端折返连贯，抵达按钮后收光；停止回流末端对齐发送键。"
+  ],
+  "scope": [
+    "internal/server/web/experience.js",
+    "internal/server/web/experience.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/experience-runtime.test.cjs",
+    "docs/tasks/composer-left-turn-send-20261108.json",
+    "scripts/run-stop-ownership.test.cjs",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确补充了运行条、停止按钮与返回输入区的完整往返动效，并要求减速、柔和。",
+      "evidence": [
+        "用户本轮要求",
+        "docs/tasks/workbench-module-send-motion-20261108.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 beginSend/land，并增加 beginStop；按按钮、运行条与输入区实时几何绘制 SVG 光路，服务端响应后才执行落点。",
+      "evidence": [
+        "internal/server/web/experience.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "细化为沿曲线渐淡的六层拖尾，发送连续左转折返，抵达后收光，停止返回发送键；兼容减弱动态效果与窗口清理。",
+      "evidence": [
+        "internal/server/web/experience.js",
+        "internal/server/web/experience.css",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "质感细化通过定向运行测试与现有本机 Aide 深色桌面验收；本轮未重复验收浅色与移动布局。",
+      "evidence": [
+        "node --check internal/server/web/experience.js",
+        "node scripts/experience-runtime.test.cjs：通过；覆盖运行条下移 25 CSS px 时光路同步跟随、隐藏、减少动态效果、分层动画结束及窗口调整时的清理和发送箭头恢复",
+        "git diff --check",
+        "./build.command：退出 0；仅替换既有 aide-aide-1，日志 /tmp/aide-motion-refinement-build.log",
+        "本机 Aide #84：发送后连续截图见细亮光头与渐淡长尾沿运行条上沿向左移动",
+        "本机 Aide #84：点击停止后截图见左端回弯与输入区上沿回流，发送箭头在回流期间隐藏；结束截图见发送箭头恢复且无光路残留",
+        "本机 Aide #84：测试请求已停止，排队设置恢复为 on",
+        "docker ps：aide-aide-1 healthy；无第二个 Aide 实例，仅复用原有 BuildKit",
+        "提交前 quick 首轮发现停止测试缺少 window 模拟及基线重复翻译键；补齐动画确认/失败/切换会话断言，并删除被后续定义覆盖的翻译条目，保留现行运行时译文。",
+        "python3 scripts/agent-route.py verify quick：最终退出 0，日志 .agent-state/verify-20261108T115441822968Z.log；覆盖停止动画回执与英文目录校验。",
+        "补齐会话轨迹既有缺失翻译：助手 → Assistant；更新 app.js 与英文目录缓存版本。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务记录说明交互、状态边界与本机验收方式；无公共 API 变更。",
+      "evidence": [
+        "docs/tasks/composer-left-turn-send-20261108.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅暂存本任务动效源码、测试、任务记录，以及 quick 所需的最小翻译目录修正；无第二个运行实例。",
+      "evidence": [
+        "git status --short",
+        "git diff --check",
+        "docker ps：aide-aide-1 healthy，无第二个实例"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "当前 main 与 origin/main 基线一致；正在完成提交前快速检查，随后提交本任务范围并推送。",
+      "evidence": [
+        "git fetch origin main",
+        "git rev-list --left-right --count HEAD...origin/main：0 0"
+      ]
+    }
+  },
+  "release_authorization": "用户明确要求：合并到main并推送。仅授权源码提交与推送，本轮不创建版本标签或 GitHub Release。",
+  "rollback": "回退本任务的 experience.js、experience.css、app.js、index.html、测试与任务记录，再用 build.command 更新现有本机实例；保留用户其他修改。",
+  "handoff": "细亮芯、渐淡长拖尾与连续折返已在现有本机 Aide 复验；用户已授权提交 main 并推送，源码交付进行中。"
+}

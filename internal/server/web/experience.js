@@ -34,7 +34,7 @@
  const media=window.matchMedia?.('(prefers-reduced-motion: reduce)');
  const finePointer=window.matchMedia?.('(hover: hover) and (pointer: fine)');
  const nativeDialogMotion=!!window.CSS?.supports('transition-behavior','allow-discrete');
- const surfaces=new Map(),running=new Map(),exits=new Map(),segmentSyncs=[];
+ const surfaces=new Map(),running=new Map(),exits=new Map(),segmentSyncs=[],sendEffects=new Set();
  const sideIDs=new Set(['file-panel','plugin-panel','reminder-center']);
  const dialogIDs=new Set(['settings-dialog','editor-dialog','rca-dialog','new-file-dialog','new-folder-dialog','file-properties-dialog','plugin-settings-dialog','plugin-upload-dialog','ws-browse-dialog','source-dialog','reminder-alert']);
  const fixedIDs=new Set([...sideIDs,'strategy-menu','search-results','terminal-body','reminder-form']);
@@ -62,7 +62,7 @@
   }
  }
  function settlePanels(){panelTransition?.();}
- function cancelAll(){resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);for(const node of running.keys())cancel(node);}
+ function cancelAll(){resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);for(const node of running.keys())cancel(node);for(const stop of [...sendEffects])stop();}
  function reveal(node,kind='menu',from=null){
   const interrupted=running.has(node)?getComputedStyle(node):null;
   const current=from||resumeSamples.get(node)||(interrupted?{opacity:interrupted.opacity,transform:interrupted.transform}:null);
@@ -173,35 +173,117 @@
  for(const selector of ['.panel-switch','.mode-switch','.root-tabs','#plugin-mode-tabs']){
   const node=document.querySelector?.(selector);if(node)bindSegment(node);
  }
+ // Short overlapping strokes produce a tapered tail along the curve itself,
+ // including the turn. No animated blur or per-frame path reconstruction.
+ function lightComet(layer){
+  const ns='http://www.w3.org/2000/svg',group=document.createElementNS(ns,'g');
+  const bands=[[168,.055],[132,.07],[98,.1],[68,.14],[40,.22],[16,.45]];
+  const paths=bands.map(([tail,opacity])=>{
+   const path=document.createElementNS(ns,'path');path.classList.add('send-light-beam');
+   path.style.opacity=opacity;group.append(path);return {path,tail};
+  });
+  layer.append(group);
+  return {run(d,duration,{enter=true,exit=true,turn=0}={}){
+   for(const {path} of paths)path.setAttribute('d',d);
+   const length=paths[0].path.getTotalLength(),start=enter?0:16,end=length+(exit?168:0);
+   const travel=turn>0?[[start,0],[turn,.6],[end,1]]:[[start,0],[end,1]];
+   const animations=paths.map(({path,tail})=>{
+    path.style.strokeDasharray=`${tail} ${length+336}`;
+    return path.animate(travel.map(([head,offset])=>({strokeDashoffset:`${tail-head}px`,offset,easing:'cubic-bezier(.38,0,.22,1)'})),{duration,fill:'forwards'});
+   });
+   animations.push(group.animate([{opacity:enter?0:1},{opacity:1,offset:.08},{opacity:1,offset:.88},{opacity:exit?0:1}],{duration,fill:'forwards'}));
+   return {finished:Promise.all(animations.map(a=>a.finished)),cancel(){for(const a of animations)a.cancel();}};
+  }};
+ }
  function beginSend(button){
-  let active=true;
-  if(allowed())button?.classList.add('send-beaming');
-  const clear=()=>{active=false;button?.classList.remove('send-beaming');};
-  return {cancel:clear,land(target){
+  const composer=button?.closest?.('.composer');
+  if(!allowed()||!composer||!visible(composer)||!button?.isConnected||typeof button.animate!=='function')return {cancel(){},land(){}};
+  const from=button.getBoundingClientRect();
+  const strip=document.getElementById('run-controls');
+  const origin={x:from.left+from.width/2,y:from.top+from.height/2};
+  const ns='http://www.w3.org/2000/svg';
+  const layer=document.createElementNS(ns,'svg');layer.classList.add('send-light-route');layer.setAttribute('aria-hidden','true');
+  layer.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
+  const rail=document.createElementNS(ns,'path');rail.classList.add('send-light-rail');
+  layer.append(rail);const comet=lightComet(layer);document.body.append(layer);button.classList.add('send-beaming');
+  let active=true,landed=false,phase=null,finishTimer=0,followFrame=0;
+  const stop=()=>{if(!active)return;active=false;clearTimeout(finishTimer);if(followFrame)cancelAnimationFrame(followFrame);phase?.cancel();button.classList.remove('send-beaming');layer.remove();sendEffects.delete(stop);};
+  sendEffects.add(stop);
+  return {cancel(){if(!landed)stop();},land(target){
+   if(!active||landed)return;
+   landed=true;
+   requestAnimationFrame(()=>{
    if(!active)return;
-   clear();
-   if(!target||!allowed()||!visible(target)||typeof target.animate!=='function'||!button?.isConnected)return;
-   const from=button.getBoundingClientRect(),to=target.getBoundingClientRect();
-   if(to.bottom<0||to.top>innerHeight||document.querySelector('.settings-sheet.open,.trajectory-sheet.open,.workspace-sheet.open'))return;
-   const origin={x:from.left+from.width/2,y:from.top+from.height/2};
-   const destination={x:to.right-Math.min(24,to.width/3),y:to.top+Math.min(26,to.height/2)};
-   const light=document.createElement('span');light.className='send-light-flight';light.setAttribute('aria-hidden','true');
-   light.style.left=origin.x+'px';light.style.top=origin.y+'px';document.body.append(light);
-   const dx=destination.x-origin.x,dy=destination.y-origin.y;
-   const flight=light.animate([
-    {opacity:.15,transform:'translate3d(0,0,0) scale(.65)'},
-    {opacity:1,transform:`translate3d(${dx*.55}px,${dy*.55}px,0) scale(1.2)`,offset:.55},
-    {opacity:0,transform:`translate3d(${dx}px,${dy}px,0) scale(.7)`}
-   ],{duration:390,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
-   const removeLight=()=>light.remove();
-   flight.finished.then(removeLight,removeLight);
-   setTimeout(removeLight,560); // A paused animation cannot leave a floating light behind.
-   const arrive=target.animate([
-    {opacity:0,transform:'translate3d(0,8px,0) scale(.975)',offset:0},
-    {opacity:0,transform:'translate3d(0,8px,0) scale(.975)',offset:.4},
-    {opacity:1,transform:'translate3d(0,0,0) scale(1)',offset:1}
-   ],{duration:390,easing:'cubic-bezier(.22,1,.36,1)'});
-   arrive.finished.catch(()=>{});
+   const stopButton=document.getElementById('stop-active-run');
+   const landing=stopButton&&visible(stopButton)?stopButton:target;
+   if(!landing||!allowed()||!visible(landing)||typeof landing.animate!=='function'||!button.isConnected||document.querySelector('.settings-sheet.open,.trajectory-sheet.open,.workspace-sheet.open')){stop();return;}
+   const to=landing.getBoundingClientRect();
+   if(to.bottom<0||to.top>innerHeight){stop();return;}
+   button.classList.remove('send-beaming');
+   const destination=landing===stopButton?{x:to.left+to.width/2,y:to.top+to.height/2}:{x:to.right-Math.min(24,to.width/3),y:to.top+Math.min(26,to.height/2)};
+   const box=composer.getBoundingClientRect(),bar=strip&&visible(strip)?strip.getBoundingClientRect():null;
+   const topY=bar?bar.top+1:box.top-46,end={x:(bar||box).left+24,y:topY};
+   if(bar){
+    const baseX=bar.left,baseY=bar.top;
+    const follow=()=>{
+     if(!active||!visible(strip))return;
+     const current=strip.getBoundingClientRect();
+     layer.style.transform=`translate3d(${current.left-baseX}px,${current.top-baseY}px,0)`;
+     followFrame=requestAnimationFrame(follow);
+    };
+    followFrame=requestAnimationFrame(follow);
+   }
+   const turnX=Math.max(end.x+24,origin.x-32);
+   const radius=Math.min(14,Math.max(4,(origin.y-topY)/3));
+   const first=`M ${origin.x} ${origin.y} H ${turnX+radius} Q ${turnX} ${origin.y} ${turnX} ${origin.y-radius} V ${topY+radius} Q ${turnX} ${topY} ${turnX-radius} ${topY} H ${end.x}`;
+   rail.setAttribute('d',`M ${end.x} ${topY} H ${turnX}`);
+   // Keep the light on one continuous path through the soft left-hand turn.
+   const measure=document.createElementNS(ns,'path');measure.setAttribute('d',first);
+   const turn=measure.getTotalLength();
+   const finishPath=landing===stopButton?` C ${end.x-16} ${topY} ${end.x-16} ${topY+6} ${end.x} ${topY+6} H ${destination.x-16} Q ${destination.x} ${topY+6} ${destination.x} ${destination.y}`:` Q ${end.x-24} ${Math.min(end.y-20,destination.y+22)} ${destination.x} ${destination.y}`;
+   phase=comet.run(first+finishPath,3800,{turn});
+   phase.finished.then(()=>{
+    if(active&&landing.isConnected&&allowed()){
+     const arrive=landing.animate([{filter:'brightness(1.16)'},{filter:'brightness(1)'}],{duration:460,easing:'cubic-bezier(.22,1,.36,1)'});
+     arrive.finished.catch(()=>{});
+    }
+    stop();
+   },stop);finishTimer=setTimeout(stop,4300);
+   });
+  }};
+ }
+ function beginStop(button,composer){
+  const strip=button?.closest?.('.composer-run-controls');
+  if(!allowed()||!strip||!composer||!visible(button)||!visible(composer)||typeof button.animate!=='function')return {cancel(){},land(){}};
+  const sendButton=document.getElementById('send');
+  sendButton?.classList.add('send-returning');
+  const from=button.getBoundingClientRect(),bar=strip.getBoundingClientRect();
+  const start={x:from.left+from.width/2,y:from.top+from.height/2};
+  const leftX=bar.left+24,topY=bar.top+1;
+  const ns='http://www.w3.org/2000/svg',layer=document.createElementNS(ns,'svg');
+  layer.classList.add('send-light-route');layer.setAttribute('aria-hidden','true');layer.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
+  const comet=lightComet(layer);document.body.append(layer);
+  let active=true,landed=false,phase=null,finishTimer=0;
+  const stop=()=>{if(!active)return;active=false;clearTimeout(finishTimer);phase?.cancel();sendButton?.classList.remove('send-returning');layer.remove();sendEffects.delete(stop);};
+  sendEffects.add(stop);
+  phase=comet.run(`M ${start.x} ${start.y} Q ${start.x} ${topY} ${start.x-16} ${topY} H ${leftX}`,1500,{exit:false});
+  phase.finished.catch(()=>{});
+  return {cancel(){if(!landed)stop();},land(){
+   if(!active||landed)return;landed=true;
+   phase.finished.then(()=>{
+    if(!active||!composer.isConnected||!allowed()){stop();return;}
+    const box=composer.getBoundingClientRect(),input=composer.querySelector('.input-wrap')||composer;
+    phase.cancel();
+    const to=sendButton?.getBoundingClientRect(),x=to?to.left+to.width/2:box.right-24,y=to?to.top+to.height/2:box.top+8;
+    phase=comet.run(`M ${leftX} ${topY} C ${box.left+8} ${topY} ${box.left+8} ${topY+12} ${box.left+8} ${topY+24} V ${box.top-8} Q ${box.left+8} ${box.top+8} ${box.left+24} ${box.top+8} H ${x-16} Q ${x} ${box.top+8} ${x} ${box.top+24} V ${y}`,1650,{enter:false});
+    phase.finished.then(()=>{
+     if(active&&input.isConnected&&allowed()){
+      const arrive=input.animate([{filter:'brightness(1.06)'},{filter:'brightness(1)'}],{duration:480,easing:'cubic-bezier(.22,1,.36,1)'});
+      arrive.finished.catch(()=>{});
+     }
+     stop();
+    },stop);finishTimer=setTimeout(stop,1950);
+   },stop);
   }};
  }
  function scan(){
@@ -274,8 +356,8 @@
   settlePanels();
   for(const node of running.keys())if(node!==document.body&&node.contains(event.target))cancel(node);
  },{capture:true,passive:true});
- window.addEventListener('resize',()=>{resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);});
+ window.addEventListener('resize',()=>{resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);for(const stop of [...sendEffects])stop();});
  // Navigation owns this API even when the optional intro does not run.
- window.aideExperience=Object.assign(window.aideExperience||{},{leave,settle,reopen,changePanels,revealContent,beginSend});
+ window.aideExperience=Object.assign(window.aideExperience||{},{leave,settle,reopen,changePanels,revealContent,beginSend,beginStop});
  root.dataset.motionLayer='ready';
 })();

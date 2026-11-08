@@ -1470,10 +1470,12 @@ async function stopRunById(runId) {
   const run=state.session?.runs?.find(item=>item.id===runId),key=JSON.stringify([scope,sessionId,runId]);
   if(!sessionId||!visible()||!run||!['running','awaiting_clarification'].includes(run.status)||stopRequests.has(key))return;
   stopRequests.add(key); setSendMode(state.busy);
+  const stopMotion=window.aideExperience?.beginStop($('stop-active-run'),$('task-form'));
   try {
     await api('/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/cancel',{method:'POST',body:'{}'});
-    if(visible()){run.stopRequested=true;toast(t('已请求停止'));refreshSessionSoon();schedulePoll();}
-  } catch(e) {if(visible())toast(e.message||String(e));}
+    if(visible()){run.stopRequested=true;toast(t('已请求停止'));refreshSessionSoon();schedulePoll();stopMotion?.land();}
+    else stopMotion?.cancel();
+  } catch(e) {stopMotion?.cancel();if(visible())toast(e.message||String(e));}
   finally{stopRequests.delete(key);if(visible())setSendMode(state.busy);}
 }
 

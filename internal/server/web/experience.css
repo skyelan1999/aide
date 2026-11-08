@@ -64,13 +64,19 @@ html[data-motion-layer="ready"] .file-ctx-menu{animation:none!important}
 .panel-switch.motion-segment-ready button,.mode-switch.motion-segment-ready button,.root-tabs.motion-segment-ready button,#plugin-mode-tabs.motion-segment-ready button{position:relative;z-index:1}
 .panel-switch.motion-segment-ready .quiet.active,.mode-switch.motion-segment-ready button.active,.root-tabs.motion-segment-ready button.active,#plugin-mode-tabs.motion-segment-ready button[aria-selected="true"]{background:transparent;box-shadow:none}
 #file-panel .root-tabs.motion-segment-ready button.active{box-shadow:none}
-#send.send-beaming{position:relative;isolation:isolate;overflow:hidden;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-hi) 20%,transparent),0 0 18px color-mix(in srgb,var(--brand-hi) 32%,transparent)}
-#send.send-beaming::before{content:"";position:absolute;inset:-20%;background:linear-gradient(110deg,transparent 30%,color-mix(in srgb,var(--on-brand) 72%,transparent) 50%,transparent 70%);transform:translateX(-120%);animation:send-beam 900ms ease-in-out infinite;pointer-events:none}
-@keyframes send-beam{to{transform:translateX(120%)}}
-.send-light-flight{position:fixed;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--on-brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand-hi) 38%,transparent),0 0 16px 7px color-mix(in srgb,var(--brand-hi) 56%,transparent);pointer-events:none;z-index:90}
-html[data-motion="reduced"] #send.send-beaming::before,html[data-ui-paused] #send.send-beaming::before{animation:none}
+#send.send-beaming{position:relative;isolation:isolate;color:transparent;background:transparent;border-color:transparent;box-shadow:none}
+#send.send-beaming::before{content:"";position:absolute;left:50%;top:50%;width:44px;height:3px;border-radius:999px;background:linear-gradient(90deg,transparent,var(--text) 72%,transparent);box-shadow:0 0 9px color-mix(in srgb,var(--text) 18%,transparent);transform:translate(-50%,-50%);animation:send-bar-ignite 900ms cubic-bezier(.22,1,.36,1) both;pointer-events:none}
+@keyframes send-bar-ignite{from{opacity:0;transform:translate(-50%,-50%) scaleX(.24)}to{opacity:.85;transform:translate(-50%,-50%) scaleX(1)}}
+#send.send-beaming.submitting::after{display:none}
+#send{transition:background .15s,color .15s,border-color .15s,opacity .34s cubic-bezier(.22,1,.36,1)}
+#send.send-returning{opacity:0!important;pointer-events:none}
+.send-light-route{position:fixed;inset:0;width:100vw;height:100vh;overflow:visible;pointer-events:none;z-index:90;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.send-light-rail{stroke:var(--text);stroke-width:.65;opacity:.055}
+.send-light-route>g{filter:drop-shadow(0 0 3px color-mix(in srgb,var(--text) 26%,transparent))}
+.send-light-beam{stroke:var(--text);stroke-width:2.4}
 html[data-motion="reduced"] .motion-segment-ready::before,html[data-ui-paused] .motion-segment-ready::before{transition:none}
-@media(prefers-reduced-motion:reduce){#send.send-beaming::before{animation:none}.motion-segment-ready::before{transition:none}}
+html[data-motion="reduced"] #send,html[data-ui-paused] #send{transition:none}
+@media(prefers-reduced-motion:reduce){.motion-segment-ready::before{transition:none}}
 @media(min-width:951px){
  #file-panel,#plugin-panel,#reminder-center{grid-column:3;grid-row:1;min-width:0;overflow:hidden}
 }
