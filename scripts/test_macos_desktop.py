@@ -29,6 +29,17 @@ builder = load('build-macos-desktop')
 
 
 class DesktopTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('xcrun'), 'requires macOS Swift')
+    def test_computer_control_scheduler_and_capture_geometry(self):
+        with tempfile.TemporaryDirectory(prefix='aide-control-scheduler-') as temporary:
+            executable = str(Path(temporary) / 'control-test')
+            subprocess.run(['xcrun', 'swiftc', '-swift-version', '5',
+                            str(ROOT / 'native/macos-desktop/computer_control_scheduler.swift'),
+                            str(ROOT / 'scripts/computer-control-scheduler-test.swift'), '-o', executable],
+                           check=True, capture_output=True, timeout=90)
+            result = subprocess.run([executable], check=True, capture_output=True, text=True, timeout=15)
+            self.assertIn('PASS independent app lanes', result.stdout)
+
     @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('xcrun'), 'requires macOS Swift and Security')
     def test_sealed_touchid_store_and_hardware_acl(self):
         with tempfile.TemporaryDirectory(prefix='aide-touchid-regression-') as temporary:
@@ -41,6 +52,16 @@ class DesktopTests(unittest.TestCase):
             self.assertIn('PASS owner-only store', result.stdout)
             self.assertTrue('NOT_RUN user-approved Touch ID signature' in result.stdout
                             or 'NOT_RUN Secure Enclave hardware unavailable' in result.stdout)
+
+    @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('xcrun'), 'requires macOS Swift')
+    def test_double_modifier_gesture(self):
+        with tempfile.TemporaryDirectory(prefix='aide-capture-gesture-') as temporary:
+            executable = str(Path(temporary) / 'gesture-test')
+            subprocess.run(['xcrun', 'swiftc', str(ROOT / 'native/macos-desktop/modifier_gesture.swift'),
+                            str(ROOT / 'scripts/app-capture-gesture-test.swift'), '-o', executable],
+                           check=True, capture_output=True, timeout=60)
+            result = subprocess.run([executable], check=True, capture_output=True, text=True, timeout=10)
+            self.assertIn('PASS double-modifier', result.stdout)
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='aide-desktop-中文 空格-')

@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>Aide Computer Actions Test</title>
+<style>
+body{font:18px system-ui;margin:24px;background:#f3f5f8;color:#152238;max-width:1000px}h1{font-size:25px}section{background:white;padding:16px;margin:14px 0;border:1px solid #b8c4d4;border-radius:12px}h2{font-size:18px;margin:0 0 10px}output{display:block;font:17px ui-monospace;color:#174c39;margin-top:8px}#arena{width:940px;height:160px;background:#e6edf7;position:relative;touch-action:none}#target{position:absolute;left:20px;top:40px;width:160px;height:70px;background:#205fc5;color:white;display:grid;place-items:center;border-radius:12px;touch-action:none;user-select:none}#scroll{width:940px;height:130px;overflow:auto;border:2px solid #567;overscroll-behavior:contain}#canvas{width:2200px;height:1600px;background:repeating-linear-gradient(0deg,#edf2f9 0px,#edf2f9 79px,#b6c7df 80px);position:relative}#canvas span:last-child{position:absolute;left:1500px;top:1000px}textarea{font:20px ui-monospace;width:920px;height:80px}
+body{margin:16px;font-size:16px}h1{font-size:22px;margin:8px 0}p{font-size:14px;margin:10px 0}section{padding:12px;margin:8px 0}h2{font-size:17px;margin:0 0 8px}output{font-size:15px;margin-top:4px}#arena{height:120px}#target{top:20px}#scroll{height:100px}textarea{height:50px}
+</style>
+<h1>Aide Computer Actions Test — disposable local fixture</h1>
+<p>No network, accounts, downloads or persistent storage. Only this page changes.</p>
+<section><h2>Drag sandbox</h2><div id="arena"><div id="target" role="button" aria-label="Drag target">Drag target</div></div><output id="dragStatus" aria-live="polite">Drag: x=20 y=20 moves=0 releases=0</output></section>
+<section><h2>Scroll sandbox — both axes</h2><div id="scroll" tabindex="0" aria-label="Scroll sandbox"><div id="canvas"><span>Top left origin</span><span>Far corner</span></div></div><output id="scrollStatus" aria-live="polite">Scroll: x=0 y=0</output></section>
+<section><h2>Keyboard sandbox</h2><textarea id="editor" aria-label="Keyboard sandbox" spellcheck="false">Alpha Beta Gamma</textarea><output id="keyStatus" aria-live="polite">Keyboard: Alpha Beta Gamma</output></section>
+<script>
+let x=20,y=20,moves=0,releases=0,active=false,dx=0,dy=0;
+const target=document.querySelector('#target'),arena=document.querySelector('#arena'),dragStatus=document.querySelector('#dragStatus');
+target.onpointerdown=e=>{active=true;dx=e.clientX;dy=e.clientY;target.setPointerCapture(e.pointerId)};
+target.onpointermove=e=>{if(!active)return; x=Math.max(0,Math.min(arena.clientWidth-160,x+e.clientX-dx));y=Math.max(0,Math.min(arena.clientHeight-70,y+e.clientY-dy));dx=e.clientX;dy=e.clientY;moves++;target.style.left=x+'px';target.style.top=y+'px';dragStatus.textContent=`Drag: x=${Math.round(x)} y=${Math.round(y)} moves=${moves} releases=${releases}`};
+target.onpointerup=target.onpointercancel=e=>{if(active)releases++;active=false;dragStatus.textContent=`Drag: x=${Math.round(x)} y=${Math.round(y)} moves=${moves} releases=${releases}`};
+const scrollBox=document.querySelector('#scroll');scrollBox.onscroll=()=>document.querySelector('#scrollStatus').textContent=`Scroll: x=${Math.round(scrollBox.scrollLeft)} y=${Math.round(scrollBox.scrollTop)}`;
+const editor=document.querySelector('#editor');editor.oninput=()=>document.querySelector('#keyStatus').textContent='Keyboard: '+editor.value;
+</script>

@@ -1,0 +1,128 @@
+{
+  "id": "computer-actions-main-20261109",
+  "request": "和到main然后推送",
+  "baseline": "3edafef75ee6f17d8ddc680721c67d2c0428ce8a",
+  "acceptance": [
+    "Commit the locally verified shortcut/capture/computer-control candidate on main and push origin/main.",
+    "Preserve all user data and current runtime; do not start another instance or publish a version.",
+    "Verify remote main equals committed local main."
+  ],
+  "scope": [
+    "docs/reviews/2026-11-08-computer-control-gap.md",
+    "docs/reviews/2026-11-09-computer-actions.md",
+    "docs/tasks/assisted-ui-actions-20261108.json",
+    "docs/tasks/computer-actions-20261108.json",
+    "docs/tasks/computer-target-routing-20261108.json",
+    "docs/tasks/computer-virtual-pointer-20261108.json",
+    "docs/tasks/global-app-capture-20261108.json",
+    "docs/tasks/settings-keybindings-20261108.json",
+    "internal/server/assisted_approval_ui.go",
+    "internal/server/assisted_approval_ui_test.go",
+    "internal/server/assisted_approval_visual.go",
+    "internal/server/computer_actions.go",
+    "internal/server/computer_actions_test.go",
+    "internal/server/computer_snapshot_evidence.go",
+    "internal/server/computer_snapshot_evidence_test.go",
+    "internal/server/web/desktop-capture.js",
+    "internal/server/web/keybindings.css",
+    "internal/server/web/keybindings.js",
+    "native/macos-desktop/app_capture.swift",
+    "native/macos-desktop/computer_control_scheduler.swift",
+    "native/macos-desktop/computer_virtual_pointer.swift",
+    "native/macos-desktop/modifier_gesture.swift",
+    "scripts/app-capture-gesture-test.swift",
+    "scripts/computer-control-scheduler-test.swift",
+    "scripts/desktop-capture.test.cjs",
+    "scripts/fixtures/computer-actions.html",
+    "scripts/keybindings.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "internal/server/approval_reviewer.go",
+    "internal/server/assisted_approval_surface.go",
+    "internal/server/assisted_approval_surface_test.go",
+    "internal/server/computer_control.go",
+    "internal/server/computer_control_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web_research.go",
+    "internal/server/workflow.go",
+    "native/macos-desktop/computer_control.swift",
+    "native/macos-desktop/main.swift",
+    "scripts/aide.sh",
+    "scripts/build-macos-desktop.py",
+    "scripts/test_macos_desktop.py",
+    "scripts/test_source_fingerprint.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Integrate existing locally tested related features; content fingerprint unchanged, source scopes reviewed, no generated runtime data staged. See linked acceptance records.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        "docs/tasks/settings-keybindings-20261108.json",
+        "docs/tasks/global-app-capture-20261108.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Integrate existing locally tested related features; content fingerprint unchanged, source scopes reviewed, no generated runtime data staged. See linked acceptance records.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        "docs/tasks/settings-keybindings-20261108.json",
+        "docs/tasks/global-app-capture-20261108.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Integrate existing locally tested related features; content fingerprint unchanged, source scopes reviewed, no generated runtime data staged. See linked acceptance records.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        "docs/tasks/settings-keybindings-20261108.json",
+        "docs/tasks/global-app-capture-20261108.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Integrate existing locally tested related features; content fingerprint unchanged, source scopes reviewed, no generated runtime data staged. See linked acceptance records.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        "docs/tasks/settings-keybindings-20261108.json",
+        "docs/tasks/global-app-capture-20261108.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Integrate existing locally tested related features; content fingerprint unchanged, source scopes reviewed, no generated runtime data staged. See linked acceptance records.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        "docs/tasks/settings-keybindings-20261108.json",
+        "docs/tasks/global-app-capture-20261108.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Integrate existing locally tested related features; content fingerprint unchanged, source scopes reviewed, no generated runtime data staged. See linked acceptance records.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        "docs/tasks/settings-keybindings-20261108.json",
+        "docs/tasks/global-app-capture-20261108.json",
+        ".agent-state/quick.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User authorized source main commit and push. Binary release/full release matrix not requested and not performed.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User: 和到main然后推送",
+  "rollback": "Revert the source integration commit on a new authorized task; retain runtime data. No force push, reset or clean.",
+  "handoff": "Source integration only; no public release or version bump."
+}

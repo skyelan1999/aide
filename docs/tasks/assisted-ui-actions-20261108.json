@@ -1,0 +1,116 @@
+{
+  "id": "assisted-ui-actions-20261108",
+  "request": "提高辅助审批能审批内容的能力，像有些点按啊，基本的功能就不要让用户在确认了",
+  "baseline": "3edafef75ee6f17d8ddc680721c67d2c0428ce8a",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/computer_control.swift\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/test_macos_desktop.py\n M scripts/test_source_fingerprint.py\n?? docs/tasks/computer-target-routing-20261108.json\n?? docs/tasks/global-app-capture-20261108.json\n?? docs/tasks/settings-keybindings-20261108.json\n?? internal/server/web/desktop-capture.js\n?? internal/server/web/keybindings.css\n?? internal/server/web/keybindings.js\n?? native/macos-desktop/app_capture.swift\n?? native/macos-desktop/modifier_gesture.swift\n?? scripts/app-capture-gesture-test.swift\n?? scripts/desktop-capture.test.cjs\n?? scripts/keybindings.test.cjs",
+  "acceptance": [
+    "辅助审批下普通点击、输入、基础按键可独立审核，不再硬编码一律转人工",
+    "审核看到真实任务、准确操作和新鲜控件证据；待输入原文仅在内存中交给审核，不写入审批卡片",
+    "付款、删除、发送、权限变更、密码等敏感目标继续人工；未知目标不盲批",
+    "手动模式不自动回答；取消、工作区变更、审批代次与控件变化不放行",
+    "只构建并测试当前本机 Aide，不新增服务容器"
+  ],
+  "scope": [
+    "internal/server/assisted_approval_surface.go",
+    "internal/server/assisted_approval_surface_test.go",
+    "internal/server/assisted_approval_ui.go",
+    "internal/server/assisted_approval_ui_test.go",
+    "internal/server/workflow.go",
+    "native/macos-desktop/computer_control.swift",
+    "docs/architecture.md",
+    "docs/tasks/assisted-ui-actions-20261108.json",
+    "internal/server/computer_control.go",
+    "internal/server/web/app.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Expand independent review to normal UI actions with fresh native AX target evidence, exact in-memory arguments and post-review target revalidation. Preserve allowlists, native identity checks and manual mode.",
+      "evidence": [
+        "internal/server/assisted_approval_surface.go",
+        "internal/server/workflow.go",
+        "native/macos-desktop/computer_control.swift"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Expand independent review to normal UI actions with fresh native AX target evidence, exact in-memory arguments and post-review target revalidation. Preserve allowlists, native identity checks and manual mode.",
+      "evidence": [
+        "internal/server/assisted_approval_surface.go",
+        "internal/server/workflow.go",
+        "native/macos-desktop/computer_control.swift"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented task-derived controller identity, cancellable app/device lanes, nonactivating pointers, exact assisted UI review, snapshot budget/mapping and visual evidence. Controlled web fields select the physical device path before mutation. Added Electron AXManualAccessibility handshake.",
+      "evidence": [
+        "internal/server/computer_control.go",
+        "internal/server/assisted_approval_ui.go",
+        "internal/server/assisted_approval_visual.go",
+        "native/macos-desktop/computer_control.swift",
+        "native/macos-desktop/computer_control_scheduler.swift",
+        "native/macos-desktop/computer_virtual_pointer.swift"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "PASS quick, focused in-container Go suite, native compile and 14 native tests. Current Aide sessions #88/#89 completed overlapping Youdao translation and TextEdit background writes without human approval; independent CUA verified both outputs. EDA screenshot #90 passed. EDA visual menu roundtrip did not pass: actor and reviewer confused menu/coordinates, then out-of-window click was gated. No manufacturing workflow acceptance. Followup computer-actions-20261108 verifies the added action vocabulary; remaining hardware/overlay and broader autonomy checks remain NOT_RUN, not a release gate PASS.",
+      "evidence": [
+        ".agent-state/verify-20261108T154207137971Z.log",
+        "/tmp/aide-computer-lanes-go-tests-ready.log",
+        "/tmp/aide-computer-web-input-compile-final.log",
+        "/tmp/aide-computer-lanes-native-tests.log",
+        "/tmp/aide-computer-final-local-build.log",
+        ".agent-state/computer-control-live-evidence.json",
+        "docs/reviews/2026-11-08-computer-control-gap.md"
+      ],
+      "notes": [
+        "First unbounded in-container test process exited 137 while the existing service restarted; reruns use GOMEMLIMIT=512MiB, GOGC=30, GOMAXPROCS=2 and -p=1. No extra service container created.",
+        "First live #86 regression automatically approved computer_click, but native activation failed while another EDA task was active. CMD+A correctly remained manual without an editable focus. Cancelled only that regression run; concurrent pointer/background-control follow-up tracked in computer-virtual-pointer-20261108.",
+        "Runtime pointer status confirmed visible labelled NSPanel with independent controller ID; full-desktop overlay visual placement not captured.",
+        "Web AXValue initial trial reverted its value; fixed by pre-mutation WebArea detection and verified through system-input translation.",
+        "Windows/Linux hardware, multi-monitor, full Go race and single-run 10X multi-app acceptance NOT_RUN.",
+        "Only diagnostic menu run was cancelled; CUA dismissed its menu. Test TextEdit content restored. User projects and other sessions preserved."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and detailed gap report distinguish verified paths, partial menu acceptance, remaining action vocabulary and release state.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-11-08-computer-control-gap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No second Aide service. Reused existing runtime and builder; only scoped regenerable build caches cleaned to satisfy disk preflight. Test tasks ended, TextEdit restored, menu diagnostic stopped and dismissed. Existing tracked/untracked user work preserved.",
+      "evidence": [
+        "/tmp/aide-computer-build-cache-cleanup.log",
+        "/tmp/aide-computer-final-local-build.log",
+        ".agent-state/computer-control-live-evidence.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Current local source instance rebuilt only. No new commit, merge, push, public artifact or issue closure in this task. Existing integrity=degraded remains distinct from healthy service.",
+      "evidence": [
+        "/tmp/aide-computer-final-local-build.log"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Local improvements are usable and basic two-app workflows verified. Visual click semantic accuracy remains partial; see menu diagnostic in the gap report. No claim of Codex parity or EDA manufacturing acceptance.",
+  "runtime": {
+    "image": "sha256:3caf76ee920d1b56e11b7b34bf6cea6df14582efd9d4ced9000b14841dda3152",
+    "status": "ok",
+    "health": "healthy",
+    "integrity": "degraded (existing dirty-candidate state)",
+    "quick_fingerprint": "577bee746227885cf2752d9d07d339e82ffa6217cd98bea2ede2335563d23794",
+    "native_digest": "aaa338b40280a7f8686f26ce173b3f66ff013aa9f9e044eb0f74169fd0b30cfa"
+  }
+}

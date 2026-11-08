@@ -1,0 +1,86 @@
+{
+  "id": "settings-keybindings-20261108",
+  "request": "帮我在设置里添加快捷键绑定的设置功能",
+  "baseline": "3edafef75ee6f17d8ddc680721c67d2c0428ce8a",
+  "initial_status": "main 3edafef7，工作树清洁；复用本机 aide-aide-1。",
+  "acceptance": [
+    "设置→通用→快捷键可录入、禁用及恢复单项或全部默认值",
+    "冲突及保留按键明确提示，不覆盖既有绑定；输入法与普通输入不误触",
+    "通过 aideUI 保存当前设备偏好，重载后仍生效；菜单提示同步",
+    "在当前本机 Aide 验证，不启动第二个实例"
+  ],
+  "scope": [
+    "internal/server/web/keybindings.js",
+    "internal/server/web/keybindings.css",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/keybindings.test.cjs",
+    "docs/architecture.md",
+    "docs/tasks/settings-keybindings-20261108.json",
+    "docs/agent/router.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "统一快捷键匹配与设置录入，复用 aideUI 设备存储和原有操作入口。",
+      "evidence": [
+        "internal/server/web/settings-init.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一快捷键匹配与设置录入，复用 aideUI 设备存储和原有操作入口。",
+      "evidence": [
+        "internal/server/web/settings-init.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "通用设置增加十项快捷键；统一匹配、录入冲突检查与设备存储，提示同步，保留输入法/弹窗/锁屏边界。",
+      "evidence": [
+        "internal/server/web/keybindings.js",
+        "internal/server/web/settings-schema.json",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "快捷键定向回归、完整 quick 与现有本机 Aide 深色桌面验收通过；其他平台原生界面、浅色及窄屏未实测。服务 status=ok，未提交源码构建的完整性基线仍显示 degraded。",
+      "evidence": [
+        "node scripts/keybindings.test.cjs：Mac/Linux 模拟事件，默认、重绑、禁用、冲突、保留键、持久化、IME、弹窗及锁屏边界通过",
+        "node scripts/test_prompt_shortcut.cjs、node scripts/run-stop-ownership.test.cjs：通过",
+        "node scripts/test_i18n_coverage.cjs：3808 处显式翻译调用通过",
+        "python3 scripts/agent-route.py verify quick：最终退出 0；.agent-state/verify-20261108T124301884931Z.log",
+        "初轮 quick 各命令退出 0，因运行期间源码变动未获有效收据；固定源码后重跑通过",
+        "./build.command：退出 0；/tmp/aide-keybindings-build.log；仅更新 aide-aide-1",
+        "实际本机 Aide：搜索录入 Ctrl+Alt+K，重启后保留；触发后焦点进入搜索框",
+        "实际本机 Aide：重复绑定提示与搜索会话冲突；Esc 取消录入且设置页保持打开",
+        "实际本机 Aide：禁用后组合键不再触发；单项恢复显示 Command+K；发送支持录入 Ctrl+Enter；全部恢复后 Command+K 正常触发",
+        "界面验收发现并修复设置刷新回调缺失，最终构建重复打开未再发生；测试绑定已恢复默认",
+        "五项变更资源与当前源码逐字节一致；healthz status=ok/integrity=degraded；基线仍为干净提交 3edafef7，当前二进制为 dirty 工作树构建，未修改完整性基线"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构及任务记录说明默认值、设备存储、作用域和验收边界。",
+      "evidence": ["docs/architecture.md", "python3 scripts/check_docs.py：通过"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本机绑定恢复默认，仅保留本任务源码、测试与文档；未新增 Aide 实例。",
+      "evidence": ["git diff --check：通过", "git status --short", "docker ps：aide-aide-1 healthy，仅复用原有 BuildKit"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅更新当前本机实例验收；未提交、推送、升版或发布。",
+      "evidence": ["/tmp/aide-keybindings-build.log"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务 scope 中修改并移除本任务新增文件，再构建当前实例；设置页恢复全部默认快捷键可撤销设备偏好。",
+  "handoff": "设置→通用→快捷键已在本机 Aide 生效；十项操作支持录入、禁用及恢复默认，带冲突提示。quick 和深色桌面验收通过，测试偏好恢复默认。代码未提交或推送；dirty 构建的完整性基线告警保留，未重置基线。"
+}

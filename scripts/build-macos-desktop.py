@@ -94,7 +94,9 @@ def compile_app(root):
                SOURCE / 'scripts/render-computer-bridge-icon.swift', Path(__file__)]
     biometric_source = SOURCE / 'native/macos-desktop/biometrics.swift'
     computer_control_source = SOURCE / 'native/macos-desktop/computer_control.swift'
-    sources.extend([biometric_source, computer_control_source])
+    capture_sources = [SOURCE / 'native/macos-desktop/modifier_gesture.swift', SOURCE / 'native/macos-desktop/app_capture.swift',
+                       SOURCE / 'native/macos-desktop/computer_control_scheduler.swift', SOURCE / 'native/macos-desktop/computer_virtual_pointer.swift']
+    sources.extend([biometric_source, computer_control_source, *capture_sources])
     digest = hashlib.sha256()
     for source in sources:
         digest.update(source.read_bytes())
@@ -114,7 +116,7 @@ def compile_app(root):
             resources.mkdir()
             executable = macos / 'AideDesktop'
             subprocess.run(common + ['-O', '-target', os.uname().machine + '-apple-macos14.0',
-                                      str(sources[0]), str(biometric_source), str(computer_control_source), '-o', str(executable)], check=True)
+                                      str(sources[0]), str(biometric_source), str(computer_control_source), *map(str, capture_sources), '-o', str(executable)], check=True)
             shutil.copyfile(SOURCE / 'scripts/desktop-session.py', resources / 'desktop-session.py')
             info = {'CFBundleIdentifier': bundle_id(root), 'CFBundleName': 'Aide',
                     'CFBundleDisplayName': 'Aide', 'CFBundleExecutable': 'AideDesktop',

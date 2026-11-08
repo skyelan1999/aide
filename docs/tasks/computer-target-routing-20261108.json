@@ -1,0 +1,102 @@
+{
+  "id": "computer-target-routing-20261108",
+  "request": "为什么非得到前台，这不合理",
+  "baseline": "3edafef75ee6f17d8ddc680721c67d2c0428ce8a",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/test_macos_desktop.py\n M scripts/test_source_fingerprint.py\n?? docs/tasks/global-app-capture-20261108.json\n?? docs/tasks/settings-keybindings-20261108.json\n?? internal/server/web/desktop-capture.js\n?? internal/server/web/keybindings.css\n?? internal/server/web/keybindings.js\n?? native/macos-desktop/app_capture.swift\n?? native/macos-desktop/modifier_gesture.swift\n?? scripts/app-capture-gesture-test.swift\n?? scripts/desktop-capture.test.cjs\n?? scripts/keybindings.test.cjs",
+  "acceptance": [
+    "Aide在前台时，可按明确应用名称或bundle ID解析后台目标，未知或歧义不猜测",
+    "inspect/snapshot不要求切前台；输入经现有审批后自动激活并验证原PID身份",
+    "应用允许列表、Aide/登录界面排除和旧宿主兼容不放宽",
+    "仅更新并验收现有本机Aide，保留此前快捷键和截屏改动"
+  ],
+  "scope": [
+    "internal/server/computer_control.go",
+    "internal/server/computer_control_test.go",
+    "internal/server/workflow.go",
+    "internal/server/web_research.go",
+    "native/macos-desktop/computer_control.swift",
+    "scripts/test_macos_desktop.py",
+    "docs/architecture.md",
+    "docs/tasks/computer-target-routing-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "增加可选app参数，原生解析运行中应用并绑定PID/rule；后台只读，已审批写操作自动聚焦，保留授权边界。",
+      "evidence": [
+        "internal/server/computer_control.go",
+        "native/macos-desktop/computer_control.swift",
+        "https://github.com/skyelan1999/aide/issues/833"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "增加可选app参数，原生解析运行中应用并绑定PID/rule；后台只读，已审批写操作自动聚焦，保留授权边界。",
+      "evidence": [
+        "internal/server/computer_control.go",
+        "native/macos-desktop/computer_control.swift",
+        "https://github.com/skyelan1999/aide/issues/833"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Issue #833: exact app/bundle target resolution; background AX/window reads; approved input auto-activates and revalidates PID/rule; unknown, ambiguous and unauthorized apps remain rejected. Existing capture/keybinding work preserved.",
+      "evidence": [
+        "internal/server/computer_control.go",
+        "internal/server/workflow.go",
+        "internal/server/web_research.go",
+        "native/macos-desktop/computer_control.swift"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted Go tests, 13 native tests, quick gate and local source build with vet passed. Real current Aide session #86 completed the requested translation from an Aide-foreground start; target app input and output independently observed through CUA. No manual target focus was needed.",
+      "evidence": [
+        "/tmp/aide-computer-target-go-test.log",
+        "/tmp/aide-computer-target-native-tests.log",
+        ".agent-state/verify-20261108T133755427068Z.log",
+        "/tmp/aide-computer-target-build.log",
+        "CUA: current Aide #86, final run completed with 8 tool calls; target application confirmed input/output"
+      ],
+      "limitations": [
+        "First Go invocation encountered transient source visibility errors on the mounted SDK/vendor; the same targeted command passed on retry.",
+        "Full release/race matrix not run; no separate test container per user requirement.",
+        "Health status=ok, container healthy; existing integrity=degraded remains."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated architecture and this task ledger; sanitized tracking and acceptance in #833.",
+      "evidence": [
+        "docs/architecture.md",
+        "https://github.com/skyelan1999/aide/issues/833"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "git diff --check passed. No user data or previous uncommitted work removed. Exactly one Aide service and its pre-existing BuildKit builder observed.",
+      "evidence": [
+        "git status --short",
+        "git diff --check",
+        "docker ps --format {{.Names}}"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Installed candidate into current local Aide only. Not committed, merged, pushed or publicly released; #833 remains open pending delivery.",
+      "evidence": [
+        "/tmp/aide-computer-target-build.log"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only this task changes to computer_control.go/.swift, workflow.go, web_research.go and tests, preserving prior shortcut/capture changes; rebuild current installation using build.command. Do not reset the working tree or remove user data.",
+  "handoff": "Implementation and real current-instance acceptance complete; local candidate running. Preserve other dirty shortcut/global-capture work. Next delivery requires explicit commit/merge/push scope.",
+  "issue": "https://github.com/skyelan1999/aide/issues/833",
+  "runtime": {
+    "container": "aide-aide-1",
+    "image": "sha256:af3e2eb351512895c35fb2c220548f1cde6cff61ca7e2ab5c1763a07db5c497e",
+    "container_health": "healthy",
+    "quick_fingerprint": "172e44f3ea1213ef7caf4807612dfd13286076086fb409b45c790a4eebe8adf0"
+  }
+}

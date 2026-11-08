@@ -20,11 +20,13 @@ func TestSurfaceReviewableIsLimitedToBoundedActions(t *testing.T) {
 		{"browser-action", "browser_navigate", "", "", map[string]any{"url": "https://example.com/docs"}, true},
 		{"browser-action", "browser_click", "", "", map[string]any{"selector": "button"}, false},
 		{"computer-app", "", "", "bundle:com.apple.Safari", nil, true},
-		{"computer-action", "computer_open_browser", "", "", map[string]any{"browser": "Safari"}, false},
+		{"computer-action", "computer_open_browser", "", "", map[string]any{"browser": "Safari"}, true},
 		{"computer-action", "computer_open_browser", "", "", map[string]any{"browser": "Safari", "url": "https://example.com/"}, true},
 		{"computer-action", "computer_key", "", "", map[string]any{"app": "Safari浏览器", "key": "CMD+L"}, true},
-		{"computer-action", "computer_key", "", "", map[string]any{"app": "Safari浏览器", "key": "ENTER"}, false},
-		{"computer-action", "computer_type", "", "", map[string]any{"app": "Safari浏览器"}, false},
+		{"computer-action", "computer_key", "", "", map[string]any{"app": "Safari浏览器", "key": "ENTER"}, true},
+		{"computer-action", "computer_type", "", "", map[string]any{"app": "Safari浏览器"}, true},
+		{"computer-action", "computer_click", "", "", map[string]any{"app": "Fixture", "x": -120, "y": 40}, true},
+		{"computer-action", "computer_click", "", "", map[string]any{"app": "Fixture", "x": -2000000, "y": 40}, false},
 	} {
 		if got := surfaceReviewable(tc.kind, tc.tool, tc.args, tc.url, tc.appRule); got != tc.want {
 			t.Errorf("%s/%s reviewable=%v, want %v", tc.kind, tc.tool, got, tc.want)

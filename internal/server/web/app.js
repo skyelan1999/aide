@@ -2234,7 +2234,7 @@ function renderClarification(run, box, inTaskHub = false) {
       const remember=el('button','quiet approval-remember',t('记住并允许'));remember.onclick=()=>answer('记住并允许');
       const deny=el('button','approval-deny',t('拒绝执行'));deny.onclick=()=>answer('拒绝');
       row.append(remember,deny);
-      card.append(row,el('p','approval-help',t(q.approvalKind === 'browser-site' ? '仅本次允许只授权上方网址的本次读取；记住后将精确域名加入浏览器插件允许列表，可在插件设置中移除。跳转到其他域名仍受限制。' : '仅本次允许只授权当前操作；记住后可在电脑控制设置中移除该应用。点击、输入与按键仍需逐次确认。')));
+      card.append(row,el('p','approval-help',t(q.approvalKind === 'browser-site' ? '仅本次允许只授权上方网址的本次读取；记住后将精确域名加入浏览器插件允许列表，可在插件设置中移除。跳转到其他域名仍受限制。' : '仅本次允许只授权当前操作；记住后可在电脑控制设置中移除该应用。辅助审批会核对常规操作，敏感或不明确的操作仍需你确认。')));
     } else if (q.approvalKind === 'shell') {
       const deny = el('button', 'approval-deny', t('拒绝执行')); deny.title=t('拒绝这条命令；命令不会运行'); deny.onclick = () => answer('拒绝');
       row.append(deny);
@@ -3731,17 +3731,19 @@ function composerUploadName(file) {
   const base = String(file.name || 'attachment').replace(/\\/g, '/').split('/').pop().replace(/[\x00-\x1f]/g, '_').trim();
   return base || 'attachment';
 }
-function queueComposerFiles(files) {
+function queueComposerFiles(files, {active=()=>true, workspaceId=state.workspaceId}={}) {
   const incoming = Array.from(files || []).filter(file => file && typeof file.size === 'number');
   if (!incoming.length) return Promise.resolve();
   composerFileQueue = composerFileQueue.catch(() => {}).then(async () => {
     if (lockScreen.locked || !state.token) { toast(t('请先解锁并连接工作区，再添加附件')); return; }
+    let added=0;
     for (const file of incoming) {
+      if(!active())return {added,failed:incoming.length-added};
       try {
         const name = composerUploadName(file);
         const path = 'attachments/chat-' + crypto.randomUUID() + '-' + name;
         const query = new URLSearchParams({path});
-        if (state.workspaceId) query.set('workspaceId', state.workspaceId);
+        if (workspaceId) query.set('workspaceId', workspaceId);
         const response = await fetch('/api/file/upload?' + query, {
           method: 'POST',
           headers: {Authorization: 'Bearer ' + state.token, 'Content-Type': file.type || 'application/octet-stream'},
@@ -3750,11 +3752,13 @@ function queueComposerFiles(files) {
         let result = {};
         try { result = await response.json(); } catch (_) {}
         if (!response.ok) throw new Error(result.error || t('附件上传失败'));
-        attachFileEntry({path}, {root: 'workspace'});
+        if(!active())return {added,failed:incoming.length-added};
+        attachFileEntry({path}, {root: 'workspace'});added++;
       } catch (error) {
         toast(t('添加附件失败：{0}', error.message || String(error)));
       }
     }
+    return {added,failed:incoming.length-added};
   });
   return composerFileQueue;
 }
@@ -3908,6 +3912,7 @@ $('task-form').onsubmit = action(async event => {
   });
 
 function shouldSendPromptOnKeydown(event) {
+  if (typeof window !== 'undefined' && window.AideKeybindings) return !event.isComposing && !event.repeat && window.AideKeybindings.matches('send', event);
   return event.key === 'Enter' && event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing;
 }
 
@@ -3934,7 +3939,7 @@ function updateSendEnabled() {
   } else if (state.previewOverLimit) {
     $('composer-hint').textContent = t("⚠ 上下文预算超限：请缩短任务或减少附件");
   } else {
-    $('composer-hint').textContent = t("Shift + Enter 发送 · Enter 换行");
+    $('composer-hint').textContent = window.AideKeybindings?.hint(t) || t("Shift + Enter 发送 · Enter 换行");
   }
 }
 function hideContextPreview() {
@@ -4661,7 +4666,7 @@ $('command-form').onsubmit = action(async event => {
 $('command-stop').onclick = () => state.commandAbort?.abort();
 $('login-dialog').addEventListener('cancel', event => event.preventDefault());
 $('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); await openRoutedPluginWorkbench(); } catch (error) { $('login-error').textContent = error.message; } };
-document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && ['BODY', 'HTML'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]') && !$('settings-sheet').classList.contains('open')) action(newSession)(); });
+
 /* ── 设置面板（FR-58~FR-60）：品牌 logo 入口；结构由 /settings-schema.json 数据驱动；
    设置值一律经 window.aideUI 的 JSON 文档管理。必须位于 initialize() 之外：
    未登录时 initialize() 会抛错返回，设置面板仍需可用。 ── */
@@ -4762,11 +4767,13 @@ function renderComputerControlSettings() {
   const permissionTitle=el('strong','',t('系统授权状态'));
   const permissionSummary=el('p','muted',t('正在查询 Aide 电脑控制与系统授权…'));
   const permissionList=el('div','computer-permission-list');
+  const executionHint=el('small','muted','');
   const refreshPermissions=el('button','quiet computer-permission-refresh',t('刷新授权状态'));refreshPermissions.type='button';
   const permissionHeading=el('div','computer-permission-heading');permissionHeading.append(permissionTitle,refreshPermissions);
   const permissionNames={screenRecording:t('屏幕录制'),accessibility:t('辅助功能')};
   let permissionBusy=false;
   const showPermissions=status=>{
+    executionHint.textContent=status.virtualPointers===true&&status.backgroundControl===true?t('每个会话显示独立颜色的虚拟光标。支持后台操作的软件可同时工作，需要系统鼠标或键盘的操作会排队。'):t('当前控制服务未提供虚拟光标或后台操作能力。');
     permissionList.replaceChildren();
     const platform=status.platform||'';
     const items=status.permissions||(platform==='macos'?{screenRecording:{required:true,granted:status.screenRecording===true,supported:true},accessibility:{required:true,granted:status.accessibility===true,supported:true}}:platform==='windows'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:platform==='linux-x11'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:{});
@@ -4810,13 +4817,13 @@ function renderComputerControlSettings() {
   const enabledRow=el('label','settings-file-checkbox'),enabled=document.createElement('input');
   enabled.type='checkbox';enabled.checked=cfg.computerControlEnabled===true;
   const enabledCopy=el('span','settings-file-copy');
-  enabledCopy.append(el('strong','',t('启用电脑控制')),el('span','',t('允许 Aide 读取指定应用的界面；点击、输入和按键每次仍需你确认。')));
+  enabledCopy.append(el('strong','',t('启用电脑控制')),el('span','',t('允许 Aide 读取指定应用的界面；辅助审批可处理常规操作，手动模式下仍逐次确认。')));
   enabledRow.append(enabled,enabledCopy);
   const label=el('label','control-label',t('已记住的应用'));
   const apps=document.createElement('textarea');apps.id='computer-control-allowed-apps';apps.rows=4;label.htmlFor=apps.id;apps.value=Array.isArray(cfg.computerControlAllowedApps)?cfg.computerControlAllowedApps.join('\n'):'';
   apps.placeholder=t('每行一个应用名称，例如 TextEdit、Safari 或 notepad.exe');
   apps.setAttribute('aria-label',t('允许控制的应用，每行一个'));
-  const hint=el('small','muted',t('Aide 会在首次访问前台应用时请求授权。这里列出已记住的应用，也可手动添加或移除；截图仅覆盖授权应用的窗口。'));
+  const hint=el('small','muted',t('Aide 会在首次访问目标应用时请求授权。这里列出已记住的应用，也可手动添加或移除；截图仅覆盖授权应用的窗口。'));
   const save=el('button','quiet',t('保存电脑控制设置'));save.type='button';
   let busy=false;
   const persist=async()=>{
@@ -4831,7 +4838,7 @@ function renderComputerControlSettings() {
   };
   save.onclick=action(persist);
   enabled.onchange=action(persist);
-  wrap.append(permissions,enabledRow,label,apps,hint,save);
+  wrap.append(permissions,enabledRow,executionHint,label,apps,hint,save);
   return wrap;
 }
 function renderAboutProject(control) {
@@ -5538,7 +5545,7 @@ function renderModelConnectionsControl(control) {
   const button=el('button','quiet',t('管理模型连接…'));button.type='button';button.onclick=()=>{closeSettingsSheet();openSettings();};
   wrap.append(el('p','section-desc',t('管理提供商、API 密钥和可用模型。')),button);return wrap;
 }
-const controlRenderers = { 'computer-control': renderComputerControlSettings, 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
+const controlRenderers = { keybindings: () => {const onCleanup=unsub=>settingsPanel.refreshers.push({apply:()=>{},unsub}),wrap=window.AideKeybindings.render({t,onCleanup});wrap.append(window.AideDesktopCapture.render({t,onCleanup}));return wrap;}, 'computer-control': renderComputerControlSettings, 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
   "knowledge-index-policy": renderKnowledgeIndexPolicy,
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
   "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='accessibility'&&settingsPanel.activeChild==='interface-tests'&&$('settings-sheet').classList.contains('open')}),
@@ -10395,7 +10402,6 @@ $('global-search').closest('.global-search').addEventListener('focusout', event 
   if (!event.currentTarget.contains(event.relatedTarget)) closeGlobalSearch();
 });
 document.addEventListener('keydown', event => {
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('global-search').focus(); $('global-search').select(); if (!searchResultsWanted) showGlobalSearch(); }
   if (event.key === 'Escape') closeGlobalSearch();
 });
 document.addEventListener('click', event => {
@@ -13170,3 +13176,23 @@ function renderPWRun(run) {
  if(run.status==='running'){const b=el('button','quiet',t('停止 PW'));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
 
 }
+
+// User-configurable workbench shortcuts share the same click paths and state guards.
+window.AideKeybindings.install({blocked:()=>lockScreen.locked||!state.token,actions:{
+ search:()=>{$('global-search').focus();$('global-search').select();if(!searchResultsWanted)showGlobalSearch();},
+ newSession:()=>{action(newSession)();},settings:()=>{void openSettingsSheet();},focusPrompt:()=>{$('prompt').focus();},
+ ...Object.fromEntries([['files','files-toggle'],['plugins','plugins-toggle'],['trajectory','trajectory-toggle'],['terminal','terminal-toggle'],['stop','stop-active-run']].map(([name,id])=>[name,()=>{const b=$(id);if(!b||b.hidden||b.disabled||!b.getClientRects().length)return false;b.click();}]))
+}});
+function syncKeybindingHints(){
+ const bindings=window.AideKeybindings.getAll();
+ for(const [selector,id] of [['.search-shortcut','search'],['#new-session kbd','newSession']]){const node=document.querySelector(selector);if(node){node.textContent=window.AideKeybindings.format(bindings[id]);node.hidden=!bindings[id];}}
+ if(!state.submitting&&!state.previewOverLimit)$('composer-hint').textContent=window.AideKeybindings.hint(t);
+}
+window.aideUI?.subscribe(syncKeybindingHints);window.addEventListener('aide:language',syncKeybindingHints);syncKeybindingHints();
+
+window.AideDesktopCapture.install({t,
+ available:()=>!lockScreen.locked&&!!state.token&&!state.submitting&&!state.pendingSessionId&&!document.querySelector('dialog[open],.settings-sheet.open,.workspace-sheet.open,.trajectory-sheet.open'),
+ scope:()=>JSON.stringify([recoveryScope(),state.session?.id||'',sessionSeq.value]),
+ attach:(files,options)=>queueComposerFiles(files,{...options,workspaceId:recoveryScope()}),
+ focus:()=>$('prompt').focus(),notify:message=>toast(message)
+});

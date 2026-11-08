@@ -1,0 +1,104 @@
+{
+  "id": "global-app-capture-20261108",
+  "request": "双Shift全局截屏到Aide并带应用名称窗口上下文，在设置中配置",
+  "baseline": "3edafef75ee6f17d8ddc680721c67d2c0428ce8a",
+  "initial_status": "main 3edafef7，继承未提交的快捷键设置功能，保留全部原改动。",
+  "acceptance": [
+    "macOS 全局双击 Shift 截取前台应用窗口，唤起现有 Aide 并附加 PNG 与应用/窗口/时间上下文",
+    "设置→通用→快捷键提供开关、双Shift/双Command选择和权限状态",
+    "不自动发送；输入、长按、组合键和鼠标动作不误触；锁屏/弹窗/会话切换不向错误会话附加",
+    "只更新和测试现有本机 Aide，无第二个服务实例"
+  ],
+  "scope": [
+    "native/macos-desktop/main.swift",
+    "native/macos-desktop/app_capture.swift",
+    "native/macos-desktop/modifier_gesture.swift",
+    "scripts/build-macos-desktop.py",
+    "internal/server/web/desktop-capture.js",
+    "internal/server/web/app.js",
+    "internal/server/web/keybindings.css",
+    "internal/server/web/index.html",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "scripts/app-capture-gesture-test.swift",
+    "scripts/desktop-capture.test.cjs",
+    "scripts/test_macos_desktop.py",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/global-app-capture-20261108.json",
+    "scripts/aide.sh",
+    "scripts/test_source_fingerprint.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "原生 NSEvent 识别干净的双击修饰键；ScreenCaptureKit 截前台窗口，单次票据绑定 WebView 与会话上下文，经原附件路径加入待发送草稿。",
+      "evidence": [
+        "native/macos-desktop/main.swift",
+        "native/macos-desktop/computer_control.swift",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "原生 NSEvent 识别干净的双击修饰键；ScreenCaptureKit 截前台窗口，单次票据绑定 WebView 与会话上下文，经原附件路径加入待发送草稿。",
+      "evidence": [
+        "native/macos-desktop/main.swift",
+        "native/macos-desktop/computer_control.swift",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增原生双修饰键检测、前台窗口截屏、主工作台受限设置桥接及一次性票据草稿附件交付；快捷键设置提供开关、Shift/Command 和权限状态。",
+      "evidence": [
+        "native/macos-desktop/app_capture.swift",
+        "native/macos-desktop/modifier_gesture.swift",
+        "internal/server/web/desktop-capture.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "macOS 原生全局双 Shift 已实际验证：用户在其他应用按键后，PNG 和上下文 TXT 成功进入现有 Aide 草稿；最终 quick 通过。双 Command、其他平台和窄屏未实际验证。",
+      "evidence": [
+        "python3 scripts/build-macos-desktop.py --root . --install：原生编译成功；/tmp/aide-app-capture-native-build.log",
+        "python3 scripts/test_macos_desktop.py：13 项通过；/tmp/aide-app-capture-native-tests.log",
+        "app-capture-gesture-test.swift：短按双击、长按、输入/点击/组合键、超时和三击回归通过",
+        "node scripts/desktop-capture.test.cjs：PNG/context 草稿、票据单次使用、锁屏、会话切换、无效数据及上传作用域通过",
+        "node scripts/assistant-composer-entry.test.cjs、node scripts/attachment-source-label.test.cjs：通过",
+        "python3 scripts/agent-route.py verify quick：退出 0；.agent-state/verify-20261108T125750308222Z.log",
+        "./build.command：退出 0，仅替换现有 aide-aide-1；/tmp/aide-app-capture-build.log",
+        "当前实例 desktop-capture.js、app.js、settings-schema.json 与源码逐字节相同",
+        "本机 Aide 设置→通用→快捷键：全局截屏默认关闭、触发方式双 Shift、系统权限已就绪；实际开启成功",
+        "CUA 不能发送纯修饰键，真实按键由用户执行；前两次未成功，增加触发状态诊断并改为按修饰键状态判断，时间窗放宽到 0.8 秒、短按上限 0.4 秒",
+        "最终用户在其他应用实际双 Shift 后，Aide 草稿出现应用 PNG 和 context.txt 附件；未提交模型请求，附件保留供用户使用",
+        "验证生成的上下文包含应用名、Bundle ID、窗口标题及时间，PNG 1600×1080、212465 字节，尺寸与元数据一致；未将截图或窗口标题写入公开仓库",
+        "修正后原生桌面单独编译安装并重开现有 Aide；原服务实例保持运行，未新增实例",
+        "新增原生文件纳入 scripts/aide.sh 构建指纹；python3 scripts/test_source_fingerprint.py 四项通过",
+        "最终 python3 scripts/agent-route.py verify quick：退出 0；.agent-state/verify-20261108T131935784736Z.log",
+        "服务 healthz status=ok；保留此前未提交源码构建的 integrity=degraded 基线提示，未重置基线"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构文档说明默认关闭、原生权限、前台窗口范围、上下文附件和不自动提交；任务记录保留真实验收边界。",
+      "evidence": [
+        "docs/architecture.md",
+        "python3 scripts/check_docs.py：通过"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留用户实际截屏的待发送草稿；全局截屏当前开启、双 Shift。继承的快捷键功能改动保留，未删除用户文件，未新增 Aide 服务实例。",
+      "evidence": ["git diff --check", "git status --short", "docker ps：仅 aide-aide-1 与原 BuildKit"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "已更新当前本机桌面端及前端服务；本轮未提交、推送、升版或发布。",
+      "evidence": ["/tmp/aide-app-capture-native-build.log", "/tmp/aide-app-capture-build.log"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "设置中关闭全局截屏即移除本机事件监听；回退本任务范围内增量并重新构建桌面端和现有服务可撤销功能。保留此前快捷键设置任务改动和用户附件。",
+  "handoff": "全局截屏开关位于设置→通用→快捷键底部，当前开启双 Shift。用户实按后应用截图及上下文已进入待发送草稿，没有自动发送。支持选择双 Command，但本轮未实际触发该选项。代码未提交或推送；服务仍有此前 dirty 构建的完整性基线告警，未重置基线。"
+}

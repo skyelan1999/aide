@@ -17,8 +17,8 @@ func TestComputerControlToolSchemasEncodeRequiredArrays(t *testing.T) {
 	if err := json.Unmarshal(encoded, &tools); err != nil {
 		t.Fatal(err)
 	}
-	if len(tools) != 7 {
-		t.Fatalf("tool count=%d, want 7", len(tools))
+	if len(tools) != 9 {
+		t.Fatalf("tool count=%d, want 9", len(tools))
 	}
 	for _, tool := range tools {
 		fn := tool["function"].(map[string]any)
@@ -88,6 +88,57 @@ func TestComputerControlDiscoveryFallbackOnlyForUnsupportedRoute(t *testing.T) {
 	} {
 		if got := computerControlDiscoveryUnsupported(tc.err); got != tc.want {
 			t.Errorf("error=%v: unsupported=%v, want %v", tc.err, got, tc.want)
+		}
+	}
+}
+
+func TestComputerControlExplicitTargetDiscovery(t *testing.T) {
+	for _, tc := range []struct {
+		args  map[string]any
+		valid bool
+		route string
+	}{
+		{nil, true, "/v1/foreground-app"},
+		{map[string]any{"app": "TextEdit"}, true, "/v1/resolve-app"},
+		{map[string]any{"app": "bundle:com.apple.TextEdit"}, true, "/v1/resolve-app"},
+		{map[string]any{"app": " com.apple.TextEdit "}, true, "/v1/resolve-app"},
+		{map[string]any{"app": ""}, false, ""},
+		{map[string]any{"app": nil}, false, ""},
+		{map[string]any{"app": 123}, false, ""},
+		{map[string]any{"app": "TextEdit\nSafari"}, false, ""},
+		{map[string]any{"app": strings.Repeat("a", 257)}, false, ""},
+	} {
+		method, route, payload, err := computerControlDiscoveryRequest(tc.args)
+		if (err == nil) != tc.valid || route != tc.route {
+			t.Fatalf("%v: %s %v", tc.args, route, err)
+		}
+		if err != nil {
+			continue
+		}
+		if route == "/v1/resolve-app" {
+			if method != http.MethodPost || payload.(map[string]any)["app"] != strings.TrimSpace(tc.args["app"].(string)) {
+				t.Fatalf("wrong explicit target request: %v", payload)
+			}
+		} else if method != http.MethodGet || payload != nil {
+			t.Fatal("foreground compatibility changed")
+		}
+	}
+}
+
+func TestComputerControlSchemasExposeAppForEachTargetedAction(t *testing.T) {
+	for _, raw := range computerControlToolSchemas() {
+		fn := raw.(map[string]any)["function"].(map[string]any)
+		name := fn["name"].(string)
+		params := fn["parameters"].(map[string]any)
+		_, exists := params["properties"].(map[string]any)["app"]
+		want := name != "computer_status" && name != "computer_open_browser"
+		if exists != want {
+			t.Fatalf("%s app target=%v want=%v", name, exists, want)
+		}
+		for _, required := range params["required"].([]string) {
+			if required == "app" {
+				t.Fatal("app must stay optional for old callers")
+			}
 		}
 	}
 }

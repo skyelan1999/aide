@@ -172,6 +172,9 @@ enum DesktopPolicy {
 final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, WKScriptMessageHandler, WKScriptMessageHandlerWithReply {
     let localSpeech = DesktopLocalSpeech()
+    let appCapture = DesktopAppCapture()
+    var appCaptureBusy = false
+    weak var captureDestination: WKWebView?
     let root: URL
     let smokeOutput: URL?
     var mainWindow: NSWindow!
@@ -204,6 +207,8 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         NSWindow.allowsAutomaticWindowTabbing = true
+        appCapture.onTrigger = { [weak self] in self?.captureForegroundWindow() }
+        appCapture.start()
         makeMenus()
         mainWindow = makeWindow()
         showLoading("正在连接本地工作台…")
@@ -389,6 +394,8 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             controller.add(self, name: "aideDesktopDiagnostics")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideBiometrics")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideLocalSpeech")
+            controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideAppCapture")
+            controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window,'AideNativeCapture',{value:args=>window.webkit.messageHandlers.aideAppCapture.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window, 'AideNativeSpeech', {value:args=>window.webkit.messageHandlers.aideLocalSpeech.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: """
             if (window === top) {
@@ -621,6 +628,17 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
                                replyHandler: @escaping (Any?, String?) -> Void) {
         func reject(_ error: BiometricFailure, name: String = "NotAllowedError") {
             replyHandler(["error": ["name": name, "message": error.message]], nil)
+        }
+        if message.name == "aideAppCapture" {
+            guard let origin = origin, message.frameInfo.isMainFrame,
+                  DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin),
+                  let web = message.webView, let url = web.url, DesktopPolicy.biometric(url, origin: origin),
+                  let body = message.body as? [String: Any], body.count <= 3, let action = body["action"] as? String else { replyHandler(["error": "Capture scope rejected"], nil); return }
+            if action == "status" { replyHandler(appCapture.status(), nil); return }
+            guard web === activeWeb, web.window?.isVisible == true else { replyHandler(["error": "Capture settings window is inactive"], nil); return }
+            if action == "configure", let enabled = body["enabled"] as? Bool, let modifier = body["modifier"] as? String, ["shift", "command"].contains(modifier) { appCapture.configure(enabled: enabled, modifier: modifier); replyHandler(appCapture.status(), nil); return }
+            if action == "permissions" { appCapture.requestPermissions(); replyHandler(appCapture.status(), nil); return }
+            replyHandler(["error": "Capture action rejected"], nil); return
         }
         if message.name == "aideLocalSpeech" {
             guard let origin = origin, message.frameInfo.isMainFrame,
@@ -924,9 +942,46 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationWillTerminate(_ notification: Notification) {
         localSpeech.stop()
+        appCapture.stop()
         computerControlHost?.stop()
         for web in views.values { stopMedia(web) }
         startup?.terminate()
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        if let window = notification.object as? NSWindow, let web = views[window] { captureDestination = web }
+    }
+    func captureForegroundWindow() {
+        guard !appCaptureBusy, appCapture.enabled, let target = NSWorkspace.shared.frontmostApplication,
+              let web = captureDestination ?? activeWeb, views.values.contains(where: { $0 === web }),
+              let origin = origin, let source = web.url, DesktopPolicy.biometric(source, origin: origin) else { appCapture.lastResult = "Capture destination is not ready"; return }
+        appCapture.lastResult = "Capturing"
+        appCaptureBusy = true
+        let fail: (String) -> Void = { message in
+            self.appCaptureBusy = false
+            self.appCapture.lastResult = message
+            web.window?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+            web.callAsyncJavaScript("window.AideDesktopCapture?.error(message)", arguments: ["message": message], in: nil, in: .page, completionHandler: nil)
+        }
+        web.evaluateJavaScript("window.AideDesktopCapture?.prepare()") { result, error in
+            guard error == nil, let ticket = result as? String, !ticket.isEmpty else { fail("请先解锁 Aide 并连接工作区，再截屏。故障或弹窗关闭后可重试。"); return }
+            Task { @MainActor in
+                do {
+                    var payload = try await self.appCapture.capture(target)
+                    guard self.appCapture.enabled, web.url == source, self.views.values.contains(where: { $0 === web }) else { self.appCaptureBusy = false; return }
+                    payload["ticket"] = ticket
+                    if web.window?.isMiniaturized == true { web.window?.deminiaturize(nil) }
+                    web.window?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+                    web.callAsyncJavaScript("return await window.AideDesktopCapture.receive(capture)", arguments: ["capture": payload], in: nil, in: .page) { result in
+                        self.appCaptureBusy = false
+                        switch result {
+                        case .success(let accepted): self.appCapture.lastResult = (accepted as? Bool) == true ? "Attached" : "Capture draft was not accepted"
+                        case .failure(let error): self.appCapture.lastResult = error.localizedDescription
+                        }
+                    }
+                } catch { fail(error.localizedDescription) }
+            }
+        }
     }
 
     @objc func about() { NSApp.orderFrontStandardAboutPanel(nil) }

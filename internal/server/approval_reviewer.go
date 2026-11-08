@@ -23,7 +23,14 @@ func reviewApproval(ctx context.Context, cfg Settings, messages []Message) (bool
 func reviewApprovalWithScope(ctx context.Context, cfg Settings, messages []Message, requireWorkspace bool) (bool, string, TokenUsage) {
 	var usage TokenUsage
 	reason := "审核响应无效，请手动确认"
-	for attempt, budget := range []int{512, 2048} {
+	initialBudget := 512
+	for _, message := range messages {
+		if len(message.Images) > 0 {
+			initialBudget = 1024
+			break
+		}
+	}
+	for attempt, budget := range []int{initialBudget, 2048} {
 		if ctx.Err() != nil {
 			return false, "审核已取消或超时，请手动确认", usage
 		}

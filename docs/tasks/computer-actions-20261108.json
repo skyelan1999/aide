@@ -1,0 +1,109 @@
+{
+  "id": "computer-actions-20261108",
+  "request": "补齐视觉定位、拖拽、滚动和复杂组合键；只用当前本地Aide实测，不另开实例",
+  "baseline": "3edafef75ee6f17d8ddc680721c67d2c0428ce8a",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M internal/server/approval_reviewer.go\n M internal/server/assisted_approval_surface.go\n M internal/server/assisted_approval_surface_test.go\n M internal/server/computer_control.go\n M internal/server/computer_control_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web_research.go\n M internal/server/workflow.go\n M native/macos-desktop/computer_control.swift\n M native/macos-desktop/main.swift\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/test_macos_desktop.py\n M scripts/test_source_fingerprint.py\n?? docs/reviews/2026-11-08-computer-control-gap.md\n?? docs/tasks/assisted-ui-actions-20261108.json\n?? docs/tasks/computer-target-routing-20261108.json\n?? docs/tasks/computer-virtual-pointer-20261108.json\n?? docs/tasks/global-app-capture-20261108.json\n?? docs/tasks/settings-keybindings-20261108.json\n?? internal/server/assisted_approval_ui.go\n?? internal/server/assisted_approval_ui_test.go\n?? internal/server/assisted_approval_visual.go\n?? internal/server/computer_snapshot_evidence.go\n?? internal/server/computer_snapshot_evidence_test.go\n?? internal/server/web/desktop-capture.js\n?? internal/server/web/keybindings.css\n?? internal/server/web/keybindings.js\n?? native/macos-desktop/app_capture.swift\n?? native/macos-desktop/computer_control_scheduler.swift\n?? native/macos-desktop/computer_virtual_pointer.swift\n?? native/macos-desktop/modifier_gesture.swift\n?? scripts/app-capture-gesture-test.swift\n?? scripts/computer-control-scheduler-test.swift\n?? scripts/desktop-capture.test.cjs\n?? scripts/keybindings.test.cjs",
+  "acceptance": [
+    "Snapshot text locations and per-task screenshot references eliminate client coordinate arithmetic; stale or foreign references fail before approval.",
+    "Drag is bounded, cancellable, holds device FIFO across the complete gesture and always releases the button. Scroll supports independent horizontal/vertical pixel deltas in the specified app region.",
+    "Validated multi-modifier keys and common main keys preserve aliases and existing commands; routine UI approval uses exact action and local visual evidence.",
+    "Current local Aide workflows demonstrate actual menu targeting, drag, both scroll axes and multi-modifier edits; no second Aide service."
+  ],
+  "scope": [
+    "internal/server/computer_actions.go",
+    "internal/server/computer_actions_test.go",
+    "internal/server/computer_control.go",
+    "internal/server/computer_control_test.go",
+    "internal/server/computer_snapshot_evidence.go",
+    "internal/server/computer_snapshot_evidence_test.go",
+    "internal/server/assisted_approval_visual.go",
+    "internal/server/assisted_approval_ui.go",
+    "internal/server/assisted_approval_surface.go",
+    "internal/server/workflow.go",
+    "internal/server/web_research.go",
+    "native/macos-desktop/computer_control.swift",
+    "native/macos-desktop/computer_control_scheduler.swift",
+    "scripts/computer-control-scheduler-test.swift",
+    "docs/architecture.md",
+    "docs/reviews/2026-11-08-computer-control-gap.md",
+    "scripts/fixtures/computer-actions.html",
+    "docs/reviews/2026-11-09-computer-actions.md",
+    "docs/tasks/computer-actions-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Per-task in-memory screenshot geometry with 2-minute expiry; OCR and local marked reviewer crops. Bounded app/device FIFO gestures, validated key grammar, existing permissions and manual fallback preserved.",
+      "evidence": [
+        "internal/server/computer_actions.go",
+        "docs/reviews/2026-11-08-computer-control-gap.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-task in-memory screenshot geometry with 2-minute expiry; OCR and local marked reviewer crops. Bounded app/device FIFO gestures, validated key grammar, existing permissions and manual fallback preserved.",
+      "evidence": [
+        "internal/server/computer_actions.go",
+        "docs/reviews/2026-11-08-computer-control-gap.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Screenshot references/OCR, exact window matching, image mapping and trusted review metadata; bounded drag/scroll, multi-modifier keys and marked review crops implemented.",
+      "evidence": [
+        "internal/server/computer_actions.go",
+        "native/macos-desktop/computer_control.swift",
+        "internal/server/assisted_approval_visual.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS quick, focused Go (14.304s), 14 native tests, native compile and actual current Aide #92-94. Drag 393/20 moves73/releases1; scroll250/200; key edit/undo/redo; EDA correct View menu opened and separate ESC cleanup. Task clarification was required; see remaining NOT_RUN boundaries.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        ".agent-state/computer-actions-live-evidence.json",
+        ".agent-state/verify-20261108T162315807243Z.log",
+        "/tmp/aide-computer-actions-go-verified.log",
+        "/tmp/aide-computer-actions-native-deadline-tests.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture, historical followup and evidence report describe final interfaces, intermediate failures, local source identity and remaining hardware/release limits.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-11-09-computer-actions.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only own test runs ended; fixture tab closed, original TextEdit text restored, EDA menu closed. User tabs/projects/inherited dirty files preserved; existing runtime/builder reused.",
+      "evidence": [
+        "docs/reviews/2026-11-09-computer-actions.md",
+        ".agent-state/computer-actions-live-evidence.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Local source runtime and installed app rebuilt only; no commit/merge/push/version bump/release or issue closure.",
+      "evidence": [
+        "/tmp/aide-computer-actions-local-build-resolution.log"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Reverse only current task increment against recorded initial_status; rebuild current source instance and native app. Preserve inherited changes and runtime data; no reset or git clean.",
+  "handoff": "Four requested action categories implemented and locally exercised. Ordinary assisted review still occasionally needs clarification; EDA title re-click caused repetition, ESC cleanup verified. Full race, cross-platform, multi-monitor and cancelled-drag hardware NOT_RUN. No claim of general Codex parity or EDA engineering completion.",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/835"
+  ],
+  "runtime": {
+    "image": "sha256:a11a457f2aa78d245e737abd1b3edf54c4aeec7e3381c194ba2ffdcad1b744ca",
+    "health": "healthy",
+    "status": "ok",
+    "integrity": "degraded",
+    "fingerprint": "09fd40fae6dfd84641f99920038baf393025f90501cf57d24c4b09dcf276204d",
+    "native_build_digest": "a4d22874367820a6aa19d577ad52fa36573e9864e22e7e41c89c5f6c0b6d0f51",
+    "native_binary_sha256": "4784b1c87e975bf6841ec6adefb8fcbd5fa08fe54a6500d862fa3f44fe61c604"
+  }
+}

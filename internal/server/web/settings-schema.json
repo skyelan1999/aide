@@ -66,6 +66,18 @@
       ]
     },
     {
+      "id": "keybindings",
+      "title": "快捷键",
+      "description": "自定义工作台快捷键，修改后立即生效。",
+      "controls": [
+        {
+          "type": "keybindings",
+          "id": "keybindings",
+          "description": "自定义按键绑定和全局截屏"
+        }
+      ]
+    },
+    {
       "id": "file-rendering",
       "title": "文件查看与渲染",
       "description": "预览与编辑偏好自动保存；文件内容仍需单独保存。",
@@ -267,7 +279,7 @@
     {
       "id": "computer-control",
       "title": "电脑控制",
-      "description": "电脑控制已整合为 Aide 内置能力。系统授权状态与申请入口在此设置中；每次点击、输入或按键仍会单独请求确认，截图可交给视觉模型分析。Linux 需要 X11；Windows 电脑控制随 Aide 桌面应用运行。",
+      "description": "电脑控制已整合为 Aide 内置能力。系统授权状态与申请入口在此设置中；辅助审批可审核任务内的普通点击、输入和按键，敏感或不明确的操作仍由你确认。Linux 需要 X11；Windows 电脑控制随 Aide 桌面应用运行。",
       "controls": [
         {
           "id": "computer-control-settings",
@@ -515,6 +527,7 @@
       "pages": [
         "appearance",
         "language",
+        "keybindings",
         "accessibility-options"
       ]
     },

@@ -199,6 +199,8 @@ type Task struct {
 	approvalReviewRound      int64
 	approvalReviewGeneration uint64
 	approvalAnswered         bool
+	surfaceApprovalInput     *surfaceApprovalInput
+	computerSnapshots        map[string]computerSnapshotReference
 
 	DeliveryBaseline *TaskDeliveryBaseline `json:"deliveryBaseline,omitempty"`
 
@@ -5386,7 +5388,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return a.recordVerification(str("title"), rawStr("content"), str("reqId"), str("designId"), str("implId"))
 	case "record_problem_report":
 		return a.recordProblemReport(str("title"), rawStr("content"), str("diagramPath"))
-	case "computer_status", "computer_open_browser", "computer_inspect", "computer_snapshot", "computer_click", "computer_type", "computer_key":
+	case "computer_status", "computer_open_browser", "computer_inspect", "computer_snapshot", "computer_click", "computer_type", "computer_key", "computer_drag", "computer_scroll":
+		ctx = a.computerControlContext(ctx, task)
 		var target computerControlTarget
 		approvedRule := ""
 		if call.Function.Name != "computer_status" && call.Function.Name != "computer_open_browser" {
@@ -5398,13 +5401,13 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 				return failure("电脑控制未在 Aide 设置中启用")
 			}
 			var discoverErr error
-			target, discoverErr = discoverComputerControlTarget(ctx)
-			if discoverErr != nil && (len(apps) == 0 || !computerControlDiscoveryUnsupported(discoverErr)) {
-				return failure("发现目标应用失败：" + discoverErr.Error() + "。若 Aide 正在前台且需要打开浏览器，请先调用 computer_open_browser；电脑控制不会读取 Aide 自身窗口")
+			target, discoverErr = discoverComputerControlTargetForApp(ctx, args)
+			if discoverErr != nil && (args["app"] != nil || len(apps) == 0 || !computerControlDiscoveryUnsupported(discoverErr)) {
+				return failure("发现目标应用失败：" + discoverErr.Error() + "。请通过 app 参数指定用户要求操作的应用名称或 bundle ID；目标应用应已启动。电脑控制不会读取 Aide 自身窗口")
 			}
 			if discoverErr == nil && !computerAppAllowed(apps, target) {
 				question, _ := json.Marshal(map[string]any{
-					"question": "Aide 发现前台应用「" + target.Name + "」（" + target.Rule + "）。允许读取它的界面并按后续逐次确认执行操作吗？",
+					"question": "Aide 发现目标应用「" + target.Name + "」（" + target.Rule + "）。允许读取它的界面并按后续逐次确认执行操作吗？",
 					"type":     "confirm", "approvalKind": "computer-app", "app": target.Name, "appRule": target.Rule,
 				})
 				answer := a.awaitUserAnswer(ctx, task, question)
@@ -5419,6 +5422,15 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			}
 		}
 		if computerControlNeedsConfirmation(call.Function.Name) {
+			var err error
+			ctx, args, err = a.resolveComputerCoordinates(ctx, task, call.Function.Name, args, target)
+			if err != nil {
+				return failure(err.Error())
+			}
+		}
+		var surfaceInput *surfaceApprovalInput
+		if computerControlNeedsConfirmation(call.Function.Name) {
+			surfaceInput = a.computerSurfaceInput(ctx, task, call.Function.Name, args, target, approvedRule)
 			confirmationArgs := make(map[string]any, len(args)+1)
 			for key, value := range args {
 				confirmationArgs[key] = value
@@ -5428,17 +5440,25 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			}
 			approvalArgs := confirmationArgs
 			if call.Function.Name == "computer_type" {
-				approvalArgs = map[string]any{"app": target.Name}
+				approvalArgs = map[string]any{"app": target.Name, "characterCount": len([]rune(rawStr("text"))), "contentHash": approvalFingerprint(rawStr("text"))}
 			}
 			question, _ := json.Marshal(map[string]any{"question": computerControlConfirmationText(call.Function.Name, confirmationArgs), "type": "confirm", "approvalKind": "computer-action", "tool": call.Function.Name, "actionArgs": approvalArgs})
-			if answer := a.awaitUserAnswer(ctx, task, question); answer != "确认" {
+			approvalCtx := context.WithValue(ctx, surfaceApprovalInputKey{}, surfaceInput)
+			if answer := a.awaitUserAnswer(approvalCtx, task, question); answer != "确认" {
 				return "用户未批准电脑操作；操作未执行。"
 			}
+			if !a.computerSurfaceUnchanged(ctx, surfaceInput, approvedRule) {
+				return failure("目标控件在审核期间已变化；操作未执行，请重新检查界面后再试")
+			}
+			ctx = context.WithValue(ctx, computerControlExpectationKey{}, surfaceInput)
 			args["approved"] = true
 		}
 		raw, err := a.callComputerControlTool(ctx, call.Function.Name, args, target, approvedRule)
 		if err != nil {
 			return failure("电脑控制工具失败：" + err.Error())
+		}
+		if call.Function.Name == "computer_snapshot" {
+			a.rememberComputerSnapshot(task, target, raw)
 		}
 		if err := capturePluginImages(ctx, raw); err != nil {
 			return failure(err.Error())
@@ -5530,7 +5550,7 @@ func browserActionConfirmationText(name string, args map[string]any) string {
 
 func computerToolRequiresConfirmation(name string) bool {
 	switch name {
-	case "computer_click", "computer_type", "computer_key":
+	case "computer_click", "computer_type", "computer_key", "computer_drag", "computer_scroll":
 		return true
 	default:
 		return false
@@ -5541,7 +5561,7 @@ func pluginActionConfirmationText(pluginID, name string, args map[string]any) st
 	if pluginID != "computer-control" {
 		return browserActionConfirmationText(name, args)
 	}
-	operation := map[string]string{"computer_click": "点击屏幕坐标", "computer_type": "向当前输入位置键入文字", "computer_key": "向当前应用发送键盘按键"}[name]
+	operation := map[string]string{"computer_click": "点击屏幕坐标", "computer_type": "向当前输入位置键入文字", "computer_key": "向当前应用发送键盘按键", "computer_drag": "拖拽指定窗口内的对象", "computer_scroll": "滚动指定窗口区域"}[name]
 	// Do not include the actual text in durable workflow questions or audit
 	// state. A short length summary is enough for confirmation.
 	if name == "computer_type" {
@@ -5581,6 +5601,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 		question, _ = json.Marshal(approvalQuestion)
 	}
 	task.PendingQuestion = question
+	task.surfaceApprovalInput, _ = ctx.Value(surfaceApprovalInputKey{}).(*surfaceApprovalInput)
 	task.ApprovalState = ""
 	if approvalQuestion["approvalKind"] == "shell" || surfaceApprovalKind(approvalQuestion["approvalKind"]) {
 		task.ApprovalState = "manual"
@@ -5611,6 +5632,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	}
 	if persistErr != nil {
 		task.PendingQuestion = nil
+		task.surfaceApprovalInput = nil
 		task.AnswerCh = nil
 		task.approvalCtx = nil
 		task.Status = "running"
@@ -5644,6 +5666,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 		task.approvalCancel()
 	}
 	task.approvalCtx = nil
+	task.surfaceApprovalInput = nil
 	task.PendingQuestion = nil
 	task.ApprovalState = ""
 	task.AnswerCh = nil

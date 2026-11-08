@@ -1598,12 +1598,14 @@
         "scripts/test_macos_desktop.py"
       ],
       [
-        "node", "--check", "internal/server/web/plugin-workbench-tabs.js"
+        "node",
+        "--check",
+        "internal/server/web/plugin-workbench-tabs.js"
       ],
       [
-        "node", "scripts/plugin-workbench-tabs.test.cjs"
+        "node",
+        "scripts/plugin-workbench-tabs.test.cjs"
       ],
-
       [
         "node",
         "--check",
@@ -1628,6 +1630,14 @@
       [
         "python3",
         "scripts/test_windows_desktop.py"
+      ],
+      [
+        "node",
+        "scripts/keybindings.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/desktop-capture.test.cjs"
       ]
     ],
     "full": [

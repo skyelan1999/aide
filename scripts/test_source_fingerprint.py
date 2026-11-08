@@ -64,7 +64,7 @@ class SourceFingerprintTests(unittest.TestCase):
             current = fingerprint()
             self.assertNotEqual(previous, current, 'scripts/version.sh')
             previous = current
-            for name in ['native/macos-desktop/main.swift', 'native/macos-desktop/biometrics.swift', 'desktop.command', 'scripts/build-macos-desktop.py',
+            for name in ['native/macos-desktop/main.swift', 'native/macos-desktop/biometrics.swift', 'native/macos-desktop/computer_control_scheduler.swift', 'native/macos-desktop/computer_virtual_pointer.swift', 'native/macos-desktop/modifier_gesture.swift', 'native/macos-desktop/app_capture.swift', 'desktop.command', 'scripts/build-macos-desktop.py',
                          'scripts/desktop-session.py', 'scripts/render-computer-bridge-icon.swift']:
                 (root/name).write_text('fixture')
                 current = fingerprint()
