@@ -14,12 +14,11 @@
       "pull_request": 5
     },
     "status_counts": {
-      "retain_no_issue_specific_resolution_verified": 85,
+      "retain_no_issue_specific_resolution_verified": 84,
       "excluded": 20,
-      "closed_verified_main": 2,
+      "closed_verified_main": 4,
       "retain_live_pdf_acceptance_pending": 1,
       "retain_ai_visibility_gap_present": 1,
-      "fix_verified_pending_main": 1,
       "retain_browser_reproduction_pending": 1
     },
     "initial_open_including_prs": 111,
@@ -216,7 +215,8 @@
       "title": "[P3] Include version calculation in the source-build freshness hash",
       "url": "https://github.com/skyelan1999/aide/issues/795",
       "scope": "core",
-      "status": "fix_verified_pending_main"
+      "status": "closed_verified_main",
+      "evidence": "PR #824; main merge 7e62f71202d3b29397941ffe8244784e3283a37a; 4 Python source-fingerprint tests, version.sh mutation/restore probe, quick gate; closed 2026-11-08"
     },
     {
       "number": 791,
@@ -517,7 +517,8 @@
       "title": "[P2] Pin GitHub Actions to immutable commits in release workflows",
       "url": "https://github.com/skyelan1999/aide/issues/657",
       "scope": "core",
-      "status": "retain_no_issue_specific_resolution_verified"
+      "status": "closed_verified_main",
+      "evidence": "PR #825; main merge 60f350c6b12bec53f0c8892e8bba1a488d50677f; official action tag SHA check, actionlint, pin regression, quick/Go/Windows CI; closed 2026-11-08"
     },
     {
       "number": 653,
@@ -807,5 +808,18 @@
       "status": "closed_verified_main",
       "evidence": "502cad907; offline Go 1.26 TestIssue82* passes on 2026-11-08"
     }
-  ]
+  ],
+  "final_state": {
+    "checked_at": "2026-11-08 14:37 CST",
+    "main_sha": "60f350c6b12bec53f0c8892e8bba1a488d50677f",
+    "closed_in_this_audit": [
+      815,
+      82,
+      795,
+      657
+    ],
+    "open_issues_excluding_prs_at_final_check": 102,
+    "in_scope_open_from_initial_snapshot": 87,
+    "scope_note": "Initial 91 in-scope items minus 4 completed closures; unverified items remain open."
+  }
 }

@@ -37,29 +37,36 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "#815、#82 确认主干已有修复并留评论关闭；#795 在独立分支修复 source_sha 输入和测试夹具。其余范围内 Issue 保留开放。",
+      "summary": "#815、#82 核对当前主干已有修复后关闭；#795、#657 分别经 PR #824/#825 修复、合并到 main 并关闭。其余范围内 Issue 保持开放。",
       "evidence": [
         "#815 comment https://github.com/skyelan1999/aide/issues/815#issuecomment-6718070426",
         " #82 comment https://github.com/skyelan1999/aide/issues/82#issuecomment-6718127121",
         "scripts/aide.sh",
-        "scripts/test_source_fingerprint.py"
+        "scripts/test_source_fingerprint.py",
+        "PR #824 merge 7e62f71202d3b29397941ffe8244784e3283a37a; #795 completed",
+        "PR #825 merge 60f350c6b12bec53f0c8892e8bba1a488d50677f; #657 completed"
       ]
     },
     "verification": {
       "status": "pass",
-      "summary": "#815 Node 翻译覆盖与实际英文翻译探针通过；#82 隔离 Go 1.26 专项测试通过；#795 指纹变更/恢复探针与 Python 夹具通过；全仓 quick 门禁复跑通过。未运行 #813 所要求的 100 MiB 实际工作台验收。",
+      "summary": "四项关闭均有当前主干的对应证据；#657 官方标签 SHA 逐一核对，本机 actionlint/定向测试/quick 与 PR CI 通过。其余 Issue 无足够定向验收，保持开放。",
       "evidence": [
         "node scripts/test_i18n_coverage.cjs: PASS 3742 sites",
         "en.js+i18n.js en probe: Converting Markdown chunk 2…",
         "docker run --network none aide:release-ci-test-tools go test ./internal/server -run ^TestIssue82 -count=1: PASS",
         "python3 scripts/test_source_fingerprint.py: 4 tests PASS",
         "bash scripts/aide.sh source-sha: version.sh edit changes hash, restore restores hash",
-        ".agent-state/verify-20261108T061533656318Z.log: quick exit 0"
+        ".agent-state/verify-20261108T061533656318Z.log: quick exit 0",
+        "gh api repos/actions/<action>/commits/<tag>: 10 个官方提交 SHA 与工作流固定引用一致",
+        "actionlint v1.7.12 (upstream checksum verified): PASS",
+        "python3 scripts/test_workflow_action_pins.py: 2 tests PASS",
+        ".agent-state/verify-20261108T062739410441Z.log: quick exit 0",
+        "PR #825 CI Aide CI run 42454993596 and Windows Desktop Check run 42454993507: success"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "逐项 JSON 清单与范围/证据汇总已写入；保留项明确不宣称问题消失。",
+      "summary": "逐项 JSON 清单和审计报告更新到四项已关闭、87 项范围内仍开放；未验证项保留明确边界。",
       "evidence": [
         "docs/reviews/2026-11-08-nonplugin-issue-audit.json",
         "docs/reviews/2026-11-08-nonplugin-issue-audit.md"
@@ -73,12 +80,23 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "待将 #795 修复提交、合并推送 main 后关闭对应 Issue；不发布版本。",
-      "evidence": []
+      "status": "not_run",
+      "summary": "本任务仅合并推送 main 和关闭已验证 Issue；没有发布新版本或镜像。PR #824/#825 均合并，origin/main 已核对。",
+      "evidence": [
+        "git ls-remote origin refs/heads/main => 60f350c6b12bec53f0c8892e8bba1a488d50677f",
+        "gh issue view 815,82,795,657 => CLOSED/COMPLETED"
+      ]
     }
   },
   "release_authorization": "用户本轮明确要求修复后提交、合并推送 main，并关闭可关闭的 Issue。",
   "rollback": "范围内修复均在隔离分支提交，可按提交回滚；原 main 工作树与运行服务保留。",
-  "handoff": "待合并 #795 后更新报告、远程 SHA 与 Issue 状态；#813 和其余未验证条目保持开放。"
+  "handoff": "四项已关闭；初始 91 项范围内还有 87 项开放。PDF 解码、SSH/SFTP 根约束、helper 竞态、#813 真实 PDF 验收、#796 AI 可见性等仍需问题专属复现/修复/验证。原 main 脏工作树未改动；无运行服务变更或新版本发布。",
+  "final_main": "60f350c6b12bec53f0c8892e8bba1a488d50677f",
+  "closed_issues": [
+    815,
+    82,
+    795,
+    657
+  ],
+  "in_scope_open_after_audit": 87
 }
