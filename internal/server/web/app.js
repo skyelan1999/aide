@@ -9951,6 +9951,29 @@ let trajView = "history"; // history | review | calls | outcome（一级）
 let trajOutcomeRun = null;
 let trajectoryGeneration = 0;
 let trajFmt = "md"; // md | json（历史视图格式，二级）
+let trajectoryViewAnimation = null;
+function syncTrajectorySelection(seg) {
+  if (!seg || !seg.offsetWidth) return;
+  const active = seg.querySelector('.traj-seg-btn.active');
+  if (!active) return;
+  if (!seg.classList.contains('traj-animated')) seg.classList.add('traj-no-motion');
+  seg.style.setProperty('--traj-selection-x', active.offsetLeft + 'px');
+  seg.style.setProperty('--traj-selection-width', active.offsetWidth + 'px');
+  seg.classList.add('traj-animated');
+  if (seg.classList.contains('traj-no-motion')) requestAnimationFrame(() => seg.classList.remove('traj-no-motion'));
+}
+function animateTrajectorySwitch(direction) {
+  trajectoryViewAnimation?.cancel();
+  trajectoryViewAnimation = null;
+  const host = $('trajectory-content');
+  if (!host?.animate || !host.isConnected || document.documentElement.dataset.motion === 'reduced' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const animation = host.animate([
+    {opacity: .65, transform: `translate3d(${direction * 7}px,0,0)`},
+    {opacity: 1, transform: 'translate3d(0,0,0)'}
+  ], {duration: 190, easing: 'cubic-bezier(.2,.8,.2,1)'});
+  trajectoryViewAnimation = animation;
+  animation.onfinish = animation.oncancel = () => { if (trajectoryViewAnimation === animation) trajectoryViewAnimation = null; };
+}
 function renderTrajectory() {
   const host = $('trajectory-content');
   ++trajectoryGeneration;
@@ -10178,6 +10201,10 @@ function openTrajectory() {
   $('trajectory-sheet').classList.add('open');
   renderTrajectory();
   $('settings-backdrop').classList.add('open');
+  requestAnimationFrame(() => {
+    syncTrajectorySelection(document.querySelector('.traj-main-seg'));
+    syncTrajectorySelection($('traj-fmt-seg'));
+  });
 }
 function openRunOutcome(runId, sessionId) {
   if (state.session?.id !== sessionId || !state.session.runs?.some(run => run.id === runId)) return false;
@@ -10189,6 +10216,8 @@ function openRunOutcome(runId, sessionId) {
 }
 function closeTrajectory() {
   ++trajectoryGeneration;
+  trajectoryViewAnimation?.cancel();
+  trajectoryViewAnimation = null;
   window.AideTaskOutcome?.close();
   $('trajectory-sheet').classList.remove('open');
   $('settings-backdrop').classList.remove('open');
@@ -10226,23 +10255,35 @@ function ensureTrajectoryTabs() {
   const mainSeg = document.querySelector('.traj-main-seg');
   if (mainSeg && !mainSeg.dataset.bound) {
     mainSeg.dataset.bound = '1';
+    if (window.ResizeObserver) new ResizeObserver(() => syncTrajectorySelection(mainSeg)).observe(mainSeg);
     mainSeg.querySelectorAll('.traj-seg-btn').forEach(btn => {
       btn.onclick = () => {
+        if (trajView === btn.dataset.view) return;
+        const buttons = [...mainSeg.querySelectorAll('.traj-seg-btn')];
+        const oldIndex = buttons.findIndex(b => b.classList.contains('active'));
         mainSeg.querySelectorAll('.traj-seg-btn').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
         trajView = btn.dataset.view;
+        syncTrajectorySelection(mainSeg);
         renderTrajectory();
+        animateTrajectorySwitch(Math.sign(buttons.indexOf(btn) - oldIndex) || 1);
+        requestAnimationFrame(() => syncTrajectorySelection($('traj-fmt-seg')));
       };
     });
   }
   const fmtSeg = $('traj-fmt-seg');
   if (fmtSeg && !fmtSeg.dataset.bound) {
     fmtSeg.dataset.bound = '1';
+    if (window.ResizeObserver) new ResizeObserver(() => syncTrajectorySelection(fmtSeg)).observe(fmtSeg);
     fmtSeg.querySelectorAll('.traj-seg-btn').forEach(btn => {
       btn.onclick = () => {
-        fmtSeg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if (trajFmt === btn.dataset.fmt) return;
+        const buttons = [...fmtSeg.querySelectorAll('.traj-seg-btn')];
+        const oldIndex = buttons.findIndex(b => b.classList.contains('active'));
+        buttons.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
         trajFmt = btn.dataset.fmt;
+        syncTrajectorySelection(fmtSeg);
         renderTrajectory();
+        animateTrajectorySwitch(Math.sign(buttons.indexOf(btn) - oldIndex) || 1);
       };
     });
   }

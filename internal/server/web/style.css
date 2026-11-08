@@ -564,10 +564,18 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .stl-canvas canvas{display:block;width:100%!important;height:100%!important}
 
 .traj-header-controls{display:flex;align-items:center;gap:8px}
-.traj-format-seg{display:inline-flex;padding:2px;border-radius:7px;background:var(--bg-inset);border:1px solid var(--line-soft-2);gap:1px}
-.traj-seg-btn{padding:4px 10px;font-size:10px;font-weight:500;color:var(--muted);border-radius:5px;transition:background .15s,color .15s;line-height:1.4}
-.traj-seg-btn:hover{color:var(--text)}
+.traj-format-seg{display:inline-flex;position:relative;padding:2px;border-radius:7px;background:var(--bg-inset);border:1px solid var(--line-soft-2);gap:1px}
+.traj-format-seg.traj-animated::before{content:"";position:absolute;top:2px;bottom:2px;left:0;width:var(--traj-selection-width);border-radius:5px;background:var(--soft);box-shadow:0 1px 3px var(--shadow-1);transform:translate3d(var(--traj-selection-x),0,0);pointer-events:none;transition:transform .23s cubic-bezier(.2,.8,.2,1),width .23s cubic-bezier(.2,.8,.2,1)}
+.traj-format-seg.traj-no-motion::before{transition:none}
+.traj-seg-btn{position:relative;z-index:1;padding:4px 10px;font-size:10px;font-weight:500;color:var(--muted);border-radius:5px;transition:background .15s,color .18s,transform .18s cubic-bezier(.2,.8,.2,1);line-height:1.4}
+.traj-seg-btn:hover{color:var(--text);transform:translateY(-1px)}
+.traj-seg-btn:active{transform:translateY(0) scale(.98)}
+.traj-seg-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .traj-seg-btn.active{background:var(--soft);color:var(--text);box-shadow:0 1px 2px var(--shadow-1)}
+.traj-format-seg.traj-animated .traj-seg-btn.active{background:transparent;box-shadow:none}
+html[data-motion="reduced"] .traj-format-seg.traj-animated::before,html[data-motion="reduced"] .traj-seg-btn{transition:none}
+html[data-motion="reduced"] .traj-seg-btn:hover,html[data-motion="reduced"] .traj-seg-btn:active{transform:none}
+@media(prefers-reduced-motion:reduce){.traj-format-seg.traj-animated::before,.traj-seg-btn{transition:none}.traj-seg-btn:hover,.traj-seg-btn:active{transform:none}}
 .traj-export-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;height:30px;font-size:12px;font-weight:550;color:var(--on-brand);background:var(--brand-hi);border-radius:7px;transition:background .15s,opacity .15s;white-space:nowrap}
 .traj-export-btn:hover{background:var(--brand-hi);opacity:.94}
 .traj-export-btn svg{flex-shrink:0;width:14px;height:14px}

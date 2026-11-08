@@ -1,0 +1,81 @@
+{
+  "id": "trajectory-module-motion-20261108",
+  "request": "优化轨迹顶部模块按钮及模块之间的动画切换，使动画流畅有质感",
+  "baseline": "2692bed96bf9f672df8ceb2742b54299685239f6",
+  "initial_status": "原主仓库 main 有既存的已跟踪和未跟踪改动，未触碰；在独立工作树 feat/trajectory-transitions-20261108 从 origin/main 2692bed96bf9f672df8ceb2742b54299685239f6 开始。",
+  "acceptance": [
+    "轨迹顶部四个模块按钮在切换时有连续选中态，模块内容短暂过渡且快速切换可取消旧动画。",
+    "模块按钮在桌面宽度切换视图时不横向跳位；窄屏可完整显示。",
+    "历史视图 Markdown/JSON 二级按钮同步选中态及 aria-pressed，键盘 Enter 可切换。",
+    "系统及应用的减少动态效果设置禁用动画；后台重新渲染不会触发切换动画。",
+    "实际页面进行桌面和窄屏验收，并通过相关快速检查。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/macos.css",
+    "scripts/session-review.test.cjs",
+    "docs/tasks/trajectory-module-motion-20261108.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将“那个按钮”按前文上下文解释为轨迹面板顶部模块按钮；范围仅含轨迹切换及其二级格式按钮。",
+      "evidence": [
+        "用户请求",
+        "index.html 轨迹面板结构"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用单个伪元素作为选中底板，只动画 transform/width；内容仅在主动切换时用可取消的 Web Animations 短过渡，桌面固定模块按钮位置，窄屏换行。",
+      "evidence": [
+        "app.js renderTrajectory/ensureTrajectoryTabs",
+        "style.css/macOS 样式与响应式规则"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现按钮底板、轻量内容过渡、ResizeObserver 对齐、重复点击跳过、aria 状态及两种减少动态效果处理；资源版本已更新。",
+      "evidence": [
+        "git diff -- internal/server/web"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "node --check、会话评审定向测试和仓库 verify quick 通过；隔离 Chrome 加载当前源码覆盖到本机 Aide 页面，实测 1200x800、390x844，四模块位置、二级格式、键盘 Enter、系统及应用减少动态效果。未替换本机运行服务或验证真实登录会话。",
+      "evidence": [
+        "node --test scripts/session-review.test.cjs: 5/5",
+        "python3 scripts/agent-route.py verify quick: pass",
+        "Chrome: 桌面四视图模块按钮 x=349，移动端无横向溢出；减少动态效果时内容动画数=0",
+        "本地截图 .agent-state/trajectory-motion-desktop-clean.png 和 trajectory-motion-mobile-review.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务记录包含目标、改动、验证范围与未覆盖的实际运行服务。",
+      "evidence": [
+        "docs/tasks/trajectory-module-motion-20261108.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留原主仓库未提交文件；隔离工作树仅包含本任务源码、测试和任务记录；浏览器截图保存在忽略的 .agent-state。",
+      "evidence": [
+        "git status --short",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次未请求合并、推送或替换本机服务；发布与正式运行环境验收另行执行。",
+      "evidence": [
+        "用户本轮请求仅为优化动画"
+      ]
+    }
+  },
+  "release_authorization": "本轮无合并、推送或部署授权。",
+  "rollback": "在功能分支撤销本任务提交；未修改用户运行服务与主仓库工作区。",
+  "handoff": "功能分支待审；正式运行服务尚未加载此版本。"
+}

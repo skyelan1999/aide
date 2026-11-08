@@ -848,11 +848,17 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 .outcome-io-resource{overflow-wrap:anywhere}
 .outcome-journal{margin:10px 0;padding:0 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface-alt,var(--bg))}.outcome-journal>summary{cursor:pointer;padding:13px 0;color:var(--muted);font-size:12px;font-weight:600}.outcome-journal-event{padding:10px 0;border-top:1px solid var(--line-soft)}.outcome-journal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px}.outcome-journal-head time{font-variant-numeric:tabular-nums;color:var(--muted)}.outcome-journal-kind{font-weight:600}.outcome-journal-event p{margin:6px 0;font-size:11px;overflow-wrap:anywhere}.outcome-journal-event .outcome-digest{margin-top:6px}
 .traj-header-controls:has(#traj-fmt-seg.hidden) .traj-ctrl-divider{display:none}
-@media(max-width:760px){#trajectory-sheet .sheet-head{align-items:flex-start;flex-wrap:wrap;gap:12px}#trajectory-sheet .traj-header-controls{flex-wrap:wrap;width:100%;gap:6px}.traj-main-seg{flex-shrink:0}#trajectory-sheet-close{margin-left:auto}.traj-outcome-picker{gap:10px}.traj-outcome-content .outcome-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#trajectory-sheet .sheet-head{display:grid;grid-template-columns:100px minmax(0,1fr)}
+#trajectory-sheet .traj-header-controls{min-width:0}
+#trajectory-sheet-close{margin-left:auto}
+@media(max-width:950px){#trajectory-sheet .sheet-head{display:flex;align-items:flex-start;flex-wrap:wrap;gap:12px}#trajectory-sheet .traj-header-controls{flex-wrap:wrap;width:100%;gap:6px}.traj-main-seg{flex-shrink:0}#trajectory-sheet-close{margin-left:auto}}
+@media(max-width:760px){.traj-outcome-picker{gap:10px}.traj-outcome-content .outcome-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 #trajectory-sheet .traj-main-seg{padding:3px;gap:3px;background:var(--bg-inset);border:1px solid var(--line);border-radius:10px}
 #trajectory-sheet .traj-main-seg .traj-seg-btn{font-size:12px;padding:7px 12px;border-radius:7px}
 #trajectory-sheet .traj-main-seg .traj-seg-btn.active{background:var(--selected);color:var(--text)}
+#trajectory-sheet .traj-main-seg.traj-animated::before{top:3px;bottom:3px;border-radius:7px;background:var(--selected)}
+#trajectory-sheet .traj-main-seg.traj-animated .traj-seg-btn.active{background:transparent;box-shadow:none}
 
 /* Markdown editing retains the native text editor beside a reading surface. */
 .editor-dialog.md-split[open]{width:min(1200px,94vw);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,58dvh);column-gap:18px}
