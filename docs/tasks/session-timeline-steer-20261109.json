@@ -81,9 +81,10 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "已在 main 本地提交 24cbe507（未推送、未升版、未构建发行镜像、未发布）。用户授权仅覆盖其他仓库插件的更新/测试/合并/市场 release；本次改动位于 aide 主仓且无插件证据，推送与发布待用户确认。",
+      "summary": "已在 main 本地提交 24cbe507（未推送、未升版、未构建发行镜像、未发布）。用户授权仅覆盖其他仓库插件的更新/测试/合并/市场 release；本次改动位于 aide 主仓且无插件证据，推送与发布待用户确认。 已按 bug 闭环建立 Issue #838。",
       "evidence": [
-        "git log -1 --stat → 24cbe507 fix(session): align timeline by real time and interrupt in-flight rounds on steer"
+        "git log -1 --stat → 24cbe507 fix(session): align timeline by real time and interrupt in-flight rounds on steer",
+        "GitHub Issue skyelan1999/aide#838（记录复现/修复/验收，待发布后关闭）"
       ]
     }
   },
