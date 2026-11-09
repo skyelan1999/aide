@@ -542,3 +542,8 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 
 - `web/workbench.css` 在既有表现层之后统一侧栏、顶栏、设置弹窗和导航的轻透明材质；侧栏84%、顶栏78%、弹窗88%的主题色与16px背景模糊配合。输入区92%、菜单94%，文字、输入字段、代码和主要按钮继续使用原有清晰表面，不对容器整体降低 opacity。背景关闭时沿用同一材质，背景资源和强度偏好不变。
 - 仅支持标准或 WebKit `backdrop-filter` 时启用；不支持时保留既有实色。系统减少透明度时取消模糊并恢复实色，强制颜色模式使用系统 Canvas。无新增动画、网络素材或设置项。验收边界见 `docs/tasks/ui-translucency-20261103.json`。
+
+
+### 大 Markdown 附件
+
+Markdown 附件的总内联预算为 16 KiB；超出时附带明确的文件引用、来源/路径/长度/哈希、有限节选及 read_file 字节参数，原文件保留以供分段读取。引用不会形成完整文件修改基线；小文档保持全文与版本快照。上下文预览、发送和重试共用此表示，所选模型的真实容量限制继续生效。详见[大 Markdown 附件验收](reviews/2026-11-09-large-markdown-attachments.md)。

@@ -285,6 +285,7 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 	var contextText strings.Builder
 	var images []MessageImage
 	versions := map[string]Change{}
+	markdownRemaining := markdownInlineBudget
 	addText := func(root, apath, body string) error {
 		header := fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n", root, apath)
 		const footer = "\n</untrusted-file>\n"
@@ -350,7 +351,32 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 			continue
 		}
 
-		// 3) 普通文本文件（原逻辑）
+		// Markdown uses a bounded inline budget shared across all attachments.
+		// Validate/hash the whole file with bounded retained memory; a reference
+		// does not masquerade as a full read or authorize overwriting unseen text.
+		if markdownAttachmentPath(att.Path) && (att.Root == "" || att.Root == "workspace" || att.Root == "source" || att.Root == "context") {
+			window, err := a.markdownAttachmentWindow(att)
+			if err != nil {
+				return "", nil, nil, friendlyAttachError(att.Path, err)
+			}
+			body := string(window.Content)
+			if window.Size > int64(markdownRemaining) {
+				body = markdownReference(att, window)
+			} else {
+				markdownRemaining -= len(window.Content)
+				if att.Root == "source" {
+					versions[sourceVersionKey(att.Source, att.Path)] = Change{Source: att.Source, BaseHash: window.Hash, Before: body}
+				} else if att.Root == "workspace" || att.Root == "" {
+					versions[path.Clean(att.Path)] = Change{BaseHash: window.Hash, Before: body}
+				}
+			}
+			if err := addText(att.Root, att.Path, body); err != nil {
+				return "", nil, nil, err
+			}
+			continue
+		}
+
+		// 3) Other ordinary text files retain the existing full-inline behavior.
 		var b []byte
 		var err error
 		if att.Root == "source" {

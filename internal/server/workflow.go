@@ -5090,6 +5090,16 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			a.rememberWorkspaceReadRange(task, p, window.Hash, window.Preview, window.TotalLines, off, returnedLines, window.Size)
 			return fmt.Sprintf("（%s 共 %d 行，SHA-256 %s，以下从第 %d 行起）\n%s", p, window.TotalLines, window.Hash, off+1, string(window.Content))
 		}
+		// Large Markdown references must be readable past the initial preview
+		// from sources as well as the workspace. Source reads never grant a
+		// full-file proposal baseline.
+		if sourceID != "" && markdownAttachmentPath(p) && (args["byteOffset"] != nil || args["byteLimit"] != nil) {
+			window, err := a.sourceMarkdownWindow(source, p, toolInt64("byteOffset"), toolInt64("byteLimit"))
+			if err != nil {
+				return failure("读取失败: " + err.Error())
+			}
+			return fmt.Sprintf("（%s：完整文件 %d 字节，当前 UTF-8 字节范围 [%d,%d)，SHA-256 %s；继续时传 byteOffset=%d，单段最多 48 KiB）\n%s", p, window.Size, window.ByteStart, window.ByteEnd, window.Hash, window.ByteEnd, string(window.Content))
+		}
 		b, err := readTextFile(p)
 		if err != nil {
 			return failure("读取失败: " + err.Error())

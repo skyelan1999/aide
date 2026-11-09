@@ -1,0 +1,102 @@
+{
+  "id": "large-markdown-attachment-20261109",
+  "request": "当我附加比较大的文件md文件，他不允许我发送，能不能把这个限制解除了",
+  "baseline": "60485163b5d499691eefb319461f12a09a047c6d",
+  "initial_status": "",
+  "acceptance": [
+    "1.8 MiB Markdown can be attached and sent in current local Aide without context-budget send disable.",
+    "Large Markdown remains intact and is explicitly referenced with bounded preview and correct tool path; no false full-read or full-file write baseline.",
+    "Preview and task/retry paths use the same representation; small Markdown and non-Markdown attachments retain existing behavior.",
+    "Existing source visibility, traversal, binary, image/document, model-capacity and file-version rules remain enforced."
+  ],
+  "scope": [
+    "internal/server/context.go",
+    "internal/server/markdown_attachments.go",
+    "internal/server/markdown_attachments_test.go",
+    "internal/server/workflow.go",
+    "docs/architecture.md",
+    "docs/tasks/large-markdown-attachment-20261109.json",
+    "docs/reviews/2026-11-09-large-markdown-attachments.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports 1.8 MB Markdown greys send. Existing full inline context exceeds model window. Deliver bounded reference mode for large Markdown instead of removing provider capacity checks.",
+      "evidence": [
+        "internal/server/web/app.js:3807",
+        "internal/server/context.go:284"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Markdown files share a 16 KiB inline budget; larger files carry identity/hash/size, 768-byte bounded preview and exact read_file byte arguments. Stream validation/hash retains bounded data. Full original stays in workspace/source. Reference-only files have no full-write baseline; provider capacity checks retained. Explicit source byte-window reads supported without altering legacy line-read path.",
+      "evidence": [
+        "internal/server/markdown_attachments.go",
+        "internal/server/context.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added bounded Markdown references and source byte-window access, reused preview/start/retry builder, preserved ordinary file and capacity guards.",
+      "evidence": [
+        "internal/server/markdown_attachments.go",
+        "internal/server/context.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS matching quick, focused in-current-container Go (15.096s), same-instance source build/vet. Actual UI #95 changed disabled to enabled with identical 1.8 MiB attachment, sent successfully and read full tail after correcting a too-short actor read. Original hash unchanged. Full/race/remote hardware NOT_RUN.",
+      "evidence": [
+        ".agent-state/large-markdown-live.json",
+        ".agent-state/verify-20261109T014833446321Z.log",
+        "/tmp/aide-large-markdown-go-verified.log",
+        "/tmp/aide-large-markdown-build.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and detailed acceptance record describe reference mode, exact measured before/after, model correction and untested limits.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-11-09-large-markdown-attachments.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only one Aide service reused. #95 tests ended; synthetic cache input intentionally retained for review, not staged. Existing user data preserved. Restart interrupted prior waiting run #87; checkpoint canResume=true retained, no automatic replay.",
+      "evidence": [
+        "docs/reviews/2026-11-09-large-markdown-attachments.md",
+        ".agent-state/large-markdown-live.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Public Release/full release matrix not requested. The commit containing this record integrates the verified source into local main; no remote push, version bump or runtime restart for this integration.",
+      "evidence": [
+        ".agent-state/verify-20261109T014833446321Z.log",
+        "/tmp/aide-large-markdown-go-verified.log",
+        "/tmp/aide-large-markdown-build.log"
+      ]
+    }
+  },
+  "release_authorization": "User: 合并到main (local main source integration; no new push or binary Release requested)",
+  "rollback": "Revert scoped Markdown helper/branch only and rebuild current instance; retain user files and session data. Do not reset workspace or replay pending computer actions.",
+  "handoff": "Verified fix is integrated into local main by the commit containing this record. Current Aide already runs the tested content. No new remote push or package Release. Existing #87 checkpoint remains available.",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/836"
+  ],
+  "runtime": {
+    "image": "sha256:06f34eb74bb6dca27bd797fbe4d95e75314cac43d16b1fa57db92ab895fdc1b9",
+    "fingerprint": "d312af7aef5597016dc7efc51076c4cb38bae31ddd55437f5b71e83752b09f89",
+    "status": "ok",
+    "health": "healthy",
+    "integrity": "degraded"
+  },
+  "source_delivery": {
+    "branch": "main",
+    "commit": "The Git commit containing this record",
+    "scope": "large Markdown attachment fix, tests and acceptance docs",
+    "remote_push": "not requested in this followup"
+  }
+}
