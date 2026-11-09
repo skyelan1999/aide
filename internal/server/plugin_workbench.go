@@ -42,6 +42,9 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 	if w.HostComponent != "" && w.HostComponent != "codex-bridge" {
 		return errors.New("unknown host component")
 	}
+	if w.Viewer != nil && w.Viewer.Protocol != 1 {
+		return errors.New("unsupported workbench viewer protocol")
+	}
 	if err := validatePluginFileHandler(w.FileHandler); err != nil {
 		return err
 	}
@@ -224,7 +227,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	a.pluginWorkbenchTickets[ticket] = pluginWorkbenchTicket{ID: id, Base: a.managementBaseLocked("plugins", id), Digest: sha256.Sum256(page), Gen: lock.Gen, Expires: now.Add(time.Minute)}
 	response := map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == id && p.Workbench != nil && ((p.ID == "codex-bridge" && p.Workbench.HostComponent == "codex-bridge") || len(p.Workbench.Tools) > 0 || document != nil || p.Workbench.ProjectMessages || p.Workbench.MobileCapture || (p.Workbench.Microphone && p.Workbench.OnDeviceSpeech) || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
+		if p.ID == id && p.Workbench != nil && ((p.ID == "codex-bridge" && p.Workbench.HostComponent == "codex-bridge") || len(p.Workbench.Tools) > 0 || document != nil || p.Workbench.ProjectMessages || p.Workbench.MobileCapture || p.Workbench.Viewer != nil || (p.Workbench.Microphone && p.Workbench.OnDeviceSpeech) || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
 			if a.pluginWorkbenchBridges == nil {
 				a.pluginWorkbenchBridges = map[string]*pluginWorkbenchBridge{}
 			}
@@ -247,7 +250,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
 			break
 		}
 	}
@@ -270,6 +273,19 @@ func (a *App) servePluginWorkbench(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	csp := workbenchCSP
+	if a.workbenchViewerLocked(ticket.ID) {
+		// sandboxed workbench documents have an opaque origin, so 'self' cannot
+		// match the host. Pin the exact origin instead of opening the policy.
+		scheme := "https"
+		if r.TLS == nil {
+			scheme = "http"
+		}
+		if forwarded := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0])); forwarded == "https" || forwarded == "http" {
+			scheme = forwarded
+		}
+		origin := scheme + "://" + r.Host
+		csp = strings.Replace(csp, "connect-src 'none'", "connect-src "+origin+" ws://"+r.Host+" wss://"+r.Host, 1)
+	}
 	if b := a.pluginWorkbenchBridges[ticket.Bridge]; b != nil {
 		b.Ready = true
 		if b.Document != nil {

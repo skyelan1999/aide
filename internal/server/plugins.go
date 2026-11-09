@@ -36,22 +36,30 @@ const (
 
 var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
+// PluginWorkbenchViewer grants the manual workbench a same-origin WebSocket
+// viewer channel. The plugin only supplies a loopback port; the host owns the
+// ticket, origin and CSP allowance, and the viewer never receives the Aide token.
+type PluginWorkbenchViewer struct {
+	Protocol int `json:"protocol"`
+}
+
 type PluginWorkbench struct {
 	ProfessionalWorkflow bool `json:"professionalWorkflow,omitempty"`
 	Microphone           bool `json:"microphone,omitempty"`
 	OnDeviceSpeech       bool `json:"onDeviceSpeech,omitempty"`
 
-	HostComponent   string             `json:"hostComponent,omitempty"`
-	ProjectMessages bool               `json:"projectMessages,omitempty"`
-	MobileCapture   bool               `json:"mobileCapture,omitempty"`
-	FileHandler     *PluginFileHandler `json:"fileHandler,omitempty"`
-	FileExtensions  []string           `json:"fileExtensions,omitempty"`
-	CloseBehavior   string             `json:"closeBehavior,omitempty"`
-	Tools           []string           `json:"tools,omitempty"`
-	Protocol        int                `json:"protocol"`
-	Entry           string             `json:"entry"`
-	Title           string             `json:"title"`
-	Standalone      *bool              `json:"standalone,omitempty"`
+	HostComponent   string                 `json:"hostComponent,omitempty"`
+	ProjectMessages bool                   `json:"projectMessages,omitempty"`
+	MobileCapture   bool                   `json:"mobileCapture,omitempty"`
+	Viewer          *PluginWorkbenchViewer `json:"viewer,omitempty"`
+	FileHandler     *PluginFileHandler     `json:"fileHandler,omitempty"`
+	FileExtensions  []string               `json:"fileExtensions,omitempty"`
+	CloseBehavior   string                 `json:"closeBehavior,omitempty"`
+	Tools           []string               `json:"tools,omitempty"`
+	Protocol        int                    `json:"protocol"`
+	Entry           string                 `json:"entry"`
+	Title           string                 `json:"title"`
+	Standalone      *bool                  `json:"standalone,omitempty"`
 }
 
 type PluginManifest struct {
