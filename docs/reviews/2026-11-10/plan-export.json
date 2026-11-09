@@ -1,0 +1,113 @@
+{
+  "schema": "aide.plan/v1",
+  "sessionTitle": "静态分析",
+  "exportedAt": "2026-11-09T18:01:09.56323Z",
+  "tasks": [
+    {
+      "id": "plan-a",
+      "title": "整理 AMR 一键启动脚本",
+      "detail": "统一 launch、run_one.sh 与 release 渲染脚本的参数与日志。",
+      "source": "user",
+      "status": "completed",
+      "runId": "run-1",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-a1",
+      "title": "梳理现有 launch 文件",
+      "source": "aide",
+      "status": "completed",
+      "parentId": "plan-a",
+      "runId": "run-1",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-a2",
+      "title": "收敛参数与默认值",
+      "source": "aide",
+      "status": "completed",
+      "parentId": "plan-a",
+      "runId": "run-1",
+      "step": 1,
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-b",
+      "title": "补齐建图导航闭环文档",
+      "detail": "把建图、导航、回归三步的验收口径写进 README。",
+      "source": "user",
+      "status": "in_progress",
+      "runId": "run-2",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-b1",
+      "title": "整理导航参数",
+      "source": "aide",
+      "status": "completed",
+      "parentId": "plan-b",
+      "runId": "run-2",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-b2",
+      "title": "写闭环验收用例",
+      "source": "aide",
+      "status": "in_progress",
+      "parentId": "plan-b",
+      "runId": "run-2",
+      "step": 1,
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-c",
+      "title": "导入工作流：回归测试",
+      "detail": "等闭环文档完成后跑一次全链路回归。",
+      "source": "user",
+      "status": "pending",
+      "dependsOn": [
+        "plan-a"
+      ],
+      "agent": "aide",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-d",
+      "title": "旧方案：手工核对 30 个文件",
+      "detail": "已被逐行差异取代。",
+      "source": "user",
+      "status": "closed",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z",
+      "closedAt": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-old",
+      "title": "逐文件打开确认",
+      "source": "aide",
+      "status": "closed",
+      "parentId": "plan-d",
+      "runId": "run-old",
+      "created": "2026-11-09T18:00:59Z",
+      "updated": "2026-11-09T18:00:59Z",
+      "closedAt": "2026-11-09T18:00:59Z"
+    },
+    {
+      "id": "plan-a0b85245ffd69182d8c57ac45bf7defb",
+      "title": "新增：核对回归脚本与发布清单",
+      "detail": "新增：核对回归脚本与发布清单",
+      "source": "user",
+      "status": "closed",
+      "created": "2026-11-09T18:01:08.525674Z",
+      "updated": "2026-11-09T18:01:09.047855Z",
+      "closedAt": "2026-11-09T18:01:09.047855Z"
+    }
+  ]
+}

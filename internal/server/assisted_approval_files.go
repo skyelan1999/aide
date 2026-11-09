@@ -135,6 +135,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	a.broadcastSessionsChanged(s.ID)
 	defer cancel()
 	approved := false
+	risk := ""
 	reason := "现有文件、远程目标、只读沙箱、符号链接或已变化的提案需要手动确认"
 	var usage TokenUsage
 	if routineDocument {
@@ -153,7 +154,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 				Reason          string
 			}
 			if err == nil && json.Unmarshal(approvalDecisionJSON(out), &v) == nil && strings.TrimSpace(v.Reason) != "" {
-				reason = v.Reason
+				reason, risk = v.Reason, v.Risk
 				approved = v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium") && v.WithinWorkspace && v.Authorized
 			} else {
 				reason = "文件提案审核失败或响应格式无效，请手动确认"
@@ -179,16 +180,30 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		approved = false
 		reason = "审批已取消或提案环境已变化"
 	}
+	grace := a.approvalGracePeriod()
 	status := "manual"
 	if approved {
 		status = "approved"
+		if grace > 0 {
+			status = "recommended"
+		}
 	}
 	if task.approvalGeneration == gen && task.Status == "awaiting_approval" {
 		task.ApprovalState = status
+		task.ApprovalDeadline = ""
+		if status == "recommended" {
+			task.ApprovalDeadline = time.Now().UTC().Add(grace).Format(time.RFC3339Nano)
+		}
 	}
 	if index < len(task.ApprovalReviews) && task.ApprovalReviews[index].At == record.At {
-		task.ApprovalReviews[index].Status = status
-		task.ApprovalReviews[index].Reason = reason
+		rec := &task.ApprovalReviews[index]
+		rec.Status, rec.Reason, rec.Risk = status, reason, risk
+		rec.Deadline = task.ApprovalDeadline
+		if approved {
+			rec.Recommendation = "approve"
+		} else {
+			rec.Recommendation = "reject"
+		}
 	}
 	if !statePersisted || a.save(s) != nil {
 		approved = false
@@ -201,7 +216,10 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		}
 	}
 	a.mu.Unlock()
-	if approved {
+	if approved && status == "recommended" {
+		// 推荐方案先展示给用户：在等待窗口内不落盘，超时未操作才按推荐执行。
+		time.AfterFunc(grace, func() { a.applyRecommendedFiles(s.ID, task.ID, gen) })
+	} else if approved {
 		r, _ := http.NewRequest(http.MethodPost, "/", nil)
 		r.SetPathValue("id", s.ID)
 		r.SetPathValue("run", task.ID)
@@ -240,4 +258,112 @@ func (w *approvalApplyResult) Write(b []byte) (int, error) {
 		w.status = 200
 	}
 	return w.body.Write(b)
+}
+
+// approvalGracePeriod 返回推荐方案等待用户操作的时间；0 表示立即按推荐执行
+// （仅用于测试或特殊部署）。
+func (a *App) approvalGracePeriod() time.Duration {
+	return a.approvalGrace
+}
+
+func updateLastApprovalReview(task *Task, status, reason string) {
+	if task == nil || len(task.ApprovalReviews) == 0 {
+		return
+	}
+	rec := &task.ApprovalReviews[len(task.ApprovalReviews)-1]
+	rec.Status, rec.Reason = status, reason
+	rec.Deadline = ""
+}
+
+// applyRecommendedFiles 在推荐方案的等待窗口到点后执行：只有提案、审批代次
+// 和 run 状态都保持不变才真正落盘，用户已手动处理或提案已变化时静默放弃。
+func (a *App) applyRecommendedFiles(sessionID, runID string, gen uint64) {
+	a.mu.Lock()
+	s := a.sessions[sessionID]
+	if s == nil || s.Deleted {
+		a.mu.Unlock()
+		return
+	}
+	var task *Task
+	for _, t := range s.Runs {
+		if t.ID == runID {
+			task = t
+		}
+	}
+	if task == nil || task.Status != "awaiting_approval" || task.ApprovalState != "recommended" || task.approvalGeneration != gen {
+		a.mu.Unlock()
+		return
+	}
+	files := append([]Change(nil), task.Files...)
+	task.ApprovalState = "applying"
+	a.mu.Unlock()
+
+	r, _ := http.NewRequest(http.MethodPost, "/", nil)
+	r.SetPathValue("id", sessionID)
+	r.SetPathValue("run", runID)
+	guard := func(t *Task) error {
+		if t != task || t.approvalGeneration != gen || len(t.Files) != len(files) {
+			return errors.New("审批已取消或提案已变化")
+		}
+		for i, f := range files {
+			if t.Files[i] != f {
+				return errors.New("文件提案已变化")
+			}
+		}
+		return nil
+	}
+	w := &approvalApplyResult{header: make(http.Header)}
+	a.applyTaskGuarded(w, r, guard)
+
+	a.mu.Lock()
+	if w.status != http.StatusOK {
+		if task.Status == "awaiting_approval" && task.approvalGeneration == gen {
+			task.ApprovalState = "manual"
+			task.ApprovalDeadline = ""
+		}
+		updateLastApprovalReview(task, "manual", "推荐方案自动执行失败："+w.body.String())
+	} else {
+		task.ApprovalState = "approved"
+		task.ApprovalDeadline = ""
+		updateLastApprovalReview(task, "approved", "已按推荐方案自动执行（等待窗口内未操作）")
+	}
+	_ = a.save(s)
+	a.mu.Unlock()
+	a.broadcastSessionsChanged(s.ID)
+}
+
+// declineTask 让用户明确不使用当前推荐方案：结束等待窗口并转手动确认，
+// 已写入的提案仍保留，用户仍可自行应用。
+func (a *App) declineTask(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	s := a.sessions[r.PathValue("id")]
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	var task *Task
+	for _, t := range s.Runs {
+		if t.ID == r.PathValue("run") {
+			task = t
+		}
+	}
+	if task == nil {
+		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	if task.Status != "awaiting_approval" || task.ApprovalState != "recommended" {
+		fail(w, 409, errors.New("任务当前没有待确认的推荐方案"))
+		return
+	}
+	task.approvalGeneration++
+	task.ApprovalState = "manual"
+	task.ApprovalDeadline = ""
+	updateLastApprovalReview(task, "declined", "用户选择不使用推荐方案，转为手动确认")
+	if err := a.save(s); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	a.broadcastSessionsChanged(s.ID)
+	jsonOut(w, 200, map[string]any{"declined": true})
 }

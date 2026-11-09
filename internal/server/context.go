@@ -446,6 +446,9 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	if scheduler := executionSchedulerInstruction(task); scheduler != "" {
 		history[0].Content += "\n" + scheduler
 	}
+	if task != nil && strings.TrimSpace(task.PlanContext) != "" {
+		history[0].Content += "\n\n## 任务与规划\n" + task.PlanContext
+	}
 	if enabled, embedded := a.markdownHistoryConfig(); enabled {
 		history[0].Content += fmt.Sprintf("\nMarkdown 历史追踪已启用（嵌入资源追踪=%t）。先读取现有 MD，再通过 write_file 提案修改原文件，不为备份另建副本；除非用户明确要求复制。实际保存才归档，未保存不算历史。可用 markdown_history 核实状态及版本。shell 或外部编辑不经过保存钩子，不能宣称已记录历史。", embedded)
 	}

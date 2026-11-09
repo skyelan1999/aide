@@ -86,6 +86,10 @@ func (a *App) updateAgentPlan(task *Task, raw string) string {
 	} else {
 		task.AgentPlan = &AgentPlan{Explanation: in.Explanation, Items: in.Plan}
 	}
+	if session := a.approvalSessionLocked(task); session != nil {
+		a.syncAgentPlanLocked(session, task)
+		_ = a.save(session)
+	}
 	// Checkpoint callback persists this alongside the paired tool response.
 	encoded, _ := json.Marshal(task.AgentPlan)
 	return "计划已更新（模型评估，不代表文件已应用或操作已授权）：" + string(encoded)

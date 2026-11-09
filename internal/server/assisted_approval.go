@@ -11,17 +11,20 @@ import (
 
 // ApprovalReview records a decision for one exact command, never a reusable grant.
 type ApprovalReview struct {
-	Command     string    `json:"command"`
-	Status      string    `json:"status"`
-	Reason      string    `json:"reason"`
-	At          string    `json:"at"`
-	Source      string    `json:"source,omitempty"`
-	Kind        string    `json:"kind,omitempty"`
-	Workspace   string    `json:"workspace,omitempty"`
-	Root        AgentRoot `json:"root,omitempty"`
-	Fingerprint string    `json:"fingerprint,omitempty"`
-	RuleID      string    `json:"ruleId,omitempty"`
-	ExpiresAt   string    `json:"expiresAt,omitempty"`
+	Command        string    `json:"command"`
+	Status         string    `json:"status"`
+	Recommendation string    `json:"recommendation,omitempty"` // approve | reject
+	Risk           string    `json:"risk,omitempty"`
+	Deadline       string    `json:"deadline,omitempty"` // 推荐方案的自动执行时限
+	Reason         string    `json:"reason"`
+	At             string    `json:"at"`
+	Source         string    `json:"source,omitempty"`
+	Kind           string    `json:"kind,omitempty"`
+	Workspace      string    `json:"workspace,omitempty"`
+	Root           AgentRoot `json:"root,omitempty"`
+	Fingerprint    string    `json:"fingerprint,omitempty"`
+	RuleID         string    `json:"ruleId,omitempty"`
+	ExpiresAt      string    `json:"expiresAt,omitempty"`
 }
 
 func (a *App) approvalSessionLocked(task *Task) *Session {

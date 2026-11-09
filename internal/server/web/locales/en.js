@@ -2993,7 +2993,7 @@ window.aideEnglish = {
   "较早草稿": "Earlier draft",
   "恢复到输入区": "Restore to composer",
   "此会话恢复草稿已达上限；当前编辑仅保留在本标签页": "This conversation has reached its recovery draft limit. Current edits remain in this tab only.",
-  "输入与输出": "Input & output",
+  "任务与规划": "Tasks & plan",
   "当前会话 · 输入与输出": "Current conversation · Input & output",
   "已展示 {0} / {1} 轮任务": "Showing {0} of {1} task rounds",
   "输入任务": "Input tasks",

@@ -213,6 +213,9 @@ type Task struct {
 	AgentReviewDone      bool                 `json:"agentReviewDone,omitempty"`
 	AgentReviewCount     int                  `json:"agentReviewCount,omitempty"`
 	AgentReviewToolCount int                  `json:"agentReviewToolCount,omitempty"`
+	PlanTaskID           string               `json:"planTaskId,omitempty"`       // 本次 run 承接的规划项
+	PlanContext          string               `json:"-"`                          // 启动时快照的规划/审批摘要，仅注入模型上下文
+	ApprovalDeadline     string               `json:"approvalDeadline,omitempty"` // 推荐方案的自动执行时限
 	ID                   string               `json:"id"`
 	Mode                 string               `json:"mode"`
 	Prompt               string               `json:"prompt"`
@@ -341,6 +344,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		Profile        string                 `json:"profile"`
 		Queued         bool                   `json:"queued"`
 		WorkflowPhase  string                 `json:"workflowPhase,omitempty"`
+		PlanTaskID     string                 `json:"planTaskId,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -385,6 +389,24 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
+	}
+	if in.PlanTaskID != "" {
+		item := a.findPlanItemLocked(s, in.PlanTaskID)
+		if item == nil {
+			fail(w, 404, errors.New("规划任务不存在"))
+			return
+		}
+		if item.Status == "closed" {
+			fail(w, 409, errors.New("该规划任务已关闭，请先重新打开"))
+			return
+		}
+		for _, dep := range item.DependsOn {
+			d := a.findPlanItemLocked(s, dep)
+			if d != nil && d.Status != "completed" && d.Status != "closed" {
+				fail(w, 409, errors.New("依赖任务尚未完成："+d.Title))
+				return
+			}
+		}
 	}
 	if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
 		fail(w, 409, err)
@@ -546,7 +568,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), PlanTaskID: in.PlanTaskID, PlanContext: a.planContextLocked(s, in.PlanTaskID, 6), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	task.MediaPrompt = mediaPrompt
 	if initialRoute != nil {
 		task.ModelRoutes = append(task.ModelRoutes, *initialRoute)
@@ -667,6 +689,11 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.ModelSelection = cloneModelSelection(&choice)
 	}
 	s.Runs = append(s.Runs, task)
+	if task.PlanTaskID != "" {
+		if item := a.findPlanItemLocked(s, task.PlanTaskID); item != nil {
+			item.Status, item.RunID, item.Updated = "in_progress", task.ID, time.Now().UTC().Format(time.RFC3339Nano)
+		}
+	}
 	// 发送成功即消费待发送草稿；用户可以先编辑草稿再启动。
 	s.PendingPrompt = ""
 	if err := a.save(s); err != nil {
@@ -929,6 +956,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			}
 		}
 	}
+	a.syncPlanOutcomeLocked(s, task)
 	a.rememberTaskOutputLocked(s, task, answer)
 	if task.Parallel != nil && (task.Parallel.Phase == "merging" || task.Parallel.Phase == "fallback" && task.Parallel.MainContext != nil) {
 		if err == nil {

@@ -2573,29 +2573,58 @@ function renderSession() {
         proposal.append(details);
       }
       if (run.status === 'awaiting_approval') {
-        if (run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
+        const applyFiles = async (remember = false, expiresAt = '', button = null) => {
+          if (button && button.disabled) return;
+          if (button) button.disabled = true;
+          try {
+            await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember,expiresAt}) });
+            toast(t("文件修改已写入各自的目标目录"));
+            await selectSession(state.session.id);
+            await loadFiles();
+          } catch (e) {
+            toast(e.message || t("应用失败，请稍后重试"));
+          } finally {
+            if (button) button.disabled = false;
+          }
+        };
+        const recommended = run.approvalState === 'recommended' && !ignoredProposals.has(run.id);
+        const review = [...(run.approvalReviews || [])].reverse().find(r => r.recommendation === 'approve') || {};
+        if (recommended) {
+          const banner = el('div', 'approval-recommend');
+          banner.append(el('h4', '', t("推荐方案：应用这些文件修改")));
+          const meta = el('p', 'approval-recommend-meta');
+          meta.append(el('span', 'approval-risk', t("风险：{0}", review.risk || t("低"))));
+          const countdown = el('span', 'approval-countdown');
+          meta.append(countdown);
+          banner.append(meta);
+          if (review.reason) banner.append(el('p', 'approval-reason', review.reason));
+          const deadline = Date.parse(String(run.approvalDeadline || '').replace(/\.(\d{3})\d+/, '.$1'));
+          const tick = () => {
+            if (!countdown.isConnected) return;
+            const left = Number.isNaN(deadline) ? 0 : Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+            countdown.textContent = left > 0 ? t("剩余 {0} 秒自动执行", left) : t("正在按推荐方案执行…");
+            if (left > 0) setTimeout(tick, 1000);
+          };
+          tick();
+          const run_now = el('button', 'primary', t("立即按推荐执行"));
+          run_now.onclick = () => applyFiles(false, '', run_now);
+          const decline = el('button', 'quiet', t("不使用推荐方案"));
+          decline.onclick = async () => {
+            decline.disabled = true;
+            try { await api(`/sessions/${state.session.id}/runs/${run.id}/decline`, { method: 'POST', body: '{}' }); toast(t("已转为手动确认")); await selectSession(state.session.id); }
+            catch (e) { toast(e.message || t("操作失败")); decline.disabled = false; }
+          };
+          banner.append(run_now, decline);
+          proposal.append(banner, el('p', 'muted', t("等待窗口内没有操作，将自动按推荐方案执行；你随时可以接管或取消。")));
+        } else if (run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
           const status = el('p', 'muted', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作'));
           status.setAttribute('role', 'status'); proposal.append(status);
         } else if (ignoredProposals.has(run.id)) {
           proposal.append(el('p', 'muted', t("已忽略此提案，未写入磁盘。")));
         } else {
           const apply = el('button', 'primary', t("应用这些文件修改"));
-          const applyFiles = async (remember = false, expiresAt = '') => {
-            if (apply.disabled) return;
-            apply.disabled = true;
-            try {
-              await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember,expiresAt}) });
-              toast(t("文件修改已写入各自的目标目录"));
-              await selectSession(state.session.id);
-              await loadFiles();
-            } catch (e) {
-              toast(e.message || t("应用失败，请稍后重试")); // 409 冲突等：把后端 error 透传给用户
-            } finally {
-              apply.disabled = false;
-            }
-          };
-          apply.textContent=t('仅本次应用'); apply.onclick=()=>applyFiles(false);
-          const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容');const validity=approvalValidityPicker(always,'永远记住并应用','记住并应用');always.onclick=()=>applyFiles(true,validity.expiresAt());
+          apply.textContent=t('仅本次应用'); apply.onclick=()=>applyFiles(false, '', apply);
+          const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容');const validity=approvalValidityPicker(always,'永远记住并应用','记住并应用');always.onclick=()=>applyFiles(true,validity.expiresAt(),always);
           const ignore = el('button', 'quiet', t("忽略此提案"));
           ignore.onclick = () => { ignoredProposals.add(run.id); renderSession(); };
           proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后写入各文件标明的目标目录；验证命令需要单独运行。")), apply, validity.node, always, ignore);
@@ -10132,12 +10161,24 @@ function renderTrajectoryOutcome(host, session) {
   select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };
   bar.append(label, select);
   const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
-  if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,renderMarkdown,api:()=>getSessionWindow(session.id),revision:sessionRevision,
+  if(!selected){window.AideSessionPlan?.sessionOverview(content,{session,t,renderMarkdown,api,revision:sessionRevision,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id!==session.id || trajView!=='outcome' || !host.isConnected || !$('trajectory-sheet').classList.contains('open'),
     onSession:next=>{if(state.session?.id!==session.id||trajView!=='outcome')return;state.session=next;state.sessionJSON=sessionRevision(next);renderTrajectory();},
-    selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
+    selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},launchTask:item=>launchPlanTask(session,item),loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
   window.AideTaskOutcome?.mount(content, {sessionId:session.id, runId:selected.id, api, t, error:toast, renderMarkdown,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome' || !$('trajectory-sheet').classList.contains('open')});
+}
+async function launchPlanTask(session, item) {
+  if (!item || !item.id) return;
+  const prompt = String(item.detail || '').trim() || item.title;
+  try {
+    await api(`/sessions/${session.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: 'chat', planTaskId: item.id }) });
+    toast(t('已交给 aide：{0}', item.title));
+    await selectSession(session.id);
+    if (state.session?.id === session.id) renderTrajectory();
+  } catch (e) {
+    toast(e.message || t('启动失败'));
+  }
 }
 function buildTrajectoryMarkdown(s) {
   const subs = (state.sessions || []).filter(x => x.parentId === s.id);
@@ -10354,7 +10395,7 @@ $('trajectory-export').onclick = action(() => {
     toast(t("已导出会话为 Markdown"));
   }
 });
-// 轨迹一级视图：历史 / 会话评审 / 调用记录 / 输入与输出；历史二级格式：Markdown / JSON
+// 轨迹一级视图：历史 / 会话评审 / 调用记录 / 任务与规划；历史二级格式：Markdown / JSON
 function ensureTrajectoryTabs() {
   const mainSeg = document.querySelector('.traj-main-seg');
   if (mainSeg && !mainSeg.dataset.bound) {

@@ -466,6 +466,8 @@ type Session struct {
 	Kind                   string                 `json:"kind,omitempty"`                // 空=普通会话；"assistant"=小秘系统会话（永久置顶、密码进入）
 	FollowedByAssistant    bool                   `json:"followedByAssistant,omitempty"` // 小秘已标记跟进：该会话有更新时提醒
 	FollowNote             string                 `json:"followNote,omitempty"`          // 小秘跟进备注
+	Plan                   []PlanItem             `json:"plan,omitempty"`                // 会话级任务与规划：用户自然语言任务 + aide 拆解步骤
+	PlanClosed             []string               `json:"planClosed,omitempty"`          // 已关闭的 aide 步骤键（runId:step），不删除记录
 }
 
 // sessionHistoryView adds pagination metadata to the regular Session JSON shape.
@@ -518,7 +520,8 @@ type App struct {
 	assistantEngine           string // operator-selected startup choice; never a plugin capability
 	mixSoulCalls              pluginCallQueues
 	mu                        sync.Mutex
-	workspaceConfigMu         sync.RWMutex // serializes workspace defaults/commits with workspace-bound operations
+	approvalGrace             time.Duration // 辅助审批返回推荐方案后的自动执行等待时间
+	workspaceConfigMu         sync.RWMutex  // serializes workspace defaults/commits with workspace-bound operations
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
 	transferMu                sync.Mutex
@@ -907,7 +910,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, contextCompactionProgress: map[string]contextCompactionProgress{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, contextCompactionProgress: map[string]contextCompactionProgress{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}, approvalGrace: 45 * time.Second}
 	if err := a.loadReminders(); err != nil {
 		a.Close()
 		return nil, err
@@ -1720,6 +1723,12 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/resume", a.resumeTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/decline", a.declineTask)
+	mux.HandleFunc("POST /api/sessions/{id}/plan", a.addPlanTask)
+	mux.HandleFunc("PATCH /api/sessions/{id}/plan/{item}", a.updatePlanTask)
+	mux.HandleFunc("POST /api/sessions/{id}/plan/dismiss", a.dismissPlanStep)
+	mux.HandleFunc("GET /api/sessions/{id}/plan/export", a.exportPlan)
+	mux.HandleFunc("POST /api/sessions/{id}/plan/import", a.importPlan)
 	mux.HandleFunc("GET /api/capabilities", a.listCapabilities)
 	mux.HandleFunc("POST /api/capabilities/check", a.checkCapability)
 	mux.HandleFunc("GET /api/approval-policy", a.getApprovalPolicy)

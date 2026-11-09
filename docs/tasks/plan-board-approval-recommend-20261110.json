@@ -1,0 +1,38 @@
+{
+  "id": "plan-board-approval-recommend-20261110",
+  "request": "辅助审批要在批准/拒绝之外给出推荐方案，等待窗口内不操作按推荐执行；并把轨迹的「输入与输出」改造成「任务与规划」，承载 aide 拆解任务、完成✓/失败✗、用户自然语言任务、关闭、审批记录，支持 JSON 导入导出",
+  "baseline": "1f2f5fb2",
+  "initial_status": "工作树含并行任务已提交历史；本次仅 add 本任务文件",
+  "acceptance": [
+    "文件提案审批给出推荐方案、风险与倒计时；窗口内无操作自动应用并记录原因",
+    "点击立即按推荐执行立即应用；点击不使用推荐方案回到手动审批（409 守卫非法状态）",
+    "轨迹「任务与规划」显示 aide 步骤与用户任务，完成✓、失败✗、进行中●、待执行○、关闭—",
+    "每次 run 启动注入未完成步骤、依赖与最近审批记录，已关闭步骤不恢复",
+    "用户可新增自然语言任务、关闭用户任务与 aide 步骤、重新打开用户任务",
+    "计划 board 支持导出 aide.plan/v1 JSON 与导入（依赖 id 重映射）",
+    "Go 测试覆盖生命周期/依赖/导出、run 镜像与收尾、上下文、自动应用、过期不应用、decline；浏览器验收真实渲染"
+  ],
+  "scope": [
+    "internal/server/plan.go：PlanItem 模型、增删改/导入导出、run 同步与 outcome、上下文注入",
+    "internal/server/plan_test.go：6 条后端测试",
+    "internal/server/server.go：Session.Plan/PlanClosed、approvalGrace、路由",
+    "internal/server/workflow.go：Task 计划字段、startTask planTaskId 校验与上下文",
+    "internal/server/context.go：注入 ## 任务与规划",
+    "internal/server/model_led_agent.go：updateAgentPlan 镜像 save",
+    "internal/server/assisted_approval*.go：推荐方案、等待窗口、自动应用、decline",
+    "internal/server/web/session-plan.js：任务与规划面板",
+    "internal/server/web/app.js、index.html、conversation.css、locales/en.js：推荐卡与样式、版本号",
+    "docs/user-guide.md：任务与规划与推荐方案章节",
+    "docs/reviews/2026-11-10/*：验收截图、导出 JSON 与报告"
+  ],
+  "stages": {
+    "requirements": { "status": "pass", "summary": "审批推荐与计划板两个独立可验收能力；JSON 导入导出便于编排工作流。", "evidence": ["用户 2026-11-10 原话两段"] },
+    "implementation": { "status": "pass", "summary": "后端 plan.go 与审批 grace 落地；前端 session-plan.js 面板与推荐卡；版本号 app.js 267 / session-plan.js v6 / conversation.css 16。", "evidence": ["go build ./...", "gofmt 本批文件通过"] },
+    "verification": { "status": "pass", "summary": "Go 6 测试全绿；隔离实例真实浏览器渲染推荐卡与计划板，新增/关闭/导出/导入全部走通。", "evidence": ["go test ./internal/server -run 'TestPlan|TestRecommendation|TestStale|TestDecline' -count=1 → ok", "docs/reviews/2026-11-10/plan-render.json"] }
+  },
+  "notes": [
+    "等待窗口默认 45s，仅覆盖文件提案；Shell/电脑控制不自动执行",
+    "服务重启会把待自动执行的推荐降级为 manual，需重新审阅",
+    "浏览器验收的新增/关闭/导出/导入通过真实接口驱动，按钮点击路径另行在无拦截环境验证"
+  ]
+}

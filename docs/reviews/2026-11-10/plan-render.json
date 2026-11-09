@@ -1,0 +1,155 @@
+{
+  "tab": "Tasks & plan",
+  "metrics": [
+    "7待办任务",
+    "4Completed",
+    "2In progress",
+    "0失败/受阻"
+  ],
+  "rows": [
+    {
+      "title": "整理 AMR 一键启动脚本",
+      "tag": "自然语言",
+      "status": "✓",
+      "depth": "plan-depth-0",
+      "actions": [
+        "查看 #",
+        "关闭任务"
+      ],
+      "approvals": "Approval records · 2"
+    },
+    {
+      "title": "梳理现有 launch 文件",
+      "tag": "aide",
+      "status": "✓",
+      "depth": "plan-depth-1",
+      "actions": [
+        "查看 #",
+        "关闭本步"
+      ],
+      "approvals": "Approval records · 2"
+    },
+    {
+      "title": "收敛参数与默认值",
+      "tag": "aide",
+      "status": "✓",
+      "depth": "plan-depth-1",
+      "actions": [
+        "查看 #",
+        "关闭本步"
+      ],
+      "approvals": "Approval records · 2"
+    },
+    {
+      "title": "补齐建图导航闭环文档",
+      "tag": "自然语言",
+      "status": "●",
+      "depth": "plan-depth-0",
+      "actions": [
+        "查看 #",
+        "交给 aide",
+        "关闭任务"
+      ],
+      "approvals": "Approval records · 1"
+    },
+    {
+      "title": "整理导航参数",
+      "tag": "aide",
+      "status": "✓",
+      "depth": "plan-depth-1",
+      "actions": [
+        "查看 #",
+        "关闭本步"
+      ],
+      "approvals": "Approval records · 1"
+    },
+    {
+      "title": "写闭环验收用例",
+      "tag": "aide",
+      "status": "●",
+      "depth": "plan-depth-1",
+      "actions": [
+        "查看 #",
+        "关闭本步"
+      ],
+      "approvals": "Approval records · 1"
+    },
+    {
+      "title": "导入工作流：回归测试",
+      "tag": "自然语言",
+      "status": "○",
+      "depth": "plan-depth-0",
+      "actions": [
+        "交给 aide",
+        "关闭任务"
+      ],
+      "approvals": ""
+    },
+    {
+      "title": "旧方案：手工核对 30 个文件",
+      "tag": "自然语言",
+      "status": "—",
+      "depth": "plan-depth-0",
+      "actions": [
+        "重新打开"
+      ],
+      "approvals": ""
+    },
+    {
+      "title": "逐文件打开确认",
+      "tag": "aide",
+      "status": "—",
+      "depth": "plan-depth-0",
+      "actions": [
+        "查看 #",
+        "关闭本步"
+      ],
+      "approvals": ""
+    }
+  ],
+  "closed": "已关闭的任务 · 2",
+  "ioButtons": [
+    "Import JSON",
+    "Export JSON"
+  ],
+  "launchDisabled": true,
+  "recommendation": {
+    "title": "推荐方案：应用这些文件修改",
+    "risk": "风险：low",
+    "countdown": "",
+    "reason": "工作区内单文件、低风险新增节点声明，建议直接应用。",
+    "buttons": [
+      "立即按推荐执行",
+      "不使用推荐方案"
+    ],
+    "review": 0
+  },
+  "added": 1,
+  "closedAfter": [
+    "旧方案：手工核对 30 个文件",
+    "逐文件打开确认",
+    "新增：核对回归脚本与发布清单"
+  ],
+  "export": {
+    "schema": "aide.plan/v1",
+    "tasks": 10,
+    "depRemapped": "plan-a",
+    "filename": "aide-plan-planaccept01.json"
+  },
+  "afterImport": 2,
+  "manualAfterDecline": "covered-by-go-test",
+  "addStatus": 201,
+  "importStatus": 200,
+  "exportedSchema": "aide.plan/v1",
+  "errors": [
+    "console: Applying inline style violates the following Content Security Policy directive 'style-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-ZBd4viyqGxdJYhqXjuAzyoumGUMQG6WvFOWiwU0S1v4='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "console: Failed to load resource: the server responded with a status of 401 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()",
+    "console: Failed to load resource: the server responded with a status of 400 ()"
+  ]
+}
