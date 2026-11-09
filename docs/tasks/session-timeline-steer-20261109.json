@@ -81,13 +81,13 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "已在 main 本地提交；未推送、未升版、未构建发行镜像、未发布。用户授权仅覆盖其他仓库插件的更新/合并/市场 release，本次改动在 aide 主仓且无插件证据。",
+      "summary": "已在 main 本地提交 24cbe507（未推送、未升版、未构建发行镜像、未发布）。用户授权仅覆盖其他仓库插件的更新/测试/合并/市场 release；本次改动位于 aide 主仓且无插件证据，推送与发布待用户确认。",
       "evidence": [
-        "git log -1 待提交后补充"
+        "git log -1 --stat → 24cbe507 fix(session): align timeline by real time and interrupt in-flight rounds on steer"
       ]
     }
   },
   "release_authorization": "用户原话：如果设及到其他仓库的插件的更新，请自行更新 测试 并合并到main 在市场中进行release。该授权限于插件仓库；本次缺陷位于 aide 主仓 internal/server 与 web 渲染，未发现插件侧改动需求，因此未执行推送与发布。",
   "rollback": "回滚：git revert 本次提交即可恢复旧的插话追加渲染与轮末消费语义；新增字段均为 json:\"-\"，不影响历史会话文件读取；旧记录缺 at 时前端回退 run.created。",
-  "handoff": "完成：后端插话即时打断 + 部分正文按轮次起始时间落盘；前端时间线按真实时间排列并显示 HH:MM；测试与真实浏览器验收通过。剩余：全量 go test 结果待回填；推送/升版/发行镜像需用户授权；未验证：多设备窄屏与明暗主题下的时间线视觉（仅 1440x900 单实例验收）。运行环境：隔离实例已停止，生产容器未改动。"
+  "handoff": "完成：后端插话即时打断 + 被打断正文按轮次起始时间落盘；前端时间线按真实时间排列并显示 HH:MM；go 定向测试、node 模块测试 7/7、verify quick、隔离实例真实浏览器验收均通过；已提交 main 24cbe507。未完成：未推送、未升版、未构建发行镜像、未发布；全量 go test 受工具镜像环境限制未取得有效信号（基线同样失败）；未验证：窄屏与明暗主题下的时间线视觉（仅 1440x900 单实例）。生产容器与 /Applications/Aide.app 未改动。"
 }
