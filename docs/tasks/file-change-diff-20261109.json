@@ -1,0 +1,83 @@
+{
+  "id": "file-change-diff-20261109",
+  "request": "会话里文件修改展开后要显示逐行差异：每行左侧加 +/− 标记与旧新行号，并对新增/删除做颜色区分",
+  "baseline": "16f52a41f9b469ee0017690c705f345a5703f1c8",
+  "initial_status": "工作树干净（基线 16f52a41）；并行任务另有 Dockerfile/go.mod/plugin 相关未提交改动，本次不触碰",
+  "acceptance": [
+    "展开任一文件修改后显示逐行差异，不再只有原始/建议双栏全文",
+    "每行左侧显示 +（新增）/-（删除）/空格（未变）标记与旧、新行号",
+    "新增行使用主题成功色、删除行使用危险色，上下文行中性；明暗两套主题均可读",
+    "文件标题旁展示 +新增数 / −删除数，与差异行一致",
+    "新文件（无原内容）整体按新增处理，行号从 1 开始；旧记录无 before 字段不报错",
+    "超大差异有上限并在底部标注剩余行数，长文件在区块内滚动而不撑破会话"
+  ],
+  "scope": [
+    "新增 internal/server/web/file-diff.js：行级 LCS 差异（先裁公共前后缀，中间段超限退化为整段增删）",
+    "app.js：文件修改 details 展开内容替换为差异视图，summary 追加 +/− 统计",
+    "conversation.css：差异行栅格（标记/旧行号/新行号/正文）与增删颜色分级",
+    "index.html：注册 file-diff.js，app.js 与 conversation.css 版本号 bump",
+    "scripts/file-diff.test.cjs：行替换、新文件、CRLF/空行、无变化、超大退化、行数截断 6 条",
+    "docs/user-guide.md 记录差异视图行为"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求文件修改展开后显示具体差异，每行左侧加 +/− 标记并做好颜色区分；现状为原始/建议双栏全文，没有行级对齐与标记。",
+      "evidence": [
+        "用户 2026-11-09 23:34 截图 + 原话：文件修改展开后需要显示具体的差异和变更，每一行左边添加一个+xxx/-xxxx，做好颜色管理"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "纯前端实现：新增可复用的行级 diff 模块，前端仅负责渲染。先裁公共前后缀降低 DP 规模；中间段乘积 >40 万行退化为整段删除+新增；单文件最多渲染 2000 行并在底部标注截断。行结构为 标记 + 旧行号 + 新行号 + 正文，颜色复用主题 --success/--danger 与对应底色，不新增令牌。",
+      "evidence": [
+        "internal/server/web/file-diff.js",
+        "internal/server/web/app.js buildFileDiff",
+        "internal/server/web/conversation.css #timeline .file-diff 规则"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现 file-diff.js（compute/splitLines）、app.js 差异渲染与统计、CSS 栅格与颜色分级；index.html 注册模块并将 app.js bump 到 265、conversation.css 到 15。新文件按纯新增处理，before 缺省为空格。",
+      "evidence": [
+        "internal/server/web/file-diff.js",
+        "internal/server/web/app.js",
+        "internal/server/web/conversation.css",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "node 单元测试 6/6；隔离实例注入真实会话数据后，在 1440×900 的真实浏览器验收：3 个文件均渲染出差异，首个修改文件 +16/−2、新文件 +5/−0、大文件 +400/−400，符号/行号/颜色取自主题令牌（明暗两套分别截图），无页面错误。",
+      "evidence": [
+        "node --test scripts/file-diff.test.cjs → 6/6 pass",
+        "浏览器验收输出 docs/reviews/2026-11-09/file-diff-render.json（fileCount=3，errors=[]）",
+        "docs/reviews/2026-11-09/file-diff-dark.png",
+        "docs/reviews/2026-11-09/file-diff-light.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "docs/user-guide.md 新增「文件修改的逐行差异」一段，说明标记、行号、配色与截断行为。",
+      "evidence": [
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "关闭隔离实例，删除交叉编译二进制与临时数据目录；验收截图与渲染结果拷入 docs/reviews。并行任务的 Dockerfile/go.mod/plugin 改动未触碰、未提交。",
+      "evidence": [
+        "lsof :18099 无监听",
+        "docs/reviews/2026-11-09/file-diff-dark.png"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "改动在 aide 主仓，尚未推送/升版/发布；待用户授权后走 release-check 与版本 bump。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

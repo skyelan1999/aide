@@ -1,0 +1,76 @@
+{
+ "fileCount": 3,
+ "stats": [
+  {
+   "label": "+ kunlun/kunlunAMR_product_20261109/src/robot_operator_panel/src/operator_panel.cpp+16−2",
+   "stats": [
+    "+16",
+    "−2"
+   ],
+   "rows": 40,
+   "add": {
+    "sign": "+",
+    "old": "",
+    "nw": "5",
+    "color": "rgb(76, 118, 90)",
+    "bg": "color(srgb 0.298039 0.462745 0.352941 / 0.12)"
+   },
+   "del": {
+    "sign": "-",
+    "old": "19",
+    "nw": "",
+    "color": "rgb(168, 60, 54)",
+    "bg": "color(srgb 0.658824 0.235294 0.211765 / 0.09)"
+   },
+   "ctx": {
+    "sign": " ",
+    "old": "1",
+    "color": "rgb(89, 89, 96)"
+   },
+   "note": "",
+   "fallback": false
+  },
+  {
+   "label": "+ kunlun/kunlunAMR_product_20261109/scripts/runtime/run_one.sh+5−0",
+   "stats": [
+    "+5",
+    "−0"
+   ],
+   "rows": 5,
+   "add": {
+    "sign": "+",
+    "old": "",
+    "nw": "1",
+    "color": "rgb(76, 118, 90)",
+    "bg": "color(srgb 0.298039 0.462745 0.352941 / 0.12)"
+   },
+   "note": "",
+   "fallback": false
+  },
+  {
+   "label": "✓ kunlun/kunlunAMR_product_20261109/config/nav_params.yaml+400−400",
+   "stats": [
+    "+400",
+    "−400"
+   ],
+   "rows": 800,
+   "add": {
+    "sign": "+",
+    "old": "",
+    "nw": "1",
+    "color": "rgb(76, 118, 90)",
+    "bg": "color(srgb 0.298039 0.462745 0.352941 / 0.12)"
+   },
+   "del": {
+    "sign": "-",
+    "old": "1",
+    "nw": "",
+    "color": "rgb(168, 60, 54)",
+    "bg": "color(srgb 0.658824 0.235294 0.211765 / 0.09)"
+   },
+   "note": "",
+   "fallback": false
+  }
+ ],
+ "errors": []
+}

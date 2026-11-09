@@ -139,3 +139,18 @@
 #timeline .entry-clock{margin-left:10px;font-size:9px;color:var(--faintest);font-weight:400;user-select:none}
 #timeline .stage-time{margin-left:8px;font-size:9px;color:var(--faintest);user-select:none}
 #timeline .user-message.steer-message{border-left:2px solid var(--accent);border-radius:8px;background:var(--bubble-bg)}
+/* 文件修改展开后的逐行差异：每行 +/− 标记与旧新行号，增删用主题成功/危险色分级 */
+#timeline .diff-stats{display:inline-flex;gap:8px;margin-left:10px;font-size:10px;font-variant-numeric:tabular-nums;user-select:none}
+#timeline .diff-stat-add{color:var(--success)}
+#timeline .diff-stat-del{color:var(--danger)}
+#timeline .file-diff{margin:8px 0 4px;border:1px solid var(--line-faint);border-radius:8px;overflow:hidden;background:var(--bg-inset)}
+#timeline .file-diff-body{max-height:420px;overflow:auto;padding:6px 0;font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px;line-height:1.7}
+#timeline .diff-line{display:grid;grid-template-columns:14px 38px 38px minmax(0,1fr);column-gap:8px;padding:0 10px;min-height:1.7em;white-space:pre-wrap;overflow-wrap:anywhere}
+#timeline .diff-line.diff-add{background:color-mix(in srgb, var(--success) 12%, transparent);color:var(--success)}
+#timeline .diff-line.diff-del{background:var(--danger-soft);color:var(--danger)}
+#timeline .diff-line.diff-ctx{color:var(--muted)}
+#timeline .diff-sign{font-weight:600;user-select:none}
+#timeline .diff-no{text-align:right;color:var(--faintest);user-select:none;font-variant-numeric:tabular-nums}
+#timeline .diff-text{min-width:0}
+#timeline .file-diff-note{padding:4px 10px 8px;font-size:10px;color:var(--faintest)}
+#timeline .file-diff-fallback{margin:8px 0 4px;white-space:pre-wrap;font-size:10px;background:var(--code-bg);padding:10px;border-radius:8px;max-height:260px;overflow:auto}

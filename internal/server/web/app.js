@@ -2299,6 +2299,29 @@ function proposalFileLabel(file) {
   if (!file.source) return file.path;
   return (file.source === 'system-docs' ? t('自动系统文档') : t('引用') + ' ' + file.source) + ' / ' + file.path + ' · ' + file.targetPath;
 }
+// 文件修改展开后的逐行差异：每行左侧给 + / - / 空格标记和旧新行号，
+// 新增与删除分别用主题的成功/危险色，上下文保持中性。
+function buildFileDiff(file, {el}) {
+  const result = window.AideFileDiff && window.AideFileDiff.compute(file.before || '', file.content || '');
+  if (!result) return {node: el('pre', 'file-diff-fallback', file.content || ''), stats: null};
+  const node = el('div', 'file-diff');
+  const stats = el('span', 'diff-stats');
+  stats.append(el('span', 'diff-stat diff-stat-add', '+' + result.adds), el('span', 'diff-stat diff-stat-del', '−' + result.dels));
+  const body = el('div', 'file-diff-body');
+  for (const row of result.rows) {
+    const line = el('div', 'diff-line diff-' + row.kind);
+    line.append(
+      el('span', 'diff-sign', row.kind === 'add' ? '+' : row.kind === 'del' ? '-' : ' '),
+      el('span', 'diff-no', row.oldNo == null ? '' : String(row.oldNo)),
+      el('span', 'diff-no', row.newNo == null ? '' : String(row.newNo)),
+      el('span', 'diff-text', row.text)
+    );
+    body.append(line);
+  }
+  node.append(body);
+  if (result.truncated > 0) node.append(el('div', 'file-diff-note', '… ' + result.truncated));
+  return {node, stats};
+}
 function renderTaskPrompt(run){
   const bubble=el('div','user-message',run.prompt);
   if(run.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
@@ -2545,8 +2568,9 @@ function renderSession() {
       for (const file of run.files) {
         const details = el('details'); details.dataset.key = run.id + ':' + (file.source || '') + ':' + file.path; details.open = openDetails.has(details.dataset.key);
         details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + proposalFileLabel(file)));
-        const diff = el('div', 'diff-columns'); const before = el('div'); before.append(el('small', '', t("原内容")), el('pre', '', file.before || t("（新文件）")));
-        const after = el('div'); after.append(el('small', '', t("建议内容")), el('pre', '', file.content)); diff.append(before, after); details.append(diff); proposal.append(details);
+        const diff = buildFileDiff(file, {el}); details.append(diff.node);
+        if (diff.stats) details.querySelector('summary').append(diff.stats);
+        proposal.append(details);
       }
       if (run.status === 'awaiting_approval') {
         if (run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
