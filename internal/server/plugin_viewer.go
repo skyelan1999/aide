@@ -75,7 +75,7 @@ func (a *App) openWorkbenchViewer(w http.ResponseWriter, r *http.Request, req wo
 			delete(a.pluginViewerTickets, key)
 		}
 	}
-	if len(a.pluginViewerTickets) >= 8 {
+	if len(a.pluginViewerTickets) >= 32 {
 		fail(w, 429, errors.New("too many viewer sessions"))
 		return
 	}
