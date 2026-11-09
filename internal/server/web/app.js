@@ -2268,14 +2268,31 @@ function renderClarification(run, box, inTaskHub = false) {
   disable(clarificationSubmissions.has(key));
   box.append(card);
 }
-// Accepted interjections belong at the visible tail of their run, using the
-// same user bubble as the original prompt. Queued items stay in the queue UI.
+// Accepted interjections render as the same user bubble as the original prompt;
+// chat mode places them by timestamp (see AideSessionTimeline), other modes keep
+// them right after the prompt. Queued items stay in the queue UI.
+function timelineClock(value) { return window.AideSessionTimeline?.clock?.(value) || ''; }
+function timelineBubble(entry, el, t) {
+  const bubble = el('div', 'user-message steer-message', entry.content);
+  if (entry.assistantManaged) bubble.prepend(el('span', 'run-origin-label', t('助理代发')));
+  const clock = timelineClock(entry.at);
+  if (clock) bubble.append(el('span', 'entry-clock', clock));
+  return bubble;
+}
+function timelineAnswer(entry, index, {el, t, renderMarkdown}) {
+  const group = el('div', 'stage-outputs');
+  const section = el('section', 'stage-output'); section.dataset.segment = entry.id || '';
+  const label = el('div', 'stage-label', t('阶段输出 {0}', index));
+  const clock = timelineClock(entry.at);
+  if (clock) label.append(el('span', 'stage-time', clock));
+  const body = el('div', 'stage-answer md-body'); body.innerHTML = renderMarkdown(entry.content);
+  section.append(label, body); group.append(section);
+  return group;
+}
 function renderSteerMessages(run, box) {
   for (const steer of run.steers || []) {
     if (steer.queued) continue;
-    const bubble = el('div', 'user-message steer-message', steer.content);
-    if(steer.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
-    box.append(bubble);
+    box.append(timelineBubble({content: steer.content, at: steer.at, assistantManaged: steer.assistantManaged}, el, t));
   }
 }
 function proposalFileLabel(file) {
@@ -2285,6 +2302,7 @@ function proposalFileLabel(file) {
 function renderTaskPrompt(run){
   const bubble=el('div','user-message',run.prompt);
   if(run.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
+  const clock=timelineClock(run.created); if(clock)bubble.append(el('span','entry-clock',clock));
   return bubble;
 }
 function assistantMessageRenderSignature(msg, view = {}) {
@@ -2391,6 +2409,8 @@ function renderSession() {
     });
     if (appendCachedSessionRun(run, renderSignature, previousRuns, $('timeline'))) continue;
     const box = el('article', 'run'); box.dataset.run = run.id;box.append(renderTaskPrompt(run));
+    // 非对话模式没有分段时间戳：插话紧随初始 prompt，仍排在回答之前。
+    if (run.mode !== 'chat') renderSteerMessages(run, box);
     box.dataset.renderSignature = renderSignature;
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'pw' ? '◈ PW WORKFLOW' : run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
     if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume && run !== state.session.runs.at(-1)) {
@@ -2425,8 +2445,19 @@ function renderSession() {
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
         renderStepThinking(box, run, step, index);
-        const stages = window.AideStagedOutput.render(step, {el, t, renderMarkdown});
-        if (stages) box.append(stages);
+        // 按真实时间排列：初始 prompt → 插话 → 分段回答。插话因此落在它
+        // 实际发生的时刻，而不是整轮回答之后。
+        const timeline = window.AideSessionTimeline?.entries(run) || [];
+        let answerIndex = 0;
+        for (const entry of timeline) {
+          if (entry.kind === 'answer') {
+            answerIndex += 1;
+            box.append(timelineAnswer(entry, answerIndex, {el, t, renderMarkdown}));
+          } else if (entry.kind === 'steer') {
+            box.append(timelineBubble(entry, el, t));
+          }
+        }
+        const hasSegments = answerIndex > 0;
         const ans = el('div', 'chat-answer md-body');
         const running = ['running','awaiting_clarification'].includes(run.status);
         const liveText = state.live[run.id] || '';
@@ -2434,7 +2465,7 @@ function renderSession() {
         // 结束后只用持久化内容，避免 live 与 content 重复拼接
         const tail = window.AideStagedOutput.pending(step, running && liveText ? liveText : (step.content || ''));
         const text = window.AideStagedOutput.text(step, running && liveText ? liveText : (step.content || ''));
-        ans.hidden = !tail && !!stages && !run.error;
+        ans.hidden = !tail && hasSegments && !run.error;
         if (running && liveText && tail) {
           // Rebuilding the timeline must not force a full Markdown parse of a
           // growing answer. The RAF renderer restores cached stable blocks.
@@ -2561,7 +2592,6 @@ function renderSession() {
       box.append(el('p', 'run-interruption', message));
     }
     if (run.error && run.status !== 'cancelled') box.append(el('p', 'task-error', run.error));
-    renderSteerMessages(run, box);
     $('timeline').append(box);
   }
   for (const run of state.session?.runs || []) {

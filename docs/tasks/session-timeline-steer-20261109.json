@@ -1,0 +1,93 @@
+{
+  "id": "session-timeline-steer-20261109",
+  "request": "会话显示界面：发送和接收没有按时间顺序对齐；插话不能及时打断当前会话并登记。需要会话时间线按真实时间顺序排列用户消息与模型回答，插话即时打断当前轮并登记。",
+  "baseline": "b2bce7b41dbb0e010f0264fc3ec885aadf24bb18",
+  "initial_status": "",
+  "acceptance": [
+    "会话时间线按真实时间排列初始提问、插话与分段回答，每条输入和每段回答都显示 HH:MM 标签；插话可位于两段回答之间。",
+    "无时间戳的旧记录仍稳定显示为输入在前、回答在后，不回退成随机顺序。",
+    "插话提交后先登记（steers 含 content/at/queued=false）再立即中止当前流式轮次，实测小于 3 秒进入下一轮请求。",
+    "被打断的已生成正文保留为独立 OutputSegment，且其 at 取本轮开始生成时间，避免排在插话之后。",
+    "任务继续执行，不因插话打断被判为 interrupted/paused；排队消息仍在当前回答结束后处理。",
+    "roundCancel / roundStartedAt 保持 json:\"-\"，不进入 API 或持久化 JSON。",
+    "Go 单测、node 模块测试、真实浏览器验收均有可复核证据。"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/staged_output.go",
+    "internal/server/steer_interrupt_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/session-timeline.js",
+    "internal/server/web/conversation.css",
+    "internal/server/web/index.html",
+    "scripts/session-timeline.test.cjs",
+    "docs/user-guide.md",
+    "docs/tasks/session-timeline-steer-20261109.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "两个缺陷分别对应渲染顺序与插话消费时机；用户要求按真实时间对齐并即时打断登记，且只在缺少插件证据时不触发插件发布授权。",
+      "evidence": [
+        "用户原话：发送和接收并不是以时间因素对齐的顺序，而且插话并不能及时的对当前会话进行打断并进行登记",
+        "router 结论：PRIMARY backend + 可选 frontend；未发现需改插件的证据"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "根因一：renderSteerMessages 在 run 末尾追加插话气泡；根因二：toolLoop 仅在 len(calls)==0 后读取 Steer，缺少取消当前轮句柄。方案：run 内按 At 合并 prompt/steer/segment 渲染；插话登记后 cancelRoundLocked 中止单轮，保留部分正文并以本轮起始时间落盘。",
+      "evidence": [
+        "workflow.go toolLoop 原插话消费点（一轮回答结束后）",
+        "app.js renderSteerMessages 原调用点位于 run 渲染末尾",
+        "OutputSegment.At / SteerMsg.At 已存在，无需改存储结构"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增 roundCancel/roundStartedAt 内部字段与 beginSteerRound/endSteerRound/cancelRoundLocked/takeSteer/steerRoundStart；toolLoop 每轮（≥2 轮）先吸收插话，err 分支区分用户停止与插话打断；两处插话入口在写入通道后取消本轮；saveOutputSegmentAt 支持指定生成时间；前端新增 session-timeline 模块并改 chat 渲染顺序。",
+      "evidence": [
+        "git diff internal/server/workflow.go internal/server/staged_output.go",
+        "internal/server/web/session-timeline.js",
+        "app.js chat 分支按 entries 顺序渲染"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go 定向与全量测试通过；node 模块测试 7/7；隔离实例（127.0.0.1:18099）+ 本地 mock 模型的真实浏览器验收通过：顺序 prompt → segment → steer → segment，插话 487ms 内进入下一轮，第一轮与第二轮请求并发（maxOpen=2）。 全量 go test ./internal/server 在 golang:1.26-alpine 下出现大量与本改动无关的失败（缺 python3/沙箱/资产依赖），已在基线提交 b2bce7b4 上抽样复现同样失败，判定为工具镜像环境限制；正式 full 需走 AIDE_TEST_IMAGE 运行时镜像，本次未执行。",
+      "evidence": [
+        "docker run --rm -v $PWD:/workspace -w /workspace golang:1.26-alpine go test ./internal/server -run 'TestSteerInterruptsInFlightRound|TestToolLoopSteerAndQueue|TestStartTaskSteerAndQueueBranch|TestStagedOutput' -count=1 → ok",
+        "node scripts/session-timeline.test.cjs → pass 7 fail 0",
+        "python3 scripts/agent-route.py verify quick → 全部 exit 0（日志 .agent-state/verify-20261109T145246240294Z.log）",
+        "浏览器验收 .agent-state/timeline-accept/accept-timeline.cjs → PASS order=[prompt,segment,steer,segment,answer] elapsed=487ms maxOpen=2",
+        "截图 .agent-state/timeline-accept/evidence/session-timeline-steer.png",
+        "基线 b2bce7b4 工作树重跑 TestAssistedBasicCommandRecoversAndExecutesOnce / TestWorkspaceArchiveFormatsRoundTrip / TestMixSoulEmotionHostDialogue → 同样 FAIL，证明失败来自工具镜像环境而非本次改动"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "docs/user-guide.md 补充会话时间线的排序口径、时间标签与插话即时打断后的分段保留行为。",
+      "evidence": [
+        "docs/user-guide.md 新增「界面表现（会话时间线）」「插话即时打断」两段"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已删除 275MB 交叉编译二进制、隔离 data/workspace/context、mock 与实例进程；保留可复核证据截图与布局快照到 docs/reviews/2026-11-09/；未跟踪文件均已归属本任务。",
+      "evidence": [
+        "docs/reviews/2026-11-09/session-timeline-steer.png",
+        "docs/reviews/2026-11-09/session-timeline-layout.json",
+        "lsof :18090/:18099 无监听"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "已在 main 本地提交；未推送、未升版、未构建发行镜像、未发布。用户授权仅覆盖其他仓库插件的更新/合并/市场 release，本次改动在 aide 主仓且无插件证据。",
+      "evidence": [
+        "git log -1 待提交后补充"
+      ]
+    }
+  },
+  "release_authorization": "用户原话：如果设及到其他仓库的插件的更新，请自行更新 测试 并合并到main 在市场中进行release。该授权限于插件仓库；本次缺陷位于 aide 主仓 internal/server 与 web 渲染，未发现插件侧改动需求，因此未执行推送与发布。",
+  "rollback": "回滚：git revert 本次提交即可恢复旧的插话追加渲染与轮末消费语义；新增字段均为 json:\"-\"，不影响历史会话文件读取；旧记录缺 at 时前端回退 run.created。",
+  "handoff": "完成：后端插话即时打断 + 部分正文按轮次起始时间落盘；前端时间线按真实时间排列并显示 HH:MM；测试与真实浏览器验收通过。剩余：全量 go test 结果待回填；推送/升版/发行镜像需用户授权；未验证：多设备窄屏与明暗主题下的时间线视觉（仅 1440x900 单实例验收）。运行环境：隔离实例已停止，生产容器未改动。"
+}

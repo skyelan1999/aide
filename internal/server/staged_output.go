@@ -16,8 +16,17 @@ type OutputSegment struct {
 }
 
 func (a *App) saveOutputSegment(task *Task, index, round int, text string) error {
+	return a.saveOutputSegmentAt(task, index, round, text, "")
+}
+
+// saveOutputSegmentAt 允许调用方指定正文的生成起始时间：插话打断时正文是
+// 在打断之前产生的，用它落盘就不能让时间线把这段正文排到插话后面。
+func (a *App) saveOutputSegmentAt(task *Task, index, round int, text, at string) error {
 	if strings.TrimSpace(text) == "" {
 		return nil
+	}
+	if at == "" {
+		at = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 	a.mu.Lock()
 	if task.Mode != "chat" || index < 0 || index >= len(task.Steps) || task.Steps[index].Name != "chat" {
@@ -29,7 +38,7 @@ func (a *App) saveOutputSegment(task *Task, index, round int, text string) error
 		a.mu.Unlock()
 		return fmt.Errorf("阶段正文没有有效的所属会话")
 	}
-	segment := OutputSegment{ID: newID(), Round: round, Content: text, At: time.Now().UTC().Format(time.RFC3339Nano)}
+	segment := OutputSegment{ID: newID(), Round: round, Content: text, At: at}
 	step := &task.Steps[index]
 	step.OutputSegments = append(step.OutputSegments, segment)
 	if err := a.save(session); err != nil {

@@ -135,3 +135,7 @@
 .environment-progress .parallel-part{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:4px}
 .environment-progress .parallel-part>span{line-height:1.6}
 .environment-progress .parallel-part>small:nth-of-type(n+2){grid-column:1/-1;min-width:0;overflow-wrap:anywhere;white-space:normal}
+/* 会话时间线：用户消息与分段回答的时间标签，插话用左侧强调线区分 */
+#timeline .entry-clock{margin-left:10px;font-size:9px;color:var(--faintest);font-weight:400;user-select:none}
+#timeline .stage-time{margin-left:8px;font-size:9px;color:var(--faintest);user-select:none}
+#timeline .user-message.steer-message{border-left:2px solid var(--accent);border-radius:8px;background:var(--bubble-bg)}

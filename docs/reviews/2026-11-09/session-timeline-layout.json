@@ -1,0 +1,43 @@
+{
+  "layout": [
+    {
+      "kind": "prompt",
+      "text": "先看一下会话时间线的实现23:04",
+      "clock": "23:04"
+    },
+    {
+      "kind": "segment",
+      "text": "Stage output 123:04我先梳理会话时间线的数据结构。\n现有渲染把",
+      "clock": "23:04"
+    },
+    {
+      "kind": "steer",
+      "text": "先别动后端，只改渲染顺序23:04",
+      "clock": "23:04"
+    },
+    {
+      "kind": "segment",
+      "text": "Stage output 223:04已按插话调整：先保留现有结构，只改渲染顺序",
+      "clock": "23:04"
+    },
+    {
+      "kind": "answer",
+      "text": "No response returned (model produced no ",
+      "clock": ""
+    }
+  ],
+  "stats": {
+    "requests": 3,
+    "streams": 2,
+    "steerRequests": 1,
+    "steer_seen": true,
+    "cancelled": 0,
+    "open": 1,
+    "maxOpen": 2,
+    "durations": [
+      0.2
+    ]
+  },
+  "elapsed": 487,
+  "errors": []
+}

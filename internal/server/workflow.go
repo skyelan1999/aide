@@ -256,19 +256,21 @@ type Task struct {
 	ResumedFrom          string               `json:"resumedFrom,omitempty"`
 	// #45 子 agent 归属：spawn_subagent 派生的子任务在创建时打上父子会话身份，
 	// 供 toolLoop 记录 ToolUse.Who 及子会话编号/标题。主任务这些字段为空。
-	WorktreeID       string          `json:"worktreeId,omitempty"`
-	ParentTaskID     string          `json:"parentTaskId,omitempty"`
-	ParentSessionID  string          `json:"parentSessionId,omitempty"` // 父会话 ID（子任务才有）
-	ChildSessionID   string          `json:"childSessionId,omitempty"`  // 本子任务所属子会话 ID
-	ChildNumber      int             `json:"childNumber,omitempty"`     // 子会话编号 #N
-	ChildTitle       string          `json:"childTitle,omitempty"`      // 子会话标题
-	Steer            chan string     `json:"-"`                         // 运行中插话通道（立即影响当前轮）
-	Queue            []string        `json:"queue,omitempty"`           // 排队消息（当前回答完后再处理）
-	Steers           []SteerMsg      `json:"steers,omitempty"`          // 运行中插话/排队消息（UI 展示用）
-	PendingQuestion  json.RawMessage `json:"pendingQuestion,omitempty"` // 等待用户澄清的结构化问题
-	AnswerCh         chan string     `json:"-"`                         // 当前澄清轮次的应答通道（每轮 ask_user 新建，见 answerRound）
-	answerRound      int64           `json:"-"`                         // 澄清轮次单调 nonce：每进入一次 ask_user 自增，与本轮 AnswerCh 配对
-	discardedAnswers int64           `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
+	WorktreeID       string             `json:"worktreeId,omitempty"`
+	ParentTaskID     string             `json:"parentTaskId,omitempty"`
+	ParentSessionID  string             `json:"parentSessionId,omitempty"` // 父会话 ID（子任务才有）
+	ChildSessionID   string             `json:"childSessionId,omitempty"`  // 本子任务所属子会话 ID
+	ChildNumber      int                `json:"childNumber,omitempty"`     // 子会话编号 #N
+	ChildTitle       string             `json:"childTitle,omitempty"`      // 子会话标题
+	Steer            chan string        `json:"-"`                         // 运行中插话通道（立即影响当前轮）
+	Queue            []string           `json:"queue,omitempty"`           // 排队消息（当前回答完后再处理）
+	Steers           []SteerMsg         `json:"steers,omitempty"`          // 运行中插话/排队消息（UI 展示用）
+	PendingQuestion  json.RawMessage    `json:"pendingQuestion,omitempty"` // 等待用户澄清的结构化问题
+	roundCancel      context.CancelFunc `json:"-"`                         // 当前模型轮次的取消句柄：插话到达时立即中止本轮流式请求
+	roundStartedAt   string             `json:"-"`                         // 本轮开始生成的时间：插话打断时给保留正文打时间戳
+	AnswerCh         chan string        `json:"-"`                         // 当前澄清轮次的应答通道（每轮 ask_user 新建，见 answerRound）
+	answerRound      int64              `json:"-"`                         // 澄清轮次单调 nonce：每进入一次 ask_user 自增，与本轮 AnswerCh 配对
+	discardedAnswers int64              `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
 }
 
 type readCoverage struct {
@@ -459,6 +461,9 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			if !in.Queued {
 				select {
 				case existing.Steer <- in.Prompt:
+					// 已登记进通道：立即打断当前这轮流式请求，让插话在下一轮生效，
+					// 而不是等整段回答生成完才被读取。
+					cancelRoundLocked(existing)
 				default:
 					fail(w, 429, errors.New("插话队列已满，请等待当前回答结束"))
 					return
@@ -2330,6 +2335,53 @@ func maxToolCallsForRounds(rounds int) int {
 	return rounds * 4
 }
 
+// beginSteerRound 为当前模型轮次挂一个可被插话取消的句柄。取消只作用于本轮
+// 流式请求，不结束整个任务：toolLoop 会把已生成的部分正文保留下来，再把插话
+// 注入下一轮。
+func (a *App) beginSteerRound(ctx context.Context, task *Task) (context.Context, context.CancelFunc) {
+	roundCtx, cancel := context.WithCancel(ctx)
+	a.mu.Lock()
+	task.roundCancel = cancel
+	task.roundStartedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	a.mu.Unlock()
+	return roundCtx, cancel
+}
+
+func (a *App) endSteerRound(task *Task) {
+	a.mu.Lock()
+	task.roundCancel = nil
+	task.roundStartedAt = ""
+	a.mu.Unlock()
+}
+
+// steerRoundStart 返回本轮开始生成的时间，供插话打断时给保留的正文打时间戳。
+func (a *App) steerRoundStart(task *Task) string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return task.roundStartedAt
+}
+
+// cancelRoundLocked 中止当前流式请求；调用方必须已持有 a.mu。
+// 插话已进入通道后才调用，保证“先登记、再打断”。
+func cancelRoundLocked(task *Task) {
+	if task.roundCancel != nil {
+		task.roundCancel()
+	}
+}
+
+// takeSteer 取出一条等待注入的插话；插话先于排队消息处理。
+func takeSteer(task *Task) (string, bool) {
+	if task.Steer == nil {
+		return "", false
+	}
+	select {
+	case steer := <-task.Steer:
+		return steer, strings.TrimSpace(steer) != ""
+	default:
+		return "", false
+	}
+}
+
 // toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
@@ -2430,6 +2482,17 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		return out, chain, err
 	}
 	for round := 0; round < maxRounds; round++ {
+		// 插话优先：从第二轮起先吸收已到达的插话，长工具链结束后也能立刻生效。
+		// 首轮沿用原有语义，避免把任务开始前预置的输入并进第一次请求。
+		if round > 0 {
+			if steer, ok := takeSteer(task); ok {
+				if strings.TrimSpace(lastOut) != "" {
+					input = append(input, Message{Role: "assistant", Content: lastOut})
+				}
+				input = append(input, Message{Role: "user", Content: wrapSteer(steer)})
+			}
+		}
+		roundCtx, _ := a.beginSteerRound(ctx, task)
 		if environmentPool != nil {
 			environmentPool.mergeMu.Lock()
 			environmentPool.toolBudget = maxToolCalls - toolCallsUsed
@@ -2554,7 +2617,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			a.mu.Unlock()
 		}
 		requestStarted := time.Now()
-		out, calls, usage, finish, err := completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
+		out, calls, usage, finish, err := completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
 		markSnapshotComplete(requestStarted, time.Now(), err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 		if err != nil {
 			a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
@@ -2569,6 +2632,21 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			// (a) 用户主动停止：保留已流式输出的部分内容与完整对话链
 			if ctx.Err() != nil {
 				return partialResult(round, out, input, ctx.Err())
+			}
+			// (b) 插话打断：本轮流式请求被插话取消。保留已生成的部分正文，
+			// 立即把插话注入下一轮，任务本身继续执行而不是被判定中断。
+			if roundCtx.Err() != nil {
+				if steer, ok := takeSteer(task); ok {
+					if strings.TrimSpace(out) != "" {
+						if segmentErr := a.saveOutputSegmentAt(task, stepIndex, round, out, a.steerRoundStart(task)); segmentErr != nil {
+							return partialResult(round, out, input, errors.Join(err, segmentErr))
+						}
+						input = append(input, Message{Role: "assistant", Content: out})
+					}
+					input = append(input, Message{Role: "user", Content: wrapSteer(steer)})
+					a.endSteerRound(task)
+					continue
+				}
 			}
 			// (d) 空响应：上游正常结束但既无正文也无工具调用（长工具链后模型“直接闭嘴”）。
 			// 盲重试只会原样重放空结果；改为注入明确提示后让模型再收尾，最多自动兜底 2 次。
@@ -2602,7 +2680,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				return "", input, checkpointErr
 			}
 			requestStarted = time.Now()
-			out, calls, usage, finish, err = completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
+			out, calls, usage, finish, err = completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
 			markSnapshotComplete(requestStarted, time.Now(), err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 			if err != nil {
 				a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
@@ -2617,6 +2695,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				return partialResult(round, out, input, err)
 			}
 		}
+		a.endSteerRound(task)
 		emptyFallback = 0 // 成功拿到正文或工具调用，重置空响应计数
 		a.mu.Lock()
 		system := ""
@@ -6842,6 +6921,8 @@ func (a *App) queueUpdate(w http.ResponseWriter, r *http.Request) {
 		// must leave both the prompt queue and its display record untouched.
 		select {
 		case task.Steer <- content:
+			// 提升为插话后立刻打断当前轮，排队消息不再等整段回答结束。
+			cancelRoundLocked(task)
 		default:
 			fail(w, 429, errors.New("插话通道已满"))
 			return
