@@ -301,7 +301,7 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 	// 二进制/不可内联附件不阻断整轮任务：只注入路径和读取指引，由模型按需用工具读取。
 	addReference := func(root, apath, reason string) error {
 		header := fmt.Sprintf("\n<untrusted-file-reference root=%q path=%q reason=%q>\n", root, apath, reason)
-		const body = "该附件未内联到模型上下文。请按需使用 read_file（仅文本）、list_files 或 run_shell 在工作区内查看、解压或转换；不要假设文件内容或完整性。\n"
+		const body = "该附件未内联到模型上下文。请按需使用 read_file（仅文本）、list_files 或 run_shell，按上述 root/path 查看、解压或转换；不要假设文件内容或完整性。\n"
 		const footer = "</untrusted-file-reference>\n"
 		if len(header)+len(body)+len(footer) > maxAttachmentTextBytes-contextText.Len() {
 			return fmt.Errorf("附件引用超过 %d MiB 处理预算", maxAttachmentTextBytes>>20)
