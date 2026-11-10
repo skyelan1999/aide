@@ -3807,6 +3807,9 @@ $('files').addEventListener('drop', action(async event => {
   if (items.length) await uploadCollected(items, currentFileTarget());
 }));
 
+// Chat composer files are temporary by definition: keep them out of the project
+// tree and under the gitignored .cache so they cannot look like project content.
+const COMPOSER_ATTACHMENT_DIR = '.cache/aide/attachments';
 // Chat composer files are stored in the writable workspace, then attached through
 // the same attachment state and send path as files selected from the file panel.
 let composerFileQueue = Promise.resolve();
@@ -3824,7 +3827,7 @@ function queueComposerFiles(files, {active=()=>true, workspaceId=state.workspace
       if(!active())return {added,failed:incoming.length-added};
       try {
         const name = composerUploadName(file);
-        const path = 'attachments/chat-' + crypto.randomUUID() + '-' + name;
+        const path = COMPOSER_ATTACHMENT_DIR + '/chat-' + crypto.randomUUID() + '-' + name;
         const query = new URLSearchParams({path});
         if (workspaceId) query.set('workspaceId', workspaceId);
         const response = await fetch('/api/file/upload?' + query, {

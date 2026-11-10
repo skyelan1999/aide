@@ -7,7 +7,7 @@ package server
 //   1. 可解析文档（docx/pdf/xlsx/pptx）由后端调 scripts/office/extract_text.py 提取文本，
 //      注入 <untrusted-file> 文本上下文——不依赖模型视觉能力，任何模型都能读。
 //   2. 图片（png/jpg/jpeg/gif/webp）按多模态 image_url 附加，不在本地读取阶段设置固定文件大小上限。
-//   3. 大文件截断标注；提取失败明确报错；确实无法解析的二进制改友好文案。
+//   3. 大文件截断标注；提取失败明确报错；无法解析的二进制改为路径引用（交由文件工具读取），不阻断整轮任务。
 //
 // 后端只提供提取与发送能力；附件 chip 的保留/删除由前端处理。
 
@@ -214,13 +214,17 @@ func truncateExtract(text string) string {
 }
 
 // friendlyAttachError 把"不支持二进制文件"等拒绝改写成可操作文案；其余错误原样返回。
+func isBinaryAttachmentError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "不支持二进制文件")
+}
+
 func friendlyAttachError(path string, err error) error {
 	if err == nil {
 		return nil
 	}
 	msg := err.Error()
 	if strings.Contains(msg, "不支持二进制文件") || strings.Contains(msg, "只支持普通文本文件") {
-		return fmt.Errorf("文件 %s 为 aide 暂不能解析的二进制格式；可让 aide 直接在工作区打开该文件，或另存为文本后附加", path)
+		return fmt.Errorf("文件 %s 为 aide 暂不能内联解析的二进制格式；请保留路径引用，让 aide 用文件工具读取，或另存为文本后附加", path)
 	}
 	return err
 }

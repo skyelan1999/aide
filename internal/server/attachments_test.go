@@ -167,15 +167,15 @@ func TestAttachmentContextUnsupportedBinary(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(a.workPath, "bad.bin"), []byte{0x00, 0x01, 0x02, 0x00}, 0600); err != nil {
 		t.Fatal(err)
 	}
-	_, _, _, err := a.attachmentContext([]Attachment{{Root: "workspace", Path: "bad.bin"}})
-	if err == nil {
-		t.Fatal("二进制应报错")
+	ctx, images, versions, err := a.attachmentContext([]Attachment{{Root: "workspace", Path: "bad.bin"}})
+	if err != nil {
+		t.Fatalf("二进制附件应降级为路径引用而不是阻断任务: %v", err)
 	}
-	if strings.Contains(err.Error(), "不支持二进制文件") {
-		t.Fatalf("旧的笼统文案应被替换: %v", err)
+	if !strings.Contains(ctx, "<untrusted-file-reference") || !strings.Contains(ctx, `path="bad.bin"`) || !strings.Contains(ctx, "run_shell") {
+		t.Fatalf("应注入可读取的路径引用: %s", ctx)
 	}
-	if !strings.Contains(err.Error(), "工作区") {
-		t.Fatalf("应给可操作文案: %v", err)
+	if strings.Contains(ctx, "<untrusted-file ") || len(images) != 0 || len(versions) != 0 {
+		t.Fatalf("不得把二进制内容当文本内联: %s images=%v versions=%v", ctx, images, versions)
 	}
 }
 

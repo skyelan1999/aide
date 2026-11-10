@@ -298,6 +298,19 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 		contextText.WriteString(footer)
 		return nil
 	}
+	// 二进制/不可内联附件不阻断整轮任务：只注入路径和读取指引，由模型按需用工具读取。
+	addReference := func(root, apath, reason string) error {
+		header := fmt.Sprintf("\n<untrusted-file-reference root=%q path=%q reason=%q>\n", root, apath, reason)
+		const body = "该附件未内联到模型上下文。请按需使用 read_file（仅文本）、list_files 或 run_shell 在工作区内查看、解压或转换；不要假设文件内容或完整性。\n"
+		const footer = "</untrusted-file-reference>\n"
+		if len(header)+len(body)+len(footer) > maxAttachmentTextBytes-contextText.Len() {
+			return fmt.Errorf("附件引用超过 %d MiB 处理预算", maxAttachmentTextBytes>>20)
+		}
+		contextText.WriteString(header)
+		contextText.WriteString(body)
+		contextText.WriteString(footer)
+		return nil
+	}
 	for _, att := range atts {
 		if att.Root == "source" && !a.sourceAIAllowed(att.Source) || att.Root == "context" && !a.sourceAIAllowed(contextSource) {
 			return "", nil, nil, errors.New("该引用来源对当前工作区 AI 不可见，请先开启可见性或移除附件")
@@ -397,6 +410,12 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 			}
 		}
 		if err != nil {
+			if isBinaryAttachmentError(err) {
+				if refErr := addReference(att.Root, att.Path, "binary"); refErr != nil {
+					return "", nil, nil, refErr
+				}
+				continue
+			}
 			return "", nil, nil, friendlyAttachError(att.Path, err)
 		}
 		if err := addText(att.Root, att.Path, string(b)); err != nil {
