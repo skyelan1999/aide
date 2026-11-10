@@ -22,3 +22,9 @@ native/windows-launcher/third_party/miniz/LICENSE -text whitespace=cr-at-eol
 
 # CMD entrypoints need stable Windows line endings even in Git source checkouts.
 *.bat text eol=crlf
+
+# Keep Python/Node helpers and container build inputs LF on Windows checkouts.
+# Directly executed shebang scripts otherwise fail with "python3\r: not found".
+*.py text eol=lf
+*.cjs text eol=lf
+Dockerfile* text eol=lf
