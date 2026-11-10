@@ -216,3 +216,7 @@
 #trajectory-content .approval-reason{margin:0 0 8px;color:var(--muted);font-size:12px}
 #trajectory-content .approval-recommend{display:flex;flex-direction:column;gap:6px}
 #trajectory-content .approval-recommend button{align-self:flex-start}
+
+/* Keep adjacent sent and received messages visibly separated. */
+#timeline .assistant-msg{margin-block:12px}
+#timeline .run>.user-message{margin-bottom:12px}
