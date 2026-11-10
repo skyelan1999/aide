@@ -1012,6 +1012,8 @@ window.aideEnglish = {
   "辅助资料 · 只读": "References · Read-only",
   "工作目录 · 保存后同步到主机": "Workspace · Synced to host when saved",
   "上下文预算超限：请缩短任务或减少附件后再发送": "Context budget exceeded: shorten the task or remove attachments before sending",
+  "（长文本已转为附件：{0}）": "(Long text moved to attachment: {0})",
+  "粘贴内容已转为附件：{0}（{1} 字符）": "Pasted text attached as {0} ({1} characters)",
   "新会话": "New conversation",
   "⚠ 上下文预算超限：请缩短任务或减少附件": "⚠ Context budget exceeded: shorten the task or remove attachments",
   "Shift + Enter 发送 · Enter 换行": "Shift + Enter to send · Enter for a new line",

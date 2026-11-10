@@ -3868,11 +3868,47 @@ taskForm.addEventListener('drop', action(async event => {
   taskForm.classList.remove('drag-over');
   await queueComposerFiles(event.dataTransfer.files);
 }));
+// 单条任务上限 20000 字节（internal/server/workflow.go）；超出时把粘贴内容落成
+// 工作区临时 Markdown 附件，输入框只保留一句可编辑的引用，避免直接 400。
+const PROMPT_MAX_BYTES = 20000;
+function composerByteLength(text) { return new TextEncoder().encode(text).length; }
+function queuePastedText(text, start, end, name, replaceAll) {
+  const prompt = $('prompt');
+  const restore = value => {
+    if (replaceAll) prompt.value = value;
+    else prompt.setRangeText(value, start, end, 'end');
+    prompt.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  return queueComposerFiles([new File([text], name, {type: 'text/markdown'})]).then(result => {
+    if (!result?.added) { restore(text); return; } // 附件失败时保留原文，不能让粘贴内容丢失
+    restore(t('（长文本已转为附件：{0}）', name));
+    toast(t('粘贴内容已转为附件：{0}（{1} 字符）', name, Array.from(text).length));
+  });
+}
 $('prompt').addEventListener('paste', event => {
   const images = Array.from(event.clipboardData?.items || [])
     .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
     .map(item => item.getAsFile()).filter(Boolean);
-  if (!images.length) return;
+  if (!images.length) {
+    const text = event.clipboardData?.getData('text/plain') || '';
+    if (text) {
+      const prompt = $('prompt');
+      const start = prompt.selectionStart ?? prompt.value.length;
+      const end = prompt.selectionEnd ?? start;
+      const projected = prompt.value.slice(0, start) + text + prompt.value.slice(end);
+      if (composerByteLength(projected) > PROMPT_MAX_BYTES) {
+        event.preventDefault();
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const name = '粘贴文本-' + stamp + '.md';
+        const markerBytes = composerByteLength(t('（长文本已转为附件：{0}）', name));
+        // 输入框本身已接近上限时连现有草稿一起转存，避免"原文+引用"仍然超限。
+        const keepDraft = composerByteLength(prompt.value) <= PROMPT_MAX_BYTES - markerBytes;
+        void queuePastedText(keepDraft ? text : projected, start, end, name, !keepDraft);
+        return;
+      }
+    }
+    return;
+  }
   event.preventDefault();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const files = images.map((blob, index) => {
