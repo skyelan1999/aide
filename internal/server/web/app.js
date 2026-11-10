@@ -3996,7 +3996,7 @@ $('task-form').onsubmit = action(async event => {
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
-    stopContextCompactionWatch = startContextCompactionWatch(target.id);
+    stopContextCompactionWatch = ensureContextCompactionWatch(target.id);
     const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, modelSelection: submittedSelection, parallelism: window.AideParallelChat?.value(state.mode, target.kind === 'assistant') || 1, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : submittedSelection.profile, queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     await stopContextCompactionWatch();
     stopContextCompactionWatch = null;
@@ -6872,33 +6872,70 @@ const contextCompactionElapsedTimers = new Map();
 function isTerminalContextCompaction(phase) {
   return phase === 'completed' || phase === 'failed' || phase === 'cancelled';
 }
+const contextCompactionWatches = new Map();
+function clearContextCompactionState(sessionID) {
+  const id = sessionID || state.session?.id || '';
+  if (!id) return;
+  state.contextCompactions.delete(id);
+  clearTimeout(contextCompactionTimers.get(id));
+  contextCompactionTimers.delete(id);
+  clearInterval(contextCompactionElapsedTimers.get(id));
+  contextCompactionElapsedTimers.delete(id);
+  if (state.session?.id !== id) return;
+  const card = $('context-card');
+  card?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled');
+  renderContextCompactionState($('context-card-detail'));
+}
+function ensureContextCompactionWatch(sessionID) {
+  if (!sessionID) return null;
+  return contextCompactionWatches.get(sessionID) || startContextCompactionWatch(sessionID);
+}
 function startContextCompactionWatch(sessionID) {
+  const existing = contextCompactionWatches.get(sessionID);
+  if (existing) return existing;
   let stopped = false;
   let inFlight = null;
+  let timer = null;
   const watchStartedAt = Date.now();
+  const finish = () => {
+    if (stopped) return;
+    stopped = true;
+    clearInterval(timer);
+    contextCompactionWatches.delete(sessionID);
+  };
   const refresh = async (force = false) => {
     if (stopped && !force) return;
     if (inFlight) { await inFlight; if (force) return refresh(true); return; }
     inFlight = (async () => {
       try {
         const data = await api(`/sessions/${sessionID}/compaction-progress`);
-        if (data?.event?.phase) {
-          const terminal = isTerminalContextCompaction(data.event.phase);
-          if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) {
-            showContextCompaction({ ...data.event, updatedAt: Number(data.updatedAt || 0) });
+        if (!data?.event?.phase) {
+          const local = state.contextCompactions.get(sessionID);
+          if (local && !isTerminalContextCompaction(local.phase) && Date.now() - (local.at || 0) > 3000) {
+            // 服务端已没有这条压缩记录（完成清理、重启或压缩线程退出）：
+            // 不能把上一次的快照当成仍在进行，否则卡片会永久停在“等待模型返回”。
+            clearContextCompactionState(sessionID);
+            finish();
           }
+          return;
         }
+        const terminal = isTerminalContextCompaction(data.event.phase);
+        if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) {
+          showContextCompaction({ ...data.event, updatedAt: Number(data.updatedAt || 0) });
+        }
+        if (terminal) finish();
       } catch (_) { /* Status polling must never block or fail task submission. */ }
     })();
     try { await inFlight; } finally { inFlight = null; }
   };
   void refresh();
-  const timer = setInterval(() => { void refresh(); }, 650);
-  return async () => {
-    if (!stopped) { stopped = true; clearInterval(timer); }
+  timer = setInterval(() => { void refresh(); }, 650);
+  const stop = async () => {
+    finish();
     if (inFlight) await inFlight;
-    await refresh(true);
   };
+  contextCompactionWatches.set(sessionID, stop);
+  return stop;
 }
 function showContextCompaction(event) {
   if (!event || !event.phase) return;
@@ -6946,6 +6983,7 @@ function showContextCompaction(event) {
   card.classList.toggle('is-compacting', event.phase === 'started' || event.phase === 'folding');
   card.classList.toggle('was-compacted', event.phase === 'completed');
   renderContextCompactionState($('context-card-detail'));
+  if (running) ensureContextCompactionWatch(targetSession);
 }
 function renderContextCompactionState(detail) {
   detail = $('context-compaction-slot') || detail;
@@ -10557,7 +10595,7 @@ $('compact-button').onclick = action(async () => {
   if (!state.session) { toast(t("请先选择会话")); return; }
   const sessionId = state.session.id;
   showContextCompaction({ phase: 'started', folded: 0, text: t('正在分析可压缩的早期消息'), sessionId: sessionId });
-  const stopCompactionWatch = startContextCompactionWatch(sessionId);
+  const stopCompactionWatch = ensureContextCompactionWatch(sessionId);
   try {
     const res = await api('/sessions/' + sessionId + '/compact', { method: 'POST', body: '{}' });
     if (res.folded) {

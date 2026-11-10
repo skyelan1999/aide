@@ -135,8 +135,9 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 	a.mu.Unlock()
 
 	before := sessionContextTokens(s)
-	if before <= compactAutoTokens {
-		t.Fatalf("fixture must cross auto-compaction threshold: %d <= %d", before, compactAutoTokens)
+	threshold := autoCompactThreshold(cfg.Models[0].ContextWindow)
+	if before <= threshold {
+		t.Fatalf("fixture must cross auto-compaction threshold: %d <= %d", before, threshold)
 	}
 	ch, cancel := a.subscribeStream("compaction-observation-test")
 	defer cancel()
@@ -187,6 +188,56 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 	}
 	if got := sessionContextTokens(s); got != events[len(events)-1].AfterTokens {
 		t.Fatalf("completed estimate differs from persisted session state: event=%d session=%d", events[len(events)-1].AfterTokens, got)
+	}
+}
+
+func TestAutoCompactionHonorsLargeModelWindow(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	requests := make(chan struct{}, 4)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case requests <- struct{}{}:
+		default:
+		}
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"x","constraints":[],"decisions":[],"files":[],"facts":[],"evidence":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 274000}}}
+	a.mu.Lock()
+	s = a.sessions[s.ID]
+	for i := 0; i < 12; i++ {
+		s.Messages = append(s.Messages,
+			Message{Role: "user", Content: strings.Repeat("user context ", 900)},
+			Message{Role: "assistant", Content: strings.Repeat("assistant context ", 900)},
+		)
+	}
+	if err := a.save(s); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.settings = cfg
+	before := sessionContextTokens(s)
+	a.mu.Unlock()
+
+	// 这段历史超过旧的固定 12K 阈值，但远低于 274K 窗口的 55%，不应触发压缩。
+	if before <= 12000 {
+		t.Fatalf("fixture must exceed the old fixed threshold: %d", before)
+	}
+	if before >= autoCompactThreshold(274000) {
+		t.Fatalf("fixture must stay below the large-window threshold: %d", before)
+	}
+	a.maybeAutoCompact(context.Background(), s, cfg, "large-window-no-compact")
+	select {
+	case <-requests:
+		t.Fatal("large-window session should not call the summarizer at 12K tokens")
+	default:
+	}
+	a.mu.Lock()
+	folded := s.CompactedMessages
+	a.mu.Unlock()
+	if folded != 0 {
+		t.Fatalf("large-window session was compacted unexpectedly: folded=%d", folded)
 	}
 }
 

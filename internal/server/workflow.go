@@ -6002,9 +6002,8 @@ func clip(s string, n int) string {
 // 新摘要输入包含上一版摘要，形成连续摘要链（早期约束不丢失）。
 
 const (
-	compactKeepTokens = 6000  // 保留最近消息的估算 token 预算
-	compactAutoTokens = 12000 // 超过该总量时自动压缩
-	compactMaxFolded  = 400   // 单次最多折叠消息数
+	compactKeepTokens = 6000 // 保留最近消息的估算 token 预算
+	compactMaxFolded  = 400  // 单次最多折叠消息数
 	// Compaction may require several bounded model calls; keep the deadline
 	// aligned with provider streaming rather than an unrelated six-minute cap.
 	// The request context still cancels work on disconnect, and history remains
@@ -6708,6 +6707,15 @@ func compactionErrorPhase(ctx context.Context, fallback string) (string, string)
 	return "failed", fallback
 }
 
+// autoCompactThreshold 按模型窗口比例决定自动压缩阈值。固定 12K 对 200K+
+// 窗口的大模型过于激进，会把仍有充足预算的历史提前折叠，并额外消耗一次模型请求。
+func autoCompactThreshold(window int) int {
+	if window <= 0 {
+		window = defaultContextWindow
+	}
+	return window * 55 / 100
+}
+
 func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, taskID string) {
 	if cfg.Model == "" {
 		return
@@ -6725,10 +6733,11 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 	for _, m := range s.Messages {
 		total += contextMessageTokens(m)
 	}
-	threshold := compactAutoTokens
-	modelThreshold := a.modelWindow(cfg.Model) * 55 / 100
-	if modelThreshold > compactKeepTokens && modelThreshold < threshold {
-		threshold = modelThreshold
+	threshold := autoCompactThreshold(a.modelWindow(cfg.Model))
+	if threshold <= compactKeepTokens {
+		// 窗口小到连最近消息预算都放不下，自动压缩无法保留连续上下文；交给发送前预检处理。
+		a.mu.Unlock()
+		return
 	}
 	if total <= threshold {
 		a.mu.Unlock()
