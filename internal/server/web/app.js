@@ -335,8 +335,37 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
 async function api(path, options = {}) {
   const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = { 'Authorization': 'Bearer ' + state.token, ...(isForm ? {} : { 'Content-Type': 'application/json' }), ...options.headers };
-  const response = await fetch('/api' + path, { ...options, headers });
-  const data = await response.json();
+  const method = String(options.method || 'GET').toUpperCase();
+  let response;
+  // Safari/WKWebView reports a dropped connection as TypeError "Load failed".
+  // The service restarts after an update or an OOM kill, so read-only polling
+  // gets two short retries before surfacing a localized error. Writes are not
+  // retried: a replay could duplicate a run or a file change.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      response = await fetch('/api' + path, { ...options, headers });
+      break;
+    } catch (cause) {
+      if (cause?.name === 'AbortError' || cause?.name === 'TimeoutError') throw cause;
+      if ((method === 'GET' || method === 'HEAD') && attempt < 2) {
+        await new Promise(resolve => setTimeout(resolve, 800 * (attempt + 1)));
+        continue;
+      }
+      const error = new Error(t('工作台连接中断，请稍后重试'));
+      error.network = true;
+      error.cause = cause;
+      throw error;
+    }
+  }
+  let data;
+  try {
+    data = await response.json();
+  } catch (cause) {
+    const error = new Error(response.ok ? t('工作台返回了无法解析的响应，请稍后重试') : t('工作台连接中断，请稍后重试'));
+    error.status = response.status;
+    error.cause = cause;
+    throw error;
+  }
   if (!response.ok) {
     window.AideCrash?.reportServer(data);
     // Password/Passkey reauthentication failures also return 401. Only the
@@ -346,7 +375,7 @@ async function api(path, options = {}) {
     if((response.status===401||response.status===403) && response.headers?.get('X-Aide-Auth-Required')==='lan-password'){location.replace('/lan-login.html');throw new Error(t('请重新输入账户密码登录'));}
     const tokenRequired = response.headers?.get('X-Aide-Auth-Required') === 'token';
     if (response.status === 401 && (!identityCheck || tokenRequired) && !$('login-dialog').open) $('login-dialog').showModal();
-    const error = new Error(t(data.error) || t("请求失败"));
+    const error = new Error(t(data?.error) || t("请求失败"));
     error.status = response.status;
     error.data = data;
     throw error;

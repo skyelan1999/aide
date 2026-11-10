@@ -34,6 +34,9 @@ services:
       # Password-protected LAN workbench: host relay opens only with explicit consent.
       - "127.0.0.1::45842"
     environment:
+      # Keep the Go heap below the cgroup cap so GC runs before the kernel OOM
+      # killer takes the whole service down.
+      GOMEMLIMIT: 3600MiB
       AIDE_INSTALLATION_KIND: ${AIDE_INSTALLATION_KIND:-source}
       AIDE_LAN_ADDR: ":45842"
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
@@ -82,5 +85,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     pids_limit: 256
-    mem_limit: 2g
+    # 2g 在长会话/大附件场景会把进程打进 cgroup OOM，容器被 restart
+    # policy 拉起时前端只看到断连。4g 仍在 Docker Desktop 预算内。
+    mem_limit: 4g
     cpus: 2

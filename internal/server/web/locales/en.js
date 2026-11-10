@@ -2474,6 +2474,8 @@ window.aideEnglish = {
   "上一页": "Previous page",
   "下一页": "Next page",
   "加载失败": "Load failed",
+  "工作台连接中断，请稍后重试": "Workbench connection lost. Try again shortly.",
+  "工作台返回了无法解析的响应，请稍后重试": "The workbench returned an unreadable response. Try again shortly.",
   "无法读取 PDF：": "Cannot read PDF:",
   "PDF 渲染组件加载失败（离线 vendor 缺失？）：": "PDF renderer failed to load (missing offline vendor?):",
   "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。": "PDF preview skips embedded images above 16 Mi pixels. Pages are limited to an 8192-pixel edge and 16 Mi canvas pixels; larger previews use reduced resolution. Download the original for complete content.",
