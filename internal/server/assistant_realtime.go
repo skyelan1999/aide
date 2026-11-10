@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -204,7 +205,10 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		client.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		return client.WriteJSON(event)
 	}
-	report := func(msg string) { _ = emit(map[string]any{"type": "aide.error", "message": msg}) }
+	report := func(msg string) {
+		log.Printf("[assistant-call] session=%s error=%s", id, msg)
+		_ = emit(map[string]any{"type": "aide.error", "message": msg})
+	}
 	upstream, resp, err := dial(ctx, upstreamURL, http.Header{"Authorization": {"Bearer " + cfg.APIKey}})
 	if err != nil {
 		status := 0
@@ -324,6 +328,8 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 				}
 			case "aide.ping":
 				_ = emit(map[string]any{"type": "aide.pong"})
+			case "aide.hangup":
+				return
 			default:
 				return
 			}

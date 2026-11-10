@@ -6,9 +6,9 @@
   const dialog=make('dialog',null,'assistant-memory-dialog');dialog.setAttribute('aria-label',t('记忆管理'));const header=make('header'),title=make('h2',t('记忆管理')),close=make('button',t('关闭'));close.type='button';header.append(title,close);
   const summary=make('p'),notice=make('p',t('这里管理当前工作区的长期记忆。删除不会清除聊天历史、旧备份或外部模型留存。'),'assistant-memory-note'),rules=make('div'),list=make('div'),footer=make('footer'),prev=make('button',t('上一页')),next=make('button',t('下一页')),status=make('span');prev.type=next.type='button';footer.append(prev,status,next);dialog.append(header,summary,notice,rules,list,footer);element.append(dialog);
   const kinds={fact:'事实',preference:'偏好',decision:'决定',promise:'约定',emotion:'情绪事件'},states={active:'当前',dormant:'久远',superseded:'已更新',resolved:'已完成',expired:'已失效'};
-  let offset=0,pageSize=20,generation=0,session=null,available=null,busy=false;
+  let offset=0,pageSize=20,generation=0,session=null,available=null,unavailable=null,busy=false;
   const valid=()=>opts.valid()&&session===opts.session();
-  function clear(){generation++;if(dialog.open)dialog.close();list.replaceChildren();rules.replaceChildren();summary.textContent='';session=null;available=null;entry.hidden=true;if(!element.hidden)element.hidden=true;}
+  function clear(){generation++;if(dialog.open)dialog.close();list.replaceChildren();rules.replaceChildren();summary.textContent='';session=null;available=null;unavailable=null;entry.hidden=true;if(!element.hidden)element.hidden=true;}
   async function call(operation,extra={}){if(!valid())throw Error(t('请先解锁助理会话'));const ticket=generation,id=session;const data=await opts.api(id,{operation,...extra});if(ticket!==generation||!valid())throw Error(t('会话已切换'));return data;}
   async function load(){if(busy)return;busy=true;prev.disabled=next.disabled=true;try{const data=await call('list',{offset});render(data);}catch(e){if(valid())summary.textContent=e.message;}finally{busy=false;}}
   function button(text,operation,extra,container){const b=make('button',t(text));b.type='button';b.onclick=async()=>{if(busy)return;b.disabled=true;try{await call(operation,extra);await load();}catch(e){if(valid())summary.textContent=e.message;}finally{b.disabled=false;}};container.append(b);return b;}
@@ -21,7 +21,7 @@
    if(!data.records.length)list.append(make('p',t('暂无长期记忆')));status.textContent=`${Math.min(offset+1,data.total)}–${Math.min(offset+pageSize,data.total)} / ${data.total}`;prev.disabled=offset===0;next.disabled=offset+pageSize>=data.total;
   }
   entry.onclick=()=>{if(!valid())return;offset=0;dialog.showModal();void load();};close.onclick=()=>{dialog.close();list.replaceChildren();rules.replaceChildren();};prev.onclick=()=>{offset=Math.max(0,offset-pageSize);void load();};next.onclick=()=>{offset+=pageSize;void load();};
-  async function sync(){if(!opts.valid()){clear();return;}const id=opts.session();if(session===id&&available!==null)return;if(session!==id){clear();session=id;}available=false;const ticket=generation;try{await call('status');if(ticket!==generation||!valid())return;available=true;element.hidden=false;entry.hidden=false;}catch{if(ticket===generation){element.hidden=true;entry.hidden=true;available=null;}}}
+  async function sync(){if(!opts.valid()){clear();return;}if(opts.engine?.()!=='mixsoul'){if(session!==null)clear();return;}const id=opts.session();if(session===id&&(available!==null||unavailable===id))return;if(session!==id){clear();session=id;}available=false;const ticket=generation;try{await call('status');if(ticket!==generation||!valid())return;available=true;element.hidden=false;entry.hidden=false;}catch{if(ticket===generation){element.hidden=true;entry.hidden=true;available=null;unavailable=id;}}}
   if(typeof MutationObserver==='function'){const observer=new MutationObserver(()=>{if(!opts.valid())clear();});for(const id of ['lock-screen','login-dialog']){const node=document.getElementById(id);if(node)observer.observe(node,{attributes:true,attributeFilter:['hidden','open','class']});}}
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')clear();});
   return {element,entry,sync,clear};

@@ -11333,7 +11333,7 @@ function initAssistantLive(){
     });
     work.before(window.aideAssistantCall.element);window.aideAssistantCall.element.classList.add('composer-call-panel');document.querySelector('.input-actions')?.prepend(window.aideAssistantCall.entry);
   }
-  if(window.AideAssistantMemory){window.aideAssistantMemory=window.AideAssistantMemory.create({translate:t,valid:()=>valid()&&state.session?.kind==='assistant',session:()=>assistantEntrySession?.id,api:(id,data)=>api(`/sessions/${id}/assistant-memory`,{method:'POST',body:JSON.stringify(data)})});work.before(window.aideAssistantMemory.element);document.querySelector('.input-actions')?.prepend(window.aideAssistantMemory.entry);}
+  if(window.AideAssistantMemory){window.aideAssistantMemory=window.AideAssistantMemory.create({translate:t,valid:()=>valid()&&state.session?.kind==='assistant',session:()=>assistantEntrySession?.id,engine:()=>state.config?.assistantEngine||'',api:(id,data)=>api(`/sessions/${id}/assistant-memory`,{method:'POST',body:JSON.stringify(data)})});work.before(window.aideAssistantMemory.element);document.querySelector('.input-actions')?.prepend(window.aideAssistantMemory.entry);}
   window.aideAssistantLiveUI=paint;paintWork([]);paint();
   window.addEventListener('pagehide',()=>{window.aideAssistantCall?.end();window.aideAssistantLive.stop();});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){window.aideAssistantCall?.end();window.aideAssistantLive.setMicrophone(false);ttsCancel();}else window.aideAssistantLiveSync();});

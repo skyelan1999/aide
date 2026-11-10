@@ -9,7 +9,7 @@
   const send=event=>{if(ws?.readyState===1){if(ws.bufferedAmount>256000){hooks.error('实时音频网络拥堵，通话已结束');stop();return;}ws.send(JSON.stringify(event));}};
   function clearAudio(){for(const player of players){player.onended=null;try{player.stop();}catch(_){}}players.clear();nextTime=context?.currentTime||0;}
   function releaseInput(){inputSerial++;if(node){node.port.onmessage=null;node.disconnect();node=null;}source?.disconnect();source=null;gain?.disconnect();gain=null;stream?.getTracks().forEach(t=>t.stop());stream=null;}
-  function stop(){epoch++;enabled=false;microphone=false;muted=false;clearInterval(ping);ping=0;releaseInput();clearAudio();if(ws){ws.onclose=ws.onmessage=ws.onerror=null;ws.close();ws=null;}const old=context;context=null;if(old)void old.close().catch(()=>{});state('off');}
+  function stop(){epoch++;enabled=false;microphone=false;muted=false;clearInterval(ping);ping=0;releaseInput();clearAudio();if(ws){const old=ws;ws.onclose=ws.onmessage=ws.onerror=null;try{if(old.readyState===1)old.send(JSON.stringify({type:'aide.hangup'}));}catch(_){}try{old.close();}catch(_){}ws=null;}const old=context;context=null;if(old)void old.close().catch(()=>{});state('off');}
   function fatal(message){hooks.error(message);stop();}
   async function input(token){
    const ticket=++inputSerial;
