@@ -822,8 +822,8 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	in.Prompt = strings.TrimSpace(in.Prompt)
-	if (in.Prompt == "" && !in.Baseline) || len(in.Prompt) > 20000 {
-		fail(w, 400, errors.New("请输入 1–20000 字节的任务"))
+	if (in.Prompt == "" && len(in.Attachments) == 0 && !in.Baseline) || len(in.Prompt) > 20000 {
+		fail(w, 400, errors.New("请输入 1–20000 字节的任务或添加附件"))
 		return
 	}
 	if in.Mode != "chat" && in.Mode != "workflow" {

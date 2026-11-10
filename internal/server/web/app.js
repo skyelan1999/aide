@@ -3921,7 +3921,7 @@ $('prompt').addEventListener('paste', event => {
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
   if (state.submitting || state.approvalModeBusy) return; // Enter 连击与点击不可重复创建 run
-  const prompt = $('prompt').value.trim(); if (!prompt) return;
+  const prompt = $('prompt').value.trim(); if (!prompt && !state.attachments.length) return; // 允许仅附件发送
   if (state.mode!=='pw' && !state.config?.configured) { openSettings(); return; }
   if (state.previewOverLimit) { toast(t("上下文预算超限：请缩短任务或减少附件后再发送")); return; }
   const sendMotion = window.aideExperience?.beginSend($('send'));
