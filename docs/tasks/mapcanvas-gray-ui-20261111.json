@@ -80,5 +80,11 @@
   "handoff": "Current local0.2.1 installed and verified. Plugin Release andmarket published; host test/lock ready for main merge. No second runtime orROS2/hardware claims.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/845"
-  ]
+  ],
+  "main_integration": {
+    "pr": "https://github.com/skyelan1999/aide/pull/846",
+    "commit": "921a95a5",
+    "status": "merged",
+    "note": "Verified in current main during 2026-11-12 issue #847 cleanup; earlier release-stage summary is a historical checkpoint."
+  }
 }

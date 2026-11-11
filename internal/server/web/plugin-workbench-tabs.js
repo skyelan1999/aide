@@ -3,7 +3,7 @@
  const validId=value=>typeof value==='string'&&/^[a-z0-9][a-z0-9_-]{0,63}$/.test(value);
  // wsID() is an opaque mode|path|host identity, not a filesystem selection or
  // slug. URLSearchParams encodes it; the destination rechecks exact equality.
- const validWorkspace=value=>typeof value==='string'&&value.length>0&&value.length<=4096&&!/[\x00-\x1f\x7f]/.test(value)&&(/^[A-Za-z0-9_-]{1,128}$/.test(value)||/^(local|ssh)\|.+\|[^|]*$/.test(value));
+ const validWorkspace=value=>typeof value==='string'&&value.length>0&&value.length<=4096&&!/[\x00-\x1f\x7f]/.test(value)&&(value==='local||'||/^[A-Za-z0-9_-]{1,128}$/.test(value)||/^(local|ssh)\|.+\|[^|]*$/.test(value));
  function read(hash=location.hash){
   const params=new URLSearchParams(hash.slice(1)),id=params.get('pluginWorkbench');
   if(!validId(id))return null;

@@ -1638,6 +1638,14 @@
       [
         "node",
         "scripts/desktop-capture.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_checkout_byte_integrity.py"
+      ],
+      [
+        "node",
+        "scripts/pdf-triage-regressions.cjs"
       ]
     ],
     "full": [

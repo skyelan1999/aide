@@ -1,0 +1,1298 @@
+{
+  "date": "2026-11-12 Asia/Shanghai",
+  "repository": "skyelan1999/aide",
+  "initialMain": "6047b69c374799c4ac01df8ab335f16c14554c66",
+  "reviewedMain": "665b11219f8ff51263856b3118f4b0020f7d89a7",
+  "fixCommit": "c9fa88bc62950f8993d25be0977ffebfc728af11",
+  "operator": "skyelan1999",
+  "initialOpenIssues": 111,
+  "initialOpenPRs": 10,
+  "decisions": [
+    {
+      "number": 847,
+      "title": "MapCanvas：清理旧版操作说明与过期交接状态",
+      "url": "https://github.com/skyelan1999/aide/issues/847",
+      "scope": "documentation",
+      "decision": "public_docs_corrected_local_archive_unverified",
+      "basis": "MapCanvas docs PR #3 merged; main architecture and 0.2.1 integration checkpoint corrected. The issue names no exact old local 0.4.x installation directory; no unknown directory was archived or deleted."
+    },
+    {
+      "number": 840,
+      "title": "windows build fail",
+      "url": "https://github.com/skyelan1999/aide/issues/840",
+      "scope": "core",
+      "decision": "closed_not_planned",
+      "basis": "初始日志只有 Source build failed 汇总和代理提示，后续补充同时包含成功构建/启动与若干失败，没有绑定当前源码的 Docker 原始失败步骤，无法确定现在仍是哪一处故障。已通过 #852 修复明确的许可证/资源 CRLF 根因（#811/#837）；当前 main Aide CI 与 Windows Desktop Check 已通过。本机为 macOS，本轮未执行受影响 Windows 主机的完整 build.bat，不以 CI 代替该真机路径。重开时请附源码 SHA、Docker 第一个 ERROR 前后脱敏日志与 launcher.log 对应时段。"
+    },
+    {
+      "number": 839,
+      "title": "会话「文件修改」展开后缺少逐行差异视图",
+      "url": "https://github.com/skyelan1999/aide/issues/839",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "verified fix and acceptance already in main; focused current regressions passed"
+    },
+    {
+      "number": 838,
+      "title": "会话时间线未按真实时间对齐，插话不能即时打断当前轮次",
+      "url": "https://github.com/skyelan1999/aide/issues/838",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "verified fix and acceptance already in main; focused current regressions passed"
+    },
+    {
+      "number": 837,
+      "title": "Windows 源码构建失败：Git 换行转换导致第三方许可证 SHA256 校验不通过",
+      "url": "https://github.com/skyelan1999/aide/issues/837",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "PR #852 merged as 85b172ed; real autocrlf checkout of 25 inputs and 18 provenance digests passed"
+    },
+    {
+      "number": 836,
+      "title": "附件：大 Markdown 改为按需读取，避免上下文预估使发送按钮禁用",
+      "url": "https://github.com/skyelan1999/aide/issues/836",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "verified fix and acceptance already in main; focused current regressions passed"
+    },
+    {
+      "number": 835,
+      "title": "电脑控制：补齐截图定位、拖拽、双轴滚动和多修饰组合键",
+      "url": "https://github.com/skyelan1999/aide/issues/835",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "verified fix and acceptance already in main; focused current regressions passed"
+    },
+    {
+      "number": 834,
+      "title": "macOS 电脑截图与内置图像预算不一致，视觉结果缺少桌面坐标换算信息",
+      "url": "https://github.com/skyelan1999/aide/issues/834",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "verified fix and acceptance already in main; focused current regressions passed"
+    },
+    {
+      "number": 833,
+      "title": "电脑控制在 Aide 位于前台时无法定位已授权目标应用",
+      "url": "https://github.com/skyelan1999/aide/issues/833",
+      "scope": "core",
+      "decision": "closed_completed",
+      "basis": "verified fix and acceptance already in main; focused current regressions passed"
+    },
+    {
+      "number": 823,
+      "title": "[P3] Ignore later COLR boxes after an unsupported first METH",
+      "url": "https://github.com/skyelan1999/aide/issues/823",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 822,
+      "title": "[P3] Stop HT MagSgn decoding after the permitted synthetic byte",
+      "url": "https://github.com/skyelan1999/aide/issues/822",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 821,
+      "title": "Stale AIDE-managed Xpra lease credentials remain after runtime restart",
+      "url": "https://github.com/skyelan1999/aide/issues/821",
+      "scope": "plugin",
+      "decision": "closed_not_planned",
+      "basis": "unpublished Xpra candidate path absent from current main; historical candidate evidence retained"
+    },
+    {
+      "number": 820,
+      "title": "AIDE-managed Xpra clipboard APIs are denied in the isolated Workbench viewer",
+      "url": "https://github.com/skyelan1999/aide/issues/820",
+      "scope": "plugin",
+      "decision": "closed_not_planned",
+      "basis": "unpublished Xpra candidate path absent from current main; historical candidate evidence retained"
+    },
+    {
+      "number": 819,
+      "title": "[P3] Support T.814 MIXED HT code-block signaling",
+      "url": "https://github.com/skyelan1999/aide/issues/819",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 818,
+      "title": "Opening a managed X Server viewer pauses Terminal Workbench bridge polling",
+      "url": "https://github.com/skyelan1999/aide/issues/818",
+      "scope": "plugin",
+      "decision": "closed_not_planned",
+      "basis": "unpublished Xpra candidate path absent from current main; historical candidate evidence retained"
+    },
+    {
+      "number": 817,
+      "title": "AIDE Terminal X Server opens a viewer but reports “Assignment to constant variable”",
+      "url": "https://github.com/skyelan1999/aide/issues/817",
+      "scope": "plugin",
+      "decision": "closed_not_planned",
+      "basis": "unpublished Xpra candidate path absent from current main; historical candidate evidence retained"
+    },
+    {
+      "number": 814,
+      "title": "[P3] Propagate failed sYCC conversion allocations before emitting RGBA",
+      "url": "https://github.com/skyelan1999/aide/issues/814",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "原证据依赖原生转换函数加分配失败注入及 wrapper 模拟；未提供当前 bundle 的可重跑失败样本。"
+    },
+    {
+      "number": 813,
+      "title": "Markdown PDF 导出失真且表格列宽异常，需输出可选文字的矢量 PDF",
+      "url": "https://github.com/skyelan1999/aide/issues/813",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Vector export exists, but original distortion document, full PDF-reader and 100 MiB mixed-document acceptance are not available in this audit; preserve the remaining acceptance work."
+    },
+    {
+      "number": 812,
+      "title": "Windows build 启动新桌面实例前未可靠等待旧实例退出",
+      "url": "https://github.com/skyelan1999/aide/issues/812",
+      "scope": "windows",
+      "decision": "closed_completed",
+      "basis": "当前 main 原生启动器 desktop-stop 持有 PID/创建时间收据，等待 WM_CLOSE 后确认旧进程退出，30 秒未退出则失败且保留旧程序。本 Issue 已有 Windows 真进程的启动竞态、延迟退出、超时及旧版无收据回归 PASS；本轮当前 main Windows Desktop Check 的 amd64/arm64 编译与 native-ui 再次通过。"
+    },
+    {
+      "number": 811,
+      "title": "[Windows] Preserve vendored JavaScript bytes with core.autocrlf enabled",
+      "url": "https://github.com/skyelan1999/aide/issues/811",
+      "scope": "windows",
+      "decision": "closed_completed",
+      "basis": "PR #852 merged as 85b172ed; real autocrlf checkout of 25 inputs and 18 provenance digests passed"
+    },
+    {
+      "number": 809,
+      "title": "Terminal X Server viewer toolbar obscures remote windows at display origin",
+      "url": "https://github.com/skyelan1999/aide/issues/809",
+      "scope": "plugin",
+      "decision": "closed_not_planned",
+      "basis": "unpublished Xpra candidate path absent from current main; historical candidate evidence retained"
+    },
+    {
+      "number": 808,
+      "title": "[P3] Avoid forming an out-of-object pointer in terminal HT SPP",
+      "url": "https://github.com/skyelan1999/aide/issues/808",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C terminal-SPP 空子组指针形成问题；报告说明原 Wasm 会先退出空子组，没有 Wasm 访问/崩溃/像素故障。"
+    },
+    {
+      "number": 807,
+      "title": "[P3] Check JPX input length before reading format signatures",
+      "url": "https://github.com/skyelan1999/aide/issues/807",
+      "scope": "pdf_decoder",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "OpenJPEG adapter rejects inputs shorter than 12 bytes before allocation or signature reads."
+    },
+    {
+      "number": 806,
+      "title": "[P3] Avoid forming an out-of-object pointer in the PTERM check",
+      "url": "https://github.com/skyelan1999/aide/issues/806",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C PTERM 指针形成问题；后续评论明确样本是删除压缩字节后的非合规截断，原 Wasm 没有越界访问或陷阱。"
+    },
+    {
+      "number": 805,
+      "title": "[Bug] Use Unicode full case folding for StarLink search",
+      "url": "https://github.com/skyelan1999/aide/issues/805",
+      "scope": "plugin",
+      "decision": "retain_open",
+      "basis": "Unicode full case-folding fix is recorded in an unpublished 0.1.5 candidate; current frozen market is 0.1.4. No candidate was silently published."
+    },
+    {
+      "number": 804,
+      "title": "[Bug] Normalize canonically equivalent Unicode in StarLink search",
+      "url": "https://github.com/skyelan1999/aide/issues/804",
+      "scope": "plugin",
+      "decision": "retain_open",
+      "basis": "Canonical Unicode normalization/offset fix is recorded in an unpublished 0.1.5 candidate; current frozen market is 0.1.4."
+    },
+    {
+      "number": 803,
+      "title": "[P2] Honor Matte and unpremultiply JPX samples for SMaskInData 2",
+      "url": "https://github.com/skyelan1999/aide/issues/803",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 802,
+      "title": "[P2] Allow plugin workbench routes in the default local workspace",
+      "url": "https://github.com/skyelan1999/aide/issues/802",
+      "scope": "plugin",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "Exact default workspace identity local|| now opens a scoped workbench; empty SSH/control-bearing identities remain rejected."
+    },
+    {
+      "number": 801,
+      "title": "[Feature] Index TypeScript and TSX symbols for StarLink graph paths",
+      "url": "https://github.com/skyelan1999/aide/issues/801",
+      "scope": "plugin",
+      "decision": "retain_open",
+      "basis": "TypeScript/TSX symbol indexing remains requested functionality; the tested local candidate is not an open implementation PR in this inventory."
+    },
+    {
+      "number": 800,
+      "title": "[P2] Apply target architecture feature defaults to build-tag selection",
+      "url": "https://github.com/skyelan1999/aide/issues/800",
+      "scope": "core",
+      "decision": "closed_not_planned",
+      "basis": "原报告针对未合并候选的 GOARCH/架构特性级别选择；当前 main 没有该配置或跨目标 ToolTags 替换路径，无法按原步骤触发。将来加入跨目标索引时必须恢复本条的 amd64.v1/v3、arm64/PPC64 等回归，不能把宿主模式通过当作跨目标验证。"
+    },
+    {
+      "number": 799,
+      "title": "[P2] Match Go cgo defaults for cross-target type snapshots",
+      "url": "https://github.com/skyelan1999/aide/issues/799",
+      "scope": "core",
+      "decision": "closed_not_planned",
+      "basis": "原报告复现依赖未合并候选中的显式 GOOS/GOARCH 选择。当前 main 的知识索引策略与 go-types 请求没有该跨目标配置，helper 使用宿主 build.Default，无法按原步骤选择 windows/arm64。本轮修复 #797/#798 的候选也明确记录宿主目标，不宣称提供跨目标编译。"
+    },
+    {
+      "number": 798,
+      "title": "[P2] Exclude Go test files from production type snapshot binding",
+      "url": "https://github.com/skyelan1999/aide/issues/798",
+      "scope": "core",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "Production binding excludes _test.go while retaining indexed source files."
+    },
+    {
+      "number": 797,
+      "title": "[P2] Apply Go build constraints before type binding indexed calls",
+      "url": "https://github.com/skyelan1999/aide/issues/797",
+      "scope": "core",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "Host go/build constraints are applied to in-memory snapshots; target identity is reported."
+    },
+    {
+      "number": 796,
+      "title": "[Bug] Knowledge-map updates expose sources hidden from AI",
+      "url": "https://github.com/skyelan1999/aide/issues/796",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Current knowledge-map updates handler still lacks an AI-specific filtered view; fixing this requires coordinated source visibility, cursor/cache isolation and consumer changes."
+    },
+    {
+      "number": 790,
+      "title": "Plugin compatibility: support authorized SSH workspaces and references",
+      "url": "https://github.com/skyelan1999/aide/issues/790",
+      "scope": "plugin",
+      "decision": "retain_open",
+      "basis": "Merged #791 repairs the offline catalog/gate, not the remaining SSH compatibility of all plugins. Candidate tests do not establish publication or installed-package acceptance."
+    },
+    {
+      "number": 776,
+      "title": "大文件下载浏览器回归在重载续传时 Chromium 退出",
+      "url": "https://github.com/skyelan1999/aide/issues/776",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Retained Docker/Chromium reload/resume crash evidence is explicit. Current browser checks cover other paths and cannot establish this large-transfer failure is resolved."
+    },
+    {
+      "number": 773,
+      "title": "[P3] Revalidate local mount source paths before Compose starts",
+      "url": "https://github.com/skyelan1999/aide/issues/773",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "The selected mount is canonicalized to a path string before Compose; the validated object is not atomically bound to the daemon mount. A concurrent replacement remains a distinct apply-time problem."
+    },
+    {
+      "number": 763,
+      "title": "[P3] Distinguish a reused PID before retaining the helper lock",
+      "url": "https://github.com/skyelan1999/aide/issues/763",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Helper stale-lock code still treats a live reusable PID as the original owner; a process-instance/OS-lock migration is required."
+    },
+    {
+      "number": 762,
+      "title": "[P2] Keep the LAN message bridge consistent when mount apply fails",
+      "url": "https://github.com/skyelan1999/aide/issues/762",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "The mount apply path still reports bridge refresh failure after successful Compose without a matching rollback/degraded-success state."
+    },
+    {
+      "number": 751,
+      "title": "Windows 源码安装：补齐独立应用窗口与插件应用内标签体验",
+      "url": "https://github.com/skyelan1999/aide/issues/751",
+      "scope": "windows",
+      "decision": "closed_not_planned",
+      "basis": "本条 UI 交付已在 main（021e375 / edbe568）且保留 Windows 原生标签、明暗与取消/隔离验收；本轮当前 main 的 Windows amd64/arm64 编译与 native-ui CI 再次通过。后续反馈中的 host-stop-required/确认停止阻断没有当前主机状态回执，本机无法复现该主机启动故障，不能据此删除保护标记。按维护者本轮整理要求暂时关闭；若当前版本仍启动受阻，带脱敏 host-status 与停止回执重开。Windows Hello 硬件及完整受影响主机启动仍未验证。"
+    },
+    {
+      "number": 710,
+      "title": "[P2] Honor the numeric value of /SMaskInData in JPXDecode images",
+      "url": "https://github.com/skyelan1999/aide/issues/710",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 708,
+      "title": "[P2] Preserve HT cleanup/refinement segments across quality layers",
+      "url": "https://github.com/skyelan1999/aide/issues/708",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 707,
+      "title": "[P3] Abort JPX decode after tag-tree node allocation failure",
+      "url": "https://github.com/skyelan1999/aide/issues/707",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 705,
+      "title": "[P2] Use neutral chroma for odd-origin subsampled sYCC edge pixels",
+      "url": "https://github.com/skyelan1999/aide/issues/705",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 704,
+      "title": "[P2] Keep host bridge PID files tied to the listening process",
+      "url": "https://github.com/skyelan1999/aide/issues/704",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Fallback bridge wrappers still use PID-file check/spawn/port readiness without shared cross-process ownership; current native hosts do not prove these legacy/fallback paths safe."
+    },
+    {
+      "number": 701,
+      "title": "[P2] Make stale helper lock cleanup atomic against a replacement owner",
+      "url": "https://github.com/skyelan1999/aide/issues/701",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "clearDeadLock still has a check-to-unlink race against a replacement owner; no scheduler-race fix was merged."
+    },
+    {
+      "number": 700,
+      "title": "[P2] Convert sYCC color channels before emitting JPX opacity RGBA",
+      "url": "https://github.com/skyelan1999/aide/issues/700",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 697,
+      "title": "[P2] Confine SFTP reference writes to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/697",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "SFTP reference writes still dispatch CLI put/rename after lexical validation; the read-side confinement fix is not a write-side fix."
+    },
+    {
+      "number": 695,
+      "title": "[P2] Confine SSH workspace mutations to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/695",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "SSH mutations still use legacy write/delete/mkdir/rename paths; absolute system/cache reads cannot simply be globally disabled to repair this."
+    },
+    {
+      "number": 694,
+      "title": "[P2] Confine SFTP reference text reads to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/694",
+      "scope": "core",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "Existing source-text read uses root-confined transferFS.Open; new actual SFTP regression verifies direct and parent symlinks are rejected."
+    },
+    {
+      "number": 693,
+      "title": "[P2] Convert e-sYCC output to standard sRGB",
+      "url": "https://github.com/skyelan1999/aide/issues/693",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 692,
+      "title": "[P2] Preserve JPX opacity channel in CMYK images with SMaskInData",
+      "url": "https://github.com/skyelan1999/aide/issues/692",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 691,
+      "title": "[P2] Confine SFTP workspace reads to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/691",
+      "scope": "core",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "SSH archive/download raw reads use root-confined SFTP Open rather than the absolute cache/system-file reader."
+    },
+    {
+      "number": 690,
+      "title": "[P2] Normalize signed samples in automatic CMYK JPX conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/690",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 689,
+      "title": "[P2] Avoid signed overflow in precision-31 sYCC RGB sums",
+      "url": "https://github.com/skyelan1999/aide/issues/689",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 688,
+      "title": "[P2] Preserve e-sYCC color handling for subsampled JPX components",
+      "url": "https://github.com/skyelan1999/aide/issues/688",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 687,
+      "title": "[P2] Stop scaling the freed K component after CMYK conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/687",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 686,
+      "title": "[P2] Bound temporary sYCC output planes for attacker-controlled JPX dimensions",
+      "url": "https://github.com/skyelan1999/aide/issues/686",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 684,
+      "title": "[P3] Free MCT payloads when record-array growth fails",
+      "url": "https://github.com/skyelan1999/aide/issues/684",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "原证据依赖临时原生 C 分配器插桩；原报告明确未在嵌入模块隔离出对应 realloc 失败，当前生成模块没有同一插桩回执。"
+    },
+    {
+      "number": 683,
+      "title": "[P2] Bound per-tile copies of attacker-controlled MCT payloads in JPX",
+      "url": "https://github.com/skyelan1999/aide/issues/683",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 682,
+      "title": "[P3] Clean nested resources when the outer precinct array cannot grow",
+      "url": "https://github.com/skyelan1999/aide/issues/682",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 681,
+      "title": "[P2] Normalize sYCC channels using each component's precision",
+      "url": "https://github.com/skyelan1999/aide/issues/681",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 680,
+      "title": "[P3] Reject PLM marker sequences with unterminated packet lengths",
+      "url": "https://github.com/skyelan1999/aide/issues/680",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 679,
+      "title": "[P3] Reject reserved ST=3 in JPEG 2000 TLM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/679",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 677,
+      "title": "[P2] Bound PDF.js RunLengthDecode stream expansion",
+      "url": "https://github.com/skyelan1999/aide/issues/677",
+      "scope": "pdf_decoder",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "RunLengthDecode caps output/hints at 64 MiB before allocation, with normal and exact-boundary controls."
+    },
+    {
+      "number": 675,
+      "title": "[P3] Require IHDR to be the first JP2H child box",
+      "url": "https://github.com/skyelan1999/aide/issues/675",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 674,
+      "title": "PTERM warning gate uses component 0 style for every component",
+      "url": "https://github.com/skyelan1999/aide/issues/674",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "PTERM 警告开关的静态差异；未给出当前 bundle 的诊断差异样本或产品输出故障。"
+    },
+    {
+      "number": 669,
+      "title": "Keep eYCC SIMD and scalar tail conversion consistent",
+      "url": "https://github.com/skyelan1999/aide/issues/669",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "当前生成的 wasm2js 模块中，按 #681 同一 5×1、[31,8,8] 分量样本将 COLR 改为 eYCC(24) 后，五个像素均为 [0,0,0,255]，没有原报告的前四像素/尾像素 SIMD 差异。这里只是无法复现本条特定差异，不宣称 eYCC 颜色正确；#688/#693/#681 的其它颜色问题仍单独保留。"
+    },
+    {
+      "number": 665,
+      "title": "[P2] Store full-stripe HT SPP membership updates in mbr, not sigma",
+      "url": "https://github.com/skyelan1999/aide/issues/665",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 660,
+      "title": "[P2] Verify Sherpa-ONNX release archives before embedding them",
+      "url": "https://github.com/skyelan1999/aide/issues/660",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Sherpa executable archives are downloaded/extracted without a reviewed per-architecture digest check; no compromised asset is alleged."
+    },
+    {
+      "number": 659,
+      "title": "[P2] Bound quadratic CDEF completeness scans during JP2 decode",
+      "url": "https://github.com/skyelan1999/aide/issues/659",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 658,
+      "title": "[P2] Pin Docker base images to immutable digests in release builds",
+      "url": "https://github.com/skyelan1999/aide/issues/658",
+      "scope": "core",
+      "decision": "retain_open",
+      "basis": "Release/SDK base images still resolve mutable tags. Pinning must preserve the separate local/offline build contract and be verified for both architectures."
+    },
+    {
+      "number": 653,
+      "title": "[P2] Widen reversible DC-level shift addition before clamping",
+      "url": "https://github.com/skyelan1999/aide/issues/653",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 652,
+      "title": "[P3] Check Tier-2 segment lengths without out-of-array pointer arithmetic",
+      "url": "https://github.com/skyelan1999/aide/issues/652",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C Tier-2 长度比较中形成指针的推导；报告未提供当前 Aide 端到端输入，且没有越界读取/陷阱/可见影响。"
+    },
+    {
+      "number": 651,
+      "title": "[P3] Keep the HT reverse VLC cursor within the code-block buffer",
+      "url": "https://github.com/skyelan1999/aide/issues/651",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C reverse-VLC 游标形成问题；后续评论补充了可达性，但仍未建立解引用、Wasm 越界或独立可执行的产品故障。"
+    },
+    {
+      "number": 648,
+      "title": "[P3] Avoid advancing whole-tile output pointer beyond one-past after the final row",
+      "url": "https://github.com/skyelan1999/aide/issues/648",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C 全图输出循环末尾形成指针的推导；报告确认 Wasm 最后一次加法后没有解引用，也未保留独立复现输入。"
+    },
+    {
+      "number": 642,
+      "title": "[P2] Validate JPEG 2000 segmentation symbols during cleanup pass",
+      "url": "https://github.com/skyelan1999/aide/issues/642",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 641,
+      "title": "[P2] Reset the cached OpenJPEG Wasm module after RuntimeError",
+      "url": "https://github.com/skyelan1999/aide/issues/641",
+      "scope": "pdf_decoder",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "JpxImage discards the cached module after a decode exception; actual generated-factory fault injection verifies subsequent decode uses a fresh module."
+    },
+    {
+      "number": 634,
+      "title": "[P3] Avoid beyond-array cursor increments in full-stripe HT MRP loop",
+      "url": "https://github.com/skyelan1999/aide/issues/634",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C full-stripe MRP 指针形成问题；报告确认实际加载/存储受掩码约束，没有当前运行时越界或输出错误证据。"
+    },
+    {
+      "number": 633,
+      "title": "[P3] Avoid beyond-array pointer arithmetic in terminal HT MRP loop",
+      "url": "https://github.com/skyelan1999/aide/issues/633",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C terminal-MRP 指针形成问题；报告保留的已运行样本没有建立 Wasm 越界、像素差异或浏览器故障。"
+    },
+    {
+      "number": 629,
+      "title": "[P2] Bound JPEG 2000 packet-iterator memory by layer and precinct counts",
+      "url": "https://github.com/skyelan1999/aide/issues/629",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 627,
+      "title": "[P2] Normalize signed JPX grayscale samples before RGBA conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/627",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 626,
+      "title": "[P2] Bound OpenJPEG Tier-2 unary increments before overflow",
+      "url": "https://github.com/skyelan1999/aide/issues/626",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 625,
+      "title": "[P2] Preserve fractional values in irreversible MCT offset arrays",
+      "url": "https://github.com/skyelan1999/aide/issues/625",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 624,
+      "title": "[P2] Decode JPEG 2000 inclusion layers above 999 correctly",
+      "url": "https://github.com/skyelan1999/aide/issues/624",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 623,
+      "title": "[P2] Advance the MCC record pointer when selecting an MCO transform",
+      "url": "https://github.com/skyelan1999/aide/issues/623",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 622,
+      "title": "[P2] Abort JPX decode when output component-header allocation fails",
+      "url": "https://github.com/skyelan1999/aide/issues/622",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 621,
+      "title": "[P1] Prevent HTJ2K terminal SPP writes past the coefficient allocation",
+      "url": "https://github.com/skyelan1999/aide/issues/621",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 618,
+      "title": "[P2] Avoid wrapped packet indexes aliasing distinct JPEG 2000 packets",
+      "url": "https://github.com/skyelan1999/aide/issues/618",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 614,
+      "title": "[P2] Bounds-check packet precinct indexes before array access",
+      "url": "https://github.com/skyelan1999/aide/issues/614",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 612,
+      "title": "[Codex Bridge] Windows Install appears unresponsive and remains Not installed",
+      "url": "https://github.com/skyelan1999/aide/issues/612",
+      "scope": "windows",
+      "decision": "closed_completed",
+      "basis": "旧管理器安装按钮反馈修复已包含在 Aide 当前固定的宿主源码 627f043（祖先 51feb7b / 0.3.3 install-feedback），新版还提供 Aide 内宿主管理路径。本轮运行固定源树 manager-ui 7/7 回归，覆盖前提不满足的原因、连接/授权失效、安装超时提示及不自动重试；Go 安装/CLI/合成 Codex 回归通过。公开 0.4.1 manager 附件存在。"
+    },
+    {
+      "number": 608,
+      "title": "[P2] Reject unsupported PCLR precision instead of truncating palette values",
+      "url": "https://github.com/skyelan1999/aide/issues/608",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 607,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPT headers",
+      "url": "https://github.com/skyelan1999/aide/issues/607",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 602,
+      "title": "[Codex Bridge] GUI-launched bridge cannot locate Codex CLI and returns 502 for model catalog",
+      "url": "https://github.com/skyelan1999/aide/issues/602",
+      "scope": "plugin",
+      "decision": "closed_completed",
+      "basis": "Aide 当前 main 的 docker/codex-host-source.json 固定宿主源码 627f043，已确认它包含 GUI CLI 查找修复 07c3f09。当前公开 Codex Bridge 0.4.1 README 也记录验证并持久化 CLI 绝对路径的流程；0.4.1 Release 与六平台 manager 附件存在。本轮对该固定源树执行 Go CLI/安装/合成 Codex 回归通过（0.526s），没有读取真实账号资料。"
+    },
+    {
+      "number": 597,
+      "title": "[P2] Bound JP2 PCLR channel expansion to prevent excessive Wasm memory growth",
+      "url": "https://github.com/skyelan1999/aide/issues/597",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 594,
+      "title": "[P3] Free nested decoder allocations when precinct code-block growth fails",
+      "url": "https://github.com/skyelan1999/aide/issues/594",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 593,
+      "title": "[P2] Cap main-header marker-index growth from repeated COM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/593",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 592,
+      "title": "[P3] Reject reserved ROI styles in RGN markers",
+      "url": "https://github.com/skyelan1999/aide/issues/592",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 591,
+      "title": "[P3] Reject unsupported progression-order values in POC markers",
+      "url": "https://github.com/skyelan1999/aide/issues/591",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 590,
+      "title": "[P2] Check Wasm32 calloc byte-size overflow in JPEG 2000 packet iterator",
+      "url": "https://github.com/skyelan1999/aide/issues/590",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 582,
+      "title": "[P2] Sign-extend signed int16 MCT offsets before conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/582",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 579,
+      "title": "[P2] Bound ICC profile copies during JP2 header parsing",
+      "url": "https://github.com/skyelan1999/aide/issues/579",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 578,
+      "title": "[P3] Check signed arithmetic in reversible MCT decoding",
+      "url": "https://github.com/skyelan1999/aide/issues/578",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 C 逆 MCT 的有符号算术推导；原报告明确尚未构造能在嵌入解码器中复现的 JP2 样本。"
+    },
+    {
+      "number": 576,
+      "title": "[P2] Bound Tier-2 segment growth from attacker-declared coding passes",
+      "url": "https://github.com/skyelan1999/aide/issues/576",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 574,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPM headers",
+      "url": "https://github.com/skyelan1999/aide/issues/574",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 573,
+      "title": "[P2] Cap per-tile JPX metadata allocation from SIZ tile counts",
+      "url": "https://github.com/skyelan1999/aide/issues/573",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 572,
+      "title": "[P2] Bound memory growth from oversized JP2 FTYP compatibility lists",
+      "url": "https://github.com/skyelan1999/aide/issues/572",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    },
+    {
+      "number": 571,
+      "title": "[P3] Avoid using the old MCT base pointer after realloc in bundled OpenJPEG",
+      "url": "https://github.com/skyelan1999/aide/issues/571",
+      "scope": "pdf_decoder",
+      "decision": "closed_not_planned",
+      "basis": "旧 OpenJPEG C 源码在 realloc 后使用旧基址的可移植性推导；报告本身未给出当前 Aide 的崩溃、像素差异或越界访问。"
+    },
+    {
+      "number": 570,
+      "title": "[P2] Upsample subsampled JPX component planes before copying",
+      "url": "https://github.com/skyelan1999/aide/issues/570",
+      "scope": "pdf_decoder",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "Current pinned upstream decoder supports subsampling; both upstream regression PDFs rendered all ten 32x32 images with 4096-byte outputs in Chromium."
+    },
+    {
+      "number": 569,
+      "title": "[P2] Check OpenJPEG input allocation before copying into Wasm",
+      "url": "https://github.com/skyelan1999/aide/issues/569",
+      "scope": "pdf_decoder",
+      "decision": "fixed_and_validated_in_this_change",
+      "basis": "Current adapter already rejects zero input allocations before copying; fault injection verifies no write at offset zero."
+    },
+    {
+      "number": 568,
+      "title": "[P2] Cap SIZ-derived JPX component buffers during tile updates",
+      "url": "https://github.com/skyelan1999/aide/issues/568",
+      "scope": "pdf_decoder",
+      "decision": "retain_open",
+      "basis": "Report includes a concrete serialized/fault-injection or output/resource reproduction. This audit does not modify native-generated arithmetic/HTJ2K/allocator internals or claim issue-specific resolution. Retain the original evidence for a dedicated decoder change."
+    }
+  ],
+  "pdfInlineCurrentResults": [
+    {
+      "number": 823,
+      "status": "DECODED",
+      "length": 20,
+      "first": [
+        128,
+        128,
+        127,
+        255,
+        128,
+        128,
+        127,
+        255,
+        128,
+        128,
+        127,
+        255,
+        128,
+        128,
+        127,
+        255,
+        128,
+        128,
+        127,
+        255
+      ]
+    },
+    {
+      "number": 690,
+      "status": "DECODED",
+      "length": 16,
+      "first": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        143,
+        143,
+        143,
+        255,
+        64,
+        64,
+        64,
+        255
+      ]
+    },
+    {
+      "number": 689,
+      "status": "DECODED",
+      "length": 16,
+      "first": [
+        0,
+        124,
+        0,
+        255,
+        0,
+        124,
+        0,
+        255,
+        0,
+        124,
+        0,
+        255,
+        0,
+        124,
+        0,
+        255
+      ]
+    },
+    {
+      "number": 681,
+      "status": "DECODED",
+      "length": 20,
+      "first": [
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255,
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "number": 675,
+      "status": "DECODED",
+      "length": 20,
+      "first": [
+        127,
+        128,
+        128,
+        255,
+        127,
+        128,
+        128,
+        255,
+        127,
+        128,
+        128,
+        255,
+        127,
+        128,
+        128,
+        255,
+        127,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "number": 642,
+      "status": "DECODED",
+      "length": 256,
+      "first": [
+        108,
+        34,
+        44,
+        255,
+        107,
+        35,
+        12,
+        255,
+        111,
+        34,
+        29,
+        255,
+        110,
+        34,
+        29,
+        255,
+        109,
+        34,
+        27,
+        255,
+        110,
+        36,
+        31,
+        255,
+        107,
+        36,
+        15,
+        255,
+        112,
+        52,
+        24,
+        255
+      ]
+    },
+    {
+      "number": 629,
+      "status": "NOT_RUN",
+      "reason": "declared 16 Mi pixels / 65535 layers; known amplification, no large allocation in this sweep"
+    },
+    {
+      "number": 627,
+      "status": "DECODED",
+      "length": 80,
+      "first": [
+        64,
+        64,
+        64,
+        255,
+        0,
+        0,
+        0,
+        255,
+        126,
+        126,
+        126,
+        255,
+        0,
+        0,
+        0,
+        255,
+        64,
+        64,
+        64,
+        255,
+        0,
+        0,
+        0,
+        255,
+        64,
+        64,
+        64,
+        255,
+        0,
+        0,
+        0,
+        255
+      ]
+    }
+  ],
+  "pdf669Current": {
+    "number": 669,
+    "trigger": "issue681 same 5x1 sample with COLR changed from sYCC(18) to eYCC(24)",
+    "pixels": [
+      [
+        0,
+        0,
+        0,
+        255
+      ],
+      [
+        0,
+        0,
+        0,
+        255
+      ],
+      [
+        0,
+        0,
+        0,
+        255
+      ],
+      [
+        0,
+        0,
+        0,
+        255
+      ],
+      [
+        0,
+        0,
+        0,
+        255
+      ]
+    ],
+    "uniform": true
+  },
+  "browser": {
+    "status": "PASS",
+    "pdf": {
+      "short": 12,
+      "decodedBytes": 48,
+      "rejected": "RunLengthDecode output exceeds 64 MiB"
+    },
+    "pluginDefaultWorkspace": {
+      "workspace": "local||",
+      "id": "terminal",
+      "opener": null
+    },
+    "scope": "actual bundled decoder/stream and actual workbench route script in Chromium; test exports only"
+  },
+  "upstreamJpxBrowser": [
+    {
+      "name": "jpx_numcomps.pdf",
+      "images": [
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        }
+      ],
+      "canvas": [
+        320,
+        220
+      ]
+    },
+    {
+      "name": "jpx_subsampling.pdf",
+      "images": [
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "bytes": 4096
+        }
+      ],
+      "canvas": [
+        220,
+        220
+      ]
+    }
+  ],
+  "validation": {
+    "quick": {
+      "status": "pass",
+      "commands": 326
+    },
+    "coreGo": {
+      "status": "pass",
+      "seconds": 2.572,
+      "scope": "host Go types + actual SFTP protocol read/archive boundary, existing read bounds/random access"
+    },
+    "uiAndPdf": "See browser payloads; deterministic fixtures only",
+    "codexManager": {
+      "pinnedSource": "627f04300558fbc8b40be34feb6c66690ef2abca",
+      "goSeconds": 0.526,
+      "uiChecks": 7
+    }
+  },
+  "originalPRs": [
+    {
+      "number": 370,
+      "result": "closed_retired_implementation"
+    },
+    {
+      "number": 670,
+      "result": "merged_after_refresh"
+    },
+    {
+      "number": 671,
+      "result": "merged_after_refresh"
+    },
+    {
+      "number": 672,
+      "result": "merged_after_refresh"
+    },
+    {
+      "number": 791,
+      "result": "merged_after_refresh"
+    },
+    {
+      "number": 826,
+      "result": "closed_superseded_by_853"
+    },
+    {
+      "number": 827,
+      "result": "closed_superseded_by_853"
+    },
+    {
+      "number": 828,
+      "result": "closed_superseded_by_853"
+    },
+    {
+      "number": 829,
+      "result": "closed_superseded_by_853"
+    },
+    {
+      "number": 830,
+      "result": "closed_superseded_by_853"
+    }
+  ],
+  "limits": [
+    "No binary Release or production replacement",
+    "No paid models, real billing accounts or physical Windows/Linux acceptance",
+    "Preserve all uncommitted user work and unpublished candidate worktrees",
+    "Fixed-in-change decisions close only after the implementing change is merged; GitHub issue/PR events are the final operational state"
+  ]
+}
