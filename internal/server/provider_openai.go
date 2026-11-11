@@ -31,11 +31,40 @@ func openAIRequiresReasoning(model string) bool {
 	return false
 }
 
-// These are application choices (off maps to the provider's none value).
-// Only documented model families expose the additional xhigh/max choices.
+// providerUsesOpenAIReasoningEffort is an explicit opt-in for compatible
+// endpoints such as Codex Bridge. Unknown providers keep their legacy wire
+// format unless the provider owner declares support in model settings.
+func providerUsesOpenAIReasoningEffort(cfg Settings) bool {
+	return providerReasoningEffortFormat(cfg) != ""
+}
+
+func providerReasoningEffortFormat(cfg Settings) string {
+	providerID := "default"
+	for _, model := range cfg.Models {
+		if model.ID == cfg.Model {
+			if model.ProviderID != "" {
+				providerID = model.ProviderID
+			}
+			break
+		}
+	}
+	for i := range cfg.ModelProviders {
+		if cfg.ModelProviders[i].ID == providerID {
+			return cfg.ModelProviders[i].ReasoningEffortFormat
+		}
+	}
+	return ""
+}
+
+// These are application choices. Endpoint-specific wire format maps off to the
+// value that endpoint understands; only documented families expose xhigh/max
+// unless a provider explicitly opts into the OpenAI reasoning format.
 func modelReasoningEfforts(cfg Settings) []string {
 	if modelCapabilityStatus(cfg, "reasoning") == "unsupported" {
 		return []string{"auto"}
+	}
+	if providerUsesOpenAIReasoningEffort(cfg) {
+		return []string{"auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"}
 	}
 	if isOpenAIEndpoint(cfg.BaseURL) {
 		if openAIRequiresReasoning(cfg.Model) {

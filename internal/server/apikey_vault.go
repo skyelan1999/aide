@@ -185,12 +185,13 @@ func (a *App) vaultKeyByIDLocked(vaultID string) (string, error) {
 }
 
 type modelProviderOut struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	BaseURL     string                `json:"baseURL"`
-	Protocol    string                `json:"protocol"`
-	ActiveKeyID string                `json:"activeKeyId,omitempty"`
-	Keys        []modelProviderKeyOut `json:"keys"`
+	ID                    string                `json:"id"`
+	Name                  string                `json:"name"`
+	BaseURL               string                `json:"baseURL"`
+	Protocol              string                `json:"protocol"`
+	ReasoningEffortFormat string                `json:"reasoningEffortFormat,omitempty"`
+	ActiveKeyID           string                `json:"activeKeyId,omitempty"`
+	Keys                  []modelProviderKeyOut `json:"keys"`
 }
 
 type modelProviderKeyOut struct {
@@ -202,7 +203,7 @@ type modelProviderKeyOut struct {
 func (a *App) modelProvidersOut() []modelProviderOut {
 	out := make([]modelProviderOut, 0, len(a.settings.ModelProviders))
 	for _, provider := range a.settings.ModelProviders {
-		item := modelProviderOut{ID: provider.ID, Name: provider.Name, BaseURL: provider.BaseURL, Protocol: provider.Protocol, ActiveKeyID: provider.ActiveKeyID, Keys: make([]modelProviderKeyOut, 0, len(provider.Keys))}
+		item := modelProviderOut{ID: provider.ID, Name: provider.Name, BaseURL: provider.BaseURL, Protocol: provider.Protocol, ReasoningEffortFormat: provider.ReasoningEffortFormat, ActiveKeyID: provider.ActiveKeyID, Keys: make([]modelProviderKeyOut, 0, len(provider.Keys))}
 		for _, key := range provider.Keys {
 			item.Keys = append(item.Keys, modelProviderKeyOut{ID: key.ID, Label: key.Label, HasKey: a.vault != nil && a.vault.Has(modelProviderVaultID(provider.ID, key.ID))})
 		}

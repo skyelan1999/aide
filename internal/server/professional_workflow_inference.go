@@ -18,7 +18,7 @@ func validatePWInference(n pwNode) error {
 		return nil
 	}
 	switch n.ReasoningEffort {
-	case "", "auto", "off", "low", "medium", "high", "xhigh", "max":
+	case "", "auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra":
 	default:
 		return errors.New("无效节点推理强度")
 	}
@@ -63,7 +63,7 @@ func (a *App) pwInferenceCatalogLocked() map[string]any {
 			}
 		}
 	}
-	return map[string]any{"agentTools": allowed, "profiles": profiles, "routerAvailable": router != nil, "reasoningEfforts": []string{"auto", "off", "low", "medium", "high"}, "parallelism": []int{1, 2, 3, 4, 5, 10}, "maxTokens": maxTokensCeiling}
+	return map[string]any{"agentTools": allowed, "profiles": profiles, "routerAvailable": router != nil, "reasoningEfforts": []string{"auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"}, "parallelism": []int{1, 2, 3, 4, 5, 10}, "maxTokens": maxTokensCeiling}
 }
 func (a *App) pwAgentToolAllowedLocked(name string) bool {
 	if toolDeniedIn(a.settings.DisabledTools, name) {
