@@ -1,0 +1,84 @@
+{
+  "id": "mapcanvas-gray-ui-20261111",
+  "request": "最好是改成一致的，然后把界面的UI优化一下，做的高级一些",
+  "baseline": "a9d00b66d806477a9e88b54d412ca75e3e1dedf6",
+  "initial_status": "",
+  "acceptance": [
+    "Imported gray brush uses most common source unknown pixel with validated trinary/negate thresholds, including GUI and AI outputs; no source writes.",
+    "Gray selection stays fixed during GUI editing; fallback without original unknowns is clearly shown.",
+    "Refined light/dark responsive workbench with coherent tool icons, compact source panel, readable map metadata, brush swatch and preserved hide/save/undo/redo tools.",
+    "Exact bundle tests and current existing local Aide UI acceptance; no second runtime."
+  ],
+  "scope": [
+    "../aide-pkg-MapCanvas",
+    "docs/tasks/mapcanvas-gray-ui-20261111.json",
+    "docs/reviews/2026-11-11-mapcanvas-gray-ui.md",
+    "internal/server/release_public_plugins_test.go",
+    "scripts/ci/public-plugins.lock.json",
+    "/Users/skyelan/WorkTrees/mapcanvas-market-20261111"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Preserve exact original unknown gray while retaining trinary semantics; polish plugin workbench without altering global Aide layout.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/845"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "One-time histogram of source unknown gray, validate native and 8-bit Nav2 interpretation; frozen GUI selection and shared AI selector. Native SVG icons, semantic theme tokens and grouped responsive controls.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/map-core.js",
+        "../aide-pkg-MapCanvas/workbench.html"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Original unknown gray selector shared by GUI and AI, frozen GUI value, visible swatch/source, refined SVG/grouped theme-aware UI and bounded scrollable controls.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/map-core.js",
+        "../aide-pkg-MapCanvas/workbench.html",
+        "../aide-pkg-MapCanvas/ai-tools.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "16 Node tests; current existing Aide native draw/undo/redo/save all64 changed pixels128, real AI dry-run/export/apply six pixels128, stale rejection; dark/light and100/200 percent native UI checked. Exact host candidate regression and0.2.0 backward compatibility checked. No second runtime, ROS2/hardware or paid model.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/docs/ACCEPTANCE.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and AI guide describe original-gray priority, fallback/unavailable and preview unknownBrush metadata. Acceptance distinguishes current UI/API from ROS2 runtime.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/AI-GUIDE.md",
+        "../aide-pkg-MapCanvas/docs/ACCEPTANCE.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Saved synthetic maps and test outputs retained; closed owned test workbench and restored dark theme and100 percent zoom. User maps, original plugin and upgrade backups preserved.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/docs/ACCEPTANCE.md"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "PluginPR2 main e79a855 andNode18/22CI passed;v0.2.1 Release andmarket ba6b72e Pages published; downloadedZIP SHA/length/CRC match installed candidate. Host publishedMapCanvas function0.629s andquick pass. No host runtime/restart/installer change. Host regression andlock change prepared for merge.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-MapCanvas/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-MapCanvas/releases/tag/v0.2.1",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/42966425953",
+        "docs/reviews/2026-11-11-mapcanvas-gray-ui.md"
+      ]
+    }
+  },
+  "release_authorization": "User previously explicitly requested push, plugin Release and market publication for this MapCanvas work; this follow-up corrects gray consistency and polishes UI.",
+  "rollback": "Existing plugin upgrade backups retained; user maps and original ros-map-editor untouched.",
+  "handoff": "Current local0.2.1 installed and verified. Plugin Release andmarket published; host test/lock ready for main merge. No second runtime orROS2/hardware claims.",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/845"
+  ]
+}
