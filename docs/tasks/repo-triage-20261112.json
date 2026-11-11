@@ -1,0 +1,90 @@
+{
+  "id": "repo-triage-20261112",
+  "request": "aide的这个页面上再加一个star数量；核查issue，关闭已解决且进入main者，尝试修复未解决者，证据不清注明无法复现暂时关闭；审查全部pull request，关闭无用者，重新检查合入有用者。",
+  "baseline": "6047b69c374799c4ac01df8ab335f16c14554c66",
+  "initial_status": "",
+  "acceptance": [
+    "Dynamic Star count is merged and actually visible in Safari.",
+    "Inventory and individual decisions cover all 111 initial issues and all 10 initial PRs.",
+    "Close completed issues only with main evidence; temporary closures explicitly use not_planned and retain reopening criteria.",
+    "Reviewed useful PR changes and targeted fixes pass applicable checks before main integration.",
+    "Preserve unrelated work, candidate trees, user data, private packages and current services."
+  ],
+  "scope": [
+    "README.md and README.en.md",
+    ".gitattributes",
+    "Go type snapshot and SSH archive read boundaries",
+    "PDF RunLength/OpenJPEG wrapper recovery and focused regressions",
+    "plugin workbench default workspace routing",
+    "current MapCanvas docs and task handoff",
+    "GitHub issue and PR triage, reviewed workflow upgrades",
+    "docs/reviews/2026-11-12-repo-triage and this task"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "111 issues / 10 PRs inventoried; current-main fixes, candidate-only reports and unresolved concrete evidence distinguished.",
+      "evidence": [
+        "docs/reviews/2026-11-12-repo-triage/README.md",
+        "docs/reviews/2026-11-12-repo-triage/audit.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Small source fixes, explicit completed versus temporary closure semantics; preserve current immutable package identities and local/offline contracts.",
+      "evidence": [
+        "docs/reviews/2026-11-12-repo-triage/README.md",
+        "docs/reviews/2026-11-12-repo-triage/audit.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Stars/checkout #852; refreshed useful PRs and #853 workflows merged; core/PDF/default-workspace fixes are in this reviewed source change.",
+      "evidence": [
+        "docs/reviews/2026-11-12-repo-triage/README.md",
+        "docs/reviews/2026-11-12-repo-triage/audit.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "326 quick commands pass; focused Go actual SFTP + host type regressions 2.572s; real Chromium routes/PDF worker; upstream JPX PDFs all ten images; no paid/live accounts. Remote implementation-PR CI is independently required.",
+      "evidence": [
+        "docs/reviews/2026-11-12-repo-triage/README.md",
+        "docs/reviews/2026-11-12-repo-triage/audit.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Complete 111-row audit, ten original PR outcomes, actual checks and unresolved limits recorded.",
+      "evidence": [
+        "docs/reviews/2026-11-12-repo-triage/README.md",
+        "docs/reviews/2026-11-12-repo-triage/audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned temporary browser/server containers stopped; no production stop, user-file cleanup or candidate removal. Unrelated original worktree changes preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-12-repo-triage/README.md",
+        "docs/reviews/2026-11-12-repo-triage/audit.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User authorized source fixes/PR integration and issue cleanup; no new binary Release or production deployment requested. GitHub PR/issue events record final source integration; do not treat this task as binary Delivery evidence.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User explicitly requested useful PRs be rechecked and merged; no new binary publication requested.",
+  "rollback": "Source changes can be reverted via the corresponding reviewed commits/PRs. No runtime image, user data, installed plugin or credential state was replaced.",
+  "handoff": "Review README/audit for each initial item. Remotely merged PRs #670/#671/#672/#791/#852/#853 and MapCanvas #3 have current GitHub event evidence. Core fixes close on their implementing PR merge; no full PDF-native-source rebuild or physical Windows validation is claimed.",
+  "operator": "skyelan1999",
+  "original_main_worktree": {
+    "head": "91d47779",
+    "preserved_untracked": [
+      "docs/reviews/2026-11-11-terminal-relay-performance.md",
+      "docs/tasks/boiler-private-release-20261112.json",
+      "docs/tasks/terminal-relay-performance-20261111.json"
+    ]
+  }
+}
