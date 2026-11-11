@@ -26,7 +26,10 @@
     "internal/server/web/locales/en.js",
     "scripts/test_ui_click_latency.cjs",
     "scripts/steer-user-bubbles.test.cjs",
-    "scripts/assistant-delegation.test.cjs"
+    "scripts/assistant-delegation.test.cjs",
+    "scripts/ci/public-plugins.lock.json",
+    "scripts/ci/basic_go.py",
+    "internal/server/release_public_plugins_test.go"
   ],
   "stages": {
     "requirements": {
@@ -78,9 +81,12 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Plugin source pushed; host source integration, plugin Release and market publication pending.",
+      "summary": "Core host 8214743c pushed main with CI success; public plugin source fb457bd, v0.1.0 Release and market bda968b Pages published and ZIP re-download/hash/CRC verified. Delivery inventory/function follow-up is locally tested, awaiting final host push/CI.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-MapCanvas"
+        "https://github.com/skyelan1999/aide/actions/runs/42949632783",
+        "https://github.com/skyelan1999/aide-pkg-MapCanvas/releases/tag/v0.1.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/42949977339",
+        "docs/reviews/2026-11-11-mapcanvas.md"
       ]
     }
   },

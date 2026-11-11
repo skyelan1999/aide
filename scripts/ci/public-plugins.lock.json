@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "marketRepository": "skyelan1999/aide-pkg-shop",
-  "marketRevision": "582effee8fc2530b6c552ff3fad24ef9d519dbae",
+  "marketRevision": "bda968b09d0976d6d78300b26f9e79938f9c4034",
   "plugins": [
     {
       "id": "ali-bailian-supporter",
@@ -362,14 +362,14 @@
     },
     {
       "id": "terminal",
-      "marketVersion": "1.6.0",
-      "package": "packages/terminal/1.6.0-c682f56ff469.zip",
-      "bytes": 1071482,
-      "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+      "marketVersion": "1.8.0",
+      "package": "packages/terminal/1.8.0-c458a12f5a51.zip",
+      "bytes": 1228467,
+      "sha256": "c458a12f5a51071bdc54c397758c63fd4621034c88b9aceb42c10390d1f1862e",
       "repository": "skyelan1999/aide-pkg-terminal",
-      "packageSourceCommit": "e71876627b457fd2bd64979d68a2fe44045e0634",
-      "latestPublicTag": "v1.6.0",
-      "latestPublicCommit": "28ca9f4132d03ad8e1137fd74d0998c3399ebd56",
+      "packageSourceCommit": "b2487d10fee4c8cc42224f588de9ca81300cb67d",
+      "latestPublicTag": "v1.8.0",
+      "latestPublicCommit": "b2487d10fee4c8cc42224f588de9ca81300cb67d",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",
@@ -489,6 +489,40 @@
       "packageSourceCommit": "be30cefdbe467478a13f64bcc63c1020cb7b7c10",
       "latestPublicTag": "v0.1.0",
       "latestPublicCommit": "be30cefdbe467478a13f64bcc63c1020cb7b7c10",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "computer-control",
+      "marketVersion": "1.2.0",
+      "package": "packages/computer-control/1.2.0-16c147b479ce.zip",
+      "bytes": 5746,
+      "sha256": "16c147b479ceacb0da20b96994e29f19d2623625a2534e6f5cf1853969a4e8f2",
+      "repository": "skyelan1999/aide-pkg-ComputerControl",
+      "packageSourceCommit": "cc92cd730b8120ac3a0cf7224dbfad4774fdce11",
+      "latestPublicTag": "v1.2.0",
+      "latestPublicCommit": "d37d767485ea6f44e9405e3a2ad47705cdfbd99c",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "mapcanvas",
+      "marketVersion": "0.1.0",
+      "package": "packages/mapcanvas/0.1.0-7fe1dc086c11.zip",
+      "bytes": 15326,
+      "sha256": "7fe1dc086c1168f7cadb6260f99f747e05b1233b5ce3f475d1acfcbb02fdd779",
+      "repository": "skyelan1999/aide-pkg-MapCanvas",
+      "packageSourceCommit": "fb457bd23d5787480bb1c0a622515cbaf945b923",
+      "latestPublicTag": "v0.1.0",
+      "latestPublicCommit": "fb457bd23d5787480bb1c0a622515cbaf945b923",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",

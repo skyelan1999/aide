@@ -6,7 +6,7 @@
 
 新名称：栅图 MapCanvas；ID mapcanvas；首次公开版本 0.1.0。独立工具 mapcanvas_sources / mapcanvas_browse / mapcanvas_read，MIT。插件 ZIP 只包含明确白名单代码、使用说明、许可证及小型合成地图，不含实例设置、用户地图、宿主补丁或凭据。
 
-已发现并修复 P2 像素整数进入 Uint16Array 前未检查溢出的问题。7 项 Node 核心/工具回归通过；宿主 Map/Document/Workbench/Market 聚焦 Go 回归 21.002s 通过。实际 ZIP 安装、页面、市场与远端产物状态将在完成后记录；本段不表示已发布。
+已发现并修复 P2 像素整数进入 Uint16Array 前未检查溢出的问题。7 项 Node 核心/工具回归通过；宿主 Map/Document/Workbench/Market 聚焦 Go 回归 21.002s 通过。安装、页面、市场与远端产物的后续验证记录如下。
 
 ## 当前本地实例验收
 
@@ -26,3 +26,14 @@
 ## 回滚
 
 禁用 mapcanvas 可撤回插件入口，原 ros-map-editor 不受影响。宿主源码可回退本次集成提交并依既有 build.command 流程重建；用户地图无迁移。市场使用不可变版本 ZIP 和 SHA；旧宿主不支持 map-image-document-v1 时拒绝安装本插件。合成验收文件保留于独立缓存供复核。
+
+## 已发布产物与发行回归接入
+
+- [插件源码](https://github.com/skyelan1999/aide-pkg-MapCanvas/tree/fb457bd23d5787480bb1c0a622515cbaf945b923)，Node18/22 CI通过。
+- [插件 0.1.0 Release](https://github.com/skyelan1999/aide-pkg-MapCanvas/releases/tag/v0.1.0)，ZIP及SHA256SUMS.txt均已上传；重新下载的ZIP摘要与本地安装包相同。
+- [宿主核心集成 8214743c](https://github.com/skyelan1999/aide/commit/8214743ce2b3c19987e0b494d9b1e336af7e63ae) 已推送main，GitHub Aide CI quick/go/gate通过。按用户本次直接push授权推送，GitHub报告使用了维护者的PR/状态检查规则绕过；这不替代随后CI通过的证据。
+- [市场 bda968b](https://github.com/skyelan1999/aide-pkg-shop/commit/bda968b09d0976d6d78300b26f9e79938f9c4034) 已推送main并部署，市场测试和Pages工作流通过；线上catalog存在mapcanvas0.1.0，实际下载ZIP的长度、SHA和CRC均与发布包一致。
+- Aide 后续发行冻结清单同步到本次市场版本（31个公用包）：新增MapCanvas与此前市场已有ComputerControl，并对齐此前已有Terminal1.8.0；没有重打包其它插件。冻结包清点和身份校验通过，不等于31个包本轮功能复验。
+- 为未来发行添加MapCanvas原包功能用例，并加入push基础Go门禁。只在既有aide-aide-1内运行过滤后的MapCanvas发布包回归：实际安装原ZIP、来源过滤、分块读取及SHA、动态原图绑定、未确认不写入、宿主提交后字节匹配通过（0.475s）。完整31包/双架构发行回归本轮未执行。
+
+当前本地 Aide 刷新 `/api/plugin-market?refresh=1` 实际返回 mapcanvas0.1.0、compatible=true、installedVersion=0.1.0，catalog非陈旧且无刷新错误。
