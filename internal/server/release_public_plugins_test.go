@@ -615,9 +615,13 @@ func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
 	text := call("mapcanvas_preview", map[string]any{"yamlPath": "map.yaml"})
 	var preview struct {
 		Map struct {
-			ImageSHA string `json:"imageSha256"`
-			YAMLSHA  string `json:"yamlSha256"`
-			Width    int    `json:"width"`
+			ImageSHA     string `json:"imageSha256"`
+			YAMLSHA      string `json:"yamlSha256"`
+			Width        int    `json:"width"`
+			UnknownBrush *struct {
+				Value  int    `json:"value"`
+				Source string `json:"source"`
+			} `json:"unknownBrush"`
 		} `json:"map"`
 	}
 	if err := json.Unmarshal([]byte(text), &preview); err != nil || preview.Map.ImageSHA != hash(original) || preview.Map.YAMLSHA != hash(yaml) || preview.Map.Width != 2 || len(sink.images) != 1 {
@@ -625,6 +629,13 @@ func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
 	}
 	if strings.Contains(text, "dataBase64") || !strings.Contains(text, "imageNotice") {
 		t.Fatal("visual evidence leaked into text", text)
+	}
+	expectedGray := uint8(147) // 0.2.0 used the midpoint; newer packages inherit source127.
+	if preview.Map.UnknownBrush != nil {
+		if preview.Map.UnknownBrush.Value != 127 || preview.Map.UnknownBrush.Source != "map" {
+			t.Fatal("unknown brush does not match original map", text)
+		}
+		expectedGray = 127
 	}
 	args := map[string]any{"yamlPath": "map.yaml", "expectedImageSha256": preview.Map.ImageSHA, "expectedYamlSha256": preview.Map.YAMLSHA, "operations": []any{map[string]any{"type": "rect", "mode": "gray", "x": 1, "y": 0, "width": 1, "height": 1}}, "outputPath": "ai/map-edited.pgm"}
 	text = call("mapcanvas_preview", args)
@@ -645,7 +656,7 @@ func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
 	task.Status = "awaiting_approval"
 	requireStatus(t, request(a, "POST", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/apply", nil), 200)
 	after, err := os.ReadFile(filepath.Join(a.workPath, "ai/map-edited.pgm"))
-	if err != nil || !bytes.Contains(after, []byte("147")) {
+	if err != nil || !bytes.Contains(after, []byte(fmt.Sprint(expectedGray))) {
 		t.Fatal("gray PGM readback", err)
 	}
 	if b, err := os.ReadFile(filepath.Join(a.workPath, "map.yaml")); err != nil || !bytes.Equal(b, yaml) {
@@ -659,7 +670,7 @@ func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
 	}
 	raster, _ := base64.StdEncoding.DecodeString(strings.SplitN(newSink.images[0].DataURL, ",", 2)[1])
 	im, err := png.Decode(bytes.NewReader(raster))
-	if err != nil || color.GrayModel.Convert(im.At(1, 0)).(color.Gray).Y != 147 {
+	if err != nil || color.GrayModel.Convert(im.At(1, 0)).(color.Gray).Y != expectedGray {
 		t.Fatal("preview pixels differ", err)
 	}
 	args["expectedImageSha256"] = strings.Repeat("0", 64)
@@ -668,5 +679,5 @@ func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
 	if !strings.Contains(text, "版本") || len(task.Files) != count {
 		t.Fatal("stale digest accepted", text)
 	}
-	return []string{"actual tool dispatcher carries PNG preview/dry-run as visual evidence with source SHA and no Base64 in text", "gray edit creates paired proposals without input writes; host applies and output PNG readback contains expected147 pixel; stale SHA rejected"}
+	return []string{"actual tool dispatcher carries PNG preview/dry-run as visual evidence with source SHA and no Base64 in text", "gray edit creates paired proposals without input writes; host applies and output PNG readback contains expected unknown pixel; stale SHA rejected"}
 }
