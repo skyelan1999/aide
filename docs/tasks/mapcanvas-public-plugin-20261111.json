@@ -58,7 +58,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Current existing local Aide native UI: PGM/PNG import/edit/undo/redo/trusted parent save, unchanged YAML/posegraph, downloaded ZIP CRC/raster hash, readonly import/edit/export generation and write denial. Focused Go 21.002s and plugin7/workbench13 tests PASS. Quick PASS c21718f8; current-runtime rebuild. No second Aide runtime; full platform/hardware matrix NOT_RUN.",
+      "summary": "Current existing local Aide native UI: PGM/PNG import/edit/undo/redo/trusted parent save, unchanged YAML/posegraph, downloaded ZIP CRC/raster hash, readonly import/edit/export generation and write denial. Focused Go 21.002s and plugin7/workbench13 tests PASS. Quick PASS c21718f8; current-runtime rebuild. No second Aide runtime; full platform/hardware matrix NOT_RUN. Final unchanged-code quick fingerprint840a9269902c6911481e76bd92e112d26a03e319f4605824d63cbf717d8fd8a6 PASS. Filtered exact-published MapCanvas host install/read/bind/save regression0.475s PASS; full31-package/dual-arch matrix not run.",
       "evidence": [
         "docs/reviews/2026-11-11-mapcanvas.md",
         "../aide-pkg-MapCanvas/docs/ACCEPTANCE.md"
@@ -80,10 +80,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Core host 8214743c pushed main with CI success; public plugin source fb457bd, v0.1.0 Release and market bda968b Pages published and ZIP re-download/hash/CRC verified. Delivery inventory/function follow-up is locally tested, awaiting final host push/CI.",
+      "status": "pass",
+      "summary": "Host core 8214743c pushed main; delivery follow-up PR842 merged as09fdf659 after quick/go/gate success. Public plugin source fb457bd, v0.1.0 Release and market bda968b Pages published; Release/market ZIP re-download hash/CRC match installed package. Current local Aide reports compatible=true and installedVersion=0.1.0. No new host installer release.",
       "evidence": [
-        "https://github.com/skyelan1999/aide/actions/runs/42949632783",
+        "https://github.com/skyelan1999/aide/pull/842",
+        "https://github.com/skyelan1999/aide/actions/runs/42950678034",
         "https://github.com/skyelan1999/aide-pkg-MapCanvas/releases/tag/v0.1.0",
         "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/42949977339",
         "docs/reviews/2026-11-11-mapcanvas.md"
@@ -92,7 +93,7 @@
   },
   "release_authorization": "User explicitly requested direct push, plugin Release and market update, including required host changes.",
   "rollback": "Disable MapCanvas or revert the host integration commit and rebuild using existing flow; no user map/data migration.",
-  "handoff": "",
+  "handoff": "Requested public source, plugin Release, marketplace and host source updates completed. Existing local Aide used for install/UI; original plugin, user maps and existing viewer preserved. Whole Aide installer release, Windows/Linux native host and hardware acceptance not claimed.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/841"
   ]

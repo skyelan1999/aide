@@ -37,3 +37,9 @@
 - 为未来发行添加MapCanvas原包功能用例，并加入push基础Go门禁。只在既有aide-aide-1内运行过滤后的MapCanvas发布包回归：实际安装原ZIP、来源过滤、分块读取及SHA、动态原图绑定、未确认不写入、宿主提交后字节匹配通过（0.475s）。完整31包/双架构发行回归本轮未执行。
 
 当前本地 Aide 刷新 `/api/plugin-market?refresh=1` 实际返回 mapcanvas0.1.0、compatible=true、installedVersion=0.1.0，catalog非陈旧且无刷新错误。
+
+## 收尾
+
+[发行回归补充 PR #842](https://github.com/skyelan1999/aide/pull/842) 的 quick/go/gate 全部通过后，以维护者权限合入 main 09fdf659（仓库另要求一位代码所有者审批；本次按用户直接完成合并发布授权执行，未修改保护规则）。最终本地 quick 指纹840a9269902c6911481e76bd92e112d26a03e319f4605824d63cbf717d8fd8a6通过并与收尾代码内容一致。此收尾仅补发布记录，不改变安装包或产品代码。
+
+公开插件、Release附件、线上市场、当前实例已安装版本均为mapcanvas0.1.0，同一SHA-256。主程序本轮仅源码集成与当前本地重建，没有发布新的Aide DMG/EXE或全插件双架构发行声明。
