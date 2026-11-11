@@ -98,8 +98,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User authorized docs push; documentation, exact scope and source/hash checks passed. Preparing main commit and remote verification.",
+      "status": "pass",
+      "summary": "Docs-only commit pushed to public origin/main; exact remote SHA and whitepaper bytes verified via GitHub API. No app Release or deployment. Server reported existing direct-push PR/gate rule bypass, so no PR/CI gate pass claimed.",
       "evidence": [
         "docs/reviews/2026-11-11-aide-docs.md"
       ]
@@ -107,7 +107,7 @@
   },
   "release_authorization": "2026-11-11 user requested: 推送. Commit and push these Aide docs only; no app release, tag, market or runtime changes.",
   "rollback": "仅恢复本任务列出的文档；新白皮书/身份快照/报告/任务JSON为本次新增。先保留后续改动，不使用整树reset或clean；不涉及运行实例回退。",
-  "handoff": "Documentation complete; commit and push authorized, remote result pending. No code, plugin, market, version or runtime changes.",
+  "handoff": "Aide documentation content is public at the recorded main commit. Publication receipt is a documentation-only follow-up. No app code/version, plugin, market or local runtime changes.",
   "author": "Skye Lan",
   "issues": [],
   "checks": [
@@ -127,5 +127,12 @@
       "command": "Inline Python source/JSON/scope/anchor checks",
       "result": "PASS: 18 source hashes and byte counts; local source equals baseline; MapCanvas suffix unchanged; 21 documentation-only paths; current entry links and chapter anchors"
     }
-  ]
+  ],
+  "publication": {
+    "content_commit": "11491e3019b0250f09d18a391cd2c9120c3433b7",
+    "commit_url": "https://github.com/skyelan1999/aide/commit/11491e3019b0250f09d18a391cd2c9120c3433b7",
+    "whitepaper_url": "https://github.com/skyelan1999/aide/blob/11491e3019b0250f09d18a391cd2c9120c3433b7/docs/architecture/aide-technical-whitepaper.md",
+    "remote_verification": "GitHub main ref equals local content commit; public repository and file bytes verified",
+    "branch_rule_result": "Server accepted direct push with PR and gate expected-rule bypass warnings; no new branch-policy changes were made."
+  }
 }
