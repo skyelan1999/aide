@@ -98,11 +98,34 @@ OpenAISupporter 的目录改动只增加该显式条件，正式 RC1 仍不兼�
 The provider-support data catalog may declare local HTTP providers with an explicit localhost, 127.0.0.1 or host.docker.internal host, scheme=http and numeric port. Legacy declarations remain HTTPS/443 only. A quota-only catalog has no model prices or currency and must declare a balance path (same origin as the selected provider), auth=model-bearer and format=quota-windows. Absolute endpoints remain governed by the legacy HTTPS rules; local providers require the relative quota path. Plugin JS never receives credentials. The host performs a GET with the selected provider key, refuses redirects and returns only allowlisted quota windows. Metadata is revalidated after an in-flight call; disabled or replaced plugins cannot retain results.
 
 Quota windows carry remainingPercent, windowDurationMins and resetsAt; they never become a currency balance. Missing/invalid data remains unavailable. Pricing-only catalogs are labelled separately from missing plugins. Source hosts advertise provider-account-quota-v1, and matching marketplace entries must require this feature as well as declaring their version/source compatibility floors.
+## Browser page balances
 
-## Safari page-balance reader (PR #667 candidate; not merged or released)
+A data-only provider catalog may declare `balance.auth=browser-page` and
+`format=page-balance`, with an HTTPS `pageURL`, plain `label` and `accountMarker`,
+a same-origin `identityLinkPrefix`, and `refreshSeconds` between 300 and 3600.
+This requires the `provider-browser-balance-v1` host capability and an updated
+macOS Aide Computer Bridge with Accessibility permission. Pricing stays separate.
 
-The browser-page proposal extends a data-only provider catalog with `balance.auth=browser-page`, `format=page-balance`, an HTTPS `pageURL`, a display `label` and `accountMarker`, a same-origin `identityLinkPrefix`, and `refreshSeconds` in the 300–3600 range. A host must explicitly advertise `provider-browser-balance-v1`; pricing remains a separate capability. The proposal and live acceptance are on [PR #667](https://github.com/skyelan1999/aide/pull/667), which is not merged, tagged, released, or published. This section documents the candidate protocol only; it is not a current-main or released capability.
+The account owner opens a dedicated ordinary Safari window identified by a random
+URL fragment. Minimal popup chrome is unsuitable because it omits the reload
+button. If Safari opens the source as a tab, the owner separates it once with
+Window → Move Tab to New Window before leaving it in the background.
+The native reader accepts only that exact source URL and returns the
+amount, currency, account display label, visible project-link identity and read
+time. It returns no DOM, Cookie, screenshot, model key or arbitrary script result.
+Only the dedicated window's Safari reload button can be pressed by this route.
 
-The macOS native Computer Bridge reader targets an owner-opened, dedicated Safari window identified by a random URL fragment. It reads only the exact declared URL and returns the visible amount, currency, account label, project-link identity and read time. It does not return DOM, cookies, screenshots, model credentials or arbitrary script results. Accessibility permission is required; Windows and Linux page reading are unsupported. Safari's dedicated window must stay open and logged in; minimal popup chrome lacks the reload control.
+`POST /api/provider-page-balance` provides prepare/read/confirm/disable actions
+under the existing management guard. A fresh preview must be explicitly confirmed
+as belonging to the selected API key before automatic reads are enabled. Private
+snapshots bind workspace, provider URL, key fingerprint, plugin/catalog identity,
+source-window nonce and website project identity. Website identity/label changes
+require confirmation again. A 20-second scheduler checks whether the declared
+five-minute interval has elapsed, independently of the settings panel being open.
 
-The proposed `POST /api/provider-page-balance` prepare/read/confirm/disable actions use the existing management guard. A fresh preview must be explicitly confirmed as belonging to the selected API key before background reads are enabled. Snapshots bind workspace, provider URL, key fingerprint, plugin/catalog identity, source-window nonce and website project identity; identity changes require re-confirmation. A scheduler checks the declared interval independently of the settings panel. Disabling the plugin/source, changing workspace/key, losing permission, closing Safari, malformed data or stale snapshots prevents a current value from being returned; a remembered amount is not treated as current or as zero. The account-to-key relationship remains an owner confirmation, not a claim inferred from a display name or billing API.
+Disabling a source or plugin, changing keys/workspaces, missing native permission,
+closing Safari/the source window, malformed data or stale snapshots prevents a
+current balance from being returned. A remembered amount is never an inferred zero.
+The account-to-key association is an owner confirmation, not proof derived from
+the display name or an undocumented billing API. Windows/Linux page reads are
+unavailable; normal plugin pricing remains supported.
