@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/color"
 	"image/png"
 	"io"
@@ -171,6 +172,10 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 	t.Helper()
 	switch id {
 	case "computer-control":
+		var snapshotPNG bytes.Buffer
+		if err := png.Encode(&snapshotPNG, image.NewRGBA(image.Rect(0, 0, 2, 2))); err != nil {
+			t.Fatal(err)
+		}
 		// This market package has been migrated to an Aide built-in capability.
 		// Exercise the native tool bridge instead of invoking the retired plugin ID.
 		t.Setenv("AIDE_COMPUTER_BRIDGE_TOKEN", strings.Repeat("r", 40))
@@ -184,7 +189,7 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 				t.Error("native computer bridge token missing")
 			}
 			if r.URL.Path == "/v1/snapshot" {
-				jsonOut(w, http.StatusOK, map[string]any{"ok": true, "app": "synthetic-window", "mimeType": "image/png", "imageBase64": base64.StdEncoding.EncodeToString([]byte("synthetic-image"))})
+				jsonOut(w, http.StatusOK, map[string]any{"ok": true, "app": "synthetic-window", "windowId": 1, "window": map[string]any{"x": 0, "y": 0, "width": 2, "height": 2}, "mimeType": "image/png", "imageBase64": base64.StdEncoding.EncodeToString(snapshotPNG.Bytes())})
 				return
 			}
 			jsonOut(w, http.StatusOK, map[string]any{"ok": true, "fixture": "native-computer-control"})
@@ -194,15 +199,15 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 		t.Cleanup(bridge.Close)
 		a.settings.ComputerControlEnabled = true
 		a.settings.ComputerControlAllowedApps = []string{"synthetic-window"}
-		status, err := a.callComputerControlTool(context.Background(), "computer_status", map[string]any{})
+		status, err := a.callComputerControlTool(context.Background(), "computer_status", map[string]any{}, computerControlTarget{}, "")
 		if err != nil || status.(map[string]any)["fixture"] != "native-computer-control" {
 			t.Fatal("native status tool failed", status, err)
 		}
-		snapshot, err := a.callComputerControlTool(context.Background(), "computer_snapshot", map[string]any{})
+		snapshot, err := a.callComputerControlTool(context.Background(), "computer_snapshot", map[string]any{}, computerControlTarget{}, "")
 		if err != nil || snapshot.(map[string]any)["protocol"] != "plugin-tool-images-v1" {
 			t.Fatal("native screenshot tool failed", snapshot, err)
 		}
-		if _, err = a.callComputerControlTool(context.Background(), "computer_click", map[string]any{"x": 1, "y": 1}); err == nil {
+		if _, err = a.callComputerControlTool(context.Background(), "computer_click", map[string]any{"x": 1, "y": 1}, computerControlTarget{}, ""); err == nil {
 			t.Fatal("click without confirmation was accepted")
 		}
 		return []string{"migrated Aide native control uses authenticated loopback bridge", "screenshot returns image protocol payload", "click without Aide confirmation is rejected"}
@@ -713,4 +718,11 @@ func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
 		t.Fatal("stale digest accepted", text)
 	}
 	return []string{"actual tool dispatcher carries PNG preview/dry-run as visual evidence with source SHA and no Base64 in text", "gray edit creates paired proposals without input writes; host applies and output PNG readback contains expected unknown pixel; stale SHA rejected"}
+}
+
+func TestReleaseMigratedComputerControlFunction(t *testing.T) {
+	a := testApp(t)
+	if cases := releasePublicFunction(t, a, "computer-control"); len(cases) != 3 {
+		t.Fatal(cases)
+	}
 }
