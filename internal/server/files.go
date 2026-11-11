@@ -626,7 +626,12 @@ func (a *App) downloadRaw(p string, src Source, hasSource bool) ([]byte, error) 
 	} else if hasSource {
 		b, err = a.readSourceRaw(src, p)
 	} else if a.workspaceMode() == "ssh" {
-		b, err = a.sftpRead(a.workspaceRemotePath(p))
+		// Archive/download inputs are relative to the selected workspace. The
+		// legacy absolute-path text helper also serves explicit system caches,
+		// so use the root-confined transfer channel for this file operation.
+		b, err = a.readSFTPContent("workspace", sshControlSocket, nil, func(fs *transferFS) (transferFile, error) {
+			return fs.Open(p, os.O_RDONLY)
+		})
 	} else {
 		b, err = readRawBytes(a.workspace, p)
 	}

@@ -24,6 +24,13 @@ shasum -a 256 -c CHECKSUMS.txt
 
 ## 升级
 
+2026-11-12 定向维护：RunLengthDecode 在分配前限制单流输出为 64 MiB，
+超限的构造提示同样拒绝；精确边界及正常字节控制保留。OpenJPEG 适配器在
+输入不足 12 字节时拒绝，分配失败不复制输入。JpxImage 在解码抛出异常后
+丢弃缓存模块，后续图片重新初始化。`node scripts/pdf-triage-regressions.cjs`
+覆盖分配失败、短输入、异常后重建以及 RunLength 的超限/精确边界；这些是
+局部防护，不表示当前 OpenJPEG 的颜色、HTJ2K 或全部资源报告均已解决。
+
 1. 在 jsDelivr 选定新的固定 `4.x.y` 版本；
 2. 重新下载 `build/pdf.min.mjs` 与 `build/pdf.worker.min.mjs` 覆盖本目录；
 3. 更新本文件与 `CHECKSUMS.txt` 的版本号和 SHA-256；
