@@ -446,6 +446,8 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 			t.Fatal(got)
 		}
 		return []string{"installed video package performs opaque upload and real MLT parsing"}
+	case "mapcanvas":
+		return releasePublicMapCanvas(t, a)
 	case "rviz":
 		got := releasePublicCall(t, a, id, "rviz_save_config", map[string]any{"config": map[string]any{"version": 1, "fixed": "map", "password": "MUST_NOT_PERSIST", "layers": []any{}}})
 		if !strings.Contains(got, "session.json") || strings.Contains(got, "MUST_NOT_PERSIST") {
@@ -495,4 +497,54 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 		t.Fatalf("public plugin %s has no implemented package function acceptance case", id)
 	}
 	return nil
+}
+
+// Exercises the exact released package through its actual source tools and
+// dynamically bound, versioned host image document. Browser pixel editing is
+// covered separately by the current-local-Aide acceptance record.
+func releasePublicMapCanvas(t *testing.T, a *App) []string {
+	t.Helper()
+	original := []byte("P5\n2 1\n255\n\x00\xff")
+	if err := os.WriteFile(filepath.Join(a.workPath, "map.pgm"), original, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(a.workPath, "not-a-map.txt"), []byte("exclude"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	got := releasePublicCall(t, a, "mapcanvas", "mapcanvas_browse", map[string]any{"source": "workspace", "path": "."})
+	if !strings.Contains(got, "map.pgm") || strings.Contains(got, "not-a-map.txt") {
+		t.Fatal("map browse filter", got)
+	}
+	decoded := releasePublicObject(t, releasePublicCall(t, a, "mapcanvas", "mapcanvas_read", map[string]any{"source": "workspace", "path": "map.pgm"}))
+	content, err := base64.StdEncoding.DecodeString(fmt.Sprint(decoded["content"]))
+	if err != nil || !bytes.Equal(content, original) || decoded["sha256"] != hash(original) {
+		t.Fatal("map read identity", decoded, err)
+	}
+	opened := request(a, "POST", "/api/plugins/mapcanvas/workbench/open", map[string]any{})
+	requireStatus(t, opened, 200)
+	var bridge struct {
+		URL    string `json:"url"`
+		Bridge struct {
+			Key string `json:"instanceId"`
+		} `json:"bridge"`
+	}
+	if err := json.Unmarshal(opened.Body.Bytes(), &bridge); err != nil {
+		t.Fatal(err)
+	}
+	requireStatus(t, workbenchRequest(a, "GET", bridge.URL, false), 200)
+	requireStatus(t, mapCall(a, bridge.Bridge.Key, "release_bind", "map.document.bind", map[string]any{"source": "workspace", "path": "map.pgm", "version": hash(original)}), 200)
+	changed := []byte("P5\n2 1\n255\n\x7f\xff")
+	requireStatus(t, mapCall(a, bridge.Bridge.Key, "release_begin", "document.save.begin", map[string]any{"size": len(changed), "version": hash(original)}), 200)
+	requireStatus(t, mapCall(a, bridge.Bridge.Key, "release_chunk", "document.save.chunk", map[string]any{"offset": 0, "data": base64.StdEncoding.EncodeToString(changed)}), 200)
+	requireStatus(t, mapCall(a, bridge.Bridge.Key, "release_prepare", "document.save.request", nil), 200)
+	before, err := os.ReadFile(filepath.Join(a.workPath, "map.pgm"))
+	if err != nil || !bytes.Equal(before, original) {
+		t.Fatal("wrote before host commit", err)
+	}
+	requireStatus(t, mapCall(a, bridge.Bridge.Key, "release_commit", "document.save.commit", nil), 200)
+	after, err := os.ReadFile(filepath.Join(a.workPath, "map.pgm"))
+	if err != nil || !bytes.Equal(after, changed) {
+		t.Fatal("map commit failed", err)
+	}
+	return []string{"released ZIP source browse filters files; chunked read matches actual bytes and SHA", "dynamic image binding stages changes without writing and host commit writes expected PGM bytes"}
 }
