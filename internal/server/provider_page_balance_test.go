@@ -207,15 +207,18 @@ func TestPageBalanceBrowserFixture(t *testing.T) {
 	if os.Getenv("AIDE_PAGE_BROWSER") != "1" {
 		t.Skip("isolated Safari fixture")
 	}
-	a := actualQuotaPackageFixture(t)
+	a := testApp(t)
+	pageFixture(t, a)
+	a.settings.Model = "fixture"
+	a.settings.Models = []ModelRef{{ID: "fixture", ProviderID: "official", Name: "Synthetic model", ContextWindow: 65536}}
+	a.settings.ModelProviders[0].Name = "Synthetic provider"
 	a.token = "page-balance-fixture-synthetic"
-	supporterVault(t, a, modelProviderVaultID("official", "k"), "synthetic-official-key")
 	t.Setenv("AIDE_COMPUTER_BRIDGE_TOKEN", strings.Repeat("t", 64))
 	a.pageBalanceClient = &http.Client{Transport: supportRoundTrip(func(r *http.Request) (*http.Response, error) {
 		return pageResponse(r, "Synthetic organization", 12.5, true), nil
 	})}
 	for _, action := range []string{"prepare", "read"} {
-		w := request(a, "POST", "/api/provider-page-balance", map[string]string{"providerId": "official", "keyId": "k", "action": action})
+		w := request(a, "POST", "/api/provider-page-balance", map[string]string{"providerId": "official", "keyId": "first", "action": action})
 		requireStatus(t, w, 200)
 	}
 	server := &http.Server{Addr: ":18981", Handler: a.Handler(), ReadHeaderTimeout: 5 * time.Second}
