@@ -7,10 +7,40 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestKnowledgeGoTypesHostConstraintsAndExternalTests(t *testing.T) {
+	other := "windows"
+	if runtime.GOOS == other {
+		other = "linux"
+	}
+	files := []goTypeFile{
+		{ID: "caller", Path: "main.go", Root: "workspace", Module: "example.test/p", Text: "package main\nimport \"example.test/p/lib\"\nfunc run(){lib.Target()}\n"},
+		{ID: "host", Path: "lib/target_" + runtime.GOOS + ".go", Root: "workspace", Module: "example.test/p", Text: "//go:build " + runtime.GOOS + "\n\npackage lib\nfunc Target(){}\n"},
+		{ID: "other", Path: "lib/target_" + other + ".go", Root: "workspace", Module: "example.test/p", Text: "//go:build " + other + "\n\npackage lib\nfunc Target(){}\n"},
+		{ID: "external-test", Path: "lib/lib_test.go", Root: "workspace", Module: "example.test/p", Text: "package lib_test\nimport \"example.test/p/lib\"\nfunc test(){lib.Target()}\n"},
+		{ID: "excluded-invalid", Path: "lib/excluded.go", Root: "workspace", Module: "example.test/p", Text: "//go:build ignore\n\nthis is invalid Go\n"},
+	}
+	r, err := checkGoTypes(files)
+	if err != nil || r.Checked != 2 || len(r.Bindings) != 1 || r.Bindings[0].TargetFile != "host" || len(r.Diagnostics) != 0 {
+		t.Fatalf("wrong production binding: %+v, %v", r, err)
+	}
+	if r.GOOS != runtime.GOOS || r.GOARCH != runtime.GOARCH {
+		t.Fatal("missing target identity", r)
+	}
+}
+
+func TestKnowledgeGoTypesBuildTagsCannotReadProjectDisk(t *testing.T) {
+	files := []goTypeFile{{ID: "outside", Path: "../../outside.go", Root: "workspace", Text: "//go:build ignore\n\ninvalid"}}
+	r, err := checkGoTypes(files)
+	if err != nil || r.Packages != 0 {
+		t.Fatalf("constraint reader accessed project path: %+v %v", r, err)
+	}
+}
 
 func TestKnowledgeGoTypesBindings(t *testing.T) {
 	files := []goTypeFile{

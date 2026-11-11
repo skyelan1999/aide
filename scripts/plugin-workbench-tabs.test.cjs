@@ -24,14 +24,14 @@ test('blocked popup reports failure without replacing current workbench',()=>{
  assert.equal(f.calls.length,1);
 });
 test('actual local and SSH workspace identities round-trip without becoming paths or credentials',()=>{
- for(const scope of ['local|/Users/test/Library/Mobile Documents/工作区 & notes#1|','ssh|/srv/projects/研发|user@example:2222','local|C:\\Users\\test\\AI Workspace|']){
+ for(const scope of ['local||','local|/Users/test/Library/Mobile Documents/工作区 & notes#1|','ssh|/srv/projects/研发|user@example:2222','local|C:\\Users\\test\\AI Workspace|']){
   const f=fixture();f.scope(scope);assert.equal(f.tabs.open(plugin,f.services),true);
   const url=new URL(f.calls[0][0]);assert.equal(url.pathname,'/');assert.equal(url.search,'');assert.equal(f.tabs.read(url.hash).workspace,scope);
   assert.equal(new URLSearchParams(url.hash.slice(1)).get('workspace'),scope);assert(!f.calls[0][0].includes('private-fixture'));
  }
 });
 test('oversized and control-bearing workspace identities never open a page or parse',()=>{
- for(const scope of ['', 'local|/workspace\nsecret|', 'ssh|/workspace|host\x00','local|/'+ 'a'.repeat(4096)+'|']){
+ for(const scope of ['', 'ssh||', 'local|', 'local|/workspace\nsecret|', 'ssh|/workspace|host\x00','local|/'+ 'a'.repeat(4096)+'|']){
   const f=fixture();f.scope(scope);assert.equal(f.tabs.open(plugin,f.services),false);assert.equal(f.calls.length,0);
   assert.equal(f.tabs.read('#'+new URLSearchParams({pluginWorkbench:'compare',workspace:scope})),null);
  }

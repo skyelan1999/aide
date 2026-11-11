@@ -16,7 +16,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -41,6 +43,9 @@ type goTypeBinding struct {
 }
 type goTypeResult struct {
 	Engine      string          `json:"engine"`
+	GOOS        string          `json:"goos"`
+	GOARCH      string          `json:"goarch"`
+	CgoEnabled  bool            `json:"cgoEnabled"`
 	Packages    int             `json:"packages"`
 	Checked     int             `json:"checked"`
 	Bindings    []goTypeBinding `json:"bindings"`
@@ -86,7 +91,8 @@ func (i goSnapshotImporter) Import(name string) (*types.Package, error) {
 	return i.standard.Import(name)
 }
 func checkGoTypes(files []goTypeFile) (goTypeResult, error) {
-	result := goTypeResult{Engine: "go/types-indexed-snapshot-v1", Bindings: []goTypeBinding{}, Diagnostics: []string{}}
+	target := build.Default
+	result := goTypeResult{Engine: "go/types-indexed-snapshot-v1", GOOS: target.GOOS, GOARCH: target.GOARCH, CgoEnabled: target.CgoEnabled, Bindings: []goTypeBinding{}, Diagnostics: []string{}}
 	if len(files) > 80 {
 		return result, errors.New("超过80个Go文件")
 	}
@@ -105,6 +111,29 @@ func checkGoTypes(files []goTypeFile) (goTypeResult, error) {
 			return result, errors.New("文件编号为空或重复")
 		}
 		ids[f.ID] = true
+		// This helper binds production packages for the host target. Test files
+		// remain indexed, but cannot create a second package at an import path.
+		name := path.Base(f.Path)
+		if strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		// MatchFile understands both filename constraints and go:build lines.
+		// Its only readable file is this authorized in-memory snapshot, never
+		// a project pathname or an unindexed dependency from the host disk.
+		matchContext := target
+		matchContext.OpenFile = func(filename string) (io.ReadCloser, error) {
+			if filename != filepath.Join("snapshot", name) {
+				return nil, os.ErrNotExist
+			}
+			return io.NopCloser(strings.NewReader(f.Text)), nil
+		}
+		matched, err := matchContext.MatchFile("snapshot", name)
+		if err != nil {
+			return result, fmt.Errorf("Go build constraints %s: %w", f.ID, err)
+		}
+		if !matched {
+			continue
+		}
 		scope := f.Root + "\x00" + f.Source
 		dir := path.Dir(f.Path)
 		tree, err := parser.ParseFile(fs, f.ID, f.Text, 0)
