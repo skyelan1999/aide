@@ -1,0 +1,56 @@
+{
+  "id": "codex-reasoning-effort-align-20261031",
+  "request": "让 Codex Bridge 推理强度接口与 Aide 对齐：修复 Aide 到本地 OpenAI 兼容端点默认剥离 reasoning_effort 的问题，并核对取值和 off/auto 语义。",
+  "baseline": "a05e9e686ee2d65283bf1a7b626b8e5c1434501a",
+  "initial_status": "Clean worktree on origin/main a05e9e68. Aide had no explicit provider setting for the Codex Bridge reasoning_effort contract; custom endpoints used legacy DeepSeek wire formatting, mixing the thinking extension with reasoning_effort.",
+  "acceptance": [
+    "A model provider can explicitly opt into OpenAI reasoning_effort without changing legacy providers by default.",
+    "For Codex Bridge, Aide sends auto as omitted, off unchanged for the bridge's lowest-supported fallback, and minimal/low/medium/high/xhigh/max/ultra unchanged through streaming and non-streaming Chat Completions. Generic OpenAI format encodes off as none.",
+    "Codex Bridge's documented off fallback to the model's lowest supported effort remains compatible; unsupported reasoning stays unavailable unless explicitly configured.",
+    "Provider metadata survives settings save/read and applies to the provider selected by the session model."
+  ],
+  "scope": [
+    "Aide provider metadata normalization/output, request formatting, focused Go tests, model provider settings control/localization, and architecture/task evidence",
+    "No Codex Bridge runtime change, no inference call, no release or production update"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Verified Codex Bridge validates reasoning_effort values and maps off to the lowest model-supported level, falling back to low. Aide had no explicit selectable provider format before this change.",
+      "evidence": ["../aide-pkg-CodexBridge/runtime/bridge.cjs:114-142", "internal/server/provider.go"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Add explicit per-provider OpenAI or Codex Bridge reasoning_effort format; preserve legacy default behavior. In Codex Bridge mode, auto is omitted and off is passed unchanged for the bridge's fallback; every intensity value accepted by the bridge passes through unchanged.",
+      "evidence": ["internal/server/server.go", "internal/server/provider.go", "internal/server/provider_openai.go"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented provider format metadata, settings UI/locales, wire mapping and focused persistence/streaming tests.",
+      "evidence": ["internal/server/apikey_vault.go", "internal/server/web/app.js", "internal/server/provider_openai_test.go", "internal/server/models_test.go"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused server Go tests passed in a clean Docker Go 1.26 container with network disabled. Final repository quick gate passed on the unchanged final code tree; JS syntax, locale coverage and diff checks passed. An unrelated random ciphertext test was made deterministic after it caused one transient quick-gate failure.",
+      "evidence": [".agent-state/verify-20261031T100945382826Z.log", "internal/server/provider_openai_test.go", "internal/server/models_test.go"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented per-provider format choices and the distinct off semantics in the architecture guide.",
+      "evidence": ["docs/architecture.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed final diff and retained the implementation on the isolated local feature branch. No commit, push, PR, or release action was requested for this feature.",
+      "evidence": ["git status --short", "git diff --check"]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Discard or revert only branch fix/codex-reasoning-effort-alignment; the original dirty aide checkout was not modified.",
+  "handoff": "Implementation and local validation complete on the isolated feature worktree. Not pushed or published."
+}

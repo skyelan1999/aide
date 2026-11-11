@@ -217,6 +217,9 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 	if profile := cfg.routedProfile; profile != nil {
 		wireFormat = profile.WireFormat
 	}
+	if providerUsesOpenAIReasoningEffort(cfg) {
+		wireFormat = "openai-reasoning"
+	}
 	if isOpenAIEndpoint(cfg.BaseURL) {
 		wireFormat = "openai-compatible"
 		if isOpenAIReasoningModel(cfg.Model) || modelCapabilityStatus(cfg, "reasoning") == "supported" {
@@ -233,14 +236,18 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 			if modelCapabilityStatus(cfg, "reasoning") == "unsupported" {
 				delete(body, "reasoning_effort")
 			} else if cfg.ReasoningEffort == "off" {
-				body["reasoning_effort"] = "none"
+				offValue := "none"
+				if providerReasoningEffortFormat(cfg) == "codex-bridge" {
+					offValue = "off"
+				}
+				body["reasoning_effort"] = offValue
 				// These models require reasoning; use their lowest supported effort.
 				if isOpenAIEndpoint(cfg.BaseURL) && openAIRequiresReasoning(cfg.Model) {
 					body["reasoning_effort"] = "low"
 				}
-			} else if isOpenAIEndpoint(cfg.BaseURL) {
+			} else if isOpenAIEndpoint(cfg.BaseURL) || providerUsesOpenAIReasoningEffort(cfg) {
 				switch cfg.ReasoningEffort {
-				case "low", "medium", "high", "xhigh", "max":
+				case "minimal", "low", "medium", "high", "xhigh", "max", "ultra":
 					if effort := adaptedReasoningEffort(cfg, cfg.ReasoningEffort); effort != "auto" {
 						body["reasoning_effort"] = effort
 					}
