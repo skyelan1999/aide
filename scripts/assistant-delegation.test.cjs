@@ -2,8 +2,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const src=fs.readFileSync('internal/server/web/app.js','utf8');
 const el=(tag,cls,text)=>({tag,cls,text,children:[],setAttribute(){},prepend(node){this.children.unshift(node)},append(node){this.children.push(node)}});
-const ctx={el,t:x=>x};vm.createContext(ctx);
-vm.runInContext(src.slice(src.indexOf('function renderSteerMessages('),src.indexOf('function renderSession()')),ctx);
+const ctx={el,t:x=>x,timelineClock:()=>''};vm.createContext(ctx);
+vm.runInContext(src.slice(src.indexOf('function timelineBubble('),src.indexOf('function renderSession()')),ctx);
 const assisted=ctx.renderTaskPrompt({prompt:'Preserve task text',assistantManaged:true});assert.equal(assisted.text,'Preserve task text');assert.equal(assisted.children[0].text,'助理代发');
 assert.equal(ctx.renderTaskPrompt({prompt:'Human task'}).children.length,0);
 const box=el('div');ctx.renderSteerMessages({steers:[{content:'From assistant',assistantManaged:true},{content:'From user'},{content:'Queued',assistantManaged:true,queued:true}]},box);

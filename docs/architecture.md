@@ -547,3 +547,8 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 ### 大 Markdown 附件
 
 Markdown 附件的总内联预算为 16 KiB；超出时附带明确的文件引用、来源/路径/长度/哈希、有限节选及 read_file 字节参数，原文件保留以供分段读取。引用不会形成完整文件修改基线；小文档保持全文与版本快照。上下文预览、发送和重试共用此表示，所选模型的真实容量限制继续生效。详见[大 Markdown 附件验收](reviews/2026-11-09-large-markdown-attachments.md)。
+
+
+### MapCanvas public map workbench
+
+MapCanvas imports YAML + PGM/PNG through visible source APIs and binds only the original raster to the versioned document channel. Its specific workbench method and source-argument exception are restricted to the canonical mapcanvas ID/tool names; read-only sources may be edited/exported but not overwritten. The trusted host Save action retains scope/version/permission/atomic replacement checks. Marketplace clients require map-image-document-v1, separating the new source host from older RC3 binaries. See [MapCanvas acceptance](reviews/2026-11-11-mapcanvas.md).

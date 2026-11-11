@@ -216,7 +216,7 @@ async function testSendSubmission() {
     state, $: id => nodes[id], window: {}, composerAutoReview: () => false, reconcileAvatarRun() {}, t: key => key, xiaomiDictation:{active:false,starting:false},
     voice:{queuedOverride:null}, action: fn => fn, toast() {}, openSettings() {}, renderAttachments() {},
     cancelContextPreview() { cancels++; }, setSendMode() {},
-    startContextCompactionWatch(sessionID) {
+    ensureContextCompactionWatch(sessionID) {
       assert.equal(sessionID, 's1');
       compactionWatches++;
       return async () => { compactionStops++; };

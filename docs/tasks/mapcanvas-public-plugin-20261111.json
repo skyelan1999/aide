@@ -1,0 +1,93 @@
+{
+  "id": "mapcanvas-public-plugin-20261111",
+  "request": "提取ROS地图编辑器0.4.7源码，改名为Aide公用插件，必要宿主更新一并集成，测试后直接push、插件release及市场更新",
+  "baseline": "93ac3ce0feafdd12970654ba80880245d40efb0b",
+  "initial_status": "",
+  "acceptance": [
+    "Public renamed MapCanvas plugin from reviewed archive, no instance metadata or user maps.",
+    "Host supports narrow source-read and original-image binding with visibility, read/write, version, scope and trusted parent commit checks.",
+    "Deterministic ZIP passes package install/tool checks and actual current-local-Aide map import/edit/undo/export/save; no second Aide runtime.",
+    "Push tested host and plugin source, publish plugin Release and matching marketplace package/listing; verify remote artifacts and live market."
+  ],
+  "scope": [
+    "internal/server/plugin_map_document.go",
+    "internal/server/plugin_map_document_test.go",
+    "internal/server/plugin_workbench_bridge.go",
+    "internal/server/web/plugin-workbench.js",
+    "internal/server/web/index.html",
+    "internal/server/plugin_market.go",
+    "internal/server/plugin_market_test.go",
+    "docs/architecture.md",
+    "docs/plugin-protocol.md",
+    "docs/tasks/mapcanvas-public-plugin-20261111.json",
+    "docs/reviews/2026-11-11-mapcanvas.md",
+    "../aide-pkg-MapCanvas",
+    "/Users/skyelan/WorkTrees/mapcanvas-market-20261111",
+    "internal/server/web/locales/en.js",
+    "scripts/test_ui_click_latency.cjs",
+    "scripts/steer-user-bubbles.test.cjs",
+    "scripts/assistant-delegation.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Rename to 栅图 MapCanvas / mapcanvas 0.1.0; preserve installed ros-map-editor; new feature token gates unsupported hosts. Existing artifact instructions are reference, superseded by current user authorization to implement and test.",
+      "evidence": [
+        "/Users/skyelan/linshi/docs/ROS地图编辑器_0.4.7_源码.zip"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "New independent MapCanvas ID/tools and deterministic MIT package. Host narrow allowlist and map-image-document-v1 feature gate; read-only imports remain editable/exportable, original writes use trusted parent/versioned document path. Existing plugin and runtime data preserved.",
+      "evidence": [
+        "internal/server/plugin_map_document.go",
+        "../aide-pkg-MapCanvas/manifest.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "MapCanvas independent manifest/tools/branding, P2 overflow fix, deterministic ZIP allowlist, narrow host map binding/source arguments, image-save concurrency tracking and market feature gate implemented.",
+      "evidence": [
+        "internal/server/plugin_map_document.go",
+        "../aide-pkg-MapCanvas/index.js",
+        "../aide-pkg-MapCanvas/workbench.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Current existing local Aide native UI: PGM/PNG import/edit/undo/redo/trusted parent save, unchanged YAML/posegraph, downloaded ZIP CRC/raster hash, readonly import/edit/export generation and write denial. Focused Go 21.002s and plugin7/workbench13 tests PASS. Quick PASS c21718f8; current-runtime rebuild. No second Aide runtime; full platform/hardware matrix NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-11-11-mapcanvas.md",
+        "../aide-pkg-MapCanvas/docs/ACCEPTANCE.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Protocol, architecture, plugin README/acceptance and host review document final behavior and compatibility limits.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "docs/reviews/2026-11-11-mapcanvas.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Test workbench closed; temporary readonly source removed preserving original sources; user maps, original plugin, existing viewer and unrelated market files preserved. Synthetic cache retained as evidence; SDK/logs ignored.",
+      "evidence": [
+        "docs/reviews/2026-11-11-mapcanvas.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Plugin source pushed; host source integration, plugin Release and market publication pending.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-MapCanvas"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested direct push, plugin Release and market update, including required host changes.",
+  "rollback": "Disable MapCanvas or revert the host integration commit and rebuild using existing flow; no user map/data migration.",
+  "handoff": "",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/841"
+  ]
+}

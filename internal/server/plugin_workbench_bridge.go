@@ -99,6 +99,11 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, err)
 		return
 	}
+	if req.Method == "map.document.bind" {
+		a.mu.Unlock()
+		a.bindMapImageDocument(w, r, req)
+		return
+	}
 	if req.Method == "host.component" {
 		a.mu.Unlock()
 		a.callWorkbenchHostComponent(w, r, req)
@@ -201,7 +206,7 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if req.Method != "tool.call" || !allowed || id == "browser-control" || id == "computer-control" || !pluginPlanArgumentsAllowed(req.Arguments) {
+	if req.Method != "tool.call" || !allowed || id == "browser-control" || id == "computer-control" || !workbenchToolArgumentsAllowed(id, req.Tool, req.Arguments) {
 		a.mu.Unlock()
 		fail(w, 403, errors.New("tool not permitted by workbench"))
 		return
