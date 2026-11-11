@@ -8,7 +8,7 @@
 
 连接本地或 SSH 项目，用自选模型理解资料、编写与修改文件、调用工具、检查结果。文件提案、审批、执行回执和运行轨迹围绕同一个任务保存。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=flat&color=yellow)](https://github.com/skyelan1999/aide/stargazers)
 
 [安装](docs/installation.md) · [使用指南](docs/user-guide.md) · [功能说明](docs/features.md) · [技术白皮书](docs/architecture/aide-technical-whitepaper.md) · [文档中心](docs/README.md)
 

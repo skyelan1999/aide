@@ -28,3 +28,9 @@ native/windows-launcher/third_party/miniz/LICENSE -text whitespace=cr-at-eol
 *.py text eol=lf
 *.cjs text eol=lf
 Dockerfile* text eol=lf
+
+# Hash-pinned third-party sources must retain their original bytes (#811, #837).
+legal/third_party/** -text
+internal/server/web/vendor/** -text
+# Generated PlantUML prefix includes this first-party source verbatim.
+internal/server/web/plantuml-resource-helpers.js text eol=lf

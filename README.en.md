@@ -8,7 +8,7 @@
 
 Connect local or SSH projects, use models you choose, inspect proposals and verify actual file and command results. Conversation, approvals, tool calls and execution receipts stay associated with the task.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=flat&color=yellow)](https://github.com/skyelan1999/aide/stargazers)
 
 [Install](docs/en/installation.md) · [User guide](docs/en/user-guide.md) · [Documentation](docs/en/README.md) · [Technical whitepaper, Chinese](docs/architecture/aide-technical-whitepaper.md)
 
