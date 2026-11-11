@@ -1,0 +1,87 @@
+{
+  "id": "workbench-file-access-20261111",
+  "request": "Professional Resume 额外支持工作区和引用的读取和保存。增加可复用的受控文件来源选择、绑定与新建保存，保留原文件版本及只读权限。",
+  "baseline": "91d47779f4b977953af06087adf2cac95a8edb8f",
+  "initial_status": "",
+  "acceptance": [
+    "Explicit opt-in fileAccess; manual-only metadata, no credential exposure or model tools",
+    "Workspace and enabled local/Skill/SFTP/workspace-SFTP browse and select",
+    "Existing-file SHA pinning; new-file exclusive publication; readonly/source-revocation/path rejection",
+    "Binary staging with trusted parent Save; iframe cannot commit",
+    "Professional Resume integration and real-browser disk readback"
+  ],
+  "scope": [
+    "internal/server/plugin_workbench_files.go",
+    "internal/server/plugin_workbench_files_test.go",
+    "internal/server/plugin_file_document.go",
+    "internal/server/plugin_file_handlers.go",
+    "internal/server/plugin_workbench.go",
+    "internal/server/plugin_workbench_bridge.go",
+    "internal/server/plugins.go",
+    "internal/server/web/plugin-workbench.js",
+    "internal/server/web/plugin-workbench-client.js",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/plugin-file-handlers.md",
+    "docs/tasks/workbench-file-access-20261111.json",
+    "scripts/plugin-workbench.test.cjs",
+    "scripts/plugin-workbench-client.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested workspace/reference read and save for Professional Resume",
+      "evidence": [
+        "GitHub issue #850"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Credential-free explicit fileAccess bridge; native binary document staging and user commit; reuse existing source and exclusive transfer publication",
+      "evidence": [
+        "internal/server/plugin_workbench_files.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Generic source picker protocol, pinned target selection, create/save/readOnly behavior, bounded browsing and client SDK",
+      "evidence": [
+        "internal/server/plugin_workbench_files.go",
+        "internal/server/plugin_file_document.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "28 related Go cases +12 race cases, vet, final quick gate, parent JS23/SDK6/preview4, exact candidate and legacy Chrome flows passed. One environment-specific generic browser guard skipped; dedicated actual browser flow ran separately.",
+      "evidence": [
+        ".agent-state/file-access-complete.jsonl",
+        ".agent-state/file-access-race-complete.jsonl",
+        ".agent-state/file-access-quick-final.log",
+        "internal/server/plugin_workbench_files_test.go",
+        "Professional Resume test/browser-files.cjs and test/browser-host.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented opt-in protocol, target version pinning, create/replace behavior and old-host fallback",
+      "evidence": [
+        "docs/architecture/plugin-file-handlers.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only generic file bridge, tests, docs and task record are staged; no user data or binary artifacts",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepared host source PR; no official Aide binary release or production deployment in this task",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User asked to add workspace/reference reading and saving to the public Professional Resume plugin; this task prepares generic host source and plugin delivery, not an official Aide binary release or production restart.",
+  "rollback": "Disable fileAccess or revert this host source change; existing file-handler paths and binary .pr format remain compatible.",
+  "handoff": "",
+  "candidate_binary_sha256": "f826f1f8bd610bba6391bc1c6372a26f908bbcbfc5e4e00ab674b921923aa9d4"
+}

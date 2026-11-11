@@ -25,10 +25,12 @@ type pluginDocumentSelection struct {
 	KnowledgeWorkspace string `json:"knowledgeWorkspace,omitempty"`
 }
 type pluginDocumentBinding struct {
-	Selection pluginDocumentSelection
-	Identity  string
-	Editable  bool
-	Stage     *pluginDocumentStage
+	Selection  pluginDocumentSelection
+	Identity   string
+	Editable   bool
+	Missing    bool
+	FileAccess bool
+	Stage      *pluginDocumentStage
 }
 
 var pluginFileExtension = regexp.MustCompile(`^\.[a-z0-9][a-z0-9_+.-]{0,23}$`)
