@@ -24,12 +24,33 @@ function fixture(api,{count=2,active=()=>true}={}){
  }
  const sheet={open:true,classList:{contains:()=>sheet.open}};
  const document={getElementById:id=>id==='settings-sheet'?sheet:null,visibilityState:'visible',documentElement:{},createElement:tag=>new Element(tag)};
- const context={window:{document,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)}},AbortController,URLSearchParams,Date,console,MutationObserver:class{constructor(fn){observers.push(fn);}observe(){}disconnect(){}},setTimeout:fn=>(timers.push(fn),timers.length),clearTimeout(){}};
+ const context={window:{document,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)}},AbortController,URL,URLSearchParams,Date,console,MutationObserver:class{constructor(fn){observers.push(fn);}observe(){}disconnect(){}},setTimeout:fn=>(timers.push(fn),timers.length),clearTimeout(){}};
  vm.runInNewContext(fs.readFileSync('internal/server/web/account-balance-pool.js','utf8'),context);
  const t=(s,...args)=>s.replace(/\{(\d+)\}/g,(_,n)=>String(args[n]));
  const pool=context.window.AideAccountBalancePool.create({api,t,active,scope:()=> 'fixture',config:{modelProviders:[{id:'provider',name:'Provider',keys:Array.from({length:count},(_,i)=>({id:String(i),label:'Key '+i}))}]}});
- return{pool,timers,observers,store,sheet,all:tag=>pool.querySelectorAll(tag),cards:()=>pool.querySelectorAll('article'),start:async()=>{timers.shift()();await flush();}};
+ return{pool,timers,observers,store,sheet,window:context.window,all:tag=>pool.querySelectorAll(tag),cards:()=>pool.querySelectorAll('article'),start:async()=>{timers.shift()();await flush();}};
 }
+
+test('website preview stays separate until explicit per-key confirmation and paused data is unavailable',async()=>{
+ let confirmed=false,paused=false;const posts=[];
+ const f=fixture(async(path,options)=>{
+  if(path==='/provider-page-balance'){const body=JSON.parse(options.body);posts.push(body);if(body.action==='confirm')confirmed=true;return{};}
+  return{supported:true,providerId:'provider',keyId:'0',supporter:'Fixture browser plugin',balanceAuth:'browser-page',balance_infos:confirmed&&!paused?[{currency:'USD',total_balance:12.5}]:[],pageBalance:{url:'https://billing.example.com/home',state:paused?'source_closed':confirmed?'ready':'confirm',enabled:confirmed,accountLabel:'Synthetic organization',pendingId:confirmed?'':'one-use-preview',previewAmount:12.5,currency:'USD',checkedAt:1793415600}};
+ },{count:1});await f.start();
+ assert(!f.all('div').some(e=>e.className==='balance-amount'));
+ await f.all('button').find(e=>e.textContent==='确认此官网账户对应此 Key，并开启自动查询').onclick();
+ assert.deepEqual(posts,[{providerId:'provider',keyId:'0',action:'confirm',pendingId:'one-use-preview'}]);
+ assert(f.all('div').some(e=>e.className==='balance-amount'&&e.textContent==='12.50'));
+ paused=true;await f.all('button')[0].onclick();assert(!f.all('div').some(e=>e.className==='balance-amount'));assert(JSON.stringify(f.pool).includes('待恢复同步'));
+});
+test('website association opens only the declared source and performs no model call',async()=>{
+ const requests=[],popup={opener:{},location:{href:''}};let windowFeatures='';
+ const f=fixture(async(path,options)=>{
+  if(path==='/provider-page-balance'){const body=JSON.parse(options.body);requests.push(body);return body.action==='prepare'?{openURL:'https://billing.example.com/home#aide-balance-'+ 'a'.repeat(32)}:{};}
+  return{supported:true,providerId:'provider',keyId:'0',balance_infos:[],pageBalance:{url:'https://billing.example.com/home',state:'setup',enabled:false}};
+ },{count:1});f.window.open=(_url,_name,features)=>{windowFeatures=features;return popup;};await f.start();await f.all('button').find(e=>e.textContent==='关联官网余额').onclick();
+ assert(!windowFeatures.split(',').some(x=>/^popup(?:=|$)/.test(x)));assert(windowFeatures.includes('toolbar=yes'));assert.equal(popup.opener,null);assert.equal(popup.location.href,'https://billing.example.com/home#aide-balance-'+'a'.repeat(32));assert.deepEqual(requests.map(x=>x.action),['prepare','read']);
+});
 test('all keys have separate cards and alarms; failures retain stale data without reflecting errors',async()=>{
  let fail=false;const queries=[];
  const f=fixture(async(path)=>{queries.push(path);if(fail)throw Error('sensitive-upstream-message');const id=new URLSearchParams(path.split('?')[1]).get('keyId');return{supported:true,providerId:'provider',keyId:id,balanceScope:'account',balance_infos:[{currency:'CNY',total_balance:id==='0'?'5':'50'}]};});
@@ -86,4 +107,16 @@ test('pricing-only and unavailable quota are distinct and unknown never becomes 
 });
 test('expired quota response cannot populate a current card',async()=>{
  const q=fixture(async path=>({supported:true,kind:'quota',checkedAt:'2020-01-01T00:00:00Z',providerId:'provider',keyId:new URLSearchParams(path.split('?')[1]).get('keyId'),quota_infos:[{id:'q',remainingPercent:99}]}));await q.start();assert(q.cards().every(c=>c.dataset.state==='stale'));assert.equal(q.all('div').filter(x=>x.className==='balance-amount').length,0);
+});
+
+test('website help is collapsed by default, remembers expansion across refresh, and explains a closed source',async()=>{
+ let closed=false;
+ const f=fixture(async()=>({supported:true,providerId:'provider',keyId:'0',balance_infos:closed?[]:[{currency:'USD',total_balance:12.5}],pageBalance:{state:closed?'source_closed':'ready',enabled:true,url:'https://billing.example.com/home',accountLabel:'Synthetic organization',checkedAt:1793415600}}),{count:1});
+ await f.start();
+ const help=()=>f.all('details').find(d=>d.children.some(c=>c.tagName==='summary'&&c.textContent==='官网同步说明'));
+ assert.equal(help().open,false);
+ help().open=true;help().ontoggle();closed=true;await f.all('button')[0].onclick();
+ assert.equal(help().open,true);
+ assert(f.all('p').some(p=>p.textContent==='专用官网窗口已关闭，请恢复窗口后继续同步。'));
+ assert.equal(f.all('div').filter(d=>d.className==='balance-amount').length,0);
 });

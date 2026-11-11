@@ -18,6 +18,8 @@ func marketCompatibleForRuntime(p marketPlugin, version, mode string) (bool, str
 	}
 	for _, feature := range source.Features {
 		switch feature {
+		case "provider-browser-balance-v1":
+			// Plugin-declared, owner-bound Safari balance snapshots.
 		case "provider-account-quota-v1":
 			// This build implements the generic plugin quota catalog contract.
 		case "provider-support-usd-v1":
