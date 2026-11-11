@@ -48,18 +48,19 @@ type PluginWorkbench struct {
 	Microphone           bool `json:"microphone,omitempty"`
 	OnDeviceSpeech       bool `json:"onDeviceSpeech,omitempty"`
 
-	HostComponent   string                 `json:"hostComponent,omitempty"`
-	ProjectMessages bool                   `json:"projectMessages,omitempty"`
-	MobileCapture   bool                   `json:"mobileCapture,omitempty"`
-	Viewer          *PluginWorkbenchViewer `json:"viewer,omitempty"`
-	FileHandler     *PluginFileHandler     `json:"fileHandler,omitempty"`
-	FileExtensions  []string               `json:"fileExtensions,omitempty"`
-	CloseBehavior   string                 `json:"closeBehavior,omitempty"`
-	Tools           []string               `json:"tools,omitempty"`
-	Protocol        int                    `json:"protocol"`
-	Entry           string                 `json:"entry"`
-	Title           string                 `json:"title"`
-	Standalone      *bool                  `json:"standalone,omitempty"`
+	HostComponent   string                     `json:"hostComponent,omitempty"`
+	ProjectMessages bool                       `json:"projectMessages,omitempty"`
+	MobileCapture   bool                       `json:"mobileCapture,omitempty"`
+	Viewer          *PluginWorkbenchViewer     `json:"viewer,omitempty"`
+	FileHandler     *PluginFileHandler         `json:"fileHandler,omitempty"`
+	FileAccess      *PluginWorkbenchFileAccess `json:"fileAccess,omitempty"`
+	FileExtensions  []string                   `json:"fileExtensions,omitempty"`
+	CloseBehavior   string                     `json:"closeBehavior,omitempty"`
+	Tools           []string                   `json:"tools,omitempty"`
+	Protocol        int                        `json:"protocol"`
+	Entry           string                     `json:"entry"`
+	Title           string                     `json:"title"`
+	Standalone      *bool                      `json:"standalone,omitempty"`
 }
 
 type PluginManifest struct {

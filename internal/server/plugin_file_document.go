@@ -169,6 +169,10 @@ func (a *App) callPluginDocument(w http.ResponseWriter, r *http.Request, req wor
 		fail(w, 403, errors.New("selected document is read-only"))
 		return
 	}
+	if d.FileAccess && args.Asset != "" && !strings.HasPrefix(req.Method, "document.package.") {
+		fail(w, 403, errors.New("manual selection only grants the selected file"))
+		return
+	}
 	result := map[string]any{}
 	switch req.Method {
 	case "document.info", "document.read", "document.package.info", "document.package.read":
@@ -217,7 +221,7 @@ func (a *App) callPluginDocument(w http.ResponseWriter, r *http.Request, req wor
 			e = errors.New("only regular document files are readable")
 			break
 		}
-		result = map[string]any{"path": s.Path, "asset": args.Asset, "size": info.Size(), "editable": d.Editable && args.Asset == "", "chunkSize": pluginDocumentChunk}
+		result = map[string]any{"path": s.Path, "source": pluginDocumentSourceID(s), "asset": args.Asset, "size": info.Size(), "editable": d.Editable && args.Asset == "", "chunkSize": pluginDocumentChunk}
 		if strings.HasSuffix(req.Method, ".info") && !args.MetadataOnly {
 			var version string
 			version, e = pluginDocumentDigest(ctx, f)
@@ -248,7 +252,7 @@ func (a *App) callPluginDocument(w http.ResponseWriter, r *http.Request, req wor
 			result["eof"] = args.Offset+int64(n) >= info.Size()
 		}
 	case "document.save.begin":
-		if args.Asset != "" || args.Size < 0 || len(args.Version) != 64 {
+		if args.Asset != "" || args.Size < 0 || (len(args.Version) != 64 && !(d.Missing && args.Version == "")) {
 			e = errors.New("save needs a size and the original document version")
 			break
 		}
@@ -400,12 +404,15 @@ func (a *App) callPluginDocument(w http.ResponseWriter, r *http.Request, req wor
 		var post *markdownPostWriteError
 		if e == nil || errors.As(e, &post) {
 			result["saved"] = true
+			result["path"] = s.Path
+			result["source"] = pluginDocumentSourceID(s)
 			result["version"] = version
 			if e != nil {
 				result["warning"] = e.Error()
 				e = nil
 			}
 			a.mu.Lock()
+			d.Missing = false
 			disposePluginDocument(d)
 			a.mu.Unlock()
 		}
@@ -431,17 +438,21 @@ func (a *App) commitPluginDocument(ctx context.Context, s pluginDocumentSelectio
 		return "", e
 	}
 	defer fs.Close()
-	if e = pluginDocumentSafePath(fs, s.Path); e != nil {
+	missing := stage.Version == ""
+	if e = pluginDocumentTargetSafePath(fs, s.Path, missing); e != nil {
 		return "", e
 	}
-	original, e := fs.Stat(s.Path)
-	if e != nil {
-		return "", e
+	var original os.FileInfo
+	if !missing {
+		original, e = fs.Stat(s.Path)
+		if e != nil {
+			return "", e
+		}
 	}
 	if e = fs.CheckSpace(stage.Size); e != nil {
 		return "", e
 	}
-	version, e := pluginDocumentVersion(ctx, fs, s.Path)
+	version, e := pluginDocumentTargetVersion(ctx, fs, s.Path, missing)
 	if e != nil || version != stage.Version {
 		return "", errors.New("file changed since it was read; reopen before saving")
 	}
@@ -497,13 +508,17 @@ func (a *App) commitPluginDocument(ctx context.Context, s pluginDocumentSelectio
 	if e != nil {
 		return "", e
 	}
+	mode := os.FileMode(0600)
+	if original != nil {
+		mode = original.Mode().Perm()
+	}
 	if fs.root != nil {
-		e = fs.root.Chmod(temp, original.Mode().Perm())
+		e = fs.root.Chmod(temp, mode)
 	} else {
 		var rp string
 		rp, e = fs.remotePath(temp)
 		if e == nil {
-			e = fs.client.Chmod(rp, original.Mode().Perm())
+			e = fs.client.Chmod(rp, mode)
 		}
 	}
 	if e != nil {
@@ -518,7 +533,7 @@ func (a *App) commitPluginDocument(ctx context.Context, s pluginDocumentSelectio
 		if err := admission(); err != nil {
 			return err
 		}
-		current, err := pluginDocumentVersion(ctx, fs, s.Path)
+		current, err := pluginDocumentTargetVersion(ctx, fs, s.Path, missing)
 		if err != nil || current != stage.Version {
 			return errors.New("file changed before publication; original preserved")
 		}
@@ -527,6 +542,9 @@ func (a *App) commitPluginDocument(ctx context.Context, s pluginDocumentSelectio
 		defer a.mu.Unlock()
 		if err := lockedAdmission(); err != nil {
 			return err
+		}
+		if missing {
+			return fs.Publish(temp, s.Path)
 		}
 		if fs.root != nil {
 			return fs.root.Rename(temp, s.Path)

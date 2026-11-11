@@ -140,6 +140,7 @@ window.aideEnglish = {
   "在提醒中心核对并重新安排；未自动重放": "Review and reschedule in Reminders; execution was not automatically replayed",
   "查看执行结果": "View the execution result",
   "保存到原文件": "Save to original file",
+  '保存到所选文件': 'Save to selected file',
   "文件打开方式": "Open file with",
   "工作台原生预览": "Native workbench preview",
   "插件文件预览": "Plugin file preview",

@@ -99,6 +99,11 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, err)
 		return
 	}
+	if req.Method == "files.select" {
+		a.mu.Unlock()
+		a.callWorkbenchFiles(w, r, req)
+		return
+	}
 	if req.Method == "map.document.bind" {
 		a.mu.Unlock()
 		a.bindMapImageDocument(w, r, req)

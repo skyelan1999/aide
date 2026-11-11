@@ -157,3 +157,13 @@ test('launching another workbench delegates to a fresh page without closing the 
  await f.controller.open(plugin,{...f.services,document:undefined,selection:{left:{source:'workspace',path:'a.md'}},api:async()=>{apiCalls++;},openPage:(p,selection)=>(pages.push({p,selection}),true)});
  assert.equal(pages.length,1);assert.equal(pages[0].selection.left.path,'a.md');assert.equal(apiCalls,0);assert.equal(frame.src,previous);
 });
+test('manual source selection requires the host grant and keeps commit on trusted parent Save',async()=>{
+ for(const grant of [false,true]){
+  const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,fileAccess:grant}});await f.controller.open({...bridgePlugin,workbench:{...bridgePlugin.workbench,fileAccess:{protocol:1,extensions:['.pr']}}},f.services);
+  const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const connection=frame.contentWindow.messages[0],port=connection.ports[0],calls=[];assert.equal(connection.data.capabilities.includes('files.select'),grant);assert(!JSON.stringify(connection.data).includes('instanceId'));
+  f.services.api=async(url,options)=>{const req=JSON.parse(options.body);calls.push(req);return {requestId:req.requestId,status:'result',result:req.method==='files.select'?{path:'new.pr',source:'workspace',editable:true,version:'',exists:false}:req.method==='document.save.commit'?{saved:true,path:'new.pr',source:'workspace',version:'b'.repeat(64)}:{savePending:true}};};
+  await port.postMessage({protocol:1,requestId:'bind',method:'files.select',arguments:{action:'bind',source:'workspace',path:'new.pr',mode:'save',version:''}});assert.equal(calls.length,grant?1:0);
+  if(grant){await port.postMessage({protocol:1,requestId:'stage',method:'document.save.request',arguments:{}});const save=f.nodes.find(n=>n.textContent==='保存到所选文件');assert(save&&!save.hidden);const count=calls.length;await port.postMessage({protocol:1,requestId:'forged',method:'document.save.commit',arguments:{}});assert.equal(calls.length,count);await save.onclick({isTrusted:false});assert.equal(calls.length,count);await save.onclick({isTrusted:true});assert.equal(calls.at(-1).method,'document.save.commit');assert.equal(port.received.at(-1).event,'document.saved');}
+  f.controller.close(true);
+ }
+});

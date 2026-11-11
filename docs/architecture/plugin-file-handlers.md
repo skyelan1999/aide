@@ -66,3 +66,19 @@ SFTP缺少posix-rename扩展时拒绝覆盖、保留原文件。fsync扩展可�
 [OBJ示例](../../examples/file-preview-plugin/README.md) 演示线框旋转、读取、编辑、分块暂存。它是协议示例，不是完整CAD，也不默认安装。证据见[验收记录](../reviews/2026-10-21-plugin-file-preview/verification.md)。本次源码支持不代表运行镜像已经包含接口。
 
 兼容原有 `workbench.fileExtensions` 的 `.pp` 项目入口：通用 `fileHandler` 优先匹配，无匹配时继续既有项目工作台流程；用户明确选择原生时跳过两种插件入口。两种声明各自保留原有权限边界。
+
+## 工作台内选择来源与另存为（fileAccess v1）
+
+普通工作台可显式声明 `fileAccess:{protocol:1,extensions:[".demo"]}`。这不登记自动预览器；`fileHandler` 仍控制文件面板的自动关联。只有宿主确认该声明后，握手才包含 `files.select`。旧宿主没有此能力时，插件须保留旧入口或明确提示更新。
+
+内嵌客户端 `host.files(args)` 使用原受控 MessagePort，方法固定为 `files.select`：
+
+- `action:"sources"`：列出工作区和已启用的 local/skill/sftp/workspace-sftp 引用，仅含 id/name/type/writable。引用ID为 `source:<id>`；不包含路径端点、凭据、宿主令牌或实例键。这是手动文件能力，不是模型工具；AI可见性不会因用户手动打开文件而改变。
+- `action:"browse",source,path,offset?,limit?,query?`：来源内目录，默认200项、最多500项分页，每目录最多扫描5000条。只列目录及声明格式，拒绝链接，不列隐藏项；不支持的来源继续使用原生入口。
+- `action:"target",source,path,mode:"save"`：只检查目标是否存在、读写状态、大小和SHA版本，不改变当前文件绑定。
+- `action:"bind",source,path,mode:"open"|"save",version?`：绑定已有文件或新保存目标。保存模式必须给出刚核对的 version，空串表示目标必须不存在；恢复旧绑定时也应传原版本，不能静默刷新覆盖基线。扩展名限声明列表，引用变更、只读、非法路径和未完成暂存均会拒绝。
+- `action:"clear"`：仅在没有待保存暂存时解除绑定。
+
+绑定后沿用 document.info/read/save.begin/save.chunk/save.request；手动选择只授权该文件，不开放同目录任意 asset 读取。新目标允许空版本作为“尚不存在”的基准。iframe仍不能发送 document.save.commit；真实用户点击父页面“保存到所选文件”才提交。回执增加 source/path，便于区分数据库保存与其他导出。
+
+现有文件保留SHA冲突检查和原子替换。新文件使用既有transfer排他发布，不覆盖后来出现的目标；默认0600权限。保存前后重新核对来源、工作区、锁屏代际、包摘要和写权限。旧文件处理器、不声明fileAccess的插件、同目录资源及现有手动项目保存接口保持原语义。该能力不扩大可信Node插件的OS权限，也不证明新源码已经进入正式镜像。
