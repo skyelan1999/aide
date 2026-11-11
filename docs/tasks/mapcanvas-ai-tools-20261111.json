@@ -1,0 +1,83 @@
+{
+  "id": "mapcanvas-ai-tools-20261111",
+  "request": "MapCanvas路径浏览列表可隐藏、灰色画笔、Aide预览与操作工具和提示词，当前本地验收后推送Release市场",
+  "baseline": "0966e0a0e704e4a4aed76a0e4df7cad3a24af367",
+  "initial_status": "",
+  "acceptance": [
+    "Browser path list has accessible collapse/expand beside 上级, preserves directory/results and restores canvas space.",
+    "Gray/unknown brush respects original max gray, negate and thresholds; undo/redo and saved/exported pixel values verified.",
+    "Enabled plugin exposes help, image preview (bounded actual PNG evidence), version-checked deterministic pixel edit proposals and embedded usage prompts. Original input raster is not overwritten by AI export.",
+    "Test changed ZIP/tools and actual existing local Aide UI, then push source/required host updates, publish versioned Release and matching live market; no second runtime."
+  ],
+  "scope": [
+    "../aide-pkg-MapCanvas",
+    "/Users/skyelan/WorkTrees/mapcanvas-market-20261111",
+    "docs/tasks/mapcanvas-ai-tools-20261111.json",
+    "docs/reviews/2026-11-11-mapcanvas-0.2.0.md",
+    "internal/server/release_public_plugins_test.go",
+    "scripts/ci/public-plugins.lock.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Collapse the browse-results list beside 上级; add semantic gray brush; expose real file preview/edit/help tools and prompts, publish0.2.0. Existing local runtime only.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/workbench.html"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Shared browser/Node map core, bounded PNG evidence and deterministic brush/rectangle edits, SHA-bound inputs and standard PGM text proposal output. AI files use normal host proposal flow; GUI remains versioned original-save. Inline shared browser core avoids new asset URLs.",
+      "evidence": [
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Path list accessible collapse, threshold-aware gray brush, shared core, validated PNG codec, executable help/preview/AI edit proposal tools and bundled prompt guide implemented.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/map-core.js",
+        "../aide-pkg-MapCanvas/ai-tools.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "14 Node regressions; exact ZIP host candidate0.620s; current existing local Aide ZIP upgrade/native collapse/gray undo-redo-save/help UI; actual preview/dry-run/paired proposal/apply/readback/stale rejection passed. No second runtime or paid model; platform/fullDelivery not run.",
+      "evidence": [
+        "docs/reviews/2026-11-11-mapcanvas-0.2.0.md",
+        "../aide-pkg-MapCanvas/docs/ACCEPTANCE.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bundled AI-GUIDE and README describe real tools, raster coordinates, SHA checks, prompts and output flow; acceptance documents actual scopes and limitations.",
+      "evidence": [
+        "../aide-pkg-MapCanvas/AI-GUIDE.md",
+        "docs/reviews/2026-11-11-mapcanvas-0.2.0.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Native test workbench closed after saved fixture/output verification; original maps/plugin/settings untouched. Only synthetic cache and applied test session retained as evidence; no second runtime.",
+      "evidence": [
+        "docs/reviews/2026-11-11-mapcanvas-0.2.0.md"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Plugin PR1 merged main9f625644 with Node18/22 CI; v0.2.0 Release and market main13da2cd Pages published. Downloaded Release/live-market ZIP SHA/CRC match30934-byte installed ZIP. Current existing Aide reports compatible=true/installedVersion0.2.0 and health/integrity ok. Host regression/frozen inventory in this change; no host runtime/installer change.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-MapCanvas/pull/1",
+        "https://github.com/skyelan1999/aide-pkg-MapCanvas/releases/tag/v0.2.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/42963043440",
+        "docs/reviews/2026-11-11-mapcanvas-0.2.0.md"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested push, plugin Release and market publication for these changes.",
+  "rollback": "Original0.1.0 upgrade backup retained by Aide; original ros-map-editor and user map data preserved. AI outputs are derived files; plugin package/release version is immutable.",
+  "handoff": "0.2.0 published, installed and verified in the existing local Aide. No second runtime or paid model. Native collapse/gray/help and real preview/edit/apply/readback passed; full platform/hardware/public-plugin matrix not claimed.",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/843"
+  ]
+}
