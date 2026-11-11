@@ -2,12 +2,14 @@
 
 [简体中文](../features.md) · [English documentation](README.md)
 
+Core update: 2026-11-11, source `921a95a5`. New multi-X chat has an active main runtime plus up to X−1 private tool-capable environments; candidates remain pending proposals until reviewed/applied. Large Markdown uses file references beyond a shared 16 KiB inline budget. Computer control includes snapshot-bound visual coordinates, drag, scroll and key combinations; eligible basic actions can use assisted review. macOS global modifier capture adds an app window and context to the draft without sending. Details: [current Chinese features](../features.md) and [technical whitepaper](../architecture/aide-technical-whitepaper.md).
+
 This describes public Aide source capabilities. A feature's presence in source, a visible control, an executed test, and a published package are separate facts. Historical screenshots retain their original dates and do not certify this release.
 
 | Area | What to use | Boundaries |
 | --- | --- | --- |
 | Conversations and workflows | Choose mode, strategy, model and approval policy beside the input. Queue or interrupt work while it runs. | Context budgets, enabled tools and approvals still govern execution. |
-| Parallel analysis | Ordinary chat offers 1x, 2x, 3x, 4x, 5x and 10x analysis concurrency limits. | Analysis requests are tool-free; the main task verifies and returns one answer. More requests increase usage and do not guarantee proportional speed. Workflows and assistant chats keep their existing scheduling. |
+| Parallel work | Ordinary chat offers 1X–5X and 10X execution capacities including the main runtime. | Private workers may use scoped tools, plugins and tests. Main-project candidates use ordinary version checks and approval. Old tool-free analysis is a compatibility path; capacity does not guarantee speed. |
 | Tasks and proposals | Inspect stage output, tool records, status and trajectory. | A proposed file is not a saved file. Verify the application receipt and destination. |
 | Usage and compaction | View cumulative session usage separately from the latest request's context window. | Parallel requests have separate windows. Missing upstream usage is unknown; estimates are labeled. Compaction does not promise smaller session files. |
 | Files | Browse workspace/reference sources; edit Markdown and text; use installed viewers for Office and CAD. | Preview, generation, export and successful reopening require separate validation. |

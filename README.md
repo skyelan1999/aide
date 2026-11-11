@@ -4,25 +4,55 @@
 
 # aide
 
-### 面向开发者的自托管 AI 工作台：连接本地或 SSH 项目，用自选模型理解资料、审阅改动并推进任务。
+### AI + IDE：把项目、模型、工具与执行过程放进同一个工作台。
 
-把项目文件、AI 工作流、插件与受控执行放在同一个工作空间。源码和数据由你掌握，模型由你选择。
+连接本地或 SSH 项目，用自选模型理解资料、编写与修改文件、调用工具、检查结果。文件提案、审批、执行回执和运行轨迹围绕同一个任务保存。
 
-[![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=social)](https://github.com/skyelan1999/aide/stargazers) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest)
 
-[安装与发行版](docs/installation.md) · [实际界面演示](docs/demo-guide.md) · [使用指南](docs/user-guide.md) · [远程目录/SFTP 中继](docs/reference-relay.md) · [功能范围](docs/features.md) · [版本与 Release](https://github.com/skyelan1999/aide/releases)
+[安装](docs/installation.md) · [使用指南](docs/user-guide.md) · [功能说明](docs/features.md) · [技术白皮书](docs/architecture/aide-technical-whitepaper.md) · [文档中心](docs/README.md)
 
 </div>
 
-![aide 工作台与辅助资料面板：显示项目文件、来源可见性与读写锁，以及任务输入框](docs/images/current-20261017/03-references.jpg)
+## 从真实项目到可核对的结果
 
-*真实界面截图：工作台与引用面板，使用 2026-10-17 专用示例环境。它展示项目资料入口，不代表所有下方功能都在此图中，也不是最新发行包的验收截图。更多操作见[实际界面演示](docs/demo-guide.md)。*
+aide 是可自托管的 AI 工程工作台，面向可信单用户环境。项目文件、辅助资料、对话、工具、插件和命令共享工作区身份；模型的回答与真正的文件写入、命令退出状态分别记录。
 
-> README 介绍当前源码中的产品能力，不代表每项能力都已包含在最新发行包中。使用发行版前请对照对应的 [Release 说明](https://github.com/skyelan1999/aide/releases)与[版本记录](version.md)。
+```mermaid
+flowchart LR
+    Project[项目与授权资料] --> Task[对话 / AI 工作流]
+    Task --> Tools[模型与工具执行]
+    Tools --> Review[提案与审批]
+    Review --> Result[文件 / 命令 / 实际回执]
+    Result --> Trace[轨迹与后续核对]
+    Trace --> Task
+```
 
-## 三步运行
+| 能力 | 当前源码提供什么 |
+| --- | --- |
+| 对话与工程任务 | 多轮工具执行、规划与审查、运行中插话/排队、暂停与继续 |
+| 多模型与上下文 | 提供商及命名密钥、参数策略、兼容 Chat Completions / Responses 的适配、上下文预算与压缩 |
+| 并行协作 | 1X～5X、10X 容量；主环境与私有执行环境异步协同，工具与测试在各自范围执行，候选汇入主项目仍经版本校验与审批 |
+| 文件与资料 | 本地与 SSH/SFTP 工作区、引用的可见/只读/可写控制、Markdown 编辑与历史、可解析文档和图片附件 |
+| 大 Markdown | 超出内联预算后使用路径、摘要和有限节选，按需分段读取；模型窗口预算继续生效 |
+| 知识与检索 | 文件/会话/代码星图、来源身份与差量同步、原文检索和本地 TF-IDF 片段排序；可选语义能力单独配置 |
+| 插件与工作台 | 独立插件市场、工具注册、专用工作台、图片证据与受控文档保存接口 |
+| 审批与电脑控制 | 手动/辅助审批；受授权约束的浏览器访问、应用检查、视觉定位、点击、拖拽、滚动和组合键 |
+| 助理与语音 | 工作统筹、任务交办、朗读和语音通话；提供商、设备权限和本机能力分别配置 |
+| 桌面体验 | 快捷键绑定、明暗配色、工作台背景；macOS 可配置双 Shift / 双 Command 应用截屏并附应用上下文 |
+| 过程与运维 | 会话调用轨迹、请求与累计用量、诊断、备份、源码构建及发行包校验 |
 
-需要 Git、Docker Engine 与 Docker Compose（macOS 可使用 Docker Desktop）。安装脚本先检查环境，再配置、构建并启动源码版本：
+并发倍率不是等比例提速承诺；模型审查不是测试通过。详细接口、约束与已有验收见[功能说明](docs/features.md)和[技术白皮书](docs/architecture/aide-technical-whitepaper.md)。
+
+## 快速开始
+
+### 使用发行版
+
+从 [GitHub Releases](https://github.com/skyelan1999/aide/releases/latest) 下载适合平台的包，按该版本说明校验摘要、解压并使用包内 `start` 入口。源码状态与发行包范围分别核对，不把后续 `main` 功能视为旧安装包已有功能。
+
+### 从源码构建
+
+标准源码路径需要 Git、Docker Engine、Docker Compose 和 Buildx；macOS 可使用 Docker Desktop。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git
@@ -31,200 +61,44 @@ bash scripts/install.sh --check
 bash scripts/install.sh --source
 ```
 
-启动后在 **模型设置** 配置自己的模型，再选择工作空间开始任务。配置目录范围、发行版安装和故障处理见[安装说明](docs/installation.md)。
+构建后配置模型提供商、API Key 和模型，选择工作区开始任务。默认地址为 `https://localhost:8097`，端口与挂载以 `.env` 为准。目录设置、首次登录与平台差异见[安装说明](docs/installation.md)。
 
-⭐ 如果 aide 对你的项目有帮助，欢迎在 [GitHub 点亮 Star](https://github.com/skyelan1999/aide)。
-
-## 为什么选择 aide
-
-aide 的名字来自 **AI + IDE**。它把 AI 能力与集成工作环境放在一起，让你围绕专业任务组织项目、资料、工具和操作过程，减少在多个窗口之间切换，把注意力留给分析、判断与成果本身。
-
-aide 把项目文件、AI 对话、修改提案、运行轨迹与命令执行放在同一个工作空间。它面向希望在本机掌握文件与执行环境的开发者：用 AI 理解项目、梳理方案，再由自己审阅和应用改动。
-
-- **围绕真实项目工作**：连接本地目录或 SSH/SFTP 工作区，浏览、编辑、附加文本文件。
-- **过程可检查**：查看规划、工具调用、文件提案和模型审查；写入和命令执行需要明确操作。
-- **环境可迁移**：Go、Python、Node.js、Git 随 Docker 环境提供，源码、镜像、工作文件与会话数据分别管理。
-
-项目数据在本机持久化；使用云端模型时，任务内容、上下文和工具读取结果会发送到所配置的提供商。aide 是独立项目，借鉴 DeepSeek Harness 的设计思路，不是 DeepSeek 官方产品，也不提供完整 DSH/Cordis 运行时兼容。
-
-## 可以完成什么
-
-| 能力 | 使用方式 | 当前边界 |
-| --- | --- | --- |
-| AI 对话与开发工作流 | 选择对话，或按规划 → 提案 → 审查生成改动 | 模型审查不等于测试通过；响应按步骤展示 |
-| 并行分析 | 普通对话可选 1X、2X、3X、4X、5X、10X 子题分析并发上限 | 主任务负责核实和最终回答；增加请求会增加用量，不保证等比例提速 |
-| 文件与 Markdown | 浏览、编辑、保存、预览、新标签页打开、附加到任务；右键下载、ZIP 压缩与安全解压 | 文件夹下载/压缩会生成 ZIP；引用按启用、AI 可见和可写锁控制，ZIP 仅展示清单后才可解压到工作目录 |
-| 工作区与辅助资料 | 本地、SSH/SFTP；本地资料、Skill 目录、链接、FTP/FTPS/SMB、MCP stdio / Streamable HTTP 来源；支持脚本中继目录和 SFTP 中继 | 中继默认只读，需在远端手动部署脚本；MCP 仅允许模型调用已声明为只读的工具 |
-| 模型与策略 | 多模型列表、参数 Profile、手动/自动策略 | 模型分别绑定提供商及其命名密钥；兼容性依赖上游 API |
-| 审批选择 | 输入框的策略菜单独立“审批”栏，选择手动或辅助审批 | 辅助审批独立审核具体命令，使用任务模型并计入用量；不确定时转人工，不扩大权限 |
-| 知识星图 | 项目文件标题栏打开独立星图；按来源、名称与编号搜索文件、会话和代码，回填原会话草稿 | 本地、SSH/SFTP、链接、FTP/FTPS/SMB 与已发现 MCP 工具说明的有界索引；静态调用仅为候选关系；自动差量更新保留有效视角与选择 |
-| 文档原文与检索 | 跨已启用来源逐字搜索或本地 TF-IDF 片段排序；点击 AI 生成引用回答 | TF-IDF 按需检索不调用模型；AI 会把检索摘录发送给模型并计费；可选向量检索单独配置；[范围与限额](docs/architecture/knowledge-map.md) |
-| 轨迹、搜索与压缩 | 查看任务步骤与工具记录；搜索聊天；压缩历史上下文 | 压缩是摘要化，不是 ZIP，也不保证磁盘体积缩小 |
-| 用量、费用与账户额度 | Token 热力图、单日明细、费率快照，以及插件提供的货币余额或窗口额度 | 货币、百分比额度分开显示；缺少支持能力时显示不可用，不按零余额处理；报警仅提醒，不会充值或停任务 |
-| 容器命令面板 | 手动运行命令，查看输出、退出码，取消任务 | 独立 shell，无 PTY，不适合交互式编辑器或常驻服务 |
-| 插件 | 上传、启停、工具调用与插件工坊；AI 可准备插件包和引用管理提案 | 仅兼容形态子集；插件是可信代码，不是安全沙箱 |
-| 权限、语音与个性化 | 三级沙箱（只读/工作区可写/完全访问）、per-tool 开关、锁屏；页面内助理自动统筹、持续语音与百炼 TTS、性格持久化；配置备份导出/导入 | 沙箱约束容器权限，不是对恶意插件的安全保证；助理语音和插件工作台本机转写是独立入口，后者须插件声明并由用户在宿主按钮启动 |
-| 外观与关于 | 专业/舒适/经典三组，各选浅色、深色或跟随系统；显示版本与仓库入口 | 偏好保存在当前浏览器，未同步到服务端 |
-| 虚拟形象与工作区布局 | 可选统一虚拟形象，多场景动画及速度/补帧设置；左右侧栏可拖动调宽 | 具体动作、设置及验收边界见任务记录；锁屏全场景及量化帧率仍有未验收项 |
-
-![实际外观设置：专业、舒适、经典及浅色/深色/系统模式](docs/images/current-20261017/04-appearance.jpg)
-
-## 按专业场景扩展 aide
-
-aide 可以直接用于日常专业工作。需要适配软件研发、技术资料分析或内部流程时，可让开发 AI 复用现有能力，调整界面、策略、插件及外部系统连接。Agent 路由管理的是开发与维护活动，不替代使用者的专业判断。
-
-1. Fork 或克隆源码，保留 MIT 许可证；为定制建立独立分支。
-2. 填写 [场景定制指南](docs/customization.md) 中的需求模板，明确哪些目录、资料和工具可以使用。
-3. 让 AI 先读 `AGENTS.md`，按需求 → 设计 → 实现 → 测试 → 文档 → Release 的路由开发。
-4. 在隔离环境检查真实界面和结果，再构建自己的 Docker 镜像；源码、镜像和数据卷分别交付。
-
-**源码用于定制，镜像用于快速运行。** 发行镜像包含运行工具链与已编译应用，不替代源码仓库；源码修改后重新构建镜像。[下载 Docker 镜像与校验和](https://github.com/skyelan1999/aide/releases) · [镜像导入与启动](docker-images/README.md)。
-
-## 源码配置细节
-
-需要 Git、Docker Engine 与 Docker Compose。macOS 可使用 Docker Desktop。当前已有 Apple Silicon 环境验证记录；其他平台应自行构建并检查。宿主机不需要先安装 Go 或 npm 依赖。
-
-也可以直接使用环境检查与安装脚本：`bash scripts/install.sh --check`，然后选择 `--source` 或 `--image 归档路径`。完整前置环境、首次登录和故障处理见 [安装说明](docs/installation.md)。
-
-### 1. 获取项目
-
-```bash
-git clone https://github.com/skyelan1999/aide.git
-cd aide
-```
-
-仓库若要求访问权限，请使用有权限的 GitHub 账户。
-
-### 2. 配置本地目录
-
-首次配置才复制 `.env.example`；已有 `.env` 时直接编辑，避免覆盖。
-
-```bash
-cp -n .env.example .env
-mkdir -p context
-```
-
-将 `.env` 中目录改成实际存在的路径。下面使用 aide 本身作为工作区、`context/` 作为只读资料目录，并将本地浏览范围限制到你的开发目录：
-
-```dotenv
-AIDE_PORT=8097
-AIDE_WORKSPACE=.
-AIDE_CONTEXT=./context
-AIDE_LOCAL_ROOT=/absolute/path/to/your/projects
-```
-
-**挂载范围要点**：仓库的 Compose 默认 `AIDE_LOCAL_ROOT=$HOME`，即将整个用户主目录可读写挂载到 `/local`。按需改为较小的已存在目录；容器命令和可信插件能访问其权限内的挂载内容。`/context` 保持只读。
-
-### 3. 构建、启动并登录
-
-```bash
-bash scripts/aide.sh build
-```
-
-源码目录首次运行或 `git pull` 后执行 `build`（macOS 双击 `build.command`，Windows 运行 `build.bat`），增量构建成功后自动启动。日常使用 `start.command` / `start.sh` / `start.bat`：只启动已安装镜像，已运行时重新打开工作台，不编译代码或镜像。Release 完整包直接使用 `start`。默认地址为 `https://localhost:8097`。首次源码构建需要获取基础镜像与依赖，详见[标准启动器接口](docs/architecture/launcher-contract.md)。
-
-**macOS 独立应用**：源码版可双击 `desktop.command` 编译并打开 `~/Applications/Aide.app`，保留原工作台界面，使用应用内标签、系统菜单和文件面板。之后日常 `start.command` 打开已编译应用；`build.command` 更新镜像及桌面宿主。后台服务与 Safari 共用，退出窗口不会停止后台任务。详见 [Mac 独立窗口](docs/architecture/macos-desktop.md)。
-
-**macOS 发布包首次启动**：当前 ZIP 尚未使用 Apple Developer ID 签名并公证，Safari 下载后可能被 Gatekeeper 拦截。仅在确认文件来自 aide 官方 Release 且未被篡改后，先尝试运行一次 `start.command`，再打开「系统设置 → 隐私与安全性」，在“安全性”区域选择仍要打开并确认。若系统没有提供“仍要打开”，可在终端切换到解压后的包目录，只移除启动脚本的隔离标记：`xattr -d com.apple.quarantine start.command`，然后双击启动。不要对来源不明的软件执行此操作。免此提示分发需要配置 Developer ID 签名和 Apple 公证。
-
-本地登录令牌和模型 API Key 是两种凭据。不要分享带令牌的地址或将令牌贴到问题单。普通开发构建可能显示 `dev`/`unknown`；正式版本需要构建身份，见[发布与维护](HANDOVER.md)。
-
-### 4. 配置模型
-
-打开左下角 **模型设置**，填写提供商的 Base URL、API Key，添加模型 ID 与上下文窗口，保存当前模型。OpenAI GPT-6 系列自动使用 Responses API；其他模型按提供商兼容接口调用。具体地址、模型名称和费用以你的提供商为准。
-
-“已配置”仅表示配置字段就绪，不代表连接成功。先发送不含私有资料的简短问题确认可用。无模型时文件与命令功能仍可使用。
-
-### 5. 完成第一项任务
-
-1. 点工作空间卡片，确认当前项目路径；打开右侧 **文件**。
-2. 打开目标文件，选择 **附加到任务**；补充所需的辅助资料。
-3. 在 **策略** 中选择模型与 Profile，输入目标和验收条件。
-4. 先用 **对话** 理解项目；需要改动时选择 **AI 工作流**。
-5. 检查提案和审查结果，确认后应用文件修改。已有文件须符合附件与版本校验要求。
-6. 将建议命令填入命令面板，审阅后手动运行；根据实际输出判断任务是否完成。
-
-本轮发行线的 **策略 → 审批** 可切换手动或辅助审批；它与模型自动路由分别配置。**项目文件** 标题栏的星座图标直接打开知识星图。按 `F…` 文件、`C…` 代码、`S…` 会话编号定位后，可将引用插入打开星图时的原会话草稿，不自动发送。操作与验收边界见[使用指南](docs/user-guide.md#知识星图候选源码)和[知识星图架构](docs/architecture/knowledge-map.md)。
-
-![从需求到验证的六步工作流](docs/images/development-flow.svg)
-
-详细操作、资料来源、费用、搜索与压缩说明见[使用指南](docs/user-guide.md)。
-
-## 数据与运行环境
-
-| 容器位置 | 内容 | 默认来源 |
-| --- | --- | --- |
-| `/workspace` | 可读写项目 | 当前仓库或 `AIDE_WORKSPACE` |
-| `/context` | 只读辅助目录 | `../Harness` 或 `AIDE_CONTEXT` |
-| `/local` | 可读写宿主目录浏览范围 | `$HOME` 或 `AIDE_LOCAL_ROOT` |
-| `/data` | 会话、模型配置、令牌、费率与统计 | 启动目录 `.aide-data/storage/data`（绑定挂载） |
-| `/home/aide` | 用户环境与开发缓存 | 启动目录 `.aide-data/storage/home`（绑定挂载） |
-
-启动器首次迁移会校验旧卷全部普通文件的内容、权限和软链接，保留旧卷。核心配置、会话、保险库及工具用户缓存随启动目录保存，Docker 容器/卷清理不再删除它们；项目自己的 `.cache` 仍由项目管理。备份、迁移和恢复见[启动目录持久化](docs/architecture/launcher-storage.md)。请通过启动器初始化，不要直接用裸 `docker compose up` 创建空目录。
-
-Go 服务使用 `go:embed` 分发前端；前端为原生 JS/CSS，Markdown 解析器随仓库本地分发，无 CDN 和 npm 安装步骤。修改源码后需要重建发布镜像。镜像归档位于 `docker-images/`，不包含挂载目录和数据卷。
-
-```bash
-bash scripts/aide.sh status   # 查看服务状态
-bash scripts/aide.sh logs     # 查看近期日志
-bash scripts/aide.sh test     # 一次性容器中运行 Go race / vet
-bash scripts/aide.sh export   # 导出本机 aide:local 镜像
-bash scripts/aide.sh stop     # 停止服务，保留数据卷
-```
-
-## 参与开发
-
-所有开发 Agent 从 [AGENTS.md](AGENTS.md) 进入同一个流程：
-
-**需求 → 设计 → 实现 → 测试 → 文档 → 清理 → Release**
-
-```bash
-python3 scripts/agent-route.py start my-feature --request "需求与目标"
-python3 scripts/agent-route.py check
-python3 scripts/agent-route.py verify quick
-python3 scripts/agent-route.py audit
-```
-
-支持 Codex、Claude Code、DeepSeek DSH 的项目入口，以及豆包和 WorkBuddy 的显式启动指令。它是仓库开发规范与检查工具，不是产品内的多 Agent 调度功能。客户端适配方式与能力边界见[接入说明](docs/agent/ADAPTERS.md)。
-
-## 使用边界
-
-- 适用于可信单用户本地工作台，默认端口仅绑定回环地址；不面向公网或多用户托管。
-- AI 可以通过读工具读取授权工作区，不能再把“只有显式附件会进入模型”视为保证。
-- 文件应用逐文件原子写入，不是跨文件事务；已应用的修改不会因后续失败自动回滚。
-- 已支持逐 token SSE 流式输出（chat 模式实时可见）、MCP stdio / Streamable HTTP 只读工具发现/调用，以及终端与知识星图等工作区能力；插件和检索能力以对应协议说明及插件启用状态为准，不代表完整兼容第三方 DSH 插件。
-- 上下文与缺失 usage 的 Token 数量为启发式估算；压缩可能丢失细节，重要事实应回查原文件和轨迹。
-
-## 文档导航
-
-| 文档 | 面向谁 |
+| 操作 | 标准入口 |
 | --- | --- |
-| [使用指南](docs/user-guide.md) | 第一次使用与日常操作 |
-| [交接与运维](HANDOVER.md) | 部署、升级、备份、恢复与排障 |
-| [架构与 API](docs/architecture.md) | 开发和扩展 |
-| [知识星图](docs/architecture/knowledge-map.md) | 多来源星域、自动差量同步、代码候选关系、原文/RAG及编号回填 |
-| [SSH 与存储配置](docs/architecture/ssh-storage.md) | 目录访问、连接恢复及工作区／文档／缓存的服务器边界 |
-| [产品主页](docs/website.md) | 独立静态站点、本地预览与手动 Pages 发布 |
-| [产品需求](docs/PRD.md) | 需求范围、编号、状态与限制 |
-| [插件协议](docs/plugin-protocol.md) | 编写和评估插件 |
-| [文档索引与有效性](docs/README.md) | 区分现行文档与历史证据 |
-| [最新发行说明](docs/releases/v0.1.17.6-RC1.md) | 0.1.17.6 RC1 的已发布范围；源码后续改动以发行记录为准 |
-| [版本记录](version.md) | 源码版本及变更；实际交付核对对应发行收据 |
+| 日常启动 / 复用已有健康实例 | `start.command`、`start.sh`、`start.bat` 或 `bash scripts/aide.sh start` |
+| 首次源码构建 / 拉取源码后应用变更 | `build.command`、`build.sh`、`build.bat` 或 `bash scripts/aide.sh build` |
+| 查看状态 / 日志 | `bash scripts/aide.sh status` / `bash scripts/aide.sh logs` |
+
+`start` 不编译源码；改变源码后仅刷新页面不会更新已运行的二进制。原生桌面窗口和浏览器可以使用同一个后台服务，不必为每个窗口启动容器。清理、停止与回退见[标准启动接口](docs/architecture/launcher-contract.md)和[运维交接](HANDOVER.md)。
+
+## 使用与扩展
+
+1. 确认工作区和辅助资料的范围，再打开或附加文件。
+2. 选择模型、执行模式与审批方式，说明目标和验收条件。
+3. 根据工具事实、文件差异、应用回执和命令结果判断完成状态。
+4. 使用插件扩展专业能力；开发者从 `AGENTS.md` 和[开发流程](docs/agent/WORKFLOW.md)进入。
+
+插件独立建库和发行，从市场或 ZIP 安装。主程序更新不会自动替换本地已安装插件。Node 插件运行可信代码，插件协议和工具开关不构成恶意代码隔离沙箱。
+
+项目状态与文件由本地或用户配置的服务保存；使用云端模型时，发送的任务上下文、图片和工具结果会交给相应提供商。`AIDE_LOCAL_ROOT`、工作区挂载和引用写锁决定可访问范围，配置前应阅读[目录与存储边界](docs/workspace-paths.md)。
+
+## 文档与版本
+
+本页按 **2026-11-11 源码 `921a95a5`** 核对。查询到的最新公开程序发行版为 **v0.1.18.0-RC3**（2026-11-02）；两者不是同一交付身份。后续版本以 Release 页面为准。
+
+| 文档 | 内容 |
+| --- | --- |
+| [文档中心](docs/README.md) | 当前使用、开发、运维入口与历史资料分类 |
+| [技术白皮书](docs/architecture/aide-technical-whitepaper.md) | Skye Lan 署名；架构、任务状态、数据边界、协议、验证和披露证据 |
+| [架构与 API](docs/architecture.md) | 模块、端点与专题入口 |
+| [插件协议](docs/plugin-protocol.md) | 工具、工作台、文档与图片通道 |
+| [使用指南](docs/user-guide.md) | 模型、文件、会话、资料和日常操作 |
+| [产品需求](docs/PRD.md) | 需求范围、状态口径和历史编号 |
+| [运维交接](HANDOVER.md) | 启动、构建、数据保护、验证与恢复 |
+| [版本记录](version.md) | 源码版本；程序附件以对应 Release 为准 |
+
+带日期的任务、测试与截图是历史证据。白皮书中的源码推导、既有测试和未执行验证分别标注；文档修改本身不证明新程序已部署或论文已公开发布。
 
 ## 许可与致谢
 
-项目使用 [MIT License](LICENSE)。本地分发的第三方组件保留各自许可证。感谢 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供设计参考。
-
-## 内置鲸鱼娘背景
-
-设置 → 外观 → 工作台背景 → 鲸鱼娘，可直接选择随应用内置的静音循环视频，无需上传。默认仍关闭，原有强度调节、本地素材与后台/锁屏/减少动态效果暂停规则保留。[实际截图与实现边界](docs/builtin-background.md)。
-
-插件独立建库、独立发布，从插件市场或 ZIP 显式安装；Aide 不携带、预装或同步插件源码。安装状态位于已忽略的 `plugins/`，主程序更新不会覆盖插件。已有克隆首次拉取该变更前，请先按[一次性迁移说明](docs/plugin-checkout-migration.md)备份并保留本地插件升级。
-
-## 文档有效性与版本
-
-README 概述源码当前记录的产品能力；具体发行包是否包含某项能力，以同版本的 Release 说明和发行收据为准。不要把候选构建、静态截图或本地验收描述成正式发行结果。
-
-工作台截图的历史采集基线为源码 `0fef6411`（2026-10-17），来自带专用示例数据的隔离实例；截图不代表最新界面，也不等于生产或发行验收。更多[截图证据和验证范围](docs/ui-evidence.md)、[界面演示手册](docs/demo-guide.md)与[当前交互设计](docs/design/current-workbench.md)。
-
-日常启动配置以 `.env` 为准：`start.command` → `scripts/aide.sh` → Docker Compose，读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围与 macOS 共享根模式见[工作目录配置](docs/workspace-paths.md)。
+[MIT License](LICENSE)。第三方组件保留各自许可。aide 是独立项目，借鉴 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的设计思路，不是 DeepSeek 官方产品，也不承诺完整 DSH/Cordis 运行时兼容。

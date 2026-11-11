@@ -1,12 +1,10 @@
-# aide 开发与运维入口
+# Aide 开发与运维交接
 
-![实际源码文档预览环境](docs/images/current-20261017/01-workbench.jpg)
+维护日期：2026-11-11；文档核对源码 `921a95a5`。最新公开程序发行为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)（2026-11-02）。主干、安装包与正在运行的实例可能不同，接手时分别核对。
 
-此图来自专用隔离实例；不证明用户现用容器已更新。文档按真实操作记录，未运行外部模型、音频和双设备通信，详情见[截图范围](docs/ui-evidence.md)。
+## 接手顺序
 
-> 当前源码文档基线：`0fef6411`（2026-10-17）。[文档与截图任务](docs/tasks/documentation-sync-20261017.json) · [实际 UI 证据](docs/ui-evidence.md) · [模块说明](docs/architecture/modules.md)。历史 RC2 发行看[原发布记录](docs/reviews/release-0.1.17.0-RC2-2026-10-08.md)，不将历史授权延续为本次发布许可。
-
-## 快速接手
+在实际 Aide 源码目录进行只读检查：
 
 ```bash
 git status --short --branch
@@ -16,57 +14,49 @@ bash scripts/version.sh show
 bash scripts/aide.sh status
 ```
 
-先读 [Agent 工作流](docs/agent/WORKFLOW.md)、[路由配置](docs/agent/router.json) 和相关 [任务验收记录](docs/tasks/)。所有现行产品说明从 [文档中心](docs/README.md) 进入；旧交接与方案放在 [历史档案](docs/archive/)。
+先保留未提交改动，确认 `.env` 的端口、Compose 项目名、工作目录、数据卷和当前运行身份，再执行构建或切换。[文档中心](docs/README.md)提供产品入口；[技术白皮书](docs/architecture/aide-technical-whitepaper.md)解释执行原理；维护流程见 [Agent 工作流](docs/agent/WORKFLOW.md)。
 
-## 本地运行与诊断
+## 启动和应用源码
 
-- 常规启动：`./start.command` 或 `bash scripts/aide.sh start`。只复用/启动已安装的镜像，健康实例直接重新打开工作台；不编译，也不因源码变化自动构建。
-- 源码首次构建或 `git pull` 后应用改动：`./build.command` / `bash scripts/aide.sh build`；Windows 使用 `build.bat`。成功校验后自动启动新源码镜像，失败不替换为 Release。旧 `AIDE_BUILD_FROM_SOURCE` 开关不能让 start 编译。
-- `clean` 清除本安装构建缓存与可移除镜像后调用 build；`docker_clean` 清除本安装 Docker 环境，不重新构建。保留用户持久数据与离线归档，见[接口规范](docs/architecture/launcher-contract.md)。
-- 只读状态：`bash scripts/aide.sh status`；日志：`bash scripts/aide.sh logs`。
-- 默认端口 `8097`，由 `.env` 的 `AIDE_PORT` 控制。生产或用户正在使用的服务不得作为测试实例；在临时实例上验证。
-- Go 服务嵌入前端。改动后必须重建目标测试镜像；仅刷新页面不会更新旧二进制。
-- `/workspace` 是工作目录，`/context` 为只读参考资料，`/data` 保存会话、凭据和配置。不要将密钥、访问令牌或业务数据写入 Git。
+| 操作 | 行为 |
+| --- | --- |
+| `./start.command` / `bash scripts/aide.sh start` | 复用或启动已安装镜像；健康服务直接打开，不因 Git 变化自动编译 |
+| `./build.command` / `bash scripts/aide.sh build` | 从源码构建，校验后启动相应产物；Windows 入口为 `build.bat` |
+| `bash scripts/aide.sh status` / `logs` | 查询本安装的状态和日志 |
+| `clean` / `docker_clean` | 不同的缓存、镜像与环境维护操作；执行前核对[精确契约](docs/architecture/launcher-contract.md)和[数据边界](docs/docker-maintenance.md) |
 
-## 验证入口
+默认端口为 `8097`，由 `.env` 中 `AIDE_PORT` 决定；报告中的 `9999` 等端口只属于对应实例。前端经 `go:embed` 编入 Go 服务；只刷新页面不能把新源码装入旧二进制。
+
+本地验收优先遵守用户对当前实例的约定。本项目当前要求复用现有本地 Aide，不另外启动 Aide/Docker 测试实例；只运行适合该环境、不会污染用户数据的检查。确需隔离实例的测试不能悄悄启动，应说明依赖和未执行范围。不要为普通文档更新重建服务。
+
+## 验证与结果记录
 
 ```bash
+python3 scripts/check_docs.py
 python3 scripts/agent-route.py check
 python3 scripts/agent-route.py verify quick
-python3 scripts/agent-route.py verify full
-python3 scripts/agent-route.py audit
 ```
 
-`full` 包含 `bash scripts/aide.sh test`，在 Docker 中运行 `go test -race -count=1 ./...` 与 `go vet ./...`。涉及 UI 的改动还要在浏览器实际检查；组件脚本通过不等于 UI 验收通过。验证记录位于 [docs/verification.md](docs/verification.md) 和相应任务 JSON。
+按改动选择验证，不把所有命令当作每次必须运行的清单。文档修改先检查链接和 diff；代码修改按模块运行聚焦测试，界面改动再验收实际本地页面。`verify full` 和 `bash scripts/aide.sh test` 涉及更完整的 Go/race/vet 及测试环境，先读[Release 验收](docs/testing/release-validation.md)并确认资源条件；不要在本次约定下另起实例。
 
-## 数据保护与发布边界
+报告写明提交/脏树、测试命令与结果、运行身份、界面操作范围及未验证项。源码检查、单元测试、服务健康、浏览器操作、真机/远端测试与发行交付各有范围。历史输出只证明原报告对应环境。
 
-- Git 源码、未提交改动、工作区、`/data`、模型配置与镜像归档是不同的数据，需要分别备份。
-- 不运行 `git clean -fdx`、`docker compose down -v`，不覆盖唯一数据副本。
-- 合并、推送、版本升级、tag、GitHub Release、镜像发布、生产重建与服务重启分别记录；只执行用户明确授权的步骤。
-- 本次仅为现行文档和实际截图更新，不包含生产重建、服务重启、tag、Release 或 Pages 部署；这些步骤需要各自授权与交付收据。
+## 数据与恢复
 
-## 回滚
+- `/workspace` 是项目，`/context` 通常为只读参考，`/data` 保存会话、配置、凭据等状态；宿主映射以实际配置为准。[目录说明](docs/workspace-paths.md)。
+- Git 源码、未提交文件、项目数据、数据卷、设置密钥、镜像与离线包分别备份。不要把业务数据或访问令牌写入仓库。
+- 不用 `git clean -fdx`、删除数据卷或覆盖唯一副本来清理验收环境。
+- 代码恢复优先保留现场后 `git revert`；镜像回退不等于数据库或文件回退。数据恢复先检查备份内容，避免用旧镜像覆盖唯一数据。
+- 文件提案、逐文件替换和外部命令并非整组跨资源事务；部分执行后以实际回执及文件读回确定状态。
 
-代码回滚优先使用 `git revert <merge-or-fix-commit>` 并重新运行 quick/full；数据恢复使用独立卷和工作区副本先验证，确认后再切换。不要以回滚镜像覆盖唯一数据副本。
+## 发布与交接
 
-## 当前工作与证据导航
+合并、推送、版本声明、构建、tag、Release、镜像分发、市场条目、运行实例重建分别记录。已有程序 Release 不会自动发布新写的论文；推送文档也不代表重新构建安装包。
 
-| 范围 | 当前说明与证据 | 交接重点 |
-| --- | --- | --- |
-| 本轮发行与当前验收 | [0.1.17.0 RC1发布记录](docs/reviews/release-0.1.17.0-RC1-2026-10-08.md) · [协议联调](docs/reviews/2026-10-08-release-integration.md) | 旧报告留存历史范围；当前门禁、镜像、远端附件与运行状态以本轮收据为准 |
-| 审批、界面、直接进入星图与自动差量更新 | [源码交接记录](docs/reviews/2026-10-08-starmap-source-sync.md) · [知识星图架构](docs/architecture/knowledge-map.md) | 历史 Safari 观察只证明当时的直接进入及按钮移除；不能覆盖之后的多来源改动 |
-| SSH 目录与生命周期修复、存储配置 | [SSH 检查报告](docs/reviews/2026-10-08-ssh-storage-audit.md) · [存储专题](docs/architecture/ssh-storage.md) | 双服务器隔离验收与用户服务器排错分开；只读断线重试一次，不重放写入 |
-| 星图不同引用来源与文档查看／回填 | [多来源候选检查](docs/reviews/2026-10-08-starmap-sources.md) · [任务账本](docs/tasks/starmap-sources-20261008.json) | 来源身份随配置及凭据变化；重启后旧查看页重新打开；真实协议／模型验收看本轮收据 |
-| 独立产品主页 | [主页说明](docs/website.md) · [任务账本](docs/tasks/homepage-20261008.json) | `site/` 静态展示，与工作台 API、发行包和运行部署分开；Pages 仅手动触发 |
+本次仅维护 Aide 文档，不修改插件、市场、运行实例或发行版本。后续发布时记录对应 Git 提交、公开时间、附件摘要及文档版本；历史记录见 [releases](docs/releases/) 和 [reviews](docs/reviews/)。
 
-候选启动沿用 `start.command`。先核对 `.env`、Compose 项目名、端口、镜像与数据卷，保留原实例；历史18189与9999的状态只是对应报告的当时观察。发布后再核对实际容器与鉴权 API，不能仅依靠页面角落版本。
+## 常用专题
 
-本次资料整理不移动业务工作区、应用数据卷或原始验收日志。现行操作说明集中在用户指南与架构专题；带日期的报告保留当次源码、环境和失败记录，过期收据不得用于本轮发布门禁。
+[执行策略](docs/architecture/execution-policy.md) · [上下文恢复](docs/architecture/context-recovery.md) · [知识星图](docs/architecture/knowledge-map.md) · [插件协议](docs/plugin-protocol.md) · [电脑与浏览器控制](docs/plugins/computer-browser-control.md) · [语音](docs/architecture/assistant-openai-speech.md) · [SSH 与存储](docs/architecture/ssh-storage.md) · [诊断](docs/architecture/diagnostics.md)
 
-## 历史记录
-
-- [旧版运维与交接档案（截至 2026-09-30）](docs/archive/HANDOVER-2026-09-30-legacy.md)
-- [2026-09-26 RC3 交接记录](docs/archive/2026-09-26-HANDOFF-RC3.md)
-- [版本记录](version.md) · [安装指南](docs/installation.md) · [用户指南](docs/user-guide.md)
-- [0.1.14.0 RC5 发布记录与限制](docs/reviews/release-assets-2026-10-01.md) · [发布任务验收](docs/tasks/release-2026-10-01.json)
+旧版交接保留在 [archive](docs/archive/)；[2026-10-17 截图](docs/ui-evidence.md)不是当前运行环境截图，不用它判断今天的界面或发布状态。

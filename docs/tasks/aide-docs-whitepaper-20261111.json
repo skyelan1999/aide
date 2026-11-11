@@ -1,0 +1,131 @@
+{
+  "id": "aide-docs-whitepaper-20261111",
+  "request": "核对更新Aide文档及首页README，删除过时内容；讲清技术架构，形成署名Skye Lan的论文基础；只处理Aide本体，暂不处理MapCanvas。",
+  "baseline": "921a95a568162fdc0088e2a0843266f1d357ff08",
+  "initial_status": "",
+  "acceptance": [
+    "中英文首页对应当前主干和公开RC3身份，删除过时功能、重复安装与旧运行状态。",
+    "当前文档中心、架构、模块、功能、用户指南和PRD的核心机制保持一致；历史证据保留。",
+    "署名Skye Lan的技术白皮书解释对象、状态、执行环境、上下文、接口、权限、文件、知识和原生能力，并提供固定源码/公开发行身份。",
+    "仅Aide文档改动；不处理MapCanvas，不创建新实例，不修改代码或发布。"
+  ],
+  "scope": [
+    "HANDOVER.md",
+    "README.en.md",
+    "README.md",
+    "docs/PRD.md",
+    "docs/README.md",
+    "docs/architecture.md",
+    "docs/architecture/adaptive-parallel.md",
+    "docs/architecture/aide-technical-whitepaper.md",
+    "docs/architecture/evidence/aide-public-baseline-20261111.json",
+    "docs/architecture/modules.md",
+    "docs/builtin-background.md",
+    "docs/documentation-map.md",
+    "docs/en/README.md",
+    "docs/en/architecture.md",
+    "docs/en/features.md",
+    "docs/en/user-guide.md",
+    "docs/features.md",
+    "docs/plugins/computer-browser-control.md",
+    "docs/reviews/2026-11-11-aide-docs.md",
+    "docs/tasks/aide-docs-whitepaper-20261111.json",
+    "docs/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User narrowed work to Aide main documentation and homepage; external draft docs restored to initial clean state.",
+      "evidence": [
+        "README.md",
+        "docs/architecture.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "当前入口分层与详细技术白皮书；新异步执行环境和旧分析兼容路径分开。",
+      "evidence": [
+        "docs/reviews/2026-11-11-aide-docs.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "更新首页、操作与架构入口，新增白皮书和公开身份快照；没有程序代码变化。",
+      "evidence": [
+        "docs/reviews/2026-11-11-aide-docs.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "文档检查与diff通过；18个固定提交源码摘要一致，任务范围与新增章节引用通过。非功能验收。",
+      "evidence": [
+        "docs/reviews/2026-11-11-aide-docs.md",
+        "docs/architecture/evidence/aide-public-baseline-20261111.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本地落盘、链接和章节引用检查通过；过时当前描述已替换，历史报告保留。",
+      "evidence": [
+        "HANDOVER.md",
+        "README.en.md",
+        "README.md",
+        "docs/PRD.md",
+        "docs/README.md",
+        "docs/architecture.md",
+        "docs/architecture/adaptive-parallel.md",
+        "docs/architecture/aide-technical-whitepaper.md",
+        "docs/architecture/evidence/aide-public-baseline-20261111.json",
+        "docs/architecture/modules.md",
+        "docs/builtin-background.md",
+        "docs/documentation-map.md",
+        "docs/en/README.md",
+        "docs/en/architecture.md",
+        "docs/en/features.md",
+        "docs/en/user-guide.md",
+        "docs/features.md",
+        "docs/plugins/computer-browser-control.md",
+        "docs/reviews/2026-11-11-aide-docs.md",
+        "docs/tasks/aide-docs-whitepaper-20261111.json",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "修改仅Markdown和文档JSON；MapCanvas原段落逐字相同，未触碰插件、市场或运行实例。",
+      "evidence": [
+        "docs/reviews/2026-11-11-aide-docs.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User authorized docs push; documentation, exact scope and source/hash checks passed. Preparing main commit and remote verification.",
+      "evidence": [
+        "docs/reviews/2026-11-11-aide-docs.md"
+      ]
+    }
+  },
+  "release_authorization": "2026-11-11 user requested: 推送. Commit and push these Aide docs only; no app release, tag, market or runtime changes.",
+  "rollback": "仅恢复本任务列出的文档；新白皮书/身份快照/报告/任务JSON为本次新增。先保留后续改动，不使用整树reset或clean；不涉及运行实例回退。",
+  "handoff": "Documentation complete; commit and push authorized, remote result pending. No code, plugin, market, version or runtime changes.",
+  "author": "Skye Lan",
+  "issues": [],
+  "checks": [
+    {
+      "command": "python3 scripts/check_docs.py",
+      "result": "PASS: 504 Markdown files, 2315 local links, JPEG signatures, FR-01..100"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py check",
+      "result": "PASS: route and specialist skill files present; client loading must still be confirmed"
+    },
+    {
+      "command": "Inline Python source/JSON/scope/anchor checks",
+      "result": "PASS: 18 source hashes and byte counts; local source equals baseline; MapCanvas suffix unchanged; 21 documentation-only paths; current entry links and chapter anchors"
+    }
+  ]
+}

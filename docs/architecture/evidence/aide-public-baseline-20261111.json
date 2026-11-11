@@ -1,0 +1,186 @@
+{
+  "schema": "aide.public-source-baseline/v1",
+  "retrieved_at": "2026-11-11T06:35:51.006348+00:00",
+  "purpose": "Aide documentation source and existing public release identities; not evidence that the new whitepaper has already been published.",
+  "repository": "https://github.com/skyelan1999/aide",
+  "source": {
+    "sha": "921a95a568162fdc0088e2a0843266f1d357ff08",
+    "url": "https://github.com/skyelan1999/aide/commit/921a95a568162fdc0088e2a0843266f1d357ff08",
+    "author_date": "2026-11-11T05:38:57Z",
+    "committer_date": "2026-11-11T05:38:57Z",
+    "date_semantics": "Git metadata dates are not independent public disclosure timestamps."
+  },
+  "release": {
+    "tag_name": "v0.1.18.0-RC3",
+    "html_url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3",
+    "target_commitish": "86f83431ec3fceb67dc4e4722ab67cf603dffaaa",
+    "created_at": "2026-11-02T05:52:25Z",
+    "published_at": "2026-11-02T06:55:25Z",
+    "prerelease": false,
+    "draft": false,
+    "immutable": false
+  },
+  "release_assets": [
+    {
+      "name": "aide-v0.1.18.0-RC3-devtools-linux-amd64.zip",
+      "size": 578983413,
+      "digest": "sha256:ae2f6c79222d6e93561ab091a8bebfc8e67433c8a5be9c75c468957512880868",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/aide-v0.1.18.0-RC3-devtools-linux-amd64.zip"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC3-devtools-linux-arm64.zip",
+      "size": 563905958,
+      "digest": "sha256:47ac99d404d55034f158dcad871c3f6816ed524b37f4bc111cb1e8942d4efff0",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/aide-v0.1.18.0-RC3-devtools-linux-arm64.zip"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC3-full-linux-amd64.zip",
+      "size": 418500452,
+      "digest": "sha256:185b495d70dedc22934bb3613d189490f7ca787ec4bebf4eedcb136e3b4badec",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/aide-v0.1.18.0-RC3-full-linux-amd64.zip"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC3-full-linux-arm64.zip",
+      "size": 413990534,
+      "digest": "sha256:7dcb8616da9903d3fcd0132c553d584a4ab0dead9417944040c649d4e27825da",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/aide-v0.1.18.0-RC3-full-linux-arm64.zip"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "size": 1687,
+      "digest": "sha256:426bb23d8ca86d46c973a8bee051cfc44441d0bdc4535b990777cf7b957e481f",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/RELEASE-ASSETS.txt"
+    },
+    {
+      "name": "RELEASE-VALIDATION.json",
+      "size": 953070,
+      "digest": "sha256:fdf8eec3ed765f00499ac56b6e75270d212a8380e55939ae9f06689e8724a133",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/RELEASE-VALIDATION.json"
+    },
+    {
+      "name": "SHA256SUMS",
+      "size": 607,
+      "digest": "sha256:d905e68da09c64b694ff09ad05947ea9686d5579911d03f8a8a73bd6c7b41f12",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.18.0-RC3/SHA256SUMS"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "internal/server/workflow.go",
+      "bytes": 285941,
+      "sha256": "c3032242698bb89ebd30427002cbd099bde5d1e573a9df285d0863d7ce5ec5e1",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/workflow.go"
+    },
+    {
+      "path": "internal/server/context.go",
+      "bytes": 38435,
+      "sha256": "23b1d0404189034e7afcfc4f340b4e275d6df57b37e3827d7389938fe6a0e348",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/context.go"
+    },
+    {
+      "path": "internal/server/provider.go",
+      "bytes": 28492,
+      "sha256": "9cf1d540b6a5950cb7ea01a48688d98272f162a6ab860dd8761c8c52053f2fa8",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/provider.go"
+    },
+    {
+      "path": "internal/server/provider_responses.go",
+      "bytes": 8804,
+      "sha256": "a34e5aaa9c705fc720b8f359634301fa2b00ce90663a45d0f8bc81951112a933",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/provider_responses.go"
+    },
+    {
+      "path": "internal/server/conversation_parallel.go",
+      "bytes": 44362,
+      "sha256": "906fab07ac1bd320d7f2a3ec7a9185dd57ba0857a4ab57d1f1e3af3b1480192b",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/conversation_parallel.go"
+    },
+    {
+      "path": "internal/server/parallel_edit_drafts.go",
+      "bytes": 9285,
+      "sha256": "1deccd8c70d32c90905aa301032eef79251a2bdce3cbc9372dc6314914b7e9af",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/parallel_edit_drafts.go"
+    },
+    {
+      "path": "internal/server/markdown_attachments.go",
+      "bytes": 3115,
+      "sha256": "e5d49d1984b2500f5285cadd978de985d28fe5800f3383c6e5cc7fcfc6419ce3",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/markdown_attachments.go"
+    },
+    {
+      "path": "internal/server/computer_actions.go",
+      "bytes": 6284,
+      "sha256": "20d3161e3091c1b77c811e20878f3edb7a52b6df1cfa00950fb5d955ad1d8b94",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/computer_actions.go"
+    },
+    {
+      "path": "internal/server/assisted_approval_surface.go",
+      "bytes": 10505,
+      "sha256": "ed4938aec43a3cba9d24a616bdf995c53333f998f6a133cf96be7e7c3f8d4cc4",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/assisted_approval_surface.go"
+    },
+    {
+      "path": "internal/server/knowledge_map.go",
+      "bytes": 23439,
+      "sha256": "4cb0726d0e734137302c4b7dfd583a28a8088f98c7bdc0cc3176f6ab39ca5251",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/knowledge_map.go"
+    },
+    {
+      "path": "internal/server/plugin_host.js",
+      "bytes": 24728,
+      "sha256": "4cefd37be3b0e3fb4c029a617f538c3ee075a29279d7bfdbbbe89e0df852a388",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/plugin_host.js"
+    },
+    {
+      "path": "native/macos-desktop/app_capture.swift",
+      "bytes": 5743,
+      "sha256": "80ac7cc617fcc15f13e5a2661855b6a71b3bc310655692977ae81de95873ff2a",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/native/macos-desktop/app_capture.swift"
+    },
+    {
+      "path": "native/macos-desktop/modifier_gesture.swift",
+      "bytes": 890,
+      "sha256": "74d9a5fce96092fb653f7bdfec5f606d6580f36c0531877bdeff8226470aaa8b",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/native/macos-desktop/modifier_gesture.swift"
+    },
+    {
+      "path": "internal/server/server.go",
+      "bytes": 162093,
+      "sha256": "01a69a19d0d3f99742c6520243b2a0f866817990c090cd6eba95c9646823c122",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/server.go"
+    },
+    {
+      "path": "internal/server/execution_environments.go",
+      "bytes": 49034,
+      "sha256": "9a29cf69d98e15e404c5b830d61ad10bd9375ac6cd439b75753cc144e0ab4ae9",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/execution_environments.go"
+    },
+    {
+      "path": "internal/server/attachments.go",
+      "bytes": 11016,
+      "sha256": "590661d3247bb1b4669cacf1964b776154d24e369e70b400d4d96f4f08055e71",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/attachments.go"
+    },
+    {
+      "path": "internal/server/computer_control.go",
+      "bytes": 19853,
+      "sha256": "d9818fae592013feb42da84d3de413dd11ecbb0a89960f1157779385abe32b56",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/computer_control.go"
+    },
+    {
+      "path": "internal/server/plugin_file_document.go",
+      "bytes": 15199,
+      "sha256": "c5e1f6d513edab6362161815e176bd5c499c2d0a2804f6e85862331e951ec011",
+      "url": "https://github.com/skyelan1999/aide/blob/921a95a568162fdc0088e2a0843266f1d357ff08/internal/server/plugin_file_document.go"
+    }
+  ],
+  "whitepaper": {
+    "path": "docs/architecture/aide-technical-whitepaper.md",
+    "version": "1.0 draft",
+    "author": "Skye Lan",
+    "publication_status": "local draft; no publication performed by this documentation task",
+    "bytes": 32440,
+    "sha256": "e4e0e5baf7c9b4540d338ff392a3c6af66e14b22170cdd15521280569cf5d2eb",
+    "hash_semantics": "Hash of this local draft only; no publication time attested."
+  }
+}

@@ -1,137 +1,72 @@
-> 2026-10-20 分发更新：以下预装记录属于历史实现。当前所有插件由独立仓库和市场分发，Aide 镜像不再携带插件，也不自动注册；已有安装保留。浏览器/电脑桥接仍属于宿主运行接口。详见 [插件分发与迁移](../plugin-checkout-migration.md)。
+# 浏览器与电脑控制
 
-# Aide 浏览器与电脑控制
+当前说明：2026-11-11，源码 `921a95a5`。电脑控制已是 Aide 内置能力，不再以独立 `computer-control` 插件作为当前安装方式；浏览器控制的工具注册和配置仍有独立通道。旧版本逐条更新已从本文移除，原验收记录保留在 `docs/reviews/`。
 
-> 2026-11-05 更新：电脑控制是 Aide 内置能力，模型调用和设置页共用 Aide 的 `computer_*` 工具/API；权限状态通过已鉴权的 `/api/computer-control/status` 查询。macOS 的 TCC 权限代理保留稳定 bundle identity，但以隐藏后台代理运行，不再展示独立桥接窗口；屏幕录制和辅助功能状态、申请入口统一在 Aide 设置 → 电脑控制。Windows/Linux 的平台状态也由同一设置面板查询。截图由 `computer_snapshot` 交给视觉证据管线。点击、输入、按键仍逐次经 Aide 确认。三端真机验收仍需在各自桌面环境完成。
+## 两条控制路径
 
-> 2026-11-03 更新：电脑控制迁入 Aide 内置工具，设置使用 Aide 全局设置；旧插件设置在首次启动时迁移并从插件注册表移除。通用设置界面供 Web、macOS、Windows 桌面共用。`computer_snapshot` 会把 PNG/JPEG 截图送入视觉证据管线，由支持图像输入的模型分析。macOS 使用现有原生屏幕录制/辅助功能桥接；Windows 桥接随 Aide 桌面应用启动，支持截图、点击、输入和有限按键；Linux 桥接需 X11、`xdotool` 与 ImageMagick，Wayland 暂不支持。Windows/Linux 当前不提供辅助功能控件树，只能通过截图观察。三端真实设备验收尚未完成。下面较早的记录作为历史设计保留。
+```mermaid
+flowchart LR
+    Task[Aide 任务] --> Policy[启用状态与目标范围]
+    Policy --> Browser[浏览器工具与页面上下文]
+    Policy --> Desktop[内置 computer 工具与目标应用]
+    Browser --> Review[人工或辅助审批]
+    Desktop --> Review
+    Review --> Recheck[重查目标与有效期]
+    Recheck --> Bridge[对应桥接或浏览器运行时]
+    Bridge --> Result[结果与新观察证据]
+    Result --> Task
+```
 
-> 当前状态（2026-10-07）：生产 Aide 已启用浏览器控制和电脑控制。浏览器使用独立无头 Chromium；真实网页读取与模型调用通过。原生电脑桥接已获屏幕录制、辅助功能权限，窗口截图、点击、中文输入、回车、文字读回及模型调用通过。下方早期“未验收/停用”描述为阶段记录，以最新验收报告为准。Safari WebDriver、模型视觉输入、下载/上传仍未完成。
+浏览器读取网页文本、链接与页面状态；电脑控制读取应用窗口、辅助功能控件和截图，并执行结构化动作。`/local` 挂载只是文件可达性，不能提供宿主键鼠和屏幕权限；容器通过认证桥接连接宿主能力。Node 插件是可信代码，不能据此称运行时是恶意插件沙箱。
 
+## 电脑工具
 
-状态：浏览器控制和电脑控制插件及 macOS 桥接均已实现，默认停用。Safari 真实联调需要在 Safari 开启远程自动化；电脑真实联调需要 macOS 为启动器授予屏幕录制与辅助功能权限。尚未完成这些权限下的实机验收。浏览器操作与桌面操作是两个独立授权面。
+设置 → 电脑控制维护开关、应用范围、桥接和操作系统权限状态。macOS 辅助代理在后台保留稳定身份，不再要求单独打开桥接窗口；系统授权仍通过正常系统流程完成。
 
-## 目标
+| 能力 | 当前行为与条件 |
+| --- | --- |
+| 状态与检查 | `computer_status` 查询可用性；`computer_inspect` 可按目标应用检查控件，不一律要求用户手动切前台 |
+| 窗口截图与视觉定位 | `computer_snapshot` 进入图片证据管线；模型需要支持图像输入。图像坐标绑定截图和应用/窗口身份，不能使用任意旧截图 |
+| 点击与虚拟焦点 | 支持结构化点击及会话目标焦点；`focusOnly` 路径可更新虚拟焦点而不移动系统鼠标 |
+| 拖拽 | 起点/终点和时长经校验；当前时长为 100–2500 ms |
+| 滚动 | 支持水平和垂直滚动；每轴参数为 -2000 至 2000 的整数像素 |
+| 输入与组合键 | 文本输入及 CMD/CTRL/ALT/SHIFT 组合、导航键和 F1–F20；具体派发能力受平台适配器约束 |
 
-- 为 Aide 提供可单独启用、配置和停用的浏览器控制与电脑控制插件。
-- 复用插件 ZIP 包、Python 工具运行时和每插件设置页。
-- 浏览器插件可检查网页内容并执行明确授权的导航/交互；电脑插件可查看屏幕并执行明确授权的输入操作。
-- 让工具结果和网页内容始终作为不可信资料处理，不把页面或截图中的文字提升为指令。
+截图定位引用在服务端关联当前任务的目标、窗口与像素尺寸；图像坐标需携带匹配 `screenshotId`，当前有效期为两分钟，目标或窗口变化后应重新截图。服务端按证据转换坐标，不让模型凭空猜测桌面缩放比。
 
-## 当前架构事实
+背景读取、控件动作和目标输入优先使用平台支持的应用定向能力；有些应用、画布或系统快捷键仍需要实际激活窗口。虚拟鼠标/会话焦点不是独立桌面：多个会话可维护不同目标，但共享系统前台、键盘和鼠标的动作不能保证同时执行。原生调度与执行前检查用于降低串目标风险，不能承诺所有软件均可后台操作。
 
-- 插件宿主、Node.js、Python 和辅助资料 MCP 客户端都运行在 Linux 容器中。
-- `/local` 是文件挂载，不提供 macOS Accessibility、AppleScript 或宿主浏览器调试协议。
-- `browser-control` 插件通过独立 macOS 进程 `scripts/safari-bridge.js` 调用 Safari WebDriver；桥接进程仅提供健康检查、页面快照、导航、点击和输入 API，不提供任意命令或文件访问。
-- `computer-control` 插件通过独立 macOS 进程 `scripts/computer-bridge.js` 调用屏幕捕获与辅助功能；桥接只提供屏幕截图、坐标点击、文本键入和有限按键，不提供任意命令或文件访问。
-- 当前 MCP 来源只支持 stdio，并只允许模型调用服务标注为只读的工具。
-- 插件 `ctx.settings` 是工作区明文 JSON 配置；不能存访问密钥，也不会自动授予网络、浏览器或桌面权限。
-- Python 工具包执行在 Aide 容器内。仅增加 Python 包不能获得 Mac 屏幕、Safari 标签页或键鼠权限。
-- 电脑截图当前捕获整屏；检查前台应用名称不能阻止截图包含屏幕上可见的其他窗口。使用者必须了解此限制，并显式配置允许控制的前台应用。
+macOS 使用屏幕捕获和辅助功能桥接；Windows 使用桌面桥接；Linux 路径依赖 X11 及相关工具，不能据源码存在推定 Wayland 或三端都已验收。平台缺失的控件树、权限或动作必须报告实际状态。
 
-## 参考的 Codex 权限原则
+## 浏览器路径
 
-Codex 将浏览器使用与电脑使用分开控制；企业策略可按站点和应用收窄范围，并由拒绝规则覆盖允许规则。对 Aide 应采用同样的分权思路：
+独立 Chromium 运行时与 Safari 桥接是不同引擎。独立浏览器上下文不自动共享 Safari 的账号和标签页；Safari 方式取决于其自动化能力与配置。静态读取、持久交互和宿主浏览器控制也不能视为同一种会话。
 
-1. 默认关闭两个插件，未配置本机桥接服务时不注册可执行工具。
-2. 浏览器权限单独配置精确站点；桌面权限单独配置应用名单。
-3. 截图、页面文本和无副作用读取可在已授权范围内运行；点击、输入、提交、下载、文件选择、快捷键和系统设置变更须逐次产生用户可见的确认。
-4. 不能以插件设置 JSON 作为秘密仓库或单独的授权机制；权限必须在 Aide 服务端校验，不能只靠前端隐藏按钮。
-5. 确认问题中的输入摘要只记录字符数；模型工具轨迹仍可能包含实际输入与返回内容，不能承诺整个会话日志已脱敏。桥接令牌不写入确认摘要。
-6. 权限撤销、超时、取消与桥接断连必须立即停止后续动作。
+站点范围、导航重定向、资源请求以及操作参数由对应实现检查。Chromium 的网络检查不能自动当作 Safari 或所有系统浏览器的覆盖证明。页面成功打开不代表复杂站点、登录、文件选择、上传下载或画布编辑已经可用；工具清单以当前注册 schema 为准。
 
-参考：[Codex 企业浏览器和电脑使用控制](https://help.openai.com/ur-in/articles/20001510-manage-browser-and-computer-use-in-your-enterprise-workspace)、[Codex 计划中的浏览器控制与审批](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan)、[Codex 沙箱与网络权限介绍](https://openai.com/index/introducing-upgrades-to-codex/)。
+## 审批行为
 
-## 所需组件
+辅助审批已覆盖符合条件的网页访问和电脑操作，不再将所有基本点击、聚焦或浏览器打开都固定交给用户确认。独立审核依据用户任务、具体目标、单次动作、参数和可获得的视觉证据判断；通过后仍重查启用状态、目标和取消状态。
 
-### Aide 插件包
+审核不会把网站或应用加入持久允许列表，也不会授予操作系统权限。身份输入、购买、删除、对外提交、权限变更等动作，以及证据不足、超时或目标变化，仍转人工处理。它不是每次点击都手动，也不是所有点击一律自动。配置、明确授权和执行范围见[用户指南](../user-guide.md#会话审批)。
 
-- `browser-control`：页面快照、链接/表单识别、站点内导航、点击和输入；站点范围由用户设置。
-- `computer-control`：整屏截图、坐标点击、文本键入和有限按键；前台应用范围由用户设置。
-- 两者使用不同的 MCP 服务和不同的 Aide 授权策略，不共享一个“全电脑”开关。
-- MCP 工具描述仅列出该插件真正支持且服务端允许的能力。未连接桥接服务时说明缺失原因，不伪装可用。
+网页、截图、控件文字和工具返回都是资料；其中出现的指令不能代替用户授权。工具轨迹可能包含输入和页面信息，不能声称整个会话日志自动脱敏。
 
-### 本机桥接服务
+## 验证与排障
 
-浏览器桥接使用 Safari WebDriver；电脑桥接使用 macOS 屏幕捕获和辅助功能 API。Aide 启动器分别生成 `.env` 中的随机令牌并管理两个服务；容器内插件只向结构化 API 发送请求，不获得任意 shell、文件系统或网络转发接口。令牌只注入所属插件的单次工具调用进程。桥接服务校验令牌、来源地址、allowlist 和请求大小。
+先看设置和工具返回的具体失败点：桥接不可达、操作系统权限缺失、目标不匹配、截图过期、平台不支持或审批未通过。不要把它们统一解释成“先切前台”。
 
-### Aide 服务端授权与确认
+- [2026-11-08 能力差距与目标应用控制验收](../reviews/2026-11-08-computer-control-gap.md)
+- [2026-11-09 视觉定位、拖拽、滚动和组合键验收](../reviews/2026-11-09-computer-actions.md)
 
-- 增加独立于插件配置的 browser/computer 授权状态和 API。
-- 由 Aide 工作流处理高影响动作确认；确认内容应显示具体站点/应用、操作和参数摘要。
-- 工具调用执行前再次校验权限、目标范围、有效期和取消状态。
-- 用户拒绝或策略不允许时，由服务器拒绝 MCP 调用；插件返回值不能绕过策略。
+这些报告仅证明当时的环境与操作。本次只更新文档，没有重新执行桌面操作，也没有新建 Aide/Docker 实例。
 
-## 实施顺序与验收
+## 实现入口
 
-1. 先实现本机桥接服务及安全配对/生命周期；确认容器只能连桥接 API，不能用它访问通用宿主资源。
-2. 实现服务端授权、精确目标白名单、逐次确认、取消和审计脱敏。
-3. 实现两个独立 ZIP 插件包与各自设置说明。
-4. 添加 Go API/授权/拒绝路径测试、MCP 协议测试、插件包安全测试。
-5. 在当前 macOS Safari 做真实页面读取和一次导航；在测试应用做屏幕读取和一次经确认的输入；确认拒绝、超时、撤权与容器重启行为。
-6. 默认发行镜像、macOS 启动器和离线包须包含兼容组件；旧版升级不得意外开启桌面权限。
+- `internal/server/computer_control.go`：工具注册、设置与桥接。
+- `internal/server/computer_actions.go`：参数、截图引用、目标与坐标校验。
+- `internal/server/computer_snapshot_evidence.go`：图片证据。
+- `internal/server/assisted_approval_surface.go`：浏览器/电脑的单次辅助审批。
+- `native/macos-desktop/computer_control.swift`、`computer_control_scheduler.swift`：原生目标动作与调度。
 
-## 当前实现与验证状态
-
-- `browser-control` 与 `computer-control` 已作为独立内置插件加入注册表，默认停用；设置 `allowedHosts` 或 `allowedApps` 后注册读取工具。导航、点击、输入和按键由 Aide 工作流在执行前逐次要求用户明确回复“确认”。
-- `scripts/browser-control-check.cjs` 用隔离的假 WebDriver 验证桥接认证、站点 allowlist、导航、快照、点击和输入；这不是 Safari 实机验收。
-- `scripts/computer-control-check.cjs` 验证桌面工具注册、应用范围、逐次确认、输入长度和按键白名单；未实际调用 macOS 辅助功能。
-- Safari WebDriver 实机验收需用户启用远程自动化；电脑桥接实机验收需 macOS 授予屏幕录制和辅助功能权限。未绕过浏览器安全警告，也未代用户修改这些系统权限。
-- 两个插件都默认关闭，allowlist 为空。当前 RC15 运行实例未重建或重启，源码功能尚未进入该运行实例。
-
-实现范围与验收：
-
-1. 已实现浏览器和电脑控制插件，分别使用默认关闭、allowlist、桥接令牌与服务端逐次确认。
-2. 已添加假 WebDriver、桌面桥接边界和 Go 服务端审批测试；不等同实机验收。
-3. 尚待用户启用 Safari WebDriver 与 macOS 屏幕录制/辅助功能权限后，测试真实 Safari 和桌面交互。
-4. 当前 RC15 运行实例没有加载此源码版本；尚未发行或部署更新镜像。
-
-因此当前可以称 Aide **源码已包含默认关闭的 Safari 浏览器与电脑控制插件**；不能称运行中的 RC15 已加载这些插件，或声称已通过真实 Safari/桌面验收。
-
-## 2026-10-06：修复镜像分发与旧工作区升级遗漏
-
-实际原因是插件只被复制到 Docker 编译阶段，最终运行镜像没有插件文件；启动时也只读取旧工作区注册表。源代码新增插件不会自动进入已有的 17 项注册表。
-
-- 最终镜像包含 `/opt/aide/builtin-plugins`，通过 `AIDE_BUILTIN_PLUGINS` 指定。开发容器指定 `/src/plugins`。
-- 启动时增量注册 browser-control/computer-control，默认关闭，保留已有插件、设置和自定义代码；已明确删除的内置插件记录在 removedBuiltins 中，不会自动复活。
-- 本地已有目录但缺少注册项时，校验 manifest 与入口后注册原目录，不替换内容。
-- 构建哈希包含 plugins，避免插件变化被启动器误认为无需重建。
-
-验证记录：
-
-- 本次新增升级回归测试与相关插件/API/审批测试：`go test -race -count=1 ./internal/server -run "TestBundledControlPlugins|TestPluginLifecycle|TestPluginBundle|TestPluginSettings|TestBrowser|TestComputer"` 通过（5.070 秒）；`go vet ./internal/server` 通过。
-- 独立候选镜像 `aide:control-integration-qa` 构建通过。
-- 使用旧 17 项注册表启动无网络隔离容器：`scripts/test_control_plugin_runtime.py` 验证 19 项、两个控制插件初始关闭、启用浏览器后五个 executable 工具；测试容器重启后 `--check` 验证设置与工具列表保留。两次均 PASS。
-- 本轮临时测试容器已删除。生产 localhost:9999 未重启、未切换；真实 Safari/桌面操作仍为 NOT_RUN。
-
-## 2026-10-07: Current headless and native architecture
-
-This section supersedes the earlier current-state statements; earlier records remain historical evidence.
-
-- Browser default engine is independent Chromium on17779; `settings.engine=safari` selects the original Safari bridge on17777. Chromium `allowedHosts` applies to HTTP requests, redirects, frames, resources and WebSocket handshakes. WebSocket frames are checked against the current list in both directions; narrowing the list closes disallowed existing channels, including when the current page itself becomes disallowed. These Chromium checks do not establish equivalent Safari or every browser transport coverage.
-- `browser_read` returns URL, title, body and links from an isolated context, then closes it. Navigation/snapshot/click/fill/scroll use a persistent interaction context. Safari cookies and tabs are not reused. Navigation/click/fill still require Aide confirmation.
-- Install using `bash scripts/headless-browser-control.sh install`. Startup launches the installed runtime without downloading. Playwright and lockfile reside in scripts/browser-runtime; browser binaries reside in the user Library/Caches/aide-browser-binaries. First installation requires network access; offline delivery is not implemented.
-- Build using `bash scripts/build-native-computer-bridge.sh`. The script generates a macOS `.icns` app icon from the same Aide blue rounded-square and white “a” mark as `internal/server/web/favicon.svg`, declares it as `CFBundleIconFile=AppIcon`, and embeds it in the signed independent app bundle under the user Library/Application Support/Aide directory. It provides Screen Recording and Accessibility request buttons plus live status. OS authorization remains a user action; the bundle identifier is unchanged so existing permission identity is preserved.
-- Native capture targets one window belonging to the allowed foreground app. The legacy Node fallback still captures the full screen. `computer_inspect` returns accessible control labels and center coordinates, excluding secure password fields, and requires Accessibility permission.
-- Production browser plugin is enabled with seven executable tools; actual Docker handler calls read example.com and DJI Chinese homepage. Dynamic specification tables, downloads and uploads are not verified. Download/upload tools are not implemented.
-- Native computer bridge is ready, but both OS permissions are false. Real desktop screenshot, inspection, click and input are NOT_RUN. Service readiness is not operation acceptance.
-
-## 2026-11-03: Computer control integrated into Aide
-
-- Computer control is now an Aide setting and core tool group. The standalone `computer-control` market item and plugin registry entry are removed; startup migrates its enabled flag and allowed-app list into Aide settings, then removes only the registry entry while retaining legacy files for recovery. New installations default to disabled with an empty allowlist.
-- macOS uses the native app bridge, Windows starts its bridge with the Aide desktop app, and Linux uses the X11 bridge. Screenshot capture is exposed as `computer_snapshot` and is limited to the selected allowed app/window as supported by each platform bridge. Each click, text entry, and key press requires separate Aide confirmation.
-- `scripts/test_control_plugin_runtime.py` now checks the 17-to-18 plugin migration, the disabled built-in defaults, refusal of standalone installation, and the independent browser-control tools. It targets the disposable container only and must not be pointed at a user's running Aide data.
-- The repository full verification passed after the Compose and English locale fixes on the candidate source. The locked desktop session prevented real desktop permission and screenshot acceptance in this task; real platform operation remains NOT_RUN.
-- Text models can use body text and accessible control text. Computer screenshots are not yet passed as vision input to the model.
-
-## 2026-10-31: macOS bridge authorization identity and status refresh
-
-The local bridge bundle is ad-hoc signed. Without an explicit designated requirement, macOS binds its TCC identity to the executable cdhash, which changes on every rebuild. The bridge build now pins the requirement to `local.aide.computer-bridge`, so future builds retain one TCC identity. The first install using this stable requirement may need the user to re-enable Screen Recording and Accessibility once; later rebuilds should keep that identity.
-
-The permission window now refreshes every two seconds and when it becomes active after returning from System Settings. A false Screen Recording preflight is shown as “not detected” with the relaunch guidance because the current process may need to be restarted after the macOS setting changes. The authenticated `/healthz` response still reports the permissions observed by the running process; it does not cache them.
-
-Observed on this machine before installing the fix: `/healthz` reported Accessibility=true and Screen Recording=false. `codesign -dr -` showed the installed app designated by cdhash `df2d9ac14bed81680cc21eeffce58ebb54ce3ba3`. The fixed bridge is now installed and `/healthz` reports both permissions false under the new identity. The user must re-enable them once; actual post-grant refresh and real capture remain NOT_RUN.
-
-## 2026-11-05: Aide-owned permission interface
-
-The prior bridge window has been removed from the macOS helper. The signed helper keeps its stable TCC identity and runs as a hidden accessory process; Aide settings now queries `/api/computer-control/status` and sends permission requests through `/api/computer-control/permissions/{permission}`. These routes reuse the same authenticated host-bridge transport as the `computer_*` tools. Windows and Linux bridge health responses expose the same settings capability shape; those operating systems do not use the macOS Screen Recording/Accessibility grants. The source changes have not yet been built or exercised on real devices, so installed-app behavior remains NOT_RUN.
+完整结构见 [Aide 技术白皮书](../architecture/aide-technical-whitepaper.md)。

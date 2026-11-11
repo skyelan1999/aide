@@ -2,6 +2,8 @@
 
 [简体中文](../architecture.md) · [English documentation](README.md)
 
+Maintained core baseline: `921a95a5`, 2026-11-11. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
+
 Aide is a Go HTTP service with an embedded native JavaScript/CSS browser UI and a container runtime. Model steps run in goroutines; SSE streams incremental output while persisted session snapshots provide final-state recovery. The Node plugin host executes trusted extensions and is not an independent security sandbox.
 
 ```mermaid
@@ -13,7 +15,7 @@ flowchart TB
   Runs --> Provider[Configured model provider]
   Runs --> Tools[Built-in tools and trusted Node plugins]
   Tools --> Proposal[File and command proposals]
-  Proposal --> Approval[User approval]
+  Proposal --> Approval[Manual or assisted review and rechecks]
   Approval --> Workspace
   Workspace --> Mounts[/workspace, /context, /local]
   Storage --> Data[/data persistent storage]
@@ -26,7 +28,7 @@ Names without a prefix below are in `internal/server/`.
 | Module | Responsibility |
 | --- | --- |
 | `cmd/aide/main.go`, `server.go` | Startup, routes, authentication, settings, sessions, pricing and build identity |
-| `workflow.go`, `context.go`, `provider.go` | Task/tool loop, proposals, compaction, context preview/budgets, provider streaming and usage |
+| `workflow.go`, `context.go`, `provider.go`, `provider_responses.go` | Task/tool loop, proposals, compaction, context preview/budgets, provider streaming and usage |
 | `profiles.go` | Built-in/custom parameter profiles and routing policy |
 | `workspace_config.go`, `ssh_session.go` | Workspace identity, local mappings and SSH/SFTP lifecycle |
 | `files.go`, `sources.go`, `mcp_source.go` | File/source boundaries, conflict checks and constrained MCP transports |
@@ -44,6 +46,10 @@ Names without a prefix below are in `internal/server/`.
 | `web/app.js`, `web/starmap*`, `web/*preview*` | Main UI, independent knowledge map and bounded viewers |
 
 Product model routing (`profiles.json`, `routing-policy.json`) is distinct from the development-agent workflow (`AGENTS.md`, workflow/router documents).
+
+## Execution environments
+
+New multi-X chat uses asynchronous collaboration: X includes the active main runtime and up to X−1 private workers. Workers may use tools, plugins and tests in scratch copies. The main runtime continues useful work, collects ready results and registers selected text candidates through ordinary version/conflict/proposal checks; collection does not apply files. SSH/captured-root limitations preserve the ordinary executor. The older tool-free `ParallelProgress` analysis remains a compatibility path, with its own planning budget. See the [environment design (Chinese)](../designs/execution-environments-20261101.md).
 
 ## Data, identity and permissions
 
