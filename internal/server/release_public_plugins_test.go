@@ -9,6 +9,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"image/color"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"net"
@@ -447,7 +449,11 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 		}
 		return []string{"installed video package performs opaque upload and real MLT parsing"}
 	case "mapcanvas":
-		return releasePublicMapCanvas(t, a)
+		cases := releasePublicMapCanvas(t, a)
+		if a.pluginOwnerOf("mapcanvas_preview") == "mapcanvas" {
+			cases = append(cases, releasePublicMapCanvasAI(t, a)...)
+		}
+		return cases
 	case "rviz":
 		got := releasePublicCall(t, a, id, "rviz_save_config", map[string]any{"config": map[string]any{"version": 1, "fixed": "map", "password": "MUST_NOT_PERSIST", "layers": []any{}}})
 		if !strings.Contains(got, "session.json") || strings.Contains(got, "MUST_NOT_PERSIST") {
@@ -547,4 +553,120 @@ func releasePublicMapCanvas(t *testing.T, a *App) []string {
 		t.Fatal("map commit failed", err)
 	}
 	return []string{"released ZIP source browse filters files; chunked read matches actual bytes and SHA", "dynamic image binding stages changes without writing and host commit writes expected PGM bytes"}
+}
+
+// Optional new-package regression, run inside the existing local Aide container.
+// No second production service and no paid model request are created.
+func TestMapCanvasInstalledCandidate(t *testing.T) {
+	bundle := os.Getenv("AIDE_TEST_MAPCANVAS_BUNDLE")
+	if bundle == "" {
+		t.Skip("explicit candidate ZIP required")
+	}
+	raw, err := os.ReadFile(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, _, err := parsePluginBundle(raw)
+	if err != nil || manifest.ID != "mapcanvas" {
+		t.Fatal("invalid MapCanvas ZIP", err)
+	}
+	a := testApp(t)
+	var body bytes.Buffer
+	form := multipart.NewWriter(&body)
+	part, err := form.CreateFormFile("bundle", "mapcanvas.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = part.Write(raw); err != nil {
+		t.Fatal(err)
+	}
+	if err = form.Close(); err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/plugins/bundle", &body)
+	req.Header.Set("Authorization", "Bearer "+a.token)
+	req.Header.Set("Content-Type", form.FormDataContentType())
+	w := httptest.NewRecorder()
+	a.Handler().ServeHTTP(w, req)
+	requireStatus(t, w, 201)
+	a.runPluginHost(context.Background())
+	releasePublicMapCanvas(t, a)
+	releasePublicMapCanvasAI(t, a)
+}
+func releasePublicMapCanvasAI(t *testing.T, a *App) []string {
+	t.Helper()
+	yaml := []byte("image: map.pgm\nresolution: 0.05\norigin: [0,0,0]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n")
+	if err := os.WriteFile(filepath.Join(a.workPath, "map.yaml"), yaml, 0600); err != nil {
+		t.Fatal(err)
+	}
+	original, err := os.ReadFile(filepath.Join(a.workPath, "map.pgm"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := &Task{ID: newID(), Status: "running", Prompt: "Preview the synthetic map and export the specified unknown pixel", WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: "local"}
+	session := &Session{ID: newID(), Runs: []*Task{task}}
+	a.sessions[session.ID] = session
+	sink := &pluginImageSink{}
+	ctx := context.WithValue(context.Background(), pluginImageKey{}, sink)
+	call := func(name string, args map[string]any) string {
+		b, _ := json.Marshal(args)
+		return a.executeToolCall(ctx, readCall(name, string(b)), task, nil)
+	}
+	text := call("mapcanvas_preview", map[string]any{"yamlPath": "map.yaml"})
+	var preview struct {
+		Map struct {
+			ImageSHA string `json:"imageSha256"`
+			YAMLSHA  string `json:"yamlSha256"`
+			Width    int    `json:"width"`
+		} `json:"map"`
+	}
+	if err := json.Unmarshal([]byte(text), &preview); err != nil || preview.Map.ImageSHA != hash(original) || preview.Map.YAMLSHA != hash(yaml) || preview.Map.Width != 2 || len(sink.images) != 1 {
+		t.Fatal("preview identity/visual pipeline", text, err)
+	}
+	if strings.Contains(text, "dataBase64") || !strings.Contains(text, "imageNotice") {
+		t.Fatal("visual evidence leaked into text", text)
+	}
+	args := map[string]any{"yamlPath": "map.yaml", "expectedImageSha256": preview.Map.ImageSHA, "expectedYamlSha256": preview.Map.YAMLSHA, "operations": []any{map[string]any{"type": "rect", "mode": "gray", "x": 1, "y": 0, "width": 1, "height": 1}}, "outputPath": "ai/map-edited.pgm"}
+	text = call("mapcanvas_preview", args)
+	if len(sink.images) != 3 || !strings.Contains(text, `"changedPixels":1`) {
+		t.Fatal("dry run", text)
+	}
+	text = call("mapcanvas_edit", args)
+	if len(task.Files) != 2 || strings.Contains(text, "拒绝") {
+		t.Fatal("paired proposals", text, len(task.Files))
+	}
+	before, err := os.ReadFile(filepath.Join(a.workPath, "map.pgm"))
+	if err != nil || !bytes.Equal(before, original) {
+		t.Fatal("original changed", err)
+	}
+	if _, err := os.Stat(filepath.Join(a.workPath, "ai/map-edited.pgm")); !os.IsNotExist(err) {
+		t.Fatal("proposal wrote before application", err)
+	}
+	task.Status = "awaiting_approval"
+	requireStatus(t, request(a, "POST", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/apply", nil), 200)
+	after, err := os.ReadFile(filepath.Join(a.workPath, "ai/map-edited.pgm"))
+	if err != nil || !bytes.Contains(after, []byte("147")) {
+		t.Fatal("gray PGM readback", err)
+	}
+	if b, err := os.ReadFile(filepath.Join(a.workPath, "map.yaml")); err != nil || !bytes.Equal(b, yaml) {
+		t.Fatal("input YAML changed", err)
+	}
+	ctx = context.WithValue(context.Background(), pluginImageKey{}, &pluginImageSink{})
+	text = call("mapcanvas_preview", map[string]any{"yamlPath": "ai/map-edited.yaml"})
+	newSink := ctx.Value(pluginImageKey{}).(*pluginImageSink)
+	if strings.Contains(text, "错误") || len(newSink.images) != 1 {
+		t.Fatal("output pair preview", text)
+	}
+	raster, _ := base64.StdEncoding.DecodeString(strings.SplitN(newSink.images[0].DataURL, ",", 2)[1])
+	im, err := png.Decode(bytes.NewReader(raster))
+	if err != nil || color.GrayModel.Convert(im.At(1, 0)).(color.Gray).Y != 147 {
+		t.Fatal("preview pixels differ", err)
+	}
+	args["expectedImageSha256"] = strings.Repeat("0", 64)
+	count := len(task.Files)
+	text = call("mapcanvas_edit", args)
+	if !strings.Contains(text, "版本") || len(task.Files) != count {
+		t.Fatal("stale digest accepted", text)
+	}
+	return []string{"actual tool dispatcher carries PNG preview/dry-run as visual evidence with source SHA and no Base64 in text", "gray edit creates paired proposals without input writes; host applies and output PNG readback contains expected147 pixel; stale SHA rejected"}
 }

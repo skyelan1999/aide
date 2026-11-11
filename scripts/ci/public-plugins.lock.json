@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "marketRepository": "skyelan1999/aide-pkg-shop",
-  "marketRevision": "bda968b09d0976d6d78300b26f9e79938f9c4034",
+  "marketRevision": "13da2cd5f380542f72fe2ab4bebde23251354662",
   "plugins": [
     {
       "id": "ali-bailian-supporter",
@@ -515,14 +515,14 @@
     },
     {
       "id": "mapcanvas",
-      "marketVersion": "0.1.0",
-      "package": "packages/mapcanvas/0.1.0-7fe1dc086c11.zip",
-      "bytes": 15326,
-      "sha256": "7fe1dc086c1168f7cadb6260f99f747e05b1233b5ce3f475d1acfcbb02fdd779",
+      "marketVersion": "0.2.0",
+      "package": "packages/mapcanvas/0.2.0-27a1a87496c6.zip",
+      "bytes": 30934,
+      "sha256": "27a1a87496c6424c7909f7006039333f6e22743cce5fe4aadb1998695c9f4fca",
       "repository": "skyelan1999/aide-pkg-MapCanvas",
-      "packageSourceCommit": "fb457bd23d5787480bb1c0a622515cbaf945b923",
-      "latestPublicTag": "v0.1.0",
-      "latestPublicCommit": "fb457bd23d5787480bb1c0a622515cbaf945b923",
+      "packageSourceCommit": "9f62564437dfa031d87de4f10167bdbae36e714d",
+      "latestPublicTag": "v0.2.0",
+      "latestPublicCommit": "9f62564437dfa031d87de4f10167bdbae36e714d",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",
