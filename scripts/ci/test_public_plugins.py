@@ -11,6 +11,25 @@ import public_plugins as qa
 
 
 class PublicPluginGateTests(unittest.TestCase):
+    def test_shipped_offline_catalog_matches_the_public_lock(self):
+        lock = qa.load_lock()
+        shipped = json.loads((qa.ROOT / 'internal/server/plugin-market/catalog.json').read_text())
+        self.assertEqual(shipped['revision'], lock['marketRevision'])
+        rows = shipped['catalog']['plugins']
+        expected = {item['id']: item for item in lock['plugins']}
+        self.assertEqual({row['id'] for row in rows}, set(expected))
+        for row in rows:
+            item = expected[row['id']]
+            with self.subTest(plugin=row['id']):
+                self.assertEqual(row['version'], item['marketVersion'])
+                self.assertEqual(row['package'], item['package'])
+                self.assertEqual(row['bytes'], item['bytes'])
+                self.assertEqual(row['sha256'], item['sha256'])
+        private = shipped['catalog'].get('privateListings', [])
+        self.assertTrue(private)
+        self.assertTrue(all(row.get('distribution') == 'private' and 'package' not in row
+                            and 'sha256' not in row for row in private))
+
     def test_frozen_packages_must_match_current_catalog_identity(self):
         with tempfile.TemporaryDirectory() as directory:
             market = Path(directory)
