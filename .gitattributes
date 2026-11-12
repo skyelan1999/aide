@@ -43,3 +43,9 @@ scripts/fixtures/PDFIUM-LICENSE -text
 scripts/openjpeg/*-fixes.patch -text -whitespace
 
 scripts/host-bridge-vendor.patch -text -whitespace
+
+# Preserve original pinned bridge dependency sources and upstream notices.
+vendor/github.com/go-git/** -text -whitespace
+vendor/github.com/hashicorp/** -text -whitespace
+vendor/github.com/rasky/** -text -whitespace
+vendor/github.com/willscott/** -text -whitespace
