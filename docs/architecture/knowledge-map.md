@@ -617,3 +617,9 @@ The corrected host probe included all composite /local submounts and read1,075 a
 本地材料缓存按文件戳复用并沿既有加密checkpoint保存。StarLink可检索结构项，只返回匹配片段和行号，不向模型提供完整outline；页面节点搜索显示命中位置，预览验证源指纹后跳转。声明为词法候选，不能当作类型解析或调用证据。远端、PDF/Office和多行动态声明没有在本轮新增此能力。普通正文、待复核和超限文件仍需全文搜索兜底。
 
 实现、资源预算、真实Safari定位、API函数验收及同目录对比见[轻量索引收据](../reviews/2026-10-19-light-index.md)。本机候选已完成定位验收；正式发行身份和附件以对应Release记录为准；现有部分覆盖和全库checkpoint警告未据此关闭。
+
+## AI-scoped updates (2026-11-12)
+
+AI/plugin graph consumers must request `scope=ai` on both `/api/knowledge-map/identity` and `/api/knowledge-map/updates`, and require `scope: "ai"` in the responses. The AI identity includes a workspace-specific visibility revision. AI snapshots copy/filter nodes, related edges, source metadata and potentially sensitive aggregate diagnostics, with an independent revision. A changed policy forces a full reset instead of diffing against the human history; an unchanged AI cursor returns an empty delta. The default/manual API remains suitable for human browsing of hidden references. Older hosts do not acknowledge AI scope and must be rejected by consumers. StarLink's companion source update is [PR #14](https://github.com/skyelan1999/aide-pkg-StarLink/pull/14); published 0.1.4 packages are unchanged.
+
+The code extractor now parses TypeScript/TSX and JSX declarations using repository-owned Babel ESTree syntax, with original locations and conservative relative-import candidates. Type-only imports, ambient declarations, syntax errors, unsupported namespaces and JSX dispatch retain explicit boundaries; this is not compiler type checking or runtime execution. See the [parser provenance](../../internal/server/code_analysis/README.md) and [remaining-issue audit](../reviews/2026-11-12-remaining-issues/README.md).

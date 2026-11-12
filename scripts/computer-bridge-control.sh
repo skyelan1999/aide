@@ -5,6 +5,9 @@ cd "$ROOT"
 MODE="${1:-start}"
 PID_FILE="$ROOT/.cache/aide-computer-bridge.pid"
 LOG_FILE="$ROOT/.cache/aide-computer-bridge.log"
+if [[ "${AIDE_BRIDGE_LOCKED:-}" != "$PID_FILE" ]]; then
+  exec python3 "$ROOT/scripts/bridge-lifecycle-lock.py" "$PID_FILE" "$0" "$@"
+fi
 NATIVE_APP="${AIDE_NATIVE_BRIDGE_APP:-${HOME}/Library/Application Support/Aide/Aide Computer Bridge.app}"
 read_token() { [[ -f .env ]] || return 1; awk -F= '$1 == "AIDE_COMPUTER_BRIDGE_TOKEN" { sub(/^[^=]*=/, ""); print; exit }' .env; }
 case "$MODE" in
@@ -23,14 +26,17 @@ case "$MODE" in
         rm -f "$PID_FILE"
       fi
       AIDE_COMPUTER_BRIDGE_TOKEN="$TOKEN" nohup node scripts/computer-bridge-linux.js >>"$LOG_FILE" 2>&1 </dev/null &
-      echo $! > "$PID_FILE"
+      CHILD_PID=$!
+    echo "$CHILD_PID" > "$PID_FILE"
       for _ in {1..30}; do
-        if TOKEN="$TOKEN" node -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>r.json()).then(x=>process.exit(x.ok&&x.service==="aide-linux-computer-bridge"?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
+        if TOKEN="$TOKEN" EXPECTED_PID="$CHILD_PID" node -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>r.json()).then(x=>process.exit(x.ok&&x.pid===Number(process.env.EXPECTED_PID)&&x.service==="aide-linux-computer-bridge"?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
           echo "Linux 电脑桥接已启动（X11）；点击、输入和按键仍需 Aide 逐次确认。"
           exit 0
         fi
         sleep 0.2
       done
+    kill "$CHILD_PID" 2>/dev/null || true
+    rm -f "$PID_FILE"
       echo "Linux 电脑桥接启动失败，检查 ${LOG_FILE}。" >&2; exit 1
     fi
     [[ "$(uname -s)" == Darwin ]] || { echo "当前系统没有配置电脑桥接。" >&2; exit 2; }
@@ -51,14 +57,17 @@ case "$MODE" in
       rm -f "$PID_FILE"
     fi
     AIDE_COMPUTER_BRIDGE_TOKEN="$TOKEN" nohup node scripts/computer-bridge.js >>"$LOG_FILE" 2>&1 </dev/null &
-    echo $! > "$PID_FILE"
+    CHILD_PID=$!
+    echo "$CHILD_PID" > "$PID_FILE"
     for _ in {1..30}; do
-      if TOKEN="$TOKEN" node -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
+      if TOKEN="$TOKEN" EXPECTED_PID="$CHILD_PID" node -e 'fetch("http://127.0.0.1:17778/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(async r=>{const x=await r.json();process.exit(r.ok&&x.pid===Number(process.env.EXPECTED_PID)?0:1)}).catch(()=>process.exit(1))' 2>/dev/null; then
         echo "电脑桥接已启动（Docker host gateway:17778）；屏幕录制和辅助功能权限需在 macOS 首次授权。"
         exit 0
       fi
       sleep 0.2
     done
+    kill "$CHILD_PID" 2>/dev/null || true
+    rm -f "$PID_FILE"
     echo "电脑桥接启动失败，检查 ${LOG_FILE}。" >&2; exit 1
     ;;
   stop)

@@ -72,6 +72,7 @@ type knowledgeRevision struct {
 }
 
 type knowledgeUpdateResponse struct {
+	Scope        string                `json:"scope,omitempty"`
 	Workspace    string                `json:"workspace"`
 	Revision     string                `json:"revision"`
 	Reset        bool                  `json:"reset"`
@@ -640,7 +641,28 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("background") == "1" && !stale && knowledgeGraphScanning(view.graph) {
 		a.knowledgeContinueLocked(r.URL.Query().Get("code") == "1")
 	}
+	aiScope := r.URL.Query().Get("scope") == "ai"
+	var aiView knowledgeUpdateView
+	if aiScope {
+		aiView = *view
+		policyBefore := a.knowledgeAIVisibilityRevision()
+		aiView.graph = a.knowledgeForAI(view.graph)
+		if policyBefore != a.knowledgeAIVisibilityRevision() {
+			fail(w, 409, fmt.Errorf("来源可见性已变化，请重新读取"))
+			return
+		}
+		revision := knowledgeGraphRevision(&aiView.graph)
+		revision.id = "A" + hash([]byte(view.revision + policyBefore + revision.id))[:24]
+		aiView.revision = revision.id
+		// A changed AI policy forces a full reset. Never delta against a human
+		// history containing revoked nodes, and never mutate the shared view.
+		aiView.history = []knowledgeRevision{revision}
+		view = &aiView
+	}
 	response := knowledgeDelta(view, cursor)
+	if aiScope {
+		response.Scope = "ai"
+	}
 	// Published graph data is immutable. A slow/frozen client must not hold
 	// the scan gate while JSON encoding or socket writes wait for its reader.
 	unlock()
@@ -657,10 +679,14 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 func (a *App) knowledgeMapIdentity(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	workspace, epoch, policy := a.knowledgeUpdatesIdentity()
+	if r.URL.Query().Get("scope") == "ai" {
+		policy += ":" + a.knowledgeAIVisibilityRevision()
+	}
 	jsonOut(w, http.StatusOK, map[string]any{
 		"workspace": workspace,
 		"epoch":     fmt.Sprint(epoch),
 		"policy":    policy,
 		"code":      r.URL.Query().Get("code") == "1",
+		"scope":     map[bool]string{true: "ai", false: "manual"}[r.URL.Query().Get("scope") == "ai"],
 	})
 }

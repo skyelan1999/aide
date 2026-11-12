@@ -3,9 +3,11 @@
 # 发布构建可重新固定：--build-arg PYTHON_BASE=python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e
 ARG PYTHON_BASE=python:3.12-slim-bookworm
 # node/golang 同样用本地 tag，避免受限网络下按 digest 拉取 metadata 卡死（与 python 一致）
-FROM node:24-bookworm-slim AS node
+ARG NODE_BASE=node:24-bookworm-slim
+ARG GO_BASE=golang:1.26-bookworm
+FROM ${NODE_BASE} AS node
 FROM ${PYTHON_BASE} AS python
-FROM golang:1.26-bookworm AS toolchain
+FROM ${GO_BASE} AS toolchain
 COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
 COPY --from=python /usr/local /usr/local
 RUN ldconfig
@@ -157,6 +159,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ARG SHERPA_VERSION=1.13.8
 ARG SHERPA_OFFLINE=0
 COPY docker/sherpa /sherpa-pkg
+COPY scripts/verify-sherpa-archive.py /usr/local/lib/aide/verify-sherpa-archive.py
 RUN set -ux; \
     arch="$(uname -m)"; \
     if [ "$arch" = "aarch64" ]; then sarch="aarch64"; spackage="shared-cpu"; else sarch="x64"; spackage="shared"; fi; \
@@ -175,6 +178,7 @@ RUN set -ux; \
       else echo "[runtime] WARN: sherpa 下载失败（网络不可达），跳过离线TTS，应用仍正常运行"; fi; \
     fi; \
     if [ "$sherpa_ok" = "1" ]; then \
+      python3 /usr/local/lib/aide/verify-sherpa-archive.py pkg.tar.bz2 "sherpa-onnx-v${SHERPA_VERSION}-linux-${sarch}-${spackage}.tar.bz2" /sherpa-pkg/archive-digests.json || exit 1; \
       apt-get update -qq 2>/dev/null && apt-get install -y -qq bzip2 >/dev/null 2>&1 || true; \
       mkdir -p /sherpa-x; \
       if tar xjf pkg.tar.bz2 -C /sherpa-x 2>/dev/null; then \

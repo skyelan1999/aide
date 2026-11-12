@@ -1646,6 +1646,35 @@
       [
         "node",
         "scripts/pdf-triage-regressions.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-preflight.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_sherpa_build_integrity.py"
+      ],
+      [
+        "python3",
+        "scripts/test_release_base_images.py"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-alpha.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-colors.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-allocation-layer.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/sync_pdf_jpx_alpha.cjs",
+        "--check"
       ]
     ],
     "full": [

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 )
 
 // Missing settings preserve the existing AI access behavior.
@@ -92,7 +93,18 @@ func (a *App) knowledgeForAI(g knowledgeGraph) knowledgeGraph {
 			edges = append(edges, e)
 		}
 	}
-	removed := len(nodes) != len(g.Nodes)
+	sources := []knowledgeSource{}
+	for _, source := range g.Sources {
+		if source.ID != "workspace" {
+			src, ok := a.findSource(source.ID)
+			if !ok || !sourceAIVisible(src, a.wsID()) {
+				continue
+			}
+		}
+		sources = append(sources, source)
+	}
+	removed := len(nodes) != len(g.Nodes) || len(sources) != len(g.Sources)
+	g.Sources = sources
 	g.Nodes = nodes
 	g.Edges = edges
 	// Aggregate code diagnostics can include hidden-source paths.
@@ -101,4 +113,20 @@ func (a *App) knowledgeForAI(g knowledgeGraph) knowledgeGraph {
 		g.Warnings = []string{"已排除当前工作区 AI 不可见来源；其余索引仍可能有未覆盖范围，不表示全文已读。"}
 	}
 	return g
+}
+
+// Changes with the current workspace policy, including sources with no nodes.
+// This is separate from the human graph's scan identity and cache.
+func (a *App) knowledgeAIVisibilityRevision() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	hidden := []string{}
+	for _, src := range a.sourceRegistry.Sources {
+		if !sourceAIVisible(src, a.wsID()) {
+			hidden = append(hidden, src.ID)
+		}
+	}
+	sort.Strings(hidden)
+	raw, _ := json.Marshal(hidden)
+	return "ai-" + hash(raw)[:24]
 }

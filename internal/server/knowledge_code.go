@@ -27,10 +27,12 @@ import (
 var codeAssets embed.FS
 
 type knowledgeCodeFile struct {
-	ID     string        `json:"id"`
-	Text   string        `json:"text"`
-	Node   knowledgeNode `json:"-"`
-	Module string        `json:"-"`
+	ID       string        `json:"id"`
+	Path     string        `json:"path,omitempty"`
+	Language string        `json:"language,omitempty"`
+	Text     string        `json:"text"`
+	Node     knowledgeNode `json:"-"`
+	Module   string        `json:"-"`
 }
 type codeSymbol struct {
 	Key       string `json:"key"`
@@ -151,14 +153,14 @@ func codeLanguage(p string) string {
 	switch strings.ToLower(path.Ext(p)) {
 	case ".go":
 		return "Go"
-	case ".js", ".mjs", ".cjs":
+	case ".js", ".mjs", ".cjs", ".jsx":
 		return "JavaScript"
 	case ".py":
 		return "Python"
 	case ".html", ".htm":
 		return "HTML"
-	case ".ts", ".tsx", ".jsx":
-		return "unsupported"
+	case ".ts", ".tsx":
+		return "TypeScript"
 	}
 	return ""
 }
@@ -309,7 +311,15 @@ func codeParseBatch(ctx context.Context, lang string, files []knowledgeCodeFile)
 	if len(files) == 0 {
 		return nil, nil
 	}
-	raw, _ := json.Marshal(files)
+	inputs := append([]knowledgeCodeFile(nil), files...)
+	for i := range inputs {
+		inputs[i].Path = inputs[i].Node.Path
+		inputs[i].Language = codeLanguage(inputs[i].Node.Path)
+		if inputs[i].Language == "" {
+			inputs[i].Language = lang
+		}
+	}
+	raw, _ := json.Marshal(inputs)
 	var cmd *exec.Cmd
 	if lang == "Python" || lang == "HTML" {
 		asset := "code_analysis/python.py"
@@ -322,6 +332,9 @@ func codeParseBatch(ctx context.Context, lang string, files []knowledgeCodeFile)
 		parserJS, _ := codeAssets.ReadFile("code_analysis/acorn.cjs")
 		script, _ := codeAssets.ReadFile("code_analysis/javascript.cjs")
 		prefix := "const acorn=(()=>{const module={exports:{}};const exports=module.exports;\n" + string(parserJS) + "\nreturn module.exports;})();\n"
+		babel, _ := codeAssets.ReadFile("code_analysis/babel-parser.cjs")
+		prefix += "const babelParser=(()=>{const module={exports:{}};const exports=module.exports;\n" + string(babel) + "\nreturn module.exports;})();\n"
+
 		encoded, _ := json.Marshal(string(raw))
 		if strings.Count(string(script), "__AIDE_CODE_INPUT__") != 1 {
 			return nil, fmt.Errorf("JavaScript解析器输入模板无效")
@@ -420,7 +433,7 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 		switch codeLanguage(f.Node.Path) {
 		case "Go":
 			units = append(units, codeGo(f))
-		case "JavaScript":
+		case "JavaScript", "TypeScript":
 			js = append(js, f)
 		case "Python":
 			py = append(py, f)
@@ -519,17 +532,30 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 			return nil
 		}
 		var base string
-		if u.Language == "JavaScript" {
+		if u.Language == "JavaScript" || u.Language == "TypeScript" {
 			if !strings.HasPrefix(im.Path, ".") {
 				return nil
 			}
 			base = path.Clean(path.Join(path.Dir(f.Node.Path), im.Path))
-			for _, p := range []string{base, base + ".js", base + ".mjs", base + ".cjs", path.Join(base, "index.js")} {
+			candidates := []string{base, base + ".ts", base + ".tsx", base + ".js", base + ".mjs", base + ".cjs", base + ".jsx", path.Join(base, "index.ts"), path.Join(base, "index.tsx"), path.Join(base, "index.js"), path.Join(base, "index.jsx")}
+			if u.Language == "TypeScript" && strings.HasSuffix(base, ".js") {
+				candidates = append(candidates, strings.TrimSuffix(base, ".js")+".ts", strings.TrimSuffix(base, ".js")+".tsx")
+			}
+			var match *knowledgeCodeFile
+			seen := map[string]bool{}
+			for _, p := range candidates {
+				if seen[p] {
+					continue
+				}
+				seen[p] = true
 				if other := fileLookup(f, p); other != nil {
-					return other
+					if match != nil && match.ID != other.ID {
+						return nil
+					}
+					match = other
 				}
 			}
-			return nil
+			return match
 		}
 		module := im.Path
 		dots := len(module) - len(strings.TrimLeft(module, "."))
@@ -723,5 +749,5 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 	}
 	appendKnowledgeWeb(ctx, g, byFile, units, addEdge, recordUnresolved)
 	sort.Strings(summary.Diagnostics)
-	g.Warnings = append(g.Warnings, "代码视图：Go/JavaScript/Python AST、HTML控件声明。调用、事件和HTTP路由连线均保留静态证据等级，不是运行时跟踪；反射、动态分派、函数变量、外部依赖与歧义关系可能缺失。TypeScript/JSX暂不解析。每文件最多256KiB，总读取4MiB/80文件/1200符号。")
+	g.Warnings = append(g.Warnings, "代码视图：Go/JavaScript/TypeScript/TSX/Python AST、HTML控件声明。调用、事件和HTTP路由连线均保留静态证据等级，不是运行时跟踪；反射、动态分派、函数变量、外部依赖与歧义关系可能缺失。TypeScript不执行类型检查；JSX组件渲染、命名空间、别名及动态分派不推断为运行时调用。每文件最多256KiB，总读取4MiB/80文件/1200符号。")
 }

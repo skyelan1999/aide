@@ -77,6 +77,7 @@ def main():
     build = commands.add_parser('build', help='publisher/developer machine; needs network/base caches')
     build.add_argument('--runtime', required=True)
     build.add_argument('--image', required=True)
+    build.add_argument('--release-bases', action='store_true', help='use reviewed immutable release base images')
     export = commands.add_parser('export', help='export only toolbox layers, without user state')
     export.add_argument('--image', required=True)
     export.add_argument('--output', type=Path, required=True)
@@ -91,7 +92,11 @@ def main():
         # A local tag avoids registry resolution of a bare sha256 in FROM.
         seed = 'aide:sdk-seed-' + runtime['Id'].removeprefix('sha256:')
         subprocess.run(['docker', 'image', 'tag', runtime['Id'], seed], check=True)
-        subprocess.run(['docker', 'build', '--platform', 'linux/' + runtime['Architecture'],
+        base_args = []
+        if args.release_bases:
+            from ci.release_base_images import build_args
+            base_args = build_args(ROOT, sdk=True)
+        subprocess.run(['docker', 'build', *base_args, '--platform', 'linux/' + runtime['Architecture'],
                         '-f', str(ROOT / 'docker/Dockerfile.sdk'), '--build-arg',
                         'AIDE_RUNTIME_IMAGE=' + seed, '-t', args.image, str(ROOT)], check=True)
         inspect(args.image, 'toolbox')

@@ -460,6 +460,7 @@ class ReleaseAssemblyTests(unittest.TestCase):
                          'docker/compose.offline.yaml','docker/offline.env.example','docker/OFFLINE.md',
                          'docs/architecture/mixsoul.md','vendor/github.com/yuin/goldmark/v2/LICENSE',
                          'internal/server/code_analysis/ACORN-LICENSE',
+                         'internal/server/code_analysis/BABEL-PARSER-LICENSE',
                          'internal/server/web/vendor/drawio/LICENSE',
                          'internal/server/web/vendor/drawio/NOTICE.txt'):
                 target = root / name
@@ -514,6 +515,7 @@ sys.exit('Unexpected package Docker action: '+repr(a))
                     self.assertFalse(any(n.endswith('.ps1') for n in names))
                     if target.startswith(('windows-', 'full-')):
                         self.assertIn('windows-entrypoint.bat',names)
+                    self.assertIn('bridge-lifecycle-lock.py',names)
                     self.assertNotIn('.env',names)
                     self.assertNotIn('owner.json',names)
 

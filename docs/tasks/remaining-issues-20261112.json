@@ -1,0 +1,82 @@
+{
+  "id": "remaining-issues-20261112",
+  "request": "剩下的issue也搞一下吧",
+  "baseline": "24a281998dd03ff01107a0ae912b8a22676a58ae",
+  "initial_status": "",
+  "acceptance": [
+    "Review every remaining open issue against current source and retained evidence.",
+    "Implement reproducible fixes, exercise relevant success/failure regressions, merge only after CI.",
+    "Record unresolved limitations honestly and apply authorized temporary closure only where reproduction evidence is unavailable.",
+    "Preserve user worktrees, installed packages, production services and credentials."
+  ],
+  "scope": [
+    "Current main implementation and regression tests for 67 remaining Aide issues",
+    "Public plugin fixes and integration where required",
+    "Per-issue GitHub comments/state and docs/reviews/2026-11-12-remaining-issues"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "67 open issues confirmed; operator skyelan1999; user authorizes continuing queue repairs and prior merge/closure workflow.",
+      "evidence": [
+        ".agent-state/remaining-open.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-issue evidence table distinguishes bounded preview fixes, source integration, native conformance work, and missing reproduction material.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/audit.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Checked SFTP mutations, helper/bridge locks, degraded mount recovery, AI visibility, TS/TSX parsing, build pins and JPX bounds/color/opacity/allocation fixes implemented. StarLink PR #14 merged as unreleased source.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "333 quick checks passed with a stable source fingerprint; final related server Go suite passed in 132.111s, vet and Windows helper cross-compilation passed. Actual SFTP protocol, Aide TLS/Node daemon, owned Chromium UI/PDF and 385 native-allocation faults passed. CI quick/go/gate required before merge; local race not_run (QA image has no compiler).",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/audit.json",
+        "https://github.com/skyelan1999/aide/pull/855",
+        {
+          "profile": "quick",
+          "fingerprint": "abef80e21f38bd3f63fd44c0d9a5a13bc0e4671e0dc65f78da2d0b64235bac6c",
+          "head": "ce38269a3419eded58579861a151aac877624fed",
+          "time": "20261112T014017221141Z",
+          "checks": 333
+        }
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "All 67 issues individually classified: 48 ready completed, 1 temporary not_planned, 18 retained with exact gaps and reopening criteria.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/README.md",
+        "docs/reviews/2026-11-12-remaining-issues/audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Isolated worktrees; owned test service stopped. No user files, production service, installed package or unrelated worktree replaced. Raw logs ignored.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/README.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Aide source PR #855 awaits required CI. StarLink PR #14 merged. No binary Release, installed-package update, runtime image Delivery or production restart.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14",
+        "https://github.com/skyelan1999/aide/pull/855"
+      ]
+    }
+  },
+  "release_authorization": "User authorizes source repair, PR review/merge and issue closure; binary release/deployment is outside this task.",
+  "rollback": "Revert source merge commits. Running installations and user data are unchanged.",
+  "handoff": "Retain the 18 concrete unresolved issues listed in audit.json. Public PR and issue events will record actual merge/closure receipts.",
+  "operator": "skyelan1999"
+}

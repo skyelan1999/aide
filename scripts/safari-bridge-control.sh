@@ -5,6 +5,9 @@ cd "$ROOT"
 MODE="${1:-start}"
 PID_FILE="$ROOT/.cache/aide-safari-bridge.pid"
 LOG_FILE="$ROOT/.cache/aide-safari-bridge.log"
+if [[ "${AIDE_BRIDGE_LOCKED:-}" != "$PID_FILE" ]]; then
+  exec python3 "$ROOT/scripts/bridge-lifecycle-lock.py" "$PID_FILE" "$0" "$@"
+fi
 
 read_token() {
   [[ -f .env ]] || return 1
@@ -27,14 +30,17 @@ case "$MODE" in
       rm -f "$PID_FILE"
     fi
     AIDE_BROWSER_BRIDGE_TOKEN="$TOKEN" nohup node scripts/safari-bridge.js >>"$LOG_FILE" 2>&1 </dev/null &
-    echo $! > "$PID_FILE"
+    CHILD_PID=$!
+    echo "$CHILD_PID" > "$PID_FILE"
     for _ in {1..30}; do
-      if TOKEN="$TOKEN" node -e 'fetch("http://127.0.0.1:17777/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
+      if TOKEN="$TOKEN" EXPECTED_PID="$CHILD_PID" node -e 'fetch("http://127.0.0.1:17777/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(async r=>{const x=await r.json();process.exit(r.ok&&x.pid===Number(process.env.EXPECTED_PID)?0:1)}).catch(()=>process.exit(1))' 2>/dev/null; then
         echo "Safari 桥接已启动（Docker host gateway:17777）；Safari WebDriver 需在 Safari 开发者设置中启用。"
         exit 0
       fi
       sleep 0.2
     done
+    kill "$CHILD_PID" 2>/dev/null || true
+    rm -f "$PID_FILE"
     echo "Safari 桥接启动失败，检查 ${LOG_FILE}。" >&2
     exit 1
     ;;

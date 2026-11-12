@@ -4,54 +4,45 @@ package main
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
-	"syscall"
+	"sync"
 	"testing"
 )
 
-func TestClearDeadLockOwnerUnlinksPIDAfterFirstRead(t *testing.T) {
-	binary, err := os.Executable()
+func TestStalePIDReuseDoesNotOwnHelperLock(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "serve.pid")
+	// An unrelated live process with the recorded PID must not retain stale ownership.
+	if err := os.WriteFile(p, []byte(strconv.Itoa(os.Getpid())), 0600); err != nil {
+		t.Fatal(err)
+	}
+	release, err := acquireHelper(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	child := exec.Command(binary, "-test.run=^$")
-	if err = child.Run(); err != nil {
+	defer release()
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if cleared, err := clearDeadLock(p); err != nil || cleared {
+				t.Errorf("removed replacement owner's receipt: %v %v", cleared, err)
+			}
+		}()
+	}
+	wg.Wait()
+	if _, err := os.Stat(p); err != nil {
 		t.Fatal(err)
 	}
-	pid := child.Process.Pid
-	if alive, err := processAlive(pid); err != nil || alive {
-		t.Fatalf("owned child did not exit: %v %v", alive, err)
-	}
-	path := filepath.Join(t.TempDir(), "serve.pid")
-	if err = syscall.Mkfifo(path, 0600); err != nil {
-		t.Fatal(err)
-	}
-	written := make(chan error, 1)
-	go func() {
-		file, e := os.OpenFile(path, os.O_WRONLY, 0)
-		if e != nil {
-			written <- e
-			return
-		}
-		if _, e = file.WriteString(strconv.Itoa(pid)); e == nil {
-			e = os.Remove(path)
-		}
-		closeErr := file.Close()
-		if e == nil {
-			e = closeErr
-		}
-		written <- e
-	}()
-	// The FIFO returns the old PID, but its directory entry is already absent
-	// before EOF. This deterministically reproduces an exiting owner's cleanup
-	// racing with the second read; no user process or timing gamble is involved.
-	cleared, err := clearDeadLock(path)
-	if writeErr := <-written; writeErr != nil {
-		t.Fatal(writeErr)
-	}
+	release()
+	cleared, err := clearDeadLock(p)
 	if err != nil || !cleared {
-		t.Fatalf("owner already removed PID: cleared=%v err=%v", cleared, err)
+		t.Fatalf("kernel lock was not released: %v %v", cleared, err)
+	}
+	// The persistent guard must survive cleanup: unlinking it would split ownership.
+	if _, err := os.Stat(filepath.Join(dir, "serve.guard")); err != nil {
+		t.Fatal(err)
 	}
 }

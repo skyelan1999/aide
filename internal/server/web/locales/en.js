@@ -4579,4 +4579,6 @@ window.aideEnglish = {
   "查看本轮": "View this turn",
   "已关闭的任务 · {0}": "Closed tasks · {0}",
   "规划只描述意图与进度，不代表文件已落盘；实际结果以工具记录和审批记录为准。导出 JSON 可用于在其它会话中复用这套工作流。": "Plans describe intent and progress. Tool and approval records confirm actual results. Export JSON to reuse this workflow in another session.",
+  "重试局域网转发": "Retry LAN forwarding",
+  "目录配置已生效；局域网转发暂不可用，请重试转发。": "Directory settings are active; LAN forwarding is unavailable. Retry forwarding.",
 };

@@ -11,7 +11,7 @@ import shutil
 def stage(source: Path, target: Path) -> dict:
     source = source.resolve()
     target.mkdir(parents=True, exist_ok=True)
-    candidates = [source / "LICENSE", source / "internal/server/code_analysis/ACORN-LICENSE"]
+    candidates = [source / "LICENSE", source / "internal/server/code_analysis/ACORN-LICENSE", source / "internal/server/code_analysis/BABEL-PARSER-LICENSE"]
     for root in ("vendor", "internal/server/web/vendor", "native/windows-launcher/third_party"):
         folder = source / root
         candidates.extend(

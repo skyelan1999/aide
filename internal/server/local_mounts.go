@@ -165,7 +165,7 @@ func (a *App) localMountAction(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if in.Action != "choose" && in.Action != "apply" {
+	if in.Action != "choose" && in.Action != "apply" && in.Action != "retry-forwarders" {
 		fail(w, 400, errors.New("未知目录操作"))
 		return
 	}

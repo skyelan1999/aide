@@ -827,26 +827,10 @@ func (a *App) sftpWriteAtGeneration(remoteFile string, b []byte, generation uint
 }
 
 func (a *App) sftpWriteExpected(remoteFile string, b []byte, expected *uint64) error {
-	if err := a.sftpEnsureParentsExpected(remoteFile, expected); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp("", "aide-sftp-*")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	if _, err := tmp.Write(b); err != nil {
-		tmp.Close()
-		os.Remove(tmpPath)
-		return err
-	}
-	tmp.Close()
-	defer os.Remove(tmpPath)
-	tmpRemote := remoteFile + ".aide-tmp"
-	if _, err := a.sftpBatchExpected("put -P "+shellQuoteRemote(tmpPath)+" "+shellQuoteRemote(tmpRemote)+"\nrename "+shellQuoteRemote(tmpRemote)+" "+shellQuoteRemote(remoteFile)+"\n", expected); err != nil {
-		return err
-	}
-	return nil
+	return a.mutateSFTP("workspace", sshControlSocket, expected, func(fs *transferFS) error {
+		fs.base = "/" // Explicit absolute API also serves configured remote cache/system paths.
+		return fs.writeAtomic(strings.TrimPrefix(remoteFile, "/"), b, true)
+	})
 }
 
 // sftpEnsureParents creates missing ancestors for a workspace write. SFTP has
@@ -909,90 +893,68 @@ func (a *App) sftpMakeDirectory(remotePath string) error {
 }
 
 func (a *App) sftpMakeDirectoryExpected(remotePath string, expected *uint64) error {
-	out, err := a.sftpBatchExpected("mkdir "+shellQuoteRemote(remotePath)+"\n", expected)
-	if err != nil {
-		return err
-	}
-	if sftpCommandFailed(out) {
-		return fmt.Errorf("SFTP 创建文件夹失败: %s", strings.TrimSpace(out))
-	}
-	return nil
+	return a.mutateSFTP("workspace", sshControlSocket, expected, func(fs *transferFS) error { fs.base = "/"; return fs.Mkdir(strings.TrimPrefix(remotePath, "/")) })
 }
 
 func (a *App) sftpRenameDirectory(oldPath, newPath string) error {
-	if a.sftpExists(newPath) {
-		return fmt.Errorf("已存在同名文件或文件夹")
-	}
-	out, err := a.sftpBatch("rename " + shellQuoteRemote(oldPath) + " " + shellQuoteRemote(newPath) + "\n")
-	if err != nil {
-		return err
-	}
-	if sftpCommandFailed(out) {
-		return fmt.Errorf("SFTP 重命名文件夹失败: %s", strings.TrimSpace(out))
-	}
-	return nil
+	return a.mutateSFTP("workspace", sshControlSocket, nil, func(fs *transferFS) error {
+		fs.base = "/"
+		return fs.Publish(strings.TrimPrefix(oldPath, "/"), strings.TrimPrefix(newPath, "/"))
+	})
 }
 
 // sftpRemove removes one regular file or one empty directory.
 func (a *App) sftpRemove(remotePath string, dir bool) error {
-	command := "rm "
-	if dir {
-		command = "rmdir "
-	}
-	out, err := a.sftpBatch(command + shellQuoteRemote(remotePath) + "\n")
-	if err != nil {
-		return err
-	}
-	if sftpCommandFailed(out) {
-		return fmt.Errorf("SFTP 删除失败: %s", strings.TrimSpace(out))
-	}
-	return nil
+	return a.mutateSFTP("workspace", sshControlSocket, nil, func(fs *transferFS) error { fs.base = "/"; return fs.Remove(strings.TrimPrefix(remotePath, "/"), dir) })
 }
 
 // sftpRemoveWorkspacePath preflights a complete subtree before deleting it so
 // protected paths cannot cause a partially deleted tree. SFTP reports symlinks
 // as link entries; they are unlinked, never traversed.
 func (a *App) sftpRemoveWorkspacePath(relativePath string, dir bool) error {
-	type entry struct {
-		path string
-		dir  bool
-	}
-	var entries []entry
-	var scan func(string, bool) error
-	scan = func(p string, isDir bool) error {
-		if err := safePath(p); err != nil {
-			return err
+	return a.mutateSFTP("workspace", sshControlSocket, nil, func(fs *transferFS) error {
+		type entry struct {
+			path string
+			dir  bool
 		}
-		if !isDir {
-			entries = append(entries, entry{p, false})
+		var entries []entry
+		var scan func(string, bool, int) error
+		scan = func(p string, isDir bool, depth int) error {
+			if err := safePath(p); err != nil {
+				return err
+			}
+			if depth > 128 || len(entries) >= 100000 {
+				return errors.New("远端目录超过安全递归删除上限")
+			}
+			if _, err := fs.remotePath(p); err != nil {
+				return err
+			}
+			if isDir {
+				count := 0
+				err := fs.readDirEach(context.Background(), p, func(info os.FileInfo) error {
+					count++
+					if count >= 2000 {
+						return errors.New("目录条目过多，无法安全递归删除")
+					}
+					return scan(path.Join(p, info.Name()), info.IsDir(), depth+1)
+				})
+				if err != nil {
+					return err
+				}
+			}
+			entries = append(entries, entry{p, isDir})
 			return nil
 		}
-		items, err := a.sftpListRemote(a.workspaceRemotePath(p), p)
-		if err != nil {
+		if err := scan(relativePath, dir, 0); err != nil {
 			return err
 		}
-		if len(items) >= 2000 {
-			return fmt.Errorf("目录条目过多，无法安全递归删除: %s", p)
-		}
-		for _, item := range items {
-			child, _ := item["path"].(string)
-			childDir, _ := item["dir"].(bool)
-			if err := scan(child, childDir); err != nil {
+		for _, item := range entries {
+			if err := fs.Remove(item.path, item.dir); err != nil {
 				return err
 			}
 		}
-		entries = append(entries, entry{p, true})
 		return nil
-	}
-	if err := scan(relativePath, dir); err != nil {
-		return err
-	}
-	for _, item := range entries {
-		if err := a.sftpRemove(a.workspaceRemotePath(item.path), item.dir); err != nil {
-			return err
-		}
-	}
-	return nil
+	})
 }
 
 func shellQuoteRemote(s string) string {
@@ -1248,22 +1210,16 @@ func (a *App) sftpWriteSource(src Source, p string, b []byte) error {
 	return a.sftpWriteSourceExpected(src, p, b, nil)
 }
 func (a *App) sftpWriteSourceExpected(src Source, p string, b []byte, expected *uint64) error {
-	remoteFile := pathJoinRemote(src.Config.Path, p)
-	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
-	if err != nil {
-		return err
+	generation := a.sshSessionGeneration(sourceSocket(src.ID))
+	a.mu.Lock()
+	current, ok := a.findSource(src.ID)
+	valid := ok && current.Enabled && markdownSourceIdentity(current) == markdownSourceIdentity(src)
+	a.mu.Unlock()
+	if !valid {
+		return errors.New("SFTP 来源已变化或停用，请重新访问")
 	}
-	tmpPath := tmp.Name()
-	if _, err := tmp.Write(b); err != nil {
-		tmp.Close()
-		os.Remove(tmpPath)
-		return err
+	if expected == nil {
+		expected = &generation
 	}
-	tmp.Close()
-	defer os.Remove(tmpPath)
-	tmpRemote := remoteFile + ".aide-tmp"
-	if _, err := a.sftpBatchSourceExpected(src, "put -P "+shellQuoteRemote(tmpPath)+" "+shellQuoteRemote(tmpRemote)+"\nrename "+shellQuoteRemote(tmpRemote)+" "+shellQuoteRemote(remoteFile)+"\n", expected, expected != nil); err != nil {
-		return err
-	}
-	return nil
+	return a.mutateSFTP(src.ID, sourceSocket(src.ID), expected, func(fs *transferFS) error { return fs.writeAtomic(p, b, false) })
 }

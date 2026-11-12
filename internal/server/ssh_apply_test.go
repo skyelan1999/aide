@@ -32,6 +32,14 @@ func sshApplyFixture(t *testing.T, holdPhase, readFailure string) (*App, *Sessio
 	attachOwnedSFTPProtocol(t, a, readMarker, release, readFailure)
 	t.Cleanup(func() { _ = os.WriteFile(release, nil, 0600) })
 	writes := filepath.Join(dir, "writes")
+	writeMarker := ""
+	if holdPhase == "put" {
+		writeMarker = entered
+	}
+	ssh, _ := os.ReadFile(a.sshBin)
+	env := "AIDE_SFTP_WRITE_LOG=" + shellQuote(writes) + " AIDE_SFTP_WRITE_ENTERED=" + shellQuote(writeMarker) + " AIDE_SFTP_WRITE_RELEASE=" + shellQuote(release) + " "
+	writeStub(t, a.sshBin, strings.Replace(string(ssh), "exec env AIDE_TRANSFER_SFTP_HELPER=1", "exec env "+env+"AIDE_TRANSFER_SFTP_HELPER=1", 1))
+
 	a.sftpBin = filepath.Join(dir, "sftp")
 	writeStub(t, a.sftpBin, `#!/bin/sh
 while IFS= read -r line; do

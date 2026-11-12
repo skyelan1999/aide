@@ -244,8 +244,8 @@ exit 0
 	if batch.Summary.Succeeded != 1 || batch.Summary.Failed != 0 {
 		t.Fatalf("nested SFTP batch upload: %+v", batch)
 	}
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), `put -P`) || !strings.Contains(string(b), at(`/srv/app/drop/nested/deep/a.txt.aide-tmp`)) || !strings.Contains(string(b), at(`mkdir "/srv/app/drop/nested"`)) {
-		t.Fatalf("nested SFTP batch upload commands: %s", b)
+	if data, err := os.ReadFile(at("/srv/app/drop/nested/deep/a.txt")); err != nil || string(data) != "nested" {
+		t.Fatalf("nested upload bytes: %q %v", data, err)
 	}
 	// Read through the real binary SFTP subsystem; verify the returned bytes.
 	w = request(a, "GET", "/api/file?root=workspace&path=readme.md", nil)
@@ -255,24 +255,24 @@ exit 0
 	}
 	// 远程写
 	requireStatus(t, request(a, "PUT", "/api/file", map[string]string{"path": "x.txt", "content": "hi", "hash": ""}), 200)
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "put -P") || !strings.Contains(string(b), "rename") {
-		t.Fatalf("sftp write batch: %s", string(b))
+	if data, err := os.ReadFile(at("/srv/app/x.txt")); err != nil || string(data) != "hi" {
+		t.Fatalf("SFTP write bytes: %q %v", data, err)
 	}
 	// 首次写入嵌套目录时，SFTP 要先创建缺失父目录，不能把 No such file
 	// 直接暴露给工作流提案应用。
 	if err := a.sftpWrite(at("/srv/app/.cache/aide/patch.py"), []byte("print(1)")); err != nil {
 		t.Fatalf("nested sftp write: %v", err)
 	}
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), at("mkdir \"/srv/app/.cache\"")) || !strings.Contains(string(b), at("mkdir \"/srv/app/.cache/aide\"")) {
-		t.Fatalf("sftp write must create parents: %s", string(b))
+	if data, err := os.ReadFile(at("/srv/app/.cache/aide/patch.py")); err != nil || string(data) != "print(1)" {
+		t.Fatalf("nested write bytes: %q %v", data, err)
 	}
 	// Office 成品走相同 SFTP 原子上传通道，无需容器内映射远端目录。
 	created := a.officeCreateTool(a.workspace, "ssh", at("/srv/app"), "generated.docx", "docx", map[string]any{"title": "Remote"})
 	if !strings.Contains(created, "已生成") {
 		t.Fatalf("remote Office create: %s", created)
 	}
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), at("/srv/app/generated.docx.aide-tmp")) {
-		t.Fatalf("remote Office file was not uploaded: %s", string(b))
+	if info, err := os.Stat(at("/srv/app/generated.docx")); err != nil || info.Size() == 0 {
+		t.Fatalf("remote Office upload: %v %v", info, err)
 	}
 	// Restricted SSH must fail before dispatch; this fixture's transport checks
 	// then explicitly select full access instead of bypassing that policy.
