@@ -1,6 +1,6 @@
 # 当前功能说明与使用入口
 
-维护日期：2026-11-12；当前源码基线 `5bec2477`，覆盖 0.1.19.0 RC1 发行准备。此前批次修正见[余项核查](reviews/2026-11-12-remaining-issues/README.md)，当前迁移与验收边界见[0.1.19 指南](release-guide-0.1.19.md)。实际公开安装包以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不把主干能力视为旧 RC3 已有功能。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
+维护日期：2026-11-12；当前源码基线 `05e0b8a7`，覆盖 0.1.19.0 RC1 发行准备。此前批次修正见[余项核查](reviews/2026-11-12-remaining-issues/README.md)，当前迁移与验收边界见[0.1.19 指南](release-guide-0.1.19.md)。实际公开安装包以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不把主干能力视为旧 RC3 已有功能。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
 
 ## 项目与工程任务
 

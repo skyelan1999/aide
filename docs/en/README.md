@@ -16,7 +16,7 @@ The maintained English guides below describe the public application. They distin
 | Explore sources and code | [Knowledge map](knowledge-map.md) |
 | Talk to the assistant | [Native voice calls](assistant-voice-call.md) |
 | Customize the workbench | [Customization](customization.md) |
-| Read the implementation paper | [Aide technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan; source baseline `5bec2477`, 2026-11-12 |
+| Read the implementation paper | [Aide technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan; source baseline `05e0b8a7`, 2026-11-12 |
 | Read the system/API design | [Architecture](architecture.md) · [Data layout](architecture/data-layout.md) |
 | Understand plugin market and account-balance capabilities | [Plugin market architecture](../architecture/plugin-market.md) |
 | Build plugins | [Plugin protocol](plugin-protocol.md) · [Daemon protocol](plugins/daemon-protocol.md) |

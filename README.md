@@ -84,7 +84,7 @@ bash scripts/install.sh --source
 
 ## 文档与版本
 
-本页按 **2026-11-12 源码 `5bec2477`** 更新，覆盖 **0.1.19.0 RC1** 的发行准备。精确公开版本、源码和安装包身份以对应 [Release](https://github.com/skyelan1999/aide/releases) 为准；升级步骤见 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
+本页按 **2026-11-12 源码 `05e0b8a7`** 更新，覆盖 **0.1.19.0 RC1** 的发行准备。精确公开版本、源码和安装包身份以对应 [Release](https://github.com/skyelan1999/aide/releases) 为准；升级步骤见 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
 
 | 文档 | 内容 |
 | --- | --- |

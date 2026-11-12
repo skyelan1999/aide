@@ -1,6 +1,6 @@
 # 0.1.19.0 RC1 usage and migration
 
-[简体中文](../release-guide-0.1.19.md). Reviewed from source baseline `5bec2477` on 2026-11-12. Actual publication, commit, architectures and hashes belong to the matching GitHub Release and `RELEASE-VALIDATION.json`; preparation notes are not publication receipts.
+[简体中文](../release-guide-0.1.19.md). Reviewed from source baseline `05e0b8a7` on 2026-11-12. Actual publication, commit, architectures and hashes belong to the matching GitHub Release and `RELEASE-VALIDATION.json`; preparation notes are not publication receipts.
 
 ## Update order
 
@@ -26,6 +26,8 @@ Workspace SSH, independent SFTP references and device SSH connections have separ
 - Terminal device sessions retain independent credentials. Fixture checks do not establish customer SSH, serial or X Server acceptance.
 
 ## Documents and PDF
+
+Context preflight retains history according to the actual remaining request window; an oversized current input still fails. Generated requirement and phase indexes preserve complete Unicode titles. Windows source paths containing Chinese characters can validate and reuse their owned build cache; incorrect or extra receipt lines are refused.
 
 Large Markdown uses paths, summaries and bounded excerpts with on-demand reads; model-window budgets still apply. Attachment-only tasks and long-paste conversion do not imply unbounded context or that all bytes were sent to a model.
 

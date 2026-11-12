@@ -1,0 +1,42 @@
+{
+  "source": "9a2136e4cb66179a6a57a6f46944ae077aae9f20",
+  "mergedMain": "05e0b8a719d2342f62183f4c9a0a3bc2597a3e14",
+  "hostRun": "https://github.com/skyelan1999/aide/actions/runs/43171412319",
+  "windowsDesktopRun": "https://github.com/skyelan1999/aide/actions/runs/43171416554",
+  "sourceCI": "https://github.com/skyelan1999/aide/actions/runs/43171416544",
+  "hosts": [
+    {
+      "host": "macos",
+      "machine": "x86_64",
+      "checks": 8,
+      "status": "pass",
+      "reportSHA256": "461a1829dff4d7e4cfeda356b867e4e3a78095432bb2ba68a553d5ad6b48b84a"
+    },
+    {
+      "host": "macos",
+      "machine": "arm64",
+      "checks": 8,
+      "status": "pass",
+      "reportSHA256": "ef2d9a0bb8a79144a4b24137f854610b063850b4c6ee10f0bafcc9734252ac71"
+    },
+    {
+      "host": "windows",
+      "machine": "AMD64",
+      "checks": 10,
+      "status": "pass",
+      "reportSHA256": "4f62ac667354c32f3d5eff32cce40b85e9ac3f9b44752871596995173ccabf2a"
+    }
+  ],
+  "bugs": [
+    862,
+    863,
+    864,
+    865,
+    866
+  ],
+  "limits": [
+    "Preparation source, not final tagged artifact identity",
+    "No production deployment or real customer hardware/paid model acceptance",
+    "Clean-main full and tagged full Delivery still required"
+  ]
+}
