@@ -3812,7 +3812,7 @@ func (a *App) rewriteRequirementsIndex(dir string) error {
 				switch {
 				case strings.HasPrefix(t, "# REQ-"):
 					if i := strings.Index(t, "·"); i >= 0 {
-						row.name = strings.TrimSpace(t[i+1:])
+						row.name = strings.TrimSpace(t[i+len("·"):])
 					}
 				case strings.HasPrefix(t, "- 状态："):
 					row.status = strings.TrimSpace(strings.TrimPrefix(t, "- 状态："))
@@ -3933,7 +3933,7 @@ func rewriteDocIndex(dir, prefix, indexFile, indexTitle string) error {
 				switch {
 				case strings.HasPrefix(t, "# "+prefix+"-"):
 					if i := strings.Index(t, "·"); i >= 0 {
-						r.name = strings.TrimSpace(t[i+1:])
+						r.name = strings.TrimSpace(t[i+len("·"):])
 					}
 				case strings.HasPrefix(t, "- 状态："):
 					r.status = strings.TrimSpace(strings.TrimPrefix(t, "- 状态："))

@@ -4,10 +4,10 @@
 
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
-| go | 379 | 1686 |
-| python | 63 | 279 |
-| node | 180 | 182 |
-| browser | 105 | 0 |
+| go | 420 | 1824 |
+| python | 76 | 344 |
+| node | 196 | 220 |
+| browser | 110 | 0 |
 
 详见[Release 测试矩阵](release-validation.md)，包含基本/全量、平台、插件、人工与外部依赖的通过标准。
 
@@ -22,7 +22,15 @@
 
 </details>
 
-<details><summary>cmd/aide-local-mounts/main_test.go · go · 8 个命名用例</summary>
+<details><summary>cmd/aide-local-mounts/degraded_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../cmd/aide-local-mounts/degraded_test.go)
+
+- `TestIssue762MountApplyReportsForwardingDegraded`
+
+</details>
+
+<details><summary>cmd/aide-local-mounts/main_test.go · go · 9 个命名用例</summary>
 
 [源码入口](../../cmd/aide-local-mounts/main_test.go)
 
@@ -34,6 +42,7 @@
 - `TestHelperStopChild`
 - `TestApplyRejectsDesiredChangedDuringComposeQuery`
 - `TestApplyFreezesSnapshotWhenLaterSettingsRemainPending`
+- `TestBridgeMetadataRollbackRetainsContentsAndModes`
 
 环境引用：`AIDE_TEST_HELPER_CHILD`。缺少配置时可能跳过；必须核对运行日志。
 
@@ -53,7 +62,15 @@
 
 [源码入口](../../cmd/aide-local-mounts/stop_race_unix_test.go)
 
-- `TestClearDeadLockOwnerUnlinksPIDAfterFirstRead`
+- `TestStalePIDReuseDoesNotOwnHelperLock`
+
+</details>
+
+<details><summary>cmd/aide-message-lan/main_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../cmd/aide-message-lan/main_test.go)
+
+- `TestHelperCapabilitiesMatchSharedProtocols`
 
 </details>
 
@@ -67,7 +84,33 @@
 
 </details>
 
-<details><summary>internal/localmounts/config_test.go · go · 4 个命名用例</summary>
+<details><summary>internal/hostbridge/replacement_other_test.go · go · 0 个命名用例</summary>
+
+[源码入口](../../internal/hostbridge/replacement_other_test.go)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>internal/hostbridge/replacement_windows_test.go · go · 0 个命名用例</summary>
+
+[源码入口](../../internal/hostbridge/replacement_windows_test.go)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>internal/hostbridge/rootfs_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/hostbridge/rootfs_test.go)
+
+- `TestRootObjectSurvivesPathAndParentReplacement`
+- `TestRootReadOnlyAndTraversal`
+- `TestBridgeMalformedRPCIsBoundedAndExportRevokes`
+
+</details>
+
+<details><summary>internal/localmounts/config_test.go · go · 5 个命名用例</summary>
 
 [源码入口](../../internal/localmounts/config_test.go)
 
@@ -75,6 +118,7 @@
 - `TestPrepareRightsAndDisconnectedDrive`
 - `TestRejectDuplicateAndAlias`
 - `TestPrepareRestoresSnapshotWhenOverrideCannotReplace`
+- `TestSelectedDirectoriesHaveNoPathBindFallback`
 
 </details>
 
@@ -117,6 +161,15 @@
 [源码入口](../../internal/messaging/lan_capture_test.go)
 
 - `TestCaptureRelayOnDemandLeaseAndFixedDestination`
+
+</details>
+
+<details><summary>internal/messaging/lan_remote_access_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/messaging/lan_remote_access_test.go)
+
+- `TestRemoteAccessRelayOnDemandLeaseAndFixedDestination`
+- `TestRemoteAccessKeepsHelperAliveWithoutPeerMessaging`
 
 </details>
 
@@ -437,7 +490,27 @@
 
 - `TestAssistantRealtimeLiveSyntheticAudio`
 
-环境引用：`AIDE_NATIVE_LIVE_DATA`, `AIDE_NATIVE_LIVE_FIXTURES`, `AIDE_NATIVE_LIVE_PCM_OUTPUT`, `AIDE_NATIVE_LIVE_SYNTHETIC_TEXT`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`AIDE_NATIVE_LIVE_DATA`, `AIDE_NATIVE_LIVE_FIXTURES`, `AIDE_NATIVE_LIVE_PCM_OUTPUT`, `AIDE_NATIVE_LIVE_SYNTHETIC_TEXT`, `AIDE_NATIVE_LIVE_VOICE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>internal/server/assistant_realtime_openai_live_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/assistant_realtime_openai_live_test.go)
+
+- `TestAssistantOpenAICallLiveRelay`
+
+环境引用：`AIDE_OPENAI_CALL_LIVE_DATA`, `AIDE_OPENAI_CALL_LIVE_OUTPUT`, `AIDE_OPENAI_CALL_LIVE_WAV`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>internal/server/assistant_realtime_provider_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/assistant_realtime_provider_test.go)
+
+- `TestAssistantOpenAINativeConfig`
+- `TestAssistantOpenAINativeSessionAndEvents`
+- `TestAssistantOpenAIRealtimeRelayAndLock`
 
 </details>
 
@@ -484,12 +557,38 @@
 
 </details>
 
-<details><summary>internal/server/assisted_approval_files_test.go · go · 2 个命名用例</summary>
+<details><summary>internal/server/assisted_approval_files_test.go · go · 6 个命名用例</summary>
 
 [源码入口](../../internal/server/assisted_approval_files_test.go)
 
 - `TestAssistedApprovalLocalFiles`
+- `TestAssistedApprovalRoutineNewDocument`
+- `TestRoutineNewDocumentBatchRejectsReplacementAndExecutable`
 - `TestReviewedFileResult`
+- `TestReviewedFileResultRefreshesAfterManualApplication`
+- `TestManualApplyRefreshesPendingDocumentReceipt`
+
+</details>
+
+<details><summary>internal/server/assisted_approval_surface_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/server/assisted_approval_surface_test.go)
+
+- `TestSurfaceReviewableIsLimitedToBoundedActions`
+- `TestAssistedBrowserSiteApprovalIsOneShot`
+
+</details>
+
+<details><summary>internal/server/assisted_approval_ui_test.go · go · 6 个命名用例</summary>
+
+[源码入口](../../internal/server/assisted_approval_ui_test.go)
+
+- `TestUIReviewRequiresActualHitOrFocus`
+- `TestUIReviewRejectsConsequentialAndNoneditableTargets`
+- `TestUIReviewFingerprintBindsContentTargetAndControl`
+- `TestAssistedUIExactTextIsReviewedButNotPersistedInCard`
+- `TestAssistedUIWithoutEvidenceOrInManualModeNeverCallsReviewer`
+- `TestAssistedCanvasClickReviewerReceivesFreshRaster`
 
 </details>
 
@@ -634,6 +733,15 @@
 
 </details>
 
+<details><summary>internal/server/browser_site_approval_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/server/browser_site_approval_test.go)
+
+- `TestBrowserReadTargetAndHostRules`
+- `TestBrowserReadUnknownSiteApproval`
+
+</details>
+
 <details><summary>internal/server/button_feedback_browser_test.go · go · 1 个命名用例</summary>
 
 [源码入口](../../internal/server/button_feedback_browser_test.go)
@@ -753,6 +861,49 @@
 
 </details>
 
+<details><summary>internal/server/computer_actions_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/computer_actions_test.go)
+
+- `TestComputerImageCoordinatesAreTaskAndWindowBound`
+- `TestComputerGestureBudgetsAndKeyGrammar`
+- `TestComputerVisualDragBindsBothEndpointsAndKeepsCropsPrivate`
+
+</details>
+
+<details><summary>internal/server/computer_control_approval_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/computer_control_approval_test.go)
+
+- `TestComputerAppApprovalChoices`
+- `TestComputerAppApprovalRejectsStaleQuestion`
+- `TestComputerAppApprovalSaveFailureDoesNotRemember`
+
+</details>
+
+<details><summary>internal/server/computer_control_test.go · go · 6 个命名用例</summary>
+
+[源码入口](../../internal/server/computer_control_test.go)
+
+- `TestComputerControlToolSchemasEncodeRequiredArrays`
+- `TestComputerBrowserURL`
+- `TestComputerBrowserConfirmationShowsFullURL`
+- `TestComputerControlDiscoveryFallbackOnlyForUnsupportedRoute`
+- `TestComputerControlExplicitTargetDiscovery`
+- `TestComputerControlSchemasExposeAppForEachTargetedAction`
+
+</details>
+
+<details><summary>internal/server/computer_snapshot_evidence_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/computer_snapshot_evidence_test.go)
+
+- `TestComputerSnapshotRetainsDesktopCoordinateMapping`
+- `TestComputerSnapshotRejectsOldOversizedGeometry`
+- `TestSurfaceVisualEvidenceBindsWindowAndClickRegion`
+
+</details>
+
 <details><summary>internal/server/config_backup_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/config_backup_test.go)
@@ -836,11 +987,12 @@
 
 </details>
 
-<details><summary>internal/server/control_workflow_test.go · go · 3 个命名用例</summary>
+<details><summary>internal/server/control_workflow_test.go · go · 4 个命名用例</summary>
 
 [源码入口](../../internal/server/control_workflow_test.go)
 
 - `TestControlWorkflowConfirmationAndRevocation`
+- `TestComputerControlCannotBeInstalledAsStandalonePlugin`
 - `TestControlPluginCanceledContext`
 - `TestControlStatusResultsReachModel`
 
@@ -915,6 +1067,14 @@
 
 </details>
 
+<details><summary>internal/server/debug_dataflow_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/debug_dataflow_test.go)
+
+- `TestDebugSessionDataflowDumpIsAuthenticatedAndContentFree`
+
+</details>
+
 <details><summary>internal/server/debug_redaction_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/debug_redaction_test.go)
@@ -943,6 +1103,14 @@
 - `TestDirectoryCreationUsesSelectedWritableReference`
 - `TestFileManagerPropertiesAndDelete`
 - `TestDirectoryPickerRejectsUnsafeNamesAndRemoteControlCharacters`
+
+</details>
+
+<details><summary>internal/server/document_index_unicode_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/document_index_unicode_test.go)
+
+- `TestGeneratedDocumentIndexesPreserveUnicodeTitles`
 
 </details>
 
@@ -1169,7 +1337,7 @@
 
 </details>
 
-<details><summary>internal/server/file_upload_batch_test.go · go · 8 个命名用例</summary>
+<details><summary>internal/server/file_upload_batch_test.go · go · 9 个命名用例</summary>
 
 [源码入口](../../internal/server/file_upload_batch_test.go)
 
@@ -1179,6 +1347,7 @@
 - `TestBatchUploadConflictDoesNotAbort`
 - `TestBatchUploadCountCap`
 - `TestBatchUploadTotalSizeCap`
+- `TestBatchUploadTruncatedNextPartHeaderIsReported`
 - `TestBatchUploadSourceRules`
 - `TestBatchUploadEmpty`
 
@@ -1318,6 +1487,14 @@
 - `TestDeriveAESKeyDeterministic`
 - `TestEmptyPassword`
 - `TestMigrationIntegration`
+
+</details>
+
+<details><summary>internal/server/knowledge_ai_updates_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/knowledge_ai_updates_test.go)
+
+- `TestIssue796AIUpdatesVisibilityAndCursorReset`
 
 </details>
 
@@ -1582,10 +1759,12 @@
 
 </details>
 
-<details><summary>internal/server/knowledge_go_types_test.go · go · 6 个命名用例</summary>
+<details><summary>internal/server/knowledge_go_types_test.go · go · 8 个命名用例</summary>
 
 [源码入口](../../internal/server/knowledge_go_types_test.go)
 
+- `TestKnowledgeGoTypesHostConstraintsAndExternalTests`
+- `TestKnowledgeGoTypesBuildTagsCannotReadProjectDisk`
 - `TestKnowledgeGoTypesBindings`
 - `TestKnowledgeGoTypesSingleMethodInterface`
 - `TestKnowledgeGoTypesResolvedDiagnosticsByColumn`
@@ -1824,6 +2003,16 @@
 
 </details>
 
+<details><summary>internal/server/knowledge_typescript_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/knowledge_typescript_test.go)
+
+- `TestIssue801TypeScriptTSXSymbolsAndRelativeCalls`
+- `TestTypeScriptSourceOnlySyntaxFailureAndAmbiguity`
+- `TestTypeScriptNeverExecutesProjectSource`
+
+</details>
+
 <details><summary>internal/server/knowledge_vector_cache_test.go · go · 4 个命名用例</summary>
 
 [源码入口](../../internal/server/knowledge_vector_cache_test.go)
@@ -1948,6 +2137,17 @@
 - `TestManagementRevocationAndStaleState`
 - `TestManagementReferenceLocksAndOrdinaryAccess`
 - `TestAuthoringRejectsInvalidCodeAndPaths`
+
+</details>
+
+<details><summary>internal/server/markdown_attachments_test.go · go · 4 个命名用例</summary>
+
+[源码入口](../../internal/server/markdown_attachments_test.go)
+
+- `TestMarkdownReferencePreviewAndTaskReadTail`
+- `TestMarkdownSharedInlineBudgetAndCompleteSmallBaseline`
+- `TestMarkdownReferenceSourceAndContextCanReadBeyondPreview`
+- `TestMarkdownReferenceValidatesWholeFileAndPaths`
 
 </details>
 
@@ -2306,7 +2506,7 @@
 
 </details>
 
-<details><summary>internal/server/models_test.go · go · 8 个命名用例</summary>
+<details><summary>internal/server/models_test.go · go · 9 个命名用例</summary>
 
 [源码入口](../../internal/server/models_test.go)
 
@@ -2314,6 +2514,7 @@
 - `TestReasoningEffortCanBeUpdatedFromSettings`
 - `TestSettingsMigrationFromSingleModel`
 - `TestLegacySingleModelSettingsWriteUsesDefaultProvider`
+- `TestModelProviderReasoningFormatSettingsRoundTrip`
 - `TestModelListProxy`
 - `TestMultipleModelProvidersUseTheirOwnVaultKeys`
 - `TestTaskRecordsModel`
@@ -2353,6 +2554,14 @@
 
 </details>
 
+<details><summary>internal/server/native_touchid_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/native_touchid_test.go)
+
+- `TestNativeTouchIDWebAuthnInterop`
+
+</details>
+
 <details><summary>internal/server/office_artifact_test.go · go · 5 个命名用例</summary>
 
 [源码入口](../../internal/server/office_artifact_test.go)
@@ -2380,6 +2589,29 @@
 
 - `TestOfficeNativeCommentsRoundTrip`
 - `TestOfficeNativeCommentsReferenceReadOnly`
+
+</details>
+
+<details><summary>internal/server/openai_tts_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/openai_tts_test.go)
+
+- `TestOpenAITTSSettingsAndIsolation`
+- `TestOpenAITTSSynthesisUsesSeparateConfig`
+- `TestOpenAITTSPersistenceAndImport`
+
+</details>
+
+<details><summary>internal/server/orchestration_observability_test.go · go · 6 个命名用例</summary>
+
+[源码入口](../../internal/server/orchestration_observability_test.go)
+
+- `TestOrchestrationEventsContinueAfterSnapshotLimit`
+- `TestRecentOrchestrationCostsAreBounded`
+- `TestOrchestrationStageCannotLeakUntrustedName`
+- `TestOrchestrationReceiptsDoNotPromoteWorkerClaims`
+- `TestParallelSmallTaskGate`
+- `TestShortParallelRequestSkipsPlannerRequest`
 
 </details>
 
@@ -2494,6 +2726,19 @@
 
 </details>
 
+<details><summary>internal/server/plan_test.go · go · 6 个命名用例</summary>
+
+[源码入口](../../internal/server/plan_test.go)
+
+- `TestPlanTaskLifecycleDependenciesAndExport`
+- `TestPlanMirrorsAgentStepsAndClosesOutcome`
+- `TestPlanContextCarriesOpenTasksAndApprovals`
+- `TestRecommendationAutoAppliesAfterWindow`
+- `TestStaleRecommendationIsNotApplied`
+- `TestDeclineRecommendationReturnsToManual`
+
+</details>
+
 <details><summary>internal/server/plugin_call_queue_test.go · go · 3 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_call_queue_test.go)
@@ -2511,7 +2756,7 @@
 - `TestPluginCommercePrivateInstallAndUpdate`
 - `TestPluginCommerceRejectInvalidLicense`
 - `TestPluginCommerceCatalogAndPublicIsolation`
-- `TestPluginCommerceExtendedCatalogKeepsLegacyPublicEntries`
+- `TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl`
 - `TestPluginCommerceIdentitySurvivesRestart`
 
 </details>
@@ -2638,7 +2883,17 @@
 
 </details>
 
-<details><summary>internal/server/plugin_market_refresh_test.go · go · 5 个命名用例</summary>
+<details><summary>internal/server/plugin_map_document_test.go · go · 3 个命名用例</summary>
+
+[源码入口](../../internal/server/plugin_map_document_test.go)
+
+- `TestMapWorkbenchSourceArgumentScope`
+- `TestMapDocumentBindSaveVersionAndPendingDraft`
+- `TestMapDocumentReadonlyAndInvalidSelection`
+
+</details>
+
+<details><summary>internal/server/plugin_market_refresh_test.go · go · 6 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_market_refresh_test.go)
 
@@ -2647,6 +2902,7 @@
 - `TestPluginMarketExternalCatalogMetadata`
 - `TestPluginMarketScreenshotRepositoryBoundary`
 - `TestPluginMarketRefreshBrowserHost`
+- `TestPluginMarketChangelogHistoryBudget`
 
 环境引用：`AIDE_MARKET_BROWSER_EVIDENCE`, `AIDE_TEST_PUBLIC_MARKET_CATALOG`, `AIDE_TEST_PUBLIC_MARKET_REVISION`。缺少配置时可能跳过；必须核对运行日志。
 
@@ -2763,6 +3019,18 @@
 
 </details>
 
+<details><summary>internal/server/plugin_source_checkout_test.go · go · 5 个命名用例</summary>
+
+[源码入口](../../internal/server/plugin_source_checkout_test.go)
+
+- `TestPluginSourceCheckoutPublication`
+- `TestPluginSourceCheckoutRejectsStaleUnsafeAndReadOnly`
+- `TestPluginSourceCheckoutReferenceVisibilityAndRights`
+- `TestPluginSourceCheckoutCancellationAndRelock`
+- `TestPluginSourceAtomicPublishGuard`
+
+</details>
+
 <details><summary>internal/server/plugin_source_protected_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_source_protected_test.go)
@@ -2852,6 +3120,15 @@
 
 </details>
 
+<details><summary>internal/server/plugin_viewer_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/server/plugin_viewer_test.go)
+
+- `TestWorkbenchViewerCSPStaysScopedToHostOrigin`
+- `TestWorkbenchViewerTicketRequiresDeclaredCapability`
+
+</details>
+
 <details><summary>internal/server/plugin_workbench_bridge_test.go · go · 9 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_workbench_bridge_test.go)
@@ -2868,6 +3145,21 @@
 
 </details>
 
+<details><summary>internal/server/plugin_workbench_files_test.go · go · 8 个命名用例</summary>
+
+[源码入口](../../internal/server/plugin_workbench_files_test.go)
+
+- `TestWorkbenchFileAccessWorkspaceBinaryCreateAndConflict`
+- `TestWorkbenchFileAccessAbsentTargetRaceDoesNotOverwrite`
+- `TestWorkbenchFileAccessReferencesAndReadOnly`
+- `TestWorkbenchFileAccessBrowseAndRejectionPaths`
+- `TestWorkbenchFileAccessPendingAndRevokedSource`
+- `TestWorkbenchFileAccessTargetInspectionAndPinnedVersion`
+- `TestWorkbenchFileAccessSFTPCreateAndReplace`
+- `TestWorkbenchFileAccessUnconfiguredReferenceCannotFallback`
+
+</details>
+
 <details><summary>internal/server/plugin_workbench_native_test.go · go · 1 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_workbench_native_test.go)
@@ -2876,10 +3168,11 @@
 
 </details>
 
-<details><summary>internal/server/plugin_workbench_test.go · go · 4 个命名用例</summary>
+<details><summary>internal/server/plugin_workbench_test.go · go · 5 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_workbench_test.go)
 
+- `TestWorkbenchReadRetryOnlyForIOErrors`
 - `TestPluginWorkbenchAuthSandboxAndOneUse`
 - `TestPluginWorkbenchRevocationChangeAndBound`
 - `TestPluginWorkbenchPackageAndPathValidation`
@@ -3015,12 +3308,13 @@
 
 </details>
 
-<details><summary>internal/server/project_cache_test.go · go · 2 个命名用例</summary>
+<details><summary>internal/server/project_cache_test.go · go · 3 个命名用例</summary>
 
 [源码入口](../../internal/server/project_cache_test.go)
 
 - `TestProjectCacheIsolation`
 - `TestLocalCacheCommandAndMemoryAgree`
+- `TestLocalCacheDirectoryKeepsExplicitDotCache`
 
 </details>
 
@@ -3080,16 +3374,34 @@
 
 </details>
 
-<details><summary>internal/server/provider_openai_test.go · go · 6 个命名用例</summary>
+<details><summary>internal/server/provider_openai_test.go · go · 8 个命名用例</summary>
 
 [源码入口](../../internal/server/provider_openai_test.go)
 
 - `TestOpenAIManualReasoningParameters`
 - `TestOpenAIWireOverridesRouterButHonorsCapabilities`
 - `TestOpenAIEndpointIsolation`
+- `TestCustomProviderReasoningEffortOptIn`
+- `TestNormalizeModelProviderReasoningEffortFormat`
 - `TestOpenAIReasoningOffModelSupport`
 - `TestOpenAISessionReasoningSelection`
 - `TestOpenAIReasoningOptionsAndModelSwitch`
+
+</details>
+
+<details><summary>internal/server/provider_page_balance_test.go · go · 7 个命名用例</summary>
+
+[源码入口](../../internal/server/provider_page_balance_test.go)
+
+- `TestPageBalanceConfirmationIsolationPersistenceAndExpiry`
+- `TestPageBalanceIdentityChangeAndInflightDisable`
+- `TestPageBalanceRejectsUnsafeDeclarations`
+- `TestPageBalanceBackgroundRefreshNeedsConsentAndStopsWithPlugin`
+- `TestPageBalanceBrowserFixture`
+- `TestPageBalanceSameNameDifferentProjectAndClosedSource`
+- `TestPageBalanceKeyRotationInvalidatesBackgroundConsent`
+
+环境引用：`AIDE_PAGE_BROWSER`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -3159,11 +3471,12 @@
 
 </details>
 
-<details><summary>internal/server/provider_support_test.go · go · 16 个命名用例</summary>
+<details><summary>internal/server/provider_support_test.go · go · 17 个命名用例</summary>
 
 [源码入口](../../internal/server/provider_support_test.go)
 
 - `TestProviderSupportActualPackagesEnabledDisabledRemoved`
+- `TestProviderSupportRecoversMissingRegistryMetadataFromMatchingManifest`
 - `TestProviderSupportExactHostPathAndModel`
 - `TestProviderSupportOpenAIUsdIsMatchedAndAggregatedSeparately`
 - `TestManualTokenPricingCurrencyDefaultsToCNYAndAcceptsUSD`
@@ -3242,6 +3555,14 @@
 
 </details>
 
+<details><summary>internal/server/release_professional_resume_test.go · go · 0 个命名用例</summary>
+
+[源码入口](../../internal/server/release_professional_resume_test.go)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>internal/server/release_public_dependencies_test.go · go · 0 个命名用例</summary>
 
 [源码入口](../../internal/server/release_public_dependencies_test.go)
@@ -3250,23 +3571,26 @@
 
 </details>
 
-<details><summary>internal/server/release_public_plugins_test.go · go · 1 个命名用例</summary>
+<details><summary>internal/server/release_public_plugins_test.go · go · 3 个命名用例</summary>
 
 [源码入口](../../internal/server/release_public_plugins_test.go)
 
 - `TestReleasePublicPackageFunctions`
+- `TestMapCanvasInstalledCandidate`
+- `TestReleaseMigratedComputerControlFunction`
 
-环境引用：`AIDE_PUBLIC_PLUGIN_EVIDENCE_DIR`, `AIDE_RELEASE_PUBLIC_MARKET`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`AIDE_PUBLIC_PLUGIN_EVIDENCE_DIR`, `AIDE_RELEASE_PUBLIC_MARKET`, `AIDE_TEST_MAPCANVAS_BUNDLE`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
-<details><summary>internal/server/remediation_test.go · go · 21 个命名用例</summary>
+<details><summary>internal/server/remediation_test.go · go · 23 个命名用例</summary>
 
 [源码入口](../../internal/server/remediation_test.go)
 
 - `TestRemediationAutoCompactNotBlockedByHeldMutex`
 - `TestContextOverflowCompactsHistoryBeforeRetry`
 - `TestAutoCompactionPublishesObservableLifecycle`
+- `TestAutoCompactionHonorsLargeModelWindow`
 - `TestAutoCompactionCancellationPublishesTerminalAndPreservesHistory`
 - `TestProviderCompleteHonorsRequestCancellation`
 - `TestManualCompactionPublishesLiveProgressAndTokenEstimates`
@@ -3285,6 +3609,7 @@
 - `TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary`
 - `TestMalformedCompactionSummaryAbortsWithoutChangingSource`
 - `TestCompactionSnapshotDetectsToolCallChanges`
+- `TestCompactionSmallRemainingBudgetFoldsShortHistory`
 
 </details>
 
@@ -3320,6 +3645,29 @@
 - `TestReminderAPICRUDSearchAndScopes`
 - `TestReminderAidePermissionsAndXiaomiTools`
 - `TestDueRemindersPopupAndXiaomiDispatchAreIdempotent`
+
+</details>
+
+<details><summary>internal/server/remote_access_browser_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/remote_access_browser_test.go)
+
+- `TestLANAccessBrowserFixture`
+
+环境引用：`AIDE_LAN_BROWSER_FIXTURE`, `AIDE_LAN_BROWSER_NO_PASSWORD`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>internal/server/remote_access_test.go · go · 6 个命名用例</summary>
+
+[源码入口](../../internal/server/remote_access_test.go)
+
+- `TestLANAccessOptInPasswordAndTimeoutPolicy`
+- `TestLANAccessIndependentSessionAndRevocation`
+- `TestLANAccessServerIdleAndLockCancelStreams`
+- `TestLANAccessTransportOriginAndTokenBypasses`
+- `TestLANCertificatePrivateSANAndLocalPinPreserved`
+- `TestLANAccessRejectsMalformedAndThrottlesPasswords`
 
 </details>
 
@@ -3579,6 +3927,22 @@
 
 </details>
 
+<details><summary>internal/server/sftp_root_read_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/sftp_root_read_test.go)
+
+- `TestIssue691And694ScopedReadsRejectLinks`
+
+</details>
+
+<details><summary>internal/server/sftp_root_write_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/sftp_root_write_test.go)
+
+- `TestIssue695And697MutationsRejectLinks`
+
+</details>
+
 <details><summary>internal/server/shell_cancel_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/shell_cancel_test.go)
@@ -3588,13 +3952,23 @@
 
 </details>
 
-<details><summary>internal/server/shell_readonly_test.go · go · 3 个命名用例</summary>
+<details><summary>internal/server/shell_output_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/server/shell_output_test.go)
+
+- `TestCappedShellOutputBoundsCollection`
+- `TestCappedShellOutputExactLimitIsNotTruncated`
+
+</details>
+
+<details><summary>internal/server/shell_readonly_test.go · go · 4 个命名用例</summary>
 
 [源码入口](../../internal/server/shell_readonly_test.go)
 
 - `TestBasicReadOnlyShellClassification`
 - `TestReadOnlyShellCommandLengthBoundsWithoutCommandCountCap`
 - `TestBasicReadOnlyShellExecutesWithoutReviewer`
+- `TestGitRepositoryHelpersRequireApproval`
 
 </details>
 
@@ -3785,6 +4159,16 @@
 
 </details>
 
+<details><summary>internal/server/ssh_final_plugins_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/ssh_final_plugins_test.go)
+
+- `TestSSHLiveFinalPluginCompatibility`
+
+环境引用：`AIDE_FINAL_PLUGIN_CANDIDATES`, `AIDE_SSH_FIXTURE_A`, `AIDE_SSH_FIXTURE_B`, `AIDE_SSH_TEST_ISOLATED`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
 <details><summary>internal/server/ssh_keyutil_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/ssh_keyutil_test.go)
@@ -3852,6 +4236,16 @@
 
 </details>
 
+<details><summary>internal/server/starlink_remaining_integration_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/starlink_remaining_integration_test.go)
+
+- `TestRemainingStarLinkDaemon`
+
+环境引用：`AIDE_STARLINK_SOURCE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
 <details><summary>internal/server/static_audit_benchmark_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/static_audit_benchmark_test.go)
@@ -3871,6 +4265,14 @@
 - `TestStaticAuditSeedInvariants`
 
 环境引用：`AIDE_STATIC_AUDIT_PREPARE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>internal/server/steer_interrupt_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/steer_interrupt_test.go)
+
+- `TestSteerInterruptsInFlightRound`
 
 </details>
 
@@ -4141,7 +4543,7 @@
 - `TestTransferSFTPProcess`
 - `TestLargeTransferSFTPRandomAccessAndResume`
 
-环境引用：`AIDE_TRANSFER_SFTP_HELPER`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`AIDE_SFTP_WRITE_ENTERED`, `AIDE_SFTP_WRITE_LOG`, `AIDE_SFTP_WRITE_RELEASE`, `AIDE_TRANSFER_SFTP_HELPER`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -4204,6 +4606,20 @@
 - `TestErrEdgeClosedClassified`
 
 环境引用：`RUN_EDGE_LIVE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>internal/server/tts/openai_test.go · go · 7 个命名用例</summary>
+
+[源码入口](../../internal/server/tts/openai_test.go)
+
+- `TestOpenAISpeechProtocol`
+- `TestOpenAISpeechFailures`
+- `TestOpenAIRealtimeNarration`
+- `TestOpenAIExplicitChain`
+- `TestOpenAIRealtimeHandshakeRetry`
+- `TestOpenAIRealtimeNoRetryAfterSession`
+- `TestOpenAIRealtimeDialErrorRedaction`
 
 </details>
 
@@ -4343,6 +4759,18 @@
 - `TestIssue156InferenceDeduplicatesSelectedSamples`
 - `TestIssue156InferenceAllowsExactAudioAndCountLimits`
 - `TestIssue156InferenceBoundsTranscriptBeforeFeatureAndPromptWork`
+
+</details>
+
+<details><summary>internal/server/voice_model_bindings_test.go · go · 5 个命名用例</summary>
+
+[源码入口](../../internal/server/voice_model_bindings_test.go)
+
+- `TestVoiceModelBindingsIsolationAndPersistence`
+- `TestVoiceModelBindingsSynthesisUsesVault`
+- `TestVoiceModelBindingsQwenProtocols`
+- `TestVoiceModelBindingsUnavailableKey`
+- `TestSettingsAutoSavePermissionsPersistence`
 
 </details>
 
@@ -4533,6 +4961,15 @@
 
 </details>
 
+<details><summary>internal/server/workflow_search_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/server/workflow_search_test.go)
+
+- `TestSearchTextStaysInsideCapturedWorkspace`
+- `TestTaskMemoryRejectsDifferentWorkspace`
+
+</details>
+
 <details><summary>internal/server/workflow_shell_approval_test.go · go · 2 个命名用例</summary>
 
 [源码入口](../../internal/server/workflow_shell_approval_test.go)
@@ -4582,11 +5019,12 @@
 
 </details>
 
-<details><summary>internal/server/workspace_test.go · go · 3 个命名用例</summary>
+<details><summary>internal/server/workspace_test.go · go · 4 个命名用例</summary>
 
 [源码入口](../../internal/server/workspace_test.go)
 
 - `TestWorkspaceConfigCRUD`
+- `TestWorkspaceConfigPartialUpdateUsesCurrentModeSnapshot`
 - `TestLocalWorkspacePathAIReadFix`
 - `TestRemoteWorkspaceDispatch`
 
@@ -4601,12 +5039,14 @@
 
 </details>
 
-<details><summary>scripts/account-balance-pool.test.cjs · node · 11 个命名用例</summary>
+<details><summary>scripts/account-balance-pool.test.cjs · node · 14 个命名用例</summary>
 
 [源码入口](../../scripts/account-balance-pool.test.cjs)
 
 - `only finite supported amounts become balances; unknown is not zero`
 - `alarm boundary, negative balances, scale clamping and persisted preference validation`
+- `website preview stays separate until explicit per-key confirmation and paused data is unavailable`
+- `website association opens only the declared source and performs no model call`
 - `all keys have separate cards and alarms; failures retain stale data without reflecting errors`
 - `RAM remains per-key and secrets are cleared before save; successful account stays editable`
 - `refresh concurrency is bounded; hidden or detached pool stops requests and aborts`
@@ -4616,6 +5056,7 @@
 - `plugin quota windows render as percentages without currency amounts or pricing controls`
 - `pricing-only and unavailable quota are distinct and unknown never becomes zero`
 - `expired quota response cannot populate a current card`
+- `website help is collapsed by default, remembers expansion across refresh, and explains a closed source`
 
 </details>
 
@@ -4654,6 +5095,14 @@
 <details><summary>scripts/assistant-live.test.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/assistant-live.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/assistant-memory.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/assistant-memory.test.cjs)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
@@ -4715,7 +5164,7 @@
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
-环境引用：`AIDE_COMPONENT_EVIDENCE_DIR`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`AIDE_CHROMIUM_EXECUTABLE`, `AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_PLAYWRIGHT_MODULE`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -4887,6 +5336,16 @@
 
 </details>
 
+<details><summary>scripts/browser-markdown-inline-style.cjs · browser · 0 个命名用例</summary>
+
+[源码入口](../../scripts/browser-markdown-inline-style.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+环境引用：`AIDE_CHROMIUM_PATH`, `AIDE_COMPONENT_EVIDENCE_DIR`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
 <details><summary>scripts/browser-markdown-recovery.cjs · browser · 0 个命名用例</summary>
 
 [源码入口](../../scripts/browser-markdown-recovery.cjs)
@@ -4894,6 +5353,16 @@
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
 环境引用：`AIDE_ASSISTANT_TIMELINE_BASELINE`, `AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_ISSUE599_SAMPLE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>scripts/browser-markdown-vector-pdf.cjs · browser · 0 个命名用例</summary>
+
+[源码入口](../../scripts/browser-markdown-vector-pdf.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+环境引用：`AIDE_CHROMIUM_PATH`, `AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_VECTOR_LARGE`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -4977,6 +5446,16 @@
 
 </details>
 
+<details><summary>scripts/browser-notification-autosave.cjs · browser · 0 个命名用例</summary>
+
+[源码入口](../../scripts/browser-notification-autosave.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+环境引用：`AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_PLAYWRIGHT_MODULE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
 <details><summary>scripts/browser-obj-preview-bounds.cjs · browser · 0 个命名用例</summary>
 
 [源码入口](../../scripts/browser-obj-preview-bounds.cjs)
@@ -4994,6 +5473,14 @@
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
 环境引用：`AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_OBJ_EXPECT_FAILURES`, `AIDE_OBJ_VENDOR_BASELINE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>scripts/browser-openai-speech.cjs · browser · 0 个命名用例</summary>
+
+[源码入口](../../scripts/browser-openai-speech.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
 </details>
 
@@ -5227,6 +5714,16 @@
 
 </details>
 
+<details><summary>scripts/browser-settings-autosave.cjs · browser · 0 个命名用例</summary>
+
+[源码入口](../../scripts/browser-settings-autosave.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+环境引用：`AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_PLAYWRIGHT_MODULE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
 <details><summary>scripts/browser-starmap-identity-race.cjs · browser · 0 个命名用例</summary>
 
 [源码入口](../../scripts/browser-starmap-identity-race.cjs)
@@ -5372,10 +5869,11 @@
 
 </details>
 
-<details><summary>scripts/ci/test_public_plugins.py · python · 3 个命名用例</summary>
+<details><summary>scripts/ci/test_public_plugins.py · python · 4 个命名用例</summary>
 
 [源码入口](../../scripts/ci/test_public_plugins.py)
 
+- `test_shipped_offline_catalog_matches_the_public_lock`
 - `test_frozen_packages_must_match_current_catalog_identity`
 - `test_only_exact_complete_success_is_accepted`
 - `test_installation_does_not_substitute_for_function_or_coverage`
@@ -5468,6 +5966,14 @@
 <details><summary>scripts/crash-monitor.test.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/crash-monitor.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/desktop-capture.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/desktop-capture.test.cjs)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
@@ -5847,11 +6353,32 @@
 
 </details>
 
+<details><summary>scripts/experience-runtime.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/experience-runtime.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>scripts/file-autosave-retry.test.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/file-autosave-retry.test.cjs)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/file-diff.test.cjs · node · 6 个命名用例</summary>
+
+[源码入口](../../scripts/file-diff.test.cjs)
+
+- `marks replacements with line numbers on both sides`
+- `treats a new file as pure additions starting at line 1`
+- `normalizes CRLF and keeps blank lines addressable`
+- `keeps the whole file when nothing changed`
+- `degrades to delete-all plus add-all for oversized middles`
+- `caps rendered rows but reports the real counts`
 
 </details>
 
@@ -5924,6 +6451,14 @@
 <details><summary>scripts/identity-login-routing.test.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/identity-login-routing.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/keybindings.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/keybindings.test.cjs)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
@@ -6120,11 +6655,27 @@
 
 </details>
 
+<details><summary>scripts/native-touchid.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/native-touchid.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>scripts/office/test_docx_comments.py · python · 1 个命名用例</summary>
 
 [源码入口](../../scripts/office/test_docx_comments.py)
 
 - `test_formatted_run_boundary_and_table`
+
+</details>
+
+<details><summary>scripts/openjpeg/test-native.py · python · 0 个命名用例</summary>
+
+[源码入口](../../scripts/openjpeg/test-native.py)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
 </details>
 
@@ -6163,6 +6714,64 @@
 <details><summary>scripts/pause-session-isolation.test.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/pause-session-isolation.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-allocation-layer.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-allocation-layer.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-alpha.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-alpha.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-colors.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-colors.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-native-fixes.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-native-fixes.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-official.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-official.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-packet-borrow.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-packet-borrow.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+环境引用：`AIDE_PACKET_FIXTURE_DIR`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>scripts/pdf-jpx-preflight.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/pdf-jpx-preflight.test.cjs)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
@@ -6225,7 +6834,7 @@
 
 </details>
 
-<details><summary>scripts/plugin-workbench-client.test.cjs · node · 5 个命名用例</summary>
+<details><summary>scripts/plugin-workbench-client.test.cjs · node · 6 个命名用例</summary>
 
 [源码入口](../../scripts/plugin-workbench-client.test.cjs)
 
@@ -6234,16 +6843,33 @@
 - `document APIs encode bounded binary chunks without roots, tokens, or an iframe commit API`
 - `throwing event listeners cannot prevent scope revocation`
 - `capture SDK uses the existing authenticated MessagePort without credentials or a new HTTP client`
+- `manual file selector uses the same bounded port and exposes no commit or credentials`
 
 </details>
 
-<details><summary>scripts/plugin-workbench.test.cjs · node · 20 个命名用例</summary>
+<details><summary>scripts/plugin-workbench-tabs.test.cjs · node · 8 个命名用例</summary>
+
+[源码入口](../../scripts/plugin-workbench-tabs.test.cjs)
+
+- `workbench opens a fresh same-origin page with scoped selection and no credentials`
+- `blocked popup reports failure without replacing current workbench`
+- `actual local and SSH workspace identities round-trip without becoming paths or credentials`
+- `oversized and control-bearing workspace identities never open a page or parse`
+- `locked, disabled, broken or malformed plugin routes cannot open a page`
+- `deep link parser rejects traversal, bad selections and missing workspace`
+- `routed page rechecks workspace, current enabled plugin and lock before creating a bridge`
+- `manual login resumes a plugin deep link after authentication and closes the login dialog`
+
+</details>
+
+<details><summary>scripts/plugin-workbench.test.cjs · node · 23 个命名用例</summary>
 
 [源码入口](../../scripts/plugin-workbench.test.cjs)
 
 - `workbench uses sandbox without same-origin or credentials and close unloads the frame`
 - `lock, scope changes, disabled plugins and Escape close the active workbench`
 - `workbench refuses arbitrary routes returned by a broken API`
+- `local speech needs both declarations and a trusted host click before recording`
 - `MessagePort only connects to the active frame and never carries parent instance/auth`
 - `closing a workbench drops late tool replies and proposal approval is absent from the port`
 - `workbench export requires actual active frame and a separate parent save click; cleanup revokes data`
@@ -6261,13 +6887,16 @@
 - `review preserves iframe draft and bridge, returns on approved save, and still revokes on scope loss`
 - `manual project save writes directly and never permits iframe commit`
 - `Codex host capability requires both the exact plugin and parent grant`
+- `launching another workbench delegates to a fresh page without closing the current document or creating a bridge`
+- `manual source selection requires the host grant and keeps commit on trusted parent Save`
 
 </details>
 
-<details><summary>scripts/plugin-workspace.test.cjs · node · 2 个命名用例</summary>
+<details><summary>scripts/plugin-workspace.test.cjs · node · 3 个命名用例</summary>
 
 [源码入口](../../scripts/plugin-workspace.test.cjs)
 
+- `plugin binary chunks are bounded, workspace-scoped and preserve exact bytes`
 - `plugin helper uses bound project, rejects traversal and symlink escape, and denies empty remote root`
 - `daemon helper binds each overlapping call root independently without global chdir`
 
@@ -6345,6 +6974,19 @@
 
 </details>
 
+<details><summary>scripts/session-review.test.cjs · node · 6 个命名用例</summary>
+
+[源码入口](../../scripts/session-review.test.cjs)
+
+- `uses recorded orchestration timing and preserves the task status`
+- `older request snapshots contribute only metadata, not sensitive bodies`
+- `empty and running sessions do not acquire fabricated timing`
+- `trajectory loads the review module before app.js and exposes the tab`
+- `execution journal provides dispatch and result order for older calls`
+- `review displays complete flow with search and collapsible turns`
+
+</details>
+
 <details><summary>scripts/session-run-controls.test.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/session-run-controls.test.cjs)
@@ -6353,14 +6995,31 @@
 
 </details>
 
-<details><summary>scripts/settings-navigation.test.cjs · node · 5 个命名用例</summary>
+<details><summary>scripts/session-timeline.test.cjs · node · 7 个命名用例</summary>
+
+[源码入口](../../scripts/session-timeline.test.cjs)
+
+- `interleaves prompt, interjection and answer segments by real time`
+- `places an interjection between two answer segments`
+- `keeps queued messages out of the timeline`
+- `falls back to run creation time for legacy records without timestamps`
+- `accepts epoch milliseconds as well as backend timestamps`
+- `parses RFC3339 nanosecond timestamps used by the backend`
+- `formats a local clock label and stays empty for invalid values`
+
+</details>
+
+<details><summary>scripts/settings-navigation.test.cjs · node · 8 个命名用例</summary>
 
 [源码入口](../../scripts/settings-navigation.test.cjs)
 
-- `all original settings remain reachable exactly once in seven groups`
+- `all settings remain reachable exactly once in seven ordered groups`
+- `search finds pages by title and control while retaining group mapping`
+- `every schema control has a renderer and key API routes exist`
 - `new sections and unknown legacy links have a safe reachable destination`
 - `advanced controls initialize once only after expansion and keep original renderer`
 - `appearance uses independent palette and mode with unchanged stored values`
+- `modern palette persists and immediately changes the document theme attribute`
 - `opening voice settings never requests microphone permission; explicit refresh stops its temporary track`
 
 </details>
@@ -6589,6 +7248,14 @@
 
 </details>
 
+<details><summary>scripts/test-local-mount-object-bridge.py · python · 0 个命名用例</summary>
+
+[源码入口](../../scripts/test-local-mount-object-bridge.py)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>scripts/test_accessibility_port.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/test_accessibility_port.cjs)
@@ -6597,7 +7264,7 @@
 
 </details>
 
-<details><summary>scripts/test_agent_route.py · python · 6 个命名用例</summary>
+<details><summary>scripts/test_agent_route.py · python · 11 个命名用例</summary>
 
 [源码入口](../../scripts/test_agent_route.py)
 
@@ -6606,6 +7273,11 @@
 - `test_explicit_interpreter_overrides`
 - `test_task_path_rejects_escape`
 - `test_release_gate`
+- `test_release_gate_requires_same_head_as_full_verification`
+- `test_full_verification_requires_at_least_one_check`
+- `test_task_creation_is_atomic_and_does_not_follow_predictable_temp_symlink`
+- `test_concurrent_task_creators_have_one_winner`
+- `test_clean_deletion_refuses_parent_symlink_swap_after_enumeration`
 - `test_cleanup_preserves_unknown_protected_tracked_and_symlinks`
 
 </details>
@@ -6680,6 +7352,14 @@
 
 </details>
 
+<details><summary>scripts/test_browser_page_balance.py · python · 0 个命名用例</summary>
+
+[源码入口](../../scripts/test_browser_page_balance.py)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>scripts/test_browser_pdf.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/test_browser_pdf.cjs)
@@ -6698,6 +7378,14 @@
 
 </details>
 
+<details><summary>scripts/test_checkout_byte_integrity.py · python · 1 个命名用例</summary>
+
+[源码入口](../../scripts/test_checkout_byte_integrity.py)
+
+- `test_autocrlf_preserves_pinned_sources_and_generated_prefix`
+
+</details>
+
 <details><summary>scripts/test_code_layout.py · python · 5 个命名用例</summary>
 
 [源码入口](../../scripts/test_code_layout.py)
@@ -6710,6 +7398,21 @@
 
 </details>
 
+<details><summary>scripts/test_codex_host_source.py · python · 8 个命名用例</summary>
+
+[源码入口](../../scripts/test_codex_host_source.py)
+
+- `test_cache_reuse_is_offline_and_every_use_is_verified`
+- `test_transient_http_retries_then_commits_one_verified_archive`
+- `test_retry_exhaustion_is_bounded_and_retains_no_partial_archive`
+- `test_permanent_http_and_bad_checksum_are_not_retried`
+- `test_corrupt_download_cache_is_repaired_only_by_verified_download`
+- `test_size_limit_explicit_archive_and_symlink_boundaries`
+- `test_prepare_only_works_without_go_or_node_and_creates_no_binaries`
+- `test_docker_host_stage_is_independent_of_application_inputs`
+
+</details>
+
 <details><summary>scripts/test_context_compaction_ui.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/test_context_compaction_ui.cjs)
@@ -6718,10 +7421,12 @@
 
 </details>
 
-<details><summary>scripts/test_control_bridge_launchers.py · python · 1 个命名用例</summary>
+<details><summary>scripts/test_control_bridge_launchers.py · python · 3 个命名用例</summary>
 
 [源码入口](../../scripts/test_control_bridge_launchers.py)
 
+- `test_concurrent_election_keeps_one_receipt`
+- `test_readiness_must_belong_to_spawned_pid`
 - `test_start_repeat_and_stop`
 
 </details>
@@ -6998,6 +7703,14 @@
 
 </details>
 
+<details><summary>scripts/test_host_bridge_vendor.py · python · 0 个命名用例</summary>
+
+[源码入口](../../scripts/test_host_bridge_vendor.py)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>scripts/test_html2canvas_scans.cjs · node · 0 个命名用例</summary>
 
 [源码入口](../../scripts/test_html2canvas_scans.cjs)
@@ -7049,13 +7762,19 @@
 
 </details>
 
-<details><summary>scripts/test_launcher_contract.py · python · 23 个命名用例</summary>
+<details><summary>scripts/test_launcher_contract.py · python · 35 个命名用例</summary>
 
 [源码入口](../../scripts/test_launcher_contract.py)
 
 - `test_slow_fingerprint_shows_progress_without_polluting_digest`
 - `test_fingerprint_timeout_kills_pipeline_descendants`
 - `test_build_is_explicit_scoped_and_starts_verified_source`
+- `test_mac_host_build_precedes_configuration_and_start`
+- `test_mac_host_failure_keeps_previous_startup_configuration`
+- `test_host_source_is_prepared_before_docker_without_changing_scope`
+- `test_low_disk_attempts_scoped_recovery_then_rechecks_before_compiling`
+- `test_persistent_low_disk_and_failed_start_do_not_recycle_new_outputs`
+- `test_source_preparation_failure_preserves_current_installation`
 - `test_build_executes_real_disk_child_without_inherited_project_dir`
 - `test_failed_build_cannot_switch_image_or_start_release`
 - `test_wrong_build_identity_retains_previous_configuration`
@@ -7076,10 +7795,16 @@
 - `test_stale_bundle_marker_cannot_select_release_or_trigger_import`
 - `test_build_completion_cannot_reopen_previous_healthy_image`
 - `test_actual_packager_ships_only_release_interfaces`
+- `test_deletes_obsolete_tags_and_dangling_ids_preserving_all_dependencies`
+- `test_unhealthy_foreign_or_wrong_runtime_never_deletes`
+- `test_reference_race_and_other_repository_tag_are_retained`
+- `test_starting_health_is_waited_for_and_timeout_does_not_delete`
+- `test_removal_failure_and_gc_failure_are_visible_and_not_forced`
+- `test_default_builder_and_dry_run_never_prune_shared_cache`
 
 </details>
 
-<details><summary>scripts/test_launcher_data.py · python · 40 个命名用例</summary>
+<details><summary>scripts/test_launcher_data.py · python · 42 个命名用例</summary>
 
 [源码入口](../../scripts/test_launcher_data.py)
 
@@ -7100,6 +7825,7 @@
 - `test_missing_environment_restores_literal_secret_configuration`
 - `test_linked_environment_is_rejected`
 - `test_persistent_data_excluded_from_build_and_git`
+- `test_default_compose_project_identity_is_stable_and_install_specific`
 - `test_select_only_intended_service_owner_and_refuse_ambiguity`
 - `test_existing_image_needs_no_download_or_load`
 - `test_local_archive_imports_without_network_or_build`
@@ -7122,6 +7848,7 @@
 - `test_source_checkout_is_not_hidden_by_stale_bundle_marker`
 - `test_source_selection_respects_checkout_and_explicit_override`
 - `test_running_instance_requires_local_service_health`
+- `test_only_explicit_a_b_activation_bypasses_healthy_reuse`
 - `test_installed_runtime_requires_platform_and_complete_metadata`
 
 环境引用：`FIX_LOAD_EXIT`, `FIX_RELEASE_RECEIPT`, `FIX_STATE`。缺少配置时可能跳过；必须核对运行日志。
@@ -7171,6 +7898,27 @@
 - `test_preserves_settings_and_quotes_spaces`
 - `test_macos_root_and_return_to_scoped_directory`
 - `test_invalid_root_keeps_configuration`
+
+</details>
+
+<details><summary>scripts/test_macos_desktop.py · python · 14 个命名用例</summary>
+
+[源码入口](../../scripts/test_macos_desktop.py)
+
+- `test_computer_control_scheduler_and_capture_geometry`
+- `test_sealed_touchid_store_and_hardware_acl`
+- `test_double_modifier_gesture`
+- `test_verified_session_uses_the_current_installation_and_cert`
+- `test_foreign_owner_and_identity_mismatch_never_read_token`
+- `test_invalid_certificate_link_and_token_are_rejected`
+- `test_ports_require_one_valid_mapping`
+- `test_system_curl_keeps_tls_and_proxy_redirect_boundaries`
+- `test_failed_start_is_redacted_and_does_not_query_credentials`
+- `test_app_identity_is_scoped_and_foreign_install_is_preserved`
+- `test_open_existing_never_compiles_or_installs`
+- `test_recycle_preserves_running_current_foreign_and_unknown_files`
+- `test_installed_app_survives_cache_eviction_and_failed_install_keeps_receipt`
+- `test_receipt_traversal_and_symlinks_are_rejected`
 
 </details>
 
@@ -7235,17 +7983,22 @@
 
 </details>
 
-<details><summary>scripts/test_message_lan_launcher.py · python · 5 个命名用例</summary>
+<details><summary>scripts/test_message_lan_launcher.py · python · 10 个命名用例</summary>
 
 [源码入口](../../scripts/test_message_lan_launcher.py)
 
 - `test_start_uses_loopback_mapping_and_pristine_checked_image`
+- `test_older_release_helper_keeps_existing_startup`
+- `test_server_protocol_mismatch_keeps_messaging_but_disables_remote_access`
+- `test_old_server_without_capability_manifest_keeps_messaging`
+- `test_sha256sum_only_linux_host_can_verify_and_start_helper`
+- `test_non_loopback_remote_mapping_disables_only_remote_access`
 - `test_mismatched_checksum_does_not_execute_helper`
 - `test_non_loopback_mapping_rejected`
 - `test_capture_target_cannot_expand_to_non_loopback`
 - `test_both_images_and_all_launch_modes_ship_bridge`
 
-环境引用：`LAN_BAD_HASH`, `LAN_BINDING`, `LAN_CAPTURE_BINDING`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`LAN_BAD_HASH`, `LAN_BINDING`, `LAN_CAPTURE_BINDING`, `LAN_REMOTE_BINDING`, `LAN_SERVER_NO_CAPABILITIES`, `LAN_SERVER_REMOTE_PROTOCOL`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -7379,16 +8132,20 @@
 
 </details>
 
-<details><summary>scripts/test_prebuild_wheels.py · python · 6 个命名用例</summary>
+<details><summary>scripts/test_prebuild_wheels.py · python · 8 个命名用例</summary>
 
 [源码入口](../../scripts/test_prebuild_wheels.py)
 
 - `test_failed_download_preserves_last_known_good`
 - `test_failed_resolver_verification_preserves_last_known_good`
 - `test_success_replaces_only_after_download_and_verification`
+- `test_amd64_target_is_explicit_and_marked`
+- `test_unsupported_target_is_rejected_before_docker`
 - `test_empty_success_rejected`
 - `test_failed_promotion_restores_previous_directory`
 - `test_existing_lock_refuses_other_run_without_touching_inputs`
+
+环境引用：`WHEEL_FIXTURE_TARGET`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -7427,6 +8184,15 @@
 - `test_listing_and_header_bounds_fail_explicitly`
 - `test_atomic_no_replace_rename`
 - `test_handle_limits_close_and_checksum_before_write`
+
+</details>
+
+<details><summary>scripts/test_release_base_images.py · python · 2 个命名用例</summary>
+
+[源码入口](../../scripts/test_release_base_images.py)
+
+- `test_real_manifest_and_sdk_scope`
+- `test_mutable_or_incomplete_manifest_refused`
 
 </details>
 
@@ -7481,12 +8247,22 @@
 
 </details>
 
-<details><summary>scripts/test_source_fingerprint.py · python · 3 个命名用例</summary>
+<details><summary>scripts/test_sherpa_build_integrity.py · python · 2 个命名用例</summary>
+
+[源码入口](../../scripts/test_sherpa_build_integrity.py)
+
+- `test_good_modified_unknown_and_missing_pin`
+- `test_both_platforms_pinned_and_verified_before_extract`
+
+</details>
+
+<details><summary>scripts/test_source_fingerprint.py · python · 4 个命名用例</summary>
 
 [源码入口](../../scripts/test_source_fingerprint.py)
 
 - `test_native_manifest_under_ascii_locale`
 - `test_caller_collation_does_not_change_source_identity`
+- `test_desktop_host_inputs_change_shared_source_identity`
 - `test_installed_plugin_state_is_excluded`
 
 </details>
@@ -7583,6 +8359,14 @@
 
 </details>
 
+<details><summary>scripts/test_windows_bootstrap_cache.py · python · 0 个命名用例</summary>
+
+[源码入口](../../scripts/test_windows_bootstrap_cache.py)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
 <details><summary>scripts/test_windows_build_proxy.py · python · 0 个命名用例</summary>
 
 [源码入口](../../scripts/test_windows_build_proxy.py)
@@ -7591,11 +8375,31 @@
 
 </details>
 
+<details><summary>scripts/test_windows_desktop.py · python · 3 个命名用例</summary>
+
+[源码入口](../../scripts/test_windows_desktop.py)
+
+- `test_real_production_policy`
+- `test_multisize_aide_icon`
+- `test_sdk_cache_tampering_refuses_extraction`
+
+</details>
+
 <details><summary>scripts/test_windows_directory_launcher.py · python · 0 个命名用例</summary>
 
 [源码入口](../../scripts/test_windows_directory_launcher.py)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/test_windows_helper_notices.py · python · 3 个命名用例</summary>
+
+[源码入口](../../scripts/test_windows_helper_notices.py)
+
+- `test_empty_vendor_directory_does_not_use_aide_license`
+- `test_missing_vendor_notice_fails_instead_of_substituting_main`
+- `test_main_module_does_not_scan_runtime_or_private_state`
 
 </details>
 
@@ -7708,6 +8512,15 @@
 [源码入口](../../scripts/test_windows_update_launcher_process.py)
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/test_workflow_action_pins.py · python · 2 个命名用例</summary>
+
+[源码入口](../../scripts/test_workflow_action_pins.py)
+
+- `test_movable_and_undocumented_refs_are_rejected`
+- `test_external_actions_have_sha_and_version_comment`
 
 </details>
 

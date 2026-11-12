@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestProjectCacheIsolation(t *testing.T) {
@@ -65,7 +66,7 @@ func TestProjectCacheIsolation(t *testing.T) {
 		t.Fatal("remote design not written", err, string(b))
 	}
 	b, err = os.ReadFile(filepath.Join(designs, "designs-index.md"))
-	if err != nil || !strings.Contains(string(b), "DESIGN-001") || !strings.Contains(string(b), "isolation") {
+	if err != nil || !utf8.Valid(b) || !strings.Contains(string(b), "| DESIGN-001 | isolation |") {
 		t.Fatal("remote design index missing generated document", err, string(b))
 	}
 	b, err = os.ReadFile(filepath.Join(remoteCache, "aide", "memory.md"))
