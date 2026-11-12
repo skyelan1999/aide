@@ -27,10 +27,24 @@ func TestRootObjectSurvivesPathAndParentReplacement(t *testing.T) {
 			base := t.TempDir()
 			selected := filepath.Join(base, "parent", "selected")
 			outside := filepath.Join(base, "outside")
-			os.MkdirAll(selected, 0700)
-			os.Mkdir(outside, 0700)
-			os.WriteFile(filepath.Join(selected, "marker"), []byte("original"), 0600)
-			os.WriteFile(filepath.Join(outside, "marker"), []byte("outside"), 0600)
+			moving, held, linkTarget := selected, filepath.Join(base, "held"), outside
+			if parent {
+				outside = filepath.Join(base, "outside-parent", "selected")
+				moving = filepath.Dir(selected)
+				held = filepath.Join(base, "held-parent")
+				linkTarget = filepath.Dir(outside)
+			}
+			for _, dir := range []string{selected, outside} {
+				if e := os.MkdirAll(dir, 0700); e != nil {
+					t.Fatal(e)
+				}
+			}
+			if e := os.WriteFile(filepath.Join(selected, "marker"), []byte("original"), 0600); e != nil {
+				t.Fatal(e)
+			}
+			if e := os.WriteFile(filepath.Join(outside, "marker"), []byte("outside"), 0600); e != nil {
+				t.Fatal(e)
+			}
 			root, e := os.OpenRoot(selected)
 			if e != nil {
 				t.Fatal(e)
@@ -41,20 +55,21 @@ func TestRootObjectSurvivesPathAndParentReplacement(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			if parent {
-				if e = os.Rename(filepath.Join(base, "parent"), filepath.Join(base, "held-parent")); e != nil {
-					t.Fatal("could not perform parent replacement fixture", e)
+			renameErr := os.Rename(moving, held)
+			denied := bridgeRootReplacementDenied(renameErr)
+			if renameErr != nil && !denied {
+				t.Fatal("unexpected directory replacement error", renameErr)
+			}
+			if !denied {
+				if e = os.Symlink(linkTarget, moving); e != nil {
+					t.Fatal("replacement symlink was not created", e)
 				}
-				if e = os.Symlink(outside, filepath.Join(base, "parent")); e != nil {
-					t.Fatal("could not install replacement parent", e)
+				replaced, e := os.ReadFile(filepath.Join(selected, "marker"))
+				if e != nil || string(replaced) != "outside" {
+					t.Fatal("fixture did not replace the original pathname", e)
 				}
 			} else {
-				if e = os.Rename(selected, filepath.Join(base, "held")); e != nil {
-					t.Fatal("could not perform directory replacement fixture", e)
-				}
-				if e = os.Symlink(outside, selected); e != nil {
-					t.Fatal("could not install replacement directory", e)
-				}
+				t.Log("native Windows handle refused directory replacement; verify it succeeds after close")
 			}
 			input, e := f.Open("marker")
 			if e != nil {
@@ -63,7 +78,7 @@ func TestRootObjectSurvivesPathAndParentReplacement(t *testing.T) {
 			b, e := io.ReadAll(input)
 			input.Close()
 			if e != nil || string(b) != "original" {
-				t.Fatal("path substitution escaped the retained object", string(b), e)
+				t.Fatal("retained root changed", string(b), e)
 			}
 			out, e := f.Create("new.txt")
 			if e != nil {
@@ -78,6 +93,21 @@ func TestRootObjectSurvivesPathAndParentReplacement(t *testing.T) {
 			}
 			if after, e := Identity(root); e != nil || after != before {
 				t.Fatal("opened identity changed", e)
+			}
+			if denied {
+				f.close()
+				// Prove that the open handle caused refusal, rather than accepting an
+				// unrelated permissions/setup failure as successful scope protection.
+				if e = os.Rename(moving, held); e != nil {
+					t.Fatal("replacement still failed after releasing the root", e)
+				}
+				if e = os.Symlink(linkTarget, moving); e != nil {
+					t.Fatal("replacement symlink failed after close", e)
+				}
+				replaced, e := os.ReadFile(filepath.Join(selected, "marker"))
+				if e != nil || string(replaced) != "outside" {
+					t.Fatal("replacement path did not resolve outside after close", e)
+				}
 			}
 		})
 	}

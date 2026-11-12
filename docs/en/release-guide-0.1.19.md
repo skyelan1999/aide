@@ -16,6 +16,8 @@ Selected local directories keep `/mounts/<id>` paths. The native helper holds ac
 
 ## SSH plugins
 
+On Windows, a live directory handle may prevent renaming that directory or its parent. Remove the selection and normally apply/stop the owned installation, confirm its bridge has exited, then change the host path. Do not delete user data to clear an in-use error.
+
 Workspace SSH, independent SFTP references and device SSH connections have separate identities. Disabled/hidden/RO or replaced connections cannot be authorized by old cached state.
 
 - SQLite binds local relative paths to the selected workspace. Remote files use bounded per-call checkout and guarded host writeback: four slots, 64 MiB per file and total; nonempty WAL/journal is refused. Stop external writers and checkpoint until the call completes. This is optimistic file conflict detection, not distributed CAS/database locking or an atomic transaction across export slots.
