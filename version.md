@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.18.0 RC3**
+**当前版本：0.1.19.0 RC1**
+
+## 0.1.19.0 RC1（2026-11-12）
+
+- Workspace file bridge, guarded directories and SSH plugins; comprehensive docs and verified native release repairs
+
 
 ## 0.1.18.0 RC3（2026-11-02）
 
