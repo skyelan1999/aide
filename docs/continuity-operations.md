@@ -1,5 +1,7 @@
 # 连续工作操作、排障与交付手册
 
+历史专项手册：以下目录、Windows PowerShell 入口及验收状态对应 2026-10-18。当前 start/build 职责、Windows 原生 BAT/EXE 和运行包操作以[安装说明](installation.md)、[启动器契约](architecture/launcher-contract.md)及[运行包说明](runtime-bundle.md)为准；历史步骤不是本次发布收据。
+
 核对日期：2026-10-18。面向使用者、验收者与接手开发者；当前状态和12项工作流见[总交接](continuity-handoff.md)，本手册给出操作顺序及结果解释。本文的检查步骤是复测方法，只有链接的收据代表已经执行；不能把步骤本身算成新的验收。Windows由用户测试，真实向量测试暂缓。
 
 ## 1. 先确定正在操作哪一套 AIDE

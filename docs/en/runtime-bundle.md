@@ -1,28 +1,32 @@
-# Startup and official release-image fallback
+# Runtime packages, explicit builds and recovery
 
-[简体中文](../runtime-bundle.md) · [English documentation](README.md)
+[简体中文](../runtime-bundle.md) · [Installation](installation.md) · [Launcher contract](../architecture/launcher-contract.md). Reviewed from source `05e0b8a7` on 2026-11-12.
 
-Docker images and monolithic Git LFS bundles are not stored in ordinary Git history for new delivery. Clone/pull transfers source and tracked manifests. Official offline packages carry their validated runtime archives separately.
+## Start and source updates
 
-Startup first verifies a configured local image's platform, image ID, source identity and relevant runtime integrity. A valid image can be reused and health-checked without rebuilding. It does not choose an image from arbitrary tar names or file timestamps.
-
-If no complete local image is available, startup tries the documented local source/dependency path. If preparation or compilation fails, `docker/prebuilt-images.tsv` selects the unique official release matching the architecture. A verified cached archive is reused or downloaded when absent. SHA-256, imported image ID, platform, source identity and applicable runtime components are checked before activation. Failure stops startup rather than treating an incomplete package as successful. A fallback release can be older than the checkout; the running image determines the actual version.
-
-Use `start.command` on macOS, `start.bat` on Windows and `bash start.sh` on Linux. A complete offline bundle imports the `.aide-image` runtime without source compilation. A Git pull does not force replacement of a valid running image.
+Use start.command on macOS, start.bat on Windows or bash start.sh on Linux. Start reuses a healthy instance or starts the installed image. It does not compile source or replace a failed build with another Release. A source checkout without an installed image stops and asks for an explicit build.
 
 ```sh
-AIDE_FORCE_REBUILD=1 bash start.command
-# Require source build to fail instead of falling back to an official image:
-AIDE_RELEASE_FALLBACK=0 AIDE_FORCE_REBUILD=1 bash start.command
+bash scripts/aide.sh build  # first build or apply changed source
+bash scripts/aide.sh start  # daily startup
 ```
 
-PowerShell:
+Windows uses build.bat / start.bat. Initial source bootstrap needs Docker Engine, Buildx and system PowerShell to build the native launcher inside Docker. A successful build verifies and starts the new artifact; failure preserves the error instead of silently falling back to an older program. Check source, image and running binary identities separately.
 
-```powershell
-$env:AIDE_FORCE_REBUILD = '1'
-.\start.ps1
-```
+Old AIDE_FORCE_REBUILD=1 start, AIDE_RELEASE_FALLBACK and start.ps1 instructions are not the current source-update interface. Browser refresh does not replace embedded application code. Use the scoped [maintenance entries](docker-maintenance.md) and preserve data/configuration.
 
-`AIDE_BUILD_FROM_SOURCE=1` bypasses the normal local-image reuse path. `AIDE_BUILD_FROM_SOURCE=0` selects image mode. Preserve configuration, workspaces and data independently of image archives. Validating a download is separate from importing, running and accepting it on a target device.
+## Full packages and optional SDK
 
-For old LFS-enabled checkouts, `git lfs uninstall --local` removes the local LFS filter/hook when appropriate; do not remove unrelated hooks. Existing remote history is not rewritten. Keep usable recovery images and architecture-specific release archives; an upgrade does not require clearing Docker.
+Git clone/pull transfers source and tracked manifests, without Docker images or a monolithic LFS archive. Download the full Release ZIP matching the target Docker engine (linux/arm64 or linux/amd64), verify the published SHA256SUMS, then extract and use its included start entry. First startup validates the image marker, archive hash, platform and imported identity. Later starts reuse the installed image without compiling source.
+
+The development SDK is a separate optional artifact, not the normal runtime package. It does not import an installation's data or plugins. Public plugins are released independently; respect their marketplace minimum host version when upgrading them after Aide.
+
+Release installations support [A/B updates](../architecture/software-updates.md): verify a matching-platform package, stage an inactive slot, activate explicitly and check health, with the existing failure recovery. Source installations update through explicit build. Image rollback does not restore migrated data or user files; keep backups and older artifacts.
+
+## Dependencies and evidence
+
+Running a downloaded full package offline differs from building source offline. Source builds separately need platform base images, wheelhouse, pinned sources and tools. A dependency image is not proof that the new application binary passed. STEP/CAD engines are excluded from the default distribution; plugin engines require their own preparation.
+
+The controlled prebuilt-image manifest records only verified public artifacts. Candidate metadata, public asset digests, archive CRC/SHA, import identity and runtime health are separate checks. The matching tag's RELEASE-VALIDATION.json identifies actual release evidence. Publication does not deploy the maintainer's or customers' installation, or establish physical-device permissions.
+
+For an older LFS-enabled checkout, git lfs uninstall --local removes the old local filter/hook when appropriate; retain unrelated custom hooks. Remote history is not rewritten. Keep usable recovery images and architecture-specific packages rather than clearing Docker for an upgrade.

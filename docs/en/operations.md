@@ -21,7 +21,7 @@ Source merge, push, version bump, tag, release upload and production deployment 
 
 For code rollback, prefer a reviewed `git revert` and fresh verification. Test data recovery on a separate copy before switching. Do not roll an old image onto the only copy of newer data without checking compatibility. Retain the previous validated image and data backup until the replacement is accepted.
 
-Historical reports under reviews/tasks/archive preserve their original dates, failures and untested ranges. Translation does not turn old receipts into current release evidence. See [Docker maintenance](docker-maintenance.md), [runtime fallback](runtime-bundle.md) and [installation](installation.md) for operator procedures.
+Historical reports under reviews/tasks/archive preserve their original dates, failures and untested ranges. Translation does not turn old receipts into current release evidence. See [Docker maintenance](docker-maintenance.md), [runtime packages](runtime-bundle.md) and [installation](installation.md) for operator procedures.
 
 
 [0.1.19 migration and rollback](release-guide-0.1.19.md).

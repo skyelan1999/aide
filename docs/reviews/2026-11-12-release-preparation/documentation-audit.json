@@ -45,5 +45,19 @@
     "docs/releases/v0.1.19.0-RC1.md"
   ],
   "historicalEvidence": "Existing dated reviews/tasks and older release notes preserved; old standalone communication guides explicitly labeled historical.",
-  "validation": "check_docs.py passed; package/SSH/race focused results recorded separately; local full and final tagged Delivery are not yet complete."
+  "validation": "check_docs.py passed; package/SSH/race focused results recorded separately; local full and final tagged Delivery are not yet complete.",
+  "followupCurrentBaseline": "05e0b8a719d2342f62183f4c9a0a3bc2597a3e14",
+  "followupDocuments": [
+    "docs/runtime-bundle.md",
+    "docs/en/runtime-bundle.md",
+    "docs/architecture/software-updates.md",
+    "docs/local-dependency-image.md",
+    "docs/continuity-handoff.md",
+    "docs/continuity-operations.md",
+    "docs/en/README.md",
+    "docs/en/documentation-map.md",
+    "docs/en/operations.md"
+  ],
+  "followupSummary": "Removed obsolete automatic-start-build/release-fallback procedures from active guides, documented explicit build and separate SDK, corrected source/offline limits and 75-minute full timeout, and labeled dated dependency/continuity handoffs as historical.",
+  "linksChecked": 2475
 }
