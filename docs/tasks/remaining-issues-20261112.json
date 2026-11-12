@@ -37,10 +37,18 @@
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "Focused/expanded Go and vet passed (final server suite 132.111s), helper/localmount tests passed, Windows helper cross-compilation passed. Actual SFTP protocol, TLS/Node daemon, owned Chromium and all 385 allocation faults passed. Final stable quick and PR CI receipts follow.",
+      "status": "pass",
+      "summary": "333 quick checks passed with a stable source fingerprint; final related server Go suite passed in 132.111s, vet and Windows helper cross-compilation passed. Actual SFTP protocol, Aide TLS/Node daemon, owned Chromium UI/PDF and 385 native-allocation faults passed. CI quick/go/gate required before merge; local race not_run (QA image has no compiler).",
       "evidence": [
-        "docs/reviews/2026-11-12-remaining-issues/README.md"
+        "docs/reviews/2026-11-12-remaining-issues/audit.json",
+        "https://github.com/skyelan1999/aide/pull/855",
+        {
+          "profile": "quick",
+          "fingerprint": "abef80e21f38bd3f63fd44c0d9a5a13bc0e4671e0dc65f78da2d0b64235bac6c",
+          "head": "ce38269a3419eded58579861a151aac877624fed",
+          "time": "20261112T014017221141Z",
+          "checks": 333
+        }
       ]
     },
     "documentation": {
@@ -60,9 +68,10 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "Source PR integration and authorized issue events follow only after required CI. No binary Release, installation, runtime image Delivery or production restart.",
+      "summary": "Aide source PR #855 awaits required CI. StarLink PR #14 merged. No binary Release, installed-package update, runtime image Delivery or production restart.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14"
+        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14",
+        "https://github.com/skyelan1999/aide/pull/855"
       ]
     }
   },
