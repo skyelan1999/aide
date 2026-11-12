@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.19.0 RC1**
+**当前版本：0.1.19.0 RC2**
+
+## 0.1.19.0 RC2（2026-11-12）
+
+- Restore frozen marketplace input for complete release Docker tests (#869)
+
 
 ## 0.1.19.0 RC1（2026-11-12）
 
