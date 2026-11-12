@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "kind": "cross-compilation only",
+  "physicalWindows": "NOT_RUN",
+  "production": "untouched",
+  "artifacts": [
+    {
+      "arch": "amd64",
+      "bytes": 11866624,
+      "sha256": "60d1704c8d81f05611c4ded67861adbc61c65df13dcc15f4ac7ba58db6176a07"
+    },
+    {
+      "arch": "arm64",
+      "bytes": 10930688,
+      "sha256": "bbe9ba76c50ff2ef9c5e1fb1d54978df0d68d7b3714929800b581da0fb364f96"
+    }
+  ]
+}

@@ -41,3 +41,5 @@ scripts/fixtures/PDFIUM-LICENSE -text
 
 # Source patches are checksum-pinned build inputs.
 scripts/openjpeg/*-fixes.patch -text -whitespace
+
+scripts/host-bridge-vendor.patch -text -whitespace

@@ -276,17 +276,15 @@ func protected(ctx context.Context, docker string) ([]string, error) {
 func prepare(ctx context.Context, root, docker string) (string, error) {
 	return prepareRevision(ctx, root, docker, nil)
 }
+
+var prepareDirectoryBridge = prepareViaBridge
+
 func prepareRevision(ctx context.Context, root, docker string, expected *string) (string, error) {
-	p, err := protected(ctx, docker)
-	if err != nil {
+	// Freeze/check again after resolving Compose, before the bridge can publish.
+	if _, err := protected(ctx, docker); err != nil {
 		return "", err
 	}
-	if expected != nil {
-		_, out, err := localmounts.PrepareRevision(root, p, *expected)
-		return out, err
-	}
-	_, out, err := localmounts.Prepare(root, p)
-	return out, err
+	return prepareDirectoryBridge(ctx, root, docker, expected)
 }
 
 var confirmApplication = confirmApply
@@ -358,6 +356,9 @@ func apply(ctx context.Context, root, docker, revision string) error {
 		}
 		return errors.New("application failed; original directory configuration restored")
 	}
+	if err := retireUnusedDirectoryBridges(ctx, root, docker); err != nil {
+		log.Print("directory applied; old bridge cleanup will retry")
+	}
 	unlock()
 	if err := refreshForwarders(ctx, root, docker); err != nil {
 		return mountAppliedWarning{err}
@@ -373,7 +374,9 @@ var processHelperLock func()
 func main() {
 	root := flag.String("root", "", "launcher root")
 	docker := flag.String("docker", "docker", "Docker executable")
-	mode := flag.String("mode", "serve", "prepare, serve or stop")
+	mode := flag.String("mode", "serve", "prepare, bridge-copy, bridge-prepare, serve or stop")
+	bridgeTicketFlag := flag.String("bridge-ticket", "", "native bridge generation")
+	bridgeRevisionFlag := flag.String("bridge-revision", "", "confirmed desired revision")
 	flag.Parse()
 	abs, err := filepath.Abs(*root)
 	if err != nil || *root == "" {
@@ -397,6 +400,20 @@ func main() {
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	if *mode == "bridge-copy" {
+		out, err := immutableBridgeBinary(abs)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(out)
+		return
+	}
+	if *mode == "bridge-prepare" {
+		if err := servePreparedBridge(ctx, abs, *docker, *bridgeTicketFlag, *bridgeRevisionFlag); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	if *mode == "prepare" {
 		out, err := prepare(ctx, abs, *docker)
 		if err != nil {
@@ -416,6 +433,9 @@ func main() {
 	// Launcher stops the prior helper before replacing the executable.
 	os.Remove(filepath.Join(dir, "stop"))
 	go watchStop(ctx, cancel, dir)
+	if err := retireUnusedDirectoryBridges(ctx, abs, *docker); err != nil {
+		log.Print("old directory bridge cleanup will retry after Docker recovers")
+	}
 	last := ""
 	for {
 		select {

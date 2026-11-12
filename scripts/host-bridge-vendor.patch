@@ -1,0 +1,76 @@
+--- a/vendor/github.com/willscott/go-nfs-client/nfs/xdr/decode.go
++++ b/vendor/github.com/willscott/go-nfs-client/nfs/xdr/decode.go
+@@ -1,6 +1,5 @@
+ // Copyright © 2017 VMware, Inc. All Rights Reserved.
+ // SPDX-License-Identifier: BSD-2-Clause
+-//
+ package xdr
+ 
+ import (
+@@ -10,7 +9,7 @@
+ )
+ 
+ func Read(r io.Reader, val interface{}) error {
+-	_, err := xdr.Unmarshal(r, val)
++	_, err := xdr.UnmarshalLimited(r, val, 1<<20)
+ 	return err
+ }
+ 
+@@ -29,8 +28,11 @@
+ 		return nil, err
+ 	}
+ 
++	if length > 1<<20 {
++		return nil, io.ErrShortBuffer
++	}
+ 	buf := make([]byte, length)
+-	if _, err = r.Read(buf); err != nil {
++	if _, err = io.ReadFull(r, buf); err != nil {
+ 		return nil, err
+ 	}
+ 
+@@ -43,6 +45,9 @@
+ 		return nil, err
+ 	}
+ 
++	if length > 1024 {
++		return nil, io.ErrShortBuffer
++	}
+ 	buf := make([]uint32, length)
+ 
+ 	for i := 0; i < int(length); i++ {
+--- a/vendor/github.com/willscott/go-nfs/conn.go
++++ b/vendor/github.com/willscott/go-nfs/conn.go
+@@ -43,6 +43,12 @@
+ }
+ 
+ func (c *conn) serve(ctx context.Context) {
++	defer c.Close()
++	defer func() {
++		if recover() != nil {
++			Log.Warn("closed malformed bridge RPC connection")
++		}
++	}()
+ 	connCtx, cancel := context.WithCancel(ctx)
+ 	defer cancel()
+ 	c.writeSerializer = make(chan []byte, 1)
+@@ -290,7 +296,7 @@
+ 		return nil, ErrInputInvalid
+ 	}
+ 	reqLen := fragment - uint32(1<<31)
+-	if reqLen < 40 {
++	if reqLen < 40 || reqLen > 2<<20 {
+ 		return nil, ErrInputInvalid
+ 	}
+ 
+--- a/vendor/github.com/willscott/go-nfs/nfs_onread.go
++++ b/vendor/github.com/willscott/go-nfs/nfs_onread.go
+@@ -23,7 +23,7 @@
+ }
+ 
+ // MaxRead is the advertised largest buffer the server is willing to read
+-const MaxRead = 1 << 24
++const MaxRead = 1 << 20
+ 
+ func onRead(ctx context.Context, w *response, userHandle Handler) error {
+ 	w.errorFmt = opAttrErrorFormatter

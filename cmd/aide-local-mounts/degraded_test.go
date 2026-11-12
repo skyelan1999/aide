@@ -11,6 +11,7 @@ import (
 )
 
 func TestIssue762MountApplyReportsForwardingDegraded(t *testing.T) {
+	fixtureDirectoryBridge(t)
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX bridge executable fixture; Windows controller compiled separately")
 	}

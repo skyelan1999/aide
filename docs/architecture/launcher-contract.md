@@ -110,3 +110,11 @@ python3 scripts/test_launcher_clean_environment.py \
 源码安装通过 `AIDE_INSTALLATION_KIND=source` 禁用应用 A/B 安装/激活和宿主更新 worker，即使当前镜像来自 Release。页面仍可查看公开 Release 信息。Release 保留既有槽位和共享数据的健康验证/回滚协议。
 
 `release` 复用 `scripts/version.sh` 的现有版本规则，不自行发明版本号。准备干净 main、指向 HEAD 的已推送版本 tag，以及 `docs/releases/<tag>.md` 的完整发布说明；当前远端 main/tag 必须一致且 required gate 成功。命令分派既有 `aide-delivery.yml`，后续仍执行原交付中的架构构建、发布说明、发布节奏和环境审批。分派成功不等于已发布。实现该入口本身不授权升版、推送 tag、公开发行或部署。
+
+## Selected directory object bridge (#773)
+
+Selected directories retain their `/mounts/<id>` paths. The native helper holds each directory with `os.Root` and exposes that object through a loopback-only NFSv3 service and Docker local named volume. Selected host pathnames are no longer passed to Docker as bind sources. Replacing a directory or its parent after preparation leaves the current export on the original object. A subsequent preparation rejects a changed identity until the directory is deliberately removed and selected again; unavailable drives retain the last confirmed identity. Existing global workspace/installation mounts are outside this change.
+
+The native helper and launcher must be updated together. The Windows resident host launches an immutable helper copy and checks its preparation receipt. Workers remain while Docker uses their volumes; retired generations stop only when those owned volumes are unused. Preserve configuration and identity receipts for recovery. `active.json` has no export secrets and uses mode 0644 for the container UID; its private host parent is 0700. Export keys and other bridge receipts remain private.
+
+RO is enforced by the host server. Writes synchronize before stable acknowledgment; bounded soft NFS timeouts mean helper failure or host suspension can cause I/O errors that require rereading before assuming a save. `nolock` does not coordinate native-host database writers: stop concurrent writers before opening the same database through the bridge. Special files and foreign ownership changes are refused. See the [source and isolated acceptance record](../reviews/2026-11-12-directory-object-bridge/README.md) for tested scope and hardware limits.

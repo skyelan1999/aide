@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -37,7 +36,7 @@ func TestPrepareRightsAndDisconnectedDrive(t *testing.T) {
 	if e := Write(p, c); e != nil {
 		t.Fatal(e)
 	}
-	active, override, e := Prepare(root, nil)
+	active, override, e := PrepareWithBridge(root, nil, nil, fixtureExporter(t))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -57,12 +56,15 @@ func TestPrepareRightsAndDisconnectedDrive(t *testing.T) {
 	if e = json.Unmarshal(raw, &doc); e != nil {
 		t.Fatal(e)
 	}
+	if st, e := os.Stat(filepath.Join(root, ".aide-data/local-mounts/active.json")); e != nil || st.Mode().Perm() != 0644 {
+		t.Fatal("read-only metadata bind is not readable by the container UID", e)
+	}
 	vs := doc.Services["aide"].Volumes
-	if len(vs) != 3 || !vs[0].ReadOnly || vs[1].ReadOnly || !vs[2].ReadOnly || vs[0].Bind["create_host_path"] || !strings.Contains(vs[0].Source, "$$literal") {
+	if len(vs) != 3 || !vs[0].ReadOnly || vs[1].ReadOnly || !vs[2].ReadOnly || vs[0].Type != "volume" || vs[0].Bind != nil {
 		t.Fatalf("incorrect mounts %+v", vs)
 	}
 	before := string(raw)
-	if _, _, e = Prepare(root, []string{filepath.Dir(a)}); e == nil {
+	if _, _, e = PrepareWithBridge(root, []string{filepath.Dir(a)}, nil, fixtureExporter(t)); e == nil {
 		t.Fatal("alias overlaps an existing RW root")
 	}
 	raw, _ = os.ReadFile(override)
@@ -98,7 +100,7 @@ func TestPrepareRestoresSnapshotWhenOverrideCannotReplace(t *testing.T) {
 	if err := Write(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"), next); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := Prepare(root, nil); err == nil {
+	if _, _, err := PrepareWithBridge(root, nil, nil, fixtureExporter(t)); err == nil {
 		t.Fatal("expected override replacement error")
 	}
 	actual, err := Read(filepath.Join(native, "active.json"))
@@ -106,10 +108,29 @@ func TestPrepareRestoresSnapshotWhenOverrideCannotReplace(t *testing.T) {
 		t.Fatalf("snapshot changed: %+v %v", actual, err)
 	}
 	os.Remove(filepath.Join(native, "active.json"))
-	if _, _, err := Prepare(root, nil); err == nil {
+	if _, _, err := PrepareWithBridge(root, nil, nil, fixtureExporter(t)); err == nil {
 		t.Fatal("expected override replacement error")
 	}
 	if _, err := os.Stat(filepath.Join(native, "active.json")); !os.IsNotExist(err) {
 		t.Fatal("failed first preparation left active snapshot")
+	}
+}
+
+func fixtureExporter(t *testing.T) Exporter {
+	return func(e Entry, r *os.Root) (string, map[string]any, error) {
+		t.Cleanup(func() { r.Close() })
+		name := "fixture-" + e.ID
+		return name, map[string]any{"driver": "local"}, nil
+	}
+}
+
+func TestSelectedDirectoriesHaveNoPathBindFallback(t *testing.T) {
+	root := t.TempDir()
+	c := Config{Version: 1, Entries: []Entry{{ID: "selected", Name: "Selected", Path: t.TempDir()}}}
+	if e := Write(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"), c); e != nil {
+		t.Fatal(e)
+	}
+	if _, _, e := Prepare(root, nil); e == nil {
+		t.Fatal("selected host path fell back to a Docker bind")
 	}
 }
