@@ -1,0 +1,22 @@
+{
+  "issue": 862,
+  "baseline": "b68f5b9933174acc6b698e6e0014f15963efe420",
+  "originalRegression": "TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall",
+  "before": "FAIL: HTTP 400 history insufficient after compaction at the unchanged 16000-token window",
+  "after": "PASS: same fixture and window under race",
+  "focusedSeconds": 5.397,
+  "broaderContextRaceSeconds": 68.119,
+  "newRegression": "TestCompactionSmallRemainingBudgetFoldsShortHistory",
+  "budgets": [
+    0,
+    40
+  ],
+  "beforeLogSHA256": "79a6c6be2ec092b512f60d09f6519923e231ee25ca99a21037ec231a77c16acf",
+  "afterLogSHA256": "6d8651e6e751ba5bc3f2f40b8012667aa16c4604f432de6ad2c7ff69668336f5",
+  "broaderLogSHA256": "df457e3f15cd78ad3f42b4556b44c927f35c7183c78ad4b8357ae0212bfd1f7e",
+  "limits": [
+    "loopback provider fixture only",
+    "No paid provider or production deployment",
+    "Final tagged full Delivery remains required"
+  ]
+}

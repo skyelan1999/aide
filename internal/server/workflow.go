@@ -613,6 +613,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
 	a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
+	compactHistoryBudget := compactKeepTokens
 	if preview.OverLimit {
 		// History compaction cannot shrink the current prompt, attachments or tool
 		// schemas. Preserve session kind (persona/tools), but exclude history and
@@ -624,6 +625,12 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			s.Title = oldTitle
 			fail(w, 400, fmt.Errorf("当前输入已超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；压缩历史无法缩小当前输入，请选择更大窗口的模型、减少附件/提示或使用文件工具分段读取", current.InputEstimate, current.OutputReserve, current.TotalEstimate, current.ContextWindow))
 			return
+		}
+		// Retained history and its summary must fit beside this exact request,
+		// including current system/tool costs, rather than a fixed allowance.
+		compactHistoryBudget = current.ContextWindow - current.OutputReserve - current.InputEstimate - 512
+		if compactHistoryBudget < 0 {
+			compactHistoryBudget = 0
 		}
 	}
 	preflightDeadline := time.Now().Add(contextCompactionTimeout)
@@ -640,7 +647,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		selectionBeforeCompact := a.sessionModelSelectionLocked(s)
 		a.mu.Unlock()
 		compactCtx, cancel := context.WithDeadline(r.Context(), preflightDeadline)
-		compactErr := a.compactSessionForContext(compactCtx, sessionID, compactCfg, params.MaxTokens)
+		compactErr := a.compactSessionForContext(compactCtx, sessionID, compactCfg, params.MaxTokens, compactHistoryBudget)
 		cancel()
 		a.mu.Lock()
 		if compactErr != nil {
@@ -6057,7 +6064,7 @@ func (a *App) setContextCompactionProgress(sessionID string, event streamEvent) 
 // compactSessionForContext compacts the oldest history before a request is rejected for exceeding
 // the model window. The model call is outside a.mu; commit is allowed only if the session snapshot
 // is unchanged. Caller must not hold a.mu.
-func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cfg Settings, outputReserve int) error {
+func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cfg Settings, outputReserve int, historyBudget ...int) error {
 	a.mu.Lock()
 	sess := a.sessions[sessionID]
 	if sess == nil {
@@ -6080,6 +6087,9 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 	keepBudget := a.modelWindow(cfg.Model) - outputReserve - 6144
 	if keepBudget > compactKeepTokens {
 		keepBudget = compactKeepTokens
+	}
+	if len(historyBudget) > 0 && historyBudget[0] < keepBudget {
+		keepBudget = historyBudget[0]
 	}
 	snap, split := a.snapshotForCompactBudget(sess, keepBudget)
 	baseLen := len(sess.Messages)
@@ -6151,8 +6161,8 @@ func (a *App) snapshotForCompactBudget(sess *Session, keepBudget int) (compactSn
 	for _, m := range sess.Messages {
 		total += contextMessageTokens(m)
 	}
-	if keepBudget < 1024 {
-		keepBudget = 1024
+	if keepBudget < 0 {
+		keepBudget = 0
 	}
 	if total <= keepBudget {
 		return compactSnapshot{}, 0
