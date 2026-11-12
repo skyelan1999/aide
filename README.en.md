@@ -8,7 +8,7 @@
 
 Connect local or SSH projects, use models you choose, inspect proposals and verify actual file and command results. Conversation, approvals, tool calls and execution receipts stay associated with the task.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=flat&color=yellow)](https://github.com/skyelan1999/aide/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide?include_prereleases)](https://github.com/skyelan1999/aide/releases) [![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=flat&color=yellow)](https://github.com/skyelan1999/aide/stargazers)
 
 [Install](docs/en/installation.md) · [User guide](docs/en/user-guide.md) · [Documentation](docs/en/README.md) · [Technical whitepaper, Chinese](docs/architecture/aide-technical-whitepaper.md)
 
@@ -36,7 +36,7 @@ Concurrency is not a proportional speed guarantee. Model review is not a passing
 
 ## Start
 
-For packaged installations, download the appropriate [Release](https://github.com/skyelan1999/aide/releases/latest), verify its checksums and follow that version's instructions. Later `main` features are not automatically present in an older binary.
+For packaged installations, download the appropriate [Release](https://github.com/skyelan1999/aide/releases), verify its checksums and follow that version's instructions. Later `main` features are not automatically present in an older binary.
 
 The standard source path uses Git, Docker Engine, Compose and Buildx:
 
@@ -63,7 +63,7 @@ Cloud models receive the context, images and tool results sent to their configur
 
 ## Documentation and versions
 
-Reviewed against source **`05e0b8a7`, 2026-11-12**, covering the **0.1.19.0 RC2** release preparation. The matching [GitHub Release](https://github.com/skyelan1999/aide/releases) identifies actual publication, source and package hashes. Source, released artifacts and a running installation remain separate identities; see the [migration guide](docs/en/release-guide-0.1.19.md).
+[**v0.1.19.0-RC2 prerelease**](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2) was published on **2026-11-12** from **`a9f8f412`**. It includes both runtime architectures, development SDKs, checksums and validation reports. The [publication receipt](docs/reviews/2026-11-12-release-preparation/publication-rc2.json) records verification and limits. Follow the [migration guide](docs/en/release-guide-0.1.19.md); check installed packages and the running instance separately.
 
 [Documentation center](docs/README.md) · [Architecture/API](docs/architecture.md) · [Plugin protocol](docs/plugin-protocol.md) · [Requirements](docs/PRD.md) · [Version history](version.md).
 

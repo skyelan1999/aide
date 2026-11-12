@@ -8,7 +8,7 @@
 
 连接本地或 SSH 项目，用自选模型理解资料、编写与修改文件、调用工具、检查结果。文件提案、审批、执行回执和运行轨迹围绕同一个任务保存。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide)](https://github.com/skyelan1999/aide/releases/latest) [![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=flat&color=yellow)](https://github.com/skyelan1999/aide/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/v/release/skyelan1999/aide?include_prereleases)](https://github.com/skyelan1999/aide/releases) [![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=flat&color=yellow)](https://github.com/skyelan1999/aide/stargazers)
 
 [安装](docs/installation.md) · [使用指南](docs/user-guide.md) · [功能说明](docs/features.md) · [技术白皮书](docs/architecture/aide-technical-whitepaper.md) · [文档中心](docs/README.md)
 
@@ -48,7 +48,7 @@ flowchart LR
 
 ### 使用发行版
 
-从 [GitHub Releases](https://github.com/skyelan1999/aide/releases/latest) 下载适合平台的包，按该版本说明校验摘要、解压并使用包内 `start` 入口。源码状态与发行包范围分别核对，不把后续 `main` 功能视为旧安装包已有功能。
+从 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 下载适合平台的包，按该版本说明校验摘要、解压并使用包内 `start` 入口。源码状态与发行包范围分别核对，不把后续 `main` 功能视为旧安装包已有功能。
 
 ### 从源码构建
 
@@ -84,7 +84,7 @@ bash scripts/install.sh --source
 
 ## 文档与版本
 
-本页按 **2026-11-12 源码 `05e0b8a7`** 更新，覆盖 **0.1.19.0 RC2** 的发行准备。精确公开版本、源码和安装包身份以对应 [Release](https://github.com/skyelan1999/aide/releases) 为准；升级步骤见 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
+已于 **2026-11-12** 公开 [**v0.1.19.0-RC2 预发布**](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)，发行源码为 **`a9f8f412`**。双架构运行包、开发 SDK、摘要与验收报告见该 Release；[发布回执](docs/reviews/2026-11-12-release-preparation/publication-rc2.json)记录实际验证及限制。升级步骤见 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)，安装包与正在运行的实例须分别核对。
 
 | 文档 | 内容 |
 | --- | --- |

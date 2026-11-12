@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "tag": "v0.1.19.0-RC2",
+  "releaseId": 442921625,
+  "assets": [
+    {
+      "name": "SHA256SUMS",
+      "bytes": 607,
+      "sha256": "8c6d8b3a2aff3bc942dd3a2c0d57d0cc3a5dfa7d0a74eaf089376fe88804cd60",
+      "publicDownload": "pass"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "bytes": 1688,
+      "sha256": "6271a0cd02e1452dbe9d5119fe219797eea30e7680c1d2bd57806e9c4a1be80c",
+      "publicDownload": "pass"
+    },
+    {
+      "name": "RELEASE-VALIDATION.json",
+      "bytes": 1028757,
+      "sha256": "1141176f33d8f75667156d20be2d894607ee460b99af6617d0ebb8c2eead9c1b",
+      "publicDownload": "pass"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-devtools-linux-amd64.zip",
+      "bytes": 793917455,
+      "sha256": "885dc35227f5e51a2d07391f5fea79129a9c2ef8f509423c4d9213c24d2ee633",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-devtools-linux-arm64.zip",
+      "bytes": 768260758,
+      "sha256": "33c5858b6afeb6f2ceadb4600b0aa4bafe2b1ccb5b321168a8b288e4a146c597",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-full-linux-amd64.zip",
+      "bytes": 635969304,
+      "sha256": "d1c5bb14404150b5c05f37d81342ed3cce80ebece901db764c9196e14544878e",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-full-linux-arm64.zip",
+      "bytes": 620630592,
+      "sha256": "4c21df0e825e5744038d02f94d7dfb745af141bd6f3fb647623102b7cae3256a",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    }
+  ]
+}

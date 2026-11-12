@@ -61,5 +61,15 @@
   "followupSummary": "Removed obsolete automatic-start-build/release-fallback procedures from active guides, documented explicit build and separate SDK, corrected source/offline limits and 75-minute full timeout, and labeled dated dependency/continuity handoffs as historical.",
   "linksChecked": 2475,
   "currentTarget": "v0.1.19.0-RC2",
-  "failedCandidate": "RC1 tag retained; Delivery failed on omitted Docker test input (#869); no Release published."
+  "failedCandidate": "RC1 tag retained; Delivery failed on omitted Docker test input (#869); no Release published.",
+  "publishedTarget": "v0.1.19.0-RC2",
+  "publishedCommit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+  "publicationEvidence": "publication-rc2.json",
+  "finalValidation": "Exact-source full Delivery attempt 2 and seven public assets verified; source/CI/browser/hardware/deployment limits remain separated.",
+  "finalDocsCheck": {
+    "command": "python3 scripts/check_docs.py",
+    "status": "pass",
+    "markdownFiles": 518,
+    "localLinks": 2489
+  }
 }

@@ -1,0 +1,234 @@
+{
+  "status": "pass",
+  "release": {
+    "id": 442921625,
+    "tag_name": "v0.1.19.0-RC2",
+    "html_url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2",
+    "draft": false,
+    "prerelease": true,
+    "published_at": "2026-11-12T12:32:55Z"
+  },
+  "publishedAtShanghai": "2026-11-12T20:32:55+08:00",
+  "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+  "sourceSHA256": "da88af53905d4e3f86470f626151f86dc96152534ce51c4422a522fa37c952d7",
+  "delivery": {
+    "run": 43208363951,
+    "attempt": 2,
+    "url": "https://github.com/skyelan1999/aide/actions/runs/43208363951/attempts/2",
+    "requiredJobs": 10,
+    "allRequiredJobs": "pass"
+  },
+  "localFull": {
+    "head": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+    "fingerprint": "6e7f4fd5926b9c170b7361b1b09c390fbeebd5fcbc02f45b476c1f5bf767e1c4",
+    "commands": 340,
+    "failedCommands": 0,
+    "receiptSHA256": "9b654a6ca759d907cf62e0fc2556be84307219268de57319ca9280ef67728455"
+  },
+  "browser": {
+    "status": "pass",
+    "cells": 48,
+    "source": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b"
+  },
+  "hosts": {
+    "windows": {
+      "status": "pass",
+      "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+      "machine": "AMD64",
+      "checks": 10
+    },
+    "macos-15": {
+      "status": "pass",
+      "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+      "machine": "arm64",
+      "checks": 8
+    },
+    "macos-15-intel": {
+      "status": "pass",
+      "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+      "machine": "x86_64",
+      "checks": 8
+    }
+  },
+  "windowsDesktop": {
+    "status": "pass",
+    "run": 43213371525,
+    "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+    "checks": [
+      "AMD64 production cross-build",
+      "ARM64 production cross-build",
+      "native Windows UI"
+    ]
+  },
+  "launcher": {
+    "status": "pass",
+    "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+    "platform": "Linux",
+    "scope": "Fresh isolated HOME/config/data/image/builder, real lifecycle and data preservation; no production installation"
+  },
+  "architectures": {
+    "arm64": {
+      "status": "pass",
+      "sourceSHA256": "da88af53905d4e3f86470f626151f86dc96152534ce51c4422a522fa37c952d7",
+      "runtimeImageId": "sha256:8ee8742611f315afaac3eb52ea8da684c6f889432084e13f5e3ab153c6d1a7ab",
+      "sdkImageId": "sha256:68a291680a67a10ea9afbee83964ed24632d51943775fb947d94f59462740dd9",
+      "serverInventory": 1716,
+      "serverPassed": 1631,
+      "serverSkipped": 85,
+      "failedShards": [],
+      "publicEntries": 32,
+      "runtimeAsset": {
+        "name": "aide-v0.1.19.0-RC2-full-linux-arm64.zip",
+        "sha256": "4c21df0e825e5744038d02f94d7dfb745af141bd6f3fb647623102b7cae3256a",
+        "bytes": 620630592
+      },
+      "sdkAsset": {
+        "name": "aide-v0.1.19.0-RC2-devtools-linux-arm64.zip",
+        "bytes": 768260758,
+        "sha256": "33c5858b6afeb6f2ceadb4600b0aa4bafe2b1ccb5b321168a8b288e4a146c597"
+      },
+      "runtimePluginPayloads": 0,
+      "sdkPluginPayloads": 0
+    },
+    "amd64": {
+      "status": "pass",
+      "sourceSHA256": "da88af53905d4e3f86470f626151f86dc96152534ce51c4422a522fa37c952d7",
+      "runtimeImageId": "sha256:1bf597d01a9c8bfd62434cb33a662baa0e7ee42846afea089e5b2f72b3f325bf",
+      "sdkImageId": "sha256:09484afb238a5950589aeb16399b4d4461199be997afda995c6abeb81ccdfbb6",
+      "serverInventory": 1716,
+      "serverPassed": 1631,
+      "serverSkipped": 85,
+      "failedShards": [],
+      "publicEntries": 32,
+      "runtimeAsset": {
+        "name": "aide-v0.1.19.0-RC2-full-linux-amd64.zip",
+        "sha256": "d1c5bb14404150b5c05f37d81342ed3cce80ebece901db764c9196e14544878e",
+        "bytes": 635969304
+      },
+      "sdkAsset": {
+        "name": "aide-v0.1.19.0-RC2-devtools-linux-amd64.zip",
+        "bytes": 793917455,
+        "sha256": "885dc35227f5e51a2d07391f5fea79129a9c2ef8f509423c4d9213c24d2ee633"
+      },
+      "runtimePluginPayloads": 0,
+      "sdkPluginPayloads": 0
+    }
+  },
+  "market": {
+    "repository": "skyelan1999/aide-pkg-shop",
+    "commit": "7a7aa3d8912471ee53391d307b8c88ac74146726",
+    "publicEntries": 32,
+    "freshReleaseTagAudit": {
+      "repositories": 32,
+      "matches": 32,
+      "evidence": "latest-market-releases.json"
+    },
+    "pairedReleases": [
+      "https://github.com/skyelan1999/aide-pkg-sqlite/releases/tag/v1.0.3",
+      "https://github.com/skyelan1999/aide-pkg-StarLink/releases/tag/v0.1.6"
+    ]
+  },
+  "publicAssets": [
+    {
+      "name": "SHA256SUMS",
+      "bytes": 607,
+      "sha256": "8c6d8b3a2aff3bc942dd3a2c0d57d0cc3a5dfa7d0a74eaf089376fe88804cd60",
+      "publicDownload": "pass"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "bytes": 1688,
+      "sha256": "6271a0cd02e1452dbe9d5119fe219797eea30e7680c1d2bd57806e9c4a1be80c",
+      "publicDownload": "pass"
+    },
+    {
+      "name": "RELEASE-VALIDATION.json",
+      "bytes": 1028757,
+      "sha256": "1141176f33d8f75667156d20be2d894607ee460b99af6617d0ebb8c2eead9c1b",
+      "publicDownload": "pass"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-devtools-linux-amd64.zip",
+      "bytes": 793917455,
+      "sha256": "885dc35227f5e51a2d07391f5fea79129a9c2ef8f509423c4d9213c24d2ee633",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-devtools-linux-arm64.zip",
+      "bytes": 768260758,
+      "sha256": "33c5858b6afeb6f2ceadb4600b0aa4bafe2b1ccb5b321168a8b288e4a146c597",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-full-linux-amd64.zip",
+      "bytes": 635969304,
+      "sha256": "d1c5bb14404150b5c05f37d81342ed3cce80ebece901db764c9196e14544878e",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    },
+    {
+      "name": "aide-v0.1.19.0-RC2-full-linux-arm64.zip",
+      "bytes": 620630592,
+      "sha256": "4c21df0e825e5744038d02f94d7dfb745af141bd6f3fb647623102b7cae3256a",
+      "publicRangeDownload": "pass",
+      "status": 206,
+      "scope": "ZIP signature, access and total size; full CRC/import and SHA checked by native CI and GitHub asset digest"
+    }
+  ],
+  "publicValidationAssetSHA256": "sha256:1141176f33d8f75667156d20be2d894607ee460b99af6617d0ebb8c2eead9c1b",
+  "verificationScope": {
+    "metadata": "Three metadata assets fetched without GitHub authentication and rehashed locally; exact seven-asset inventory and all SHA256SUMS entries matched GitHub-computed digests.",
+    "zipDelivery": "Unauthenticated ZIP range requests verify signature, public access and total size. Full archive CRC, all-layer privacy, image import and runtime/SDK execution were performed by the native CI jobs, rather than repeated on the maintainer machine."
+  },
+  "issues": {
+    "869": "Fixed and closed completed after both actual native candidate jobs passed.",
+    "871": {
+      "state": "temporarily closed as unable to reproduce",
+      "rootCause": "unknown",
+      "codeOrAssertionChanged": false,
+      "engine": "WebKit 26.6",
+      "firstAttempt": {
+        "run": 43208363951,
+        "attempt": 1,
+        "attempted": 34,
+        "passed": 33,
+        "failed": 1,
+        "remainingNotRun": 14,
+        "case": "webkit-zh-CN-blue-light-390",
+        "report": "webkit-871-attempt1.json",
+        "reportSHA256": "832555b2b73457c15fd2a62996c344de81dc37f11608f4db60747c496b2ff766",
+        "screenshot": "webkit-871-failure.png",
+        "screenshotSHA256": "c1370ed92fc3c580813369b9b873aeda35700720d8cb935cd6163b38deaa929a"
+      },
+      "subsequentExactSourcePasses": [
+        {
+          "run": 43209704982,
+          "cells": 48,
+          "status": "pass",
+          "reportSHA256": "5908040a918610e34938e6119939f8b91692cf5043479f677dc088831a3a3c24"
+        },
+        {
+          "run": 43208363951,
+          "attempt": 2,
+          "cells": 48,
+          "status": "pass",
+          "evidence": "Published RELEASE-VALIDATION.json"
+        }
+      ]
+    }
+  },
+  "productionDeploymentPerformed": false,
+  "installedPluginUpgradePerformed": false,
+  "limits": [
+    "Synthetic providers, not paid inference or factual company research.",
+    "Linux WebKit does not establish native Safari or OS permission grants.",
+    "No physical Windows/macOS Docker Desktop lifecycle, TCC/network-drive/hotplug or customer hardware acceptance.",
+    "Conditional Go integration skips are explicit and do not count as executed functionality.",
+    "Historical #776 and observed #871 are not advertised as product crash fixes."
+  ]
+}

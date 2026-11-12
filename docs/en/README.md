@@ -33,4 +33,4 @@ Protocol names, paths, user documents, custom names, model output and provider d
 Dated task ledgers, reviews, old release notes, source-evidence snapshots and archives retain their original language and claims. They are historical evidence, not current English operating instructions or newly executed tests. Current user/developer entry points above have English guidance; detailed canonical historical references remain linked and explicitly identified as such. See [Documentation coverage](documentation-map.md).
 
 
-[0.1.19 usage and migration](release-guide-0.1.19.md).
+[v0.1.19.0-RC2 prerelease](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2) was published on 2026-11-12 from `a9f8f412`. See the [publication receipt](../reviews/2026-11-12-release-preparation/publication-rc2.json) and [usage and migration guide](release-guide-0.1.19.md). Publication does not upgrade an existing installation.

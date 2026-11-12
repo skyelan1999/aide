@@ -2,7 +2,7 @@
 
 RC1 仅保留失败候选的源码标签，没有公开程序 Release。RC2 补齐 Docker 测试阶段的冻结市场清单输入后重新验收；市场所标最低宿主 RC1 可由 RC2 或更新版本满足。
 
-本页覆盖 2026-11-12 源码基线 `05e0b8a7` 之后的发行准备。运行包是否发布及精确源码、平台、SHA-256，以同 tag 的 GitHub Release 和 `RELEASE-VALIDATION.json` 为准；发行准备文档不能代替发布回执。[English](en/release-guide-0.1.19.md)。
+[v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)已于 2026-11-12 公开，发行源码为 `a9f8f412`。实际平台、SHA-256 和完整验收报告见 Release 的七个附件，以及[发布回执](reviews/2026-11-12-release-preparation/publication-rc2.json)。[English](en/release-guide-0.1.19.md)。
 
 ## 更新顺序
 
@@ -47,4 +47,8 @@ JPEG2000 预览使用固定源码、补丁与编译器生成的 OpenJPEG fallbac
 - [目录桥接与最终源码处置](reviews/2026-11-12-directory-object-bridge/README.md)
 - [完整 Release 门禁](testing/release-validation.md)、[安装](installation.md)、[运维](../HANDOVER.md)
 
-上述是已记录的源码和隔离检查范围。双架构运行包、48 格浏览器、当前公开插件、原生宿主和新装生命周期的本次结果，以精确发行提交的 Delivery 报告为准。发行不自动替换维护者本机生产服务；客户升级仍应备份并保留回退路径。
+精确发行源码的本地 full 共 340 条命令通过；正式 [Delivery 第 2 次尝试](https://github.com/skyelan1999/aide/actions/runs/43208363951/attempts/2)的十项必需作业通过，包含双架构运行包/SDK、race/vet、公开插件、三个原生宿主、48 格浏览器及隔离 Linux 新装生命周期。32 个公开市场条目中包括一个已退役插件的预期拒绝，条件跳过项详见原始报告。
+
+[#871](https://github.com/skyelan1999/aide/issues/871) 首次浏览器执行中，WebKit 26.6 的一个窄屏格发生资源请求内部错误（已执行 34 格：33 通过、1 失败，余下 14 格未执行）。未更改应用、断言或引擎，相同源码随后两轮各 48 格通过；[原始报告](reviews/2026-11-12-release-preparation/webkit-871-attempt1.json)和[失败截图](reviews/2026-11-12-release-preparation/webkit-871-failure.png)保留。该问题按“无法复现，暂时关闭”处置，根因未知，不宣称产品崩溃已修复。Linux WebKit 与合成模型不代表原生 Safari、系统权限或付费模型验收。
+
+发行不自动替换维护者本机生产服务或已安装插件；客户升级仍应备份并保留回退路径。
