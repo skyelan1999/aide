@@ -20,7 +20,7 @@ The maintained English guides below describe the public application. They distin
 | Read the system/API design | [Architecture](architecture.md) · [Data layout](architecture/data-layout.md) |
 | Understand plugin market and account-balance capabilities | [Plugin market architecture](../architecture/plugin-market.md) |
 | Build plugins | [Plugin protocol](plugin-protocol.md) · [Daemon protocol](plugins/daemon-protocol.md) |
-| Stop, recover and update | [Operations](operations.md) · [Docker maintenance](docker-maintenance.md) · [Runtime fallback](runtime-bundle.md) |
+| Stop, recover and update | [Operations](operations.md) · [Docker maintenance](docker-maintenance.md) · [Runtime packages](runtime-bundle.md) |
 | Develop with an AI client | [Development workflow](development-workflow.md) |
 | Understand requirements and limits | [Product requirements](PRD.md) |
 | Maintain translations | [Localization](localization.md) |

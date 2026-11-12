@@ -1,5 +1,7 @@
 # 本地依赖镜像与启动恢复
 
+本文保留 2026-10-15 的依赖镜像与桌面验收记录，涉及 dependencies-v1、自动构建与旧开关的内容是历史实现，不是现行操作入口。当前依赖基线为 dependencies-v2，开发 SDK 独立分发；日常 start 不构建，源码更新显式 build。请从[当前安装说明](installation.md)、[运行包与恢复](runtime-bundle.md)及[启动器契约](architecture/launcher-contract.md)操作。下文的旧实机观测不代表本次 Release 或当前生产状态。
+
 本轮桌面观测统一从仓库根 `start.command` 打开。当前用户指定的入口位于 `aide/start.command`，不以另一份兼容工作树、单独 HTML 夹具或直接打开旧页面代替启动验收。Go/Node 等定向回归仍可通过测试命令执行，但不能算作桌面观测。
 
 ## 清构建缓存后保留完整环境

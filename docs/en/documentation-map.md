@@ -7,7 +7,7 @@ English product documentation is maintained by topic rather than by rewriting da
 | Current area | English entry |
 | --- | --- |
 | Product behavior and limitations | [Features](features.md), [requirements](PRD.md), [user guide](user-guide.md) |
-| Setup and runtime | [Installation](installation.md), [fallback](runtime-bundle.md), [operations](operations.md), [Docker maintenance](docker-maintenance.md) |
+| Setup and runtime | [Installation](installation.md), [runtime packages](runtime-bundle.md), [operations](operations.md), [Docker maintenance](docker-maintenance.md) |
 | Files, local/SSH scope, document destinations | [Workspace paths](workspace-paths.md), [data layout](architecture/data-layout.md) |
 | Assistant, audio and communication | [User guide](user-guide.md), [voice calls](assistant-voice-call.md), [TTS](security/tts-local.md) |
 | Source/module/API navigation | [Architecture](architecture.md), [debug API](debug-api.md) |
