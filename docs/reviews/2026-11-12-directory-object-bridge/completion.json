@@ -1,0 +1,49 @@
+{
+  "asOfUTC": "2026-11-12",
+  "retainedIssueCount": 18,
+  "completedIssues": [
+    813,
+    790,
+    773,
+    708,
+    693,
+    682,
+    665,
+    653,
+    642,
+    627,
+    625,
+    623,
+    621,
+    607,
+    594,
+    582,
+    574
+  ],
+  "temporaryUnreproducedIssue": 776,
+  "mainSourceMerges": {
+    "856": "ccec15d2bc015f41b492ebe39eef6a9830a16206",
+    "857": "7e9ee93b3573923a9d1ca69a5ad38082db7c039d",
+    "858": "54c6673c04094b0a41e78a65f0feca78be70c16e"
+  },
+  "pluginSourceMerges": {
+    "skyelan1999/aide-pkg-sqlite#3": "bbf4f3dfb120cd36c718cc85d172a9ae18526d03",
+    "skyelan1999/aide-pkg-StarLink#15": "55da1ab92c6350ab7190eaf70ffba5d3465fa105"
+  },
+  "bridgeCI": {
+    "Aide": 43157597780,
+    "WindowsDesktop": 43157597807,
+    "conclusion": "success",
+    "windowsCoverage": "cross-builds, isolated UI and stop recovery; selected-directory hardware acceptance NOT_RUN"
+  },
+  "localQuick": {
+    "status": "pass",
+    "checks": 336,
+    "head": "cfa22be662320b4e319fa4f187e25e0314bc5d2c",
+    "fingerprint": "d8f52c5416f3ff4eebc60fa0dbeb16d6f3533629371d61678c6587778798140f"
+  },
+  "productionChanged": false,
+  "installedPluginsChanged": false,
+  "binaryReleaseChanged": false,
+  "marketplacePinsChanged": false
+}

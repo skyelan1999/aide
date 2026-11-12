@@ -57,21 +57,21 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Reviewed all scoped source/vendor files; disposable SSH and bridge containers/volumes/workers removed. Owned prototype processes stopped. Production containers and unrelated user files preserved.",
+      "summary": "Scoped source/vendor files reviewed; disposable SSH/bridge containers, volumes, native prototype and loopback services stopped. Production containers and unrelated untracked user files preserved.",
       "evidence": [
         "docs/reviews/2026-11-12-directory-object-bridge/README.md"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source PRs #856 and #857 merged after CI; final directory bridge PR pending. Binary Aide/plugin Releases and deployment are outside this task.",
+      "status": "pass",
+      "summary": "Authorized source merges complete: Aide #856/#857/#858 and public SQLite #3 / StarLink #15. Required source CI passed. This stage covers source integration only; binary Delivery, new Releases, marketplace pins and production deployment were not requested or executed.",
       "evidence": [
-        "docs/reviews/2026-11-12-final-ssh/README.md"
+        "docs/reviews/2026-11-12-directory-object-bridge/completion.json"
       ]
     }
   },
   "release_authorization": "User requested reviewing and merging useful code and closing resolved/unclear reports; no production restart or binary Aide Release requested.",
   "rollback": "Preserve user data/configuration. Revert source through reviewed commits if necessary; an old directory helper restores the pathname race and is not an equivalent scope guarantee. No production deployment to roll back.",
-  "handoff": "Only #773 source review/merge remains from the 18 retained issues; #776 temporarily closed as nonreproducible, not claimed fixed. Production and installed packages unchanged.",
+  "handoff": "All 18 retained issues disposed: 17 verified source corrections closed completed; #776 temporarily closed not_planned because its historical crash could not be reproduced. No production restart, installed plugin replacement, binary Release or market update. No remaining issue/PR queue work found at final audit.",
   "operator": "skyelan1999"
 }
