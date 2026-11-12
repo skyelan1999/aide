@@ -38,3 +38,6 @@ internal/server/web/plantuml-resource-helpers.js text eol=lf
 # Keep embedded parser notices byte-identical across host checkouts.
 internal/server/code_analysis/*-LICENSE -text
 scripts/fixtures/PDFIUM-LICENSE -text
+
+# Source patches are checksum-pinned build inputs.
+scripts/openjpeg/*-fixes.patch -text -whitespace

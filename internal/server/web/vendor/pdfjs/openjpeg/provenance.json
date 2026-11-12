@@ -12,8 +12,8 @@
     "Bridge synchronous decode using malloc/write/jp2_decode(numComponents,indexed,smask,reduce0,padComponents)/free; clear owned image/error fields on completion.",
     "PDFImage uses last filter and actual numComps, with DeviceRGBA requesting automatic RGBA output.",
     "2026-11-12: bounded JP2/J2K header preflight before native input allocation; canonical sYCC/CMYK display conversion uses native independently scaled components and preserves opacity.",
-    "2026-11-12: 15 checked generated tag-tree unknown-value stores changed from 999 to INT32_MAX; generated allocator entry checks NULL and a 256 MiB cumulative per-decode request budget. The upstream source file remains unchanged; the emitted private module is locally patched, not a newly compiled official upstream binary.",
-    "PDFImage numeric SMaskInData / preblend handling backported from Mozilla PDF.js PR 21587 by scripts/sync_pdf_jpx_alpha.cjs."
+    "PDFImage numeric SMaskInData / preblend handling backported from Mozilla PDF.js PR 21587 by scripts/sync_pdf_jpx_alpha.cjs.",
+    "2026-11-12 follow-up: embed locally rebuilt pinned source artifact. Sentinel, ownership, bounds, segment, MCT, SEGSYM, PPM/PPT borrowing, signed grayscale and e-sYCC fixes are in source patches; no generated native arithmetic/store rewriting."
   ],
   "sync": "node scripts/sync_pdf_openjpeg.cjs; --check compares generated factory bytes",
   "upstreamFixtures": [
@@ -26,5 +26,26 @@
       "file": "jpx_subsampling.pdf",
       "sha256": "01f92ae453f8f6d2e8c61574054c1ca3160e3481a3f9c8cc365aa1ff7cd3e1f3"
     }
-  ]
+  ],
+  "localNativeBuild": {
+    "artifact": "aide_openjpeg_nowasm_fallback.js",
+    "artifactSHA256": "46b308b55777d4dbf96dc3a7907dce0692d874139e5e621e024feb2b552ccbd2",
+    "compiler": "emscripten/emsdk@sha256:d04ab749bef080e69c2d92839f17bab5324d1ac89197faa1ced55fa245ee6118",
+    "core": {
+      "repository": "uclouvain/openjpeg",
+      "commit": "8314119b067c0fc77834731168daaebd379fdb12",
+      "url": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/8314119b067c0fc77834731168daaebd379fdb12",
+      "sha256": "e723e8babb2188e8743308842bb1bfc9809f0375cd964cfeac2fb17285094321",
+      "patchSHA256": "d54d98a5cad90b00b2038f0da8a180de66c86cba09e07b242217485b2bafba57"
+    },
+    "wrapper": {
+      "repository": "mozilla/pdf.js.openjpeg",
+      "commit": "c76ca8601f97bae7e14b3974a7d157c675f03b8c",
+      "url": "https://codeload.github.com/mozilla/pdf.js.openjpeg/tar.gz/c76ca8601f97bae7e14b3974a7d157c675f03b8c",
+      "sha256": "ab14359c331cea373785322e34e54aa30bc26cb1e76b92a085338debac43e82a",
+      "patchSHA256": "7b9e3326af0df8f42d35003f8f128f83f1c345ff6352215c44eddd575f02eaa9"
+    },
+    "recipe": "python3 scripts/openjpeg/build.py --work .agent-state/openjpeg-clean-rebuild --check",
+    "status": "Locally rebuilt from pinned C source plus checked source patches; upstream generated source retained separately."
+  }
 }

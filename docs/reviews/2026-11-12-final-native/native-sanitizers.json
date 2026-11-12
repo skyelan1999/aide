@@ -1,0 +1,42 @@
+{
+  "status": "pass",
+  "compiler": "emscripten/emsdk@sha256:d04ab749bef080e69c2d92839f17bab5324d1ac89197faa1ced55fa245ee6118",
+  "sanitizers": [
+    "address",
+    "undefined",
+    "leak"
+  ],
+  "faultSites": [
+    "outer precinct growth",
+    "inner code-block growth"
+  ],
+  "failuresPerSite": 25,
+  "htBlockHeightMutations": 64,
+  "fixtures": {
+    "packet-header-empty-control.j2k": "3ecc6373a56fdf9f57a218fb07d2acfd4382592f0fa78827e6480b73bcd05ef8",
+    "708-singleht-one-codeblock-cleanup-sigprop-separated-by-layer.j2k": "118d0f911e45fbeb5ff91ee688594ce65eb057e3e95db10931afd40738428b8f",
+    "627-unsigned-control.jp2": "2e413d687738f1dea82081b0e42ba08b1585bede31635881d387811085b1a35e",
+    "625-offset-100p75.j2k": "2a59b3fd40949fb999d1327c3e872c1a9a7cf9a559a6b41b9c6586242c92e70b",
+    "623-second-selected-mcc-index4.j2k": "1cf1b4da45b4445d5caf23d7f440e1ffa15358fd24a3e503606eaccd8fe7193f",
+    "ppm.j2k": "e0b455edd171d9d074495ff5e668db256ce4138cd4780f75f6b65f4dd3a02789",
+    "693-pima-esycc.jp2": "9d22c58bc746fa35b2f13c422e891fe45913146e065865d2c37d11efdacaac57",
+    "ppt-duplicate.j2k": "2ae8aa70503f632b345c721a9ab175afe888bca162a72ce041039fb87ff86920",
+    "627-reported.jp2": "2f4999ff6cc395f70a83bf454a61b7103bdd23ee91bd9d544ca80d49b6339446",
+    "623-negative-int16-offset-source.j2k": "2766065a89154ebf312fe5a17d63ab2254f12d6b774d0a1cf576c275690ea38c",
+    "growth-inner.j2k": "7a39ae3a414996a7e5b0ee7799a9f4921ff1a7ef89d3d663df897e4d608347fe",
+    "623-single-selected-mcc-index4-control.j2k": "987db453c8d5d523bd8bc34d2e53062a1f5670cfe13832d80aefcf9a6c85c73c",
+    "642-reported.j2k": "af269e0848189563bade55e85f57cdf16c6a096459f740d8694255b039f5df3a",
+    "ppt.j2k": "6d6b6f79f6ef1aa5da88b13f16eaaf6f5944348f4f53d9ddd25192eb54eee412",
+    "file1_b12.jph": "8bf8e9aee043da15e95debf9049e2e371640705d949fe51fb0036fe91aac941f",
+    "ppm-duplicate.j2k": "5e9b06efc0ebb07340019acc31d3ac5af4f306f7f8f6f66fa2bf7c5eec0458ed",
+    "growth-outer.j2k": "a484289bbd9a12391a526b38ac965e7e9ef874fb6acee5303ceee1caff73ebfa",
+    "642-no-segsym-control.j2k": "0f5cc0e00b9e6a7b01311b876f350391380a5ae977fbcb9e05c55b83e9619098",
+    "file1_b11.jph": "a496952705d380f3e9f88b6f60798c30f4bb05db920c20b45531b7d882804e10",
+    "growth.j2k": "a35da79bfa8297c8346da68671a52d8b082664ea5e6016b0d93cccb4841abd54",
+    "one.j2k": "3ecc6373a56fdf9f57a218fb07d2acfd4382592f0fa78827e6480b73bcd05ef8",
+    "653-reproducer.j2k": "0ef35489c39bdafd09e6fa1ce0934b9de6bf4c86f211bafc09340ab113fa1a70",
+    "625-offset-100.j2k": "6d0384cb22a85c0e9fc31998723e94c6a4538d68d28c4e9dcc3aa7c3a176a96f",
+    "708-singleht-one-layer-control.j2k": "85b4b6429931d9bb9fec8963c400bf83d2985e576014033d2b103ce099bd365e",
+    "625-offset-101.j2k": "41bdb5f23133b0844f17988b5966ccc42a7eeebc84b042a3ad72c22409d4d698"
+  }
+}

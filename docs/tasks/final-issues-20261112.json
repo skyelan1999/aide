@@ -1,0 +1,67 @@
+{
+  "id": "final-issues-20261112",
+  "request": "都处理了：继续解决保留的18个Issue",
+  "baseline": "7fbb1961abac0d8d4ac1a80d022214433f3df57c",
+  "initial_status": "",
+  "acceptance": [
+    "Address all 18 retained issues with current-artifact tests and source-backed dispositions.",
+    "Reproduce/fix native JPEG2000 issues with checked source/build provenance rather than unverified minified edits.",
+    "Complete actual browser and isolated SSH/plugin acceptance for changed paths.",
+    "Merge passing source PRs and close only verified fixes or explicitly temporary unsupported/no-reproducer outcomes authorized by the user."
+  ],
+  "scope": [
+    "Aide and public plugin source, isolated test dependencies and fixtures, GitHub issue/PR lifecycle.",
+    "Preserve production services, installed plugins, proprietary sources and unrelated user files."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "All 18 current reports inventoried; user chose preserving selected-directory functionality with a native file bridge for #773.",
+      "evidence": [
+        "docs/reviews/2026-11-12-final-native/README.md"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Pinned native decoder source fixes and vector-PDF acceptance complete; SSH checkout and directory-object bridge remain in progress.",
+      "evidence": [
+        "scripts/openjpeg/README.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "14 native decoder corrections plus discoverable PDF attachments implemented; wider SSH and bridge work not yet ready for merge.",
+      "evidence": [
+        "docs/reviews/2026-11-12-final-native/README.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Native C ASan/UBSan/LSan, two identical clean rebuilds, direct regressions, preview browser checks and actual 100 MiB aggregate attachment PDF export passed. Three transfer runs pass; historical crash root cause unknown.",
+      "evidence": [
+        "docs/reviews/2026-11-12-final-native/native-sanitizers.json",
+        "docs/reviews/2026-11-12-final-native/vector-pdf.json",
+        "docs/reviews/2026-11-12-final-native/transfer-runs.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested reviewing and merging useful code and closing resolved/unclear reports; no production restart or binary Aide Release requested.",
+  "rollback": "",
+  "handoff": "Task continues on #790 and #773. Program deployment and installed plugin replacement have not occurred.",
+  "operator": "skyelan1999"
+}

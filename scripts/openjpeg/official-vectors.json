@@ -1,0 +1,12 @@
+[
+  {
+    "name": "file1_b11.jph",
+    "url": "https://gitlab.com/wg1/htj2k-codestreams/-/raw/f6b9ede094a0bd6e1e0427e12721e3f3ee1b704b/testfiles_jph/file1_b11.jph",
+    "sha256": "a496952705d380f3e9f88b6f60798c30f4bb05db920c20b45531b7d882804e10"
+  },
+  {
+    "name": "file1_b12.jph",
+    "url": "https://gitlab.com/wg1/htj2k-codestreams/-/raw/f6b9ede094a0bd6e1e0427e12721e3f3ee1b704b/testfiles_jph/file1_b12.jph",
+    "sha256": "8bf8e9aee043da15e95debf9049e2e371640705d949fe51fb0036fe91aac941f"
+  }
+]

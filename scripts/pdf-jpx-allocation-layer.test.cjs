@@ -8,8 +8,11 @@ async function main(){
  const {oi}=await load(source,';export {oi};'),normal=oi({warn:()=>{}});
  const control=normal.decode(bytes('one-layer'),{numComponents:1}),late=normal.decode(bytes('layer1000'),{numComponents:1});
  assert.equal(control.length,256);assert.equal(new Set(control).size>1,true);assert.deepEqual(late,control,'first inclusion at layer 1000 changed samples');
- const allocation='const pointer=aideNativeAllocate(a,b)|0;';assert.equal(source.split(allocation).length,2);
- const instrumented=source.replace(allocation,'if(Module.triageRequests)Module.triageRequests.push(b);const pointer=(++Module.triageCount===Module.triageFailAt)?0:aideNativeAllocate(a,b)|0;');
+ const allocation='const pointer=allocate(bytes);',boundary='function _aideAllocationCheck(bytes,pointer,after){';
+ assert.equal(source.split(allocation).length,2);assert.equal(source.split(boundary).length,2);
+ // Instrument only this test copy. Core requests pass the checked C/JS boundary;
+ // the exported allocator covers the initial input buffer independently.
+ const instrumented=source.replace(allocation,'if(module.triageRequests)module.triageRequests.push(bytes);const pointer=(++module.triageCount===module.triageFailAt)?0:allocate(bytes);').replace(boundary,boundary+'if(after){if(Module.triageRequests)Module.triageRequests.push(bytes);if(++Module.triageCount===Module.triageFailAt)pointer=0;}');
  const api=await load(instrumented,';export {oi};');let failures=0;
  for(const name of ['622-','707-']){
   const input=bytes(name),baseline=api.oi({warn:()=>{}});baseline.triageCount=0;baseline.triageRequests=[];

@@ -1,0 +1,17 @@
+{
+  "compiler": "emscripten/emsdk@sha256:d04ab749bef080e69c2d92839f17bab5324d1ac89197faa1ced55fa245ee6118",
+  "core": {
+    "repository": "uclouvain/openjpeg",
+    "commit": "8314119b067c0fc77834731168daaebd379fdb12",
+    "url": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/8314119b067c0fc77834731168daaebd379fdb12",
+    "sha256": "e723e8babb2188e8743308842bb1bfc9809f0375cd964cfeac2fb17285094321",
+    "patchSHA256": "d54d98a5cad90b00b2038f0da8a180de66c86cba09e07b242217485b2bafba57"
+  },
+  "wrapper": {
+    "repository": "mozilla/pdf.js.openjpeg",
+    "commit": "c76ca8601f97bae7e14b3974a7d157c675f03b8c",
+    "url": "https://codeload.github.com/mozilla/pdf.js.openjpeg/tar.gz/c76ca8601f97bae7e14b3974a7d157c675f03b8c",
+    "sha256": "ab14359c331cea373785322e34e54aa30bc26cb1e76b92a085338debac43e82a",
+    "patchSHA256": "7b9e3326af0df8f42d35003f8f128f83f1c345ff6352215c44eddd575f02eaa9"
+  }
+}
