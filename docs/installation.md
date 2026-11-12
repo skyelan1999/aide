@@ -1,6 +1,6 @@
 # 安装、升级与首次启动
 
-本文按 2026-11-12 源码 `05e0b8a7` 和 `0.1.19.0 RC1` 发行准备核对。是否已公开、实际支持架构和文件摘要，以同版本 [GitHub Release](https://github.com/skyelan1999/aide/releases) 及 `RELEASE-VALIDATION.json` 为准。不要把 main 的功能视为旧包已有功能。
+本文按 2026-11-12 源码 `05e0b8a7` 和 `0.1.19.0 RC2` 发行准备核对。是否已公开、实际支持架构和文件摘要，以同版本 [GitHub Release](https://github.com/skyelan1999/aide/releases) 及 `RELEASE-VALIDATION.json` 为准。不要把 main 的功能视为旧包已有功能。
 
 ## 选择安装方式
 

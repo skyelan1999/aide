@@ -1,0 +1,53 @@
+{
+  "issue": 869,
+  "failedCandidate": "v0.1.19.0-RC1",
+  "failedCommit": "c8a599ff25d162101e2cc047b745154ada5835cd",
+  "failedDelivery": "https://github.com/skyelan1999/aide/actions/runs/43186718453",
+  "failure": "Both native release Docker builds fail the catalog regression because their reduced COPY inputs omit the frozen market lock.",
+  "repair": "Copy the exact scripts/ci/public-plugins.lock.json into both build stages; do not copy it into the final slim runtime or weaken the assertion.",
+  "probe": "Derive the actual local COPY instructions for each build stage, transfer only those tracked files into a disposable network-none Go SDK container and execute the original catalog test under race.",
+  "results": [
+    {
+      "build": "Dockerfile",
+      "state": "before",
+      "expected": "missing frozen lock failure",
+      "exit": 1,
+      "files": 5688,
+      "log": "Dockerfile-before.log",
+      "sha256": "134f4fa861013e0a80e5588e01cbaa10af4a5c82f281a9d61abbd4cc53d0ae2e"
+    },
+    {
+      "build": "Dockerfile",
+      "state": "after",
+      "expected": "catalog race pass",
+      "exit": 0,
+      "files": 5689,
+      "log": "Dockerfile-after.log",
+      "sha256": "a812d2159b27a084a2cfa1ccc13dc1bf3bd53f70b3d9b01b7411765d9ea561cd"
+    },
+    {
+      "build": "Dockerfile.local",
+      "state": "before",
+      "expected": "missing frozen lock failure",
+      "exit": 1,
+      "files": 5658,
+      "log": "Dockerfile.local-before.log",
+      "sha256": "ff52c2ffde70fa1cfc12c51f8d44457756fc1a659df89237c4389bd92d41e043"
+    },
+    {
+      "build": "Dockerfile.local",
+      "state": "after",
+      "expected": "catalog race pass",
+      "exit": 0,
+      "files": 5659,
+      "log": "Dockerfile.local-after.log",
+      "sha256": "0c7623633986349700da68fbb59863c1f9f286bc99ef8cffb01974a57ad46d05"
+    }
+  ],
+  "nextCandidate": "v0.1.19.0-RC2",
+  "limits": [
+    "Focused reduced-context checks, not final tagged full Delivery",
+    "RC1 tag preserved; no RC1 Release exists",
+    "No production service or installed plugin replaced"
+  ]
+}

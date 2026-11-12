@@ -2,7 +2,7 @@
 
 [简体中文](../installation.md) · **English**
 
-Reviewed against source `05e0b8a7` on 2026-11-12 for the `0.1.19.0 RC1` release preparation. Actual publication, architectures and hashes are determined by the matching [GitHub Release](https://github.com/skyelan1999/aide/releases) and its `RELEASE-VALIDATION.json`. A main-branch feature does not establish support in an older package.
+Reviewed against source `05e0b8a7` on 2026-11-12 for the `0.1.19.0 RC2` release preparation. Actual publication, architectures and hashes are determined by the matching [GitHub Release](https://github.com/skyelan1999/aide/releases) and its `RELEASE-VALIDATION.json`. A main-branch feature does not establish support in an older package.
 
 ## Choose a package
 

@@ -59,5 +59,7 @@
     "docs/en/operations.md"
   ],
   "followupSummary": "Removed obsolete automatic-start-build/release-fallback procedures from active guides, documented explicit build and separate SDK, corrected source/offline limits and 75-minute full timeout, and labeled dated dependency/continuity handoffs as historical.",
-  "linksChecked": 2475
+  "linksChecked": 2475,
+  "currentTarget": "v0.1.19.0-RC2",
+  "failedCandidate": "RC1 tag retained; Delivery failed on omitted Docker test input (#869); no Release published."
 }

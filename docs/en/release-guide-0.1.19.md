@@ -1,4 +1,6 @@
-# 0.1.19.0 RC1 usage and migration
+# 0.1.19.0 RC2 usage and migration
+
+RC1 remains an unpublished candidate source tag. RC2 restores the frozen marketplace lock in Docker test inputs and requires fresh validation. RC2 or newer satisfies the paired plugins' declared minimum host RC1.
 
 [简体中文](../release-guide-0.1.19.md). Reviewed from source baseline `05e0b8a7` on 2026-11-12. Actual publication, commit, architectures and hashes belong to the matching GitHub Release and `RELEASE-VALIDATION.json`; preparation notes are not publication receipts.
 

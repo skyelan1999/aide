@@ -24,27 +24,28 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Release Aide 0.1.19.0 RC1 through existing version/Delivery flow; publish paired SQLite/StarLink before freezing exact current market identities.",
+      "summary": "Publish one Aide Release through version.sh and full Delivery. Initial RC1 tag is immutable and unpublished after build-input failure #869; patch to RC2 after clean-main full/release-check. Existing plugin artifacts and market minimum RC1 remain compatible with RC2.",
       "evidence": [
         "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
       ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "Published SQLite 1.0.3 and StarLink 0.1.6, merged market #38; synchronized 32 exact public packages plus private metadata and added actual Professional Resume handler lifecycle acceptance. Release-discovered product fixes #862-866 merged in #861; stale fixtures repaired without disabling assertions.",
+      "summary": "Published SQLite 1.0.3 and StarLink 0.1.6, merged market #38; synchronized 32 exact public packages plus private metadata and added actual Professional Resume handler lifecycle acceptance. Release-discovered product fixes #862-866 merged in #861; stale fixtures repaired without disabling assertions. Added the missing frozen market lock to both reduced Docker test stages for #869.",
       "evidence": [
         "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
       ]
     },
     "verification": {
       "status": "pass",
-      "summary": "Pre-release scoped verification passed: exact public ZIP/SSH/race cases, four changed-market plugin functions, context/index regressions, current source CI, real native Windows AMD64/ARM64 build/UI and all 26 commands across Windows/PowerShell and macOS ARM/Intel hosts. Clean-main full/release-check and exact-tag full Delivery remain mandatory release-stage gates and are not claimed complete.",
+      "summary": "Pre-release scoped verification passed: exact public ZIP/SSH/race cases, four changed-market plugin functions, context/index regressions, current source CI, real native Windows AMD64/ARM64 build/UI and all 26 commands across Windows/PowerShell and macOS ARM/Intel hosts. Clean-main full/release-check and exact-tag full Delivery remain mandatory release-stage gates and are not claimed complete. Reduced COPY-context before/after race probes pass for both Dockerfiles; no assertion or required check removed. RC2 clean-main/tagged full and Delivery are still required.",
       "evidence": [
         "docs/reviews/2026-11-12-release-preparation/plugin-ssh.json",
         "docs/reviews/2026-11-12-release-preparation/changed-market-functions.json",
         "docs/reviews/2026-11-12-release-preparation/context-862.json",
         "docs/reviews/2026-11-12-release-preparation/index-865.json",
-        "docs/reviews/2026-11-12-release-preparation/native-final.json"
+        "docs/reviews/2026-11-12-release-preparation/native-final.json",
+        "docs/reviews/2026-11-12-release-preparation/build-inputs-869.json"
       ]
     },
     "documentation": {
@@ -63,14 +64,16 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Plugin releases and public market downloads verified. Aide version bump and final full Delivery publication remain pending.",
+      "summary": "SQLite/StarLink public releases and market verified. RC1 Delivery failed the mandatory Docker test layer on both architectures; no Aide Release created. Keep RC1 tag and use version.sh patch for RC2, with fresh full/release-check and full Delivery.",
       "evidence": [
-        "docs/reviews/2026-11-12-release-preparation/market-live.json"
+        "docs/reviews/2026-11-12-release-preparation/market-live.json",
+        "docs/reviews/2026-11-12-release-preparation/build-inputs-869.json"
       ]
     }
   },
   "release_authorization": "User: 全部该release的release，aide把文档全面更新，做一次release; added 该在市场更新的也更新 (2026-11-12 Asia/Shanghai).",
   "rollback": "Preserve existing Releases, tags, ZIPs, runtime images, data and configuration. If promotion fails, keep the new release draft and current published catalog/version available; market rollback reverts only new listing promotion.",
-  "handoff": "Clean main full is running. Require actual pass and release-check before version.sh, then recheck exact tagged HEAD, full Delivery and remote publication/assets. No production restart.",
-  "operator": "skyelan1999"
+  "handoff": "Merge reviewed #869 build-input repair and RC2 docs; clean main full/release-check; version.sh patch to RC2; exact tagged full/release-check; push and full Delivery; verify actual public assets. No production restart.",
+  "operator": "skyelan1999",
+  "release_target": "v0.1.19.0-RC2"
 }
