@@ -16,7 +16,7 @@ The maintained English guides below describe the public application. They distin
 | Explore sources and code | [Knowledge map](knowledge-map.md) |
 | Talk to the assistant | [Native voice calls](assistant-voice-call.md) |
 | Customize the workbench | [Customization](customization.md) |
-| Read the implementation paper | [Aide technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan; source baseline `921a95a5`, 2026-11-11 |
+| Read the implementation paper | [Aide technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan; source baseline `5bec2477`, 2026-11-12 |
 | Read the system/API design | [Architecture](architecture.md) · [Data layout](architecture/data-layout.md) |
 | Understand plugin market and account-balance capabilities | [Plugin market architecture](../architecture/plugin-market.md) |
 | Build plugins | [Plugin protocol](plugin-protocol.md) · [Daemon protocol](plugins/daemon-protocol.md) |
@@ -31,3 +31,6 @@ The maintained English guides below describe the public application. They distin
 Protocol names, paths, user documents, custom names, model output and provider diagnostics are not translated automatically. UI language does not change prices, currencies or model response language. An installed plugin owns its own interface and documentation; the host catalog does not rewrite third-party code.
 
 Dated task ledgers, reviews, old release notes, source-evidence snapshots and archives retain their original language and claims. They are historical evidence, not current English operating instructions or newly executed tests. Current user/developer entry points above have English guidance; detailed canonical historical references remain linked and explicitly identified as such. See [Documentation coverage](documentation-map.md).
+
+
+[0.1.19 usage and migration](release-guide-0.1.19.md).

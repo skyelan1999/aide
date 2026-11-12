@@ -1,0 +1,60 @@
+{
+  "marketRevision": "7a7aa3d8912471ee53391d307b8c88ac74146726",
+  "plugins": [
+    {
+      "cases": [
+        "installed SQLite handler creates/inserts/reads exact bound values",
+        "default read-only rejects write",
+        "every unscoped write requires confirmation",
+        "execute and transaction cannot ATTACH outside declared roots",
+        "CSV export cannot overwrite outside symlink sentinel"
+      ],
+      "function": "pass",
+      "id": "sqlite",
+      "inspection": "pass",
+      "installation": "pass",
+      "sha256": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
+      "version": "1.0.3"
+    },
+    {
+      "cases": [
+        "installed StarLink authenticates against the real isolated Aide TLS host",
+        "workspace-bound status and graph summary complete without external sources"
+      ],
+      "function": "pass",
+      "id": "starlink",
+      "inspection": "pass",
+      "installation": "pass",
+      "sha256": "aa9247968de771201d34ce4b0573e7c056061a5333eee04685184944be335a07",
+      "version": "0.1.6"
+    },
+    {
+      "cases": [
+        "published terminal process I/O and explicit cleanup",
+        "installed proxy pauses congested sources in both directions and transfers exact 32 MiB payloads",
+        "original public ZIP copy/Telnet admission, independent lifecycle and dynamic input policy"
+      ],
+      "function": "pass",
+      "id": "terminal",
+      "inspection": "pass",
+      "installation": "pass",
+      "sha256": "fc42c5a33f4ba440340fa25956aeed6c8b5b3b1561f477f8126064b6b1da5bc3",
+      "version": "1.8.1"
+    },
+    {
+      "cases": [
+        "installed guide and consent-required fictional task",
+        "encrypted task cache contains no plaintext fixture",
+        "evidence-bound result validation and mismatch refusal",
+        "complete/result lifecycle, immutable completion and deletion; no live research or model call"
+      ],
+      "function": "pass",
+      "id": "professional-resume",
+      "inspection": "pass",
+      "installation": "pass",
+      "sha256": "36e03a6d88bf9f84ce3404635e109c15ed047b107a1e078fb8dde2b125acb27c",
+      "version": "0.1.1"
+    }
+  ],
+  "status": "pass"
+}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "marketRepository": "skyelan1999/aide-pkg-shop",
-  "marketRevision": "ba6b72e2611884288e00b014c8487251887bacda",
+  "marketRevision": "7a7aa3d8912471ee53391d307b8c88ac74146726",
   "plugins": [
     {
       "id": "ali-bailian-supporter",
@@ -294,14 +294,14 @@
     },
     {
       "id": "sqlite",
-      "marketVersion": "1.0.1",
-      "package": "packages/sqlite/1.0.1-641ed1d4d86e.zip",
-      "bytes": 15479,
-      "sha256": "641ed1d4d86e2a83482f93f2465b7803521dd0fbf077914da4f66a4bef04f789",
+      "marketVersion": "1.0.3",
+      "package": "packages/sqlite/1.0.3-d1c597a93381.zip",
+      "bytes": 17906,
+      "sha256": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
       "repository": "skyelan1999/aide-pkg-sqlite",
-      "packageSourceCommit": "8098ba73c1ca588f037805dba1aa51f239615c71",
-      "latestPublicTag": "v1.0.1",
-      "latestPublicCommit": "9d9cbd9a4291c1ddcb6f0d7ef310ff21f6efa374",
+      "packageSourceCommit": "f5f1ad44741f3b3b336f2e481ab1c8d6dde99946",
+      "latestPublicTag": "v1.0.3",
+      "latestPublicCommit": "f5f1ad44741f3b3b336f2e481ab1c8d6dde99946",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",
@@ -311,14 +311,14 @@
     },
     {
       "id": "starlink",
-      "marketVersion": "0.1.4",
-      "package": "packages/starlink/0.1.4-98795650fd6b.zip",
-      "bytes": 38501,
-      "sha256": "98795650fd6b4306b958174e8bb196d82fceccf13eb8a79e18349c8296a72440",
+      "marketVersion": "0.1.6",
+      "package": "packages/starlink/0.1.6-aa9247968de7.zip",
+      "bytes": 50913,
+      "sha256": "aa9247968de771201d34ce4b0573e7c056061a5333eee04685184944be335a07",
       "repository": "skyelan1999/aide-pkg-StarLink",
-      "packageSourceCommit": "b07fa70427bf5137050feebfde30b12359dfcaa7",
-      "latestPublicTag": "v0.1.4",
-      "latestPublicCommit": "b07fa70427bf5137050feebfde30b12359dfcaa7",
+      "packageSourceCommit": "39faf743713cc92f8c0909fcc74392ca51aa87cb",
+      "latestPublicTag": "v0.1.6",
+      "latestPublicCommit": "39faf743713cc92f8c0909fcc74392ca51aa87cb",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",
@@ -362,14 +362,14 @@
     },
     {
       "id": "terminal",
-      "marketVersion": "1.8.0",
-      "package": "packages/terminal/1.8.0-c458a12f5a51.zip",
-      "bytes": 1228467,
-      "sha256": "c458a12f5a51071bdc54c397758c63fd4621034c88b9aceb42c10390d1f1862e",
+      "marketVersion": "1.8.1",
+      "package": "packages/terminal/1.8.1-fc42c5a33f4b.zip",
+      "bytes": 1230048,
+      "sha256": "fc42c5a33f4ba440340fa25956aeed6c8b5b3b1561f477f8126064b6b1da5bc3",
       "repository": "skyelan1999/aide-pkg-terminal",
-      "packageSourceCommit": "b2487d10fee4c8cc42224f588de9ca81300cb67d",
-      "latestPublicTag": "v1.8.0",
-      "latestPublicCommit": "b2487d10fee4c8cc42224f588de9ca81300cb67d",
+      "packageSourceCommit": "63dc80b8c178cd51538d57dbc6a439581e65387a",
+      "latestPublicTag": "v1.8.1",
+      "latestPublicCommit": "63dc80b8c178cd51538d57dbc6a439581e65387a",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",
@@ -529,6 +529,23 @@
         "function": "required"
       },
       "public": true
+    },
+    {
+      "id": "professional-resume",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true,
+      "marketVersion": "0.1.1",
+      "package": "packages/professional-resume/0.1.1-36e03a6d88bf.zip",
+      "bytes": 54871,
+      "sha256": "36e03a6d88bf9f84ce3404635e109c15ed047b107a1e078fb8dde2b125acb27c",
+      "repository": "skyelan1999/aide-pkg-ProfessionalResume",
+      "packageSourceCommit": "e23693cfa6ccd3db0f502effde641ab454e49a77",
+      "latestPublicTag": "v0.1.1",
+      "latestPublicCommit": "e23693cfa6ccd3db0f502effde641ab454e49a77"
     }
   ],
   "policy": "Every current public market package must pass inspection, real isolated Aide installation and meaningful function cases. Missing/failed/skipped required cases block publication. Use already-published ZIPs without rebuilding plugins. Latest upstream versions are compared and documented; they do not silently replace current market packages. Private listings are excluded."

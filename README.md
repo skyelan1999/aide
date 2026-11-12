@@ -84,7 +84,7 @@ bash scripts/install.sh --source
 
 ## 文档与版本
 
-本页按 **2026-11-11 源码 `921a95a5`** 核对。查询到的最新公开程序发行版为 **v0.1.18.0-RC3**（2026-11-02）；两者不是同一交付身份。后续版本以 Release 页面为准。
+本页按 **2026-11-12 源码 `5bec2477`** 更新，覆盖 **0.1.19.0 RC1** 的发行准备。精确公开版本、源码和安装包身份以对应 [Release](https://github.com/skyelan1999/aide/releases) 为准；升级步骤见 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
 
 | 文档 | 内容 |
 | --- | --- |
@@ -102,3 +102,6 @@ bash scripts/install.sh --source
 ## 许可与致谢
 
 [MIT License](LICENSE)。第三方组件保留各自许可。aide 是独立项目，借鉴 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的设计思路，不是 DeepSeek 官方产品，也不承诺完整 DSH/Cordis 运行时兼容。
+
+
+[0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。

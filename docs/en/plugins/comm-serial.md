@@ -1,5 +1,7 @@
 # Serial Port Plugin (comm-serial)
 
+> Historical independent communication-plugin guide. These capabilities now belong to the separately installed Terminal plugin (current market 1.8.1). Use its release documentation; old package examples are not current installation instructions.
+
 A **resident daemon plugin** built on [serialport](https://serialport.io/) (`@serialport/bindings-cpp`) that holds serial port handles long-term inside the aide container: list ports, open/configure, read/write data, and create **virtual serial pairs (PTY)** for testing and device simulation without hardware.
 
 - Plugin dir: `plugins/comm-serial/` (`manifest.json` + `index.js` + `test.js` + the plugin-local `node_modules/`)

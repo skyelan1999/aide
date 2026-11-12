@@ -1,5 +1,7 @@
 # SSH Communication Plugin (comm-ssh)
 
+> Historical independent communication-plugin guide. These capabilities now belong to the separately installed Terminal plugin (current market 1.8.1). Use its release documentation; old package examples are not current installation instructions.
+
 A **resident daemon plugin** built on [`ssh2`](https://www.npmjs.com/package/ssh2). It turns aide into a scriptable SSH client: a long-running Node process maintains multiple SSH connections, SFTP sessions, and local port forwards, and embeds a **scriptable mock SSH server** for end-to-end testing and device/protocol dry-runs.
 
 - Plugin directory: `plugins/comm-ssh/` (`manifest.json` + `index.js` + `test.js` + `package.json` + `node_modules/ssh2`)

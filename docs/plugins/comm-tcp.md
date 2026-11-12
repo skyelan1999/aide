@@ -1,5 +1,7 @@
 # TCP 通讯插件（comm-tcp）
 
+> 历史独立通信插件说明：这些能力现已归入独立安装的 Terminal（当前市场 1.8.1）。请按 Terminal 发行文档使用，旧包示例不是当前安装入口。
+
 零第三方依赖的**常驻守护（daemon）插件**，基于 Node 内置 **`net`** 模块，用于在回环网络上做 TCP 通讯的探测、录制、回放与模拟。面向协议调试、设备/服务联调与 fuzz 测试。
 
 - 插件目录：`plugins/comm-tcp/`（`manifest.json` + `index.js` + `test.js`）

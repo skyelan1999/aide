@@ -409,7 +409,7 @@ Upload a trusted `.js`, `.mjs`, or `.cjs` file, name it, and enable it. Shape va
 
 ### SQLite plugin
 
-The preinstalled **SQLite** plugin (`sqlite`) uses Node's built-in `node:sqlite` with zero dependencies and works offline, reading/writing SQLite files inside the authorized mount roots: parameterized queries, transactions, migrations, schema introspection, and CSV/backup export. Tools are read-only by default; writes require explicit `readonly=false`. Database paths are confined to `/workspace`, `/context`, `/local`, queries are parameterized, and results are truncated by default. See [plugins/sqlite.md](plugins/sqlite.md).
+SQLite is a separately installed public plugin, not bundled in a new Aide image. Version 1.0.3 binds local relative paths to the selected workspace and uses authorized offline checkout/host writeback for SSH workspace/reference files. Queries default to read-only; transactions and scripts default to writable, and exports write output files. Remote files require external writers to remain stopped and WAL checkpointed; this is not a distributed database lock. Upgrade the plugin separately after Aide 0.1.19.0 RC1. See the [current plugin guide](plugins/sqlite.md).
 
 ### Unified master identity (#43, RC2)
 
@@ -509,3 +509,6 @@ Settings → General → Appearance → Workbench background → Studio. Lightwe
 ## Current topic guides
 
 See [workspace/source paths](workspace-paths.md), [knowledge search and history](knowledge-map.md), [native realtime voice calls](assistant-voice-call.md), [plugin lifecycle](plugin-protocol.md), and [maintenance/recovery](operations.md). These English guides describe current workflows; historical screenshots above retain their original dates.
+
+
+[0.1.19 usage and migration](release-guide-0.1.19.md).

@@ -495,6 +495,8 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 			cases = append(cases, releasePublicMapCanvasAI(t, a)...)
 		}
 		return cases
+	case "professional-resume":
+		return releasePublicProfessionalResume(t, a)
 	case "rviz":
 		got := releasePublicCall(t, a, id, "rviz_save_config", map[string]any{"config": map[string]any{"version": 1, "fixed": "map", "password": "MUST_NOT_PERSIST", "layers": []any{}}})
 		if !strings.Contains(got, "session.json") || strings.Contains(got, "MUST_NOT_PERSIST") {

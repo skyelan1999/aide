@@ -1,0 +1,73 @@
+{
+  "id": "release-docs-20261112",
+  "request": "全部该release的release，aide把文档全面更新，做一次release；该在市场更新的也更新",
+  "baseline": "5bec24776314b37565a13ff9f25746ca0f770741",
+  "initial_status": "",
+  "acceptance": [
+    "Refresh current Aide Chinese/English product, installation, usage, architecture, operational and release documentation without rewriting dated historical evidence.",
+    "Publish changed public plugins with immutable packages, actual installation/function evidence and verified public downloads; update market listings and frozen Aide plugin identities.",
+    "Use version.sh and full Aide Delivery for one versioned release; verify exact tag, both architectures, required matrix and remote assets.",
+    "Preserve production services, installed plugins, proprietary sources and unrelated user files."
+  ],
+  "scope": [
+    "Aide source/docs/release scripts and GitHub source/release lifecycle.",
+    "SQLite, StarLink and official public marketplace updates required by the merged fixes.",
+    "Disposable CI/local fixtures and candidate artifact builds; no production restart or paid model invocation."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized public releases, comprehensive current docs and marketplace updates. Existing production/data and immutable older artifacts remain preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Release Aide 0.1.19.0 RC1 through existing version/Delivery flow; publish paired SQLite/StarLink before freezing exact current market identities.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Published SQLite 1.0.3 and StarLink 0.1.6, merged market #38; synchronized 32 exact public packages plus private metadata and added actual Professional Resume handler lifecycle acceptance.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Exact final ZIP dual-SSH race twice, four updated market-package host/race cases, 37 CI unit cases and docs checks pass. Full local profile and final tagged Delivery pending; an early local run was deliberately stopped when offline catalog formatting was finalized and will not be reused.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/plugin-ssh.json",
+        "docs/reviews/2026-11-12-release-preparation/changed-market-functions.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Refreshed Chinese/English installation, migration, current entry guides, architecture/whitepaper, plugin/SSH/PDF/market docs and release notes; dated evidence preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Changes confined to owned clean worktrees; final ZIPs exclude credentials/private packages; unrelated original user files and production containers preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Plugin releases and public market downloads verified. Aide version bump and final full Delivery publication remain pending.",
+      "evidence": [
+        "docs/reviews/2026-11-12-release-preparation/market-live.json"
+      ]
+    }
+  },
+  "release_authorization": "User: 全部该release的release，aide把文档全面更新，做一次release; added 该在市场更新的也更新 (2026-11-12 Asia/Shanghai).",
+  "rollback": "Preserve existing Releases, tags, ZIPs, runtime images, data and configuration. If promotion fails, keep the new release draft and current published catalog/version available; market rollback reverts only new listing promotion.",
+  "handoff": "Continue local full, candidate host/browser checks, version.sh on clean main, release-check, final tagged full Delivery and independent remote asset verification. No production restart.",
+  "operator": "skyelan1999"
+}

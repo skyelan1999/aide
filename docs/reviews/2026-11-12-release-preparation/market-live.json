@@ -1,0 +1,20 @@
+{
+  "status": "pass",
+  "marketRevision": "7a7aa3d8912471ee53391d307b8c88ac74146726",
+  "plugins": [
+    {
+      "id": "sqlite",
+      "version": "1.0.3",
+      "bytes": 17906,
+      "sha256": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
+      "minAideVersion": "0.1.19.0 RC1"
+    },
+    {
+      "id": "starlink",
+      "version": "0.1.6",
+      "bytes": 50913,
+      "sha256": "aa9247968de771201d34ce4b0573e7c056061a5333eee04685184944be335a07",
+      "minAideVersion": "0.1.19.0 RC1"
+    }
+  ]
+}

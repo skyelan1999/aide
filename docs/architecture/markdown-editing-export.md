@@ -165,3 +165,7 @@ SSH workspaces use the same comparison dialog with commit, index and disk conten
 ![实际文档预览](../images/current-20261017/12-markdown.jpg)
 
 [完整原图、环境与边界](../ui-evidence.md)。
+
+## 2026-11-12 向量 PDF 与附件验收
+
+当前导出保持可检索文字、分页表格、独立图像及标准附件面板可见的嵌入文件。实际产品菜单验收、独立解析器字节恢复及九页合成文档范围见[原生/PDF 记录](../reviews/2026-11-12-final-native/README.md)。两个各 50 MiB 附件不代表 100 MiB 可见正文或无限规模保证。当前使用与迁移见[0.1.19 指南](../release-guide-0.1.19.md)。

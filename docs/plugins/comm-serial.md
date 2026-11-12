@@ -1,5 +1,7 @@
 # 串口通讯插件（comm-serial）
 
+> 历史独立通信插件说明：这些能力现已归入独立安装的 Terminal（当前市场 1.8.1）。请按 Terminal 发行文档使用，旧包示例不是当前安装入口。
+
 基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。
 
 - 插件目录：`plugins/comm-serial/`（`manifest.json` + `index.js` + `test.js` + 随插件安装的 `node_modules/`）

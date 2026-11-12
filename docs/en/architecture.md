@@ -2,7 +2,7 @@
 
 [简体中文](../architecture.md) · [English documentation](README.md)
 
-Maintained core baseline: `921a95a5`, 2026-11-11. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
+Maintained core baseline: `5bec2477`, 2026-11-12. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
 
 Aide is a Go HTTP service with an embedded native JavaScript/CSS browser UI and a container runtime. Model steps run in goroutines; SSE streams incremental output while persisted session snapshots provide final-state recovery. The Node plugin host executes trusted extensions and is not an independent security sandbox.
 
@@ -91,3 +91,6 @@ Messages use cryptographic device identities; short lookup codes are discovery a
 Use [Plugin protocol](plugin-protocol.md) for Node/Python tools and isolated workbench UI contracts. Package validation does not prove arbitrary plugin behavior. Model/provider compatibility must be tested for the requested capability, and generated media require actual artifacts.
 
 The slim runtime and separately delivered development toolbox have different contents. STEP preview is supplied by the public STEP Viewer plugin; removing it from the host does not remove unrelated DXF rendering. Official package identity is verified by tag, source commit, checksums, imported image metadata and runtime checks. A local development branch or old screenshot does not certify a public release.
+
+
+[0.1.19 implementation changes](release-guide-0.1.19.md).

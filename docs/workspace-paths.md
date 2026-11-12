@@ -175,3 +175,6 @@ HTTP 冲突、认证或其他保存错误会暂停当前文件的自动保存并
 ![实际目录配置与文档绑定](images/current-20261017/02-workspace.jpg)
 
 [完整原图、环境与边界](ui-evidence.md)。
+
+
+[0.1.19 目录对象桥接与 SSH 迁移](release-guide-0.1.19.md)。

@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "race": true,
+  "repeat": 2,
+  "case": "TestSSHLiveFinalPluginCompatibility",
+  "sqliteSHA256": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
+  "starlinkSHA256": "aa9247968de771201d34ce4b0573e7c056061a5333eee04685184944be335a07",
+  "logSHA256": "6e176cc0a6176af492359f95294387af0c411e9e91047fa4d35365e3ce8d8bc9",
+  "scope": "real host installation, separate disposable SSH servers, transactions/CSV, RO/AI-hidden/WAL refusal, Office/attachment sources and StarLink daemon",
+  "productionChanged": false
+}
