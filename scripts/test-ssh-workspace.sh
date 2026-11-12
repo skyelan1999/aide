@@ -87,7 +87,7 @@ done
     --network "$ssh_test_network" --cap-drop ALL --security-opt no-new-privileges:true \
     --tmpfs /tmp:rw,exec,size=1g --tmpfs /home/aide:rw,size=64m \
     -e AIDE_SSH_FIXTURE_A=ssh-fixture-a -e AIDE_SSH_FIXTURE_B=ssh-fixture-b \
-    -e AIDE_SSH_TEST_ISOLATED=1 -e "GOMAXPROCS=$ssh_test_gomaxprocs" -e "GOFLAGS=$ssh_test_goflags" -e GOCACHE=/go-cache \
+    -e AIDE_SSH_TEST_ISOLATED=1 -e "AIDE_FINAL_PLUGIN_CANDIDATES=${AIDE_FINAL_PLUGIN_CANDIDATES:-}" -e "GOMAXPROCS=$ssh_test_gomaxprocs" -e "GOFLAGS=$ssh_test_goflags" -e GOCACHE=/go-cache \
     -v aide-ssh-workspace-go-cache:/go-cache -v "$ssh_test_root:/src:ro" -w /src \
     --entrypoint bash "$ssh_test_runtime_image" -c \
     'mkdir -p /home/aide/.ssh; go test -mod=vendor $2 -v ./internal/server -run "$3" -count="$1" -timeout=8m' fixture "$ssh_test_repeat" "$ssh_test_race_flag" "$ssh_test_filter"

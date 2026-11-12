@@ -1,0 +1,412 @@
+{
+  "marketRevision": "ba6b72e2611884288e00b014c8487251887bacda",
+  "count": 31,
+  "plugins": [
+    {
+      "id": "ali-bailian-supporter",
+      "version": "0.1.2",
+      "source": "f009b4fb5f1ebfef61dd0cf7570d43fa64a5fd0c",
+      "sha256": "b88098def971e2afcb3db042d71e29c3d771f6c4fb742d9307ecb0e66f28ed47",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "almanac",
+      "version": "1.1.0",
+      "source": "c42b56e8a384e113d5f3533e182cc04e0bb09996",
+      "sha256": "5f82efc98e80feeab726038ca4e1fb4e09d8f79ff28af2981a0898fade26fd56",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "archive-tools",
+      "version": "1.0.0",
+      "source": "c4d2286083c650dd4de94ce5b12936858993f8c3",
+      "sha256": "78bf74c2291120fc0102419b3512ac7a61264dc5ed6f418f6f232462252b8eee",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "auto-ai-model-router",
+      "version": "0.1.2",
+      "source": "9e7878109d80f317f526109f406cc65e85886352",
+      "sha256": "8418518ccc48fd154d3b579293513bb439ec2d4150ec282ed8fee8ae93ab2060",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "browser-control",
+      "version": "1.1.0",
+      "source": "e0f62b3bb67795dbeeb06818e529af1cb08ec125",
+      "sha256": "9e67c3194f59eb2ce27ea2c7d4384d04d652198605be6494f68e9a6e9641c7e2",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "current-time",
+      "version": "1.1.0",
+      "source": "1f8098ff1ba6384e917df5b5b417978f01780c22",
+      "sha256": "3959e61044b8e3a4a123b466ace916cf061c0f19d63680df8989c3d8341b793d",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "deepseek-supporter",
+      "version": "0.1.0",
+      "source": "acc4b94a2c629761f310d81370e4f30a133de49b",
+      "sha256": "77e9591d2f443d09cc24a5c5647952c30b47f58848a542e6e92632ea83e49465",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "environment-guide",
+      "version": "1.0.0",
+      "source": "4103e0e742b0b4da71a5a981ee1aa1250bc0e3d6",
+      "sha256": "1ccef42c7a51802ff4cb17c33408ffbcbac57e705489094acb0c0f692384dc63",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "feedback",
+      "version": "1.0.0",
+      "source": "8302f3577ea572186e2f940ca10e40e5604cf13b",
+      "sha256": "907e5964c7cf42cf302a78735f4b6aad015db0f2c91f10591571e7bf55eb60cc",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "goal",
+      "version": "1.0.0",
+      "source": "72fbb16cd37f115a3843988bc6f31c2a35f05a25",
+      "sha256": "81bba34cb0b8d16138749ef0bcaac1e68558148bca969330eab8222943c744c1",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "lunar-calendar",
+      "version": "1.1.0",
+      "source": "983384b311ee26c51a7ac352ef0169c61e49d589",
+      "sha256": "70f14e9538bf5a645c63d9f16ce231852944d83dd9fd27428c29065509a9e964",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "markdown-history",
+      "version": "1.0.0",
+      "source": "251a214346c08ee7e80e64f37bc93d08b40786fd",
+      "sha256": "064b9a593932ebd657a5db4e668e451a9cbe22524c2b1d7f5d6b6cbefd737edd",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "office",
+      "version": "1.1.0",
+      "source": "1d56ad23c7d028afe65882a534b44a9270ff406f",
+      "sha256": "34b4d01a5714cad3530471b3de86c4d81eee6ca0452b85ba149b31b8ad94553f",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "plan",
+      "version": "1.0.0",
+      "source": "c89648ba468ca0410d30c44b7e592bb37127234a",
+      "sha256": "c30939a8d1662fde2f2c08e811731bf66cf4f750ea076c94c8567315e98cda53",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "plugin-authoring",
+      "version": "1.0.0",
+      "source": "e44b69f0f8a11c9cd9c0eab43e6b1ed0afc6afb6",
+      "sha256": "7e323cb5235e1231df12eacc9ed69aa0632ef2da3ac9ae40fb9509aba1262cba",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "rviz",
+      "version": "0.1.1",
+      "source": "da01e9db62ce87aaddf07c953a70019ea46100ad",
+      "sha256": "c0a685b9281a2c911d2a649ee27de08712ad16b0cd2f3feeb643e06b9920a5b9",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": true,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "skill",
+      "version": "1.1.0",
+      "source": "9fbe996c3ede074a3d02ff8de13f321d9f5a22a5",
+      "sha256": "d020157344ef540cb614ab4cc8c4ce00c935719649eef35664e2c6381fe3bed2",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "sqlite",
+      "version": "1.0.1",
+      "source": "8098ba73c1ca588f037805dba1aa51f239615c71",
+      "sha256": "641ed1d4d86e2a83482f93f2465b7803521dd0fbf077914da4f66a4bef04f789",
+      "localPackage": "SHA_VERIFIED",
+      "from": "separate exact published package copy",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": true,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "starlink",
+      "version": "0.1.4",
+      "source": "b07fa70427bf5137050feebfde30b12359dfcaa7",
+      "sha256": "98795650fd6b4306b958174e8bb196d82fceccf13eb8a79e18349c8296a72440",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": true,
+        "/workspace": true,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "step-viewer",
+      "version": "0.1.1",
+      "source": "13e96e7f14d5eb5bce391d044afa9fcfdd2c93a0",
+      "sha256": "d19162b4784c48c0d7c6229c2e2ac13eb4fc4298f586e0772fdd1751f32c8e81",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "subagent",
+      "version": "1.0.0",
+      "source": "f9584cbfc128007e4ecdfed587cc93f231c776e0",
+      "sha256": "d346c221046743bc7f508209c0c0d6eb28615b814b96c08b7c3f2fd5be37bcba",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "terminal",
+      "version": "1.8.0",
+      "source": "b2487d10fee4c8cc42224f588de9ca81300cb67d",
+      "sha256": "c458a12f5a51071bdc54c397758c63fd4621034c88b9aceb42c10390d1f1862e",
+      "localPackage": "SHA_VERIFIED",
+      "from": "separate exact published package copy",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": true,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "todo",
+      "version": "1.0.0",
+      "source": "cfe72f5d187737893ea3aca44e7f788f92e18d03",
+      "sha256": "8c85249e4a760279d9e4dbf4e0a51d1d58beb7da12df4633ac749631fe3c2452",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "tts-tools",
+      "version": "0.1.0",
+      "source": "a5774b4af5ea9d1eedc6f2c8b1f3ce74d2acc42b",
+      "sha256": "a42b4cbab8aaf9929d307133e202c8eea14c8f4fa460d4259fd04876e350b515",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "video-preview",
+      "version": "0.1.0",
+      "source": "3935bcde407a85be372909f9fabca697b2da151c",
+      "sha256": "652e923f0a6158681974486b91dfafe2723b8ce18de325de208be9bee31ce396",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "workflow",
+      "version": "1.0.0",
+      "source": "e7b732e79b5e8489d6418bb97456860216000e7b",
+      "sha256": "db2fa93c32f2762cd26cb23774df8888fb87369a0cf6d136a9b6c26532b4f979",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "file-preview",
+      "version": "0.1.0",
+      "source": "d945229598d455d069b1dc377a7fa0ed4c0e6fcf",
+      "sha256": "f57eb56e0b65de5c6e11a651b44fd57f97c6b2f40bed6b0ce7f3cad1e84b6d9e",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": true,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "codex-bridge",
+      "version": "0.4.1",
+      "source": "747e6f4c76b7299c9bab6d632bc1b2bf74ff7a1c",
+      "sha256": "6fc6bad3d1f4643b85cd8353a4a05f42f2c28328cc82f3caa5fba9f2df84cc84",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "openai-supporter",
+      "version": "0.1.0",
+      "source": "be30cefdbe467478a13f64bcc63c1020cb7b7c10",
+      "sha256": "dae0cbbf00cf955df0c086575583e90ccabbc45e72c1a495d27b4dcda71672c1",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "computer-control",
+      "version": "1.2.0",
+      "source": "cc92cd730b8120ac3a0cf7224dbfad4774fdce11",
+      "sha256": "16c147b479ceacb0da20b96994e29f19d2623625a2534e6f5cf1853969a4e8f2",
+      "localPackage": "SHA_VERIFIED",
+      "sourceSignals": {
+        "api.sources": false,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    },
+    {
+      "id": "mapcanvas",
+      "version": "0.2.1",
+      "source": "e79a8558828a38745d9500887f53efa70c5f9df4",
+      "sha256": "c69d77085ee5d3a3d5cf9600d8bbfe1756249b9cd8cfe751e79433bd13457618",
+      "localPackage": "SHA_VERIFIED",
+      "from": "separate exact published package copy",
+      "sourceSignals": {
+        "api.sources": true,
+        "workspaceRoot": false,
+        "/workspace": false,
+        "api.runPython": false
+      }
+    }
+  ]
+}
