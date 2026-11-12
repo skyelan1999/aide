@@ -119,29 +119,17 @@ func (a *App) visionGateLocked(images []MessageImage) error {
 // ── 提取与读取 ────────────────────────────────────────────────────────────────
 
 // extractDocumentText 调 scripts/office/extract_text.py 提取 docx/pdf/xlsx/pptx 文本。
-// 仅支持本地工作区（脚本跑在容器内；SSH 远端无文件可读，参考来源库同理）。
+// 远端工作区/引用先按绑定来源取得有界快照；脚本只解析临时字节。
 func (a *App) extractDocumentText(att Attachment) (string, error) {
 	if err := safePath(att.Path); err != nil {
 		return "", err
 	}
-	if att.Root == "source" {
-		if att.Source == "" {
-			return "", errors.New("缺少引用来源 ID")
-		}
-		a.mu.Lock()
-		src, ok := a.findSource(att.Source)
-		a.mu.Unlock()
-		if !ok || !src.Enabled {
-			return "", errors.New("引用来源不存在或已停用")
-		}
-		raw, err := a.readSourceRaw(src, att.Path)
+	if att.Root == "source" || a.workspaceMode() == "ssh" {
+		raw, err := a.attachmentSourceBytes(att)
 		if err != nil {
 			return "", err
 		}
-		return officeExtractText(raw, strings.ToLower(path.Ext(att.Path)))
-	}
-	if a.workspaceMode() == "ssh" {
-		return "", errors.New("Office/PDF 文档提取暂不支持 SSH 工作区")
+		return officeExtractTextLimit(raw, strings.ToLower(path.Ext(att.Path)), officeMaxStdout)
 	}
 	root, err := a.root(att.Root)
 	if err != nil {
@@ -166,8 +154,15 @@ func (a *App) readLocalImage(att Attachment) (MessageImage, error) {
 }
 
 func (a *App) readLocalMedia(att Attachment, mediaType string) (MessageImage, error) {
+	if mediaType == "" {
+		return MessageImage{}, errors.New("不支持的媒体格式")
+	}
 	if a.workspaceMode() == "ssh" || att.Root == "source" {
-		return MessageImage{}, errors.New("图片附件暂仅支持本地工作区文件")
+		b, err := a.attachmentSourceBytes(att)
+		if err != nil {
+			return MessageImage{}, err
+		}
+		return MessageImage{MediaType: mediaType, DataURL: "data:" + mediaType + ";base64," + base64.StdEncoding.EncodeToString(b), Format: strings.TrimPrefix(strings.ToLower(path.Ext(att.Path)), ".")}, nil
 	}
 	if err := safePath(att.Path); err != nil {
 		return MessageImage{}, err

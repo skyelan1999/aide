@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "runtimeImage": "sha256:02d38bdb07b578ca2430914b3dd3d5dd1832ad8982f85b5a13f081d29765e8ee",
+  "fixtureImage": "aide-source-fixtures:final20261112",
+  "race": true,
+  "repeat": 2,
+  "cases": [
+    "TestSSHLivePluginSourceSnapshots",
+    "TestSSHLiveFinalPluginCompatibility"
+  ],
+  "candidatePackages": {
+    "sqlite-1.0.3": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
+    "starlink-0.1.6": "e7ae3c0012a9ced52768fe57689ed3cbf9601455354bd1a67571ddae6d7f2647"
+  },
+  "logSHA256": "86669835962a3c1a5e92fff85a18f873b6a1b02d6764b224f40b9dc0a2e4855d",
+  "coverage": [
+    "separate SSH servers A and B",
+    "real host candidate ZIP installation and Node calls",
+    "workspace SQLite transaction bytes",
+    "RO/AI-hidden reference refusal",
+    "nonempty WAL refusal",
+    "CSV writeback bytes to independent reference",
+    "workspace and reference DOCX structure/comment/resolve",
+    "remote document text and image bytes",
+    "StarLink daemon to authenticated local HTTPS AI-scoped remote graph"
+  ],
+  "limits": [
+    "no paid model, production SSH host or external hardware",
+    "remote SQLite requires quiescent files; checks are optimistic, not distributed locks",
+    "program/plugin Release and installed instances not replaced"
+  ],
+  "finalCandidatePackages": {
+    "sqlite-1.0.3": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
+    "starlink-0.1.6": "a3ab3323488bbb2edddc3bd9e0569079502f937c31d7a8f8d25f0fc0f4cf3e65"
+  },
+  "finalExactPackageRun": {
+    "race": true,
+    "repeat": 1,
+    "case": "TestSSHLiveFinalPluginCompatibility",
+    "status": "PASS",
+    "logSHA256": "5502a8f4a1fc507db1135c4e33d581c35113183661082eb4563bcb9d9299fe94",
+    "note": "Only StarLink package documentation changed after the two-repeat code run."
+  }
+}

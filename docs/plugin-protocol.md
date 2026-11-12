@@ -408,7 +408,7 @@ Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注�
 
 高级 SSH API 的引用私钥支持直调用 `terminal_ssh_connect` 及受控分发的嵌套参数，由宿主读取后只通过 daemon 上下文注入。API 连接要求用户核验的 SHA256 主机指纹；工作台交互式 SSH 保持 OpenSSH known_hosts。每个工作区独立持有通信模块实例及带作用域身份的资源句柄。SFTP 本地路径仅允许当前本地工作区；模拟SFTP使用独立临时根。安装包内置固定版本 ssh2、serialport、运行依赖和上游许可，控制在既有256文件/64MiB展开上限内，不调用安装脚本。
 
-### 只读文件来源与临时快照
+### 文件来源、临时快照与受控写回
 
 短命 `call` handler 可使用 `await api.sources(request)`。宿主为每次已准入调用建立私有 Unix socket；不向插件传递 SSH/SFTP 密码或私钥，不开放公共 HTTP 路由。当前支持本地/SSH 工作区及已启用且允许 AI 访问的 local/skill/SFTP/workspace-sftp 引用。daemon 暂不提供此接口，其他协议来源需单独适配。
 
@@ -420,6 +420,10 @@ Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注�
 快照上限为单文件 8 MiB、同次调用合计 64 MiB、每侧/每次目录列表 5,000 条目、目录深度 32、每次来源请求 90 秒；更低的请求预算生效。达到预算、读取失败或遇到链接/特殊文件时拒绝整个快照，不返回可被误读为完整的部分目录。宿主保护路径 `.git`、`.data`、`.aide-data`、`.env`、`docker-images` 不进入快照，排除范围写入来源记录。SSH/SFTP 目录必须能无损解析，无法解析的条目使请求失败。快照只证明实际读取的字节；不保留原修改时间，不保证变化目录的跨文件原子快照，不证明远端历史、作者或可信时间。
 
 读取前后和 handler 结束时重查工作区、来源配置、连接代次及 AI 可见性。来源变化拒绝旧结果。正常返回、取消或错误后关闭 socket 并清理临时副本。引用访问需要跨来源调度时，插件应省略旧的本地 `scheduling` 契约，使用保守的执行域独占；此 API 不是对可信 Node 插件的 OS 沙箱。
+
+源码新增能力 `plugin-source-checkout-v1`：短命调用可用 `{operation:'checkout',source,path,slot,write,allowCreate,sqlite}` 暂存单个普通文件，返回 `{workspace,path,source,hash,exists,writable,maxBytes}`。`slot` 匹配 `[a-z][a-z0-9-]{0,24}`，每次最多四个，不可复用；文件和同次全部暂存合计上限均为 64 MiB。`write:true` 仍须来源可写；不存在的文件仅在同时请求 `allowCreate:true` 时接受，父目录必须存在。路径为规范相对路径，拒绝链接和宿主保护目录。`sqlite:true` 额外拒绝非空 WAL/journal，调用方须先停止外部写入并完成 checkpoint。
+
+修改该槽中的本地文件后，用 `{operation:'commit',slot}` 请求宿主写回；不可更换路径或来源，每个槽只提交一次。宿主检查原始字节、来源/连接身份、工作区及锁屏代次，使用临时文件并在发布前再次检查。失败、暂停、取消或权限变化不应被解释为保存成功；发布后才发现来源变化时，错误要求重新读取确认保存状态。此机制是乐观冲突检查，不提供跨主机 SQLite 锁、分布式 CAS 或多个槽的原子事务。临时根只存续于本次调用，旧宿主不支持时插件应明确拒绝远端操作。实现与隔离验收见[SSH 完成记录](reviews/2026-11-12-final-ssh/README.md)。
 
 `api.runPython` 新增 `options.sourceSnapshot:true`：远程工作区下仅显式启用该选项且宿主提供来源 API 时，允许在本地插件安装目录启动 Python，并由插件将宿主提供的临时根传给受限比较器。`api.workspaceRoot` 仍为空，`readFile/listFiles` 仍拒绝把 SSH 回退成本地工作区；其他插件调用行为兼容。
 

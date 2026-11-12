@@ -21,15 +21,18 @@ import (
 )
 
 type pluginSourceRequest struct {
-	Operation string   `json:"operation"`
-	Source    string   `json:"source"`
-	Path      string   `json:"path"`
-	Slot      string   `json:"slot"`
-	Recursive bool     `json:"recursive"`
-	MaxBytes  int64    `json:"maxBytes"`
-	MaxFiles  int      `json:"maxFiles"`
-	MaxDepth  int      `json:"maxDepth"`
-	Exclude   []string `json:"exclude"`
+	Operation   string   `json:"operation"`
+	Write       bool     `json:"write"`
+	SQLite      bool     `json:"sqlite"`
+	AllowCreate bool     `json:"allowCreate"`
+	Source      string   `json:"source"`
+	Path        string   `json:"path"`
+	Slot        string   `json:"slot"`
+	Recursive   bool     `json:"recursive"`
+	MaxBytes    int64    `json:"maxBytes"`
+	MaxFiles    int      `json:"maxFiles"`
+	MaxDepth    int      `json:"maxDepth"`
+	Exclude     []string `json:"exclude"`
 }
 
 var pluginSourceProtected = []string{".git", ".data", ".aide-data", ".env", "docker-images"}
@@ -140,16 +143,22 @@ func (a *App) startPluginSources(ctx context.Context) (string, func(), func() bo
 	}
 	a.mu.Lock()
 	areas := a.pluginSourceAreasLocked()
+	sourceLock := a.loadLockStateLocked()
 	a.mu.Unlock()
 	var mu sync.Mutex
 	var total int64
 	used := map[string]bool{}
+	checkouts := map[string]*pluginSourceCheckout{}
 	server := &http.Server{ReadHeaderTimeout: 5 * time.Second}
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
 		if r.Method != "POST" || r.URL.Path != "/" {
 			fail(w, 400, errors.New("invalid source request"))
+			return
+		}
+		if lock := a.readLockState(); lock.Locked || lock.Gen != sourceLock.Gen {
+			fail(w, 409, errors.New("来源调用的锁屏状态已变化"))
 			return
 		}
 		var in pluginSourceRequest
@@ -161,7 +170,13 @@ func (a *App) startPluginSources(ctx context.Context) (string, func(), func() bo
 		}
 		callCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
 		defer cancel()
-		result, e := a.pluginSourceRequest(callCtx, areas, dir, &total, used, in)
+		var result any
+		var e error
+		if in.Operation == "checkout" || in.Operation == "commit" {
+			result, e = a.pluginCheckoutRequest(callCtx, areas, dir, &total, checkouts, in)
+		} else {
+			result, e = a.pluginSourceRequest(callCtx, areas, dir, &total, used, in)
+		}
 		if e != nil {
 			fail(w, 400, e)
 			return
@@ -171,8 +186,12 @@ func (a *App) startPluginSources(ctx context.Context) (string, func(), func() bo
 	go func() { _ = server.Serve(listener) }()
 	validate := func() bool {
 		a.mu.Lock()
+		lock := a.loadLockStateLocked()
 		now := a.pluginSourceAreasLocked()
 		a.mu.Unlock()
+		if lock.Locked || lock.Gen != sourceLock.Gen {
+			return false
+		}
 		if len(now) != len(areas) {
 			return false
 		}
