@@ -62,8 +62,11 @@ def check(binary, folder, installation):
     from test_windows_build_proxy import check_cmd
     check_cmd(folder, toolbin)
     calls=folder/'calls.log'
+    system32=Path(os.environ['SystemRoot'])/'System32'
+    builders=folder/'fixture-builders';builders.mkdir()
     env=dict(os.environ,AIDE_LAUNCHER_NO_PAUSE='1',FIXTURE_CALLS=str(calls),FIXTURE_NEW_EXE=str(folder/'new.exe'),
-        PATH=str(toolbin)+os.pathsep+str(Path(os.environ['SystemRoot'])/'System32'))
+        FIXTURE_BUILDER_STATE=str(builders),
+        PATH=os.pathsep.join(map(str,(toolbin,system32,system32/'WindowsPowerShell/v1.0'))))
     # The actual root build BAT must carry the resolved environment through
     # Docker bootstrap, temporary host-stop and the second native build phase.
     for name,explicit,system,expected in (
@@ -80,6 +83,13 @@ def check(binary, folder, installation):
         log=calls.read_text();assert 'native:host-stop' in log and 'native:build' in log and 'proxy:wrong' not in log,log
         assert log.count('proxy:inherited')>=4,log
         assert 'synthetic-secret' not in result.stdout+result.stderr
+        assert log.count('docker:buildx:create')==1,log
+        # Repeat with the stale host to exercise reuse of the same owned cache.
+        shutil.copy2(folder/'old.exe',root/'aide-launcher.exe');calls.write_text('')
+        run(root,'build',args='',env=environment)
+        reused=calls.read_text()
+        assert 'docker:buildx:inspect' in reused and 'docker:buildx:build' in reused,reused
+        assert 'docker:buildx:create' not in reused,reused
     for pac in (False,True):
         root=fixture('proxy-refusal-'+str(pac),exe=folder/'old.exe');calls.write_text('')
         environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
