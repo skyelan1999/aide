@@ -1,4 +1,6 @@
-# 0.1.19.0 RC1 使用与迁移说明
+# 0.1.19.0 RC2 使用与迁移说明
+
+RC1 仅保留失败候选的源码标签，没有公开程序 Release。RC2 补齐 Docker 测试阶段的冻结市场清单输入后重新验收；市场所标最低宿主 RC1 可由 RC2 或更新版本满足。
 
 本页覆盖 2026-11-12 源码基线 `05e0b8a7` 之后的发行准备。运行包是否发布及精确源码、平台、SHA-256，以同 tag 的 GitHub Release 和 `RELEASE-VALIDATION.json` 为准；发行准备文档不能代替发布回执。[English](en/release-guide-0.1.19.md)。
 

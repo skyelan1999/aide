@@ -10,7 +10,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-Aide 由 Go 服务、嵌入式浏览器 UI、工具运行时及按平台配置的原生桥接组成。浏览器和桌面壳共享后端，模型回答、工具执行、文件应用和实际验收分别留痕。本页覆盖 0.1.19.0 RC1 发行准备；实际安装包与验证身份以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不能把主干能力视为旧 RC3 安装包已有功能。发行与运行身份见 [HANDOVER](../HANDOVER.md)，历史验收见 [验证记录](verification.md)。
+Aide 由 Go 服务、嵌入式浏览器 UI、工具运行时及按平台配置的原生桥接组成。浏览器和桌面壳共享后端，模型回答、工具执行、文件应用和实际验收分别留痕。本页覆盖 0.1.19.0 RC2 发行准备；实际安装包与验证身份以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不能把主干能力视为旧 RC3 安装包已有功能。发行与运行身份见 [HANDOVER](../HANDOVER.md)，历史验收见 [验证记录](verification.md)。
 
 超长会话、摘要压缩、项目记忆及工业使用边界见[超长对话与工业复杂任务支持说明](industrial-long-conversation-support.md)。
 

@@ -58,6 +58,7 @@ COPY scripts/stage-third-party-licenses.py ./scripts/stage-third-party-licenses.
 RUN python3 scripts/stage-third-party-licenses.py /opt/aide/licenses
 COPY plugins/testdata ./plugins/testdata
 COPY scripts/office ./scripts/office
+COPY scripts/ci/public-plugins.lock.json ./scripts/ci/public-plugins.lock.json
 COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs
 COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
 # Fail the build before shipping a page whose application script cannot parse.
