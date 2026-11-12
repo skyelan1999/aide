@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "pages": 9,
+  "pdfBytes": 105019538,
+  "attachments": {
+    "a.bin": {
+      "bytes": 52428800,
+      "sha256": "5b84ac4414574cbdf8ccb4b1db31cb66a3c4ae829a1cacd349e1371276f86d4e"
+    },
+    "b.bin": {
+      "bytes": 52428800,
+      "sha256": "3094db7314ebb2b85299879e333a19250a8236e4d12f3f0245c179e53e9c6e03"
+    }
+  },
+  "searchableText": true,
+  "independentImage": [
+    1024,
+    512
+  ],
+  "inputMeaning": "100 MiB aggregate random binary attachments plus small visible mixed Markdown; not 100 MiB of visible plain text"
+}

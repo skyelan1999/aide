@@ -1,0 +1,182 @@
+[
+  {
+    "mode": "rgb-gray",
+    "status": "PASS",
+    "options": {
+      "maxImageSize": 16777216,
+      "canvasMaxAreaInBytes": 33554432
+    },
+    "imageOps": [
+      "paintImageXObject"
+    ],
+    "imageObjects": [
+      {
+        "id": "img_p0_1",
+        "pixel": null,
+        "empty": false,
+        "width": 4,
+        "height": 4,
+        "bytes": 64
+      }
+    ],
+    "pages": 1,
+    "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+    "expectedPixel": [
+      255,
+      255,
+      255,
+      255
+    ],
+    "messages": []
+  },
+  {
+    "mode": "gray-rgb",
+    "status": "PASS",
+    "options": {
+      "maxImageSize": 16777216,
+      "canvasMaxAreaInBytes": 33554432
+    },
+    "imageOps": [
+      "paintImageXObject"
+    ],
+    "imageObjects": [
+      {
+        "id": "img_p0_1",
+        "pixel": null,
+        "empty": false,
+        "width": 4,
+        "height": 4,
+        "bytes": 64
+      }
+    ],
+    "pages": 1,
+    "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+    "expectedPixel": [
+      128,
+      0,
+      0,
+      255
+    ],
+    "messages": []
+  },
+  {
+    "mode": "rgba-rgb",
+    "status": "PASS",
+    "options": {
+      "maxImageSize": 16777216,
+      "canvasMaxAreaInBytes": 33554432
+    },
+    "imageOps": [
+      "paintImageXObject"
+    ],
+    "imageObjects": [
+      {
+        "id": "img_p0_1",
+        "pixel": null,
+        "empty": false,
+        "width": 4,
+        "height": 4,
+        "bytes": 64
+      }
+    ],
+    "pages": 1,
+    "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+    "expectedPixel": [
+      255,
+      0,
+      0,
+      255
+    ],
+    "messages": []
+  },
+  {
+    "mode": "auto",
+    "status": "PASS",
+    "options": {
+      "maxImageSize": 16777216,
+      "canvasMaxAreaInBytes": 33554432
+    },
+    "imageOps": [
+      "paintImageXObject"
+    ],
+    "imageObjects": [
+      {
+        "id": "img_p0_1",
+        "pixel": null,
+        "empty": false,
+        "width": 4,
+        "height": 4,
+        "bytes": 64
+      }
+    ],
+    "pages": 1,
+    "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+    "expectedPixel": [
+      255,
+      0,
+      0,
+      255
+    ],
+    "messages": []
+  },
+  {
+    "mode": "alpha",
+    "status": "PASS",
+    "options": {
+      "maxImageSize": 16777216,
+      "canvasMaxAreaInBytes": 33554432
+    },
+    "imageOps": [
+      "paintImageXObject"
+    ],
+    "imageObjects": [
+      {
+        "id": "img_p0_1",
+        "pixel": null,
+        "empty": false,
+        "width": 4,
+        "height": 4,
+        "bytes": 64
+      }
+    ],
+    "pages": 1,
+    "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+    "expectedPixel": [
+      255,
+      0,
+      0,
+      255
+    ],
+    "messages": []
+  },
+  {
+    "mode": "pipeline",
+    "status": "PASS",
+    "options": {
+      "maxImageSize": 16777216,
+      "canvasMaxAreaInBytes": 33554432
+    },
+    "imageOps": [
+      "paintImageXObject"
+    ],
+    "imageObjects": [
+      {
+        "id": "img_p0_1",
+        "pixel": null,
+        "empty": false,
+        "width": 4,
+        "height": 4,
+        "bytes": 64
+      }
+    ],
+    "pages": 1,
+    "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+    "expectedPixel": [
+      255,
+      0,
+      0,
+      255
+    ],
+    "messages": []
+  }
+]

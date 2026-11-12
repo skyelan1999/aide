@@ -1675,6 +1675,14 @@
         "node",
         "scripts/sync_pdf_jpx_alpha.cjs",
         "--check"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-native-fixes.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-packet-borrow.test.cjs"
       ]
     ],
     "full": [

@@ -1,0 +1,10 @@
+[
+  {
+    "sha256": "46b308b55777d4dbf96dc3a7907dce0692d874139e5e621e024feb2b552ccbd2",
+    "compiler": "emscripten/emsdk@sha256:d04ab749bef080e69c2d92839f17bab5324d1ac89197faa1ced55fa245ee6118"
+  },
+  {
+    "sha256": "46b308b55777d4dbf96dc3a7907dce0692d874139e5e621e024feb2b552ccbd2",
+    "compiler": "emscripten/emsdk@sha256:d04ab749bef080e69c2d92839f17bab5324d1ac89197faa1ced55fa245ee6118"
+  }
+]

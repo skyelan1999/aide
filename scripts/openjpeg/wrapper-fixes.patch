@@ -1,0 +1,65 @@
+diff --git a/src/decoder.c b/src/decoder.c
+index 32e4f45..dc6e51b 100644
+--- a/src/decoder.c
++++ b/src/decoder.c
+@@ -102,10 +102,10 @@ static OPJ_BOOL upsample_component(const opj_image_t *image,
+ 
+   OPJ_INT32 *data =
+       opj_image_data_alloc((OPJ_SIZE_T)width * height * sizeof(OPJ_INT32));
+-  OPJ_UINT32 *x_indices = malloc(width * sizeof(OPJ_UINT32));
++  OPJ_UINT32 *x_indices = opj_image_data_alloc(width * sizeof(OPJ_UINT32));
+   if (unlikely(!data || !x_indices)) {
+     opj_image_data_free(data);
+-    free(x_indices);
++    opj_image_data_free(x_indices);
+     return OPJ_FALSE;
+   }
+ 
+@@ -131,7 +131,7 @@ static OPJ_BOOL upsample_component(const opj_image_t *image,
+       dst[x] = src[x_indices[x]];
+     }
+   }
+-  free(x_indices);
++  opj_image_data_free(x_indices);
+ 
+   opj_image_data_free(comp->data);
+   comp->data = data;
+@@ -305,6 +305,14 @@ int EMSCRIPTEN_KEEPALIVE jp2_decode(OPJ_UINT8 *data, OPJ_SIZE_T data_size,
+ 
+   if (!pdf_is_indexed_colormap) {
+     for (int i = 0; i < numcomps; i++) {
++      /* Display-normalize signed grayscale before precision narrowing. */
++      if (image->numcomps <= 2 && image->comps[i].sgnd) {
++        opj_image_comp_t *comp = &image->comps[i];
++        const OPJ_INT64 midpoint = (OPJ_INT64)1 << (comp->prec - 1);
++        for (OPJ_SIZE_T j = 0; j < (OPJ_SIZE_T)comp->w * comp->h; ++j)
++          comp->data[j] = (OPJ_INT32)((OPJ_INT64)comp->data[j] + midpoint);
++        comp->sgnd = 0;
++      }
+       scale_component(&image->comps[i], 8);
+     }
+   }
+diff --git a/src/myjs.js b/src/myjs.js
+index c602639..0f4a9bf 100644
+--- a/src/myjs.js
++++ b/src/myjs.js
+@@ -24,6 +24,19 @@
+  */
+ 
+ mergeInto(LibraryManager.library, {
++  aideAllocationCheck(bytes, pointer, after) {
++    bytes >>>= 0;
++    if (!after) {
++      Module.aideAllocationBytes = (Module.aideAllocationBytes || 0) + bytes;
++      if (Module.aideAllocationBytes > 268435456) {
++        Module.aideAllocationFailed = true;
++        throw new Error("OpenJPEG allocation budget exceeded");
++      }
++    } else if (bytes && !pointer) {
++      Module.aideAllocationFailed = true;
++      throw new Error("OpenJPEG native allocation failed");
++    }
++  },
+   jsPrintWarning: function (message_ptr) {
+     const message = UTF8ToString(message_ptr);
+     (Module.warn || console.warn)(`OpenJPEG: ${message}`);

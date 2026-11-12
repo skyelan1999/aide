@@ -23,3 +23,7 @@ body.querySelectorAll=selector=>selector==='table'?[{...table,rows:[row([100,100
 const wide=vm.runInContext('vectorPdfDefinition(body)',context);
 assert.equal(wide.pageOrientation,'landscape','wide tables use landscape pages');
 console.log('PASS: vector PDF table proportions, repeat headers, wide-table layout, CSS colors and Chinese font');
+
+const attached=vm.runInContext("vectorPdfDefinition(body,[{name:'sample.bin',dataUrl:'data:application/octet-stream;base64,AA==',index:0}])",context);
+assert.equal(attached.content.at(-1).columns[1].attachment.hidden,false,'embedded files must be discoverable in reader attachment panels');
+assert.equal(attached.content.at(-1).columns[1].attachment.relationship,'Data');
