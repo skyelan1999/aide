@@ -38,21 +38,17 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Pre-release scoped verification passed: exact public ZIP/SSH/race cases, four changed-market plugin functions, context/index regressions, current source CI, real native Windows AMD64/ARM64 build/UI and all 26 commands across Windows/PowerShell and macOS ARM/Intel hosts. Clean-main full/release-check and exact-tag full Delivery remain mandatory release-stage gates and are not claimed complete. Reduced COPY-context before/after race probes pass for both Dockerfiles; no assertion or required check removed. RC2 clean-main/tagged full and Delivery are still required.",
+      "summary": "RC2 exact-commit local full (340 commands), complete dual-native candidate/race/vet/public-package/privacy/import checks, 48 formal browser cells on attempt 2, three native hosts, Windows desktop cross-build/UI, clean Linux lifecycle and public asset verification passed. Conditional skips and observed WebKit failure/replays are recorded explicitly.",
       "evidence": [
-        "docs/reviews/2026-11-12-release-preparation/plugin-ssh.json",
-        "docs/reviews/2026-11-12-release-preparation/changed-market-functions.json",
-        "docs/reviews/2026-11-12-release-preparation/context-862.json",
-        "docs/reviews/2026-11-12-release-preparation/index-865.json",
-        "docs/reviews/2026-11-12-release-preparation/native-final.json",
-        "docs/reviews/2026-11-12-release-preparation/build-inputs-869.json"
+        "docs/reviews/2026-11-12-release-preparation/publication-rc2.json"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Refreshed Chinese/English installation, migration, current entry guides, architecture/whitepaper, plugin/SSH/PDF/market docs and release notes; dated evidence preserved.",
+      "summary": "Updated current Chinese/English product, installation, migration, runtime and architecture docs; recorded actual RC2 prerelease identity and the preserved #871 failure, subsequent passes and limits. Historical reports/tags/older releases remain preserved.",
       "evidence": [
-        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
+        "docs/reviews/2026-11-12-release-preparation/documentation-audit.json",
+        "docs/reviews/2026-11-12-release-preparation/publication-rc2.json"
       ]
     },
     "cleanup": {
@@ -63,17 +59,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "SQLite/StarLink public releases and market verified. RC1 Delivery failed the mandatory Docker test layer on both architectures; no Aide Release created. Keep RC1 tag and use version.sh patch for RC2, with fresh full/release-check and full Delivery.",
+      "status": "pass",
+      "summary": "Published one Aide prerelease v0.1.19.0-RC2 at a9f8f412 with seven verified public assets. SQLite 1.0.3 and StarLink 0.1.6 stable releases and market #38 are public; 32 public repo release tags match the frozen catalog. RC1 remains an unpublished failed-candidate tag. No production deployment or installed-plugin upgrade.",
       "evidence": [
-        "docs/reviews/2026-11-12-release-preparation/market-live.json",
-        "docs/reviews/2026-11-12-release-preparation/build-inputs-869.json"
+        "docs/reviews/2026-11-12-release-preparation/publication-rc2.json",
+        "docs/reviews/2026-11-12-release-preparation/market-live.json"
       ]
     }
   },
   "release_authorization": "User: 全部该release的release，aide把文档全面更新，做一次release; added 该在市场更新的也更新 (2026-11-12 Asia/Shanghai).",
   "rollback": "Preserve existing Releases, tags, ZIPs, runtime images, data and configuration. If promotion fails, keep the new release draft and current published catalog/version available; market rollback reverts only new listing promotion.",
-  "handoff": "Merge reviewed #869 build-input repair and RC2 docs; clean main full/release-check; version.sh patch to RC2; exact tagged full/release-check; push and full Delivery; verify actual public assets. No production restart.",
+  "handoff": "Release and market publication complete. Use the migration guide to install/activate RC2 explicitly; the maintainer production service and installed plugins were not upgraded. #869 is verified fixed; #871 is temporarily closed after two exact-source 48-cell passes, root cause unknown. Keep prior release images/data and original user worktree changes.",
   "operator": "skyelan1999",
   "release_target": "v0.1.19.0-RC2"
 }

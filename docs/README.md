@@ -1,6 +1,6 @@
 # Aide 文档中心
 
-维护日期：2026-11-12。当前说明对照源码 `05e0b8a7`，覆盖 `0.1.19.0 RC2` 发行准备；实际公开状态与附件见 [Releases](https://github.com/skyelan1999/aide/releases)。本轮新增能力不视为旧 RC3 安装包已有功能。
+维护日期：2026-11-12。[v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)已公开，发行源码为 `a9f8f412`；实际附件与摘要见 Release，[发布回执](reviews/2026-11-12-release-preparation/publication-rc2.json)记录验收与限制。升级见[使用与迁移](release-guide-0.1.19.md)，本轮新增能力不视为旧 RC3 安装包已有功能。
 
 ## 使用 Aide
 

@@ -1,0 +1,1922 @@
+{
+  "status": "fail",
+  "commit": "a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b",
+  "cases": [
+    {
+      "id": "chromium-zh-CN-blue-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-0/runs/approval-0/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-blue-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-1/runs/approval-1/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-blue-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-2/runs/approval-2/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-blue-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-3/runs/approval-3/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-comfort-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-4/runs/approval-4/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-comfort-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-5/runs/approval-5/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-comfort-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-6/runs/approval-6/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-zh-CN-comfort-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-7/runs/approval-7/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-blue-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-8/runs/approval-8/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-blue-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-9/runs/approval-9/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-blue-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-10/runs/approval-10/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-blue-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-11/runs/approval-11/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-comfort-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-12/runs/approval-12/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-comfort-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-13/runs/approval-13/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-comfort-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-14/runs/approval-14/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "chromium-en-comfort-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "153.0.8010.12",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-15/runs/approval-15/events",
+          "method": "GET",
+          "error": "net::ERR_ABORTED",
+          "phase": "initial",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-blue-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-16/runs/approval-16/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-blue-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-17/runs/approval-17/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/sessions/b7d38d73d0698f366c8ca8303337e87f",
+          "method": "PATCH",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/context-preview",
+          "method": "POST",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-blue-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-18/runs/approval-18/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-blue-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-19/runs/approval-19/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-comfort-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-20/runs/approval-20/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/favicon.svg",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 2
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-comfort-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-21/runs/approval-21/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-comfort-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-22/runs/approval-22/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-zh-CN-comfort-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-23/runs/approval-23/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-blue-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-24/runs/approval-24/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-blue-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-25/runs/approval-25/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-blue-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-26/runs/approval-26/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/favicon.svg",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 2
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-blue-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-27/runs/approval-27/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/sessions/38def36722e3fa42287ac57dc35a3743",
+          "method": "PATCH",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/context-preview",
+          "method": "POST",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-comfort-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-28/runs/approval-28/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-comfort-light-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-29/runs/approval-29/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/context-preview",
+          "method": "POST",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/sessions/11bb7e91f2a738457f5eccc27af33594",
+          "method": "PATCH",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-comfort-dark-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-30/runs/approval-30/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/messages/state",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "firefox-en-comfort-dark-390",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "155.0",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-31/runs/approval-31/events",
+          "method": "GET",
+          "error": "NS_ERROR_ABORT",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "NS_BINDING_ABORTED",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": []
+    },
+    {
+      "id": "webkit-zh-CN-blue-light-1440",
+      "status": "pass",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate",
+        "chat sends both attachments, renders streamed Markdown and survives page reload",
+        "unauthenticated session access and workspace traversal rejected",
+        "composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded"
+      ],
+      "engineVersion": "26.6",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-32/runs/approval-32/events",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/sessions/eab3d2986d679894591e81006cd632ad/runs/020a5c46f5b944b522d74c8b00362286/events",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "reload",
+          "documentGeneration": 1
+        }
+      ],
+      "navigationCancellations": [
+        {
+          "phase": "reload",
+          "documentGeneration": 1,
+          "path": "/api/management-proposals",
+          "methods": [
+            "GET"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "webkit-zh-CN-blue-light-390",
+      "status": "fail",
+      "checks": [
+        "manual intent and original command; exact-round rejection reaches real backend",
+        "file drop and image paste upload and become actual attachments without model-name gate"
+      ],
+      "engineVersion": "26.6",
+      "browserCrash": false,
+      "failedRequests": [
+        {
+          "path": "/api/sessions/release-33/runs/approval-33/events",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/sessions/6a10c31a3edb7820f620c9b2a1a85a8a/runs/149b23790cc78b3a7ba1dfebe176ebcc/events",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "initial",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/files",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/api/events",
+          "method": "GET",
+          "error": "Load request cancelled",
+          "phase": "reload",
+          "documentGeneration": 1
+        },
+        {
+          "path": "/urdf-preview.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/local-mounts.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/ini.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/crash-monitor.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/themes/dark/tokens.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/app.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/themes/green.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/management.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/continuity.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/csharp.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/locales/en.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/sql.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-media.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-outline.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-history-manager.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/capabilities.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/crash-monitor.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/vim.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/json.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/docx-preview/docx-preview.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/erlang.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/nginx.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/management.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/yaml.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/groovy.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/marked.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/workbench-background.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/sanctum.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/kotlin.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/i18n.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/lock-cluster.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/markdown.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/conversation.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/async-action.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-workbench.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/themes/comfort.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/style.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/file-autosave.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-history.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/scala.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/matlab.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/recovery-transfer.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/assistant-memory.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/go.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/swift.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/dart.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/clojure.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/fsharp.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/assistant-live.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/javascript.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/macos.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/recovery-manager.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-file-preview.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/avatar-player.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/git-history.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/message-center.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/task-outcome.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/file-route.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-upgrade.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-export.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/text-editor.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/lua.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/haskell.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/assistant-memory.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/assistant-realtime.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/ruby.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/account-balance-pool.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-market.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/perl.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-diagrams.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/session-model-selection.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/file-types.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/themes/professional.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/workbench.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-workbench-tabs.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/keybindings.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/graphql.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/delimited-text.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/themes/modern.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-market.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/assistant-call.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/desktop-capture.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/dockerfile.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/typescript.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/rust.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/r.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/elixir.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/message-notifications.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-workbench.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/php.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/model-token-chart.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/highlight.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/parallel-chat.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/preview-safety.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/remote-access.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/xml.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/message-center.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/runtime-lifecycle.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/session-timeline.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/keybindings.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/protobuf.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/scss.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/assistant-call.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/apache.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/settings-init.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/python.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/markdown-code.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/staged-output.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/plugin-plans.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/session-review.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/css.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/docx-style-bridge.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/settings-navigation.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/session-plan.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/makefile.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/cmake.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/jszip.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/themes/light/tokens.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/cpp.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/session-review.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/experience.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/bash.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/java.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/file-transfers.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/experience.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/file-diff.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/vendor/highlight.js/languages/less.min.js",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        },
+        {
+          "path": "/remote-access.css",
+          "method": "GET",
+          "error": "WebKit encountered an internal error",
+          "phase": "reload",
+          "documentGeneration": 2
+        }
+      ],
+      "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-session-id=\"6a10c31a3edb7820f620c9b2a1a85a8a\"]')\n",
+      "probes": [
+        {
+          "path": "/healthz",
+          "status": 200,
+          "bytes": 164
+        },
+        {
+          "path": "/style.css",
+          "status": 200,
+          "bytes": 212358
+        },
+        {
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 834633
+        }
+      ],
+      "visibleText": "aaide.LOCAL  新建会话 N\n工作空间\naide workspace/workspace · 本地  小秘\n会话\n会话消耗—\nDocker 环境Python / Node.js / Git版本加载中…LOCAL\n点击锁定\n模型设置 未配置\na\n开始新的探索\n⌘ K\n连接中轨迹\n插件文件\n开放的 AI 创造空间\n让灵感，\n抵达未见之境。\n\n连接模型、工具与知识，让探索成为可审阅的成果。\n从一份文件出发，构建属于你的世界。\n\nOPEN SOURCE·LOCAL FIRST\n理解项目梳理架构与代码逻辑 ↗构建功能从计划到可审阅的修改 ↗检查代码发现问题与改进空间 ↗深入研究多角度分析 · 可验证结论 ↗问题解决根因分析 · RCA 图 · 报告 ↗\n01 选择文件→02 描述任务→03 审阅结果\n↓\n小秘…✓讲解停止\n‹❚❚›0 / 0结束\n任务描述\n\n↑\n策略 · 默认\n并行1x\n2x\n3x\n4x\n5x\n10x\n对话PWAI 工作流\n需求设计实施验证问题分析\n排队Shift + Enter 发送 · Enter 换行\n组成明细 ▾\n先配置模型，即可开始真实 AI 对话附件仅在发送任务时提交给模型\n命令面板 本地展开 ＋\n命令在当前工作区执行；SSH 可启用交互终端。\n❯交互终端运行停止\n项目文件\n工作目录 RW引用\n来源\n\nAIDE SETTINGS\n设置\n\n外观偏好仅在当前设备生效。\n\n插件↻×\n已安装市场\n＋ 上传\n已启用插件的能力声明\nWORKSPACE\n工作空间配置\n×\n工作空间\n本地SSH · SFTP\n本机路径（电脑上的绝对路径，如 /Users/you/Project；留空 = /workspace）\n浏览…\n主机\n端口用户名\n远程目录\n密码密钥无\n密码\n粘贴私钥选择文件\n\n浏览…\n仅引用路径导入加密副本\n私钥口令（passphrase，可选）\n\n账户密码（解锁凭证保险库）\n\n最近使用（点击挂载）\n自动系统文档\n文档路径（本机绝对路径；留空 = /context）\n本地目录\n工作空间 (SFTP) 浏览…\n最近使用（点击挂载）\n缓存\n缓存放置目录（其下创建 .cache；留空 = 工作区 .cache）\n本地目录\n工作空间 (SFTP) 浏览…\n 清除已保存的 SSH 密码与密钥\n最近使用（点击挂载）\n测试连接\n保存配置\nAuto\n简体中文\nEnglish\nFILE VIEW\n—只读\n\n\nTRAJECTORY\n会话轨迹\n历史会话评审调用记录任务与规划\nMarkdownJSON\n导出×\n\n历史记录会话内容；会话评审展示已记录的状态与计时；输入与输出整理任务和成果。"
+    }
+  ],
+  "limits": [
+    "Synthetic provider, no paid inference",
+    "Linux WebKit does not prove native Safari or OS permission grants"
+  ]
+}

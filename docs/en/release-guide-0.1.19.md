@@ -1,8 +1,8 @@
 # 0.1.19.0 RC2 usage and migration
 
-RC1 remains an unpublished candidate source tag. RC2 restores the frozen marketplace lock in Docker test inputs and requires fresh validation. RC2 or newer satisfies the paired plugins' declared minimum host RC1.
+RC1 remains an unpublished candidate source tag. RC2 restores the frozen marketplace lock in Docker test inputs and passed fresh validation. RC2 or newer satisfies the paired plugins' declared minimum host RC1.
 
-[简体中文](../release-guide-0.1.19.md). Reviewed from source baseline `05e0b8a7` on 2026-11-12. Actual publication, commit, architectures and hashes belong to the matching GitHub Release and `RELEASE-VALIDATION.json`; preparation notes are not publication receipts.
+[简体中文](../release-guide-0.1.19.md). [v0.1.19.0-RC2 prerelease](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2) was published on 2026-11-12 from `a9f8f412`. The seven Release assets include architectures, checksums and full validation reports; see the [publication receipt](../reviews/2026-11-12-release-preparation/publication-rc2.json).
 
 ## Update order
 
@@ -39,4 +39,8 @@ JPEG2000 fallback is rebuilt from pinned source/patch/compiler inputs, with repr
 
 ## Evidence and delivery
 
-See [decoder/PDF](../reviews/2026-11-12-final-native/README.md), [SSH/plugin matrix](../reviews/2026-11-12-final-ssh/README.md), [directory bridge](../reviews/2026-11-12-directory-object-bridge/README.md) and [full Delivery contract](../testing/release-validation.md). Those source checks do not replace this release's exact-commit native architectures, 48-browser-cell matrix, current public packages, host and clean-install lifecycle reports. Publication does not deploy the maintainer's production installation. Keep backups and rollback assets.
+See [decoder/PDF](../reviews/2026-11-12-final-native/README.md), [SSH/plugin matrix](../reviews/2026-11-12-final-ssh/README.md), [directory bridge](../reviews/2026-11-12-directory-object-bridge/README.md) and [full Delivery contract](../testing/release-validation.md). The exact-source local full profile passed 340 commands. All ten required jobs in [Delivery attempt 2](https://github.com/skyelan1999/aide/actions/runs/43208363951/attempts/2) passed, including both native runtime/SDK architectures, race/vet, public packages, three native hosts, 48 browser cells and isolated clean Linux lifecycle. The 32 public entries include one retired package with expected refusal; conditional skips are explicit in the reports.
+
+[#871](https://github.com/skyelan1999/aide/issues/871) recorded an internal resource-request error in one narrow WebKit 26.6 cell: the first attempt ran 34 cells, with 33 passes, one failure and 14 remaining cells not run. Two subsequent unchanged-source runs each passed all 48 cells, with no application, assertion or engine change. The [original report](../reviews/2026-11-12-release-preparation/webkit-871-attempt1.json) and [failure screenshot](../reviews/2026-11-12-release-preparation/webkit-871-failure.png) remain available. It is temporarily closed as unreproduced, with root cause unknown; this is not a claimed product crash fix. Linux WebKit and synthetic providers do not establish native Safari, OS permissions or paid-model acceptance.
+
+Publication does not upgrade the maintainer's production installation or installed plugins. Keep backups and rollback assets.

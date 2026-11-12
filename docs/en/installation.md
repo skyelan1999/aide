@@ -2,7 +2,7 @@
 
 [简体中文](../installation.md) · **English**
 
-Reviewed against source `05e0b8a7` on 2026-11-12 for the `0.1.19.0 RC2` release preparation. Actual publication, architectures and hashes are determined by the matching [GitHub Release](https://github.com/skyelan1999/aide/releases) and its `RELEASE-VALIDATION.json`. A main-branch feature does not establish support in an older package.
+[v0.1.19.0-RC2 prerelease](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2) was published on 2026-11-12 from `a9f8f412`. Verify architecture, SHA-256 and `RELEASE-VALIDATION.json` in that Release; the [publication receipt](../reviews/2026-11-12-release-preparation/publication-rc2.json) records verification scope. Later main-branch features do not establish support in this or an older package.
 
 ## Choose a package
 

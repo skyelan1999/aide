@@ -1,0 +1,258 @@
+[
+  {
+    "id": "ali-bailian-supporter",
+    "marketVersion": "0.1.2",
+    "frozenLatestTag": "v0.1.2",
+    "actualLatestTag": "v0.1.2",
+    "publishedAt": "2026-10-23T04:00:27Z",
+    "status": "match"
+  },
+  {
+    "id": "almanac",
+    "marketVersion": "1.1.0",
+    "frozenLatestTag": "v1.1.0",
+    "actualLatestTag": "v1.1.0",
+    "publishedAt": "2026-10-21T05:22:03Z",
+    "status": "match"
+  },
+  {
+    "id": "archive-tools",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-20T03:21:15Z",
+    "status": "match"
+  },
+  {
+    "id": "auto-ai-model-router",
+    "marketVersion": "0.1.2",
+    "frozenLatestTag": "v0.1.2",
+    "actualLatestTag": "v0.1.2",
+    "publishedAt": "2026-10-23T04:41:25Z",
+    "status": "match"
+  },
+  {
+    "id": "browser-control",
+    "marketVersion": "1.1.0",
+    "frozenLatestTag": "v1.1.0",
+    "actualLatestTag": "v1.1.0",
+    "publishedAt": "2026-10-20T03:07:18Z",
+    "status": "match"
+  },
+  {
+    "id": "current-time",
+    "marketVersion": "1.1.0",
+    "frozenLatestTag": "v1.1.0",
+    "actualLatestTag": "v1.1.0",
+    "publishedAt": "2026-10-21T05:21:46Z",
+    "status": "match"
+  },
+  {
+    "id": "deepseek-supporter",
+    "marketVersion": "0.1.0",
+    "frozenLatestTag": "v0.1.0",
+    "actualLatestTag": "v0.1.0",
+    "publishedAt": "2026-10-26T02:35:53Z",
+    "status": "match"
+  },
+  {
+    "id": "environment-guide",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:28:49Z",
+    "status": "match"
+  },
+  {
+    "id": "feedback",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:16:37Z",
+    "status": "match"
+  },
+  {
+    "id": "goal",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:02:15Z",
+    "status": "match"
+  },
+  {
+    "id": "lunar-calendar",
+    "marketVersion": "1.1.0",
+    "frozenLatestTag": "v1.1.0",
+    "actualLatestTag": "v1.1.0",
+    "publishedAt": "2026-10-21T05:21:40Z",
+    "status": "match"
+  },
+  {
+    "id": "markdown-history",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-20T03:16:34Z",
+    "status": "match"
+  },
+  {
+    "id": "office",
+    "marketVersion": "1.1.0",
+    "frozenLatestTag": "v1.1.0",
+    "actualLatestTag": "v1.1.0",
+    "publishedAt": "2026-10-20T04:02:51Z",
+    "status": "match"
+  },
+  {
+    "id": "plan",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:02:18Z",
+    "status": "match"
+  },
+  {
+    "id": "plugin-authoring",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-20T02:51:32Z",
+    "status": "match"
+  },
+  {
+    "id": "rviz",
+    "marketVersion": "0.1.1",
+    "frozenLatestTag": "v0.1.1",
+    "actualLatestTag": "v0.1.1",
+    "publishedAt": "2026-10-28T05:03:41Z",
+    "status": "match"
+  },
+  {
+    "id": "skill",
+    "marketVersion": "1.1.0",
+    "frozenLatestTag": "v1.1.0",
+    "actualLatestTag": "v1.1.0",
+    "publishedAt": "2026-10-19T16:02:17Z",
+    "status": "match"
+  },
+  {
+    "id": "sqlite",
+    "marketVersion": "1.0.3",
+    "frozenLatestTag": "v1.0.3",
+    "actualLatestTag": "v1.0.3",
+    "publishedAt": "2026-11-12T05:36:23Z",
+    "status": "match"
+  },
+  {
+    "id": "starlink",
+    "marketVersion": "0.1.6",
+    "frozenLatestTag": "v0.1.6",
+    "actualLatestTag": "v0.1.6",
+    "publishedAt": "2026-11-12T05:36:29Z",
+    "status": "match"
+  },
+  {
+    "id": "step-viewer",
+    "marketVersion": "0.1.1",
+    "frozenLatestTag": "v0.1.2",
+    "actualLatestTag": "v0.1.2",
+    "publishedAt": "2026-10-29T02:53:49Z",
+    "status": "match"
+  },
+  {
+    "id": "subagent",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:19:17Z",
+    "status": "match"
+  },
+  {
+    "id": "terminal",
+    "marketVersion": "1.8.1",
+    "frozenLatestTag": "v1.8.1",
+    "actualLatestTag": "v1.8.1",
+    "publishedAt": "2026-11-11T08:12:06Z",
+    "status": "match"
+  },
+  {
+    "id": "todo",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:13:26Z",
+    "status": "match"
+  },
+  {
+    "id": "tts-tools",
+    "marketVersion": "0.1.0",
+    "frozenLatestTag": "v0.1.0",
+    "actualLatestTag": "v0.1.0",
+    "publishedAt": "2026-10-23T05:03:57Z",
+    "status": "match"
+  },
+  {
+    "id": "video-preview",
+    "marketVersion": "0.1.0",
+    "frozenLatestTag": "v0.1.1",
+    "actualLatestTag": "v0.1.1",
+    "publishedAt": "2026-10-29T02:53:47Z",
+    "status": "match"
+  },
+  {
+    "id": "workflow",
+    "marketVersion": "1.0.0",
+    "frozenLatestTag": "v1.0.0",
+    "actualLatestTag": "v1.0.0",
+    "publishedAt": "2026-10-19T16:25:18Z",
+    "status": "match"
+  },
+  {
+    "id": "file-preview",
+    "marketVersion": "0.1.0",
+    "frozenLatestTag": "v0.1.0",
+    "actualLatestTag": "v0.1.0",
+    "publishedAt": "2026-10-28T08:55:08Z",
+    "status": "match"
+  },
+  {
+    "id": "codex-bridge",
+    "marketVersion": "0.4.1",
+    "frozenLatestTag": "v0.4.1",
+    "actualLatestTag": "v0.4.1",
+    "publishedAt": "2026-10-31T03:25:24Z",
+    "status": "match"
+  },
+  {
+    "id": "openai-supporter",
+    "marketVersion": "0.1.0",
+    "frozenLatestTag": "v0.1.0",
+    "actualLatestTag": "v0.1.0",
+    "publishedAt": "2026-10-30T05:05:16Z",
+    "status": "match"
+  },
+  {
+    "id": "computer-control",
+    "marketVersion": "1.2.0",
+    "frozenLatestTag": "v1.2.0",
+    "actualLatestTag": "v1.2.0",
+    "publishedAt": "2026-10-28T01:08:09Z",
+    "status": "match"
+  },
+  {
+    "id": "mapcanvas",
+    "marketVersion": "0.2.1",
+    "frozenLatestTag": "v0.2.1",
+    "actualLatestTag": "v0.2.1",
+    "publishedAt": "2026-11-11T05:32:03Z",
+    "status": "match"
+  },
+  {
+    "id": "professional-resume",
+    "marketVersion": "0.1.1",
+    "frozenLatestTag": "v0.1.1",
+    "actualLatestTag": "v0.1.1",
+    "publishedAt": "2026-11-11T15:52:55Z",
+    "status": "match"
+  }
+]
