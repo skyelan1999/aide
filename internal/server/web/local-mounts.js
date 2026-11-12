@@ -10,11 +10,12 @@
   const refresh=button('刷新',()=>run(load)),add=button('添加目录',()=>{entries.push({id:'dir-'+Date.now().toString(36)+'-'+(++serial),name:t('本地目录'),path:'',readOnly:true});paint();});
   const save=button('保存配置',()=>run(async()=>{const data=await api('/local-mounts',{method:'PUT',body:JSON.stringify({revision:snapshot.revision,config:{version:1,entries}})});if(!live())return;snapshot=data;entries=data.config.entries;paint();notice.textContent=t('配置已保存，应用并重启后生效。');}),'primary');
   const apply=button('应用并重启',()=>run(async()=>{if(!snapshot||!window.confirm(t('请先保存当前工作。应用目录配置会重新创建 Aide 容器，中断正在运行的会话和手机连接；还需在本机窗口确认。')))return;await request('apply');}));
-  actions.append(add,refresh,save,apply);box.append(intro,notice,list,actions);
+  const retryForwarders=button('重试局域网转发',()=>run(()=>request('retry-forwarders')));retryForwarders.dataset.native='true';
+  actions.append(add,refresh,save,apply,retryForwarders);box.append(intro,notice,list,actions);
   async function run(fn){if(busy||blocked())return;busy=true;toggle();try{await fn();}catch(e){if(live())notice.textContent=e.message;}finally{busy=false;if(live())toggle();}}
   const unsaved=()=>snapshot&&JSON.stringify(entries)!==JSON.stringify(snapshot.config.entries);
   function changed(){toggle();notice.textContent=t('有未保存的目录配置，请先保存。');}
-  function toggle(){for(const b of box.querySelectorAll('button,input,select'))b.disabled=busy||(b.dataset.native==='true'&&!snapshot?.hostReady);save.disabled=busy||!snapshot;add.disabled=busy||entries.length>=16;apply.disabled=busy||!snapshot?.hostReady||!snapshot?.pending||unsaved();}
+  function toggle(){for(const b of box.querySelectorAll('button,input,select'))b.disabled=busy||(b.dataset.native==='true'&&!snapshot?.hostReady);save.disabled=busy||!snapshot;add.disabled=busy||entries.length>=16;apply.disabled=busy||!snapshot?.hostReady||!snapshot?.pending||unsaved();retryForwarders.hidden=!snapshot?.response?.warning;retryForwarders.disabled=busy||!snapshot?.hostReady||unsaved();}
   async function load(){const data=await api('/local-mounts');if(!live())return;snapshot=data;entries=data.config.entries.map(e=>({...e}));paint();}
   async function request(action,row){
    const req=await api('/local-mounts/action',{method:'POST',body:JSON.stringify({action,revision:snapshot.revision})});
@@ -26,13 +27,13 @@
     const reply=d.response;if(reply?.id!==req.id||reply.state==='running')continue;
     if(reply.error)throw Error(reply.error);
     if(row&&entries.includes(row)){row.path=reply.path;paint();notice.textContent=t('目录已选择，请保存配置。');}
-    else await load();return;
+    else {await load();if(reply.warning)notice.textContent=t(reply.warning);}return;
    }
    if(live())throw Error(t('等待本机操作超时，请刷新核对状态。'));
   }
   function paint(){
    list.replaceChildren();
-   notice.textContent=t(!snapshot?.hostReady?'本机目录服务未连接；配置可保存，下次使用新版启动器启动时应用。':snapshot.pending?'配置与实际挂载不同，保存后请应用并重启。':'当前目录配置已生效。');
+   notice.textContent=t(snapshot?.response?.warning||(!snapshot?.hostReady?'本机目录服务未连接；配置可保存，下次使用新版启动器启动时应用。':snapshot.pending?'配置与实际挂载不同，保存后请应用并重启。':'当前目录配置已生效。'));
    if(!entries.length)list.append(el('p','muted',t('尚未添加额外目录。原有工作区和引用不受影响。')));
    for(const row of entries){
     const card=el('article','local-mount-card'),name=el('input'),path=el('input'),access=el('select'),top=el('div','local-mount-row'),location=el('div','local-mount-row');

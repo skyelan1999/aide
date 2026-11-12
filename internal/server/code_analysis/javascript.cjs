@@ -1,16 +1,22 @@
 // Source-only AST extraction. Never require, import or evaluate workspace code.
 const files = JSON.parse(__AIDE_CODE_INPUT__), out = [];
 for (const file of files) {
-  const u = {file: file.id, language: 'JavaScript', package: '', symbols: [], calls: [], imports: [], diagnostics: [], events: [], requests: [], unresolvedWeb: [], webReferencesTruncated: false};
+  const u = {file: file.id, language: file.language || 'JavaScript', package: '', symbols: [], calls: [], imports: [], diagnostics: [], events: [], requests: [], unresolvedWeb: [], webReferencesTruncated: false};
   try {
     let tree;
-    try { tree = acorn.parse(file.text, {ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true}); }
-    catch (e) { tree = acorn.parse(file.text, {ecmaVersion: 'latest', sourceType: 'script', locations: true, allowHashBang: true}); }
+    if(file.language==='TypeScript'||/\.[jt]sx$/i.test(file.path||'')) {
+      const plugins=['estree'];if(file.language==='TypeScript')plugins.push('typescript');if(/x$/i.test(file.path||''))plugins.push('jsx');
+      tree=babelParser.parse(file.text,{sourceType:'unambiguous',plugins,attachComment:false,errorRecovery:false}).program;
+      if(/x$/i.test(file.path||''))u.diagnostics.push('JSX/TSX只提取声明；组件渲染不作为调用连线');
+    } else {
+      try { tree = acorn.parse(file.text, {ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true}); }
+      catch (e) { tree = acorn.parse(file.text, {ecmaVersion: 'latest', sourceType: 'script', locations: true, allowHashBang: true}); }
+    }
     const environments = new WeakMap(), symbolKeys = new WeakMap(), writes = [], pending = [], pendingEvents = [], globalMutations = new Set();
     const isFunction = n => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(n.type);
     function children(n, visit) {
       for (const [k, v] of Object.entries(n)) {
-        if (['loc', 'start', 'end', 'type'].includes(k)) continue;
+        if (['loc', 'start', 'end', 'type', 'comments', 'tokens', 'typeAnnotation', 'returnType', 'typeParameters', 'superTypeParameters', 'implements'].includes(k)) continue;
         if (Array.isArray(v)) { for (const c of v) if (c && typeof c.type === 'string') visit(c); }
         else if (v && typeof v.type === 'string') visit(v);
       }
@@ -36,6 +42,8 @@ for (const file of files) {
       return null;
     }
     function build(n, env, fn, parent = null) {
+      if(n.type==='TSModuleDeclaration')throw Error('TypeScript namespace declarations are not supported by the static binding extractor');
+      if(n.declare||n.type==='TSDeclareFunction'){if(n.id)bind(env,n.id.name,{kind:'value'});return;}
       let here = env, functionEnv = fn;
       if (n.type === 'FunctionDeclaration' && n.id) bind(env.functionBody ? fn : env, n.id.name, {kind: 'callable', node: n});
       if (n.type === 'ClassDeclaration' && n.id) bind(env, n.id.name, {kind: 'callable', node: n});
@@ -56,7 +64,7 @@ for (const file of files) {
           bind(n.kind === 'var' ? functionEnv : here, name, value);
         }
       }
-      if (n.type === 'ImportDeclaration') for (const s of n.specifiers) bind(here, s.local.name, {kind: 'import', path: n.source.value, name: s.type === 'ImportSpecifier' ? s.imported.name || s.imported.value : s.type === 'ImportDefaultSpecifier' ? 'default' : '*'});
+      if (n.type === 'ImportDeclaration') for (const s of n.specifiers) if(n.importKind!=='type'&&s.importKind!=='type')bind(here, s.local.name, {kind: 'import', path: n.source.value, name: s.type === 'ImportSpecifier' ? s.imported.name || s.imported.value : s.type === 'ImportDefaultSpecifier' ? 'default' : '*'});
       if (n.type === 'AssignmentExpression' || n.type === 'UpdateExpression') for (const name of names(n.left || n.argument)) writes.push([here, name]);
       if (n.type === 'AssignmentExpression' || n.type === 'UpdateExpression') {
         const target = n.left || n.argument;
@@ -207,6 +215,7 @@ for (const file of files) {
       webRecord(u.requests, {caller:scope, url, method, line:n.loc.start.line, column:n.loc.start.column+1});
     }
     function walk(n, scope = '', parent = null) {
+      if(n.declare||n.type==='TSDeclareFunction')return;
       let next = scope;
       const func = isFunction(n), cls = /^(ClassDeclaration|ClassExpression)$/.test(n.type);
       if (func || cls) {
@@ -216,7 +225,7 @@ for (const file of files) {
         u.symbols.push({key, parent: scope, name, kind: cls ? 'class' : parent?.type === 'MethodDefinition' ? 'method' : func && n.async ? 'async function' : 'function', line: n.loc.start.line, endLine: n.loc.end.line, signature: head.slice(0, 240), anonymous: !named});
         symbolKeys.set(n, key); next = key;
       }
-      if (n.type === 'ImportDeclaration') for (const s of n.specifiers) u.imports.push({alias: s.local.name, path: n.source.value, name: s.type === 'ImportSpecifier' ? s.imported.name || s.imported.value : s.type === 'ImportDefaultSpecifier' ? 'default' : '*'});
+      if (n.type === 'ImportDeclaration') for (const s of n.specifiers) if(n.importKind!=='type'&&s.importKind!=='type')u.imports.push({alias: s.local.name, path: n.source.value, name: s.type === 'ImportSpecifier' ? s.imported.name || s.imported.value : s.type === 'ImportDefaultSpecifier' ? 'default' : '*'});
       webEvidence(n, scope);
       if (n.type === 'CallExpression' || n.type === 'NewExpression') {
         const c = n.callee;

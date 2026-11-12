@@ -1,0 +1,73 @@
+{
+  "id": "remaining-issues-20261112",
+  "request": "剩下的issue也搞一下吧",
+  "baseline": "24a281998dd03ff01107a0ae912b8a22676a58ae",
+  "initial_status": "",
+  "acceptance": [
+    "Review every remaining open issue against current source and retained evidence.",
+    "Implement reproducible fixes, exercise relevant success/failure regressions, merge only after CI.",
+    "Record unresolved limitations honestly and apply authorized temporary closure only where reproduction evidence is unavailable.",
+    "Preserve user worktrees, installed packages, production services and credentials."
+  ],
+  "scope": [
+    "Current main implementation and regression tests for 67 remaining Aide issues",
+    "Public plugin fixes and integration where required",
+    "Per-issue GitHub comments/state and docs/reviews/2026-11-12-remaining-issues"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "67 open issues confirmed; operator skyelan1999; user authorizes continuing queue repairs and prior merge/closure workflow.",
+      "evidence": [
+        ".agent-state/remaining-open.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-issue evidence table distinguishes bounded preview fixes, source integration, native conformance work, and missing reproduction material.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/audit.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Checked SFTP mutations, helper/bridge locks, degraded mount recovery, AI visibility, TS/TSX parsing, build pins and JPX bounds/color/opacity/allocation fixes implemented. StarLink PR #14 merged as unreleased source.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "Focused/expanded Go and vet passed (final server suite 132.111s), helper/localmount tests passed, Windows helper cross-compilation passed. Actual SFTP protocol, TLS/Node daemon, owned Chromium and all 385 allocation faults passed. Final stable quick and PR CI receipts follow.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/README.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "All 67 issues individually classified: 48 ready completed, 1 temporary not_planned, 18 retained with exact gaps and reopening criteria.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/README.md",
+        "docs/reviews/2026-11-12-remaining-issues/audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Isolated worktrees; owned test service stopped. No user files, production service, installed package or unrelated worktree replaced. Raw logs ignored.",
+      "evidence": [
+        "docs/reviews/2026-11-12-remaining-issues/README.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source PR integration and authorized issue events follow only after required CI. No binary Release, installation, runtime image Delivery or production restart.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14"
+      ]
+    }
+  },
+  "release_authorization": "User authorizes source repair, PR review/merge and issue closure; binary release/deployment is outside this task.",
+  "rollback": "Revert source merge commits. Running installations and user data are unchanged.",
+  "handoff": "Retain the 18 concrete unresolved issues listed in audit.json. Public PR and issue events will record actual merge/closure receipts.",
+  "operator": "skyelan1999"
+}

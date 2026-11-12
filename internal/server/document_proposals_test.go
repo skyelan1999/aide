@@ -287,8 +287,11 @@ done
 	if err != nil || string(b) != "remote document" {
 		t.Fatalf("SFTP destination: %s %v", b, err)
 	}
-	b, _ = os.ReadFile(log)
-	if !strings.Contains(string(b), filepath.Join(remote, "report.md")) {
-		t.Fatal("source root not used")
+	if _, err := os.Stat(filepath.Join(a.workPath, "report.md")); !os.IsNotExist(err) {
+		t.Fatal("source proposal wrote into workspace instead of source root")
+	}
+	entries, err := os.ReadDir(remote)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("source write left staging files: %v %v", entries, err)
 	}
 }

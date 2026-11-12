@@ -1452,7 +1452,7 @@ func (a *App) createDirectory(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case "sftp":
-			if _, err := a.sftpBatchSource(src, "mkdir "+shellQuoteRemote(pathJoinRemote(src.Config.Path, newPath))+"\n"); err != nil {
+			if err := a.mutateSFTP(src.ID, sourceSocket(src.ID), nil, func(fs *transferFS) error { return fs.Mkdir(newPath) }); err != nil {
 				fail(w, 400, err)
 				return
 			}
@@ -2047,11 +2047,7 @@ func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, errors.New("已存在同名文件或文件夹"))
 			return
 		}
-		out, err := a.sftpBatch("rename " + shellQuoteRemote(a.workspaceRemotePath(body.Path)) + " " + shellQuoteRemote(a.workspaceRemotePath(newPath)) + "\n")
-		if err != nil || sftpCommandFailed(out) {
-			if err == nil {
-				err = errors.New(strings.TrimSpace(out))
-			}
+		if err := a.sftpRenameDirectory(a.workspaceRemotePath(body.Path), a.workspaceRemotePath(newPath)); err != nil {
 			fail(w, 400, err)
 			return
 		}

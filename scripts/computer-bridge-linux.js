@@ -58,7 +58,7 @@ async function handle(req, res) {
   if (!peerAllowed(req.socket.remoteAddress)) return reply(res, 403, { ok: false, error: '桥接服务仅接受本机和 Docker 私有网络请求' });
   if (req.headers.authorization !== `Bearer ${TOKEN}`) return reply(res, 401, { ok: false, error: '未授权' });
   const route = new URL(req.url, 'http://localhost').pathname;
-  if (req.method === 'GET' && route === '/healthz') return reply(res, 200, { ok: true, service: 'aide-linux-computer-bridge', platform: 'linux-x11', accessibilityInspection: false, permissions: { screenRecording: { required: false, granted: true, supported: true }, accessibility: { required: false, granted: false, supported: false } } });
+  if (req.method === 'GET' && route === '/healthz') return reply(res, 200, { ok: true, pid: process.pid, service: 'aide-linux-computer-bridge', platform: 'linux-x11', accessibilityInspection: false, permissions: { screenRecording: { required: false, granted: true, supported: true }, accessibility: { required: false, granted: false, supported: false } } });
   if (req.method !== 'POST' || !['/v1/inspect', '/v1/snapshot', '/v1/click', '/v1/type', '/v1/key'].includes(route)) return reply(res, 404, { ok: false, error: '不支持的电脑操作' });
   let input; try { input = await readBody(req); } catch (error) { return reply(res, 400, { ok: false, error: error.message }); }
   try {

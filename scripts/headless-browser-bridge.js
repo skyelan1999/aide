@@ -169,7 +169,7 @@ const server = http.createServer(async (req, res) => {
   if (!(peer === '::1' || peer.startsWith('127.') || peer.startsWith('192.168.65.') || /^172\.(1[6-9]|2\d|3[01])\./.test(peer))) return reply(res, 403, { ok: false, error: 'Local/Docker requests only' });
   if (token.length < 32 || req.headers.authorization !== `Bearer ${token}`) return reply(res, 401, { ok: false, error: 'Unauthorized' });
   if (req.method === 'GET' && req.url === '/healthz') {
-    try { await launch(); return reply(res, 200, { ok: true, service: 'aide-headless-browser', engine: 'chromium-headless', browserReady: true }); }
+    try { await launch(); return reply(res, 200, { ok: true, pid: process.pid, service: 'aide-headless-browser', engine: 'chromium-headless', browserReady: true }); }
     catch (error) { return reply(res, 503, { ok: false, error: error.message.slice(0, 500) }); }
   }
   if (req.method !== 'POST' || !['/v1/read', '/v1/navigate', '/v1/snapshot', '/v1/click', '/v1/fill', '/v1/scroll'].includes(req.url)) return reply(res, 404, { ok: false, error: 'Unsupported operation' });

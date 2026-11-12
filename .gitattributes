@@ -34,3 +34,7 @@ legal/third_party/** -text
 internal/server/web/vendor/** -text
 # Generated PlantUML prefix includes this first-party source verbatim.
 internal/server/web/plantuml-resource-helpers.js text eol=lf
+
+# Keep embedded parser notices byte-identical across host checkouts.
+internal/server/code_analysis/*-LICENSE -text
+scripts/fixtures/PDFIUM-LICENSE -text

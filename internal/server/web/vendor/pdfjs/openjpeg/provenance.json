@@ -8,9 +8,12 @@
   "upstreamNativeBuild": "Official generated wasm2js fallback; not locally recompiled from C. Upstream build instructions in external/openjpeg/README.md; source https://github.com/mozilla/pdf.js.openjpeg/",
   "localAdapter": [
     "Remove outer async and final await; replace private run with synchronous init (only warn option is exposed, no async init/status hooks).",
-    "Embed unchanged native wasm2js body within existing private oi factory.",
+    "Embed the pinned generated wasm2js body within the private oi factory, with the explicit checked local emitted patches listed below.",
     "Bridge synchronous decode using malloc/write/jp2_decode(numComponents,indexed,smask,reduce0,padComponents)/free; clear owned image/error fields on completion.",
-    "PDFImage uses last filter and actual numComps, with DeviceRGBA requesting automatic RGBA output."
+    "PDFImage uses last filter and actual numComps, with DeviceRGBA requesting automatic RGBA output.",
+    "2026-11-12: bounded JP2/J2K header preflight before native input allocation; canonical sYCC/CMYK display conversion uses native independently scaled components and preserves opacity.",
+    "2026-11-12: 15 checked generated tag-tree unknown-value stores changed from 999 to INT32_MAX; generated allocator entry checks NULL and a 256 MiB cumulative per-decode request budget. The upstream source file remains unchanged; the emitted private module is locally patched, not a newly compiled official upstream binary.",
+    "PDFImage numeric SMaskInData / preblend handling backported from Mozilla PDF.js PR 21587 by scripts/sync_pdf_jpx_alpha.cjs."
   ],
   "sync": "node scripts/sync_pdf_openjpeg.cjs; --check compares generated factory bytes",
   "upstreamFixtures": [

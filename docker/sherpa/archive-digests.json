@@ -1,0 +1,8 @@
+{
+  "source": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.8",
+  "verifiedAt": "2026-11-12",
+  "archives": {
+    "sherpa-onnx-v1.13.8-linux-aarch64-shared-cpu.tar.bz2": "4e3734f82bc1379fd91f219f5869c7e9d03b7a4f7561907d8abca4849c51a789",
+    "sherpa-onnx-v1.13.8-linux-x64-shared.tar.bz2": "c0bdb7907d3a74bba1d55d22bf4d9fa75586cf1530614ebe88a27b9118e015c4"
+  }
+}

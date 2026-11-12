@@ -1,0 +1,754 @@
+{
+  "date": "2026-11-12",
+  "baseline": "24a281998dd03ff01107a0ae912b8a22676a58ae",
+  "operator": "skyelan1999",
+  "initialOpenIssues": 67,
+  "readyToCloseCompleted": 48,
+  "temporaryNotPlanned": 1,
+  "retainOpen": 18,
+  "starlink": {
+    "pr": "https://github.com/skyelan1999/aide-pkg-StarLink/pull/14",
+    "sourceHead": "a94a8d4a5c489196878d9fecd7dc3c46e452c3f6",
+    "merge": "4ed8e28f0ada9498baa1cee64cfbaa07979b699e",
+    "publishedPackage": "0.1.4 unchanged",
+    "newSource": "0.1.5 unreleased source candidate"
+  },
+  "limitations": [
+    "No production restart, binary Release, installed-plugin update, live SSH-account authentication, paid model call or new physical Windows acceptance.",
+    "Native failure guard / tag-tree sentinel are checked local patches of the pinned generated wasm2js fallback. The original upstream source file is preserved; this is not a fresh C/ASan build.",
+    "Preview budgets intentionally reject some valid large/profile-specific JPEG2000 inputs.",
+    "Browser mounting UI checks use the actual component and product CSS with a synthetic API; Go independently verifies apply/mailbox behavior."
+  ],
+  "issues": [
+    {
+      "number": 823,
+      "title": "[P3] Ignore later COLR boxes after an unsupported first METH",
+      "url": "https://github.com/skyelan1999/aide/issues/823",
+      "decision": "fixed_ready_to_close",
+      "basis": "Record the first COLR independently of supported method; later COLR boxes become ignored boxes in a private input copy. Exact 231-byte fixture and control match; caller bytes remain unchanged."
+    },
+    {
+      "number": 822,
+      "title": "[P3] Stop HT MagSgn decoding after the permitted synthetic byte",
+      "url": "https://github.com/skyelan1999/aide/issues/822",
+      "decision": "temporary_close_not_planned",
+      "basis": "无法复现，暂时关闭。Report explicitly lacks a retained serialized MagSgn exhaustion codestream; old source/crosswalk does not establish a current generated-fallback runtime failure. Reopen with a bounded current-artifact codestream, expected/actual result and MagSgn exhaustion-site trace. This is not a claim that native reader conformance is repaired."
+    },
+    {
+      "number": 819,
+      "title": "[P3] Support T.814 MIXED HT code-block signaling",
+      "url": "https://github.com/skyelan1999/aide/issues/819",
+      "decision": "fixed_ready_to_close",
+      "basis": "Document the actual unsupported T.814 MIXED HT profile and normal decoder error in docs/features.md, as allowed by the issue suggested direction. No MIXED decoding support or full HT conformance is claimed."
+    },
+    {
+      "number": 813,
+      "title": "Markdown PDF 导出失真且表格列宽异常，需输出可选文字的矢量 PDF",
+      "url": "https://github.com/skyelan1999/aide/issues/813",
+      "decision": "retain_open",
+      "basis": "Vector export already exists in main, but the original distorted document, full PDF-reader checks and 100 MiB mixed export/embedded-attachment acceptance remain incomplete. No large browser stress run was substituted for those criteria."
+    },
+    {
+      "number": 805,
+      "title": "[Bug] Use Unicode full case folding for StarLink search",
+      "url": "https://github.com/skyelan1999/aide/issues/805",
+      "decision": "fixed_ready_to_close",
+      "basis": "StarLink main PR #14 uses pinned Unicode 17 C/F full folding and canonical normalization, with original source excerpt offsets. 20 Node tests and actual Aide TLS + Node daemon/IPC search pass."
+    },
+    {
+      "number": 804,
+      "title": "[Bug] Normalize canonically equivalent Unicode in StarLink search",
+      "url": "https://github.com/skyelan1999/aide/issues/804",
+      "decision": "fixed_ready_to_close",
+      "basis": "StarLink main PR #14 normalizes canonically equivalent text/query keys and preserves original excerpts. Both NFC/NFD directions, Hangul and reordered combining marks pass; actual daemon search passes."
+    },
+    {
+      "number": 803,
+      "title": "[P2] Honor Matte and unpremultiply JPX samples for SMaskInData 2",
+      "url": "https://github.com/skyelan1999/aide/issues/803",
+      "decision": "fixed_ready_to_close",
+      "basis": "Backport numeric SMaskInData and embedded preblend handling from Mozilla PDF.js PR 21587. Six official PDFium JP2 colors match reference pixels in actual PDF.js browser page rendering."
+    },
+    {
+      "number": 801,
+      "title": "[Feature] Index TypeScript and TSX symbols for StarLink graph paths",
+      "url": "https://github.com/skyelan1999/aide/issues/801",
+      "decision": "fixed_ready_to_close",
+      "basis": "Pinned Babel 7.28.5 ESTree syntax parsing adds TS/TSX/JSX declarations and conservative relative-import candidates. Original locations, type-only/ambient exclusions, namespace/syntax refusal and no project execution tested. Actual Aide + StarLink daemon finds TS/TSX symbols and caller-to-worker static path."
+    },
+    {
+      "number": 796,
+      "title": "[Bug] Knowledge-map updates expose sources hidden from AI",
+      "url": "https://github.com/skyelan1999/aide/issues/796",
+      "decision": "fixed_ready_to_close",
+      "basis": "AI-scoped identity and updates filter nodes/edges/source metadata/diagnostics with an independent visibility revision and reset policy. StarLink requires explicit scope acknowledgment, revokes cached hidden nodes and refuses older hosts. Manual graph remains available. Host API and actual TLS/daemon tests pass."
+    },
+    {
+      "number": 790,
+      "title": "Plugin compatibility: support authorized SSH workspaces and references",
+      "url": "https://github.com/skyelan1999/aide/issues/790",
+      "decision": "retain_open",
+      "basis": "The common SFTP mutation boundary and StarLink AI graph policy are fixed, but this umbrella still requires per-plugin SSH/workspace/reference compatibility and package acceptance; StarLink source itself still declares local workspace binding only. No blanket all-plugin claim."
+    },
+    {
+      "number": 776,
+      "title": "大文件下载浏览器回归在重载续传时 Chromium 退出",
+      "url": "https://github.com/skyelan1999/aide/issues/776",
+      "decision": "retain_open",
+      "basis": "The report is Linux/Docker Chromium reload/resume termination, not just transfer API correctness. Current owned QA image lacks matching Chromium; current host Chromium component/PDF tests do not establish that Docker crash is fixed. Preserve the specific browser/environment acceptance issue."
+    },
+    {
+      "number": 773,
+      "title": "[P3] Revalidate local mount source paths before Compose starts",
+      "url": "https://github.com/skyelan1999/aide/issues/773",
+      "decision": "retain_open",
+      "basis": "A path-only Docker bind source cannot be atomically held to a macOS filesystem object through Docker Desktop daemon creation. A precheck alone leaves the demonstrated race; no such incomplete mitigation is called a fix. Needs a reviewed mount-lifecycle/object-identity design."
+    },
+    {
+      "number": 763,
+      "title": "[P3] Distinguish a reused PID before retaining the helper lock",
+      "url": "https://github.com/skyelan1999/aide/issues/763",
+      "decision": "fixed_ready_to_close",
+      "basis": "A persistent kernel-held serve.guard replaces PID-based ownership. Stale live/reused PID receipts do not own a lock. Concurrent cleaners cannot unlink a new owner. PID receipts are replaced atomically; launchers stop the legacy helper before binary replacement."
+    },
+    {
+      "number": 762,
+      "title": "[P2] Keep the LAN message bridge consistent when mount apply fails",
+      "url": "https://github.com/skyelan1999/aide/issues/762",
+      "decision": "fixed_ready_to_close",
+      "basis": "A committed mount change reports done with a distinct forwarding warning; a retry-forwarders action retries only the bridge. Failed retries retain the warning and retry path. Go apply/mailbox tests and eight real-browser palette/theme/width component cases pass."
+    },
+    {
+      "number": 710,
+      "title": "[P2] Honor the numeric value of /SMaskInData in JPXDecode images",
+      "url": "https://github.com/skyelan1999/aide/issues/710",
+      "decision": "fixed_ready_to_close",
+      "basis": "SMaskInData is read numerically (0/default versus 1/2). Explicit zero matches absent; opacity remains different for value 1. PDFImage controls and full browser alpha rendering pass."
+    },
+    {
+      "number": 708,
+      "title": "[P2] Preserve HT cleanup/refinement segments across quality layers",
+      "url": "https://github.com/skyelan1999/aide/issues/708",
+      "decision": "retain_open",
+      "basis": "Native HT cleanup/refinement segmentation across quality layers remains algorithm work. Header/memory guards and layer-1000 sentinel correction do not repair pass routing; no claim based on unrelated HT images."
+    },
+    {
+      "number": 707,
+      "title": "[P3] Abort JPX decode after tag-tree node allocation failure",
+      "url": "https://github.com/skyelan1999/aide/issues/707",
+      "decision": "fixed_ready_to_close",
+      "basis": "Checked generated native allocator entry throws immediately on any nonzero allocation returning NULL, poisons the module and forces reconstruction. All 385 actual allocation positions in the supplied #707/#622 fixtures fault-tested; tag-tree fault recovery recreates the module before returning valid output."
+    },
+    {
+      "number": 705,
+      "title": "[P2] Use neutral chroma for odd-origin subsampled sYCC edge pixels",
+      "url": "https://github.com/skyelan1999/aide/issues/705",
+      "decision": "fixed_ready_to_close",
+      "basis": "sYCC auto conversion uses independently scaled native component buffers and a JS reference-grid matrix; absent odd-origin chroma is explicitly neutral. Independent 2x2 odd-origin raw-component edge regression and valid sYCC native controls pass; no serialized odd-origin JP2/UI claim."
+    },
+    {
+      "number": 704,
+      "title": "[P2] Keep host bridge PID files tied to the listening process",
+      "url": "https://github.com/skyelan1999/aide/issues/704",
+      "decision": "fixed_ready_to_close",
+      "basis": "Persistent OS locks serialize bridge start/stop through readiness. Newly spawned Node health must identify the spawned PID. Eight concurrent actual shell launcher calls retain one child/PID receipt; existing lifecycle regressions pass. Native LaunchServices remains separately owned."
+    },
+    {
+      "number": 701,
+      "title": "[P2] Make stale helper lock cleanup atomic against a replacement owner",
+      "url": "https://github.com/skyelan1999/aide/issues/701",
+      "decision": "fixed_ready_to_close",
+      "basis": "Persistent serve.guard is never unlinked; kernel ownership spans PID receipt cleanup. Twenty concurrent stale cleaners cannot remove a live replacement receipt. Actual helper child/stop and single-instance tests pass."
+    },
+    {
+      "number": 700,
+      "title": "[P2] Convert sYCC color channels before emitting JPX opacity RGBA",
+      "url": "https://github.com/skyelan1999/aide/issues/700",
+      "decision": "fixed_ready_to_close",
+      "basis": "Automatic sYCC converts independently scaled Y/Cb/Cr to RGB while retaining the fourth opacity component. Exact attached JP2 is extracted from its PDF; every pixel matches the opaque RGB control and retains raw alpha. Full PDF.js page render exercised."
+    },
+    {
+      "number": 697,
+      "title": "[P2] Confine SFTP reference writes to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/697",
+      "decision": "fixed_ready_to_close",
+      "basis": "Independent writable SFTP sources now use checked streaming SFTP operations, exclusive random staging names and checked final publication; current source identity/permissions are revalidated. Real protocol fixture refuses final/parent links and preserves outside sentinels; normal create/overwrite pass."
+    },
+    {
+      "number": 695,
+      "title": "[P2] Confine SSH workspace mutations to the configured root",
+      "url": "https://github.com/skyelan1999/aide/issues/695",
+      "decision": "fixed_ready_to_close",
+      "basis": "SSH write/mkdir/rename/delete operations use checked SFTP paths; recursive removal preflights its bounded tree, then rechecks each mutation. Real protocol tests cover linked parents/final paths plus valid create, overwrite, nested write, rename and recursive delete. SFTP v3 cannot make LSTAT-to-operation atomic against independent server-side path swaps; server account/chroot confinement remains required for that threat."
+    },
+    {
+      "number": 693,
+      "title": "[P2] Convert e-sYCC output to standard sRGB",
+      "url": "https://github.com/skyelan1999/aide/issues/693",
+      "decision": "retain_open",
+      "basis": "The linked archive 4:4:4 e-sYCC fixture remains a useful color-conformance case. Subsampled layouts now fail explicitly, but the PIMA e-sRGB-to-standard-sRGB transfer is not implemented or guessed from a few sample colors."
+    },
+    {
+      "number": 692,
+      "title": "[P2] Preserve JPX opacity channel in CMYK images with SMaskInData",
+      "url": "https://github.com/skyelan1999/aide/issues/692",
+      "decision": "fixed_ready_to_close",
+      "basis": "Automatic CMYK conversion retains the fifth CDEF opacity plane. Attached 2x2 JP2 yields alpha 128 and full browser PDF center is [128,128,128,255], rather than opaque white."
+    },
+    {
+      "number": 690,
+      "title": "[P2] Normalize signed samples in automatic CMYK JPX conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/690",
+      "decision": "fixed_ready_to_close",
+      "basis": "Signed CMYK ink coverage uses the signed display maximum before RGB conversion. Exact supplied fixture now yields [62,62,62,255] for positive 64 and [0,0,0,255] for 127."
+    },
+    {
+      "number": 689,
+      "title": "[P2] Avoid signed overflow in precision-31 sYCC RGB sums",
+      "url": "https://github.com/skyelan1999/aide/issues/689",
+      "decision": "fixed_ready_to_close",
+      "basis": "sYCC conversion after independent component scaling uses JS number arithmetic, avoiding native signed precision-31 RGB sum wrap. Exact HTJ2K fixture yields [255,124,255,255] for every pixel."
+    },
+    {
+      "number": 688,
+      "title": "[P2] Preserve e-sYCC color handling for subsampled JPX components",
+      "url": "https://github.com/skyelan1999/aide/issues/688",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preserve the e-sYCC classification and reject subsampled e-sYCC with a normal unsupported-layout error before native allocation. The linked archive contains a 4:4:4 sample, not the claimed 4:2:2 file; no valid 4:2:2 rendering acceptance is claimed. Full 4:4:4 e-sRGB conversion remains tracked in #693. Header-only subsampled e-sYCC mutant is refused by the actual adapter before any native input allocation; this is not a conforming entropy/rendering vector."
+    },
+    {
+      "number": 687,
+      "title": "[P2] Stop scaling the freed K component after CMYK conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/687",
+      "decision": "fixed_ready_to_close",
+      "basis": "Already corrected by the current upstream wrapper component-count refresh. Original 64x64 mixed-precision CMYK fixture now decodes three times with identical output and zero changes in the first 16 KiB of native linear memory; source-backed regression retained."
+    },
+    {
+      "number": 686,
+      "title": "[P2] Bound temporary sYCC output planes for attacker-controlled JPX dimensions",
+      "url": "https://github.com/skyelan1999/aide/issues/686",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preflight bounds estimated native component/temporary color planes before input allocation; 96 MiB plane policy and 64 MiB output limit prevent the supplied 305x30000 amplification geometry. Native per-decode allocation requests additionally capped at 256 MiB."
+    },
+    {
+      "number": 683,
+      "title": "[P2] Bound per-tile copies of attacker-controlled MCT payloads in JPX",
+      "url": "https://github.com/skyelan1999/aide/issues/683",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preflight bounds cumulative MCT payload bytes times SIZ tile count to 16 MiB. Supplied 501-tile/20x12000-byte geometry is rejected before native input allocation."
+    },
+    {
+      "number": 682,
+      "title": "[P3] Clean nested resources when the outer precinct array cannot grow",
+      "url": "https://github.com/skyelan1999/aide/issues/682",
+      "decision": "retain_open",
+      "basis": "Native allocation abort/module discard mitigates repeated cached-heap retention, but this exact outer-precinct growth/fault site has no newly replayed current-module test. Retain the specific nested-cleanup report."
+    },
+    {
+      "number": 681,
+      "title": "[P2] Normalize sYCC channels using each component's precision",
+      "url": "https://github.com/skyelan1999/aide/issues/681",
+      "decision": "fixed_ready_to_close",
+      "basis": "Independent per-component native scaling precedes the sYCC matrix. Exact [31,8,8] fixture now produces [255,0,255,255] for all five pixels."
+    },
+    {
+      "number": 680,
+      "title": "[P3] Reject PLM marker sequences with unterminated packet lengths",
+      "url": "https://github.com/skyelan1999/aide/issues/680",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preflight rejects a PLM sequence ending with an incomplete packet-length varint. Exact reported FF570005000180 form tested before native allocation; normal controls still decode."
+    },
+    {
+      "number": 679,
+      "title": "[P3] Reject reserved ST=3 in JPEG 2000 TLM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/679",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preflight rejects reserved TLM ST=3 before native allocation. Exact reported TLM marker form tested with real decoder adapter and normal controls."
+    },
+    {
+      "number": 675,
+      "title": "[P3] Require IHDR to be the first JP2H child box",
+      "url": "https://github.com/skyelan1999/aide/issues/675",
+      "decision": "fixed_ready_to_close",
+      "basis": "Require IHDR to be the first JP2H child. Exact 220-byte reported mutant now fails normally; standard component controls remain valid."
+    },
+    {
+      "number": 665,
+      "title": "[P2] Store full-stripe HT SPP membership updates in mbr, not sigma",
+      "url": "https://github.com/skyelan1999/aide/issues/665",
+      "decision": "retain_open",
+      "basis": "Old Wasm full-stripe mbr/sigma write evidence is retained. The current generated fallback differs; normal images cannot prove internal membership-store correctness. Requires a checked current-core mapping or instrumented conformance test."
+    },
+    {
+      "number": 660,
+      "title": "[P2] Verify Sherpa-ONNX release archives before embedding them",
+      "url": "https://github.com/skyelan1999/aide/issues/660",
+      "decision": "fixed_ready_to_close",
+      "basis": "Reviewed per-architecture Sherpa 1.13.8 GitHub asset SHA-256 pins are checked before extraction for both downloaded and offline archives. Modified/unknown/missing-pin tests fail closed. No full runtime-image rebuild or acoustic acceptance claimed."
+    },
+    {
+      "number": 659,
+      "title": "[P2] Bound quadratic CDEF completeness scans during JP2 decode",
+      "url": "https://github.com/skyelan1999/aide/issues/659",
+      "decision": "fixed_ready_to_close",
+      "basis": "CDEF count is bounded to 256 and total component count to 256 before native parsing, bounding the completeness scan. Over-limit header refuses before native allocation."
+    },
+    {
+      "number": 658,
+      "title": "[P2] Pin Docker base images to immutable digests in release builds",
+      "url": "https://github.com/skyelan1999/aide/issues/658",
+      "decision": "fixed_ready_to_close",
+      "basis": "Release candidate and release SDK builds now pass official multi-platform immutable Python/Node/Go image digests from a reviewed manifest. Invalid/missing-platform/mutable refs fail. Local/offline default tags remain unchanged. OCI index/platform identities queried; no new binary Delivery run claimed."
+    },
+    {
+      "number": 653,
+      "title": "[P2] Widen reversible DC-level shift addition before clamping",
+      "url": "https://github.com/skyelan1999/aide/issues/653",
+      "decision": "retain_open",
+      "basis": "Reversible native DC-level-shift signed addition remains separate from the repaired sYCC RGB sum. No speculative minified arithmetic patch or source-only pass claim."
+    },
+    {
+      "number": 642,
+      "title": "[P2] Validate JPEG 2000 segmentation symbols during cleanup pass",
+      "url": "https://github.com/skyelan1999/aide/issues/642",
+      "decision": "retain_open",
+      "basis": "Current small inline segmentation-symbol fixture still needs a proper native cleanup-pass validation change. Header conformance guards do not validate entropy cleanup segmentation symbols."
+    },
+    {
+      "number": 629,
+      "title": "[P2] Bound JPEG 2000 packet-iterator memory by layer and precinct counts",
+      "url": "https://github.com/skyelan1999/aide/issues/629",
+      "decision": "fixed_ready_to_close",
+      "basis": "Exact retained large packet-iterator fixture is refused before native allocation by header budgets. Accepted images have at most 4096 layers and 8 Mi estimated packet-iterator elements; the original large native allocation is not re-executed."
+    },
+    {
+      "number": 627,
+      "title": "[P2] Normalize signed JPX grayscale samples before RGBA conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/627",
+      "decision": "retain_open",
+      "basis": "Signed grayscale normalization remains separate from CMYK ink normalization. Raw packed bytes have already lost negative samples; a post-hoc midpoint guess would be incorrect. Needs a proper native component-normalization change."
+    },
+    {
+      "number": 626,
+      "title": "[P2] Bound OpenJPEG Tier-2 unary increments before overflow",
+      "url": "https://github.com/skyelan1999/aide/issues/626",
+      "decision": "fixed_ready_to_close",
+      "basis": "Decompressed JPX input is capped at 64 MiB before native copying/packet decoding, making the >512 MiB effective-unary-overflow stream unreachable in this preview path. Cumulative native request budget is 256 MiB. A real over-limit byte buffer is refused without native allocation; the original 2 GiB workload is not rerun."
+    },
+    {
+      "number": 625,
+      "title": "[P2] Preserve fractional values in irreversible MCT offset arrays",
+      "url": "https://github.com/skyelan1999/aide/issues/625",
+      "decision": "retain_open",
+      "basis": "Fractional irreversible MCT offsets require preserving floating-point state through native transform/DC-shift structures, not a safe header-only or 8-bit output patch. Supplied historical reproducer remains open."
+    },
+    {
+      "number": 624,
+      "title": "[P2] Decode JPEG 2000 inclusion layers above 999 correctly",
+      "url": "https://github.com/skyelan1999/aide/issues/624",
+      "decision": "fixed_ready_to_close",
+      "basis": "All 15 checked generated unknown tag-tree value stores use INT32_MAX. Exact layer-1000 fixture differs from control in 252 pixels on baseline 24a28199 and in zero pixels on the candidate. Preview still declares a 4096-layer policy cap; no all-65535-layer conformance claim."
+    },
+    {
+      "number": 623,
+      "title": "[P2] Advance the MCC record pointer when selecting an MCO transform",
+      "url": "https://github.com/skyelan1999/aide/issues/623",
+      "decision": "retain_open",
+      "basis": "Selected non-first MCC record lookup remains a native record iteration defect. Reordering untrusted markers could change dependencies; no header-rewrite workaround is used."
+    },
+    {
+      "number": 622,
+      "title": "[P2] Abort JPX decode when output component-header allocation fails",
+      "url": "https://github.com/skyelan1999/aide/issues/622",
+      "decision": "fixed_ready_to_close",
+      "basis": "Abort immediately at native allocation NULL, before C can dereference an absent component-header allocation; poisoned module is never reused. All 316 actual allocation positions in supplied 20-component fixture and 69 in tag-tree fixture fault-tested; subsequent valid image rebuilds and matches baseline."
+    },
+    {
+      "number": 621,
+      "title": "[P1] Prevent HTJ2K terminal SPP writes past the coefficient allocation",
+      "url": "https://github.com/skyelan1999/aide/issues/621",
+      "decision": "retain_open",
+      "basis": "P1 HT terminal SPP allocation-bound write remains open. Original official vector and diagnostic modules were downloaded and inspected as data; ordinary current decoding is not proof of allocation safety. Requires targeted native bounds correction and current instrumented/sanitizer evidence."
+    },
+    {
+      "number": 618,
+      "title": "[P2] Avoid wrapped packet indexes aliasing distinct JPEG 2000 packets",
+      "url": "https://github.com/skyelan1999/aide/issues/618",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preview preflight caps components to 256 and wide-number packet-iterator estimates to 8 Mi elements, rejecting the report 16384-component alias geometry before native allocation. This bounds accepted preview inputs rather than claiming a new unlimited native packet iterator."
+    },
+    {
+      "number": 614,
+      "title": "[P2] Bounds-check packet precinct indexes before array access",
+      "url": "https://github.com/skyelan1999/aide/issues/614",
+      "decision": "fixed_ready_to_close",
+      "basis": "Reject coding overrides after tile-part zero before native allocation, preventing later tile-part COC/COD geometry from changing an already-initialized precinct allocation. Deterministic multi-tile-part header refusal tested; no upstream crafted OOB/sanitizer replay claimed."
+    },
+    {
+      "number": 608,
+      "title": "[P2] Reject unsupported PCLR precision instead of truncating palette values",
+      "url": "https://github.com/skyelan1999/aide/issues/608",
+      "decision": "fixed_ready_to_close",
+      "basis": "PCLR precision above supported 31 bits is rejected before native parsing; a 31-bit boundary remains accepted by the header guard. No silent 33-bit palette truncation."
+    },
+    {
+      "number": 607,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPT headers",
+      "url": "https://github.com/skyelan1999/aide/issues/607",
+      "decision": "retain_open",
+      "basis": "Packed packet-header budget now prevents the old 8 MiB amplification trigger, but smaller accepted PPT buffers still use a transient merge copy; the requested copy elimination is not claimed complete."
+    },
+    {
+      "number": 597,
+      "title": "[P2] Bound JP2 PCLR channel expansion to prevent excessive Wasm memory growth",
+      "url": "https://github.com/skyelan1999/aide/issues/597",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preflight includes palette-expanded full planes in the 96 MiB component estimate and bounds native cumulative allocation requests. Over-budget palette/image combinations cannot enter the native allocator. Explicit palette-expanded-plane header mutant is refused by the actual adapter with zero native input allocations."
+    },
+    {
+      "number": 594,
+      "title": "[P3] Free nested decoder allocations when precinct code-block growth fails",
+      "url": "https://github.com/skyelan1999/aide/issues/594",
+      "decision": "retain_open",
+      "basis": "Allocation failure now aborts and invalidates the cached native module, but the exact inner code-block growth/leaked-child site is not specifically replayed in this round. Retain the original native cleanup requirement."
+    },
+    {
+      "number": 593,
+      "title": "[P2] Cap main-header marker-index growth from repeated COM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/593",
+      "decision": "fixed_ready_to_close",
+      "basis": "At most 4096 codestream markers are processed, including COM; repeated minimal marker amplification is rejected before native input allocation."
+    },
+    {
+      "number": 592,
+      "title": "[P3] Reject reserved ROI styles in RGN markers",
+      "url": "https://github.com/skyelan1999/aide/issues/592",
+      "decision": "fixed_ready_to_close",
+      "basis": "Only supported implicit ROI style zero is accepted by preflight; reserved RGN style 255 is rejected before native allocation."
+    },
+    {
+      "number": 591,
+      "title": "[P3] Reject unsupported progression-order values in POC markers",
+      "url": "https://github.com/skyelan1999/aide/issues/591",
+      "decision": "fixed_ready_to_close",
+      "basis": "POC progression values must be 0..4. Exact reported Ppoc=255 form refuses before native allocation instead of producing fabricated output."
+    },
+    {
+      "number": 590,
+      "title": "[P2] Check Wasm32 calloc byte-size overflow in JPEG 2000 packet iterator",
+      "url": "https://github.com/skyelan1999/aide/issues/590",
+      "decision": "fixed_ready_to_close",
+      "basis": "Wide-number preflight bounds layer/precinct/component products before native 32-bit allocation arithmetic, and rejects the original 65535-layer profile before any native allocation."
+    },
+    {
+      "number": 582,
+      "title": "[P2] Sign-extend signed int16 MCT offsets before conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/582",
+      "decision": "retain_open",
+      "basis": "Negative signed int16 MCT offsets still need native sign extension before transform application. Current CMYK/display fixes are unrelated; do not relabel this source conversion as repaired."
+    },
+    {
+      "number": 579,
+      "title": "[P2] Bound ICC profile copies during JP2 header parsing",
+      "url": "https://github.com/skyelan1999/aide/issues/579",
+      "decision": "fixed_ready_to_close",
+      "basis": "ICC payload is capped at 4 MiB and JP2H at 8 MiB before the native header reader copies it. Allocator request budget adds a second bound."
+    },
+    {
+      "number": 576,
+      "title": "[P2] Bound Tier-2 segment growth from attacker-declared coding passes",
+      "url": "https://github.com/skyelan1999/aide/issues/576",
+      "decision": "fixed_ready_to_close",
+      "basis": "4096-layer policy rejects the original 10000-layer TERMALL trigger before native parsing. A 256 MiB cumulative native allocation-request budget also bounds repeated segment/reallocation work for accepted inputs; failure aborts and discards the decoder."
+    },
+    {
+      "number": 574,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPM headers",
+      "url": "https://github.com/skyelan1999/aide/issues/574",
+      "decision": "retain_open",
+      "basis": "Packed packet-header budget limits the old 8 MiB trigger, but smaller PPM merges still duplicate bytes transiently. Preserve the requested copy-elimination optimization."
+    },
+    {
+      "number": 573,
+      "title": "[P2] Cap per-tile JPX metadata allocation from SIZ tile counts",
+      "url": "https://github.com/skyelan1999/aide/issues/573",
+      "decision": "fixed_ready_to_close",
+      "basis": "Preflight caps tile count at 4096 and tile-component count at 16384 before tile metadata allocation; the 65535-tile SIZ trigger is rejected allocation-free."
+    },
+    {
+      "number": 572,
+      "title": "[P2] Bound memory growth from oversized JP2 FTYP compatibility lists",
+      "url": "https://github.com/skyelan1999/aide/issues/572",
+      "decision": "fixed_ready_to_close",
+      "basis": "FTYP box extent is capped at 64 KiB before the native compatibility-list copy; over-limit box rejected without native input allocation."
+    },
+    {
+      "number": 568,
+      "title": "[P2] Cap SIZ-derived JPX component buffers during tile updates",
+      "url": "https://github.com/skyelan1999/aide/issues/568",
+      "decision": "fixed_ready_to_close",
+      "basis": "SIZ-derived component-plane estimate is capped at 96 MiB and RGBA at 64 MiB before native allocation. The 305x30000x3 geometry is rejected, with normal native controls passing."
+    }
+  ],
+  "remaining-alpha-browser": {
+    "pixels": [
+      [
+        128,
+        0,
+        0,
+        255
+      ],
+      [
+        0,
+        128,
+        0,
+        255
+      ],
+      [
+        0,
+        0,
+        128,
+        255
+      ],
+      [
+        128,
+        128,
+        128,
+        255
+      ],
+      [
+        128,
+        128,
+        0,
+        255
+      ],
+      [
+        128,
+        128,
+        128,
+        255
+      ]
+    ]
+  },
+  "remaining-color-browser": [
+    {
+      "issue": 692,
+      "pixel": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "size": [
+        200,
+        200
+      ]
+    },
+    {
+      "issue": 700,
+      "pixel": [
+        64,
+        64,
+        64,
+        255
+      ],
+      "size": [
+        128,
+        128
+      ]
+    }
+  ],
+  "remaining-mount-browser": [
+    {
+      "palette": "professional",
+      "theme": "light",
+      "width": 1280,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "professional",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "professional",
+      "theme": "dark",
+      "width": 1280,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "professional",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "classic",
+      "theme": "light",
+      "width": 1280,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "classic",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "classic",
+      "theme": "dark",
+      "width": 1280,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    },
+    {
+      "palette": "classic",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "recovered": "当前目录配置已生效。"
+    }
+  ],
+  "remaining-layer-before-after": [
+    {
+      "identity": "baseline",
+      "pixels": 256,
+      "different": 252
+    },
+    {
+      "identity": "candidate",
+      "pixels": 256,
+      "different": 0
+    }
+  ],
+  "remaining-allocation-layer": {
+    "status": "PASS",
+    "firstInclusionLayer1000": "identical to one-layer control",
+    "allocationFailures": 385,
+    "poisonedModuleRejected": true,
+    "freshModuleRecovered": true
+  },
+  "remaining-color-results": {
+    "status": "PASS",
+    "rows": [
+      {
+        "issue": 690,
+        "length": 16,
+        "first": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          62,
+          62,
+          62,
+          255,
+          0,
+          0,
+          0,
+          255
+        ]
+      },
+      {
+        "issue": 689,
+        "length": 16,
+        "first": [
+          255,
+          124,
+          255,
+          255,
+          255,
+          124,
+          255,
+          255,
+          255,
+          124,
+          255,
+          255,
+          255,
+          124,
+          255,
+          255
+        ]
+      },
+      {
+        "issue": 681,
+        "length": 20,
+        "first": [
+          255,
+          0,
+          255,
+          255,
+          255,
+          0,
+          255,
+          255,
+          255,
+          0,
+          255,
+          255,
+          255,
+          0,
+          255,
+          255
+        ]
+      },
+      {
+        "issue": 692,
+        "length": 16,
+        "first": [
+          255,
+          255,
+          255,
+          128,
+          255,
+          255,
+          255,
+          128,
+          255,
+          255,
+          255,
+          128,
+          255,
+          255,
+          255,
+          128
+        ]
+      },
+      {
+        "issue": 700,
+        "length": 16384,
+        "first": [
+          0,
+          135,
+          0,
+          127,
+          0,
+          138,
+          0,
+          127,
+          0,
+          140,
+          0,
+          127,
+          0,
+          143,
+          0,
+          127
+        ]
+      }
+    ],
+    "oddOriginNeutralEdge": true
+  }
+}

@@ -58,7 +58,7 @@ async function route(req, res) {
   if (!localOrDocker) return reply(res, 403, { ok: false, error: '桥接服务仅接受本机和 Docker Desktop 私有网络请求' });
   if (req.headers.authorization !== `Bearer ${TOKEN}`) return reply(res, 401, { ok: false, error: '未授权' });
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  if (req.method === 'GET' && pathname === '/healthz') return reply(res, 200, { ok: true, service: 'aide-computer-bridge' });
+  if (req.method === 'GET' && pathname === '/healthz') return reply(res, 200, { ok: true, pid: process.pid, service: 'aide-computer-bridge' });
   if (req.method !== 'POST' || !['/v1/snapshot', '/v1/click', '/v1/type', '/v1/key'].includes(pathname)) return reply(res, 404, { ok: false, error: '不支持的电脑操作' });
   let input; try { input = await readBody(req); } catch (error) { return reply(res, 400, { ok: false, error: error.message }); }
   try {

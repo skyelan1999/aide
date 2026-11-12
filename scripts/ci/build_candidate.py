@@ -258,7 +258,9 @@ def main():
         raise ValueError('Use an empty output directory')
     out.mkdir(parents=True, exist_ok=True)
     image = f'aide:ci-{commit[:12]}-{args.arch}'
-    run(['docker', 'build', '--platform', 'linux/' + args.arch, '--progress', 'plain',
+    from release_base_images import build_args
+    base_args = build_args(ROOT)
+    run(['docker', 'build', *base_args, '--platform', 'linux/' + args.arch, '--progress', 'plain',
          '--build-arg', 'AIDE_VERSION=' + version, '--build-arg', 'AIDE_COMMIT=' + commit,
          '--build-arg', 'AIDE_RUNTIME_MODE=release-image', '--build-arg', 'AIDE_SRC_SHA=' + source,
          '--build-arg', 'AIDE_RUN_TESTS=1', '--build-arg', 'PIP_INDEX_URL=https://pypi.org/simple', '-t', image, '.'])
@@ -267,7 +269,7 @@ def main():
         raise ValueError('Built image identity mismatch')
     # Race/vet use the same source in a dedicated toolchain, never the slim runtime.
     run(['python3', 'scripts/development-toolbox.py', 'build',
-         '--runtime', image, '--image', image + '-test-tools'])
+         '--runtime', image, '--image', image + '-test-tools', '--release-bases'])
     verification = []
     for command, extra_env in verification_plan(image):
         run(command, env=dict(os.environ, **extra_env))

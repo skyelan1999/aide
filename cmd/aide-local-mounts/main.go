@@ -16,6 +16,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -27,10 +28,11 @@ type request struct {
 	Created  int64  `json:"created"`
 }
 type response struct {
-	ID    string `json:"id"`
-	Path  string `json:"path,omitempty"`
-	Error string `json:"error,omitempty"`
-	State string `json:"state"`
+	ID      string `json:"id"`
+	Warning string `json:"warning,omitempty"`
+	Path    string `json:"path,omitempty"`
+	Error   string `json:"error,omitempty"`
+	State   string `json:"state"`
 }
 
 func command(ctx context.Context, name string, args ...string) ([]byte, error) {
@@ -78,6 +80,22 @@ func refreshForwarders(ctx context.Context, root, docker string) error {
 	return nil
 }
 
+type mountAppliedWarning struct{ cause error }
+
+func (e mountAppliedWarning) Error() string { return e.cause.Error() }
+func setResponseError(result *response, err error) {
+	if err == nil {
+		return
+	}
+	var warning mountAppliedWarning
+	if errors.As(err, &warning) {
+		result.Warning = "目录配置已生效；局域网转发暂不可用，请重试转发。"
+		return
+	}
+	result.Error = err.Error()
+	result.State = "error"
+}
+
 func completedRequest(dir, id string) bool {
 	raw, err := os.ReadFile(filepath.Join(dir, "response.json"))
 	if err != nil || len(raw) > 4096 {
@@ -117,36 +135,20 @@ func processAlive(pid int) (bool, error) {
 	return platformProcessAlive(pid)
 }
 
+// serve.guard is a persistent OS lock, never unlinked. PID receipts are not
+// ownership: a crashed helper releases its kernel lock even if its PID is reused.
 func clearDeadLock(path string) (bool, error) {
-	raw, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return true, nil
-	}
+	release, err := lockHelperFile(filepath.Join(filepath.Dir(path), "serve.guard"))
 	if err != nil {
 		return false, err
 	}
-	pid, err := strconv.Atoi(string(raw))
-	if err != nil {
-		return false, errors.New("invalid helper lock; manual recovery required")
-	}
-	alive, err := processAlive(pid)
-	if err != nil || alive {
-		return false, err
-	}
-	// Do not remove a replacement owner's lock.
-	again, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return true, nil // The exiting owner already removed its lock.
-	}
-	if err != nil {
-		return false, err
-	}
-	if string(again) != string(raw) {
+	if release == nil {
 		return false, nil
 	}
+	defer release()
 	err = os.Remove(path)
 	if os.IsNotExist(err) {
-		err = nil // Removal by the owner is also a successful cleanup.
+		err = nil
 	}
 	return true, err
 }
@@ -155,26 +157,13 @@ func stopHelper(dir string, timeout time.Duration) error {
 		return err
 	}
 	deadline := time.Now().Add(timeout)
-	owner := 0
-	if raw, e := os.ReadFile(filepath.Join(dir, "serve.pid")); e == nil {
-		owner, _ = strconv.Atoi(string(raw))
-	}
 	for {
 		cleared, err := clearDeadLock(filepath.Join(dir, "serve.pid"))
 		if err != nil {
 			return err
 		}
 		if cleared {
-			if owner == 0 {
-				return nil
-			}
-			alive, e := processAlive(owner)
-			if e != nil {
-				return e
-			}
-			if !alive {
-				return nil
-			}
+			return nil
 		}
 		if time.Now().After(deadline) {
 			return errors.New("directory helper is still stopping; executable must not be replaced")
@@ -182,39 +171,37 @@ func stopHelper(dir string, timeout time.Duration) error {
 		time.Sleep(100 * time.Millisecond)
 	}
 }
-func acquireHelper(dir string) (func(), error) {
-	p := filepath.Join(dir, "serve.pid")
-	for attempt := 0; attempt < 2; attempt++ {
-		f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-		if os.IsExist(err) && attempt == 0 {
-			cleared, e := clearDeadLock(p)
-			if e != nil {
-				return nil, e
-			}
-			if cleared {
-				continue
-			}
-		}
-		if err != nil {
-			return nil, fmt.Errorf("directory helper already running: %w", err)
-		}
-		if _, err = f.WriteString(strconv.Itoa(os.Getpid())); err != nil {
-			f.Close()
-			os.Remove(p)
-			return nil, err
-		}
-		if err = f.Close(); err != nil {
-			os.Remove(p)
-			return nil, err
-		}
-		return func() {
-			raw, e := os.ReadFile(p)
-			if e == nil && string(raw) == strconv.Itoa(os.Getpid()) {
-				os.Remove(p)
-			}
-		}, nil
+func writeHelperPID(path string) error {
+	file, err := os.CreateTemp(filepath.Dir(path), ".serve-pid-")
+	if err != nil {
+		return err
 	}
-	return nil, errors.New("cannot acquire directory helper lock")
+	defer os.Remove(file.Name())
+	if _, err := file.WriteString(strconv.Itoa(os.Getpid())); err != nil {
+		file.Close()
+		return err
+	}
+	if err := file.Close(); err != nil {
+		return err
+	}
+	return os.Rename(file.Name(), path)
+}
+
+func acquireHelper(dir string) (func(), error) {
+	release, err := lockHelperFile(filepath.Join(dir, "serve.guard"))
+	if err != nil {
+		return nil, err
+	}
+	if release == nil {
+		return nil, errors.New("directory helper already running")
+	}
+	p := filepath.Join(dir, "serve.pid")
+	if err := writeHelperPID(p); err != nil {
+		release()
+		return nil, err
+	}
+	var once sync.Once
+	return func() { once.Do(func() { _ = os.Remove(p); release() }) }, nil
 }
 
 func nativeWindowsLauncher() string {
@@ -372,8 +359,17 @@ func apply(ctx context.Context, root, docker, revision string) error {
 		return errors.New("application failed; original directory configuration restored")
 	}
 	unlock()
-	return refreshForwarders(ctx, root, docker)
+	if err := refreshForwarders(ctx, root, docker); err != nil {
+		return mountAppliedWarning{err}
+	}
+	return nil
 }
+
+// Keep the OS lock reachable until process teardown, including deferred shutdown.
+// Tests/short-lived acquisitions may release explicitly; the serve process must
+// not advertise an unlocked executable while it is still unwinding main.
+var processHelperLock func()
+
 func main() {
 	root := flag.String("root", "", "launcher root")
 	docker := flag.String("docker", "docker", "Docker executable")
@@ -416,7 +412,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer release()
+	processHelperLock = release
 	// Launcher stops the prior helper before replacing the executable.
 	os.Remove(filepath.Join(dir, "stop"))
 	go watchStop(ctx, cancel, dir)
@@ -462,15 +458,17 @@ func main() {
 				}
 			case "apply":
 				e = apply(task, abs, *docker, req.Revision)
+			case "retry-forwarders":
+				e = refreshForwarders(task, abs, *docker)
+				if e != nil {
+					result.Warning = "目录配置已生效；局域网转发暂不可用，请重试转发。"
+				}
 			default:
 				e = errors.New("unknown directory action")
 			}
 			done()
 			close(finished)
-			if e != nil {
-				result.Error = e.Error()
-				result.State = "error"
-			}
+			setResponseError(&result, e)
 			localmounts.Write(filepath.Join(dir, "response.json"), result)
 		}
 		select {

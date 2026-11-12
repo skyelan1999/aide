@@ -1,6 +1,6 @@
 # 当前功能说明与使用入口
 
-维护日期：2026-11-11；源码基线 `921a95a5`。最新公开程序包为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)，后续主干能力不据此视为已进入该包。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
+维护日期：2026-11-12；本轮修改以 `24a28199` 为基线，新增修正及验证见[余项核查](reviews/2026-11-12-remaining-issues/README.md)。最新公开程序包为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)，后续主干能力不据此视为已进入该包。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
 
 ## 项目与工程任务
 
@@ -51,4 +51,10 @@
 
 ## 验证范围
 
-本页描述源码提供的能力，不把代码存在、设置可见、某次操作成功和公开安装包交付混为一项。已有[测试与审查](reviews/)按原日期和环境保留；[2026-10-17 截图](ui-evidence.md)仍是历史图片。本次仅修改文档，没有新建 Aide/Docker 实例或重新执行模型、桌面、音频和跨平台验收。
+本页描述源码提供的能力，不把代码存在、设置可见、某次操作成功和公开安装包交付混为一项。已有[测试与审查](reviews/)按原日期和环境保留；[2026-10-17 截图](ui-evidence.md)仍是历史图片。本轮实际执行了隔离 Go/插件进程与浏览器回归；各项范围见余项核查。没有替换正在运行的生产实例，也未执行付费模型、真实音频或新的跨平台硬件验收。
+
+## PDF / JPX preview support boundary
+
+The PDF.js worker uses the pinned OpenJPEG fallback with Aide's checked adapter patches. Baseline JPEG 2000 and supported HT-only inputs are accepted within the preview budgets; T.814 MIXED HT signaling is unsupported and returns a decoder error. Subsampled e-sYCC is explicitly rejected rather than silently converted as sYCC; full e-sYCC-to-standard-sRGB conversion remains open. These are source preview capabilities, not a universal JPEG 2000 conformance claim.
+
+Per-JPX limits: decompressed input 64 MiB; FTYP 64 KiB; JP2H 8 MiB; ICC 4 MiB; 4096 tiles / 16384 tile-components / 256 components; 96 MiB estimated component planes; 64 MiB RGBA output; 4096 quality layers; 8 Mi estimated packet-iterator elements; 4096 markers; 256 CDEF entries; packed packet headers 4 MiB; aggregate MCT tile copies 16 MiB; cumulative native allocation requests 256 MiB. PCLR precision above 31 bits and coding overrides after tile-part zero are rejected. Limits can reject valid but unsupported large/profile-specific images. They do not bound an entire PDF/browser's peak memory or resolve every remaining decoder report. See the [individual audit](reviews/2026-11-12-remaining-issues/README.md).

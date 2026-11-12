@@ -2,19 +2,65 @@ package server
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pkg/sftp"
 )
 
-type transferSFTPStdio struct{}
+type transferSFTPStdio struct{ pending []byte }
 
-func (transferSFTPStdio) Read(b []byte) (int, error)  { return os.Stdin.Read(b) }
+func (s *transferSFTPStdio) Read(b []byte) (int, error) {
+	if os.Getenv("AIDE_SFTP_WRITE_LOG") == "" {
+		return os.Stdin.Read(b)
+	}
+	if len(s.pending) == 0 {
+		header := make([]byte, 4)
+		if _, err := io.ReadFull(os.Stdin, header); err != nil {
+			return 0, err
+		}
+		n := binary.BigEndian.Uint32(header)
+		if n > 1<<20 {
+			return 0, errors.New("oversized test packet")
+		}
+		packet := make([]byte, n)
+		if _, err := io.ReadFull(os.Stdin, packet); err != nil {
+			return 0, err
+		}
+		if len(packet) > 0 && packet[0] == 6 {
+			if marker := os.Getenv("AIDE_SFTP_WRITE_ENTERED"); marker != "" {
+				if err := os.WriteFile(marker, nil, 0600); err != nil {
+					return 0, err
+				}
+				for {
+					if _, err := os.Stat(os.Getenv("AIDE_SFTP_WRITE_RELEASE")); err == nil {
+						break
+					}
+					time.Sleep(time.Millisecond)
+				}
+			}
+			f, err := os.OpenFile(os.Getenv("AIDE_SFTP_WRITE_LOG"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+			if err != nil {
+				return 0, err
+			}
+			_, err = f.WriteString("put\n")
+			f.Close()
+			if err != nil {
+				return 0, err
+			}
+		}
+		s.pending = append(header, packet...)
+	}
+	n := copy(b, s.pending)
+	s.pending = s.pending[n:]
+	return n, nil
+}
 func (transferSFTPStdio) Write(b []byte) (int, error) { return os.Stdout.Write(b) }
 func (transferSFTPStdio) Close() error                { return nil }
 
@@ -46,7 +92,7 @@ func TestTransferSFTPProcess(t *testing.T) {
 	if os.Getenv("AIDE_TRANSFER_SFTP_HELPER") != "1" {
 		t.Skip("subprocess protocol helper")
 	}
-	server, e := sftp.NewServer(transferSFTPStdio{})
+	server, e := sftp.NewServer(&transferSFTPStdio{})
 	if e != nil {
 		os.Exit(2)
 	}

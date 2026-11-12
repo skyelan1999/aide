@@ -111,7 +111,7 @@ async function route(req, res) {
   if (!dockerDesktopPeer) return reply(res, 403, { ok: false, error: '桥接服务只接受本机和 Docker Desktop 私有网络请求' });
   if (req.headers.authorization !== `Bearer ${TOKEN}`) return reply(res, 401, { ok: false, error: '未授权' });
   const path = new URL(req.url, 'http://localhost').pathname;
-  if (req.method === 'GET' && path === '/healthz') return reply(res, 200, { ok: true, service: 'aide-safari-bridge', driver: 'Safari WebDriver', session: Boolean(sessionId) });
+  if (req.method === 'GET' && path === '/healthz') return reply(res, 200, { ok: true, pid: process.pid, service: 'aide-safari-bridge', driver: 'Safari WebDriver', session: Boolean(sessionId) });
   if (req.method !== 'POST' || !['/v1/snapshot', '/v1/navigate', '/v1/click', '/v1/fill'].includes(path)) return reply(res, 404, { ok: false, error: '不支持的浏览器操作' });
   let input;
   try { input = await readBody(req); } catch (error) { return reply(res, 400, { ok: false, error: error.message }); }

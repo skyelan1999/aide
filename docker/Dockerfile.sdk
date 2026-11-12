@@ -1,7 +1,9 @@
 # Optional execution toolbox. It is never the default Aide release target.
 ARG AIDE_RUNTIME_IMAGE=aide:local
-FROM golang:1.26-bookworm AS go-sdk
-FROM node:24-bookworm-slim AS node-sdk
+ARG GO_BASE=golang:1.26-bookworm
+ARG NODE_BASE=node:24-bookworm-slim
+FROM ${GO_BASE} AS go-sdk
+FROM ${NODE_BASE} AS node-sdk
 FROM ${AIDE_RUNTIME_IMAGE}
 USER root
 RUN test "$AIDE_RUNTIME_PROFILE" = slim \

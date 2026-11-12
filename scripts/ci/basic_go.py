@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-PATTERN = (r'^Test(MapWorkbench.*|MapDocument.*|AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNeverReturnKey|'
+PATTERN = (r'^Test(Issue801.*|TypeScript.*|Issue695And697.*|Issue796.*|Issue762.*|StalePID.*|HelperSingleInstance.*|MapWorkbench.*|MapDocument.*|AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNeverReturnKey|'
            r'ExecutionDiffLargeArtifactsUseBoundedMemory|ExecutionTextArtifactMatchesProposalTextContract|'
            r'ExecutionCollectPartialFailureRetainsIdempotentReceipts|StaticAuditFixture|'
            r'TerminalCopyContextCanonicalIdentityAndVisibility|TerminalContextPinnedMasterNeverRetargets|'
@@ -18,6 +18,7 @@ PATTERN = (r'^Test(MapWorkbench.*|MapDocument.*|AuthenticationAndOrigin|FileBoun
 COMMANDS = [
     ['go', 'test', '-mod=vendor', '-count=1', '-timeout=5m', '-run=' + PATTERN, './...'],
     ['go', 'vet', '-mod=vendor', './...'],
+    ['go', 'test', '-race', '-mod=vendor', '-count=1', '-timeout=3m', './cmd/aide-local-mounts', './internal/localmounts'],
 ]
 
 

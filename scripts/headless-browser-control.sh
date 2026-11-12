@@ -5,6 +5,9 @@ cd "$ROOT"
 MODE="${1:-start}"
 PID_FILE="$ROOT/.cache/aide-headless-browser.pid"
 LOG_FILE="$ROOT/.cache/aide-headless-browser.log"
+if [[ "${AIDE_BRIDGE_LOCKED:-}" != "$PID_FILE" ]]; then
+  exec python3 "$ROOT/scripts/bridge-lifecycle-lock.py" "$PID_FILE" "$0" "$@"
+fi
 case "$MODE" in
   install)
     npm ci --prefix scripts/browser-runtime --ignore-scripts --no-audit --no-fund
@@ -24,7 +27,7 @@ case "$MODE" in
     CHILD_PID="$(AIDE_BROWSER_BRIDGE_TOKEN="$TOKEN" node -e 'const fs=require("node:fs"); const fd=fs.openSync(process.argv[2],"a"); const child=require("node:child_process").spawn(process.execPath,[process.argv[1]],{detached:true,stdio:["ignore",fd,fd],env:process.env}); child.unref(); fs.closeSync(fd); process.stdout.write(String(child.pid));' scripts/headless-browser-bridge.js "$LOG_FILE")"
     echo "$CHILD_PID" > "$PID_FILE"
     for _ in {1..30}; do
-      if TOKEN="$TOKEN" node -e 'fetch("http://127.0.0.1:17779/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
+      if TOKEN="$TOKEN" EXPECTED_PID="$CHILD_PID" node -e 'fetch("http://127.0.0.1:17779/healthz",{headers:{authorization:"Bearer "+process.env.TOKEN}}).then(async r=>{const x=await r.json();process.exit(r.ok&&x.pid===Number(process.env.EXPECTED_PID)?0:1)}).catch(()=>process.exit(1))' 2>/dev/null; then
         echo "Headless Chromium ready on 17779 (PID ${CHILD_PID})."; exit 0
       fi
       kill -0 "$CHILD_PID" 2>/dev/null || break
