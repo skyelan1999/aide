@@ -17,3 +17,7 @@ The directory must remain accessible to the native user. Rooted access adds no p
 NFSv3 has bounded parser/message/read/file/connection budgets and soft timeouts. Stable writes synchronize before acknowledgment; transport failure, suspension or process death can yield I/O errors. Native-host concurrent database writes are not coordinated (`nolock`); keep them stopped. Special files and foreign ownership changes are refused. This is not complete NFS certification. Protected macOS TCC directories, physical Windows filesystems, network drives, USB unplug/replug and production workloads were not exercised. Existing global mounts are outside this selected-directory change.
 
 Rollback: preserve `.aide-data/local-mounts` configuration/identity receipts and user directories. An old helper restores the old pathname-bind race and is not an equivalent scope guarantee. Stop/reconfigure the owned installation normally before replacing its paired helper. No user data migration or deletion is required.
+
+## Final integration
+
+Merged source and CI identities and all 18 retained dispositions are recorded in [completion receipt](completion.json). Windows CI additionally passed isolated native UI and stop-recovery tests; this does not establish physical Windows selected-directory bridge acceptance.
