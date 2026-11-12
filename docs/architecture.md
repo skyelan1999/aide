@@ -1,6 +1,6 @@
 # aide 架构与接口索引
 
-> 核对日期：2026-11-11；实现基线 `921a95a5`。本页是模块和接口导航，任务、上下文、权限、并行、文件与原生控制原理见署名 Skye Lan 的 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。旧截图只说明当时界面，不是本轮运行验收。
+> 核对日期：2026-11-12；实现基线 `5bec2477`。本页是模块和接口导航，任务、上下文、权限、并行、文件与原生控制原理见署名 Skye Lan 的 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。旧截图只说明当时界面，不是本轮运行验收。
 
 [软件模块说明](architecture/modules.md)列出管理提案、文档绑定、页面助理、消息和 TTS 的依赖；[功能说明](features.md)与[演示](demo-guide.md)对应真实入口。
 
@@ -10,7 +10,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-Aide 由 Go 服务、嵌入式浏览器 UI、工具运行时及按平台配置的原生桥接组成。浏览器和桌面壳共享后端，模型回答、工具执行、文件应用和实际验收分别留痕。最新公开程序包为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)（2026-11-02）；后续主干能力不据此视为已进入该包。发行与运行身份见 [HANDOVER](../HANDOVER.md)，历史验收见 [验证记录](verification.md)。
+Aide 由 Go 服务、嵌入式浏览器 UI、工具运行时及按平台配置的原生桥接组成。浏览器和桌面壳共享后端，模型回答、工具执行、文件应用和实际验收分别留痕。本页覆盖 0.1.19.0 RC1 发行准备；实际安装包与验证身份以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不能把主干能力视为旧 RC3 安装包已有功能。发行与运行身份见 [HANDOVER](../HANDOVER.md)，历史验收见 [验证记录](verification.md)。
 
 超长会话、摘要压缩、项目记忆及工业使用边界见[超长对话与工业复杂任务支持说明](industrial-long-conversation-support.md)。
 
@@ -212,3 +212,6 @@ macOS 的 `modifier_gesture.swift`、`app_capture.swift` 实现可选双修饰�
 ### MapCanvas public map workbench
 
 MapCanvas imports YAML + PGM/PNG through visible source APIs and binds only the original raster to the versioned document channel. Its specific workbench method and source-argument exception are restricted to the canonical mapcanvas ID/tool names; read-only sources may be edited/exported but not overwritten. The trusted host Save action retains scope/version/permission/atomic replacement checks. Marketplace clients require map-image-document-v1, separating the new source host from older RC3 binaries. Current public plugin is 0.2.1; its AI preview/edit and gray-pixel checks are recorded in `docs/tasks/mapcanvas-ai-tools-20261111.json` and `docs/tasks/mapcanvas-gray-ui-20261111.json`. Preview returns PNG evidence: visual judgment requires image-input support from the selected model/provider; metadata alone is not visual acceptance. Use the current controls “导入地图”, “灰色画笔”, “平移”, and “保存原图”; final writes still require the host Save receipt. See [historical 0.1.0 acceptance](reviews/2026-11-11-mapcanvas.md) and the [current plugin guide](https://github.com/skyelan1999/aide-pkg-MapCanvas/blob/main/README.md).
+
+
+[0.1.19 架构变更与边界](release-guide-0.1.19.md)。

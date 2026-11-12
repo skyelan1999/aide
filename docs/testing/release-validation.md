@@ -30,7 +30,7 @@
 
 ## 当前公开插件安装包范围
 
-[冻结清单](../../scripts/ci/public-plugins.lock.json) 来自公开市场的固定提交，包含当时 **30 个 public 可安装包**。每项保留市场版本、原 ZIP 大小/SHA256、公开实现仓库和来源提交，以及最近公开 tag 供差异审阅。较新源码 tag 不会悄悄替换市场包。私有插件不进入本轮公开验收或发行镜像。
+[冻结清单](../../scripts/ci/public-plugins.lock.json) 来自公开市场的固定提交，本次更新覆盖 **32 个 public 包条目**（31 个可安装条目和已迁移为宿主能力的 computer-control 历史包）。每项保留市场版本、原 ZIP 大小/SHA256、公开实现仓库和来源提交，以及最近公开 tag 供差异审阅。较新源码 tag 不会悄悄替换市场包。私有插件不进入本轮公开验收或发行镜像。
 
 不要求重编译全部插件。测试把原发布 ZIP 直接提交到真实 `/api/plugins/bundle`，验证已安装身份和启用状态，再调用安装后的 handler 或 Aide 的正式 native executor。需要引擎的插件安装现有发布依赖；例如 STEP 测试实际下载并校验预编译 CAD 引擎、产生已知尺寸实体再计算网格。
 
@@ -48,6 +48,7 @@
 | office | 原生入口实际生成 DOCX、检查 ZIP 文件 | 使用合成内容 |
 | archive-tools | 真实压缩/解压、还原字节一致 | 全量 Go 套件另测路径边界 |
 | markdown-history | 实际历史接口记录快照、相同内容去重 | 临时工作区 |
+| professional-resume | 实际安装后的 guide、用户同意、虚构履历任务、加密缓存、证据关联校验、结果回填/删除及重复完成拒绝 | 不调用模型、不调查真实公司；工作台文件/浏览器既有验收单独记录 |
 | sqlite | 安装后 CREATE/INSERT/参数化查询；默认只读拒绝写；逐句确认、实际 ATTACH 越界拒绝、CSV 链接哨兵不变 | 私有临时数据库 |
 | starlink | 原插件读取本机合成令牌/证书，与真实隔离 Aide HTTPS 宿主完成状态及星图摘要 | 不读取用户星图 |
 | terminal | 创建真实本地进程、输入、解码轮询输出、关闭 | SSH/串口/SCPI 需专用设备，不声称真实硬件通过 |
@@ -154,3 +155,7 @@ if this source gate fails: retain the failed attempt and use `version.sh patch`
 for the corrected next tag. Documentation-only repair does not invalidate a
 successful local full receipt when its source fingerprint is unchanged; final
 tagged runtime/public-package acceptance must still run afresh.
+
+### 0.1.19 市场冻结更新
+
+本次冻结应绑定新市场提交，覆盖 SQLite 1.0.3、StarLink 0.1.6、Terminal 1.8.1 和 Professional Resume 0.1.1，保留其余现行公开包。marketRevision、每包版本/大小/路径/SHA 必须与当前目录一致；两架构完整安装与功能证据必须重跑，旧31包收据不能作为本次通过证明。插件及市场的公开状态和 Aide Delivery 分开核实。

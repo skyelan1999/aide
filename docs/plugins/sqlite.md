@@ -2,12 +2,14 @@
 
 零第三方依赖的普通插件，基于 Node 内置 **`node:sqlite`**（`DatabaseSync`），可离线运行、免原生编译。用于在授权的挂载根内读写 SQLite 数据库文件：参数化查询、事务、多语句迁移、表结构探查与 CSV / 一致性备份导出。
 
-- 插件目录：`plugins/sqlite/`（`manifest.json` + `index.js`）
+- 独立实现与发行：[aide-pkg-sqlite](https://github.com/skyelan1999/aide-pkg-sqlite)，当前配套版本 1.0.3；安装后位于数据区的 `plugins/sqlite/`。
 - 协议：aide 插件协议 v1.1（`docs/plugin-protocol.md`）
 - 形态：普通（非 daemon）插件——**每次工具调用短连接**：打开数据库 → 执行 → 关闭，不跨调用复用连接。
-- 预装状态：随仓库预装、默认启用；工具默认只读，写操作需显式 `readonly=false`。
+- 分发状态：主程序不预装，需从市场或 ZIP 安装。查询默认只读；事务和脚本默认可写，导出会写出文件。
 
 ## 工具清单
+
+1.0.3 的本地相对路径以当前工作区为基准。SSH 工作区和启用、AI 可见的引用通过宿主单调用 checkout/commit 访问，不回退本机。写入需 RW，`outputSource` 可另选导出来源；需配套 Aide 0.1.19.0 RC1。远端每文件及调用总量限 64 MiB、最多四槽，非空 WAL/journal 拒绝。操作前停止外部写入并 checkpoint，直到调用结束保持停写；这是乐观冲突检查，不提供分布式锁或跨槽原子事务。历史固定挂载路径示例不代表远端 API。
 
 | 工具 | 用途 | 默认 | 主要返回 |
 | --- | --- | --- | --- |

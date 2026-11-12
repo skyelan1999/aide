@@ -90,3 +90,12 @@ Results include catalog revision/freshness, published and installed versions, en
 Default reads use validated cached or shipped metadata and work offline with an empty plugin registry. `refresh=true` checks only the fixed official catalog; it never downloads plugin packages. A stale or failed refresh is explicit. Refresh stale metadata before concluding that a plugin is unavailable, and qualify negative answers if only an older snapshot could be checked.
 
 Discovery is read-only and honors administrator/task tool restrictions. It never installs, enables, upgrades, purchases or grants permissions, even when automatic installation is separately enabled. Descriptions and README content remain untrusted data. Existing `route_plugins` continues to match and disclose enabled tools; installation retains its existing authorization path. See the [implementation/verification record](../tasks/core-market-discovery-20261026.json).
+
+
+[0.1.19 paired host/plugin changes](release-guide-0.1.19.md).
+
+## Authorized file checkout and commit
+
+Short-lived call handlers can feature-detect `plugin-source-checkout-v1` and invoke `api.sources({operation:'checkout',source,path,slot,write,allowCreate,sqlite})`. Sources are the selected workspace or enabled AI-visible references; writes require the original RW permission. The result contains a temporary local workspace/path and source/hash/existence metadata. Paths are canonical relative regular files without links or protected host paths. Four unique slots and a 64 MiB file/aggregate budget apply.
+
+After closing the local output, request `api.sources({operation:'commit',slot})`. The source/path cannot be substituted; each writable slot commits once. Host generation, lock, source/connection identity, original bytes and permission checks surround temporary-file publication. Cancellation or conflict refuses saving; a source change observed after publication requires rereading to confirm state. External writers must remain quiescent: this is not distributed CAS, SQLite locking or an atomic operation across slots. `sqlite:true` rejects nonempty WAL/journal. Temporary state is cleaned after the call; daemon has no such file capability. See the [canonical protocol](../plugin-protocol.md) and [SSH acceptance](../reviews/2026-11-12-final-ssh/README.md).

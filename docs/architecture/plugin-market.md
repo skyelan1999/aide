@@ -28,6 +28,8 @@ Aide「插件」侧栏增加「已安装 / 市场」。保留上传、设置、�
 
 ## 目录发布
 
+2026-11-12 发行准备将宿主离线目录与冻结清单同步到市场 `7a7aa3d8912471ee53391d307b8c88ac74146726`：32 个公开包条目（含已迁移的 computer-control 历史包）及 3 个私有展示条目。SQLite 1.0.3、StarLink 0.1.6 的市场最低宿主为 0.1.19.0 RC1；Terminal 为 1.8.1、Professional Resume 为 0.1.1。旧包保留，私有展示不含公开安装包。完整 Delivery 必须按确切版本重新安装和验收，旧 31 包收据不能替代本轮结果。下文“首批”是原始目录设计记录。
+
 官方受控仓库保存目录与不可变命名的 ZIP：`packages/<id>/<version>-<digest-prefix>.zip`。首批23个插件共120983字节，来自审阅过的 Aide 源码 `4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94`。此版用仓库和 Pages 直接分发小包，未创建或声称存在 Releases 附件。
 
 市场仓库 `scripts/build_catalog.py --aide ../aide --ref <sha>` 只读取该提交的受控插件文件，补充根 LICENSE，按固定排序/时间戳打包，执行宿主的独立入口校验，生成目录与摘要。不得从本地插件注册表、设置或缓存打包。`verify_catalog.py` 核对每个包及 manifest，并只将网站、目录和被引用的包复制到 `public/`。Pages workflow 发布该目录。

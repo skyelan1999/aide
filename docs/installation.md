@@ -1,218 +1,103 @@
-# 安装与首次启动
+# 安装、升级与首次启动
 
-> **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
+本文按 2026-11-12 源码 `5bec2477` 和 `0.1.19.0 RC1` 发行准备核对。是否已公开、实际支持架构和文件摘要，以同版本 [GitHub Release](https://github.com/skyelan1999/aide/releases) 及 `RELEASE-VALIDATION.json` 为准。不要把 main 的功能视为旧包已有功能。
 
-aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Release 提供 arm64 Docker 镜像及 macOS、Windows ARM64、Ubuntu ARM64 启动包；x64 镜像尚未构建。首次启动器会自动获取并校验对应版本镜像。需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
+## 选择安装方式
 
-## 1. 安装宿主环境
-
-| 平台 | 前置环境 | 注意 |
+| 方式 | 适用场景 | 入口 |
 | --- | --- | --- |
-| macOS Apple Silicon | Docker Desktop、Git；镜像校验需要 Python 3 | 打开 Docker Desktop，等待引擎就绪；发行镜像目标为 linux/arm64 |
-| Linux ARM64 | Docker Engine、Compose v2、Git、Python 3 | 当前用户须有访问 Docker 引擎的权限 |
-| Linux/macOS x86 | 同上 | 使用源码构建；不要直接使用 ARM 归档 |
-| Windows ARM64 | Docker Desktop ARM64 Linux 引擎 | 使用 Release 中 Windows ARM64 启动包；本轮未在 Windows 实机验证 |
-| Windows x64 | Docker Desktop、WSL2 | RC8 没有 linux/amd64 镜像；使用源码构建 |
+| 完整发行包 `aide-<tag>-full-linux-arm64.zip` | Docker 引擎为 linux/arm64，包括 Apple Silicon | 校验、解压后使用包内 start 入口 |
+| 完整发行包 `aide-<tag>-full-linux-amd64.zip` | Docker 引擎为 linux/amd64，包括常见 x64 Windows/Linux、Intel Mac | 同上；不能使用另一架构的镜像 |
+| 可选开发工具包 `aide-<tag>-devtools-linux-<arch>.zip` | 需要编译器和开发依赖 | 单独导入 SDK；日常运行无需安装 |
+| 源码构建 | 修改程序或跟随 main | 环境检查后显式 build |
 
-安装入口：[Docker Desktop](https://docs.docker.com/desktop/) / [Docker Engine](https://docs.docker.com/engine/install/) / [Git](https://git-scm.com/downloads) / [Python](https://www.python.org/downloads/)。Docker Desktop 的适用许可由使用者按其组织情况确认；aide 自身使用 MIT 许可证。不需要在宿主机安装 Go；日常运行无需 npm。开发路由检查另外需要 Node.js 与 Python 3。
+包名中的架构指 **Linux Docker 引擎架构**，不是浏览器架构。完整包包含各宿主的启动文件及对应镜像；仅使用同一 Release 实际存在的附件。历史轻量启动包不包含镜像，首次启动需下载；不能将其作为完整 A/B 升级包。
 
-## 2. 下载同一版本的源码
+## 宿主环境
 
-从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `aide-launcher.exe` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；macOS/Linux 下载中断可自动续传；原生 Windows 下载中断会清理本次临时下载并在下次重试，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
+macOS 使用 Docker Desktop；Windows 使用 Docker Desktop 的 Linux 容器引擎，x64 机器通常还需 WSL2；Linux 使用 Docker Engine、Compose 和 Buildx。源码构建另需 Git。宿主 Python 3 用于脚本和校验；日常运行不要求宿主 Go、Node 或 npm。开发与发布检查另需对应工具链。
 
-Release 离线启动器会读取已保存的宿主端口；首次启动遇到端口占用时，会在默认端口后选择并保存可用端口。Windows 离线包和完整发行包会启动宿主端口监视器，在设置中更改端口后更新 Compose 映射并重启服务；`/data` 与工作区数据卷继续共用。源码开发启动使用仓库 `.env` 配置，不启用 Release 包的自动升级流程。
+安装来源：[Docker Desktop](https://docs.docker.com/desktop/)、[Docker Engine](https://docs.docker.com/engine/install/)、[Git](https://git-scm.com/downloads)、[Python](https://www.python.org/downloads/)。Docker Desktop 的组织许可由使用者确认。Aide 使用 MIT，第三方组件保留其许可。
 
-| 下载项 | 启动方式 | 目标系统 |
-| --- | --- | --- |
-| `aide-v0.1.14.0-RC8-macos-arm64.zip` | 双击 `start.command` | Apple Silicon macOS |
-| `aide-v0.1.14.0-RC8-windows-arm64.zip` | 双击 `start.bat` | Windows ARM64 |
-| `aide-v0.1.14.0-RC8-ubuntu-arm64.zip` | `./start.sh` | Ubuntu ARM64 |
-| `aide-<tag>-full-linux-arm64.zip` | 首次运行或在设置中上传升级；包含各平台启动脚本和 arm64 镜像 | Docker Engine 为 linux/arm64 |
-| `aide-<tag>-full-linux-amd64.zip` | 首次运行或在设置中上传升级；包含各平台启动脚本和 amd64 镜像 | Docker Engine 为 linux/amd64 |
+## 使用完整发行包
 
-启动器检查 Docker 引擎架构、SHA256 和镜像 ID，再执行不构建、不拉取的启动。完整发行包名称中的架构指包内 Linux Docker 镜像架构，包含所有宿主平台启动文件。开发者可在持有匹配架构基础镜像的构建机运行 `scripts/package-release-assets.sh <tag> <image> [输出目录]` 生成完整包；`scripts/publish-release-assets.sh <tag> <输出目录>` 会把产物上传到已推送的 GitHub tag 对应 Release。
+1. 从同一 Release 下载匹配引擎架构的完整 ZIP 和 `SHA256SUMS`，核对文件名与摘要。不要混合不同 tag 的启动器、镜像和元数据。
+2. 解压到自己的安装目录。macOS 可运行 `start.command`，Windows 使用 `aide-launcher.exe` / `start.bat`，Linux 使用 `start.sh`。
+3. 启动器校验并导入包内镜像，检查架构、镜像身份和健康状态。安装与启动不调用付费模型。
+4. 设置提供商、API Key、模型和项目后开始使用。浏览器与原生桌面窗口可共用同一后台，不必为每个窗口启动容器。
+
+```bash
+# 在下载目录执行，SHA256SUMS 必须来自同一 Release
+shasum -a 256 -c SHA256SUMS
+```
+
+只有下载了清单全部文件时，全清单校验才会全部成功；按需下载者可对所选文件逐项核对。Windows 可用 PowerShell `Get-FileHash -Algorithm SHA256` 核对相应条目。SHA-256 是完整性摘要，不是独立发布者签名。
+
+## 源码安装与更新
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.14.0-RC8
+# 需要可重复的发行源码时，检出已公开 Release 的精确 tag
 bash scripts/install.sh --check
-```
-
-也可解压 Release 源码 ZIP 后进入根目录。镜像安装脚本需要同版源码中的 Compose、version.md 和 scripts；Docker 归档本身不是双击安装程序。
-
-## 3A. 发行镜像安装（Apple Silicon / ARM64）
-
-只有在 [Releases](https://github.com/skyelan1999/aide/releases) 页面存在镜像附件时，才使用此方式。下载同一 release 的镜像和 SHA256SUMS，放在 aide/docker-images/；按实际附件文件名替换下面的 `<matching-version>` 占位符。
-
-```bash
-bash scripts/install.sh --image "docker-images/aide-<matching-version>-linux-arm64.tar.gz"
-```
-
-脚本先检查校验和，再导入镜像并检查架构，最后使用 `--no-build --pull never` 启动。版本不匹配、校验失败或架构不匹配会停止，不会偷偷重建。
-
-## 3B. 源码安装（含 x86）
-
-```bash
 bash scripts/install.sh --source
 ```
 
-首次构建需联网下载基础镜像。脚本创建 context/，仅在 .env 不存在时复制模板，并把本地浏览范围限制到仓库目录。镜像内包含应用与工具链，宿主目录通过挂载提供。
+后续操作：
 
-## 3C. 离线 / 空气 Gap 安装（目标机零联网）
-
-适用于完全不连公网的内网/隔离环境。**核心原则：目标机只 `docker load` 已导入镜像并用 `start-image` 启动，绝不执行 `start`**——`start` 会触发 `docker build`，进而拉取基础镜像，在离线机上必然失败或挂起。Compose 已设 `pull_policy: never`，双保险防止裸跑 `compose up` 意外拉取；缺镜像会立即报错而非联网等待。
-
-交付物三件套（来自同一版本 tag，如 0.1.14.0 RC1）：
-
-1. 同 tag 源码（或源码 ZIP，内含 Compose、scripts、version.md）；
-2. 自包含镜像归档 `aide-<matching-version>-linux-aarch64.tar.gz`（x86 机为 `amd64`；Docker 内部架构标识为 arm64，归档文件名统一用 aarch64/amd64）；
-3. 同目录清单 `SHA256SUMS`（单文件；历史零散 `*.sha256` 已废弃）。
-
-```bash
-# 目标离线机：校验 → 导入 → 配置 → 启动
-cd aide                                   # 同 tag 源码根目录
-shasum -a 256 -c docker-images/SHA256SUMS # 校验归档完整性，失败即停
-docker load -i "docker-images/aide-<matching-version>-linux-aarch64.tar.gz"
-# 复制模板并指定已导入镜像 tag、局域网模型地址（见 .env.example 注释）
-#   AIDE_IMAGE=aide:<matching-version>
-#   AI_BASE_URL=http://<局域网模型地址>
-#   AIDE_WEBSEARCH_URL=        # 留空：web_search 离线降级
-bash scripts/aide.sh start-image          # = --no-build --pull never，绝不 build/pull
-curl -fsSk https://127.0.0.1:8097/healthz   # 健康检查（-k 跳过自签证书校验）
-```
-
-离线行为说明：
-
-- **模型必须指向局域网/本地 provider**（内网网关、本地 vLLM 等），`AI_BASE_URL` 不可填公网地址。
-- **`web_search` 离线不可用**：未配置 `AIDE_WEBSEARCH_URL` 时该工具直接返回“离线环境不可用在线搜索，请用 search_text 搜本地”，不发起任何外联、不崩溃；需要联网检索时改用本地 `search_text`，或在内网自建 SearXNG 后把地址填入 `AIDE_WEBSEARCH_URL`。
-- 前端、drawio、Office 解析等全部内置镜像，无 CDN/外部字体依赖；镜像自包含运行工具链。
-
-离线部署流程：
-
-```mermaid
-flowchart TD
-  A["联网构建机"] --> B["docker build（固定 tag<br/>注入版本/commit）"]
-  B --> C["docker save"]
-  C --> D["gzip 压缩"]
-  D --> E["shasum 生成 SHA256SUMS"]
-  E --> F[("介质拷贝<br/>U盘 / 内网文件分发")]
-  F --> G["目标离线机：shasum -c 校验"]
-  G --> H["docker load 导入镜像"]
-  H --> I["配 .env：AIDE_IMAGE=aide:版本<br/>AI_BASE_URL=局域网模型"]
-  I --> J["bash scripts/aide.sh start-image<br/>--no-build --pull never"]
-  J --> K["curl healthz 健康检查"]
-  K --> L["模型指向局域网/本地 provider<br/>web_search 离线降级为 search_text"]
-```
-
-## 4. 构建、测试与发布门禁（源码开发）
-
-日常 `bash scripts/aide.sh start` 已针对启动热路径优化，无需理解以下细节即可使用；本节说明其工作方式与离线/发布注意事项。
-
-**两种启动模式**
-
-| 命令 | 行为 | 适用 |
+| 操作 | 命令 | 行为 |
 | --- | --- | --- |
-| `bash scripts/aide.sh start` | 源码构建启动。计算 Go 源码集合（cmd+internal+go.mod/go.sum/vendor + Dockerfile/compose.yaml）哈希，写入镜像 label `aide.srcsha`；二次启动若哈希未变则 `--no-build` 直起（跳过 buildkit，数秒到可访问），变化才 `--build` | 改了源码后本地开发 |
-| `bash scripts/aide.sh start-image` | 用已导入镜像 `--no-build --pull never` 直起，绝不 build/pull | 发行镜像 / 离线机 |
+| 日常启动 | `bash scripts/aide.sh start` | 复用健康实例或启动已安装镜像，不编译源码 |
+| 应用源码修改 | `bash scripts/aide.sh build` | 显式构建、校验成功后启动，不静默退回旧产物 |
+| 强制冷构建 | `bash scripts/aide.sh clean-build` | 按启动器契约处理本安装的构建缓存，不删除用户数据 |
+| 状态 / 日志 | `bash scripts/aide.sh status` / `logs` | 查询本安装 |
+| 停止 | `bash scripts/aide.sh stop` | 停止本安装组件，保留配置和数据 |
 
-**测试与发布门禁（#43）**
+对应的 `start.*`、`build.*`、`stop.*` 入口具有相同职责。刷新页面不会更新嵌入二进制的前端。启动接口和清理精确范围见[启动器契约](architecture/launcher-contract.md)。
 
-- 日常 `start` 的 Docker 构建**默认不跑全量 `go test`**（`AIDE_RUN_TESTS=0`），只做 `go vet` + 增量 `go build`。改前端/Go 后层缓存命中，vet+build 约 5s、端到端约 12s；无改动二次启动走快捷路径约 3s。
-- 全量 `go test` 从「每次启动」移到「发布门禁」：`scripts/docker-release.sh` 与 CI 构建必须带 `--build-arg AIDE_RUN_TESTS=1`，强制跑全量测试（约 160s）才放行。门禁不绕过。
-- 需要本地全量测试（含 race 检测）时手动跑：`bash scripts/aide.sh test`（容器内 `go test -race -count=1 ./... && go vet ./...`）。
-- 临时在构建中打开测试：`AIDE_RUN_TESTS=1 bash scripts/aide.sh start`。
+## 配置项目与目录
 
-**运行时 pip 层缓存与离线（#46）**
-
-- runtime stage 把稳定层（系统用户 + Office 文档解析 pip 依赖）放在 `COPY` 业务二进制**之前**，把随代码变化的二进制放到最后。这样改 Go/前端只失效最末 COPY 层，pip 层稳定 `CACHED`、不重复联网下载；运行期镜像自包含、绝不联网 pip。
-- 依赖版本已锁定（python-docx==1.2.0、openpyxl==3.1.5、python-pptx==1.0.2、ezdxf==1.4.4），pip 下载经 BuildKit cache mount 复用。
-- **离线/air-gap 首次构建**：联网机先运行 `bash scripts/prebuild-wheels.sh --target-platform linux/arm64`（默认目标）或 `--target-platform linux/amd64`，把对应 CPython 3.12 wheel 预下载到 `docker/wheels/`，随源码带到离线构建机，构建时加 `--build-arg PIP_OFFLINE=1`（`pip install --no-index --find-links=/wheels`，纯本地、零联网）。离线构建会在安装前核对 wheelhouse 的平台与 Python 标记；缺失或目标不匹配会立即失败。`docker/wheels/` 默认仅含 `.gitkeep`；在线构建忽略它。
-  预下载在同文件系统的隔离目录进行，并在容器中以 `--no-index --ignore-installed --dry-run` 校验固定依赖及传递依赖可完整解析，成功后才替换现有目录；下载/校验失败保留原输入，替换失败尝试恢复原目录。并发脚本由 `docker/.wheelhouse-lock` 拒绝重复执行。强制杀进程或掉电可能留下该锁及 `.wheelhouse-stage.*`：先确认没有下载进程，再检查其中 `previous` 和当前 `docker/wheels/`，必要时手动恢复后清锁；目录切换不保证掉电原子性。
-
-## 5. 配置自己的项目
-
-首次默认使用源码目录作为工作区。如需其他目录，修改 .env 后重新启动；路径必须存在，推荐绝对路径：
+`.env` 决定源码安装的端口、Compose 组合和已有挂载；默认 HTTPS 端口为 `8097`。发行启动器保存其实际端口，端口冲突按该启动器策略处理。不要停止无关服务解决冲突。
 
 ```dotenv
-AIDE_IMAGE=aide:<matching-version>
 AIDE_PORT=8097
 AIDE_WORKSPACE=/absolute/path/to/project
 AIDE_CONTEXT=/absolute/path/to/reference
 AIDE_LOCAL_ROOT=/absolute/path/to/projects
 ```
 
-发行镜像后续运行用 `bash scripts/aide.sh start-image`；自定义源码改动后将 AIDE_IMAGE 设为自己的镜像名，用 `bash scripts/aide.sh start` 重建。不要使用 Docker 命令直接覆盖当前业务目录；升级前备份数据卷。
+路径须存在；系统权限和 Docker 文件共享继续生效。应用内切换工作区只选择已授权范围。设置 → 文件与知识 → 本地目录可登记额外目录，保存后通过本机确认应用并重启。新启动器持有实际目录对象，经宿主文件桥接提供 `/mounts/<id>`，防止准备后同名路径被替换成其他目录；更换磁盘或目录身份后需移除并重新选择。须配套更新原生启动器与助手；详情与数据库并发限制见[工作目录](workspace-paths.md)和[桥接契约](architecture/launcher-contract.md#selected-directory-object-bridge-773)。
 
-## 6. 登录与连接模型
+SSH 工作区与引用分别配置连接身份。引用需启用并允许当前工作区 AI 访问，写入还需 RW。插件自己连接的设备 SSH 需要独立凭据，不继承项目权限。
 
-Windows 原生启动器在恢复配置前，会用当前用户 SID 通过 Win32 直接写入 `.aide-data` 的私有 DACL，阻断继承并仅授予该用户完全控制；不通过 `Set-Acl` 解析域账号名，不修改 owner/group。已有目录也会重新保护，避免首次保护失败后重试跳过，或保留虽然已阻断继承但仍允许其他账号的 ACL；保护失败则停止恢复配置。原生 EXE 的 NTFS ACL、断域环境和 Docker Desktop 需要 Windows 实机验收；`scripts/test_windows_launcher_acl.py` 只覆盖保留的历史 PS1 实现，不代替原生 EXE 验收。
+## 登录与模型
 
-Windows 启动器在健康检查通过后，若系统未配置默认浏览器，只警告并保留已就绪的服务；可手动打开终端输出的地址，或设置 `AIDE_OPEN_BROWSER=0` 跳过自动打开。目录 helper 停止时，已退出的旧进程删除 PID 文件属于正常完成；升级先使用镜像内新提取且经 SHA-256 校验的 helper 停止旧进程，仍存活的进程或其他停止错误会阻止替换。
+首次启动在数据目录生成本地 HTTPS 证书。仅在确认是自己这次启动的 localhost 服务后处理自签证书提示。Touch ID / WebAuthn 使用 `localhost`，不要用 IP 替代 RP ID。无桌面时按启动器输出的本机登录方式操作；令牌及带令牌 URL 不应分享。详见 [TLS](security/tls.md)。
 
-macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/auth/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
+配置 Base URL、命名密钥、模型及支持的 API 协议；先用非敏感内容验证。安装成功不证明模型、麦克风、浏览器控制或客户设备已配置好。云端模型会收到实际发送的上下文、工具结果和图片。
 
-> aide 自 0.1.11 起主端口走 **HTTPS**：首次启动自动在数据目录生成仅本机回环可用的自签证书，浏览器会提示"连接不是私密连接"，点 **高级 → 继续前往 localhost** 即可（例外对本机这张证书长期有效）。请用 `localhost` 而非 `127.0.0.1` 打开，WebAuthn / Touch ID 的 RP ID 不支持 IP 字面量。命令行健康检查用 `curl -k https://...` 跳过自签校验。离线环境证书本地生成，不受影响。详见 [安全：HTTPS/TLS 入口加固](security/tls.md)。
+## 升级与插件
 
-然后在模型设置填写 Base URL、API Key 和模型 ID。安装不会调用模型；模型费用取决于提供商。先用非敏感问题测试连接，再打开实际资料。
+升级前备份 `.env`、数据目录和配置，并保留旧完整包与镜像。发行安装在设置 → 软件更新使用同架构完整包，遵守现有 A/B 健康检查和回退。源码安装通过更新源码后显式 build，不启用发行包自动升级代理。具体见[软件更新](architecture/software-updates.md)和[运维交接](../HANDOVER.md)。
 
-## 常见问题
+公共插件独立发行，主程序升级不自动替换已安装插件。SQLite 1.0.3、StarLink 0.1.6 的市场最低宿主为 Aide `0.1.19.0 RC1`；先更新宿主，再从市场升级插件。旧程序不能通过只换插件获得新宿主能力。SQLite 远端操作要求外部写入停止并完成 WAL checkpoint。
+
+## 离线运行与源码构建
+
+完整包包含镜像，可在目标离线机器校验、导入并 start；已安装镜像的日常 start 不构建、不拉取。不要在离线目标执行 build。离线模型应使用内网/本地提供商；在线搜索、市场刷新及尚未下载的外置语音/插件引擎仍需对应网络或预先准备。运行包自带所需应用资源，开发 SDK 单独分发。
+
+离线源码构建是另一件事：需要预先准备基础镜像、全部构建来源和相应平台 wheelhouse。`scripts/prebuild-wheels.sh --target-platform linux/arm64`（或 amd64）和 `PIP_OFFLINE=1` 只解决 Python wheel 输入，不代表所有构建依赖已准备。见[运行包与离线输入](runtime-bundle.md)。
+
+## 故障恢复
 
 | 现象 | 处理 |
 | --- | --- |
-| docker 不存在 / 引擎未就绪 | 安装并启动 Docker，重新运行 --check |
-| 端口 8097 被占用 | 修改 AIDE_PORT，不要停掉不属于本项目的服务 |
-| bind source path 不存在 | 检查 .env 目录；已有 .env 不会被脚本自动纠正 |
-| 镜像标签找不到 | 使用同版源码/归档，确认 docker load 成功及 AIDE_IMAGE |
-| checksum mismatch | 停止使用该归档，重新下载同版文件和 SHA256SUMS |
-| 版本显示 dev/unknown | 使用正式附件或在 Git 仓库内运行 start 注入版本/SHA |
-| 连接模型失败 | 检查提供商配置；安装成功不等于模型已连通 |
-| 重启后没有旧会话 | 检查 Compose 项目名及 /data 卷，不要创建新卷代替恢复 |
+| Docker 未就绪 | 先检查引擎，再运行环境检查 |
+| 缺镜像 / 架构不匹配 | 核对同 tag 包及引擎架构；源码安装先 build |
+| 摘要不符 | 停止使用该文件，重新获取同版本附件，不覆盖旧有效包 |
+| 自选目录不可用或身份改变 | 确认磁盘及本机权限，必要时移除后重新选择，不创建空目录替代 |
+| 桥接 I/O 错误 | 确认助手和磁盘状态，重新读取确认保存结果；不要假定已写入 |
+| 会话或插件丢失 | 核对安装目录、Compose 项目和数据挂载，不新建卷覆盖恢复路径 |
+| 仍显示旧功能 | 核对运行版本/commit，源码改动须 build，插件须独立升级 |
 
-停止：`bash scripts/aide.sh stop`。查看状态：`bash scripts/aide.sh status`。日志：`bash scripts/aide.sh logs`。不要使用 `docker compose down -v` 清除数据。备份与回滚见 [交接手册](../HANDOVER.md)。
-
-### 配置可浏览的本地目录
-
-工作空间配置中的「浏览」只能访问挂载到 `/local` 的宿主目录。在 aide 仓库根目录执行：
-
-```bash
-# 将当前 aide 仓库设为本地浏览根目录
-python3 scripts/configure-local-root.py
-# 或指定其他已存在的目录（含空格时加引号）
-python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
-```
-
-脚本更新 `.env` 的 `AIDE_LOCAL_ROOT` 和 `COMPOSE_FILE`，保留其他配置，不自动重启服务。确认当前任务结束后，执行 `docker compose up -d --no-build --pull never` 重建容器以应用挂载；服务会短暂中断，命名数据卷保留。使用「工作空间配置 → 本机路径 → 浏览」选择目录并保存。浏览器显示并回填电脑上的真实路径；不能通过「上一级」越过配置的浏览根目录；macOS 要从 `/` 浏览已共享目录，运行 `python3 scripts/configure-local-root.py --path /` 后照常启动。应用内切换目录只能选择已挂载范围内的位置，扩大范围须重新配置并重建容器。
-
-### 本地离线语音（可选）
-
-镜像已内置 sherpa-onnx 合成器（Apache-2.0，离线），但中文音色模型外置在 `/data/tts/` 以控体积。
-联网环境在容器内执行 `scripts/tts-setup --model huayan` 下载默认女声（约 67MB，含 SHA256 校验）；
-保密/空气隙环境按 [本地离线 TTS](security/tts-local.md) 手动放入模型。装完重启后，设置页「语音引擎」选「自动」即优先本地离线，文本不出本机。
-
-
-## 普通设备快速启动与开发构建
-
-源码目录首次运行和 `git pull` 更新后，使用 `build.command` / `bash build.sh` / `build.bat`。它统一编排增量构建，验证当前源码镜像后自动启动；Windows 同时在 Docker 内编译当前 C++ 启动器。失败不会换用公开 Release。需要 Docker Compose、Buildx 与 Git；首次构建需要基础镜像、BuildKit 和依赖，不能把本机默认镜像缓存等同于专用构建器的离线缓存。
-
-日常使用 `start.command` / `bash start.sh` / `start.bat`，只复用健康实例或启动已存在且通过校验的镜像。start 不编译，即使设置旧 `AIDE_BUILD_FROM_SOURCE=1` / `AIDE_FORCE_REBUILD=1` 也不编译。源码目录缺镜像会提示先 build，不下载 Release 来替代本地源码。
-
-Release 完整包保留 `start`、`stop`、`docker_clean`、`verify` 四组入口；首次 start 校验并导入包内匹配架构镜像，后续复用本地镜像。缺少匹配归档时明确报错；Windows 单 EXE/薄包保留经固定摘要校验的官方包恢复能力。均不回退源码编译。保留原 `.env`、`.aide-data`、工作区和离线归档。源码安装关闭 A/B 安装与切换；Release 安装保留在线 A/B 升级。详见[标准接口及清理边界](architecture/launcher-contract.md)。
-
-发布时须从已验证镜像执行 export-bundle（package-release-assets.sh 已接入），一同提交更新后的预构建清单与校验记录，并上传清单引用的完整包及 SHA256SUMS。仓库入口与 Release 解压入口都要实际验收，核对下载附件的大小、摘要和镜像身份；不能只推代码或薄启动器。保留旧附件作为回滚，不覆盖已发布的同名文件。
-
-## 启动后的实际工作台（源码 0fef6411）
-
-截图是 2026-10-17 源码专用实例，并非安装器或发行包测试。正常启动仍由 .env 的端口和启动器确定；不要复制截图临时端口，也不要把更新源码等同于已更新正在运行的旧二进制。
-
-![启动后的实际工作台](images/current-20261017/01-workbench.jpg)
-
-[完整原图、环境与边界](ui-evidence.md)。
-
-### Windows 单文件后台主机
-
-[原生 Windows 主机](../native/windows-launcher/README.md)由一个分发 EXE 承载启动、停止、端口协调、A/B 更新和目录/LAN 组件。BAT 默认直接调用 EXE；运行时无需宿主 PowerShell/Python。组件按内嵌 SHA256 校验并自动落入私有缓存，Docker Desktop 和 Compose 仍需安装。
-
-默认后台驻留在当前用户登录会话，同 EXE 的端口/更新 worker 并行运行，容器变更按安装目录加锁。`aide-launcher.exe host-status` 可查询任务状态；`stop` 停止本安装及后台任务，保留数据；`host-stop` 只停后台任务。不自动注册系统服务或登录启动项。旧安装迁移保留源容器/卷，仅接受同根目录的明确归属；孤立旧项目可显式使用 `--project NAME`。
-
-源码构建 EXE 需要现有 Go 1.26+、Python 和本地 Linux 工具镜像：`python scripts/build-windows-launcher.py --image <本地Linux镜像>`。交叉编译和便携故障测试不代替 Windows Job、NTFS ACL、Docker Desktop、A/B 更新、旧数据迁移与 ARM64 实机验收；当前验证范围见该实现说明。保留 `.env`、`.aide-data` 和工作区；不确认的进程终止会留下阻塞标记，不能用重启自动抹掉。
+不使用 `docker compose down -v` 或全局 prune 作为常规恢复。保护用户工作区、会话、插件、凭据和旧镜像。完整发行检查和未验证设备范围见[Release 验收](testing/release-validation.md)。

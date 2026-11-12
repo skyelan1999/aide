@@ -1,5 +1,7 @@
 # UDP Communication Plugin (comm-udp)
 
+> Historical independent communication-plugin guide. These capabilities now belong to the separately installed Terminal plugin (current market 1.8.1). Use its release documentation; old package examples are not current installation instructions.
+
 A **long-running daemon plugin** with zero third-party dependencies, built on Node's built-in **`dgram`** module. Used to send/receive UDP datagrams on the loopback network, simulate responses, and join/leave multicast groups — aimed at UDP protocol debugging and device integration.
 
 - Plugin directory: `plugins/comm-udp/` (`manifest.json` + `index.js` + `test.js`)

@@ -1,5 +1,7 @@
 # UDP 通讯插件（comm-udp）
 
+> 历史独立通信插件说明：这些能力现已归入独立安装的 Terminal（当前市场 1.8.1）。请按 Terminal 发行文档使用，旧包示例不是当前安装入口。
+
 零第三方依赖的**常驻守护（daemon）插件**，基于 Node 内置 **`dgram`** 模块，用于在回环网络上收发 UDP 数据报、做规则模拟应答与组播加入/离开。面向 UDP 协议调试与设备联调。
 
 - 插件目录：`plugins/comm-udp/`（`manifest.json` + `index.js` + `test.js`）

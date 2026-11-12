@@ -494,3 +494,6 @@ New conversation messages retain a local `createdAt` timestamp. Legacy messages 
 The public `mapcanvas` workbench may call `map.document.bind` with exactly `source`, `path`, and the imported image SHA-256 `version`. Only `.pgm`/`.png` regular images up to 8 MiB from currently visible file sources qualify. The host verifies instance/package/workspace/lock identity, import version and source origin, then binds the existing document capability. Read-only sources bind for browsing/export but cannot commit writes. Pending image drafts must be saved/discarded before rebinding. No other plugin ID gains this method.
 
 `mapcanvas_browse` and `mapcanvas_read` may pass the bounded source selector through the workbench tool bridge; all source visibility and staging containment checks still run in the host sources service. Ordinary plugins keep their prior argument restrictions. Image edits are staged through document.save.*; only the parent's trusted Save click commits. The host serializes that click with frame calls and tracks the in-flight save so close/cancellation does not blindly retry. The market feature token is `map-image-document-v1`; old released hosts without it are incompatible despite sharing the same version string.
+
+
+[0.1.19 配套宿主与插件要求](release-guide-0.1.19.md)。

@@ -1,6 +1,6 @@
 # 当前功能说明与使用入口
 
-维护日期：2026-11-12；本轮修改以 `24a28199` 为基线，新增修正及验证见[余项核查](reviews/2026-11-12-remaining-issues/README.md)。最新公开程序包为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)，后续主干能力不据此视为已进入该包。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
+维护日期：2026-11-12；当前源码基线 `5bec2477`，覆盖 0.1.19.0 RC1 发行准备。此前批次修正见[余项核查](reviews/2026-11-12-remaining-issues/README.md)，当前迁移与验收边界见[0.1.19 指南](release-guide-0.1.19.md)。实际公开安装包以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不把主干能力视为旧 RC3 已有功能。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
 
 ## 项目与工程任务
 
@@ -58,3 +58,6 @@
 The PDF.js worker uses a reproducibly generated OpenJPEG fallback with pinned C sources, source patches and compiler image; see `scripts/openjpeg/README.md`. Baseline JPEG 2000 and supported HT-only inputs are accepted within the preview budgets; T.814 MIXED HT signaling is unsupported and returns a decoder error. Subsampled e-sYCC is explicitly rejected rather than silently converted as sYCC; full-resolution unsigned e-sYCC uses the PIMA 7667 Annex B conversion to standard sRGB display values. Native ownership failures, DC shifts, MCT record/offset handling, HT layer segments and terminal row bounds are checked by focused regressions and a native sanitizer harness. These are source preview capabilities, not a universal JPEG 2000 conformance claim.
 
 Per-JPX limits: decompressed input 64 MiB; FTYP 64 KiB; JP2H 8 MiB; ICC 4 MiB; 4096 tiles / 16384 tile-components / 256 components; 96 MiB estimated component planes; 64 MiB RGBA output; 4096 quality layers; 8 Mi estimated packet-iterator elements; 4096 markers; 256 CDEF entries; packed packet headers 4 MiB; aggregate MCT tile copies 16 MiB; cumulative native allocation requests 256 MiB. PCLR precision above 31 bits and coding overrides after tile-part zero are rejected. Limits can reject valid but unsupported large/profile-specific images. They do not bound an entire PDF/browser's peak memory or resolve every remaining decoder report. See the [individual audit](reviews/2026-11-12-remaining-issues/README.md).
+
+
+[0.1.19 使用与迁移](release-guide-0.1.19.md)。

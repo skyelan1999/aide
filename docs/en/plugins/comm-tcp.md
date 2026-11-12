@@ -1,5 +1,7 @@
 # TCP Communication Plugin (comm-tcp)
 
+> Historical independent communication-plugin guide. These capabilities now belong to the separately installed Terminal plugin (current market 1.8.1). Use its release documentation; old package examples are not current installation instructions.
+
 A **long-running daemon plugin** with zero third-party dependencies, built on Node's built-in **`net`** module. Used for TCP probing, traffic recording, replay, and simulated responses on the loopback network — aimed at protocol debugging, service/device integration, and fuzz testing.
 
 - Plugin directory: `plugins/comm-tcp/` (`manifest.json` + `index.js` + `test.js`)

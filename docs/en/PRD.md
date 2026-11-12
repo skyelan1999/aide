@@ -32,3 +32,6 @@ Historical tables include features that were missing or partially verified at th
 Aide does not provide malicious-plugin OS isolation, a guarantee of globally complete knowledge retrieval, proof that a model read every citation, automatic cross-device reachability, or universal provider/model availability. A generated document proposal is not a saved business artifact. A static call graph is not runtime execution. A translated page is not a certified accessibility/conformance audit. Old tests are not receipts for a new release.
 
 Acceptance must record reproducible inputs, actual operations, observed results, remaining uncertainty and exact source/package identity. The public product is independent of private research branches and independently distributed plugins.
+
+
+[0.1.19 implemented scope and limits](release-guide-0.1.19.md).

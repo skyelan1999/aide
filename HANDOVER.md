@@ -1,6 +1,6 @@
 # Aide 开发与运维交接
 
-维护日期：2026-11-11；文档核对源码 `921a95a5`。最新公开程序发行为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)（2026-11-02）。主干、安装包与正在运行的实例可能不同，接手时分别核对。
+维护日期：2026-11-12；文档核对源码 `5bec2477`，覆盖 `0.1.19.0 RC1` 发行准备。公开状态与工件身份以对应 [Release](https://github.com/skyelan1999/aide/releases) 为准；此前公开包基线为 v0.1.18.0-RC3。主干、安装包与正在运行的实例可能不同，接手时分别核对。
 
 ## 接手顺序
 
@@ -27,7 +27,7 @@ bash scripts/aide.sh status
 
 默认端口为 `8097`，由 `.env` 中 `AIDE_PORT` 决定；报告中的 `9999` 等端口只属于对应实例。前端经 `go:embed` 编入 Go 服务；只刷新页面不能把新源码装入旧二进制。
 
-本地验收优先遵守用户对当前实例的约定。本项目当前要求复用现有本地 Aide，不另外启动 Aide/Docker 测试实例；只运行适合该环境、不会污染用户数据的检查。确需隔离实例的测试不能悄悄启动，应说明依赖和未执行范围。不要为普通文档更新重建服务。
+本地验收优先遵守用户对当前实例的约定。日常操作保留现有生产 Aide；本次已授权的发布使用专用临时目录、容器和 CI 夹具，不覆盖生产数据。其他确需隔离实例的测试不能悄悄启动，应说明依赖和未执行范围。不要为普通文档更新重建服务。
 
 ## 验证与结果记录
 
@@ -60,3 +60,6 @@ python3 scripts/agent-route.py verify quick
 [执行策略](docs/architecture/execution-policy.md) · [上下文恢复](docs/architecture/context-recovery.md) · [知识星图](docs/architecture/knowledge-map.md) · [插件协议](docs/plugin-protocol.md) · [电脑与浏览器控制](docs/plugins/computer-browser-control.md) · [语音](docs/architecture/assistant-openai-speech.md) · [SSH 与存储](docs/architecture/ssh-storage.md) · [诊断](docs/architecture/diagnostics.md)
 
 旧版交接保留在 [archive](docs/archive/)；[2026-10-17 截图](docs/ui-evidence.md)不是当前运行环境截图，不用它判断今天的界面或发布状态。
+
+
+[0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。

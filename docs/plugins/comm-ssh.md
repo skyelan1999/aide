@@ -1,5 +1,7 @@
 # SSH 通讯插件（comm-ssh）
 
+> 历史独立通信插件说明：这些能力现已归入独立安装的 Terminal（当前市场 1.8.1）。请按 Terminal 发行文档使用，旧包示例不是当前安装入口。
+
 基于 [`ssh2`](https://www.npmjs.com/package/ssh2) 的**常驻守护（daemon）插件**，把 aide 变成一个可脚本化的 SSH 客户端：在一个长驻 Node 进程里维护多条 SSH 连接、SFTP 会话与本地端口转发，并内置一个**可脚本化应答的模拟 SSH 服务端**，用于端到端测试与设备/协议演练。
 
 - 插件目录：`plugins/comm-ssh/`（`manifest.json` + `index.js` + `test.js` + `package.json` + `node_modules/ssh2`）

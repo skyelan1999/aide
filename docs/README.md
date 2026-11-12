@@ -1,6 +1,6 @@
 # Aide 文档中心
 
-维护日期：2026-11-11。当前说明对照源码 `921a95a5`；公开程序发行基线为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)（2026-11-02 发布）。后续主干能力不据此视为已进入 RC3 安装包。
+维护日期：2026-11-12。当前说明对照源码 `5bec2477`，覆盖 `0.1.19.0 RC1` 发行准备；实际公开状态与附件见 [Releases](https://github.com/skyelan1999/aide/releases)。本轮新增能力不视为旧 RC3 安装包已有功能。
 
 ## 使用 Aide
 
@@ -39,3 +39,6 @@
 [2026-10-17 截图](ui-evidence.md)仍是当时的界面记录，不作为当前首页效果图。[连续工作交接](continuity-handoff.md)等旧交接保留原任务范围；当前接手先读根目录 [HANDOVER](../HANDOVER.md)。本次清理删除当前入口中的失效说明，不删除历史原始收据。
 
 白皮书的源码、公开发行身份和校验清单见[证据快照](architecture/evidence/aide-public-baseline-20261111.json)。白皮书在提交、推送或正式发布之前仍是本地文档，不能由已有程序 Release 的日期推定其已经公开。
+
+
+[0.1.19 使用与迁移](release-guide-0.1.19.md)。

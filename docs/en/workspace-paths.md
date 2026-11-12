@@ -29,3 +29,6 @@ Working directories, automatic system documents and local references share the m
 To share only a project tree, set an absolute path such as `AIDE_LOCAL_ROOT=D:/Projects` in the Release folder's `.env`. Select document/workspace subdirectories within that boundary. Add directories on other drives under **Settings → Files & knowledge → Local directories**, save, then apply and restart with host confirmation. Choose read/write access when documents need to be saved. Workspaces on extra mounts keep their cache in the Aide data area; extra mounts cannot be selected as cache destinations. Selecting a path does not automatically grant access to another drive; Docker Desktop sharing and OS permissions still apply.
 
 Port changes and A/B upgrades preserve the launcher's Compose overrides, including extra directory mounts and permissions. Both Windows AMD64 and ARM64 launcher archives must ship `scripts/watch-port.ps1`. See the [repair and verification record](../tasks/release-external-directories-20261026.json); native Windows acceptance is tracked separately from PowerShell fixtures on macOS.
+
+
+[0.1.19 directory-object bridge and SSH scope](release-guide-0.1.19.md).

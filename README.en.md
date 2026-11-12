@@ -63,7 +63,7 @@ Cloud models receive the context, images and tool results sent to their configur
 
 ## Documentation and versions
 
-Reviewed against source **`921a95a5`, 2026-11-11**. The latest public application release queried for this update is **v0.1.18.0-RC3**, published 2026-11-02. Source state, released artifacts and the running installation are separate identities.
+Reviewed against source **`5bec2477`, 2026-11-12**, covering the **0.1.19.0 RC1** release preparation. The matching [GitHub Release](https://github.com/skyelan1999/aide/releases) identifies actual publication, source and package hashes. Source, released artifacts and a running installation remain separate identities; see the [migration guide](docs/en/release-guide-0.1.19.md).
 
 [Documentation center](docs/README.md) · [Architecture/API](docs/architecture.md) · [Plugin protocol](docs/plugin-protocol.md) · [Requirements](docs/PRD.md) · [Version history](version.md).
 
@@ -72,3 +72,6 @@ The technical whitepaper is authored as **Skye Lan**. It distinguishes source in
 ## License
 
 [MIT](LICENSE). Third-party components retain their own licenses. Aide is an independent project inspired by [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness); it is not an official DeepSeek product or a complete DSH/Cordis runtime implementation.
+
+
+[0.1.19 usage and migration](docs/en/release-guide-0.1.19.md).
