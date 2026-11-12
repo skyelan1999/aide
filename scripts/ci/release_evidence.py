@@ -45,7 +45,7 @@ def host(report, sha, name):
     require(report.get('host') == kind and report.get('machine') in machine, 'Native host architecture mismatch')
     checks = report.get('checks', [])
     require(len(checks) == (10 if kind == 'windows' else 8) and all(c.get('status') == 'pass' for c in checks), 'Missing native host checks')
-    required={'aide/cmd/aide-local-mounts','aide/internal/messaging'}
+    required={'aide/cmd/aide-local-mounts','aide/internal/hostbridge','aide/internal/localmounts','aide/internal/messaging'}
     if kind=='windows':required.add('aide/scripts/xsys-review')
     tests=checks[0].get('goTests',[])
     require(required <= {event.get('Package') for event in tests if event.get('Action')=='pass' and event.get('Test')}, 'Native Go assertions missing or all skipped')

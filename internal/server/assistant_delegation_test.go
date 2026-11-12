@@ -117,6 +117,15 @@ func TestAssistantReviewerAppliesNewFileUsingOriginalAuthority(t *testing.T) {
 	a.settings.BaseURL = model.URL
 	a.settings.Model = "test"
 	a.reviewPendingFiles(context.Background(), task)
+	if task.ApprovalState != "recommended" || task.ApprovalDeadline == "" {
+		t.Fatalf("missing user recommendation window: %+v", task.ApprovalReviews)
+	}
+	if _, err := os.Stat(filepath.Join(a.workPath, "qa.md")); !os.IsNotExist(err) {
+		t.Fatal("review wrote the file before the recommendation window elapsed", err)
+	}
+	// Drive the scheduled callback directly rather than waiting 30 seconds.
+	// It must still use the original authorization and guarded apply path.
+	a.applyRecommendedFiles("file-owner", task.ID, task.approvalGeneration)
 	b, err := os.ReadFile(filepath.Join(a.workPath, "qa.md"))
 	if err != nil || string(b) != "QA" || !task.Applied || len(task.ApprovalReviews) != 1 || task.ApprovalReviews[0].Source != "assistant" {
 		t.Fatalf("no audited file application: %v %+v", err, task.ApprovalReviews)

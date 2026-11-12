@@ -42,11 +42,19 @@ func TestRootObjectSurvivesPathAndParentReplacement(t *testing.T) {
 				t.Fatal(e)
 			}
 			if parent {
-				os.Rename(filepath.Join(base, "parent"), filepath.Join(base, "held-parent"))
-				os.Symlink(outside, filepath.Join(base, "parent"))
+				if e = os.Rename(filepath.Join(base, "parent"), filepath.Join(base, "held-parent")); e != nil {
+					t.Fatal("could not perform parent replacement fixture", e)
+				}
+				if e = os.Symlink(outside, filepath.Join(base, "parent")); e != nil {
+					t.Fatal("could not install replacement parent", e)
+				}
 			} else {
-				os.Rename(selected, filepath.Join(base, "held"))
-				os.Symlink(outside, selected)
+				if e = os.Rename(selected, filepath.Join(base, "held")); e != nil {
+					t.Fatal("could not perform directory replacement fixture", e)
+				}
+				if e = os.Symlink(outside, selected); e != nil {
+					t.Fatal("could not install replacement directory", e)
+				}
 			}
 			input, e := f.Open("marker")
 			if e != nil {
@@ -99,7 +107,9 @@ func TestRootReadOnlyAndTraversal(t *testing.T) {
 	}
 	outside := filepath.Join(t.TempDir(), "private")
 	os.WriteFile(outside, []byte("outside"), 0600)
-	f.root.Symlink(outside, "link")
+	if e := f.root.Symlink(outside, "link"); e != nil {
+		t.Fatal("outside symlink fixture was not created", e)
+	}
 	if _, e := f.Open("link"); e == nil {
 		t.Fatal("followed outside symlink")
 	}

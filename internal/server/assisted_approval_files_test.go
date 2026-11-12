@@ -77,6 +77,17 @@ func TestAssistedApprovalLocalFiles(t *testing.T) {
 			a.settings.BaseURL = model.URL
 			a.settings.Model = "test"
 			a.reviewPendingFiles(context.Background(), task)
+			if mode == "new" || mode == "update" {
+				if task.ApprovalState != "recommended" || task.Applied {
+					t.Fatal("missing recommendation window before apply", task.ApprovalState)
+				}
+				before, readErr := os.ReadFile(filepath.Join(a.workPath, "qa.md"))
+				if mode == "new" && !os.IsNotExist(readErr) || mode == "update" && (readErr != nil || string(before) != "original") {
+					t.Fatal("review mutated the file during the recommendation window", readErr)
+				}
+				// Exercise the timer callback without a real 30-second sleep.
+				a.applyRecommendedFiles(s.ID, task.ID, task.approvalGeneration)
+			}
 			b, err := os.ReadFile(filepath.Join(a.workPath, "qa.md"))
 			if mode == "new" || mode == "update" {
 				if err != nil || string(b) != "QA" || !task.Applied || task.Status != "completed" {
@@ -104,13 +115,20 @@ func TestAssistedApprovalLocalFiles(t *testing.T) {
 func TestAssistedApprovalRoutineNewDocument(t *testing.T) {
 	a := testApp(t)
 	docs := bindProposalDocs(t, a, "docs")
-	_, task := documentProposalTask(a)
+	s, task := documentProposalTask(a)
 	if _, err := proposeDocument(a, task, nil, "report.md", "# Report\n"); err != nil {
 		t.Fatal(err)
 	}
 	// No model endpoint is configured: routine creation must not require a
 	// second model response, while the bound target is still version checked.
 	a.reviewPendingFiles(context.Background(), task)
+	if task.ApprovalState != "recommended" || task.Applied {
+		t.Fatal("routine document skipped the recommendation window")
+	}
+	if _, err := os.Stat(filepath.Join(docs, "report.md")); !os.IsNotExist(err) {
+		t.Fatal("routine document was written before the timer callback", err)
+	}
+	a.applyRecommendedFiles(s.ID, task.ID, task.approvalGeneration)
 	b, err := os.ReadFile(filepath.Join(docs, "report.md"))
 	if err != nil || string(b) != "# Report\n" || !task.Applied || task.Status != "completed" {
 		t.Fatalf("routine document not applied: %q %v", b, err)

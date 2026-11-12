@@ -33,7 +33,7 @@ class EvidenceTests(unittest.TestCase):
     def test_host_must_be_native_and_all_commands_pass(self):
         r={'status':'pass','commit':'a'*40,'host':'macos','machine':'arm64','checks':[{'status':'pass'}]*8}
         r['checks']=[dict(check) for check in r['checks']]
-        r['checks'][0]['goTests']=[{'Package':p,'Test':'TestFixture','Action':'pass'} for p in ('aide/cmd/aide-local-mounts','aide/internal/messaging')]
+        r['checks'][0]['goTests']=[{'Package':p,'Test':'TestFixture','Action':'pass'} for p in ('aide/cmd/aide-local-mounts','aide/internal/hostbridge','aide/internal/localmounts','aide/internal/messaging')]
         gate.host(r,'a'*40,'macos-15')
         with self.assertRaises(ValueError):gate.host(r,'a'*40,'macos-15-intel')
         r['checks'].pop()
