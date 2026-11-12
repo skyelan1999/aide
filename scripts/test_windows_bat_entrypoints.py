@@ -90,6 +90,16 @@ def check(binary, folder, installation):
         reused=calls.read_text()
         assert 'docker:buildx:inspect' in reused and 'docker:buildx:build' in reused,reused
         assert 'docker:buildx:create' not in reused,reused
+        receipts=list((root/'.agent-state').glob('aide-bootstrap-*.receipt'))
+        assert len(receipts)==1,receipts
+        original=receipts[0].read_bytes()
+        for invalid in (b'another-checkout\r\n', original+b'unexpected-line\r\n'):
+            receipts[0].write_bytes(invalid)
+            shutil.copy2(folder/'old.exe',root/'aide-launcher.exe');calls.write_text('')
+            refused=run(root,'build',args='',env=environment,expected=1)
+            assert 'ownership receipt is invalid' in refused.stdout
+            assert 'docker:buildx:build' not in calls.read_text()
+        receipts[0].write_bytes(original)
     for pac in (False,True):
         root=fixture('proxy-refusal-'+str(pac),exe=folder/'old.exe');calls.write_text('')
         environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
