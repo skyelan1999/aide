@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "helperSHA256": "584685de8893873ca587fda28abfd35138fda1b6241c50da4c5ad44ac7d48ddd",
+  "appSHA256": "b142da22b43672e0cd4d265af9f3063dfedc9759e2758d9059e499c64a91e80f",
+  "image": "sha256:bbeba12a258e6c98dc0333fc3db4c27d307e016b14643c7fc7e3efc24952b79e",
+  "directorySwap": "original object retained",
+  "parentSwap": "original object retained",
+  "actualAideAPI": "workspace path maps to retained object",
+  "uid": 1000,
+  "stableWriteBytes": 3145728,
+  "writeSHA256": "f2095cf4da6e88ea0be00ddfb29fb97734fa39d03df78e6db009da494990b2f0",
+  "ROServerEnforcement": "RW client refused",
+  "persistedIdentityChange": "rejected without changing active metadata",
+  "outsideDirectories": "unchanged",
+  "production": "untouched"
+}

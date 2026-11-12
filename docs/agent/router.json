@@ -1683,6 +1683,10 @@
       [
         "node",
         "scripts/pdf-jpx-packet-borrow.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_host_bridge_vendor.py"
       ]
     ],
     "full": [

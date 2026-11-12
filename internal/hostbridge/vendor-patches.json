@@ -1,0 +1,14 @@
+{
+  "vendor/github.com/willscott/go-nfs-client/nfs/xdr/decode.go": {
+    "upstreamSHA256": "6f484f78d6ad031ab66bc874db3369aa5f00629690aa79a8a612ab0767b3aa0a",
+    "patchedSHA256": "f5af1dbac4ff119d8b1dd25e37db01d696ee1f2e9a9dca49654a7632da9d3727"
+  },
+  "vendor/github.com/willscott/go-nfs/conn.go": {
+    "upstreamSHA256": "a62885ef2f7ff40355c3fe8112832e86456342c6f07d2016788c0ca87a254e6e",
+    "patchedSHA256": "903c0db1cda83f398674981432ac3202fde14b186e8fa1d8a6a0ba71872aadea"
+  },
+  "vendor/github.com/willscott/go-nfs/nfs_onread.go": {
+    "upstreamSHA256": "ab2d1f95361f44b1055dfe62f138f9437db52b2f32c2de4a462f5c019fbd1dce",
+    "patchedSHA256": "4b0ba97839d98f6803935ae1ee9ffd54b619da5fc326c111e756d37010d36857"
+  }
+}

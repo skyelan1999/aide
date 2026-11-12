@@ -89,6 +89,7 @@ func TestComposeChoiceAndRejectArguments(t *testing.T) {
 	}
 }
 func TestApplyRecreatesOnlyAideAndRefreshesForwarders(t *testing.T) {
+	fixtureDirectoryBridge(t)
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX executable fixture")
 	}
@@ -236,6 +237,7 @@ fi
 }
 
 func TestApplyFreezesSnapshotWhenLaterSettingsRemainPending(t *testing.T) {
+	fixtureDirectoryBridge(t)
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX executable fixture")
 	}
@@ -276,5 +278,44 @@ fi
 	desired, err := localmounts.Read(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"))
 	if err != nil || localmounts.Revision(desired) != localmounts.Revision(second) {
 		t.Fatal("later settings not preserved as pending", err)
+	}
+}
+
+func fixtureDirectoryBridge(t *testing.T) {
+	t.Helper()
+	before := prepareDirectoryBridge
+	prepareDirectoryBridge = func(ctx context.Context, root, docker string, expected *string) (string, error) {
+		_, out, e := localmounts.PrepareWithBridge(root, nil, expected, func(entry localmounts.Entry, opened *os.Root) (string, map[string]any, error) {
+			t.Cleanup(func() { opened.Close() })
+			return "fixture-" + entry.ID, map[string]any{"driver": "local"}, nil
+		})
+		return out, e
+	}
+	t.Cleanup(func() { prepareDirectoryBridge = before })
+}
+
+func TestBridgeMetadataRollbackRetainsContentsAndModes(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, ".aide-data/local-mounts")
+	os.MkdirAll(dir, 0700)
+	p := filepath.Join(dir, "active.json")
+	os.WriteFile(p, []byte(`{"version":1,"entries":[]}`), 0644)
+	saved, e := saveBridgeMetadata(root)
+	if e != nil {
+		t.Fatal(e)
+	}
+	os.WriteFile(p, []byte(`{"changed":true}`), 0600)
+	os.Chmod(p, 0600)
+	os.WriteFile(filepath.Join(dir, "compose.json"), []byte(`{}`), 0600)
+	if e = restoreBridgeMetadata(saved); e != nil {
+		t.Fatal(e)
+	}
+	b, _ := os.ReadFile(p)
+	st, e := os.Stat(p)
+	if e != nil || st.Mode().Perm() != 0644 || !strings.Contains(string(b), `"version": 1`) && !strings.Contains(string(b), `"version":1`) {
+		t.Fatal("metadata rollback changed content/mode", string(b), e)
+	}
+	if _, e = os.Stat(filepath.Join(dir, "compose.json")); !os.IsNotExist(e) {
+		t.Fatal("rollback retained newly created metadata")
 	}
 }

@@ -134,7 +134,7 @@ Result run(const fs::path& exe,const Args& args,DWORD timeout=120000){
 
  Result r{code,read(out),read(err)};if(cancelled)throw std::runtime_error("Native operation stopped by operator");return r;
 }
-void spawn(const fs::path& exe,const Args& args,const fs::path& log){
+DWORD spawn(const fs::path& exe,const Args& args,const fs::path& log){
  SECURITY_ATTRIBUTES sa{sizeof(sa),nullptr,TRUE};
  Handle output(CreateFileW(log.c_str(),FILE_APPEND_DATA,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,&sa,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr));
  Handle input(CreateFileW(L"NUL",GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,&sa,OPEN_EXISTING,0,nullptr));
@@ -142,7 +142,7 @@ void spawn(const fs::path& exe,const Args& args,const fs::path& log){
  std::wstring cmd=quote(exe.wstring());for(auto& a:args)cmd+=L" "+quote(a);
  Startup si(input.h,output.h,output.h);
  PROCESS_INFORMATION pi{};if(!CreateProcessW(exe.c_str(),cmd.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT,nullptr,nullptr,&si.info.StartupInfo,&pi))throw std::runtime_error("Cannot launch native background helper");
- CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
+ CloseHandle(pi.hThread);CloseHandle(pi.hProcess);return pi.dwProcessId;
 }
 fs::path findExe(const std::wstring& name){std::wstring b(32768,0);DWORD n=SearchPathW(nullptr,name.c_str(),nullptr,DWORD(b.size()),b.data(),nullptr);if(n&&n<b.size()){b.resize(n);return fs::path(b);}return {};}
 fs::path installedBrowser(){
@@ -470,8 +470,19 @@ public:
  void prepareDirectory(){
   computerBridgeToken();
   auto target=root/L".aide-data/local-mounts";directoryHelper=embeddedHelper("local-mounts");stopDirectory(directoryHelper);setenvw(L"AIDE_LOCAL_MOUNTS_COMPOSE",composeExe.empty()?L"docker":composeExe.wstring());
-  auto prepared=run(directoryHelper,{L"-mode",L"prepare",L"-root",root.wstring(),L"-docker",docker.wstring()});required(prepared,"Directory mounts preparation failed");
-  auto override=trim(prepared.out);if(!override.empty()){auto file=fs::absolute(fs::u8path(override));if(file.lexically_normal()!=(target/L"compose.json").lexically_normal())throw std::runtime_error("Unexpected directory helper Compose path");auto composeFiles=env(L"COMPOSE_FILE");if(composeFiles.find(file.wstring())==std::wstring::npos)setenvw(L"COMPOSE_FILE",composeFiles+L";"+file.wstring());}
+  // The one-shot runner kills descendants. Start the rooted file service in
+  // the resident host job and await its exact generation receipt instead.
+  auto copied=run(directoryHelper,{L"-mode",L"bridge-copy",L"-root",root.wstring(),L"-docker",docker.wstring()});required(copied,"Directory bridge copy failed");
+  auto binary=fs::absolute(fs::u8path(trim(copied.out)));realPath(binary);
+  if(binary.parent_path().lexically_normal()!=(target/L"bridge-binaries").lexically_normal()||binary.extension()!=L".exe"||!digest(utf8(binary.stem().wstring()))||sha256(binary)!=utf8(binary.stem().wstring()))throw std::runtime_error("Invalid immutable directory bridge");
+  std::array<unsigned char,32> bytes{};if(BCryptGenRandom(nullptr,bytes.data(),ULONG(bytes.size()),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)throw std::runtime_error("Cannot identify directory bridge generation");
+  std::string ticket;const char* hex="0123456789abcdef";for(auto c:bytes){ticket+=hex[c>>4];ticket+=hex[c&15];}
+  auto generation=target/L"bridge-runs"/wide(ticket);privateDirectory(generation);
+  auto child=spawn(binary,{L"-mode",L"bridge-prepare",L"-root",root.wstring(),L"-docker",docker.wstring(),L"-bridge-ticket",wide(ticket)},generation/L"bridge.log");
+  json receipt;bool ready=false;for(int i=0;i<1200;i++){if(nativeInterrupted()){write(generation/L"stop","stop");throw std::runtime_error("Directory preparation stopped");}if(fs::exists(generation/L"ready.json")){receipt=parseJson(read(generation/L"ready.json",8192));ready=true;break;}Sleep(100);}
+  if(!ready||receipt.value("Protocol",0)!=1||receipt.value("PID",DWORD(0))!=child)throw std::runtime_error("Directory bridge readiness is unconfirmed; inspect its log");
+  if(!receipt.value("Error","").empty())throw std::runtime_error(receipt.value("Error",""));
+  auto override=receipt.value("Override","");if(!override.empty()){auto file=fs::absolute(fs::u8path(override));if(file.lexically_normal()!=(target/L"compose.json").lexically_normal())throw std::runtime_error("Unexpected directory helper Compose path");auto composeFiles=env(L"COMPOSE_FILE");if(composeFiles.find(file.wstring())==std::wstring::npos)setenvw(L"COMPOSE_FILE",composeFiles+L";"+file.wstring());}
   directoryAvailable=true;
  }
  std::string binding(const wchar_t* port){auto r=compose({L"port",L"aide",port});required(r,"Missing helper port mapping");auto value=trim(r.out);if(!std::regex_match(value,std::regex("127\\.0\\.0\\.1:[0-9]{1,5}")))throw std::runtime_error("Helper mapping must be loopback only");return value;}
