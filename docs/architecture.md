@@ -1,6 +1,6 @@
 # aide 架构与接口索引
 
-> 核对日期：2026-11-12；实现基线 `5bec2477`。本页是模块和接口导航，任务、上下文、权限、并行、文件与原生控制原理见署名 Skye Lan 的 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。旧截图只说明当时界面，不是本轮运行验收。
+> 核对日期：2026-11-12；实现基线 `05e0b8a7`。本页是模块和接口导航，任务、上下文、权限、并行、文件与原生控制原理见署名 Skye Lan 的 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。旧截图只说明当时界面，不是本轮运行验收。
 
 [软件模块说明](architecture/modules.md)列出管理提案、文档绑定、页面助理、消息和 TTS 的依赖；[功能说明](features.md)与[演示](demo-guide.md)对应真实入口。
 

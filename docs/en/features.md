@@ -2,7 +2,7 @@
 
 [简体中文](../features.md) · [English documentation](README.md)
 
-Core update: 2026-11-12, source `5bec2477`. New multi-X chat has an active main runtime plus up to X−1 private tool-capable environments; candidates remain pending proposals until reviewed/applied. Large Markdown uses file references beyond a shared 16 KiB inline budget. Computer control includes snapshot-bound visual coordinates, drag, scroll and key combinations; eligible basic actions can use assisted review. macOS global modifier capture adds an app window and context to the draft without sending. Details: [current Chinese features](../features.md) and [technical whitepaper](../architecture/aide-technical-whitepaper.md).
+Core update: 2026-11-12, source `05e0b8a7`. New multi-X chat has an active main runtime plus up to X−1 private tool-capable environments; candidates remain pending proposals until reviewed/applied. Large Markdown uses file references beyond a shared 16 KiB inline budget. Computer control includes snapshot-bound visual coordinates, drag, scroll and key combinations; eligible basic actions can use assisted review. macOS global modifier capture adds an app window and context to the draft without sending. Details: [current Chinese features](../features.md) and [technical whitepaper](../architecture/aide-technical-whitepaper.md).
 
 This describes public Aide source capabilities. A feature's presence in source, a visible control, an executed test, and a published package are separate facts. Historical screenshots retain their original dates and do not certify this release.
 

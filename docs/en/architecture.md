@@ -2,7 +2,7 @@
 
 [简体中文](../architecture.md) · [English documentation](README.md)
 
-Maintained core baseline: `5bec2477`, 2026-11-12. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
+Maintained core baseline: `05e0b8a7`, 2026-11-12. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
 
 Aide is a Go HTTP service with an embedded native JavaScript/CSS browser UI and a container runtime. Model steps run in goroutines; SSE streams incremental output while persisted session snapshots provide final-state recovery. The Node plugin host executes trusted extensions and is not an independent security sandbox.
 

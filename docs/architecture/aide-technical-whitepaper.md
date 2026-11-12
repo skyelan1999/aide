@@ -3,7 +3,7 @@
 作者：**Skye Lan**
 文档版本：**1.1 草稿**
 编写与源码核对日期：**2026-11-12**
-实现基线：[`5bec24776314b37565a13ff9f25746ca0f770741`](https://github.com/skyelan1999/aide/tree/5bec24776314b37565a13ff9f25746ca0f770741)
+实现基线：[`05e0b8a76314b37565a13ff9f25746ca0f770741`](https://github.com/skyelan1999/aide/tree/05e0b8a76314b37565a13ff9f25746ca0f770741)
 范围：Aide 本体；独立插件产品的技术方案不在本文范围内。
 
 ## 摘要

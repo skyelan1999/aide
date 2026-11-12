@@ -63,7 +63,7 @@ Cloud models receive the context, images and tool results sent to their configur
 
 ## Documentation and versions
 
-Reviewed against source **`5bec2477`, 2026-11-12**, covering the **0.1.19.0 RC1** release preparation. The matching [GitHub Release](https://github.com/skyelan1999/aide/releases) identifies actual publication, source and package hashes. Source, released artifacts and a running installation remain separate identities; see the [migration guide](docs/en/release-guide-0.1.19.md).
+Reviewed against source **`05e0b8a7`, 2026-11-12**, covering the **0.1.19.0 RC1** release preparation. The matching [GitHub Release](https://github.com/skyelan1999/aide/releases) identifies actual publication, source and package hashes. Source, released artifacts and a running installation remain separate identities; see the [migration guide](docs/en/release-guide-0.1.19.md).
 
 [Documentation center](docs/README.md) · [Architecture/API](docs/architecture.md) · [Plugin protocol](docs/plugin-protocol.md) · [Requirements](docs/PRD.md) · [Version history](version.md).
 

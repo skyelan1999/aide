@@ -31,17 +31,20 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Published SQLite 1.0.3 and StarLink 0.1.6, merged market #38; synchronized 32 exact public packages plus private metadata and added actual Professional Resume handler lifecycle acceptance.",
+      "summary": "Published SQLite 1.0.3 and StarLink 0.1.6, merged market #38; synchronized 32 exact public packages plus private metadata and added actual Professional Resume handler lifecycle acceptance. Release-discovered product fixes #862-866 merged in #861; stale fixtures repaired without disabling assertions.",
       "evidence": [
         "docs/reviews/2026-11-12-release-preparation/documentation-audit.json"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Exact final ZIP dual-SSH race twice, four updated market-package host/race cases, 37 CI unit cases and docs checks pass. Full local profile and final tagged Delivery pending; an early local run was deliberately stopped when offline catalog formatting was finalized and will not be reused.",
+      "status": "pass",
+      "summary": "Pre-release scoped verification passed: exact public ZIP/SSH/race cases, four changed-market plugin functions, context/index regressions, current source CI, real native Windows AMD64/ARM64 build/UI and all 26 commands across Windows/PowerShell and macOS ARM/Intel hosts. Clean-main full/release-check and exact-tag full Delivery remain mandatory release-stage gates and are not claimed complete.",
       "evidence": [
         "docs/reviews/2026-11-12-release-preparation/plugin-ssh.json",
-        "docs/reviews/2026-11-12-release-preparation/changed-market-functions.json"
+        "docs/reviews/2026-11-12-release-preparation/changed-market-functions.json",
+        "docs/reviews/2026-11-12-release-preparation/context-862.json",
+        "docs/reviews/2026-11-12-release-preparation/index-865.json",
+        "docs/reviews/2026-11-12-release-preparation/native-final.json"
       ]
     },
     "documentation": {
@@ -68,6 +71,6 @@
   },
   "release_authorization": "User: 全部该release的release，aide把文档全面更新，做一次release; added 该在市场更新的也更新 (2026-11-12 Asia/Shanghai).",
   "rollback": "Preserve existing Releases, tags, ZIPs, runtime images, data and configuration. If promotion fails, keep the new release draft and current published catalog/version available; market rollback reverts only new listing promotion.",
-  "handoff": "Continue local full, candidate host/browser checks, version.sh on clean main, release-check, final tagged full Delivery and independent remote asset verification. No production restart.",
+  "handoff": "Clean main full is running. Require actual pass and release-check before version.sh, then recheck exact tagged HEAD, full Delivery and remote publication/assets. No production restart.",
   "operator": "skyelan1999"
 }
