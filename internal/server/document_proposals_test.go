@@ -155,7 +155,7 @@ func TestDocumentProposalRejectsUnavailableAndEscapedBinding(t *testing.T) {
 func TestDocumentProposalIndependentReviewUsesBoundRoot(t *testing.T) {
 	a := testApp(t)
 	dir := bindProposalDocs(t, a, "docs-A")
-	_, task := documentProposalTask(a)
+	s, task := documentProposalTask(a)
 	if _, err := proposeDocument(a, task, nil, "report.md", "reviewed"); err != nil {
 		t.Fatal(err)
 	}
@@ -171,6 +171,13 @@ func TestDocumentProposalIndependentReviewUsesBoundRoot(t *testing.T) {
 	a.settings.BaseURL = model.URL
 	a.settings.Model = "test"
 	a.reviewPendingFiles(context.Background(), task)
+	if task.ApprovalState != "recommended" || task.Applied {
+		t.Fatal("bound document did not wait for the recommendation window")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "report.md")); !os.IsNotExist(err) {
+		t.Fatal("bound document written before its guarded callback", err)
+	}
+	a.applyRecommendedFiles(s.ID, task.ID, task.approvalGeneration)
 	b, err := os.ReadFile(filepath.Join(dir, "report.md"))
 	if err != nil || string(b) != "reviewed" || !task.Applied {
 		t.Fatalf("not applied to binding: %s %v %+v", b, err, task.ApprovalReviews)

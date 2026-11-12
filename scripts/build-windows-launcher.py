@@ -62,6 +62,36 @@ def webview_sdk(build, arch, cache=None):
     return target
 
 
+def helper_license_notices(module_text, source_root=ROOT):
+    """Collect real pinned module notices; vendor mode has no Module.Dir."""
+    roots = dict(line.split('|', 1) for line in module_text.splitlines() if '|' in line)
+    notices = []
+    for module, directory in sorted(roots.items()):
+        base = Path(directory) if directory else source_root / 'vendor' / module
+        if not base.is_dir():
+            raise SystemExit('Missing embedded helper module source: ' + module)
+        paths = [base / 'LICENSE'] if base.resolve() == source_root.resolve() else sorted(
+            path for path in base.rglob('*') if path.is_file()
+            and path.name.upper().startswith(('LICENSE', 'COPYING', 'NOTICE', 'PATENTS')))
+        if (not paths or not all(path.is_file() for path in paths)
+                or not any(path.name.upper().startswith(('LICENSE', 'COPYING')) for path in paths)):
+            raise SystemExit('Missing embedded helper dependency license: ' + module)
+        for path in paths:
+            raw = path.read_bytes()
+            try:
+                text = raw.decode('utf-8-sig')
+                encoding = 'UTF-8'
+            except UnicodeDecodeError:
+                # The pinned VMware BSD-2 notice is distributed as Windows-1252.
+                # Preserve the original files and identify their bytes explicitly.
+                text = raw.decode('cp1252')
+                encoding = 'Windows-1252'
+            notices.append(module + '/' + path.relative_to(base).as_posix() + '\n'
+                           + 'Original SHA256: ' + hashlib.sha256(raw).hexdigest() + '\n'
+                           + 'Original encoding: ' + encoding + '\n' + text)
+    return notices
+
+
 def host_helpers(build, arch, go, assembly_root="/build", sdk=None):
     """Build current host components into the single distributed PE, not the image's old helpers."""
     if not go:
@@ -81,15 +111,9 @@ def host_helpers(build, arch, go, assembly_root="/build", sdk=None):
     module_text = subprocess.check_output([go, 'list', '-deps', '-f',
         '{{if not .Standard}}{{with .Module}}{{.Path}}|{{.Dir}}{{end}}{{end}}',
         './cmd/aide-local-mounts', './cmd/aide-message-lan'], cwd=ROOT, env=environment, text=True)
-    module_roots = dict(line.split('|', 1) for line in module_text.splitlines() if '|' in line)
     goroot = subprocess.check_output([go, 'env', 'GOROOT'], env=environment, text=True).strip()
     notices = ['Go standard library\n' + (Path(goroot) / 'LICENSE').read_text(encoding='utf-8')]
-    for module, directory in sorted(module_roots.items()):
-        candidates = [Path(directory) / name for name in ('LICENSE', 'LICENSE.txt', 'LICENSE.md', 'COPYING')]
-        license_file = next((path for path in candidates if path.is_file()), None)
-        if license_file is None:
-            raise SystemExit('Missing embedded helper dependency license: ' + module)
-        notices.append(module + '\n' + license_file.read_text(encoding='utf-8'))
+    notices.extend(helper_license_notices(module_text, ROOT))
     if sdk is not None:
         notices.append('Microsoft WebView2 SDK ' + WEBVIEW2_VERSION + '\n' + (sdk / 'LICENSE.txt').read_text())
     license_path = build / ('helper-licenses-' + arch + '.txt')
