@@ -973,3 +973,17 @@ func TestCompactionSnapshotDetectsToolCallChanges(t *testing.T) {
 		t.Fatal("snapshot ignored changed tool arguments")
 	}
 }
+
+func TestCompactionSmallRemainingBudgetFoldsShortHistory(t *testing.T) {
+	a := testApp(t)
+	s := &Session{Messages: []Message{{Role: "user", Content: strings.Repeat("u", 200)}, {Role: "assistant", Content: strings.Repeat("a", 200)}}}
+	for _, budget := range []int{0, 40} {
+		snapshot, split := a.snapshotForCompactBudget(s, budget)
+		if split != len(s.Messages) || len(snapshot.messages) != len(s.Messages) {
+			t.Fatalf("small actual budget retained oversized history: budget=%d split=%d", budget, split)
+		}
+		if snapshot.messages[0].Content != s.Messages[0].Content || snapshot.messages[1].Content != s.Messages[1].Content {
+			t.Fatal("folding discarded original evidence")
+		}
+	}
+}
