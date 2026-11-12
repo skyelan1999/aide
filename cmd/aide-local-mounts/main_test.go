@@ -300,6 +300,13 @@ func TestBridgeMetadataRollbackRetainsContentsAndModes(t *testing.T) {
 	os.MkdirAll(dir, 0700)
 	p := filepath.Join(dir, "active.json")
 	os.WriteFile(p, []byte(`{"version":1,"entries":[]}`), 0644)
+	before, e := os.Stat(p)
+	if e != nil {
+		t.Fatal(e)
+	}
+	// Windows exposes readonly/writable mode bits, not POSIX 0644. Preserve
+	// the actual original host mode; native DACL protection is tested separately.
+	originalMode := before.Mode().Perm()
 	saved, e := saveBridgeMetadata(root)
 	if e != nil {
 		t.Fatal(e)
@@ -312,7 +319,7 @@ func TestBridgeMetadataRollbackRetainsContentsAndModes(t *testing.T) {
 	}
 	b, _ := os.ReadFile(p)
 	st, e := os.Stat(p)
-	if e != nil || st.Mode().Perm() != 0644 || !strings.Contains(string(b), `"version": 1`) && !strings.Contains(string(b), `"version":1`) {
+	if e != nil || st.Mode().Perm() != originalMode || !strings.Contains(string(b), `"version": 1`) && !strings.Contains(string(b), `"version":1`) {
 		t.Fatal("metadata rollback changed content/mode", string(b), e)
 	}
 	if _, e = os.Stat(filepath.Join(dir, "compose.json")); !os.IsNotExist(e) {

@@ -7,7 +7,8 @@ bootstrap = (ROOT / 'scripts/windows-bootstrap.bat').read_text(encoding='utf-8')
 dockerfile = (ROOT / 'Dockerfile').read_text(encoding='utf-8')
 
 assert 'AIDE_BOOT_SCOPE=%%H' in bootstrap, 'Builder identity must be stable for this checkout'
-assert 'AIDE_BOOT_RECEIPT=' in bootstrap and 'findstr.exe /x /l' in bootstrap, 'Existing builders require a matching ownership receipt'
+assert 'AIDE_BOOT_RECEIPT=' in bootstrap and '[IO.File]::ReadAllLines($env:AIDE_BOOT_RECEIPT)' in bootstrap, 'Receipt paths must preserve Unicode'
+assert '$v.Count -eq 1' in bootstrap and '$v[0] -ceq $env:AIDE_BOOT_BUILDER' in bootstrap, 'Existing builders require exactly one matching ownership line'
 assert 'buildx inspect "%AIDE_BOOT_BUILDER%"' in bootstrap, 'Builder reuse must be checked before build'
 assert 'buildx create --name "%AIDE_BOOT_BUILDER%"' in bootstrap, 'A missing owned builder must be initialized'
 assert 'buildx rm "%AIDE_BOOT_BUILDER%"' not in bootstrap, 'Bootstrap must preserve builder cache across builds'

@@ -1,0 +1,18 @@
+{
+  "issue": 865,
+  "baseline": "ea937de2",
+  "cause": "A byte index advanced one byte past a two-byte UTF-8 delimiter in both index builders.",
+  "fix": "Advance by the full delimiter length; preserve title text.",
+  "regressions": [
+    "TestGeneratedDocumentIndexesPreserveUnicodeTitles (REQ, DESIGN, IMPL, TEST, RCA; Chinese, ASCII, mixed titles)",
+    "TestProjectCacheIsolation (actual owned SFTP protocol; exact title and valid UTF-8)",
+    "original 16k context compaction regressions"
+  ],
+  "command": "go test -race ./internal/server -run TestGeneratedDocumentIndexesPreserveUnicodeTitles|TestProjectCacheIsolation|TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall|TestContextRecoveryPreflightCompactsMultipleHistoryBatches|TestCompactionSmallRemainingBudgetFoldsShortHistory -count=1",
+  "result": "PASS 6.622s",
+  "logSHA256": "bed6a753bb9030e1e742c924e080ed92c92091c543f7009d5ba2c894905091fb",
+  "limits": [
+    "Owned SFTP pipes, no real remote account",
+    "Final tagged full Delivery remains required"
+  ]
+}

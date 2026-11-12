@@ -5,10 +5,12 @@ Resource declarations are placeholders for this isolated test only. The temporar
 executable is never installed or published and cannot provide host helpers.
 """
 import os
+import importlib.util
 from pathlib import Path
 import re
 import subprocess
 import tempfile
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,14 +25,24 @@ def main():
         raise SystemExit('Windows C++ compiler unavailable')
     with tempfile.TemporaryDirectory(prefix='aide-native-syntax-') as temporary:
         folder = Path(temporary)
+        # Reuse the production builder's fixed official SDK and hash verifier.
+        spec = importlib.util.spec_from_file_location('aide_windows_builder', ROOT / 'scripts/build-windows-launcher.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        sdk = builder.webview_sdk(folder, 'amd64')
+        # Native MSVC has the real Windows SDK EventToken.h. The production
+        # Linux cross-build's lower-case MinGW compatibility shim is unnecessary.
+        with zipfile.ZipFile(folder / ('webview2-' + builder.WEBVIEW2_VERSION + '.nupkg')) as package:
+            (sdk / 'WebView2.h').write_bytes(package.read('build/native/include/WebView2.h'))
+        (sdk / 'eventtoken.h').unlink()
         sources = '\n'.join(p.read_text(encoding='utf-8') for p in (ROOT / 'native/windows-launcher').glob('*') if p.suffix in ('.cpp', '.hpp'))
         declarations = ['#pragma once', '#define AIDE_LAN_BRIDGE_PROTOCOL_VERSION 1', '#define AIDE_LAN_REMOTE_ACCESS_PROTOCOL_VERSION 1']
         declarations += [f'inline const char* {name}="";' for name in sorted(set(re.findall(r'\bembedded_[a-z_0-9]+\b', sources)))]
-        declarations += [f'extern "C" const unsigned char {name}[]={{0}};' for name in sorted(set(re.findall(r'\baide_(?:local_mounts|message_lan)_(?:begin|end)\b', sources)))]
+        declarations += [f'extern "C" const unsigned char {name}[]={{0}};' for name in sorted(set(re.findall(r'\baide_(?:local_mounts|message_lan|webview_loader)_(?:begin|end)\b', sources)))]
         (folder / 'embedded.hpp').write_text('\n'.join(declarations), encoding='utf-8')
         command = folder / 'check.cmd'
         command.write_text('@echo off\ncall "' + installation + '\\Common7\\Tools\\VsDevCmd.bat" -arch=x64\n'
-            'if errorlevel 1 exit /b 1\ncl /nologo /utf-8 /std:c++17 /EHsc /I"' + str(folder) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib user32.lib\n'
+            'if errorlevel 1 exit /b 1\ncl /nologo /utf-8 /std:c++17 /EHsc /DUNICODE /D_UNICODE /I"' + str(folder) + '" /I"' + str(sdk) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib user32.lib comctl32.lib crypt32.lib gdi32.lib gdiplus.lib dwmapi.lib\n'
             'if errorlevel 1 exit /b 1\nlauncher-test.exe --self-test\n')
         subprocess.run(['cmd.exe', '/d', '/c', str(command)], check=True, cwd=folder)
         binary = folder / 'launcher-test.exe'

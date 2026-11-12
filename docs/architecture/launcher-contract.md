@@ -113,6 +113,8 @@ python3 scripts/test_launcher_clean_environment.py \
 
 ## Selected directory object bridge (#773)
 
+Windows can refuse renaming an opened directory or its parent while the bridge owns the handle. Tests distinguish this from successful pathname replacement: the same operation must succeed after closing the retained root. Remove the selection and normally apply/stop, then confirm the bridge has exited before changing the host directory name. This is separate from complete Windows Docker Desktop/removable-drive acceptance.
+
 Selected directories retain their `/mounts/<id>` paths. The native helper holds each directory with `os.Root` and exposes that object through a loopback-only NFSv3 service and Docker local named volume. Selected host pathnames are no longer passed to Docker as bind sources. Replacing a directory or its parent after preparation leaves the current export on the original object. A subsequent preparation rejects a changed identity until the directory is deliberately removed and selected again; unavailable drives retain the last confirmed identity. Existing global workspace/installation mounts are outside this change.
 
 The native helper and launcher must be updated together. The Windows resident host launches an immutable helper copy and checks its preparation receipt. Workers remain while Docker uses their volumes; retired generations stop only when those owned volumes are unused. Preserve configuration and identity receipts for recovery. `active.json` has no export secrets and uses mode 0644 for the container UID; its private host parent is 0700. Export keys and other bridge receipts remain private.

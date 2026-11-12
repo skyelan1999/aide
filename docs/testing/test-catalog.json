@@ -18,9 +18,20 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "cmd/aide-local-mounts/degraded_test.go",
+      "kind": "go",
+      "sha256": "5c5473babd3fa54d20006613bf34cf716bbb8a2c8695d026d66c374e7b82fef2",
+      "cases": [
+        "TestIssue762MountApplyReportsForwardingDegraded"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "cmd/aide-local-mounts/main_test.go",
       "kind": "go",
-      "sha256": "f5df0c0bc3b4d80d339d6281946c4f74c3039a494b0c470734013a9b596c7f09",
+      "sha256": "a538656f5c6bf34857faf50d83a13b6a6cdd2641263ef59c635be6feb2ee0c8a",
       "cases": [
         "TestCompletedMailboxRequest",
         "TestHelperSingleInstanceAndStopDuringAction",
@@ -29,9 +40,10 @@
         "TestApplyRecreatesOnlyAideAndRefreshesForwarders",
         "TestHelperStopChild",
         "TestApplyRejectsDesiredChangedDuringComposeQuery",
-        "TestApplyFreezesSnapshotWhenLaterSettingsRemainPending"
+        "TestApplyFreezesSnapshotWhenLaterSettingsRemainPending",
+        "TestBridgeMetadataRollbackRetainsContentsAndModes"
       ],
-      "caseCount": 8,
+      "caseCount": 9,
       "environmentReferences": [
         "AIDE_TEST_HELPER_CHILD"
       ],
@@ -53,9 +65,20 @@
     {
       "path": "cmd/aide-local-mounts/stop_race_unix_test.go",
       "kind": "go",
-      "sha256": "09f36f26fa300a343524121ace9b8764bd767d12d006b938c7ed7f3dc93364d4",
+      "sha256": "64942a5325b14239036ae4ac1fb9259fb70aada0e5fa3b1edc2ced667f18bca6",
       "cases": [
-        "TestClearDeadLockOwnerUnlinksPIDAfterFirstRead"
+        "TestStalePIDReuseDoesNotOwnHelperLock"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "cmd/aide-message-lan/main_test.go",
+      "kind": "go",
+      "sha256": "e26343cc1cf5a0ca803bdb3dc05c514f18140c9e78d85a3e98651089db19d0f9",
+      "cases": [
+        "TestHelperCapabilitiesMatchSharedProtocols"
       ],
       "caseCount": 1,
       "environmentReferences": [],
@@ -75,16 +98,48 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/hostbridge/replacement_other_test.go",
+      "kind": "go",
+      "sha256": "f95baf1a0834cacd7adbcaac5da2e3664d60df70743bb215235a0cef67f9989f",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/hostbridge/replacement_windows_test.go",
+      "kind": "go",
+      "sha256": "e320e99043dd5955a3bb4348b14c7a36b18f4fb93b90f4a4bdbdce6fefe1f7cf",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/hostbridge/rootfs_test.go",
+      "kind": "go",
+      "sha256": "32370ecbba8c78748e960f0b3328156c28cb0edcfb53f58a9037f8adbd75dbe3",
+      "cases": [
+        "TestRootObjectSurvivesPathAndParentReplacement",
+        "TestRootReadOnlyAndTraversal",
+        "TestBridgeMalformedRPCIsBoundedAndExportRevokes"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/localmounts/config_test.go",
       "kind": "go",
-      "sha256": "ccea55bd4c1cba0475b8135b3d4b5e5d29df5d525c5d1b7c6e482cd6165e4d74",
+      "sha256": "576402f2e2dd08326e5a7a2855883cd1f7d35fbd54d2c3f7bdc5410fc60c4da6",
       "cases": [
         "TestPathsAndOverlap",
         "TestPrepareRightsAndDisconnectedDrive",
         "TestRejectDuplicateAndAlias",
-        "TestPrepareRestoresSnapshotWhenOverrideCannotReplace"
+        "TestPrepareRestoresSnapshotWhenOverrideCannotReplace",
+        "TestSelectedDirectoriesHaveNoPathBindFallback"
       ],
-      "caseCount": 4,
+      "caseCount": 5,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -139,6 +194,18 @@
         "TestCaptureRelayOnDemandLeaseAndFixedDestination"
       ],
       "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/messaging/lan_remote_access_test.go",
+      "kind": "go",
+      "sha256": "caef6186ffd489322e76950617819be360580ee09880a1c22fc871fb428948fb",
+      "cases": [
+        "TestRemoteAccessRelayOnDemandLeaseAndFixedDestination",
+        "TestRemoteAccessKeepsHelperAliveWithoutPeerMessaging"
+      ],
+      "caseCount": 2,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -367,7 +434,7 @@
     {
       "path": "internal/server/assistant_delegation_test.go",
       "kind": "go",
-      "sha256": "43a92233f7215bee49ea7aba85ab31f8edae6c5cf4954f0f2e7f82d99e430485",
+      "sha256": "77eca1075e65adc4c983ac1b0ac941dbc5cd2b83b7796310f4050c3a85cd5062",
       "cases": [
         "TestAssistantPushActuallyStartsAndLabelsTask",
         "TestAssistantApprovalSettingScopePreservationAndRevocation",
@@ -540,7 +607,7 @@
     {
       "path": "internal/server/assistant_realtime_live_test.go",
       "kind": "go",
-      "sha256": "3462faf095b9d2f61d36fd03c7eb24166f078fef4503c2cb19e030ca3074f8c7",
+      "sha256": "8cca4b1a1d0915c0c8c2d763f17a2698e53ce47e9a9f8245a6df26cb69eb63f6",
       "cases": [
         "TestAssistantRealtimeLiveSyntheticAudio"
       ],
@@ -549,8 +616,37 @@
         "AIDE_NATIVE_LIVE_DATA",
         "AIDE_NATIVE_LIVE_FIXTURES",
         "AIDE_NATIVE_LIVE_PCM_OUTPUT",
-        "AIDE_NATIVE_LIVE_SYNTHETIC_TEXT"
+        "AIDE_NATIVE_LIVE_SYNTHETIC_TEXT",
+        "AIDE_NATIVE_LIVE_VOICE"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/assistant_realtime_openai_live_test.go",
+      "kind": "go",
+      "sha256": "1be78ae92a0f4ef55d1d9b4dddbfb333710d6c0c49172d1495805721b94f8263",
+      "cases": [
+        "TestAssistantOpenAICallLiveRelay"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [
+        "AIDE_OPENAI_CALL_LIVE_DATA",
+        "AIDE_OPENAI_CALL_LIVE_OUTPUT",
+        "AIDE_OPENAI_CALL_LIVE_WAV"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/assistant_realtime_provider_test.go",
+      "kind": "go",
+      "sha256": "7a420b5a5a8c7ec98856db90b02f2698c7f39e421a694a301dbf5679f922d1f4",
+      "cases": [
+        "TestAssistantOpenAINativeConfig",
+        "TestAssistantOpenAINativeSessionAndEvents",
+        "TestAssistantOpenAIRealtimeRelayAndLock"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
@@ -611,12 +707,44 @@
     {
       "path": "internal/server/assisted_approval_files_test.go",
       "kind": "go",
-      "sha256": "99a9a7eb601c5216c46c69c4d35e40c58e4dc4d48281ec88656c6febb8dfa32c",
+      "sha256": "208392f0674e557a1ddabab41ed8bfa2db6aa947e440a1b51ea57d2f74d7ec35",
       "cases": [
         "TestAssistedApprovalLocalFiles",
-        "TestReviewedFileResult"
+        "TestAssistedApprovalRoutineNewDocument",
+        "TestRoutineNewDocumentBatchRejectsReplacementAndExecutable",
+        "TestReviewedFileResult",
+        "TestReviewedFileResultRefreshesAfterManualApplication",
+        "TestManualApplyRefreshesPendingDocumentReceipt"
+      ],
+      "caseCount": 6,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/assisted_approval_surface_test.go",
+      "kind": "go",
+      "sha256": "7aa1d85d3497d7b2fe6cb03c05a62c971a6f10ff02409cdafe8bc37dab0c6209",
+      "cases": [
+        "TestSurfaceReviewableIsLimitedToBoundedActions",
+        "TestAssistedBrowserSiteApprovalIsOneShot"
       ],
       "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/assisted_approval_ui_test.go",
+      "kind": "go",
+      "sha256": "da261ec5f2d7558745f722f9083f5b41b9a39cdd3627042842c8ba0fd189f05e",
+      "cases": [
+        "TestUIReviewRequiresActualHitOrFocus",
+        "TestUIReviewRejectsConsequentialAndNoneditableTargets",
+        "TestUIReviewFingerprintBindsContentTargetAndControl",
+        "TestAssistedUIExactTextIsReviewedButNotPersistedInCard",
+        "TestAssistedUIWithoutEvidenceOrInManualModeNeverCallsReviewer",
+        "TestAssistedCanvasClickReviewerReceivesFreshRaster"
+      ],
+      "caseCount": 6,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -661,7 +789,7 @@
     {
       "path": "internal/server/attachments_test.go",
       "kind": "go",
-      "sha256": "8f8d84e9cd4f2d1940c0b7674cfc973fb39189b39a4bc8f631d41babf8e066ff",
+      "sha256": "2c2dfad8eb98874fc58dda6469a25ff2c261b163f475a70afaf27960fa2dc8f0",
       "cases": [
         "TestTruncateExtract",
         "TestModelSupportsVision",
@@ -797,6 +925,18 @@
         "TestComputerConfirmationDoesNotStoreTypedContent"
       ],
       "caseCount": 5,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/browser_site_approval_test.go",
+      "kind": "go",
+      "sha256": "0b22a19f62e49cf49e0fec95abd22ad69125fe6f0cc908597d369b50a2fedb19",
+      "cases": [
+        "TestBrowserReadTargetAndHostRules",
+        "TestBrowserReadUnknownSiteApproval"
+      ],
+      "caseCount": 2,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -952,6 +1092,61 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/computer_actions_test.go",
+      "kind": "go",
+      "sha256": "8606d478b41666829c282e5f31b04571149ed5ebd2a3eba2589af3e48d443272",
+      "cases": [
+        "TestComputerImageCoordinatesAreTaskAndWindowBound",
+        "TestComputerGestureBudgetsAndKeyGrammar",
+        "TestComputerVisualDragBindsBothEndpointsAndKeepsCropsPrivate"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/computer_control_approval_test.go",
+      "kind": "go",
+      "sha256": "c4d8d7ce5780193879375f40256cdd4ca607106716d40b6e9635c4ac7936690e",
+      "cases": [
+        "TestComputerAppApprovalChoices",
+        "TestComputerAppApprovalRejectsStaleQuestion",
+        "TestComputerAppApprovalSaveFailureDoesNotRemember"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/computer_control_test.go",
+      "kind": "go",
+      "sha256": "cc5fe1b19714129d6bd9dd289017b3f6219bf214bdf55786402bbcfa52355615",
+      "cases": [
+        "TestComputerControlToolSchemasEncodeRequiredArrays",
+        "TestComputerBrowserURL",
+        "TestComputerBrowserConfirmationShowsFullURL",
+        "TestComputerControlDiscoveryFallbackOnlyForUnsupportedRoute",
+        "TestComputerControlExplicitTargetDiscovery",
+        "TestComputerControlSchemasExposeAppForEachTargetedAction"
+      ],
+      "caseCount": 6,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/computer_snapshot_evidence_test.go",
+      "kind": "go",
+      "sha256": "f976b603c4ec25cc8e31cd4f441e6f6814d0e947e39170453bb0fe5e8acb8d10",
+      "cases": [
+        "TestComputerSnapshotRetainsDesktopCoordinateMapping",
+        "TestComputerSnapshotRejectsOldOversizedGeometry",
+        "TestSurfaceVisualEvidenceBindsWindowAndClickRegion"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/config_backup_test.go",
       "kind": "go",
       "sha256": "5b83aa9e30c7132d1b09ff44f76dd2ff335522d85263ed2f13802b90f631f44a",
@@ -1061,13 +1256,14 @@
     {
       "path": "internal/server/control_workflow_test.go",
       "kind": "go",
-      "sha256": "8cacc0cebef9b17871f8f864fb94bd34e2fe470c9480fc571b705290c7eb73e1",
+      "sha256": "52350ff73b7b2c4319ab9d1d51cb53e4bd3cab287d96dd547954e1c3d83d92df",
       "cases": [
         "TestControlWorkflowConfirmationAndRevocation",
+        "TestComputerControlCannotBeInstalledAsStandalonePlugin",
         "TestControlPluginCanceledContext",
         "TestControlStatusResultsReachModel"
       ],
-      "caseCount": 3,
+      "caseCount": 4,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -1105,7 +1301,7 @@
     {
       "path": "internal/server/crash_diagnostics_test.go",
       "kind": "go",
-      "sha256": "2bca5f453301e9fecd0505028764683abeb00d031a9f6404b4e1d20671f6ce77",
+      "sha256": "c6035fb23d3e0bb45b41cdf14e2a1759bb622dbb02137497159c352990fa2a01",
       "cases": [
         "TestCrashPanicResponseAndIsolation",
         "TestCrashWriterCapabilitiesAndCommittedStream",
@@ -1156,6 +1352,17 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/debug_dataflow_test.go",
+      "kind": "go",
+      "sha256": "e98c387587a1c9793fe76ae174f6071e6dad10fdc1a387b659fc2b2a9e0fad24",
+      "cases": [
+        "TestDebugSessionDataflowDumpIsAuthenticatedAndContentFree"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/debug_redaction_test.go",
       "kind": "go",
       "sha256": "174c2be468dd3a5d2ff9233be62e321cfd44ab213e0b3e659df7b8f565982435",
@@ -1196,9 +1403,20 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/document_index_unicode_test.go",
+      "kind": "go",
+      "sha256": "df239628188270d02e04c41441e6d5acfd1a001506c9aac51638cd300b2cc8b6",
+      "cases": [
+        "TestGeneratedDocumentIndexesPreserveUnicodeTitles"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/document_proposals_test.go",
       "kind": "go",
-      "sha256": "2ee491e7d4c819187c413707fcc3eaa1f09f4f2cc0c17e0cc4041e1607a9a135",
+      "sha256": "12bab308618b5ae324fbe6dbd0b503a2c5b8e801e8405900d80616f4e55bda7f",
       "cases": [
         "TestDocumentProposalBindingAndMixedPaths",
         "TestDocumentProposalBindingChangeRejectsOldApproval",
@@ -1345,7 +1563,7 @@
     {
       "path": "internal/server/execution_scheduler_receipt_test.go",
       "kind": "go",
-      "sha256": "a384b578b513c9fb077f93d888a54a1ba618e025c3d1a46fcb1e9babdb1ec8ef",
+      "sha256": "6864dd25d9a2f63e63194ec836b47960eb2b978aebef35fbec6b1ccc38a7c1b0",
       "cases": [
         "TestExecutionSchedulerReceiptRebuildsAfterCompaction",
         "TestExecutionSchedulerReceiptLeavesOrdinaryProjectUnchanged",
@@ -1480,7 +1698,7 @@
     {
       "path": "internal/server/file_upload_batch_test.go",
       "kind": "go",
-      "sha256": "cd5459bf8722da369be68ab46b6fc95c81795735a12de1e37096981b549f1ed2",
+      "sha256": "7e32e168ef5d94a5ba0f7f5ae39aa680d628223e77047fb9f96b05f7e7d55d9d",
       "cases": [
         "TestBatchUploadNestedLayout",
         "TestBatchUploadTraversalRejectedPerFile",
@@ -1488,10 +1706,11 @@
         "TestBatchUploadConflictDoesNotAbort",
         "TestBatchUploadCountCap",
         "TestBatchUploadTotalSizeCap",
+        "TestBatchUploadTruncatedNextPartHeaderIsReported",
         "TestBatchUploadSourceRules",
         "TestBatchUploadEmpty"
       ],
-      "caseCount": 8,
+      "caseCount": 9,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -1554,7 +1773,7 @@
     {
       "path": "internal/server/harness_integration_test.go",
       "kind": "go",
-      "sha256": "42a4aad4a355334f9137ae9e670e8d7fd136c96a4421fedbba3ed222fdcae360",
+      "sha256": "6f2e29cbb560cbfaca5d7c82f2667ca88a7f8629281e987359acbfa6e50c364a",
       "cases": [
         "TestHarnessConfigLayersAndStrictValidation",
         "TestHarnessCheckpointRecoveryAndJournalOwnership",
@@ -1659,6 +1878,17 @@
         "TestMigrationIntegration"
       ],
       "caseCount": 9,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/knowledge_ai_updates_test.go",
+      "kind": "go",
+      "sha256": "f1127d896f7ea667b8ec4caf98c0d3f0de78d391cb88ca42bf2d95f6d439df25",
+      "cases": [
+        "TestIssue796AIUpdatesVisibilityAndCursorReset"
+      ],
+      "caseCount": 1,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -1996,8 +2226,10 @@
     {
       "path": "internal/server/knowledge_go_types_test.go",
       "kind": "go",
-      "sha256": "0fc78216dbcf38def6e26c970ad670ed4b6b8b4688634335ed7b690dbc678b6a",
+      "sha256": "28096305f5584353a0e150028fc28f619e6364682eb99e2bb25174e9c3a76a49",
       "cases": [
+        "TestKnowledgeGoTypesHostConstraintsAndExternalTests",
+        "TestKnowledgeGoTypesBuildTagsCannotReadProjectDisk",
         "TestKnowledgeGoTypesBindings",
         "TestKnowledgeGoTypesSingleMethodInterface",
         "TestKnowledgeGoTypesResolvedDiagnosticsByColumn",
@@ -2005,7 +2237,7 @@
         "TestKnowledgeGoTypeHelperBounds",
         "TestKnowledgeGoTypeProcessCancellationAndEnvironment"
       ],
-      "caseCount": 6,
+      "caseCount": 8,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -2300,6 +2532,19 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/knowledge_typescript_test.go",
+      "kind": "go",
+      "sha256": "387abe33fafd33a052892d8a9c325bac2ff57fa4306d723a1802cb623ab7d675",
+      "cases": [
+        "TestIssue801TypeScriptTSXSymbolsAndRelativeCalls",
+        "TestTypeScriptSourceOnlySyntaxFailureAndAmbiguity",
+        "TestTypeScriptNeverExecutesProjectSource"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/knowledge_vector_cache_test.go",
       "kind": "go",
       "sha256": "133aa46671716eeee37cfb46c59cc9e38eab380e86eef7b0d285864d86295eb3",
@@ -2461,6 +2706,20 @@
         "TestAuthoringRejectsInvalidCodeAndPaths"
       ],
       "caseCount": 6,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/markdown_attachments_test.go",
+      "kind": "go",
+      "sha256": "dd8ef655a9668366d97a79d948abd99297a8e4dfde32c09a180ed3bea634b243",
+      "cases": [
+        "TestMarkdownReferencePreviewAndTaskReadTail",
+        "TestMarkdownSharedInlineBudgetAndCompleteSmallBaseline",
+        "TestMarkdownReferenceSourceAndContextCanReadBeyondPreview",
+        "TestMarkdownReferenceValidatesWholeFileAndPaths"
+      ],
+      "caseCount": 4,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -2897,18 +3156,19 @@
     {
       "path": "internal/server/models_test.go",
       "kind": "go",
-      "sha256": "c36a1861201aaee4936dadd4f0cca6def1a11dd3e42837314dd5c97c11fc897e",
+      "sha256": "a835e8387f12c49216876f3bfbff05153c34d7029f31ec127facc4887195ca47",
       "cases": [
         "TestMultiModelSettings",
         "TestReasoningEffortCanBeUpdatedFromSettings",
         "TestSettingsMigrationFromSingleModel",
         "TestLegacySingleModelSettingsWriteUsesDefaultProvider",
+        "TestModelProviderReasoningFormatSettingsRoundTrip",
         "TestModelListProxy",
         "TestMultipleModelProvidersUseTheirOwnVaultKeys",
         "TestTaskRecordsModel",
         "TestModelDiscoveryDraft"
       ],
-      "caseCount": 8,
+      "caseCount": 9,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -2954,6 +3214,17 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/native_touchid_test.go",
+      "kind": "go",
+      "sha256": "febd355a9a74ba48729c661a6a36c5d9e1d415252e98c48d0e7015a2426b47a0",
+      "cases": [
+        "TestNativeTouchIDWebAuthnInterop"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/office_artifact_test.go",
       "kind": "go",
       "sha256": "855e80fc3ed2afa5d184ae1aa83562be5c0d78510436336459833ba69725018f",
@@ -2989,6 +3260,35 @@
         "TestOfficeNativeCommentsReferenceReadOnly"
       ],
       "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/openai_tts_test.go",
+      "kind": "go",
+      "sha256": "0b7a19ef4db30da37e0e50a9cce21776aab76feafb853bb28583dafb6cb8738c",
+      "cases": [
+        "TestOpenAITTSSettingsAndIsolation",
+        "TestOpenAITTSSynthesisUsesSeparateConfig",
+        "TestOpenAITTSPersistenceAndImport"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/orchestration_observability_test.go",
+      "kind": "go",
+      "sha256": "d184ab1a586bc789e70ebbfddc4e5067276a652dcdcc381c079dcd7ed76faaca",
+      "cases": [
+        "TestOrchestrationEventsContinueAfterSnapshotLimit",
+        "TestRecentOrchestrationCostsAreBounded",
+        "TestOrchestrationStageCannotLeakUntrustedName",
+        "TestOrchestrationReceiptsDoNotPromoteWorkerClaims",
+        "TestParallelSmallTaskGate",
+        "TestShortParallelRequestSkipsPlannerRequest"
+      ],
+      "caseCount": 6,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -3134,6 +3434,22 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/plan_test.go",
+      "kind": "go",
+      "sha256": "d263b3b90ae5ba9d4e3f3854e39fe71f9523f210f402facdab62522efdcd58e6",
+      "cases": [
+        "TestPlanTaskLifecycleDependenciesAndExport",
+        "TestPlanMirrorsAgentStepsAndClosesOutcome",
+        "TestPlanContextCarriesOpenTasksAndApprovals",
+        "TestRecommendationAutoAppliesAfterWindow",
+        "TestStaleRecommendationIsNotApplied",
+        "TestDeclineRecommendationReturnsToManual"
+      ],
+      "caseCount": 6,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/plugin_call_queue_test.go",
       "kind": "go",
       "sha256": "dbc33e4e0940b9f21c45a1b1374bdd4cba84eea49af552778c63ca87ddb927b1",
@@ -3149,12 +3465,12 @@
     {
       "path": "internal/server/plugin_commerce_test.go",
       "kind": "go",
-      "sha256": "47398c28c5e8466a52aa072ffe4695a4bd809c62c768a13f60907be2d0a8a4f0",
+      "sha256": "902d606548914b31db7cf1dccda28a30f5a195cda60115163edc4989a5e49554",
       "cases": [
         "TestPluginCommercePrivateInstallAndUpdate",
         "TestPluginCommerceRejectInvalidLicense",
         "TestPluginCommerceCatalogAndPublicIsolation",
-        "TestPluginCommerceExtendedCatalogKeepsLegacyPublicEntries",
+        "TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl",
         "TestPluginCommerceIdentitySurvivesRestart"
       ],
       "caseCount": 5,
@@ -3312,17 +3628,31 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/plugin_map_document_test.go",
+      "kind": "go",
+      "sha256": "33e482a300bd6eee06e7d1ef6f0111269d85fd32f7a468949f3f5aaa008ed244",
+      "cases": [
+        "TestMapWorkbenchSourceArgumentScope",
+        "TestMapDocumentBindSaveVersionAndPendingDraft",
+        "TestMapDocumentReadonlyAndInvalidSelection"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/plugin_market_refresh_test.go",
       "kind": "go",
-      "sha256": "df40e68ce0e52ed57c6ae149c163a9a52f9a84d3308f84120172bcd2eaecc262",
+      "sha256": "b91977de6a8471559abebef1994e6b78d7efb140bbb29f04fcb69f2cc2a1463f",
       "cases": [
         "TestPluginMarketRefreshFailureVisibleWithoutLosingCache",
         "TestPluginMarketInvalidRefreshDisclosesValidationFailure",
         "TestPluginMarketExternalCatalogMetadata",
         "TestPluginMarketScreenshotRepositoryBoundary",
-        "TestPluginMarketRefreshBrowserHost"
+        "TestPluginMarketRefreshBrowserHost",
+        "TestPluginMarketChangelogHistoryBudget"
       ],
-      "caseCount": 5,
+      "caseCount": 6,
       "environmentReferences": [
         "AIDE_MARKET_BROWSER_EVIDENCE",
         "AIDE_TEST_PUBLIC_MARKET_CATALOG",
@@ -3465,6 +3795,21 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/plugin_source_checkout_test.go",
+      "kind": "go",
+      "sha256": "e6594ca5d11006afbef5c05d276e69b72fbd31623289c6ca7065a9d22dad3605",
+      "cases": [
+        "TestPluginSourceCheckoutPublication",
+        "TestPluginSourceCheckoutRejectsStaleUnsafeAndReadOnly",
+        "TestPluginSourceCheckoutReferenceVisibilityAndRights",
+        "TestPluginSourceCheckoutCancellationAndRelock",
+        "TestPluginSourceAtomicPublishGuard"
+      ],
+      "caseCount": 5,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/plugin_source_protected_test.go",
       "kind": "go",
       "sha256": "a77410fb925c9d8431a28ed4eeb863a5c25e46521e7cc8970d1cc8410514d721",
@@ -3578,6 +3923,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/plugin_viewer_test.go",
+      "kind": "go",
+      "sha256": "74fb7b061fd7299aca5564529ca67836ff391bd4668ec28ed4838e1047af9160",
+      "cases": [
+        "TestWorkbenchViewerCSPStaysScopedToHostOrigin",
+        "TestWorkbenchViewerTicketRequiresDeclaredCapability"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/plugin_workbench_bridge_test.go",
       "kind": "go",
       "sha256": "e5bdc81d1c4195908af7bfe9d4eed7da62ee5dfa3be4187ee959ac8511887d19",
@@ -3597,6 +3954,24 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/plugin_workbench_files_test.go",
+      "kind": "go",
+      "sha256": "2d92d8ea8df2ef7fa6f75bbf5d2e15bfb293ae5bca8b78f0ccb49a8c7005fa11",
+      "cases": [
+        "TestWorkbenchFileAccessWorkspaceBinaryCreateAndConflict",
+        "TestWorkbenchFileAccessAbsentTargetRaceDoesNotOverwrite",
+        "TestWorkbenchFileAccessReferencesAndReadOnly",
+        "TestWorkbenchFileAccessBrowseAndRejectionPaths",
+        "TestWorkbenchFileAccessPendingAndRevokedSource",
+        "TestWorkbenchFileAccessTargetInspectionAndPinnedVersion",
+        "TestWorkbenchFileAccessSFTPCreateAndReplace",
+        "TestWorkbenchFileAccessUnconfiguredReferenceCannotFallback"
+      ],
+      "caseCount": 8,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/plugin_workbench_native_test.go",
       "kind": "go",
       "sha256": "13eb4da4d342dbf3c0c499944d250d675b6dffa25718bd5dd1eea497aa999742",
@@ -3610,14 +3985,15 @@
     {
       "path": "internal/server/plugin_workbench_test.go",
       "kind": "go",
-      "sha256": "4d34a6c4373fbec8992121c08698d25987499e04586ce823b1d49d5ef9e0be5c",
+      "sha256": "0c94ac86146eae3d347502109f0d85326d40510417f5288b5b271a05e359d26f",
       "cases": [
+        "TestWorkbenchReadRetryOnlyForIOErrors",
         "TestPluginWorkbenchAuthSandboxAndOneUse",
         "TestPluginWorkbenchRevocationChangeAndBound",
         "TestPluginWorkbenchPackageAndPathValidation",
         "TestPluginWorkbenchFileExtensions"
       ],
-      "caseCount": 4,
+      "caseCount": 5,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -3785,12 +4161,13 @@
     {
       "path": "internal/server/project_cache_test.go",
       "kind": "go",
-      "sha256": "0abcb482086efbbcdf5b8bf8d950a6f7d62666432394a7edfd0320c759c0ead0",
+      "sha256": "137b0b5adb233d14208632d9bee4740da357607d3825600fca4a61192d6feb92",
       "cases": [
         "TestProjectCacheIsolation",
-        "TestLocalCacheCommandAndMemoryAgree"
+        "TestLocalCacheCommandAndMemoryAgree",
+        "TestLocalCacheDirectoryKeepsExplicitDotCache"
       ],
-      "caseCount": 2,
+      "caseCount": 3,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -3868,17 +4245,38 @@
     {
       "path": "internal/server/provider_openai_test.go",
       "kind": "go",
-      "sha256": "ea4be8ce69fe712a0fa08a2b6485ea94e060bb4753134e4eaa5d104212b2fe7a",
+      "sha256": "cdc52a1364d7062b4e4b917460947d76ba25a5c85ab36f1d253827099ffebd13",
       "cases": [
         "TestOpenAIManualReasoningParameters",
         "TestOpenAIWireOverridesRouterButHonorsCapabilities",
         "TestOpenAIEndpointIsolation",
+        "TestCustomProviderReasoningEffortOptIn",
+        "TestNormalizeModelProviderReasoningEffortFormat",
         "TestOpenAIReasoningOffModelSupport",
         "TestOpenAISessionReasoningSelection",
         "TestOpenAIReasoningOptionsAndModelSwitch"
       ],
-      "caseCount": 6,
+      "caseCount": 8,
       "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/provider_page_balance_test.go",
+      "kind": "go",
+      "sha256": "19a5538374a197264b1c7f06ce333465029a9024f0797f81c4bd13e71a1cb64e",
+      "cases": [
+        "TestPageBalanceConfirmationIsolationPersistenceAndExpiry",
+        "TestPageBalanceIdentityChangeAndInflightDisable",
+        "TestPageBalanceRejectsUnsafeDeclarations",
+        "TestPageBalanceBackgroundRefreshNeedsConsentAndStopsWithPlugin",
+        "TestPageBalanceBrowserFixture",
+        "TestPageBalanceSameNameDifferentProjectAndClosedSource",
+        "TestPageBalanceKeyRotationInvalidatesBackgroundConsent"
+      ],
+      "caseCount": 7,
+      "environmentReferences": [
+        "AIDE_PAGE_BROWSER"
+      ],
       "execution": "not_run_by_inventory"
     },
     {
@@ -3970,9 +4368,10 @@
     {
       "path": "internal/server/provider_support_test.go",
       "kind": "go",
-      "sha256": "0718e8e9cb949b0d71bbc4fba12ba93335f1b796d7a7d8a21c53e60fab833909",
+      "sha256": "88bc05573bc3230f4657d17ba39afbc47eddd8c4b4510284d93d332f8f15d4ab",
       "cases": [
         "TestProviderSupportActualPackagesEnabledDisabledRemoved",
+        "TestProviderSupportRecoversMissingRegistryMetadataFromMatchingManifest",
         "TestProviderSupportExactHostPathAndModel",
         "TestProviderSupportOpenAIUsdIsMatchedAndAggregatedSeparately",
         "TestManualTokenPricingCurrencyDefaultsToCNYAndAcceptsUSD",
@@ -3989,7 +4388,7 @@
         "TestProviderSupportZeroReasoningCounterDoesNotProveNonThinkingMode",
         "TestProviderSupportPluginPriorityAndManualFallback"
       ],
-      "caseCount": 16,
+      "caseCount": 17,
       "environmentReferences": [
         "AIDE_SUPPORTER_ZIP_DIR"
       ],
@@ -4073,6 +4472,15 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/release_professional_resume_test.go",
+      "kind": "go",
+      "sha256": "3ed4a8b2aa1ba34f8840ac784fe5c04ed36b4cf597e23fc45e5e0913d859e10b",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/release_public_dependencies_test.go",
       "kind": "go",
       "sha256": "6de3ecf1dcb37f073f10fe26c98d80478be6afb8805334936933899ce2282505",
@@ -4084,25 +4492,29 @@
     {
       "path": "internal/server/release_public_plugins_test.go",
       "kind": "go",
-      "sha256": "dfeae28fb035bf64e97cdc43c22e861bf594bf2ae26b9f0b86a7a785b6fce886",
+      "sha256": "9696cb805330b41f8eaf6d943f01b5753f873b95e59c32bbd79efe74b682675c",
       "cases": [
-        "TestReleasePublicPackageFunctions"
+        "TestReleasePublicPackageFunctions",
+        "TestMapCanvasInstalledCandidate",
+        "TestReleaseMigratedComputerControlFunction"
       ],
-      "caseCount": 1,
+      "caseCount": 3,
       "environmentReferences": [
         "AIDE_PUBLIC_PLUGIN_EVIDENCE_DIR",
-        "AIDE_RELEASE_PUBLIC_MARKET"
+        "AIDE_RELEASE_PUBLIC_MARKET",
+        "AIDE_TEST_MAPCANVAS_BUNDLE"
       ],
       "execution": "not_run_by_inventory"
     },
     {
       "path": "internal/server/remediation_test.go",
       "kind": "go",
-      "sha256": "ada940582f3c87f48061670668d0dfbae060a7162ae01b7e065eef86a3d66d26",
+      "sha256": "322e8b262e11f166e6f2302625e997555aeb782138fcfe188fc42312f340afdb",
       "cases": [
         "TestRemediationAutoCompactNotBlockedByHeldMutex",
         "TestContextOverflowCompactsHistoryBeforeRetry",
         "TestAutoCompactionPublishesObservableLifecycle",
+        "TestAutoCompactionHonorsLargeModelWindow",
         "TestAutoCompactionCancellationPublishesTerminalAndPreservesHistory",
         "TestProviderCompleteHonorsRequestCancellation",
         "TestManualCompactionPublishesLiveProgressAndTokenEstimates",
@@ -4120,9 +4532,10 @@
         "TestR08LegacyMigration",
         "TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary",
         "TestMalformedCompactionSummaryAbortsWithoutChangingSource",
-        "TestCompactionSnapshotDetectsToolCallChanges"
+        "TestCompactionSnapshotDetectsToolCallChanges",
+        "TestCompactionSmallRemainingBudgetFoldsShortHistory"
       ],
-      "caseCount": 21,
+      "caseCount": 23,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -4167,6 +4580,36 @@
         "TestDueRemindersPopupAndXiaomiDispatchAreIdempotent"
       ],
       "caseCount": 4,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/remote_access_browser_test.go",
+      "kind": "go",
+      "sha256": "b4bbe0ce9dcf4fea770b9c2cabbca0db85466f2d54434bde5bfba03ff59e1ddd",
+      "cases": [
+        "TestLANAccessBrowserFixture"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [
+        "AIDE_LAN_BROWSER_FIXTURE",
+        "AIDE_LAN_BROWSER_NO_PASSWORD"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/remote_access_test.go",
+      "kind": "go",
+      "sha256": "c6f25542705ce3975aabbfc129d33437717efff852f1d54b0f1f38105a7cdb9a",
+      "cases": [
+        "TestLANAccessOptInPasswordAndTimeoutPolicy",
+        "TestLANAccessIndependentSessionAndRevocation",
+        "TestLANAccessServerIdleAndLockCancelStreams",
+        "TestLANAccessTransportOriginAndTokenBypasses",
+        "TestLANCertificatePrivateSANAndLocalPinPreserved",
+        "TestLANAccessRejectsMalformedAndThrottlesPasswords"
+      ],
+      "caseCount": 6,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -4492,6 +4935,28 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/sftp_root_read_test.go",
+      "kind": "go",
+      "sha256": "b6c828ccc7d82c7bbd12e61eb7e1aa34eba3b13541681561a9674ac40bc07af0",
+      "cases": [
+        "TestIssue691And694ScopedReadsRejectLinks"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/sftp_root_write_test.go",
+      "kind": "go",
+      "sha256": "7e200455a4c8674d7db1399405745e40ff1e65d15e222f1617a3ef8f99b6e629",
+      "cases": [
+        "TestIssue695And697MutationsRejectLinks"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/shell_cancel_test.go",
       "kind": "go",
       "sha256": "3cc57aa225c931026d849b4e2ae73eabeaebf773acde67b07f7d966e7aefbab2",
@@ -4504,15 +4969,28 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/shell_output_test.go",
+      "kind": "go",
+      "sha256": "27d41f599976e04c3012bddb460ce62611888e2452c9cce6c94ff9defe1ecdbd",
+      "cases": [
+        "TestCappedShellOutputBoundsCollection",
+        "TestCappedShellOutputExactLimitIsNotTruncated"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/shell_readonly_test.go",
       "kind": "go",
-      "sha256": "11dac6610d2af037a743757d69c94d963ac3c785107c02b0874bde26af7ac3f8",
+      "sha256": "20fb3ed234dd130228dc6a343359fced09cbaa2b40c5caa94737db3238d900ab",
       "cases": [
         "TestBasicReadOnlyShellClassification",
         "TestReadOnlyShellCommandLengthBoundsWithoutCommandCountCap",
-        "TestBasicReadOnlyShellExecutesWithoutReviewer"
+        "TestBasicReadOnlyShellExecutesWithoutReviewer",
+        "TestGitRepositoryHelpersRequireApproval"
       ],
-      "caseCount": 3,
+      "caseCount": 4,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -4705,7 +5183,7 @@
     {
       "path": "internal/server/ssh_apply_test.go",
       "kind": "go",
-      "sha256": "7519f25d675a452d5a8e7ac081441153dd3f62c8acc35b6be81ba2bb16a18ae0",
+      "sha256": "eac47c22103b48ef68c44a8f6e6cacec1680e067a7399160039f5d6ab62f98fc",
       "cases": [
         "TestSSHApplyCompletesAndPersists",
         "TestSSHApplyRechecksStateAfterRead",
@@ -4746,6 +5224,22 @@
       ],
       "caseCount": 2,
       "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/ssh_final_plugins_test.go",
+      "kind": "go",
+      "sha256": "63dc8f29175c1f2d6e0c1f16e86c52fb295cf7043eb3cff8d7d6f1b22b1747da",
+      "cases": [
+        "TestSSHLiveFinalPluginCompatibility"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [
+        "AIDE_FINAL_PLUGIN_CANDIDATES",
+        "AIDE_SSH_FIXTURE_A",
+        "AIDE_SSH_FIXTURE_B",
+        "AIDE_SSH_TEST_ISOLATED"
+      ],
       "execution": "not_run_by_inventory"
     },
     {
@@ -4833,6 +5327,19 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/starlink_remaining_integration_test.go",
+      "kind": "go",
+      "sha256": "df1c6a18d974978c1fce4bcfbc16ffbf1729bac85c849ca07e47a13afbbe7deb",
+      "cases": [
+        "TestRemainingStarLinkDaemon"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [
+        "AIDE_STARLINK_SOURCE"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/static_audit_benchmark_test.go",
       "kind": "go",
       "sha256": "5e26b88241a5c2fd5a500f38a578c6c8664fbb3cd335b6ea389324df2aa07329",
@@ -4860,6 +5367,17 @@
       "environmentReferences": [
         "AIDE_STATIC_AUDIT_PREPARE"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/steer_interrupt_test.go",
+      "kind": "go",
+      "sha256": "e21f6e33dd8168a2434c082b84838b215f6975545cb734e881b24aef81c4c5cb",
+      "cases": [
+        "TestSteerInterruptsInFlightRound"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
@@ -5130,7 +5648,7 @@
     {
       "path": "internal/server/tools_test.go",
       "kind": "go",
-      "sha256": "a82ae53493702edef91f5adea192c7024fd8a39f0263a91b8f7432e00ab73812",
+      "sha256": "5dd96398350e394758d6a2359066a71f091c3d0cafc77b36137eceded12a47db",
       "cases": [
         "TestToolLoopReadFile",
         "TestToolLoopWriteProposalAndShellExec",
@@ -5192,13 +5710,16 @@
     {
       "path": "internal/server/transfer_sftp_test.go",
       "kind": "go",
-      "sha256": "0b52e9005870fdf6611c8614ac7a7077375d495def676d17952ba49a8e0f74f7",
+      "sha256": "58fa9ce358932e4e4e454509f17e014c95c896bb049882ae36ab3f5252e78d9c",
       "cases": [
         "TestTransferSFTPProcess",
         "TestLargeTransferSFTPRandomAccessAndResume"
       ],
       "caseCount": 2,
       "environmentReferences": [
+        "AIDE_SFTP_WRITE_ENTERED",
+        "AIDE_SFTP_WRITE_LOG",
+        "AIDE_SFTP_WRITE_RELEASE",
         "AIDE_TRANSFER_SFTP_HELPER"
       ],
       "execution": "not_run_by_inventory"
@@ -5206,7 +5727,7 @@
     {
       "path": "internal/server/transfer_ssh_live_test.go",
       "kind": "go",
-      "sha256": "c65112d72f572f6c01f6695557cd5b8683f121a3b39cd3e4ee42aada0cb73f2e",
+      "sha256": "1d0dd370e9c43cb832a1ee38129f82c23f8413be2b65ec6a6b9d3acd9cbd4097",
       "cases": [
         "TestLargeTransferSSHLive"
       ],
@@ -5279,6 +5800,23 @@
       "environmentReferences": [
         "RUN_EDGE_LIVE"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/tts/openai_test.go",
+      "kind": "go",
+      "sha256": "d3af422f48621cd15d2e7c1e99f38e26df294c241a3297911b40a289f2e3287c",
+      "cases": [
+        "TestOpenAISpeechProtocol",
+        "TestOpenAISpeechFailures",
+        "TestOpenAIRealtimeNarration",
+        "TestOpenAIExplicitChain",
+        "TestOpenAIRealtimeHandshakeRetry",
+        "TestOpenAIRealtimeNoRetryAfterSession",
+        "TestOpenAIRealtimeDialErrorRedaction"
+      ],
+      "caseCount": 7,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
@@ -5457,6 +5995,21 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/voice_model_bindings_test.go",
+      "kind": "go",
+      "sha256": "cbe23d3e8f35e5e6b713041976ff037784b0403f21458b61bb185351998278cd",
+      "cases": [
+        "TestVoiceModelBindingsIsolationAndPersistence",
+        "TestVoiceModelBindingsSynthesisUsesVault",
+        "TestVoiceModelBindingsQwenProtocols",
+        "TestVoiceModelBindingsUnavailableKey",
+        "TestSettingsAutoSavePermissionsPersistence"
+      ],
+      "caseCount": 5,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/voice_password_confirmation_test.go",
       "kind": "go",
       "sha256": "1a21dc79ab782ffdc63ea08c7c23f0dd0a473bf3ad1b78762402c145d33a1bd4",
@@ -5598,7 +6151,7 @@
     {
       "path": "internal/server/workbench_capability_test.go",
       "kind": "go",
-      "sha256": "742c5b3326832dbdc6e7fcb4bdd35f6c0eec33ce153b4f864b89f362b4298fe5",
+      "sha256": "47eff1dd5b55d71f1724de44cf3ae908944c92757f9f0e55db4911abcc6e16db",
       "cases": [
         "TestIssue88StandaloneWorkbenchCapabilitiesGetBridge"
       ],
@@ -5692,6 +6245,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/workflow_search_test.go",
+      "kind": "go",
+      "sha256": "3e72fece5656e23e750300be15aaa07f7b147c6cc4cba01a7033cca6046d56a3",
+      "cases": [
+        "TestSearchTextStaysInsideCapturedWorkspace",
+        "TestTaskMemoryRejectsDifferentWorkspace"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/workflow_shell_approval_test.go",
       "kind": "go",
       "sha256": "fdf56c84bfbcab2014e0d8fef46f050cb4c7ac16b0774faa88c29d3286a6333c",
@@ -5758,13 +6323,14 @@
     {
       "path": "internal/server/workspace_test.go",
       "kind": "go",
-      "sha256": "f197cc9ebd29e4971dc923ec57c43fe7a042ab53ad978ad8f7f267285e179596",
+      "sha256": "74c632a662289d8e750b0b8e21a4fe26b0b657bce58a025d0a73dcd8d098a4a1",
       "cases": [
         "TestWorkspaceConfigCRUD",
+        "TestWorkspaceConfigPartialUpdateUsesCurrentModeSnapshot",
         "TestLocalWorkspacePathAIReadFix",
         "TestRemoteWorkspaceDispatch"
       ],
-      "caseCount": 3,
+      "caseCount": 4,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -5783,10 +6349,12 @@
     {
       "path": "scripts/account-balance-pool.test.cjs",
       "kind": "node",
-      "sha256": "c5533351042ab118c82df871aa7d577ab209b0c0a68d9e5be8b12682ec9cac57",
+      "sha256": "95f702c8ba2851216a58af9c71a2cf1a1ec87c4aaf89ae9ad6abf0f5aa6d3f11",
       "cases": [
         "only finite supported amounts become balances; unknown is not zero",
         "alarm boundary, negative balances, scale clamping and persisted preference validation",
+        "website preview stays separate until explicit per-key confirmation and paused data is unavailable",
+        "website association opens only the declared source and performs no model call",
         "all keys have separate cards and alarms; failures retain stale data without reflecting errors",
         "RAM remains per-key and secrets are cleared before save; successful account stays editable",
         "refresh concurrency is bounded; hidden or detached pool stops requests and aborts",
@@ -5795,9 +6363,10 @@
         "closing the settings sheet clears unsaved RAM fields",
         "plugin quota windows render as percentages without currency amounts or pricing controls",
         "pricing-only and unavailable quota are distinct and unknown never becomes zero",
-        "expired quota response cannot populate a current card"
+        "expired quota response cannot populate a current card",
+        "website help is collapsed by default, remembers expansion across refresh, and explains a closed source"
       ],
-      "caseCount": 11,
+      "caseCount": 14,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -5822,7 +6391,7 @@
     {
       "path": "scripts/assistant-delegation.test.cjs",
       "kind": "node",
-      "sha256": "8d9f76334ec1df607fc16f6b999568c968fd2513d0e2133e96d7024f3e0b2936",
+      "sha256": "4e98bcc98ebea7fc0654d4b538533fafd93b4fbdf3662ca9f5cc1416c08b4579",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -5847,9 +6416,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/assistant-memory.test.cjs",
+      "kind": "node",
+      "sha256": "0afccdbf79d449605b0ef096966345c55a2a3d62c5d605b8a22579ebf79c7620",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/assistant-realtime.test.cjs",
       "kind": "node",
-      "sha256": "63fb708be1176cdc48ebcb82379c85f869d85366353c07e4e126fae306c9e4fc",
+      "sha256": "4f1321f56a6a15d7d3ca114c52eccd40dab95bf267734c3f4de079b6447caf04",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -5907,11 +6485,13 @@
     {
       "path": "scripts/browser-assistant-call-review.cjs",
       "kind": "browser",
-      "sha256": "215af7d5318d402a96614c6e333ff9f585b8d010d2715cf66d3d717e70d7f32f",
+      "sha256": "2994c87899513ad5ac47114a492fbff0aa631e59bf9ceebf931dbbb4bd40884e",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
-        "AIDE_COMPONENT_EVIDENCE_DIR"
+        "AIDE_CHROMIUM_EXECUTABLE",
+        "AIDE_COMPONENT_EVIDENCE_DIR",
+        "AIDE_PLAYWRIGHT_MODULE"
       ],
       "execution": "not_run_by_inventory"
     },
@@ -6163,6 +6743,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/browser-markdown-inline-style.cjs",
+      "kind": "browser",
+      "sha256": "2e010c8cb173f1c64a488e547741858a9874909cf11dd4585881fd967e475cc7",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [
+        "AIDE_CHROMIUM_PATH",
+        "AIDE_COMPONENT_EVIDENCE_DIR"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/browser-markdown-recovery.cjs",
       "kind": "browser",
       "sha256": "850ad0eb55484fb631bfb667aeaabc9b1c956c192e32386fed5f224950937082",
@@ -6172,6 +6764,19 @@
         "AIDE_ASSISTANT_TIMELINE_BASELINE",
         "AIDE_COMPONENT_EVIDENCE_DIR",
         "AIDE_ISSUE599_SAMPLE"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/browser-markdown-vector-pdf.cjs",
+      "kind": "browser",
+      "sha256": "67c6a25d915fa41ac81e3006f66bbffc349cb955e594e760453c7590ade55d56",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [
+        "AIDE_CHROMIUM_PATH",
+        "AIDE_COMPONENT_EVIDENCE_DIR",
+        "AIDE_VECTOR_LARGE"
       ],
       "execution": "not_run_by_inventory"
     },
@@ -6275,6 +6880,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/browser-notification-autosave.cjs",
+      "kind": "browser",
+      "sha256": "22522393661a69082e664fb08b12ac3b502cf58fa356b8d180bb9dc7009d05dd",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [
+        "AIDE_COMPONENT_EVIDENCE_DIR",
+        "AIDE_PLAYWRIGHT_MODULE"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/browser-obj-preview-bounds.cjs",
       "kind": "browser",
       "sha256": "16e765b3440465499b63f35cb41b7f9ffb8f37f07309a00b7b4faa489498d2f7",
@@ -6296,6 +6913,15 @@
         "AIDE_OBJ_EXPECT_FAILURES",
         "AIDE_OBJ_VENDOR_BASELINE"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/browser-openai-speech.cjs",
+      "kind": "browser",
+      "sha256": "88ca821d49549652faec1e18adb1bea8f55317198c83075ca2f550983ffabb5d",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
@@ -6514,7 +7140,7 @@
     {
       "path": "scripts/browser-plugin-routing.cjs",
       "kind": "browser",
-      "sha256": "91665e627f314388d6a65f2a3a2a8c49e5ca7be5d7fcfe237bafeab3efa6a8b3",
+      "sha256": "6ccdd627ad0683c3b177962c998d5cd51ff78973d1912fefc55562db69aaa47e",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
@@ -6584,6 +7210,18 @@
       "caseCount": 0,
       "environmentReferences": [
         "AIDE_COMPONENT_EVIDENCE_DIR"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/browser-settings-autosave.cjs",
+      "kind": "browser",
+      "sha256": "a025763afc64db507f144b5c6e292eb70568474987b179876d36f62cad8aa705",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [
+        "AIDE_COMPONENT_EVIDENCE_DIR",
+        "AIDE_PLAYWRIGHT_MODULE"
       ],
       "execution": "not_run_by_inventory"
     },
@@ -6756,20 +7394,21 @@
     {
       "path": "scripts/ci/test_public_plugins.py",
       "kind": "python",
-      "sha256": "4b761adc18e687dde6ea234f41db0b76eaed8eb08ff0365d6b459b667a16b5c2",
+      "sha256": "a963db7aad5b4b9e950c155f4a32748efd440f7ef9be8855e3bf55fb41f17903",
       "cases": [
+        "test_shipped_offline_catalog_matches_the_public_lock",
         "test_frozen_packages_must_match_current_catalog_identity",
         "test_only_exact_complete_success_is_accepted",
         "test_installation_does_not_substitute_for_function_or_coverage"
       ],
-      "caseCount": 3,
+      "caseCount": 4,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
       "path": "scripts/ci/test_release_evidence.py",
       "kind": "python",
-      "sha256": "5981f535992f6e037283cee4697cf4e34b5c7a0c7138057a5daccaa3f1b8aa36",
+      "sha256": "48e55c369fe19690d6c06a53b8a25c80da041827200988e2f38cb5880dc4c075",
       "cases": [
         "test_every_browser_cell_required_and_bound_to_source",
         "test_all_go_names_need_one_completion_and_skips_are_separate",
@@ -6870,6 +7509,15 @@
       "path": "scripts/crash-monitor.test.cjs",
       "kind": "node",
       "sha256": "84ab237240275c459d05e008d751f0b9e83407d7db72e5bdae4af48b65f88c4a",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/desktop-capture.test.cjs",
+      "kind": "node",
+      "sha256": "f0d8b0eb7dc8ab298a69a444a53c2dd74e2c7118be41b30194f67720a0fd9211",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7296,11 +7944,36 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/experience-runtime.test.cjs",
+      "kind": "node",
+      "sha256": "a7da1caa9f0c51aaa777515a2b5f10cf9de00d7dfb76a7542d0e545fad3a848e",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/file-autosave-retry.test.cjs",
       "kind": "node",
       "sha256": "c4f1381408d008e495be6be655f50a313725784b94a850e8bfb408fbc1512e99",
       "cases": [],
       "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/file-diff.test.cjs",
+      "kind": "node",
+      "sha256": "fe2beb1d72d7d19849e3fe53a1862a769e88fa9eff9faa9da625bac2e5775560",
+      "cases": [
+        "marks replacements with line numbers on both sides",
+        "treats a new file as pure additions starting at line 1",
+        "normalizes CRLF and keeps blank lines addressable",
+        "keeps the whole file when nothing changed",
+        "degrades to delete-all plus add-all for oversized middles",
+        "caps rendered rows but reports the real counts"
+      ],
+      "caseCount": 6,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -7383,7 +8056,16 @@
     {
       "path": "scripts/identity-login-routing.test.cjs",
       "kind": "node",
-      "sha256": "77f886eace658ff95869fe652c607a0d5de0ce63c3c26b330d81feb36c51b25a",
+      "sha256": "603baa76e4ae5524c628f5968ec833be9b840eadde13f894f2784e9972900884",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/keybindings.test.cjs",
+      "kind": "node",
+      "sha256": "8d5fade571e528b3132ce7d57d150dcac5d73c993ad314c0e7f2335238f418d2",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7437,7 +8119,7 @@
     {
       "path": "scripts/lock-recovery.test.cjs",
       "kind": "node",
-      "sha256": "715ee05def0fee731431cdb4b1e31ff85641383ce6a83606bcca0120f16c27cf",
+      "sha256": "cee99bb30e28d8aa243a19713394c82832f7281eec8bca48300da53fcccfa7ad",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7446,7 +8128,7 @@
     {
       "path": "scripts/management-permissions.test.cjs",
       "kind": "node",
-      "sha256": "19e0e1e9af0ad8e58158d589491fbed33e8fdb1367b139a59b57c0ffe38af72a",
+      "sha256": "55f7407439bd574bb5f6177099096285c5d25f15b33dc64717160ffdeaae20be",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7473,7 +8155,7 @@
     {
       "path": "scripts/markdown-download-export.test.js",
       "kind": "node",
-      "sha256": "e8148e5eea32ddc0a77f412516ae458741db73e9d8ee6f84d06c955869aca571",
+      "sha256": "0a6ee8fe1ef0fa2b2564aacc13d71e33eed9a3f70a2e44cc90625ed70b51fc50",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7491,7 +8173,7 @@
     {
       "path": "scripts/markdown-image-path.test.js",
       "kind": "node",
-      "sha256": "8795ba6d442d160eb79b7515ed254a52ba7016a7c6724d1c82c169effe3c5394",
+      "sha256": "2819e5a03e2784267969469c05353d8f21e8e5b0f26e2717d10fa750c7277721",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7509,7 +8191,7 @@
     {
       "path": "scripts/markdown-live-preview.test.cjs",
       "kind": "node",
-      "sha256": "301184dd882c306121e4165d6d39e68b1ba1eafee21e4593b81d5c03766c1303",
+      "sha256": "98be0fbf44e511b8926c92bcf53b89e1d9350ace649c3a4591ce8feee660666a",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7518,7 +8200,7 @@
     {
       "path": "scripts/markdown-pdf-layout.test.cjs",
       "kind": "node",
-      "sha256": "59df2429ac27adfae2278ad694b747b009748da300153cc14bca42be0b75683a",
+      "sha256": "55758678a0e5341c5db1d860f8f53c4cb61a0069c9b40e889d6bf1c39c45aa42",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7585,7 +8267,7 @@
     {
       "path": "scripts/message-notifications.test.cjs",
       "kind": "node",
-      "sha256": "3b174163c60c6db3b788398b51df07954d0a204c91726bda0e57ee6c8b3ecffe",
+      "sha256": "20022c2257419d212c4c0301ec56b5eb4491c9c46b282b734877ba8f40f5188c",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7607,6 +8289,15 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/native-touchid.test.cjs",
+      "kind": "node",
+      "sha256": "e55e6e58605e1dc802911f401807d9122dae16d1d3c0dc03c8fc003c0a4a161c",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/office/test_docx_comments.py",
       "kind": "python",
       "sha256": "02ab83d8ec6b415963ff4393f8b348877eca157ddeb849dd8383f32e38dee177",
@@ -7614,6 +8305,15 @@
         "test_formatted_run_boundary_and_table"
       ],
       "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/openjpeg/test-native.py",
+      "kind": "python",
+      "sha256": "d33d110d96b107b515a456bf1a169fcc5447a439e15bbaa07f43f042acd82236",
+      "cases": [],
+      "caseCount": 0,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -7657,6 +8357,71 @@
       "path": "scripts/pause-session-isolation.test.cjs",
       "kind": "node",
       "sha256": "9fe234105eb18c79e4c1857e7f901474ab68f2004a331cf1a635557bc005e413",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-allocation-layer.test.cjs",
+      "kind": "node",
+      "sha256": "dd0da0768d189a2e97ba2a707e55fa72ad8a32bbd7a05e80f57afa94ce7f17eb",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-alpha.test.cjs",
+      "kind": "node",
+      "sha256": "54b83f0e23a31e55d83c532d84873cf884694e3e764892abf2512648063be999",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-colors.test.cjs",
+      "kind": "node",
+      "sha256": "6b19ce710fbd4f7af9cb06dcc5b9790ef97cdb4c37bb91060340b3aeafb61411",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-native-fixes.test.cjs",
+      "kind": "node",
+      "sha256": "3480b3031ab2d25df283ea901907016f22577a2141d0a92abd9102b7ae519422",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-official.test.cjs",
+      "kind": "node",
+      "sha256": "28390a299ef5c3a773a34fca303024f74c2a7efe72521d5962a6d484a98593f4",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-packet-borrow.test.cjs",
+      "kind": "node",
+      "sha256": "a85f5a00d758479c765886b71fa0df8600a9c1ab40b314b474054b794f98873e",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [
+        "AIDE_PACKET_FIXTURE_DIR"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/pdf-jpx-preflight.test.cjs",
+      "kind": "node",
+      "sha256": "20ea135f6d883d286322503e5ab30ceafffaf9b937e6525a317ba4c7118e97bc",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7707,7 +8472,7 @@
     {
       "path": "scripts/plugin-market.test.cjs",
       "kind": "node",
-      "sha256": "f8b6de352b46db19cdbfe5f300c90aa276395d1fc6978553907245d518dab4ce",
+      "sha256": "5c243ce2f80daee60aa2dab58dc0f890fddad1ab9d9ff453cf2ab012b5410505",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7734,26 +8499,46 @@
     {
       "path": "scripts/plugin-workbench-client.test.cjs",
       "kind": "node",
-      "sha256": "67ca91ce06f8891113d3300a08d5f659518f57549939998f93a12240b46ba862",
+      "sha256": "c16f7cb31058f593ae4cf76c7b7a0c4389e65a003cb07a664c516808ae5fc852",
       "cases": [
         "client accepts only parent handshake for its plugin, calls declared tools, and preserves pending status",
         "scope revocation rejects outstanding call without issuing a retry",
         "document APIs encode bounded binary chunks without roots, tokens, or an iframe commit API",
         "throwing event listeners cannot prevent scope revocation",
-        "capture SDK uses the existing authenticated MessagePort without credentials or a new HTTP client"
+        "capture SDK uses the existing authenticated MessagePort without credentials or a new HTTP client",
+        "manual file selector uses the same bounded port and exposes no commit or credentials"
       ],
-      "caseCount": 5,
+      "caseCount": 6,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/plugin-workbench-tabs.test.cjs",
+      "kind": "node",
+      "sha256": "ab9267dcfad483714c4bdcd5157b781235b40b69736efd09714410394a093f8f",
+      "cases": [
+        "workbench opens a fresh same-origin page with scoped selection and no credentials",
+        "blocked popup reports failure without replacing current workbench",
+        "actual local and SSH workspace identities round-trip without becoming paths or credentials",
+        "oversized and control-bearing workspace identities never open a page or parse",
+        "locked, disabled, broken or malformed plugin routes cannot open a page",
+        "deep link parser rejects traversal, bad selections and missing workspace",
+        "routed page rechecks workspace, current enabled plugin and lock before creating a bridge",
+        "manual login resumes a plugin deep link after authentication and closes the login dialog"
+      ],
+      "caseCount": 8,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
       "path": "scripts/plugin-workbench.test.cjs",
       "kind": "node",
-      "sha256": "b40caf3c23274e0a15df3eb320df82b4d9763ba873850e89b81b00bfa62dce61",
+      "sha256": "934483d1eebaa89252dddc2070e613ccddf14ce74decc17ca4a3890027a334cc",
       "cases": [
         "workbench uses sandbox without same-origin or credentials and close unloads the frame",
         "lock, scope changes, disabled plugins and Escape close the active workbench",
         "workbench refuses arbitrary routes returned by a broken API",
+        "local speech needs both declarations and a trusted host click before recording",
         "MessagePort only connects to the active frame and never carries parent instance/auth",
         "closing a workbench drops late tool replies and proposal approval is absent from the port",
         "workbench export requires actual active frame and a separate parent save click; cleanup revokes data",
@@ -7770,21 +8555,24 @@
         "employee and location capabilities require an explicit compatible capture protocol",
         "review preserves iframe draft and bridge, returns on approved save, and still revokes on scope loss",
         "manual project save writes directly and never permits iframe commit",
-        "Codex host capability requires both the exact plugin and parent grant"
+        "Codex host capability requires both the exact plugin and parent grant",
+        "launching another workbench delegates to a fresh page without closing the current document or creating a bridge",
+        "manual source selection requires the host grant and keeps commit on trusted parent Save"
       ],
-      "caseCount": 20,
+      "caseCount": 23,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
       "path": "scripts/plugin-workspace.test.cjs",
       "kind": "node",
-      "sha256": "bee549867d0da274843c3e582cae4d396783ab22f7b99c6d8abf052b7948e06e",
+      "sha256": "6b0e62362279f9a326a85b400a034a89e0ce91647ba004cb2e4b6b0001259807",
       "cases": [
+        "plugin binary chunks are bounded, workspace-scoped and preserve exact bytes",
         "plugin helper uses bound project, rejects traversal and symlink escape, and denies empty remote root",
         "daemon helper binds each overlapping call root independently without global chdir"
       ],
-      "caseCount": 2,
+      "caseCount": 3,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -7800,7 +8588,7 @@
     {
       "path": "scripts/qwen-tts.test.cjs",
       "kind": "node",
-      "sha256": "e5e453e7cf1e159648c9625dfa2ea79e59518b814c7ab48222d007d3b960ffe9",
+      "sha256": "6646a4388f7500637b0211703599d2b5edf45a1c8119e6a94eff9f7484381ef1",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7836,7 +8624,7 @@
     {
       "path": "scripts/run-stop-ownership.test.cjs",
       "kind": "node",
-      "sha256": "6306e0d135660db0ffee9430a064ce4d790f29e41aefc12ee597018ddd27211f",
+      "sha256": "e4a90d498b47db5eec81adcc77f131f40f2fb6db4e0229b8dc1b54c4c109183c",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -7870,6 +8658,22 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/session-review.test.cjs",
+      "kind": "node",
+      "sha256": "e1b696e7eaa281727f5193c60c7f73461bcf5219ceebbca9e50b8574970527ad",
+      "cases": [
+        "uses recorded orchestration timing and preserves the task status",
+        "older request snapshots contribute only metadata, not sensitive bodies",
+        "empty and running sessions do not acquire fabricated timing",
+        "trajectory loads the review module before app.js and exposes the tab",
+        "execution journal provides dispatch and result order for older calls",
+        "review displays complete flow with search and collapsible turns"
+      ],
+      "caseCount": 6,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/session-run-controls.test.cjs",
       "kind": "node",
       "sha256": "1fbb2ccc8ca7c6e794345b968370afca22b2a75c6f4b5d5ae75c0079c5fdd4da",
@@ -7879,17 +8683,37 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/session-timeline.test.cjs",
+      "kind": "node",
+      "sha256": "e1372e6901a808d8f57e90645abfe5ff0e1e252000800a08002d8f93646486fb",
+      "cases": [
+        "interleaves prompt, interjection and answer segments by real time",
+        "places an interjection between two answer segments",
+        "keeps queued messages out of the timeline",
+        "falls back to run creation time for legacy records without timestamps",
+        "accepts epoch milliseconds as well as backend timestamps",
+        "parses RFC3339 nanosecond timestamps used by the backend",
+        "formats a local clock label and stays empty for invalid values"
+      ],
+      "caseCount": 7,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/settings-navigation.test.cjs",
       "kind": "node",
-      "sha256": "3c76924066556b90d6b27ccf7b5ae8fbad2af2c6ae4ee8dff878dd9aeced0d2d",
+      "sha256": "ffbeb71933fad20fa2c59b2056df0ce94fe0d3be3dc36575e03f172ec8d9764e",
       "cases": [
-        "all original settings remain reachable exactly once in seven groups",
+        "all settings remain reachable exactly once in seven ordered groups",
+        "search finds pages by title and control while retaining group mapping",
+        "every schema control has a renderer and key API routes exist",
         "new sections and unknown legacy links have a safe reachable destination",
         "advanced controls initialize once only after expansion and keep original renderer",
         "appearance uses independent palette and mode with unchanged stored values",
+        "modern palette persists and immediately changes the document theme attribute",
         "opening voice settings never requests microphone permission; explicit refresh stops its temporary track"
       ],
-      "caseCount": 5,
+      "caseCount": 8,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -7986,7 +8810,7 @@
     {
       "path": "scripts/starmap-frame-work.test.cjs",
       "kind": "node",
-      "sha256": "d7e2321c85913f9ec948553290751a3d2166fca9018c804156f3160c8ac34a62",
+      "sha256": "7c47559591b7232b6e4c07fd76652f646d9a19b406f1fa27f2ac0fb5953e371f",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -8121,7 +8945,7 @@
     {
       "path": "scripts/steer-user-bubbles.test.cjs",
       "kind": "node",
-      "sha256": "0024221c00c47726c98f1d462d30ca5e923dcd3f56cc49d1bdf9d256b882b835",
+      "sha256": "0ee7a5244871803dd572841eaaf07842439d6848c13e53f724813fad0a2606d7",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -8130,7 +8954,7 @@
     {
       "path": "scripts/task-action-hub.test.cjs",
       "kind": "node",
-      "sha256": "3e9f0e0fe99f7b081cc9a8bf1d6ed5a87deabe90415bd87219a28c4575c4cf14",
+      "sha256": "1eaabe0c4238a6041eadb35265806d71e0eeb68b8eb3f79a8a25764ff2c68c45",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -8140,6 +8964,15 @@
       "path": "scripts/test-large-transfer-ssh.py",
       "kind": "python",
       "sha256": "8927fc85d79d5704c67c352a9fd4f49b1ec3b589d7275bd20bc33b6454efc75e",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/test-local-mount-object-bridge.py",
+      "kind": "python",
+      "sha256": "9db51d698c30d4d239f7d6c7819a07fa6794b64aaa48a1106599b92da8d3c246",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -8157,16 +8990,21 @@
     {
       "path": "scripts/test_agent_route.py",
       "kind": "python",
-      "sha256": "a0e6ec5caae1544d97662a9a665db37d9838ae01e6b337b3ba34a1cffe3f17eb",
+      "sha256": "bb873109d9e4ee3987f3b396a964c184125ac73fec74b4ffb5aedcec44ed2c96",
       "cases": [
         "test_snapshot_owner_outlives_its_execution_and_cleanup_deadlines",
         "test_public_runtime_asset_gate_fails_closed",
         "test_explicit_interpreter_overrides",
         "test_task_path_rejects_escape",
         "test_release_gate",
+        "test_release_gate_requires_same_head_as_full_verification",
+        "test_full_verification_requires_at_least_one_check",
+        "test_task_creation_is_atomic_and_does_not_follow_predictable_temp_symlink",
+        "test_concurrent_task_creators_have_one_winner",
+        "test_clean_deletion_refuses_parent_symlink_swap_after_enumeration",
         "test_cleanup_preserves_unknown_protected_tracked_and_symlinks"
       ],
-      "caseCount": 6,
+      "caseCount": 11,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -8251,6 +9089,15 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_browser_page_balance.py",
+      "kind": "python",
+      "sha256": "ce2b51fd84392376b69043b80fb84b46d1e573ccf883717d047c5bcdcfb0babf",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_browser_pdf.cjs",
       "kind": "node",
       "sha256": "5a74b64612f7de8a7a134fa97e4e4b3717781ec38cd47a77cea877421da4975c",
@@ -8271,6 +9118,17 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_checkout_byte_integrity.py",
+      "kind": "python",
+      "sha256": "010efb03863cd93b376a63c06d341a70eefd25127a95446f3a1dc96e73789490",
+      "cases": [
+        "test_autocrlf_preserves_pinned_sources_and_generated_prefix"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_code_layout.py",
       "kind": "python",
       "sha256": "c754af747ba6e68d249be3791c6977f7ce1aa5039375b435672c9dab78ccec1b",
@@ -8286,6 +9144,24 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_codex_host_source.py",
+      "kind": "python",
+      "sha256": "734c6f0278f6c00ddf10c15fd2dbbef463770cf17989133653dec850cec6abd6",
+      "cases": [
+        "test_cache_reuse_is_offline_and_every_use_is_verified",
+        "test_transient_http_retries_then_commits_one_verified_archive",
+        "test_retry_exhaustion_is_bounded_and_retains_no_partial_archive",
+        "test_permanent_http_and_bad_checksum_are_not_retried",
+        "test_corrupt_download_cache_is_repaired_only_by_verified_download",
+        "test_size_limit_explicit_archive_and_symlink_boundaries",
+        "test_prepare_only_works_without_go_or_node_and_creates_no_binaries",
+        "test_docker_host_stage_is_independent_of_application_inputs"
+      ],
+      "caseCount": 8,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_context_compaction_ui.cjs",
       "kind": "node",
       "sha256": "c2246a36c10a50cf42e1b610cdc14de592e0ffa700a42af8fa7b1d2675502400",
@@ -8297,18 +9173,20 @@
     {
       "path": "scripts/test_control_bridge_launchers.py",
       "kind": "python",
-      "sha256": "be0c1bd6d0e7dc2259e9cdd78d95b785319305028882e87ec51f0c1aaf4c22e8",
+      "sha256": "99a1dabc13a53ca9d709703b4f4d8cc03f3beff8a1a3520e9990293e5f447429",
       "cases": [
+        "test_concurrent_election_keeps_one_receipt",
+        "test_readiness_must_belong_to_spawned_pid",
         "test_start_repeat_and_stop"
       ],
-      "caseCount": 1,
+      "caseCount": 3,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
       "path": "scripts/test_control_plugin_runtime.py",
       "kind": "python",
-      "sha256": "b9dde2650f62e4996147cf3024a84cd571a0ccb0f1d7984a5c5fd04ac8cfe664",
+      "sha256": "b7bff11efd235277783451ecb39d7d8d7fae74317b5b4a3357e364b86c80f92d",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -8602,7 +9480,7 @@
     {
       "path": "scripts/test_headless_websocket.cjs",
       "kind": "node",
-      "sha256": "6707785ad95fa7b5949054b35bd971ffa670f8461b18e040227eb0f9503adb81",
+      "sha256": "08452447c3c71bd9e78c2a71ee1f40f64afe8ef20878c8cc56f9f0277dcc34f0",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
@@ -8619,6 +9497,15 @@
       "environmentReferences": [
         "AIDE_HIGHLIGHT_CATALOG"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/test_host_bridge_vendor.py",
+      "kind": "python",
+      "sha256": "da008a7fcdab8897ecf52eb1e6c4cbc470710ef70778d308bc6bff8229c3f9b2",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
@@ -8683,11 +9570,17 @@
     {
       "path": "scripts/test_launcher_contract.py",
       "kind": "python",
-      "sha256": "e174661869a7ab05d7ee7262342d25c1f8a2f821751fb6dcec91cb163bf38539",
+      "sha256": "bad80beb27e7afb93dab9a370977deb0ce606da356674fffdb9367fada53020c",
       "cases": [
         "test_slow_fingerprint_shows_progress_without_polluting_digest",
         "test_fingerprint_timeout_kills_pipeline_descendants",
         "test_build_is_explicit_scoped_and_starts_verified_source",
+        "test_mac_host_build_precedes_configuration_and_start",
+        "test_mac_host_failure_keeps_previous_startup_configuration",
+        "test_host_source_is_prepared_before_docker_without_changing_scope",
+        "test_low_disk_attempts_scoped_recovery_then_rechecks_before_compiling",
+        "test_persistent_low_disk_and_failed_start_do_not_recycle_new_outputs",
+        "test_source_preparation_failure_preserves_current_installation",
         "test_build_executes_real_disk_child_without_inherited_project_dir",
         "test_failed_build_cannot_switch_image_or_start_release",
         "test_wrong_build_identity_retains_previous_configuration",
@@ -8707,16 +9600,22 @@
         "test_missing_runtime_refuses_instead_of_compiling",
         "test_stale_bundle_marker_cannot_select_release_or_trigger_import",
         "test_build_completion_cannot_reopen_previous_healthy_image",
-        "test_actual_packager_ships_only_release_interfaces"
+        "test_actual_packager_ships_only_release_interfaces",
+        "test_deletes_obsolete_tags_and_dangling_ids_preserving_all_dependencies",
+        "test_unhealthy_foreign_or_wrong_runtime_never_deletes",
+        "test_reference_race_and_other_repository_tag_are_retained",
+        "test_starting_health_is_waited_for_and_timeout_does_not_delete",
+        "test_removal_failure_and_gc_failure_are_visible_and_not_forced",
+        "test_default_builder_and_dry_run_never_prune_shared_cache"
       ],
-      "caseCount": 23,
+      "caseCount": 35,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {
       "path": "scripts/test_launcher_data.py",
       "kind": "python",
-      "sha256": "09be9457705b8686420c305752b7b1a2e39e2934063e24ddef411b727114ac74",
+      "sha256": "47da37d3bcac93121579a4880d3d55f2b9054b7a156c4880f2bedb78783f160b",
       "cases": [
         "test_dotenv_compose_files_survive_generated_mount_override",
         "test_exported_compose_files_keep_precedence_without_resolving_dotenv",
@@ -8735,6 +9634,7 @@
         "test_missing_environment_restores_literal_secret_configuration",
         "test_linked_environment_is_rejected",
         "test_persistent_data_excluded_from_build_and_git",
+        "test_default_compose_project_identity_is_stable_and_install_specific",
         "test_select_only_intended_service_owner_and_refuse_ambiguity",
         "test_existing_image_needs_no_download_or_load",
         "test_local_archive_imports_without_network_or_build",
@@ -8757,9 +9657,10 @@
         "test_source_checkout_is_not_hidden_by_stale_bundle_marker",
         "test_source_selection_respects_checkout_and_explicit_override",
         "test_running_instance_requires_local_service_health",
+        "test_only_explicit_a_b_activation_bypasses_healthy_reuse",
         "test_installed_runtime_requires_platform_and_complete_metadata"
       ],
-      "caseCount": 40,
+      "caseCount": 42,
       "environmentReferences": [
         "FIX_LOAD_EXIT",
         "FIX_RELEASE_RECEIPT",
@@ -8826,6 +9727,30 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_macos_desktop.py",
+      "kind": "python",
+      "sha256": "be20067691d7e1e83243e8385ec745e9f808e4e08c84026ec993d430fc6ce707",
+      "cases": [
+        "test_computer_control_scheduler_and_capture_geometry",
+        "test_sealed_touchid_store_and_hardware_acl",
+        "test_double_modifier_gesture",
+        "test_verified_session_uses_the_current_installation_and_cert",
+        "test_foreign_owner_and_identity_mismatch_never_read_token",
+        "test_invalid_certificate_link_and_token_are_rejected",
+        "test_ports_require_one_valid_mapping",
+        "test_system_curl_keeps_tls_and_proxy_redirect_boundaries",
+        "test_failed_start_is_redacted_and_does_not_query_credentials",
+        "test_app_identity_is_scoped_and_foreign_install_is_preserved",
+        "test_open_existing_never_compiles_or_installs",
+        "test_recycle_preserves_running_current_foreign_and_unknown_files",
+        "test_installed_app_survives_cache_eviction_and_failed_install_keeps_receipt",
+        "test_receipt_traversal_and_symlinks_are_rejected"
+      ],
+      "caseCount": 14,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_maintenance.py",
       "kind": "python",
       "sha256": "d5ab63bc69ac8f7db36afd4e36555099176e17d4622fc1af866cc4f22c2f51f5",
@@ -8876,7 +9801,7 @@
     {
       "path": "scripts/test_mermaid_native_issues.cjs",
       "kind": "node",
-      "sha256": "6e537b6b4c005f1769335fbd4a92d754ffcc0b2a8e1bc67b93730d4c539c4768",
+      "sha256": "6d5699eaa8fe7b2ea6bbf9b4edf8d9e102f719a0aee388b96bcc35cf12a3a736",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
@@ -8903,19 +9828,27 @@
     {
       "path": "scripts/test_message_lan_launcher.py",
       "kind": "python",
-      "sha256": "b05bca4fe6229494b15937b1de441828d38cd9eca5556a6ec3352e117c38efc8",
+      "sha256": "cf68a92abf345015af227893bd3e49599a9239be736a36f448775f9c3ff846fa",
       "cases": [
         "test_start_uses_loopback_mapping_and_pristine_checked_image",
+        "test_older_release_helper_keeps_existing_startup",
+        "test_server_protocol_mismatch_keeps_messaging_but_disables_remote_access",
+        "test_old_server_without_capability_manifest_keeps_messaging",
+        "test_sha256sum_only_linux_host_can_verify_and_start_helper",
+        "test_non_loopback_remote_mapping_disables_only_remote_access",
         "test_mismatched_checksum_does_not_execute_helper",
         "test_non_loopback_mapping_rejected",
         "test_capture_target_cannot_expand_to_non_loopback",
         "test_both_images_and_all_launch_modes_ship_bridge"
       ],
-      "caseCount": 5,
+      "caseCount": 10,
       "environmentReferences": [
         "LAN_BAD_HASH",
         "LAN_BINDING",
-        "LAN_CAPTURE_BINDING"
+        "LAN_CAPTURE_BINDING",
+        "LAN_REMOTE_BINDING",
+        "LAN_SERVER_NO_CAPABILITIES",
+        "LAN_SERVER_REMOTE_PROTOCOL"
       ],
       "execution": "not_run_by_inventory"
     },
@@ -9022,7 +9955,7 @@
     {
       "path": "scripts/test_orgchart_assembly_mirror.cjs",
       "kind": "node",
-      "sha256": "70ee6f7473d3bb4630fc72aad3b242a10ade3a9fe8a445e9ffd6254c6911e67c",
+      "sha256": "860ecbbb7fea2d6af3632b434e8f98cd1594fff0f3dce218a0790e147fa567fa",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -9086,17 +10019,21 @@
     {
       "path": "scripts/test_prebuild_wheels.py",
       "kind": "python",
-      "sha256": "9fef96f6160a2f367b25dd01c37065efd38753cdc82d5d935d7c73a772560e8a",
+      "sha256": "32fd7b24e9cdf2f8c0782c5ce5bb82dff0869718256805fc14a00deb408b98a0",
       "cases": [
         "test_failed_download_preserves_last_known_good",
         "test_failed_resolver_verification_preserves_last_known_good",
         "test_success_replaces_only_after_download_and_verification",
+        "test_amd64_target_is_explicit_and_marked",
+        "test_unsupported_target_is_rejected_before_docker",
         "test_empty_success_rejected",
         "test_failed_promotion_restores_previous_directory",
         "test_existing_lock_refuses_other_run_without_touching_inputs"
       ],
-      "caseCount": 6,
-      "environmentReferences": [],
+      "caseCount": 8,
+      "environmentReferences": [
+        "WHEEL_FIXTURE_TARGET"
+      ],
       "execution": "not_run_by_inventory"
     },
     {
@@ -9141,6 +10078,18 @@
         "test_handle_limits_close_and_checksum_before_write"
       ],
       "caseCount": 9,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/test_release_base_images.py",
+      "kind": "python",
+      "sha256": "3c291795ac86aefa341dd5f192b6816ab79b09a2e6ea6776af37a40dc307ccda",
+      "cases": [
+        "test_real_manifest_and_sdk_scope",
+        "test_mutable_or_incomplete_manifest_refused"
+      ],
+      "caseCount": 2,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -9207,15 +10156,28 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_sherpa_build_integrity.py",
+      "kind": "python",
+      "sha256": "afa5678c5182f8e6c8d4fed4936d0d0c77a5fb595b3df5e238d0040633f6961d",
+      "cases": [
+        "test_good_modified_unknown_and_missing_pin",
+        "test_both_platforms_pinned_and_verified_before_extract"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_source_fingerprint.py",
       "kind": "python",
-      "sha256": "bbe1b749cf11c458a30bc1924958fc20187057ba62c5ca9c4fbae1977b69ccb8",
+      "sha256": "c0aecc63acc52ae3e335782597caae895afbead102916f2ee625f5759545f223",
       "cases": [
         "test_native_manifest_under_ascii_locale",
         "test_caller_collation_does_not_change_source_identity",
+        "test_desktop_host_inputs_change_shared_source_identity",
         "test_installed_plugin_state_is_excluded"
       ],
-      "caseCount": 3,
+      "caseCount": 4,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -9283,7 +10245,7 @@
     {
       "path": "scripts/test_ui_click_latency.cjs",
       "kind": "node",
-      "sha256": "df83ad475b02577f2d34bddeede3871e4e622503033853375f9ed7045b67072b",
+      "sha256": "f850861047fd0e9087b17a3bee25b73118be6e0c42ce1c8002992b1f718a7ff3",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -9326,6 +10288,15 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_windows_bootstrap_cache.py",
+      "kind": "python",
+      "sha256": "8bd25b5d00b5432e5c73d65a75aed3ca3df6a6a6664d288a80c7b0d5c68304f4",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_windows_build_proxy.py",
       "kind": "python",
       "sha256": "bbb9e24af7f502210d21feed9f5ae167aeb64fcfeaaecb9fb07412087984b585",
@@ -9335,11 +10306,37 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_windows_desktop.py",
+      "kind": "python",
+      "sha256": "0801bd46722cf16b1283b3c351b7a6232e25e5662cda57afcb9bd9b33b61cf33",
+      "cases": [
+        "test_real_production_policy",
+        "test_multisize_aide_icon",
+        "test_sdk_cache_tampering_refuses_extraction"
+      ],
+      "caseCount": 3,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_windows_directory_launcher.py",
       "kind": "python",
       "sha256": "1c6730bfd4c32283a16396a9e39cc1b4316eb542105661bace22b5fe225c768a",
       "cases": [],
       "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/test_windows_helper_notices.py",
+      "kind": "python",
+      "sha256": "a05ba3db9353417a687d119b189c7eaa72425f9aecc99405e84e0be6d5768f2e",
+      "cases": [
+        "test_empty_vendor_directory_does_not_use_aide_license",
+        "test_missing_vendor_notice_fails_instead_of_substituting_main",
+        "test_main_module_does_not_scan_runtime_or_private_state"
+      ],
+      "caseCount": 3,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -9364,7 +10361,7 @@
     {
       "path": "scripts/test_windows_launcher_compile.py",
       "kind": "python",
-      "sha256": "e264c174b59f5a6e174d91c76049eb9c09451f59390e9f9ad643e54bffb2c539",
+      "sha256": "476b286e31508add64442a62cf806eb7d227c455be7d26474edd8aee9593eb8e",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -9475,6 +10472,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/test_workflow_action_pins.py",
+      "kind": "python",
+      "sha256": "343fecca12aecf96ab287e54ea32eefc6000700ab686ab075da38539c39064cc",
+      "cases": [
+        "test_movable_and_undocumented_refs_are_rejected",
+        "test_external_actions_have_sha_and_version_comment"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/test_xsys_platform_contracts.py",
       "kind": "python",
       "sha256": "e1a408ed50a53cd4346d6d3f708d00447c6717c86bcf230d553e6b7223fa62c2",
@@ -9519,7 +10528,7 @@
     {
       "path": "scripts/tts-playback.test.cjs",
       "kind": "node",
-      "sha256": "58424efc395bdde75ffb223d25e2979d90e3fb85fce1027cab36420ce428cbe9",
+      "sha256": "b71ce5e9da2a519c5a8cdcb2c0b51515d4eccf5216849270c21ea95fd7e270dc",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -9528,7 +10537,7 @@
     {
       "path": "scripts/ui-response-latency.test.cjs",
       "kind": "node",
-      "sha256": "633851df36c15659830b2a5a0b91829d660336956bb61f21cabac5c3e0c57a8b",
+      "sha256": "4cf330cd73130c2f836e0c9cf8a8bf2b0d245b666b1aeb849a19b4c0efdafda9",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -9598,7 +10607,7 @@
     {
       "path": "scripts/workbench-background.test.cjs",
       "kind": "node",
-      "sha256": "cd2c16511b5097e4809b81ca8278e35c022013bcd250d99c48e635a9cbdf7f39",
+      "sha256": "ec1fa545cd20a4a24daab8328abd0ea8280898a00e58f1656a40d4db59eda802",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],
@@ -9616,7 +10625,7 @@
     {
       "path": "scripts/xiaomi-model-picker.test.cjs",
       "kind": "node",
-      "sha256": "523ef120158b2e85f4250f9665b08c29a36e49ffe250b1c8b07694f9079376b5",
+      "sha256": "d9994d5fe6c8d4541379ba9d7a73298a41d94eb7a5f1f8088107f905ee6a9a03",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [],

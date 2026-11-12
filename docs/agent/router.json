@@ -1687,6 +1687,10 @@
       [
         "python3",
         "scripts/test_host_bridge_vendor.py"
+      ],
+      [
+        "python3",
+        "scripts/test_windows_helper_notices.py"
       ]
     ],
     "full": [

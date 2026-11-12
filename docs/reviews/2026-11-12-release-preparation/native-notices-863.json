@@ -1,0 +1,28 @@
+{
+  "issue": 863,
+  "status": "focused checks pass; final native host rerun pending",
+  "collector": "real vendor roots, recursive license/notice/patent texts, original SHA256 and encoding; never substitute Aide license",
+  "unitCases": 3,
+  "fixtureApprovalSeconds": 2.609,
+  "frozenCatalogRaceSeconds": 4.719,
+  "originalVendoredBytes": "unchanged",
+  "crossBuilds": [
+    {
+      "arch": "amd64",
+      "bytes": 11907584,
+      "sha256": "4cc0eba230eaf98ec9b90f63de8184a3e578285395d710b502c8c39dd31b87f1"
+    },
+    {
+      "arch": "arm64",
+      "bytes": 10971648,
+      "sha256": "f8d26454caf10caa777dcc3c7cf930f3d282f003436a308d219a3eedb24a4fd5"
+    }
+  ],
+  "embeddedNotices": {
+    "VMware": true,
+    "MPL": true,
+    "subcomponent": true,
+    "PATENTS": true,
+    "sourceHashes": 11
+  }
+}

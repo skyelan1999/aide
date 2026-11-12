@@ -18,7 +18,7 @@ if /i "%PROCESSOR_ARCHITEW6432%"=="ARM64" set "AIDE_BOOT_ARCH=arm64"
 if not exist ".agent-state" mkdir ".agent-state"
 set "AIDE_BOOT_RECEIPT=%CD%\.agent-state\%AIDE_BOOT_BUILDER%.receipt"
 if not exist "%AIDE_BOOT_RECEIPT%" goto bootstrap_builder_init
-findstr.exe /x /l /c:"%AIDE_BOOT_BUILDER%" "%AIDE_BOOT_RECEIPT%" >nul
+powershell.exe -NoProfile -Command "try { $v=@([IO.File]::ReadAllLines($env:AIDE_BOOT_RECEIPT)); if ($v.Count -eq 1 -and $v[0] -ceq $env:AIDE_BOOT_BUILDER) { exit 0 } } catch {}; exit 1"
 if errorlevel 1 (echo BuildKit ownership receipt is invalid; refusing to use the builder. & exit /b 1)
 docker.exe buildx inspect "%AIDE_BOOT_BUILDER%" >nul 2>nul
 if errorlevel 1 goto bootstrap_builder_create

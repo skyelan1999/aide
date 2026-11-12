@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def plan(host, temporary):
     common = [
-        ['go', 'test', '-json', '-mod=vendor', '-count=1', './cmd/aide-local-mounts', './internal/messaging'] + (['./scripts/xsys-review'] if host == 'windows' else []),
+        ['go', 'test', '-json', '-mod=vendor', '-count=1', './cmd/aide-local-mounts', './internal/hostbridge', './internal/localmounts', './internal/messaging'] + (['./scripts/xsys-review'] if host == 'windows' else []),
         [sys.executable, 'scripts/test_reference_relay_agent.py'],
         [sys.executable, 'scripts/test_mixsoul_embedding_follow.py'],
     ]

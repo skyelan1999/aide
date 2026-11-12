@@ -31,7 +31,7 @@ func TestPrepareRightsAndDisconnectedDrive(t *testing.T) {
 	a, b := filepath.Join(t.TempDir(), "read $literal"), filepath.Join(t.TempDir(), "write")
 	os.Mkdir(a, 0700)
 	os.Mkdir(b, 0700)
-	c := Config{1, []Entry{{ID: "docs", Name: "Docs", Path: a, ReadOnly: true}, {ID: "output", Name: "Output", Path: b}, {ID: "offline", Name: "Offline", Path: filepath.Join(t.TempDir(), "disconnected"), ReadOnly: true}}}
+	c := Config{1, []Entry{{ID: "docs", Name: "Docs", Path: normalizedTestPath(t, a), ReadOnly: true}, {ID: "output", Name: "Output", Path: normalizedTestPath(t, b)}, {ID: "offline", Name: "Offline", Path: normalizedTestPath(t, filepath.Join(t.TempDir(), "disconnected")), ReadOnly: true}}}
 	p := filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json")
 	if e := Write(p, c); e != nil {
 		t.Fatal(e)
@@ -56,7 +56,15 @@ func TestPrepareRightsAndDisconnectedDrive(t *testing.T) {
 	if e = json.Unmarshal(raw, &doc); e != nil {
 		t.Fatal(e)
 	}
-	if st, e := os.Stat(filepath.Join(root, ".aide-data/local-mounts/active.json")); e != nil || st.Mode().Perm() != 0644 {
+	probe := filepath.Join(t.TempDir(), "mode-probe")
+	if e := os.WriteFile(probe, []byte("fixture"), 0644); e != nil {
+		t.Fatal(e)
+	}
+	expectedMode, e := os.Stat(probe)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if st, e := os.Stat(filepath.Join(root, ".aide-data/local-mounts/active.json")); e != nil || st.Mode().Perm() != expectedMode.Mode().Perm() {
 		t.Fatal("read-only metadata bind is not readable by the container UID", e)
 	}
 	vs := doc.Services["aide"].Volumes
@@ -96,7 +104,7 @@ func TestPrepareRestoresSnapshotWhenOverrideCannotReplace(t *testing.T) {
 	if err := Write(filepath.Join(native, "active.json"), previous); err != nil {
 		t.Fatal(err)
 	}
-	next := Config{1, []Entry{{ID: "next", Name: "Next", Path: t.TempDir(), ReadOnly: true}}}
+	next := Config{1, []Entry{{ID: "next", Name: "Next", Path: normalizedTestPath(t, t.TempDir()), ReadOnly: true}}}
 	if err := Write(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"), next); err != nil {
 		t.Fatal(err)
 	}
@@ -126,11 +134,20 @@ func fixtureExporter(t *testing.T) Exporter {
 
 func TestSelectedDirectoriesHaveNoPathBindFallback(t *testing.T) {
 	root := t.TempDir()
-	c := Config{Version: 1, Entries: []Entry{{ID: "selected", Name: "Selected", Path: t.TempDir()}}}
+	c := Config{Version: 1, Entries: []Entry{{ID: "selected", Name: "Selected", Path: normalizedTestPath(t, t.TempDir())}}}
 	if e := Write(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"), c); e != nil {
 		t.Fatal(e)
 	}
 	if _, _, e := Prepare(root, nil); e == nil {
 		t.Fatal("selected host path fell back to a Docker bind")
 	}
+}
+
+func normalizedTestPath(t *testing.T, native string) string {
+	t.Helper()
+	value, e := Normalize(native)
+	if e != nil {
+		t.Fatal(e)
+	}
+	return value
 }
