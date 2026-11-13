@@ -142,12 +142,30 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('aide.installation=' + self.launcher.scope, builds[0])
         self.assertIn('AIDE_SRC_SHA=' + FINGERPRINT, builds[0])
         self.assertIn('AIDE_RUNTIME_MODE=source', builds[0])
+        self.assertIn('AIDE_COMMIT=' + 'd' * 40, builds[0])
         self.assertEqual(calls[-1], ['bash', 'scripts/aide.sh', 'start-built'])
         self.assertEqual(self.launcher.recycle_calls[0][0], len(calls))
         self.assertEqual(self.launcher.recycle_calls[0][1]['expected_image'], SCOPE_IMAGE)
         self.assertIn('AIDE_IMAGE=' + self.launcher.image, (self.root / '.env').read_text())
         self.assertIn('USER_SETTING=preserved', (self.root / '.env').read_text())
         self.assertTrue(self.launcher.owner())
+
+    def test_dirty_source_build_keeps_drafts_and_binds_identity_to_full_content(self):
+        draft = self.root / 'draft.md'
+        draft.write_bytes(b'Existing unfinished draft\n')
+        self.launcher.dirty = '?? draft.md'
+        self.launcher.build()
+        build = next(c for c in self.launcher.commands if c[1:3] == ['buildx', 'build'])
+        self.assertIn('AIDE_COMMIT=' + 'd' * 40 + '-dirty.' + FINGERPRINT, build)
+        self.assertIn('AIDE_SRC_SHA=' + FINGERPRINT, build)
+        self.assertEqual(draft.read_bytes(), b'Existing unfinished draft\n')
+        self.assertFalse(any(c[:2] in [['git', 'clean'], ['git', 'stash'], ['git', 'add']]
+                             for c in self.launcher.commands))
+        with patch.dict(globals(), FINGERPRINT='e' * 64):
+            self.launcher.build()
+        builds = [c for c in self.launcher.commands if c[1:3] == ['buildx', 'build']]
+        self.assertIn('AIDE_COMMIT=' + 'd' * 40 + '-dirty.' + 'e' * 64, builds[-1])
+        self.assertEqual(draft.read_bytes(), b'Existing unfinished draft\n')
 
     def test_mac_host_build_precedes_configuration_and_start(self):
         native = self.root / 'native/macos-desktop/main.swift'

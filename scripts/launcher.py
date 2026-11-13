@@ -293,7 +293,9 @@ class Launcher:
         display, _ = version(self.root)
         commit = self.call(['git', 'rev-parse', 'HEAD'], capture=True)
         if self.call(['git', 'status', '--porcelain'], capture=True):
-            commit += '-dirty'
+            # Retain the dirty marker without collapsing different source builds
+            # onto one ambiguous identity. Drafts stay in place and untracked.
+            commit += '-dirty.' + source
         configuration = json.loads(self.d('compose', 'config', '--format', 'json', capture=True))
         build = configuration['services']['aide']['build']
         arguments = dict(build.get('args') or {})
