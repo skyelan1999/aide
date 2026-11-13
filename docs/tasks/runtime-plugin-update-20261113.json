@@ -1,0 +1,72 @@
+{
+  "id": "runtime-plugin-update-20261113",
+  "request": "那就把运行的aide和插件也都更新一下，该release的release，aide不release，该更新市场的也更新，做好验证",
+  "baseline": "f99510618b1a92bebd4bbd9f0427cbf260611be7",
+  "initial_status": "",
+  "acceptance": [
+    "Rebuild/activate existing source-mode Aide via standard launcher without version bump, tag or Aide Release; preserve mounts/settings/sessions and verify actual runtime commit/image/API/UI.",
+    "Inventory installed plugins against immutable latest marketplace and applicable independent releases/source, never blindly downgrade newer installed variants or enable disabled plugins.",
+    "Publish only justified validated plugin versions with ordinary packaging, private/public boundaries, uploaded-asset hash readback and release status; update market metadata/public archives only where appropriate.",
+    "Update actual installed plugins through ordinary verified upgrade transaction, preserve configuration/data/backups, verify actual versions, tool/workbench entry and relevant functions.",
+    "Keep rollback image/config/essential user-data snapshots (reproducible caches excluded) and record exact source/image/package/market identities, tests, unavailable hardware/account checks and final production/release state."
+  ],
+  "scope": [
+    "User explicitly authorizes updating the running Aide and plugins, plugin Releases and marketplace updates; explicitly excludes Aide Release/version bump.",
+    "Preserve all original tracked/untracked workspace work, credentials and user data. No paid provider calls, automatic approvals, private source/binaries in public market, or permission/licensing bypass."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests real runtime/plugin activation, justified plugin releases and market updates, with explicit no-Aide-Release constraint.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-plugin immutable source/release/market reconciliation. Preserve newer local variants, retired packages, credentials/data and pending approvals. Standard source build only; no Aide Release.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Existing Aide source runtime rebuilt and activated. Five plugin versions plus one same-version documentation package upgraded normally. Native export failure found during real desktop acceptance, fixed and verified in the owning private repository with no Aide core change.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Standard build/vet/frontend/image checks passed. Exact runtime image/source fingerprints recorded. All 35 plugin guides/load states, settings/enabled, all 87 session statuses and mounts verified. Actual native Save/file readback/reopen passed after user unlock. Isolated responsive/plugin/clock/SQLite checks passed. Existing dirty-build integrity baseline warning preserved and documented; hardware/accounts/CAD not claimed.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Public deployment record contains sanitized aggregate evidence; private package/release/native evidence stays in owning repositories and ignored local task state. OpenAISupporter setup/release docs updated.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned QA container and browser closed. Original tracked/untracked work, production services, user data, old image pin and essential data backups retained.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Seven distinct plugins received verified prereleases (one superseding native export patch); every new attachment downloaded and SHA-256 verified. Public marketplace PR39 merged, CI/Pages passed and live ZIP/routing/host compatibility verified. Aide release/version/tag/Delivery explicitly excluded.",
+      "evidence": [
+        "docs/reviews/2026-11-13-runtime-plugin-update.md"
+      ]
+    }
+  },
+  "release_authorization": "那就把运行的aide和插件也都更新一下，该release的release，aide不release，该更新市场的也更新，做好验证",
+  "rollback": "Private essential data/plugin/config snapshot and old image reference retained. Compose image-selection readback verified; rollback not executed. Preserve post-update user data before restoring.",
+  "handoff": "Production Aide f9951061-dirty remains running with updated plugins; old pre-existing integrity baseline warning remains. Real native export/save/reopen accepted. No Aide Release. Private sources/artifacts remain private.",
+  "operator": "skyelan1999"
+}
