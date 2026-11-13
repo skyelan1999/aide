@@ -15,19 +15,22 @@ import (
 // （source=aide，runId/step 指回所属 run）。它是编排视图的唯一数据源，
 // 也是 aide 后续轮次理解背景与历史的上下文来源。
 type PlanItem struct {
-	ID        string   `json:"id"`
-	Title     string   `json:"title"`
-	Detail    string   `json:"detail,omitempty"`
-	Source    string   `json:"source"` // user | aide
-	Status    string   `json:"status"` // pending | in_progress | completed | failed | blocked | closed
-	ParentID  string   `json:"parentId,omitempty"`
-	RunID     string   `json:"runId,omitempty"`
-	Step      int      `json:"step,omitempty"`
-	DependsOn []string `json:"dependsOn,omitempty"`
-	Agent     string   `json:"agent,omitempty"`
-	Created   string   `json:"created"`
-	Updated   string   `json:"updated"`
-	ClosedAt  string   `json:"closedAt,omitempty"`
+	WorkspaceID     string                `json:"workspaceId,omitempty"`
+	ContractHistory []GoalContractArchive `json:"contractHistory,omitempty"`
+	Contract        *GoalContract         `json:"contract,omitempty"`
+	ID              string                `json:"id"`
+	Title           string                `json:"title"`
+	Detail          string                `json:"detail,omitempty"`
+	Source          string                `json:"source"` // user | aide
+	Status          string                `json:"status"` // pending | in_progress | completed | failed | blocked | closed
+	ParentID        string                `json:"parentId,omitempty"`
+	RunID           string                `json:"runId,omitempty"`
+	Step            int                   `json:"step,omitempty"`
+	DependsOn       []string              `json:"dependsOn,omitempty"`
+	Agent           string                `json:"agent,omitempty"`
+	Created         string                `json:"created"`
+	Updated         string                `json:"updated"`
+	ClosedAt        string                `json:"closedAt,omitempty"`
 }
 
 const (
@@ -40,7 +43,7 @@ const (
 
 func validPlanStatus(status string) bool {
 	switch status {
-	case "pending", "in_progress", "completed", "failed", "blocked", "closed":
+	case "pending", "in_progress", "completed", "failed", "blocked", "awaiting_acceptance", "closed":
 		return true
 	}
 	return false
@@ -74,10 +77,12 @@ func (a *App) planStepClosedLocked(s *Session, runID string, step int) bool {
 // 用于导入编排好的工作流后按顺序执行。
 func (a *App) addPlanTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Title     string   `json:"title"`
-		Detail    string   `json:"detail"`
-		DependsOn []string `json:"dependsOn"`
-		Agent     string   `json:"agent"`
+		WorkspaceID string        `json:"workspaceId"`
+		Contract    *GoalContract `json:"contract"`
+		Title       string        `json:"title"`
+		Detail      string        `json:"detail"`
+		DependsOn   []string      `json:"dependsOn"`
+		Agent       string        `json:"agent"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -88,11 +93,20 @@ func (a *App) addPlanTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, fmt.Errorf("任务标题需为 1–%d 字，说明不超过 %d 字", planTitleRunes, planDetailRunes))
 		return
 	}
+	contract, err := freshGoalContract(in.Contract)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if in.WorkspaceID != "" && in.WorkspaceID != a.wsID() {
+		fail(w, 409, errors.New("项目已切换，请重新打开任务面板"))
 		return
 	}
 	if len(s.Plan) >= planItemLimit {
@@ -106,8 +120,11 @@ func (a *App) addPlanTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
-	item := PlanItem{ID: "plan-" + newID(), Title: in.Title, Detail: in.Detail, Source: "user", Status: "pending",
+	item := PlanItem{Contract: contract, ID: "plan-" + newID(), Title: in.Title, Detail: in.Detail, Source: "user", Status: "pending",
 		DependsOn: append([]string(nil), in.DependsOn...), Agent: strings.TrimSpace(in.Agent), Created: now, Updated: now}
+	if item.Contract != nil {
+		item.WorkspaceID = a.wsID()
+	}
 	s.Plan = append(s.Plan, item)
 	s.Updated = now
 	if err := a.save(s); err != nil {
@@ -196,10 +213,11 @@ func (a *App) dismissPlanStep(w http.ResponseWriter, r *http.Request) {
 }
 
 type planDocument struct {
-	Schema       string     `json:"schema"`
-	SessionTitle string     `json:"sessionTitle,omitempty"`
-	ExportedAt   string     `json:"exportedAt"`
-	Tasks        []PlanItem `json:"tasks"`
+	DestinationWorkspaceID string     `json:"destinationWorkspaceId,omitempty"`
+	Schema                 string     `json:"schema"`
+	SessionTitle           string     `json:"sessionTitle,omitempty"`
+	ExportedAt             string     `json:"exportedAt"`
+	Tasks                  []PlanItem `json:"tasks"`
 }
 
 // exportPlan 输出可编排的 JSON：保留依赖关系、执行归属与状态，便于在
@@ -254,6 +272,10 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
+	if doc.DestinationWorkspaceID != "" && doc.DestinationWorkspaceID != a.wsID() {
+		fail(w, 409, errors.New("项目已切换，请重新打开任务面板"))
+		return
+	}
 	if len(s.Plan)+len(doc.Tasks) > planItemLimit {
 		fail(w, 409, fmt.Errorf("导入后超过 %d 项上限，请先关闭或清理旧任务", planItemLimit))
 		return
@@ -282,7 +304,16 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 				deps = append(deps, mapped)
 			}
 		}
-		added = append(added, PlanItem{ID: id, Title: title, Detail: t.Detail, Source: "user", Status: "pending",
+		contract, err := freshGoalContract(t.Contract)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		workspaceID := ""
+		if contract != nil {
+			workspaceID = a.wsID()
+		}
+		added = append(added, PlanItem{WorkspaceID: workspaceID, Contract: contract, ID: id, Title: title, Detail: t.Detail, Source: "user", Status: "pending",
 			DependsOn: deps, Agent: strings.TrimSpace(t.Agent), Created: now, Updated: now})
 	}
 	s.Plan = append(s.Plan, added...)
@@ -372,6 +403,9 @@ func (a *App) syncPlanOutcomeLocked(s *Session, task *Task) {
 	switch {
 	case ok:
 		item.Status = "completed"
+		if item.Contract != nil && !goalAccepted(item, task) {
+			item.Status = goalPendingStatus(item, task)
+		}
 	case task.Status == "running":
 		item.Status = "in_progress"
 	default:
@@ -386,9 +420,18 @@ func (a *App) planContextLocked(s *Session, focusID string, approvalLimit int) s
 		return ""
 	}
 	var lines []string
+	items := append([]PlanItem(nil), s.Plan...)
+	if focusID != "" {
+		for i, item := range items {
+			if item.ID == focusID {
+				items = append([]PlanItem{item}, append(items[:i], items[i+1:]...)...)
+				break
+			}
+		}
+	}
 	open := 0
-	for _, item := range s.Plan {
-		if item.Status == "closed" || item.Status == "completed" {
+	for _, item := range items {
+		if item.Status == "closed" || item.Status == "completed" && item.ID != focusID {
 			continue
 		}
 		open++
@@ -407,7 +450,13 @@ func (a *App) planContextLocked(s *Session, focusID string, approvalLimit int) s
 		if len(item.DependsOn) > 0 {
 			deps = " 依赖:" + strings.Join(item.DependsOn, ",")
 		}
-		lines = append(lines, fmt.Sprintf("- %s [%s] %s%s%s", mark, item.Source, item.Title, focus, deps))
+		entry := fmt.Sprintf("- %s [%s] %s%s%s", mark, item.Source, item.Title, focus, deps)
+		if item.ID == focusID {
+			entry += goalContractContext(item)
+		} else if item.Contract != nil {
+			entry += fmt.Sprintf("（%d 项验收条件，须逐项复核）", len(item.Contract.Criteria))
+		}
+		lines = append(lines, entry)
 	}
 	if len(lines) == 0 {
 		return ""

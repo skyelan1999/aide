@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "scope": "Actual Aide DOM, HTTP and persistence with a deterministic unpaid provider; no production data or deployment",
+  "cases": [
+    {
+      "id": "zh-CN-1440",
+      "status": "pass",
+      "checks": [
+        "goal and criteria save and redraw immediately (#874)",
+        "real execution completes while unmet goal awaits acceptance",
+        "each operator observation persists and all accepted criteria complete the goal",
+        "revised conditions reset acceptance; blocked/pass reviews and prior contract are retained",
+        "source-linked decision explicitly confirmed through product UI",
+        "conflict visible; explicit replacement preserves old records; actual JSON download contains current decision",
+        "concurrent update rejected; unsaved draft retained",
+        "refresh and unrelated record archival preserve an unsent draft",
+        "decision survives page reload and appears in a different session; viewport fits"
+      ]
+    },
+    {
+      "id": "zh-CN-390",
+      "status": "pass",
+      "checks": [
+        "goal and criteria save and redraw immediately (#874)",
+        "real execution completes while unmet goal awaits acceptance",
+        "each operator observation persists and all accepted criteria complete the goal",
+        "source-linked decision explicitly confirmed through product UI",
+        "concurrent update rejected; unsaved draft retained",
+        "decision survives page reload and appears in a different session; viewport fits"
+      ]
+    },
+    {
+      "id": "en-1440",
+      "status": "pass",
+      "checks": [
+        "goal and criteria save and redraw immediately (#874)",
+        "real execution completes while unmet goal awaits acceptance",
+        "each operator observation persists and all accepted criteria complete the goal",
+        "source-linked decision explicitly confirmed through product UI",
+        "concurrent update rejected; unsaved draft retained",
+        "decision survives page reload and appears in a different session; viewport fits"
+      ]
+    },
+    {
+      "id": "en-390",
+      "status": "pass",
+      "checks": [
+        "goal and criteria save and redraw immediately (#874)",
+        "real execution completes while unmet goal awaits acceptance",
+        "each operator observation persists and all accepted criteria complete the goal",
+        "source-linked decision explicitly confirmed through product UI",
+        "concurrent update rejected; unsaved draft retained",
+        "decision survives page reload and appears in a different session; viewport fits"
+      ]
+    }
+  ]
+}

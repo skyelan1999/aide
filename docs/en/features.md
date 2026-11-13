@@ -34,3 +34,6 @@ Appearance includes separate palette and light/dark/system preferences, reduced 
 
 
 [0.1.19 current capabilities and limits](release-guide-0.1.19.md).
+
+
+Source additions (2026-11-13): [goals, acceptance and project knowledge](project-goals-knowledge.md), using existing plans/token memory with individual operator reviews, attributed records and explicit replacement. Not included in the RC2 package.

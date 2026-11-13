@@ -72,4 +72,5 @@ func TestReleaseBrowserMatrix(t *testing.T) {
 		}
 	}
 	t.Log(string(output))
+	runProjectRecordsBrowser(t)
 }

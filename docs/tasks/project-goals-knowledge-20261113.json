@@ -1,0 +1,73 @@
+{
+  "id": "project-goals-knowledge-20261113",
+  "request": "基于现有能力完善目标与验收、项目知识和决策记录，做好测试和文档",
+  "baseline": "9b45e3777db622b10fc26b10859b67c269618268",
+  "initial_status": "",
+  "acceptance": [
+    "Extend existing session plan items with explicit deliverables and individually reviewable acceptance criteria; execution completion alone cannot complete a goal with unmet criteria.",
+    "Bind operator acceptance to the latest run and durable tool receipts; stale updates/imported reports never inherit accepted status. Preserve legacy plans and dependency behavior for items without criteria.",
+    "Extend existing project token-memory storage with source-linked facts, constraints, decisions and questions; separate proposed/confirmed/superseded/archived state, explicit operator confirmation, CAS and conflict visibility.",
+    "Make current-project records available across sessions and in bounded model context; preserve legacy memory text, remote-cache behavior and workspace isolation.",
+    "Expose both features in the existing task/plan panel with English localization and real desktop/narrow-screen browser acceptance.",
+    "Run focused API, persistence, concurrency, context, import/export and UI regressions plus quick/full checks where applicable, and update current user/API/architecture documentation."
+  ],
+  "scope": [
+    "Owned feature worktree; internal/server plan, task outcome, project-memory/context/tool integration and existing task-plan UI.",
+    "Focused tests, repository verification registration, bilingual current docs and controlled task/evidence. No production restart, paid provider invocation, unrelated files or change to frozen release assets."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized the first two capability improvements, based on existing functionality, with tests and documentation.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Optional contracts extend existing PlanItem and snapshots; structured records extend memoryTokenStore and existing project cache. Operator review/confirmation remains separate from model execution. Legacy text and uncontracted plans are compatible.",
+      "evidence": [
+        "docs/project-goals-knowledge.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented bounded criteria/review/history, project/run-bound sign-off, approval transitions, dependency gates, existing-memory records with confirmation/replacement/archive/conflicts/CAS, bounded model search/cursors and task-board UI/tool switches. Fixed initial-snapshot redraw #874 and enabled goals in empty sessions.",
+      "evidence": [
+        "docs/project-goals-knowledge.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual Chinese/English 1440/390 UI and IAB observation passed, including real synthetic-provider execution, revision/sign-off, conflict replacement/export and unsent-draft retention. Full current-tree regression in progress; no paid provider or production deployment.",
+      "evidence": [
+        "docs/reviews/2026-11-13-project-goals-knowledge/browser-report.json",
+        "docs/reviews/2026-11-13-project-goals-knowledge/browser-source.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual usage/API/storage guide, current README/features/user guides, PRD, architecture and handover updated. Source additions are explicitly absent from published RC2 package.",
+      "evidence": [
+        "docs/project-goals-knowledge.md",
+        "docs/en/project-goals-knowledge.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Back up sessions and the entire project cache before reverting source/older writers. Optional fields read old data; old writers may discard new metadata. No automatic data deletion/migration or production upgrade.",
+  "handoff": "Finish frozen-tree full verification and source PR integration. No new version tag, Release, marketplace change or production restart for this feature task.",
+  "operator": "skyelan1999",
+  "issues": [
+    874,
+    875
+  ]
+}

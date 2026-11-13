@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // Read-only projections reuse persisted task/reminder state. Polling never
@@ -66,6 +67,39 @@ func (a *App) sessionWorkEventLocked(s *Session) *assistantWatchEvent {
 				}
 				event.Detail = string(r)
 				break
+			}
+		}
+	}
+	// Goal acceptance is a business outcome, separate from executor completion.
+	if run.Status == "completed" {
+		item := a.findPlanItemLocked(s, run.PlanTaskID)
+		if item != nil && item.Contract != nil {
+			goalStatus, label, next := "completed", "目标已逐项验收", "查看已验收的目标与交付结果"
+			switch {
+			case item.RunID != run.ID:
+				goalStatus, label, next = "historical", "历史执行结束，当前目标以最新执行和验收为准", "查看当前目标；历史执行结果不代表当前签收"
+			case item.Status == "closed" && !goalAccepted(item, run):
+				goalStatus, label, next = "closed", "目标已关闭，未逐项验收", "已关闭；只有用户重新交办才继续"
+			case !goalAccepted(item, run):
+				goalStatus, label, next = goalPendingStatus(item, run), "执行结束，目标仍待验收", "打开任务与规划逐项复核；先处理未通过条件，不能代替用户签收"
+			}
+			criterionIDs := []string{}
+			for _, c := range item.Contract.Criteria {
+				criterionIDs = append(criterionIDs, c.ID)
+			}
+			event.ID = watchEvent("task", run.ID+":"+run.Status+":"+delivery+":goal:"+goalStatus+":"+recoveryHash(criterionIDs), "", s.ID).ID
+			event.Status = goalStatus
+			event.Text = fmt.Sprintf("任务 #%d「%s」%s。", s.Number, s.Title, label)
+			event.NextAction = next
+			if goalStatus != "completed" {
+				event.Blocker = strings.TrimSpace(event.Blocker + " 目标尚未完成逐项签收。")
+				event.Detail = ""
+			}
+			if goalStatus == "blocked" {
+				event.Priority = 3
+			}
+			if goalStatus == "closed" || goalStatus == "historical" {
+				event.Priority = 1
 			}
 		}
 	}

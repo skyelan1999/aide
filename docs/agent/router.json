@@ -1691,6 +1691,16 @@
       [
         "python3",
         "scripts/test_windows_helper_notices.py"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/project-records.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/session-plan.js"
       ]
     ],
     "full": [

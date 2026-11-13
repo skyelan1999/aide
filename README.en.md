@@ -34,6 +34,9 @@ Aide is a self-hosted engineering workbench for a trusted single-user environmen
 
 Concurrency is not a proportional speed guarantee. Model review is not a passing test. See the [source-backed whitepaper](docs/architecture/aide-technical-whitepaper.md) for mechanisms and verification limits.
 
+
+Source additions (2026-11-13): existing plans support deliverables and individual acceptance, while project memory supports attributed facts, constraints, decisions and questions. See [project goals and knowledge](docs/en/project-goals-knowledge.md). These additions are not in the v0.1.19.0-RC2 package.
+
 ## Start
 
 For packaged installations, download the appropriate [Release](https://github.com/skyelan1999/aide/releases), verify its checksums and follow that version's instructions. Later `main` features are not automatically present in an older binary.

@@ -40,11 +40,12 @@ type memoryRecord struct {
 	Created string   `json:"created"`
 }
 type memoryTokenStore struct {
-	Version        int               `json:"version"`
-	Tokenizer      string            `json:"tokenizer"`
-	Vocabulary     map[string]string `json:"vocabulary"`
-	Records        []memoryRecord    `json:"records"`
-	ProjectionHash string            `json:"projectionHash"`
+	Knowledge      []ProjectKnowledge `json:"knowledge,omitempty"`
+	Version        int                `json:"version"`
+	Tokenizer      string             `json:"tokenizer"`
+	Vocabulary     map[string]string  `json:"vocabulary"`
+	Records        []memoryRecord     `json:"records"`
+	ProjectionHash string             `json:"projectionHash"`
 }
 
 func newMemoryTokenStore() memoryTokenStore {
@@ -89,6 +90,9 @@ func (s memoryTokenStore) text() string {
 	return b.String()
 }
 func (s memoryTokenStore) validate() error {
+	if err := validateProjectKnowledge(s.Knowledge); err != nil {
+		return err
+	}
 	if s.Vocabulary == nil || s.Records == nil {
 		return fmt.Errorf("token 记忆结构不完整")
 	}
@@ -159,7 +163,9 @@ func loadMemoryTokenStore(dir string) (memoryTokenStore, string, error) {
 		if err == nil && s.ProjectionHash != hash([]byte(s.text())) {
 			return s, "", fmt.Errorf("token 记忆投影校验失败")
 		}
+		knowledge := s.Knowledge
 		s = newMemoryTokenStore()
+		s.Knowledge = knowledge
 		if len(legacy) > memoryTextLimit || !utf8.Valid(legacy) {
 			return s, "", fmt.Errorf("兼容记忆必须为 UTF-8 且不超过 24 KB")
 		}
@@ -217,6 +223,9 @@ func (a *App) appendTokenMemory(content string) string {
 	s.append(addition, "write_memory")
 	projection := s.text()
 	s.ProjectionHash = hash([]byte(projection))
+	if encoded, encodeErr := json.Marshal(s); encodeErr != nil || len(encoded) > 2*1024*1024 {
+		return "项目记忆存储超过 2 MiB，未写入；请先导出整理。"
+	}
 	if err = os.MkdirAll(dir, 0700); err != nil {
 		return "创建记忆目录失败: " + err.Error()
 	}

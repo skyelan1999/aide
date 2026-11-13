@@ -5371,6 +5371,8 @@ function renderPermissionManager() {
     ['semantic_search', t('语义搜索'), t('本地 TF-IDF 语义检索文件片段')],
     ['web_search', t('网页搜索'), t('DuckDuckGo 在线搜索当前信息')],
     ['spawn_subagent', t('子代理'), t('派生独立子会话处理子任务')],
+    ['task_acceptance', t('目标与验收'), t('读取当前目标的验收条件及历史用户复核')],
+    ['project_knowledge', t('项目知识与决策'), t('读取项目记录，或提议待用户确认的新记录')],
     ['read_memory', t('读记忆'), t('读取持久化记忆文件')],
     ['write_memory', t('写记忆'), t('追加持久化记忆')],
     ['create_diagram', t('建图表'), t('创建 draw.io 图表文件')],
@@ -10239,6 +10241,7 @@ function renderTrajectory() {
     })();
     return;
   }
+  if (trajView === 'outcome' && session && session.kind !== 'assistant') { renderTrajectoryOutcome(host, session); return; }
   if (!session || (session.kind === 'assistant' ? !session.messages?.length : !session.runs?.length)) {
     host.append(el('p', 'muted', t("当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。")));
     return;
@@ -10263,7 +10266,7 @@ function renderTrajectoryOutcome(host, session) {
   }
   const runs = [...(session.runs || [])].reverse();
   const selected = runs.find(r => r.id === trajOutcomeRun?.runId && session.id === trajOutcomeRun?.sessionId);
-  if (!runs.length) return;
+
   const bar = el('div', 'traj-outcome-picker');
   const label = el('label', '', t('展示范围')); label.htmlFor = 'traj-outcome-run';
   const select = el('select', ''); select.id = 'traj-outcome-run';
@@ -10275,7 +10278,7 @@ function renderTrajectoryOutcome(host, session) {
   select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };
   bar.append(label, select);
   const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
-  if(!selected){window.AideSessionPlan?.sessionOverview(content,{session,t,renderMarkdown,api,revision:sessionRevision,
+  if(!selected){window.AideSessionPlan?.sessionOverview(content,{session,t,renderMarkdown,api,workspaceId:state.config?.workspaceId,revision:sessionRevision,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id!==session.id || trajView!=='outcome' || !host.isConnected || !$('trajectory-sheet').classList.contains('open'),
     onSession:next=>{if(state.session?.id!==session.id||trajView!=='outcome')return;state.session=next;state.sessionJSON=sessionRevision(next);renderTrajectory();},
     selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},launchTask:item=>launchPlanTask(session,item),loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
@@ -10365,7 +10368,7 @@ const CALL_TYPES = {
   file: ['list_files','read_file','write_file','create_diagram'],
   shell: ['run_shell'],
   search: ['search_text','semantic_search','web_search'],
-  memory: ['read_memory','write_memory'],
+  memory: ['read_memory','write_memory','project_knowledge','task_acceptance'],
   subagent: ['spawn_subagent'],
 };
 function callTypeOf(tool) {
