@@ -1,0 +1,194 @@
+[
+  {
+    "id": "ali-bailian-supporter",
+    "version": "0.1.2",
+    "sha256": "b88098def971e2afcb3db042d71e29c3d771f6c4fb742d9307ecb0e66f28ed47",
+    "package": "packages/ali-bailian-supporter/0.1.2-b88098def971.zip"
+  },
+  {
+    "id": "almanac",
+    "version": "1.1.0",
+    "sha256": "5f82efc98e80feeab726038ca4e1fb4e09d8f79ff28af2981a0898fade26fd56",
+    "package": "packages/almanac/1.1.0-5f82efc98e80.zip"
+  },
+  {
+    "id": "archive-tools",
+    "version": "1.0.0",
+    "sha256": "78bf74c2291120fc0102419b3512ac7a61264dc5ed6f418f6f232462252b8eee",
+    "package": "packages/archive-tools/1.0.0-78bf74c22911.zip"
+  },
+  {
+    "id": "auto-ai-model-router",
+    "version": "0.1.2",
+    "sha256": "8418518ccc48fd154d3b579293513bb439ec2d4150ec282ed8fee8ae93ab2060",
+    "package": "packages/auto-ai-model-router/0.1.2-8418518ccc48.zip"
+  },
+  {
+    "id": "browser-control",
+    "version": "1.1.0",
+    "sha256": "9e67c3194f59eb2ce27ea2c7d4384d04d652198605be6494f68e9a6e9641c7e2",
+    "package": "packages/browser-control/1.1.0-9e67c3194f59.zip"
+  },
+  {
+    "id": "codex-bridge",
+    "version": "0.4.1",
+    "sha256": "6fc6bad3d1f4643b85cd8353a4a05f42f2c28328cc82f3caa5fba9f2df84cc84",
+    "package": "packages/codex-bridge/0.4.1-6fc6bad3d1f4.zip"
+  },
+  {
+    "id": "computer-control",
+    "version": "1.2.0",
+    "sha256": "16c147b479ceacb0da20b96994e29f19d2623625a2534e6f5cf1853969a4e8f2",
+    "package": "packages/computer-control/1.2.0-16c147b479ce.zip"
+  },
+  {
+    "id": "current-time",
+    "version": "1.1.0",
+    "sha256": "3959e61044b8e3a4a123b466ace916cf061c0f19d63680df8989c3d8341b793d",
+    "package": "packages/current-time/1.1.0-3959e61044b8.zip"
+  },
+  {
+    "id": "deepseek-supporter",
+    "version": "0.1.0",
+    "sha256": "77e9591d2f443d09cc24a5c5647952c30b47f58848a542e6e92632ea83e49465",
+    "package": "packages/deepseek-supporter/0.1.0-77e9591d2f44.zip"
+  },
+  {
+    "id": "environment-guide",
+    "version": "1.0.0",
+    "sha256": "1ccef42c7a51802ff4cb17c33408ffbcbac57e705489094acb0c0f692384dc63",
+    "package": "packages/environment-guide/1.0.0-1ccef42c7a51.zip"
+  },
+  {
+    "id": "feedback",
+    "version": "1.0.0",
+    "sha256": "907e5964c7cf42cf302a78735f4b6aad015db0f2c91f10591571e7bf55eb60cc",
+    "package": "packages/feedback/1.0.0-907e5964c7cf.zip"
+  },
+  {
+    "id": "file-preview",
+    "version": "0.1.0",
+    "sha256": "f57eb56e0b65de5c6e11a651b44fd57f97c6b2f40bed6b0ce7f3cad1e84b6d9e",
+    "package": "packages/file-preview/0.1.0-f57eb56e0b65.zip"
+  },
+  {
+    "id": "goal",
+    "version": "1.0.0",
+    "sha256": "81bba34cb0b8d16138749ef0bcaac1e68558148bca969330eab8222943c744c1",
+    "package": "packages/goal/1.0.0-81bba34cb0b8.zip"
+  },
+  {
+    "id": "lunar-calendar",
+    "version": "1.1.0",
+    "sha256": "70f14e9538bf5a645c63d9f16ce231852944d83dd9fd27428c29065509a9e964",
+    "package": "packages/lunar-calendar/1.1.0-70f14e9538bf.zip"
+  },
+  {
+    "id": "mapcanvas",
+    "version": "0.2.1",
+    "sha256": "c69d77085ee5d3a3d5cf9600d8bbfe1756249b9cd8cfe751e79433bd13457618",
+    "package": "packages/mapcanvas/0.2.1-c69d77085ee5.zip"
+  },
+  {
+    "id": "markdown-history",
+    "version": "1.0.0",
+    "sha256": "064b9a593932ebd657a5db4e668e451a9cbe22524c2b1d7f5d6b6cbefd737edd",
+    "package": "packages/markdown-history/1.0.0-064b9a593932.zip"
+  },
+  {
+    "id": "office",
+    "version": "1.1.0",
+    "sha256": "34b4d01a5714cad3530471b3de86c4d81eee6ca0452b85ba149b31b8ad94553f",
+    "package": "packages/office/1.1.0-34b4d01a5714.zip"
+  },
+  {
+    "id": "openai-supporter",
+    "version": "0.1.0",
+    "sha256": "dae0cbbf00cf955df0c086575583e90ccabbc45e72c1a495d27b4dcda71672c1",
+    "package": "packages/openai-supporter/0.1.0-dae0cbbf00cf.zip"
+  },
+  {
+    "id": "plan",
+    "version": "1.0.0",
+    "sha256": "c30939a8d1662fde2f2c08e811731bf66cf4f750ea076c94c8567315e98cda53",
+    "package": "packages/plan/1.0.0-c30939a8d166.zip"
+  },
+  {
+    "id": "plugin-authoring",
+    "version": "1.0.0",
+    "sha256": "7e323cb5235e1231df12eacc9ed69aa0632ef2da3ac9ae40fb9509aba1262cba",
+    "package": "packages/plugin-authoring/1.0.0-7e323cb5235e.zip"
+  },
+  {
+    "id": "professional-resume",
+    "version": "0.1.1",
+    "sha256": "36e03a6d88bf9f84ce3404635e109c15ed047b107a1e078fb8dde2b125acb27c",
+    "package": "packages/professional-resume/0.1.1-36e03a6d88bf.zip"
+  },
+  {
+    "id": "rviz",
+    "version": "0.1.1",
+    "sha256": "c0a685b9281a2c911d2a649ee27de08712ad16b0cd2f3feeb643e06b9920a5b9",
+    "package": "packages/rviz/0.1.1-c0a685b9281a.zip"
+  },
+  {
+    "id": "skill",
+    "version": "1.1.0",
+    "sha256": "d020157344ef540cb614ab4cc8c4ce00c935719649eef35664e2c6381fe3bed2",
+    "package": "packages/skill/1.1.0-d020157344ef.zip"
+  },
+  {
+    "id": "sqlite",
+    "version": "1.0.3",
+    "sha256": "d1c597a933816d10fc5eeec148373f77dd59456e58d487c34980b36cc991d8b5",
+    "package": "packages/sqlite/1.0.3-d1c597a93381.zip"
+  },
+  {
+    "id": "starlink",
+    "version": "0.1.6",
+    "sha256": "aa9247968de771201d34ce4b0573e7c056061a5333eee04685184944be335a07",
+    "package": "packages/starlink/0.1.6-aa9247968de7.zip"
+  },
+  {
+    "id": "step-viewer",
+    "version": "0.1.1",
+    "sha256": "d19162b4784c48c0d7c6229c2e2ac13eb4fc4298f586e0772fdd1751f32c8e81",
+    "package": "packages/step-viewer/0.1.1-d19162b4784c.zip"
+  },
+  {
+    "id": "subagent",
+    "version": "1.0.0",
+    "sha256": "d346c221046743bc7f508209c0c0d6eb28615b814b96c08b7c3f2fd5be37bcba",
+    "package": "packages/subagent/1.0.0-d346c2210467.zip"
+  },
+  {
+    "id": "terminal",
+    "version": "1.8.1",
+    "sha256": "fc42c5a33f4ba440340fa25956aeed6c8b5b3b1561f477f8126064b6b1da5bc3",
+    "package": "packages/terminal/1.8.1-fc42c5a33f4b.zip"
+  },
+  {
+    "id": "todo",
+    "version": "1.0.0",
+    "sha256": "8c85249e4a760279d9e4dbf4e0a51d1d58beb7da12df4633ac749631fe3c2452",
+    "package": "packages/todo/1.0.0-8c85249e4a76.zip"
+  },
+  {
+    "id": "tts-tools",
+    "version": "0.1.0",
+    "sha256": "a42b4cbab8aaf9929d307133e202c8eea14c8f4fa460d4259fd04876e350b515",
+    "package": "packages/tts-tools/0.1.0-a42b4cbab8aa.zip"
+  },
+  {
+    "id": "video-preview",
+    "version": "0.1.0",
+    "sha256": "652e923f0a6158681974486b91dfafe2723b8ce18de325de208be9bee31ce396",
+    "package": "packages/video-preview/0.1.0-652e923f0a61.zip"
+  },
+  {
+    "id": "workflow",
+    "version": "1.0.0",
+    "sha256": "db2fa93c32f2762cd26cb23774df8888fb87369a0cf6d136a9b6c26532b4f979",
+    "package": "packages/workflow/1.0.0-db2fa93c32f2.zip"
+  }
+]

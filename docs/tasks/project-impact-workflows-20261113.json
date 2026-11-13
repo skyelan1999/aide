@@ -37,32 +37,39 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused API/persistence/concurrency/race regressions passed, including real plugin execution, handoff, changed-version admission, failed durable save rollback, failed-stage preservation and paused resume. Initial human-oriented zh/en 1440/390 browser matrix passed; frozen-commit full gate and final browser evidence pending.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Combined frozen source 2cda6a20 full gate passed: all 346 commands exit 0; 24/24 server shards, 1662 passed/90 conditional skips of 1752 registered items, other packages race/platform contracts/vet. Two real zh/en x 1440/390 browser matrices passed 4/4 each. All 43 initial plugin artifacts installed normally; all 42 visible guides and 19 workbench entry types checked with explicit native/account/hardware limits. Private current-version fixes separately tested and merged; obsolete historical patch closed without merging.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/verification.json",
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Bilingual first-use/API/storage guides and current README/features/user guide/PRD/architecture/handover updated; final evidence pending.",
+      "summary": "Bilingual final behavior, first-use entry paths, API/storage/recovery guidance, source/runtime boundaries and public audit matrix updated. Exact private evidence remains local/private.",
       "evidence": [
+        "docs/plugin-usage.md",
+        "docs/en/plugin-usage.md",
         "docs/project-impact-workflows.md",
         "docs/en/project-impact-workflows.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned source/tests/docs reviewed and explicitly staged. User original work preserved; raw evidence/private artifacts remain ignored/local. Disposable services stopped at final handoff; production untouched.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "not_run",
+      "summary": "This improvement stage delivers source through PR #881; no new program version/Release, marketplace package, production upgrade or runtime replacement. Prior release work is a separate delivery identity.",
       "evidence": []
     }
   },
   "release_authorization": "",
-  "rollback": "",
-  "handoff": "",
+  "rollback": "Revert the source merge before rebuilding if needed; no production data migration or service replacement was performed.",
+  "handoff": "Verified source 2cda6a20 and unchanged code fingerprint c1d2f703d5077fbdd25b9fe47ffba73f5a3c2ba42f868048f9556dbcbc3d1c17; final documentation/evidence only commit follows. PR #881 tracks merge state. Production remains on its prior service build. Private fixes merged separately; private/native/account/hardware acceptance limits are explicit.",
   "issues": [
     877,
     878,
@@ -71,8 +78,10 @@
   ],
   "operator": "skyelan1999",
   "followup_usability_audit": {
-    "status": "pending",
+    "status": "pass",
     "request": "做的时候一定要更人性化，不要让人不知道怎么用，你可以做完了之后全面排查aide和对应所有插件的类似问题",
-    "scope": "Inventory current Aide surfaces, installed/corresponding plugin sources and marketplace packages; inspect entry/first-run/empty/configuration/save/approval/failure/recovery flows, record what was actually opened and fix confirmed gaps. Source/package/runtime acceptance stays separate."
+    "scope": "Inventory current Aide surfaces, installed/corresponding plugin sources and marketplace packages; inspect entry/first-run/empty/configuration/save/approval/failure/recovery flows, record what was actually opened and fix confirmed gaps. Source/package/runtime acceptance stays separate.",
+    "task": "aide-usability-audit-20261113",
+    "evidence": "docs/reviews/2026-11-13-aide-usability/README.md"
   }
 }

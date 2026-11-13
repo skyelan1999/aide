@@ -31,29 +31,39 @@
       "evidence": []
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused PluginGuide/ProjectKnowledge race tests passed. Real zh/en 1440/390 matrix passed 4/4 after correcting narrow form CSS. 32 public ZIPs plus 5 existing private artifacts verified/installed; 4 more private development candidates built using tracked HEAD and normal packaging scripts, unpublished. Frozen rerun with expanded inventory and full remain pending.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Combined frozen source 2cda6a20 full gate passed: all 346 commands exit 0; 24/24 server shards, 1662 passed/90 conditional skips of 1752 registered items, other packages race/platform contracts/vet. Two real zh/en x 1440/390 browser matrices passed 4/4 each. All 43 initial plugin artifacts installed normally; all 42 visible guides and 19 workbench entry types checked with explicit native/account/hardware limits. Private current-version fixes separately tested and merged; obsolete historical patch closed without merging.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/verification.json",
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Bilingual plugin entry guide and per-public-plugin audit matrix written; final frozen verification evidence pending.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Bilingual final behavior, first-use entry paths, API/storage/recovery guidance, source/runtime boundaries and public audit matrix updated. Exact private evidence remains local/private.",
+      "evidence": [
+        "docs/plugin-usage.md",
+        "docs/en/plugin-usage.md",
+        "docs/project-impact-workflows.md",
+        "docs/en/project-impact-workflows.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned source/tests/docs reviewed and explicitly staged. User original work preserved; raw evidence/private artifacts remain ignored/local. Disposable services stopped at final handoff; production untouched.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "not_run",
+      "summary": "This improvement stage delivers source through PR #881; no new program version/Release, marketplace package, production upgrade or runtime replacement. Prior release work is a separate delivery identity.",
       "evidence": []
     }
   },
   "release_authorization": "",
-  "rollback": "",
-  "handoff": "Combined final source verification and PR #881 will cover both remaining business improvements and usability follow-up. Original feature-only full ran all 24 server shards and other race/vet successfully, but overall failed a duplicate localization key; fixed in this owned follow-up, no failed receipt promoted to PASS.",
+  "rollback": "Revert the source merge before rebuilding if needed; no production data migration or service replacement was performed.",
+  "handoff": "Verified source 2cda6a20 and unchanged code fingerprint c1d2f703d5077fbdd25b9fe47ffba73f5a3c2ba42f868048f9556dbcbc3d1c17; final documentation/evidence only commit follows. PR #881 tracks merge state. Production remains on its prior service build. Private fixes merged separately; private/native/account/hardware acceptance limits are explicit.",
   "operator": "skyelan1999",
   "issues": [
     882,
