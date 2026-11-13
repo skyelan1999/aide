@@ -1,6 +1,8 @@
 {
-  "fixtureStartedAt": "2026-11-13T03:21:26.685399845Z",
+  "head": "d81ee448575e8f26c9e6bece4fd6c68205048ac8",
+  "fixtureStartedAt": "2026-11-13T03:49:46.901058173Z",
   "productFiles": 4151,
-  "productSHA256": "c82da98942ea448b2923584c2b80b6a7136ff7aa6938c444620d86523404143f",
+  "productSHA256": "df94f279cc855c5cc489d7aa2fc589adcb3a7901cb6c2f30b4f32bbde3c351d3",
+  "browserDriverSHA256": "b1c520301cd3d951eab251942d237a58381c522938ba59920b3d4f795832ca10",
   "productFilesModifiedAfterFixtureStart": []
 }

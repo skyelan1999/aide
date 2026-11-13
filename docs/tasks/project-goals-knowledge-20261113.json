@@ -36,9 +36,10 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual Chinese/English 1440/390 UI and IAB observation passed, including real synthetic-provider execution, revision/sign-off, conflict replacement/export and unsent-draft retention. Full current-tree regression in progress; no paid provider or production deployment.",
+      "status": "pass",
+      "summary": "Frozen source d81ee448 full gate passed: 342 commands; server 1736 registered top-level tests/fuzz seeds/examples, 1648 passed and 88 conditional skips, no omissions/failures; other packages race, platform contracts and vet passed. Four exact-source Chinese/English desktop/narrow browser cases passed with deterministic unpaid execution. Additional IAB visual observation was on an earlier candidate.",
       "evidence": [
+        "docs/reviews/2026-11-13-project-goals-knowledge/verification.json",
         "docs/reviews/2026-11-13-project-goals-knowledge/browser-report.json",
         "docs/reviews/2026-11-13-project-goals-knowledge/browser-source.json"
       ]
@@ -52,19 +53,23 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed owned diff and file inventory; disposable browser fixture and full snapshot containers stop/remove through their runners. Original checkout user files preserved; no production stop/restart or paid provider call. Raw logs remain ignored under .agent-state; controlled evidence is synthetic.",
+      "evidence": [
+        "docs/reviews/2026-11-13-project-goals-knowledge/README.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "Current request is implementation, tests and documentation. Source delivery is PR #876; no version bump, new Release, marketplace modification or production upgrade for these additions. Earlier RC2 release remains separate.",
+      "evidence": [
+        "docs/reviews/2026-11-13-project-goals-knowledge/verification.json"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "Back up sessions and the entire project cache before reverting source/older writers. Optional fields read old data; old writers may discard new metadata. No automatic data deletion/migration or production upgrade.",
-  "handoff": "Finish frozen-tree full verification and source PR integration. No new version tag, Release, marketplace change or production restart for this feature task.",
+  "handoff": "Implementation and exact-source local full/browser verification complete; source delivery PR #876 closes #874 and #875 on integration. Preserve source/package/runtime distinction; use the existing Delivery gate before any future Release or production upgrade.",
   "operator": "skyelan1999",
   "issues": [
     874,

@@ -6,7 +6,7 @@
       "id": "zh-CN-1440",
       "status": "pass",
       "checks": [
-        "goal and criteria save and redraw immediately (#874)",
+        "unsent goal/criteria survive parent remount; save and redraw immediately (#874)",
         "real execution completes while unmet goal awaits acceptance",
         "each operator observation persists and all accepted criteria complete the goal",
         "revised conditions reset acceptance; blocked/pass reviews and prior contract are retained",
@@ -21,7 +21,7 @@
       "id": "zh-CN-390",
       "status": "pass",
       "checks": [
-        "goal and criteria save and redraw immediately (#874)",
+        "unsent goal/criteria survive parent remount; save and redraw immediately (#874)",
         "real execution completes while unmet goal awaits acceptance",
         "each operator observation persists and all accepted criteria complete the goal",
         "source-linked decision explicitly confirmed through product UI",
@@ -33,7 +33,7 @@
       "id": "en-1440",
       "status": "pass",
       "checks": [
-        "goal and criteria save and redraw immediately (#874)",
+        "unsent goal/criteria survive parent remount; save and redraw immediately (#874)",
         "real execution completes while unmet goal awaits acceptance",
         "each operator observation persists and all accepted criteria complete the goal",
         "source-linked decision explicitly confirmed through product UI",
@@ -45,7 +45,7 @@
       "id": "en-390",
       "status": "pass",
       "checks": [
-        "goal and criteria save and redraw immediately (#874)",
+        "unsent goal/criteria survive parent remount; save and redraw immediately (#874)",
         "real execution completes while unmet goal awaits acceptance",
         "each operator observation persists and all accepted criteria complete the goal",
         "source-linked decision explicitly confirmed through product UI",

@@ -1,0 +1,3306 @@
+{
+  "status": "pass",
+  "sourceCommit": "d81ee448575e8f26c9e6bece4fd6c68205048ac8",
+  "completedAt": "2026-11-13T10:27:43.590031+00:00",
+  "scope": "Frozen source implementation, current Go/web browser acceptance and documentation. No new Release, marketplace update or production deployment.",
+  "fullGate": {
+    "command": "python3 scripts/agent-route.py verify full",
+    "profile": "full",
+    "status": "pass",
+    "fingerprint": "e560706cb84225195cde5ac7e92abd67cf4f80dcdbe810a0dc33c0f9378cc6a3",
+    "receiptHead": "d81ee448575e8f26c9e6bece4fd6c68205048ac8",
+    "receiptTime": "20261113T035327457404Z",
+    "checks": [
+      {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/app.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/live-markdown-scan.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/stable-markdown-cache.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_reminder_styles.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_approval_persistence.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/settings-init.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "scripts/version.sh",
+          "check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_agent_route.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_go_test_shards.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/check_docs.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/install.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/aide.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/docker-release.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_docker_release.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_install.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/i18n.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/locales/en.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_i18n.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_i18n_coverage.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_stream_url.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_accessibility_port.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_windows_port_lifecycle.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_local_root.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_control_bridge_launchers.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_ui_click_latency.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/ui-response-latency.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-image-path.test.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-download-export.test.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-pdf-layout.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-infrared.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-lensing.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-path.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-timeline.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-topics.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-live-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-template-icons.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/attachment-source-label.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-history-writable.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-document-continuation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-workspace-scene.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-cache.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-coverage-state.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/toast-lifecycle.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/lock-entry.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/lock-cluster.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/lock-cluster-state.test.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/lock-recovery.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-recovery-scroll.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-autosave-retry.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-open-request-ownership.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/continuity-isolation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/continuity-lock-write.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/workspace-scene-transition.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/outcome-pagination.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/outcome-overview-lifecycle.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/outcome-request-ownership.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/session-render-cache.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/run-activity-cards.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/run-stop-ownership.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/session-run-controls.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/task-action-hub.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/recovery-transfer.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/markdown-code.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-code.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/context-meter.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/starmap-logbook.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-logbook.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/steer-user-bubbles.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/git-history.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/git-history.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-unix-metadata.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/parallel-chat.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/parallel-chat.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/session-model-selection.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/session-model-selection.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/xiaomi-model-picker.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pause-session-isolation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/staged-output.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/reasoning-settings.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_source_fingerprint.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-progressive-cadence.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_maintenance.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_message_lan_launcher.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_local_dependency_image.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-local-frame.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-live-metadata.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-frame-work.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-stellar-scale.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-empty-state.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-plans.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/bootstrap-file-recovery.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-diagrams.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-ai-exploration.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-file-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/workbench-background.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/knowledge-web-parser.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/crash-monitor.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/crash-monitor.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/urdf-preview.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/urdf-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-upgrade.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-upgrade.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-background.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-route-location.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/resource-guard.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_resource_guard.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_pip_install_retry.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/mcp-source-form.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_prebuilt_publication.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/message-center.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/message-center.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/message-notifications.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/message-notifications.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/identity-login-routing.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/assistant-live.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/assistant-live.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_voice_panel.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/qwen-tts.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/tts-playback.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/assistant-delegation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/document-proposals.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/management.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/management-permissions.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-market.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-market.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-file-preview.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-workbench.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-workbench-client.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--test",
+          "scripts/plugin-workbench.test.cjs",
+          "scripts/plugin-workbench-client.test.cjs",
+          "scripts/plugin-file-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-plugin-file-preview.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/local-mounts.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/auto-model-router-ui.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/model-token-chart.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--test",
+          "scripts/model-token-chart.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/account-balance-pool.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--test",
+          "scripts/account-balance-pool.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/generated-media.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/assistant-call.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/assistant-call.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/assistant-realtime.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/assistant-pcm-worklet.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/assistant-realtime.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_development_toolbox.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_reminder_popup.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_voice_sample_duration.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_starmap_identity_race.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/prebuild-wheels.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_prebuild_wheels.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_avatar_pack_paths.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_frame_interpolation.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_mermaid_proof_auth.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/ui_queue_check.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/ui_stream_check.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_ui_acceptance_scope.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/preview-safety.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_dxf_preview_bounds.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_docx_preview_bounds.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/drawio-preview-safety.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_preview_bounds.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/drawio-layout-fixes.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_layout_fixes.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_clone_constraints.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_geometry_fixes.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_lifecycle_alpha.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_obj_preview_bounds.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/avatar_asset_audit.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_ai_templates.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_animation_validation.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_visio_archive.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_visio_polyline.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_visio_nurbs.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_visio_media_errors.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_trello_limits.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_gif_frames.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_freehand_preview.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_palette_search.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/diagramly/Extensions.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/extensions.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/integrate.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/stencils.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_native_distribution.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_reference_relay_agent.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/source-relay-ui.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_windows_native_package.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/docx-style-bridge.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_png_import.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_tts_archive_integrity.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_zip_preview_bounds.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/drawio-layout-second-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/highlight-grammar-fixes.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_highlight_grammar_review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-editing-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-editing-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_editing_review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-data-integrity-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-data-integrity-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_data_integrity.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-workbench-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-workbench-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-workbench-palette-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_workbench_review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-import-plugin-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-import-plugin-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_import_plugin_review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/drawio-linear-regex.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_cors_linear.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_linear_regex.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-cors-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-device-shape-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-device-shape-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_device_shapes.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-mathjax-issue-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/ui/safe.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/bussproofs.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/centernot.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mathtools.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mhchem.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/physics.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-traversal-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_parser_layout_resources.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_traversal.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-resource-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--jitless",
+          "scripts/test_plantuml_converter_issues.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-plantuml-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/plantuml/drawio-plantuml.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_mermaid_native_issues.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-mermaid-native-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/mermaid/drawio-mermaid.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-mermaid-svg-issues.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/mermaid.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_drawio_ui_fallback.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-ui-robustness-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/sync_drawio_ui_robustness.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-mathjax-layout-issues.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_cad_light_aggregate.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-cad-asset-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/STLLoader.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-markdown-boundaries.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_libavoid_readiness.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_orgchart_assembly_mirror.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-orgchart-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/libavoid-js/libavoid.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-preview-lifecycle.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_marked_link_scans.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-marked-link-scans.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/marked.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/mermaid-math.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-mermaid-resource-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-freehand-corners.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-assistant-call-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-drawio-message-origin.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-mathjax-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/cases.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_marked_resource_scans.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-marked-resource-scans.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_html2canvas_scans.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-html2canvas-scans.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-template-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-dompurify-stack.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/vendor/drawio/js/sanitizer/purify.min.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-drawio-preview-bounds.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--test",
+          "internal/server/mixsoul/dynamics.test.cjs",
+          "internal/server/mixsoul/embedding-auth.test.cjs",
+          "internal/server/mixsoul/emotion.test.cjs",
+          "internal/server/mixsoul/initiative.test.cjs",
+          "internal/server/mixsoul/native-memory.test.cjs",
+          "internal/server/mixsoul/quotation.test.cjs",
+          "internal/server/mixsoul/store.test.cjs",
+          "internal/server/mixsoul/system.test.cjs",
+          "internal/server/mixsoul/topic.test.cjs",
+          "scripts/assistant-composer-entry.test.cjs",
+          "scripts/assistant-initiative.test.cjs",
+          "scripts/test_assistant_result_refresh.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-markdown-export-cancel.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-inline-image.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-markdown-inline-images.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/obj-triangle-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-obj-triangle-budget.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-predictor-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-resource-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/highlight-work-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-highlight-work-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-structure-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/sync_plantuml_resource_helpers.cjs",
+          "--check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plantuml-resource-helpers.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plantuml-resource-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/drawio-plantuml-resource-browser-cases.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-page-canvas-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-page-canvas-budget.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-decoder-followup-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-decoder-followups.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/sync_pdf_openjpeg.cjs",
+          "--check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-components-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-jpx-components.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-function-depth-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-function-depth.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-markdown-recovery.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-resource-depth-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-resource-depth.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-font-annotation-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-font-annotation-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-graphics-fax-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-graphics-fax-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-flate-image-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-flate-image-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-embedded-dimension-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-embedded-dimensions.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/urdf-interaction-budget.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-urdf-interaction-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-font-program-budget-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-font-program-budgets.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-parser-followup-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-stream-sink-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-parser-followups.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-stream-lifecycle.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-font-attachment-review.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-pdf-font-attachments.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_mixsoul_embedding_follow.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_codex_host_source.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_contract.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_macos_desktop.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-workbench-tabs.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-workbench-tabs.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/runtime-lifecycle.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/runtime-lifecycle.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_runtime_assets_config.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/experience-runtime.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/native-touchid.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_windows_desktop.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/keybindings.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/desktop-capture.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_checkout_byte_integrity.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-triage-regressions.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-preflight.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_sherpa_build_integrity.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_release_base_images.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-alpha.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-colors.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-allocation-layer.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/sync_pdf_jpx_alpha.cjs",
+          "--check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-native-fixes.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pdf-jpx-packet-borrow.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_host_bridge_vendor.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_windows_helper_notices.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/project-records.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/session-plan.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_runtime_assets.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_go_snapshot.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_optional_step.py"
+        ],
+        "exit": 0
+      }
+    ],
+    "logSHA256": "a067a86a3ced1e78e1b12f02518da49850246bb8bdc357b0d9c01e6972043f32"
+  },
+  "go": {
+    "status": "pass",
+    "serverInventoryCount": 1736,
+    "serverPassed": 1648,
+    "serverSkipped": 88,
+    "serverFailedShards": [],
+    "missingCompletionEvidence": 0,
+    "shards": [
+      {
+        "shard": 1,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 66.322
+      },
+      {
+        "shard": 2,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 84.367
+      },
+      {
+        "shard": 3,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 68.6
+      },
+      {
+        "shard": 4,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 86.396
+      },
+      {
+        "shard": 5,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 59.39
+      },
+      {
+        "shard": 6,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 93.861
+      },
+      {
+        "shard": 7,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 76.011
+      },
+      {
+        "shard": 8,
+        "selectedCount": 73,
+        "exit": 0,
+        "seconds": 139.334
+      },
+      {
+        "shard": 9,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 95.394
+      },
+      {
+        "shard": 10,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 58.205
+      },
+      {
+        "shard": 11,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 72.09
+      },
+      {
+        "shard": 12,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 85.92
+      },
+      {
+        "shard": 13,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 68.978
+      },
+      {
+        "shard": 14,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 53.985
+      },
+      {
+        "shard": 15,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 69.551
+      },
+      {
+        "shard": 16,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 65.137
+      },
+      {
+        "shard": 17,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 273.26
+      },
+      {
+        "shard": 18,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 163.624
+      },
+      {
+        "shard": 19,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 163.15
+      },
+      {
+        "shard": 20,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 165.136
+      },
+      {
+        "shard": 21,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 99.226
+      },
+      {
+        "shard": 22,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 185.643
+      },
+      {
+        "shard": 23,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 129.949
+      },
+      {
+        "shard": 24,
+        "selectedCount": 72,
+        "exit": 0,
+        "seconds": 71.526
+      }
+    ],
+    "skipped": [
+      {
+        "name": "TestAssistantAgenticPluginResultReturnedToModel",
+        "messages": [
+          "assistant_agent_test.go:104: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestAssistantDeliveryBrowserFixture",
+        "messages": [
+          "assistant_delivery_browser_test.go:17: opt-in isolated real-workbench browser harness"
+        ]
+      },
+      {
+        "name": "TestAssistantOpenAICallLiveRelay",
+        "messages": [
+          "assistant_realtime_openai_live_test.go:23: opt-in real OpenAI call relay"
+        ]
+      },
+      {
+        "name": "TestAssistantRealtimeLiveSyntheticAudio",
+        "messages": [
+          "assistant_realtime_live_test.go:23: opt-in paid provider probe"
+        ]
+      },
+      {
+        "name": "TestAuthoringPrepareDoesNotExecuteAndApprovalInstalls",
+        "messages": [
+          "management_test.go:81: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestButtonFeedbackBrowser",
+        "messages": [
+          "button_feedback_browser_test.go:14: opt-in browser regression"
+        ]
+      },
+      {
+        "name": "TestCapabilityPluginLiveLifecycle",
+        "messages": [
+          "capabilities_plugin_live_test.go:17: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestCommandPanelBrowser",
+        "messages": [
+          "command_panel_browser_test.go:18: opt-in browser regression"
+        ]
+      },
+      {
+        "name": "TestContextRecoveryLiveModels",
+        "messages": [
+          "context_recovery_live_test.go:21: explicit live model opt-in required"
+        ]
+      },
+      {
+        "name": "TestCurrentTimePluginAvailableToAideAndXiaomi",
+        "messages": [
+          "current_time_plugin_test.go:13: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestExecutionEnvironmentsLiveLuna",
+        "messages": [
+          "execution_environments_live_test.go:19: explicit Luna live opt-in required"
+        ]
+      },
+      {
+        "name": "TestFileGitHistoryBrowserFixture",
+        "messages": [
+          "file_git_browser_fixture_test.go:15: opt-in synthetic browser fixture"
+        ]
+      },
+      {
+        "name": "TestIssue103AskpassHelperProcess",
+        "messages": [
+          "ssh_passphrase_pipe_test.go:35: subprocess fixture only"
+        ]
+      },
+      {
+        "name": "TestIssue146CaseAliasesAreNotNewPaths",
+        "messages": [
+          "task_delivery_provenance_test.go:243: filesystem is case sensitive; exercise on a case-insensitive volume"
+        ]
+      },
+      {
+        "name": "TestIssue76CurlOutputProcess",
+        "messages": [
+          "source_curl_bounds_test.go:14: subprocess output fixture"
+        ]
+      },
+      {
+        "name": "TestIssue79BatchOutputProcess",
+        "messages": [
+          "sftp_bounds_test.go:120: owned subprocess helper"
+        ]
+      },
+      {
+        "name": "TestIssue96RejectsFractionalRevision",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestKnowledgeConclusionTopicsLiveBrowser",
+        "messages": [
+          "knowledge_conclusion_topics_browser_test.go:21: opt-in local browser fixture"
+        ]
+      },
+      {
+        "name": "TestKnowledgeLocalFallbackRejectsChangedSourceIdentity",
+        "messages": [
+          "knowledge_local_failure_test.go:215: requires normal runtime user permissions"
+        ]
+      },
+      {
+        "name": "TestKnowledgeLocalProcessHelper",
+        "messages": [
+          "knowledge_local_store_test.go:147: isolated process helper"
+        ]
+      },
+      {
+        "name": "TestKnowledgeLocalReadFailurePublishesPrefixAndOtherSources",
+        "messages": [
+          "knowledge_local_failure_test.go:24: requires normal runtime user permissions"
+        ]
+      },
+      {
+        "name": "TestKnowledgeLocalUnavailableRootRetainsSameOriginObservation",
+        "messages": [
+          "knowledge_local_failure_test.go:158: requires normal runtime user permissions"
+        ]
+      },
+      {
+        "name": "TestKnowledgeUnreadableBodyDoesNotHideLaterFiles",
+        "messages": [
+          "knowledge_local_failure_test.go:84: requires normal runtime user permissions"
+        ]
+      },
+      {
+        "name": "TestLANAccessBrowserFixture",
+        "messages": [
+          "remote_access_browser_test.go:19: isolated browser fixture"
+        ]
+      },
+      {
+        "name": "TestLargeEngineeringLiveLuna",
+        "messages": [
+          "large_engineering_benchmark_test.go:331: explicit paid Luna opt-in required"
+        ]
+      },
+      {
+        "name": "TestLargeEngineeringPhaseTimingLiveLuna",
+        "messages": [
+          "benchmark_phase_timing_test.go:230: explicit paid phase timing opt-in required"
+        ]
+      },
+      {
+        "name": "TestLargeTransferBrowser",
+        "messages": [
+          "large_transfer_browser_test.go:14: opt-in browser regression"
+        ]
+      },
+      {
+        "name": "TestLargeTransferSSHLive",
+        "messages": [
+          "transfer_ssh_live_test.go:20: run scripts/test-large-transfer-ssh.py"
+        ]
+      },
+      {
+        "name": "TestLockBrowserFixture",
+        "messages": [
+          "lock_browser_fixture_test.go:13: opt-in isolated lock browser fixture"
+        ]
+      },
+      {
+        "name": "TestLunarCalendarPluginAvailableToAideAndXiaomi",
+        "messages": [
+          "lunar_calendar_plugin_test.go:11: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestManagementPermissionsPersistAndRoles",
+        "messages": [
+          "management_test.go:41: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestManagementReferenceLocksAndOrdinaryAccess",
+        "messages": [
+          "management_test.go:141: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestManagementUpgradePreservesSettingsAndDisabledState",
+        "messages": [
+          "management_test.go:109: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestMapCanvasInstalledCandidate",
+        "messages": [
+          "release_public_plugins_test.go:603: explicit candidate ZIP required"
+        ]
+      },
+      {
+        "name": "TestMarketBrowseLiveOfficialCatalog",
+        "messages": [
+          "plugin_market_tools_test.go:267: opt-in read-only official metadata acceptance"
+        ]
+      },
+      {
+        "name": "TestMarketSourceCompatibilityBrowserFixture",
+        "messages": [
+          "plugin_market_source_compat_test.go:154: isolated browser fixture"
+        ]
+      },
+      {
+        "name": "TestMarketSourceOpenAIActualPackage",
+        "messages": [
+          "plugin_market_source_compat_test.go:97: actual immutable package opt-in"
+        ]
+      },
+      {
+        "name": "TestPWSignedAssetsAndExactWorkbenchBytes",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestPWSignedBundleInstallAndUpgradePreserveManifest",
+        "messages": [
+          "professional_workflow_runtime_test.go:153: explicit signed runtime package fixture"
+        ]
+      },
+      {
+        "name": "TestPWSignedRuntimeIntegrityAndVerifiedImage",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestPageBalanceBrowserFixture",
+        "messages": [
+          "provider_page_balance_test.go:208: isolated Safari fixture"
+        ]
+      },
+      {
+        "name": "TestPluginFilePreviewBrowser",
+        "messages": [
+          "plugin_file_browser_test.go:14: isolated opt-in browser"
+        ]
+      },
+      {
+        "name": "TestPluginMarketExternalCatalogMetadata",
+        "messages": [
+          "plugin_market_refresh_test.go:89: optional public metadata snapshot"
+        ]
+      },
+      {
+        "name": "TestPluginMarketPublishedPackages",
+        "messages": [
+          "plugin_market_test.go:297: set AIDE_TEST_MARKET_PACKAGES to a verified official package tree"
+        ]
+      },
+      {
+        "name": "TestPluginMarketRefreshBrowserHost",
+        "messages": [
+          "plugin_market_refresh_test.go:151: opt-in interactive marketplace QA"
+        ]
+      },
+      {
+        "name": "TestPluginQuotaActualPackage",
+        "messages": [
+          "provider_quota_package_test.go:40: actual quota package opt-in"
+        ]
+      },
+      {
+        "name": "TestPluginQuotaBrowserFixture",
+        "messages": [
+          "provider_quota_package_test.go:75: isolated browser fixture"
+        ]
+      },
+      {
+        "name": "TestPluginRoutingBrowser",
+        "messages": [
+          "plugin_routing_test.go:309: opt-in actual browser"
+        ]
+      },
+      {
+        "name": "TestPluginSourceNativeComparison",
+        "messages": [
+          "plugin_sources_test.go:54: set AIDE_TEST_COMPARE_BUNDLE to a local private package"
+        ]
+      },
+      {
+        "name": "TestPluginUpgradeBrowserFixture",
+        "messages": [
+          "plugin_upgrade_browser_fixture_test.go:16: opt-in isolated browser fixture"
+        ]
+      },
+      {
+        "name": "TestPluginUpgradeButtonsBrowser",
+        "messages": [
+          "plugin_upgrade_buttons_browser_test.go:14: opt-in browser regression"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowApprovalAndPermission",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowAutoReadRespectsDisabledTool",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowBranchContracts",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowBuiltinHonorsCurrentDisabledTools",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowBuiltinTools",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required",
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowFileBindingAndAutoInput",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowGraph",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowInferenceParallelAndOptions",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowManualOnlyBridge",
+        "messages": [
+          "professional_workflow_test.go:149: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowModelNode",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowRunSnapshotAndCancel",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowShellKeepsOriginalApproval",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProfessionalWorkflowStoreAndBindings",
+        "messages": [
+          "professional_workflow_test.go:19: explicit signed PW runtime fixture required"
+        ]
+      },
+      {
+        "name": "TestProjectRecordsBrowser",
+        "messages": [
+          "project_records_browser_test.go:84: opt-in browser acceptance; Delivery invokes the same harness"
+        ]
+      },
+      {
+        "name": "TestReferenceRelayBrowserFixture",
+        "messages": [
+          "source_relay_browser_test.go:15: manual browser fixture"
+        ]
+      },
+      {
+        "name": "TestReleaseBrowserMatrix",
+        "messages": [
+          "release_browser_test.go:19: Delivery runs this separately with all three installed engines"
+        ]
+      },
+      {
+        "name": "TestReleasePublicPackageFunctions",
+        "messages": [
+          "release_public_plugins_test.go:41: explicit frozen public-market packages required"
+        ]
+      },
+      {
+        "name": "TestRemainingStarLinkDaemon",
+        "messages": [
+          "starlink_remaining_integration_test.go:20: separately checked-out StarLink source required"
+        ]
+      },
+      {
+        "name": "TestReminderScheduleBrowser",
+        "messages": [
+          "reminder_schedule_browser_test.go:15: opt-in isolated workbench browser"
+        ]
+      },
+      {
+        "name": "TestSFTPRelayBrowserFixture",
+        "messages": [
+          "source_sftp_relay_test.go:240: opt-in browser fixture"
+        ]
+      },
+      {
+        "name": "TestSSHKnowledgeCursorRestartHelper",
+        "messages": [
+          "knowledge_cursor_process_test.go:25: isolated subprocess helper"
+        ]
+      },
+      {
+        "name": "TestSSHLiveFinalPluginCompatibility",
+        "messages": [
+          "ssh_final_plugins_test.go:52: dual isolated SSH fixture required"
+        ]
+      },
+      {
+        "name": "TestSSHLiveGitHistory",
+        "messages": [
+          "file_git_history_ssh_test.go:153: requires isolated SSH fixture"
+        ]
+      },
+      {
+        "name": "TestSSHLivePluginSourceSnapshots",
+        "messages": [
+          "plugin_sources_test.go:238: isolated SSH fixture required"
+        ]
+      },
+      {
+        "name": "TestSSHLiveWorkspaceAndIndependentSource",
+        "messages": [
+          "ssh_live_test.go:163: run scripts/test-ssh-workspace.sh to start two isolated SSH fixtures"
+        ]
+      },
+      {
+        "name": "TestSkillLibraryBundleImportAndNativeOwner",
+        "messages": [
+          "skill_library_test.go:381: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestSkillLibraryCancelsInflightAndRechecksGeneration",
+        "messages": [
+          "skill_library_test.go:414: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestSkillLibraryLivePublicCatalog",
+        "messages": [
+          "skill_library_test.go:337: opt-in public GitHub check"
+        ]
+      },
+      {
+        "name": "TestSkillLibraryRejectsUntrustedDownloadsAndVirtualTraversal",
+        "messages": [
+          "skill_library_test.go:272: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts",
+          "skill_library_test.go:272: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts",
+          "skill_library_test.go:272: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts",
+          "skill_library_test.go:272: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts",
+          "skill_library_test.go:272: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts",
+          "skill_library_test.go:292: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestSkillLibraryRolesReadonlyDisabledAndCancellation",
+        "messages": [
+          "skill_library_test.go:184: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestSkillLibrarySearchCachePrepareConfirmReadAndLocks",
+        "messages": [
+          "skill_library_test.go:111: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestSourceFileActionsLiveSFTP",
+        "messages": [
+          "source_file_actions_test.go:31: source action fixture not started"
+        ]
+      },
+      {
+        "name": "TestSourcesLiveProtocols",
+        "messages": [
+          "sources_live_test.go:16: Docker source fixtures not started"
+        ]
+      },
+      {
+        "name": "TestStaticAuditLiveLuna",
+        "messages": [
+          "static_audit_benchmark_test.go:161: explicit paid Luna opt-in required"
+        ]
+      },
+      {
+        "name": "TestTerminalSessionFeaturesInstalledCandidate",
+        "messages": [
+          "terminal_session_features_test.go:27: set AIDE_TERMINAL_FEATURE_BUNDLE_PATH to a paired Terminal feature candidate ZIP"
+        ]
+      },
+      {
+        "name": "TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools",
+        "messages": [
+          "terminal_workbench_test.go:46: independent-plugin integration: set AIDE_PLUGIN_TEST_ROOT to a directory containing plugin-ID checkouts"
+        ]
+      },
+      {
+        "name": "TestTransferSFTPProcess",
+        "messages": [
+          "transfer_sftp_test.go:93: subprocess protocol helper"
+        ]
+      }
+    ],
+    "otherPackagesRace": "pass",
+    "xsysPlatformContracts": "pass",
+    "vetAllPackages": "pass",
+    "network": "none",
+    "workers": 1,
+    "reportSHA256": "8904859bbca7cbec695ae05ea0a951ad8cafac6164894c02f88f5f9d96493762"
+  },
+  "dependencyImages": {
+    "runtime": "sha256:2c7a3c33468a36262bc55d872c2b9a5dc09c0923b71204876f5995d2956b0646",
+    "toolchain": "sha256:02d38bdb07b578ca2430914b3dd3d5dd1832ad8982f85b5a13f081d29765e8ee",
+    "notice": "Existing local dependency images; the frozen source is compiled/tested in a disposable snapshot, not proof of a new distribution image."
+  },
+  "browser": {
+    "status": "pass",
+    "caseIds": [
+      "zh-CN-1440",
+      "zh-CN-390",
+      "en-1440",
+      "en-390"
+    ],
+    "report": "browser-report.json",
+    "source": "browser-source.json",
+    "productSHA256": "df94f279cc855c5cc489d7aa2fc589adcb3a7901cb6c2f30b4f32bbde3c351d3",
+    "fixture": "isolated data and deterministic unpaid provider",
+    "notice": "Final exact-source four-cell Chromium matrix is authoritative. Additional IAB visual observation was on an earlier candidate, not native Safari or a production instance."
+  },
+  "codeHeadCI": {
+    "head": "d81ee448575e8f26c9e6bece4fd6c68205048ac8",
+    "workflowRun": 43362491950,
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": {
+      "quick": "success",
+      "go": "success",
+      "gate": "success"
+    },
+    "url": "https://github.com/skyelan1999/aide/actions/runs/43362491950"
+  },
+  "limits": [
+    "Conditional Go skips are listed separately and do not establish their functionality.",
+    "No paid-provider business-quality evaluation, customer SSH host, distributed remote CAS or native-device/hardware acceptance.",
+    "Knowledge sources are reference labels; source-file changes do not automatically reassess records.",
+    "Acceptance is a user observation tied to an execution snapshot, not independent testing or continuous external-state validation.",
+    "The published v0.1.19.0-RC2 package and running production instance do not contain these source additions."
+  ]
+}
