@@ -17,48 +17,63 @@
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "Live source runtime reproduced degraded warning; image checksum previously verified, identity is ambiguous legacy -dirty. No tasks currently executing; 87 sessions/35 plugins and 8 draft files recorded.",
-      "evidence": []
+      "summary": "Resolved the requested live degraded warning while preserving drafts/data. Explicitly no Aide Release.",
+      "evidence": [
+        "docs/reviews/2026-11-13-source-integrity.md",
+        "docs/reviews/2026-11-13-source-integrity.json"
+      ]
     },
     "design": {
       "status": "pass",
-      "summary": "Existing source SHA-256 appended to dirty commit metadata; source-only readiness recognition. Clean/release identities and all checksum/backup/state guards retained.",
+      "summary": "Content-bound dirty source identity, recognized only in compiled source mode; trusted image checks and atomic backed-up readiness transition retained.",
       "evidence": [
-        "docs/architecture/software-updates.md"
+        "docs/reviews/2026-11-13-source-integrity.md",
+        "docs/reviews/2026-11-13-source-integrity.json"
       ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "Launcher, integrity identity validation, focused regression tests and operational docs updated. No baseline edited and no draft/data moved.",
+      "summary": "PR889 merged and original installation rebuilt/activated through standard launcher; no manual baseline editing, draft deletion/ignore/stash or version bump.",
       "evidence": [
-        "internal/server/integrity_upgrade.go",
-        "scripts/launcher.py"
+        "docs/reviews/2026-11-13-source-integrity.md",
+        "docs/reviews/2026-11-13-source-integrity.json"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "36 launcher tests and Linux root/race integrity suite passed. Isolated actual upgrade/rollback smoke and original-runtime activation are being verified.",
-      "evidence": []
+      "status": "pass",
+      "summary": "36 launcher tests, Linux root/race integrity regressions, real isolated upgrade/failure/tamper/rollback, CI quick/go/gate, live startup/restart and 310-second observation passed. 755 protected files, 8 drafts, 87 sessions, 5 approvals, 35 plugin configurations and all mounts preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-13-source-integrity.md",
+        "docs/reviews/2026-11-13-source-integrity.json"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Build identity contract and sanitized actual runtime evidence documented, with a follow-up link from the historical degraded report.",
+      "evidence": [
+        "docs/reviews/2026-11-13-source-integrity.md",
+        "docs/reviews/2026-11-13-source-integrity.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned isolated integration containers/images cleaned; original drafts, production services, private essential-data snapshot and stopped rollback image pin retained.",
+      "evidence": [
+        "docs/reviews/2026-11-13-source-integrity.md",
+        "docs/reviews/2026-11-13-source-integrity.json"
+      ]
     },
     "release": {
       "status": "not_run",
-      "summary": "User explicitly excludes Aide Release/version bump/tag/Delivery. Only source merge and existing installation build/activation are authorized.",
-      "evidence": []
+      "summary": "User explicitly excludes Aide Release, version bump, tag and Delivery. Source fix merged and existing runtime updated only.",
+      "evidence": [
+        "docs/reviews/2026-11-13-source-integrity.md"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "Current image pinned as aide:rollback-integrity-20261113 with stopped recovery container. New private essential data/plugin/config and byte-verified draft backup retained outside the source tree.",
-  "handoff": "",
+  "handoff": "Live integrity=ok, including restart and >5-minute observation. Original user data/drafts preserved, old baseline automatically backed up; no Aide Release.",
   "operator": "skyelan1999",
   "issue": 888
 }
