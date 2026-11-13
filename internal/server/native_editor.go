@@ -124,7 +124,7 @@ func (a *App) nativeEditorWriteError() error {
 }
 func nativeEditorReadTool(name string) bool {
 	switch name {
-	case "task_acceptance", "browse_plugin_market", "brdplan_bridge_status", "brdplan_bridge_result", "brdplan_workspace_projects", "brdplan_guide", "brdplan_engine_status", "read_file", "list_files", "search_files", "document_search", "semantic_search":
+	case "change_impact", "workflow_inputs", "task_acceptance", "browse_plugin_market", "brdplan_bridge_status", "brdplan_bridge_result", "brdplan_workspace_projects", "brdplan_guide", "brdplan_engine_status", "read_file", "list_files", "search_files", "document_search", "semantic_search":
 		return true
 	}
 	return false

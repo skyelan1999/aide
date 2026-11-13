@@ -36,3 +36,5 @@ Dated task ledgers, reviews, old release notes, source-evidence snapshots and ar
 [v0.1.19.0-RC2 prerelease](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2) was published on 2026-11-12 from `a9f8f412`. See the [publication receipt](../reviews/2026-11-12-release-preparation/publication-rc2.json) and [usage and migration guide](release-guide-0.1.19.md). Publication does not upgrade an existing installation.
 
 [Project goals, acceptance and decision records](project-goals-knowledge.md) · 2026-11-13 source additions.
+
+[Change impact and staged business workflows](project-impact-workflows.md): file selection, impact reviews, guided scenarios and accepted predecessor handoff.

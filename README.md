@@ -108,3 +108,5 @@ bash scripts/install.sh --source
 
 
 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
+
+源码增补：需求变更影响清单与可复用业务阶段流程见[使用说明](docs/project-impact-workflows.md)，沿用当前规划、插件、审批和验收；已发布 RC2 包不含此增补。

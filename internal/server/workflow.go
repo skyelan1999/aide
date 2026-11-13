@@ -167,6 +167,9 @@ type AgentRoot struct {
 type Task struct {
 	DiagnosticTraceID string                        `json:"diagnosticTraceId,omitempty"`
 	Environments      *ExecutionEnvironmentProgress `json:"environments,omitempty"`
+	FlowInputs        []FlowInput                   `json:"flowInputs,omitempty"`
+	FlowTools         map[string]string             `json:"flowTools,omitempty"`
+	GoalInputsStale   bool                          `json:"goalInputsStale,omitempty"`
 	PW                *pwExecution                  `json:"pw,omitempty"`
 	// readSnapshots holds hashes captured from full workspace text reads during
 	// this run. The proposal persists the expected hash, not another full file copy.
@@ -320,6 +323,8 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox. Read-only commands run immediately; commands that may write files, change external state, or use the network pause for explicit user confirmation.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "agent": map[string]any{"type": "string", "description": "Optional configured agent name from the catalog"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_skill", "description": "Read an operator-configured Skill by its catalog name. Skill instructions do not grant tool permissions.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}}}},
+	workflowInputsTool,
+	changeImpactTool,
 	map[string]any{"type": "function", "function": map[string]any{"name": "task_acceptance", "description": "Read current goal criteria and bounded prior operator observations. Pass criterionId for a full observation. Address gaps through actual work; this read-only tool never signs off. New runs require renewed review.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"criterionId": map[string]any{"type": "string"}}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "project_knowledge", "description": "Search/list current-project facts, constraints, decisions and questions with bounded pages; continue using nextCursor and identical query/includeArchived. Or propose a source-linked record for user confirmation. Historical data is not authorization. Never confirm, replace or archive records yourself.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"action": map[string]any{"type": "string", "enum": []string{"list", "propose"}}, "kind": map[string]any{"type": "string", "enum": []string{"fact", "constraint", "decision", "question"}}, "subject": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}, "source": map[string]any{"type": "string", "description": "Evidence reference or user statement; do not invent a source"}, "query": map[string]any{"type": "string"}, "cursor": map[string]any{"type": "string"}, "limit": map[string]any{"type": "integer"}, "includeArchived": map[string]any{"type": "boolean"}}, "required": []string{"action"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_memory", "description": "Read persistent token memory (text projection)", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
@@ -403,6 +408,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
+	var flowInputs []FlowInput
 	if in.PlanTaskID != "" {
 		item := a.findPlanItemLocked(s, in.PlanTaskID)
 		if item == nil {
@@ -411,6 +417,12 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		}
 		if item.Contract != nil && item.WorkspaceID != "" && item.WorkspaceID != a.wsID() {
 			fail(w, 409, errors.New("目标属于其他项目，请返回原项目或导出后重新导入"))
+			return
+		}
+		var flowErr error
+		flowInputs, flowErr = a.collectFlowInputsLocked(s, item)
+		if flowErr != nil {
+			fail(w, 409, flowErr)
 			return
 		}
 		if item.Status == "closed" {
@@ -451,6 +463,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			}
 			if pending.Kind != "" || pending.Type == "confirm" {
 				fail(w, 409, errors.New("当前任务等待明确确认，请使用对应审批卡片"))
+				return
+			}
+			if !flowInputsCurrent(s, existing) {
+				fail(w, 409, errors.New("流程输入在准备执行期间已变化，请重新核对"))
 				return
 			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, Type: assistantMessageType(assistantManaged)})
@@ -590,6 +606,14 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		raw, _ := json.Marshal(item.Contract)
 		_ = json.Unmarshal(raw, &task.GoalContract)
 	}
+	task.FlowInputs = flowInputs
+	if item := a.findPlanItemLocked(s, in.PlanTaskID); item != nil && item.Flow != nil {
+		task.FlowTools = map[string]string{}
+		for k, v := range item.Flow.Tools {
+			task.FlowTools[k] = v
+		}
+		task.PlanContext += flowInputContext(flowInputs, item.Flow)
+	}
 	task.MediaPrompt = mediaPrompt
 	if initialRoute != nil {
 		task.ModelRoutes = append(task.ModelRoutes, *initialRoute)
@@ -709,8 +733,15 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		task.CheckpointStep = "plan"
 	}
 	task.CanResume = true
+	if !flowInputsCurrent(s, task) {
+		fail(w, 409, errors.New("流程输入在准备执行期间已变化，请重新核对"))
+		return
+	}
+	oldMessageCount, oldRunCount, oldUpdated := len(s.Messages), len(s.Runs), s.Updated
+	oldPlan, _ := json.Marshal(s.Plan)
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, SourceRunID: task.ID, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano), Type: assistantMessageType(assistantManaged)})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
+	undoFlow := flowInvalidationRollback(s)
 	oldSelection, oldSelectionRevision := s.ModelSelection, s.ModelSelectionRevision
 	if s.ModelSelection == nil || s.ModelSelection.Model == "" {
 		s.ModelSelectionRevision++
@@ -720,18 +751,24 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	if task.PlanTaskID != "" {
 		if item := a.findPlanItemLocked(s, task.PlanTaskID); item != nil {
 			item.Status, item.RunID, item.Updated = "in_progress", task.ID, time.Now().UTC().Format(time.RFC3339Nano)
+			a.reconcileFlowInputsLocked(s)
 		}
 	}
 	// 发送成功即消费待发送草稿；用户可以先编辑草稿再启动。
 	s.PendingPrompt = ""
 	if err := a.save(s); err != nil {
+		undoFlow()
+		s.Messages = s.Messages[:oldMessageCount]
+		s.Runs = s.Runs[:oldRunCount]
+		s.Updated = oldUpdated
+		var restoredPlan []PlanItem
+		_ = json.Unmarshal(oldPlan, &restoredPlan)
+		s.Plan = restoredPlan
 		s.ModelSelection = oldSelection
 		s.ModelSelectionRevision = oldSelectionRevision
-		s.Messages = s.Messages[:len(s.Messages)-1]
-		s.Runs = s.Runs[:len(s.Runs)-1]
 		s.Title = oldTitle
 		s.PendingPrompt = oldPendingPrompt
-		fail(w, 500, err)
+		fail(w, 500, fmt.Errorf("无法启动任务：执行记录未能保存，原阶段和草稿已保留。请检查存储空间和目录权限后重试：%w", err))
 		return
 	}
 	// #34：aide 每条用户消息累计计数，达到阈值后台触发常规演化（持久化、不阻塞响应）。
@@ -1280,6 +1317,14 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("媒体任务已提交；请继续原任务查询或下载，重新生成请明确发送新消息"))
 		return
 	}
+	if orig.GoalInputsStale {
+		fail(w, 409, errors.New("流程输入已变化，请从当前阶段新建执行并重新验收"))
+		return
+	}
+	if item := a.findPlanItemLocked(s, orig.PlanTaskID); item != nil && item.Flow != nil {
+		fail(w, 409, errors.New("流程阶段重试请在任务与规划中重新交给 aide，以保留依赖和验收绑定"))
+		return
+	}
 	if orig.PW != nil {
 		fail(w, 400, errors.New("PW 运行不自动重试或续跑，请核对已发生效果后重新发送"))
 		return
@@ -1480,6 +1525,10 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("任务不存在"))
 		return
 	}
+	if orig.GoalInputsStale {
+		fail(w, 409, errors.New("流程输入已变化，请从当前阶段新建执行并重新验收"))
+		return
+	}
 	if orig.PW != nil {
 		fail(w, 400, errors.New("PW 运行不自动重试或续跑，请核对已发生效果后重新发送"))
 		return
@@ -1505,6 +1554,16 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	if !review.Required && recoveryDecision != nil {
 		fail(w, 409, errors.New("恢复快照已变化，请重新加载"))
 		return
+	}
+	if item := a.findPlanItemLocked(s, orig.PlanTaskID); item != nil && item.Flow != nil {
+		if item.RunID != orig.ID || !flowInputsCurrent(s, orig) {
+			fail(w, 409, errors.New("流程阶段或前置输入已变化，请重新核对"))
+			return
+		}
+		if _, err := a.collectFlowInputsLocked(s, item); err != nil {
+			fail(w, 409, err)
+			return
+		}
 	}
 	choice := a.taskModelSelectionLocked(orig)
 	cfg, selectionErr := a.selectionSettingsLocked(choice)
@@ -1591,11 +1650,25 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	if orig.Model != "" {
 		resumed.Model = orig.Model
 	}
+	undoFlow := flowInvalidationRollback(s)
+	var flowItem *PlanItem
+	var oldFlowItem PlanItem
+	if item := a.findPlanItemLocked(s, orig.PlanTaskID); item != nil && item.Flow != nil {
+		flowItem = item
+		oldFlowItem = *item
+		item.RunID = resumed.ID
+		item.Status = "in_progress"
+	}
 	originalStatus := orig.Status
 	orig.Status = "resumed"
 	orig.CanResume = false
 	s.Runs = append(s.Runs, &resumed)
+	a.reconcileFlowInputsLocked(s)
 	if err := a.save(s); err != nil {
+		undoFlow()
+		if flowItem != nil {
+			*flowItem = oldFlowItem
+		}
 		s.Runs = s.Runs[:len(s.Runs)-1]
 		orig.Status = originalStatus
 		orig.CanResume = true
@@ -4940,6 +5013,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		a.recordIncident(ctx, incident{Module: "tools", Phase: "execute", Tool: call.Function.Name}, errors.New(message), started)
 		return recordToolDispatchFailure(ctx, message)
 	}
+	if err := a.flowToolError(task, call.Function.Name); err != nil {
+		return failure(err.Error())
+	}
 	ctx, editorRelease := a.nativeEditorEnter(ctx)
 	defer editorRelease()
 	if !nativeEditorReadTool(call.Function.Name) {
@@ -5492,6 +5568,10 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		})
 		answer := a.awaitUserAnswer(ctx, task, qb)
 		return "用户回答：" + strings.TrimSpace(answer)
+	case "change_impact":
+		return a.taskChangeImpact(task, args)
+	case "workflow_inputs":
+		return a.workflowInputs(task, args)
 	case "task_acceptance":
 		return a.taskAcceptance(task, str("criterionId"))
 	case "project_knowledge":

@@ -60,3 +60,5 @@ Knowledge proposals use `kind/subject/content/source`; confirmation/archive use 
 Focused API/persistence/concurrency/context tests live in `goal_acceptance_test.go` and `project_knowledge_test.go` and join the daily basic Go gate. `TestProjectRecordsBrowser` / `scripts/browser-project-records.cjs` exercise the real UI and are also called by the existing Delivery browser gate. Actual commands, fingerprints, observations and limits are recorded in the [task ledger](../tasks/project-goals-knowledge-20261113.json). Synthetic providers/isolated fixtures do not establish paid-model, customer SSH, native hardware or production deployment acceptance.
 
 Assistant follow-up distinguishes executor completion from goal acceptance. Revised criteria produce a new pending-acceptance notice; closed unaccepted goals are not instructions to resume work.
+
+Follow-on capabilities: [change impact and staged workflows](project-impact-workflows.md) reuse these goals/acceptance and existing project facilities.

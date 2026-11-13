@@ -175,6 +175,9 @@ func recoverPluginPlans(task *Task) {
 }
 
 func (a *App) pluginPlanPolicy(task *Task, tool, owner, scope, workspace string, epoch uint64) error {
+	if err := a.flowToolError(task, tool); err != nil {
+		return err
+	}
 	if err := a.sandboxToolError(tool); err != nil {
 		return err
 	}

@@ -515,3 +515,5 @@ See [workspace/source paths](workspace-paths.md), [knowledge search and history]
 
 
 Source additions (2026-11-13): [goals, acceptance and project decision records](project-goals-knowledge.md) extend the existing task board and project memory. Operator acceptance is separate from execution; records persist across sessions without granting authorization. These additions are not in RC2.
+
+For first use of impact analysis/workflows, open Trajectory → Tasks and planning and follow the [guided instructions](project-impact-workflows.md).

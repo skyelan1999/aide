@@ -78,3 +78,5 @@ The technical whitepaper is authored as **Skye Lan**. It distinguishes source in
 
 
 [0.1.19 usage and migration](docs/en/release-guide-0.1.19.md).
+
+Source additions: [change impact and reusable business stages](docs/en/project-impact-workflows.md) reuse plans, plugins, approvals and acceptance. Not included in the published RC2 package.

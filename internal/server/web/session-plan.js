@@ -109,7 +109,7 @@
           return !dep || dep.status === 'completed' || (dep.status === 'closed' && (!dep.contract || dep.contract.criteria.every(c => c.review?.state === 'passed' && c.review.runId === dep.runId)));
         });
         if (launchTask) {
-          const launch = node('button', 'primary plan-launch', t('交给 aide'));
+          const launch = node('button', 'primary plan-launch', t(item.flow ? '开始本阶段' : '交给 aide'));
           launch.type = 'button';
           launch.disabled = !depsReady || !!(run && ['running', 'awaiting_approval', 'awaiting_clarification'].includes(run.status));
           if (!depsReady) launch.title = t('依赖的任务尚未完成');
@@ -144,6 +144,8 @@
       row.append(head);
 
       if (item.source === 'user' && window.AideProjectRecords) window.AideProjectRecords.goalCard(row, { api, sessionId: current.id, item, t, changed: reload, valid });
+      if (item.flow && Object.keys(item.flow.tools || {}).length) row.append(node("p", "project-source", t("已选 {0} 项专业工具", Object.keys(item.flow.tools).length)));
+      if (item.flow && window.AideProjectWorkflows) window.AideProjectWorkflows.stageTools(row, { api, sessionId: current.id, item, t, valid, changed: reload });
       if (item.detail) {
         const detail = node('p', 'plan-detail', item.detail);
         row.append(detail);
@@ -199,6 +201,9 @@
       intro.append(node('p', 'muted', t('aide 每轮都会读到这份列表：未完成项、依赖和最近审批记录都会进入上下文，避免遗漏。')));
       hostRef.append(intro);
 
+      const navigatorHost = node('div', 'project-flow-guides'); hostRef.append(navigatorHost);
+      function renderNavigator() { navigatorHost.replaceChildren(); if (window.AideProjectWorkflows) window.AideProjectWorkflows.navigator(navigatorHost, { plan: planOf(current), runs: runsOf(current), t, api, sessionId: current.id, valid, changed: reload, launchTask, selectRun }); }
+      renderNavigator();
       const open = plan.filter(i => i.status !== 'closed');
       const totals = {
         total: open.length,
@@ -297,6 +302,7 @@
       toolbar.append(io);
       hostRef.append(toolbar);
       if (window.AideProjectRecords) window.AideProjectRecords.knowledgePanel(hostRef, { api, t, valid });
+      if (window.AideProjectWorkflows) window.AideProjectWorkflows.panel(hostRef, { api, sessionId: current.id, workspaceId, t, valid, changed: reload });
 
       const board = node('div', 'plan-board');
       const userItems = plan.filter(i => i.source === 'user');
@@ -362,6 +368,7 @@
         }
       }
       function patchStatuses(plan) {
+        renderNavigator();
         for (const item of plan) {
           const ref = rowRefs.get(item.id);
           if (!ref) continue;

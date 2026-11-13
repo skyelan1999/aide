@@ -447,6 +447,7 @@ type Message struct {
 	ToolCallID    string            `json:"tool_call_id,omitempty"`
 }
 type Session struct {
+	Impacts                []ChangeImpact         `json:"impacts,omitempty"`
 	AssistantResultNotices map[string]string      `json:"assistantResultNotices,omitempty"` // Persisted executor-event receipts, local only.
 	ModelSelectionRevision uint64                 `json:"modelSelectionRevision,omitempty"`
 	ModelSelection         *SessionModelSelection `json:"modelSelection,omitempty"`
@@ -1737,6 +1738,10 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/sessions/{id}/plan/{item}/acceptance", a.goalAcceptanceAPI)
 	mux.HandleFunc("PUT /api/sessions/{id}/plan/{item}/acceptance", a.goalAcceptanceAPI)
 	mux.HandleFunc("POST /api/sessions/{id}/plan/{item}/acceptance", a.goalAcceptanceAPI)
+	mux.HandleFunc("GET /api/sessions/{id}/impacts", a.changeImpactAPI)
+	mux.HandleFunc("POST /api/sessions/{id}/impacts", a.changeImpactAPI)
+	mux.HandleFunc("GET /api/sessions/{id}/plan/flows", a.businessFlowAPI)
+	mux.HandleFunc("POST /api/sessions/{id}/plan/flows", a.businessFlowAPI)
 	mux.HandleFunc("GET /api/project-knowledge", a.projectKnowledgeAPI)
 	mux.HandleFunc("POST /api/project-knowledge", a.projectKnowledgeAPI)
 	mux.HandleFunc("POST /api/sessions/{id}/plan/dismiss", a.dismissPlanStep)

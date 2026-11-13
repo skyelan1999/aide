@@ -31,15 +31,32 @@
     function render(view) {
       body.replaceChildren();
       body.append(el('p', 'muted', t(view.accepted ? '目标已逐项验收' : '执行完成后仍须逐项复核；记录实际观察，模型回答不能代替签收。')));
+      if (view.inputsStale) body.append(el('p', 'project-error', t('前置成果已变化，请重新执行当前阶段。')));
+      if (view.flowInputs?.length) {
+        const inputs = el('details'); inputs.append(el('summary', '', t('阶段输入与来源')));
+        for (const input of view.flowInputs) {
+          inputs.append(el('strong', '', input.title), el('p', '', input.output));
+          if (input.truncated) inputs.append(el('p', 'project-error', t('输入有截断，请回读原文件或原执行记录。')));
+          for (const file of input.files || []) inputs.append(el('p', 'project-source', file.path));
+          const evidence = el('details'); evidence.append(el('summary', '', t('查看原始执行与证据摘要')), el('p', 'project-source', input.runId + ' · ' + input.snapshot));
+          for (const file of input.files || []) evidence.append(el('p', 'project-source', (file.source || '') + ':' + file.path + ' · ' + file.digest));
+          for (const receipt of input.receipts || []) { evidence.append(el('p', 'project-source', receipt.tool + ' · ' + receipt.digest), el('p', '', receipt.result)); if (receipt.truncated) evidence.append(el('p', 'project-error', t('输入有截断，请回读原文件或原执行记录。'))); }
+          inputs.append(evidence);
+        }
+        body.append(inputs);
+      }
       for (const text of view.contract?.deliverables || []) body.append(el('p', 'project-source', text));
+      if (view.contract && !view.canReview) body.append(el('p', 'muted', t('先开始执行；执行结束并处理文件审批后，再记录验收。')));
       for (const c of view.criteria || []) {
         const row = el('section', 'project-criterion'); row.dataset.criterionId = c.id;
         row.append(el('strong', '', c.text), el('span', 'plan-tag', t(states[c.state] || '待验收')));
         if (c.review) row.append(el('p', 'project-source', t('用户观察记录') + ' · ' + c.review.recordedAt + ' · ' + c.review.note));
         if (c.history?.length) { const history = el('details'); history.append(el('summary', '', t('历史复核记录'))); for (const r of c.history) history.append(el('p', 'project-source', r.recordedAt + ' · ' + t(states[r.state] || '待验收') + ' · ' + r.note)); row.append(history); }
+        if (!view.canReview) { body.append(row); continue; }
         const form = el('form', 'project-review');
         const choice = el('select'); choice.setAttribute('aria-label', t('验收状态'));
         for (const state of ['pending', 'passed', 'failed', 'blocked']) { const option = el('option', '', t(states[state])); option.value = state; choice.append(option); }
+        if (!view.executionReady) choice.querySelector('option[value="passed"]').disabled = true;
         choice.value = ['passed', 'failed', 'blocked'].includes(c.state) ? c.state : 'pending';
         const receipt = el('select'); receipt.setAttribute('aria-label', t('关联工具证据'));
         const manual = el('option', '', t('用户实际观察（非独立自动验证）')); manual.value = '0'; receipt.append(manual);

@@ -44,7 +44,20 @@ func runProjectRecordsBrowser(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	for i := 0; i < 8; i++ {
+		s := planSession(a, fmt.Sprintf("workflow-records-%d", i), fmt.Sprintf("Workflow fixture %d", i))
+		s.Number = 920 + i
+		if err := a.save(s); err != nil {
+			t.Fatal(err)
+		}
+	}
 	a.mu.Unlock()
+	for name, text := range map[string]string{"spec.md": "# Design input\nPressure parameter: 10\n[calculation](calc.md)", "calc.md": "# Calculation\n[specification](spec.md)\nCheck units and pressure.", "report.md": "# Report\n[calculation](calc.md)"} {
+		if err := os.WriteFile(filepath.Join(a.workspace.Name(), name), []byte(text), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	planInstall(t, a, "flow-fixture", `module.exports={apply(ctx){ctx.tool({name:'flow_value',handler:()=>({text:'calculation evidence 42'})});}};`)
 	address := os.Getenv("AIDE_PROJECT_BROWSER_ADDRESS")
 	if address != "" {
 		listener, err := net.Listen("tcp", address)
@@ -67,7 +80,11 @@ func runProjectRecordsBrowser(t *testing.T) {
 	}
 	server := httptest.NewServer(a.Handler())
 	defer server.Close()
-	script, err := filepath.Abs("../../scripts/browser-project-records.cjs")
+	scriptName := "browser-project-records.cjs"
+	if os.Getenv("AIDE_PROJECT_WORKFLOWS_BROWSER") == "1" {
+		scriptName = "browser-project-workflows.cjs"
+	}
+	script, err := filepath.Abs("../../scripts/" + scriptName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,10 +95,26 @@ func runProjectRecordsBrowser(t *testing.T) {
 		t.Fatalf("project records browser: %v\n%s", err, output)
 	}
 	t.Log(string(output))
+	if os.Getenv("AIDE_PROJECT_WORKFLOWS_BROWSER") != "1" {
+		workflow := exec.Command("node", filepath.Join(filepath.Dir(script), "browser-project-workflows.cjs"))
+		workflow.Env = cmd.Env
+		output, err := workflow.CombinedOutput()
+		if err != nil {
+			t.Fatalf("project workflows browser: %v\n%s", err, output)
+		}
+		t.Log(string(output))
+	}
 }
 func TestProjectRecordsBrowser(t *testing.T) {
 	if os.Getenv("AIDE_PROJECT_BROWSER") != "1" && os.Getenv("AIDE_PROJECT_BROWSER_ADDRESS") == "" {
 		t.Skip("opt-in browser acceptance; Delivery invokes the same harness")
+	}
+	runProjectRecordsBrowser(t)
+}
+
+func TestProjectWorkflowsBrowser(t *testing.T) {
+	if os.Getenv("AIDE_PROJECT_WORKFLOWS_BROWSER") != "1" {
+		t.Skip("opt-in workflow browser; Delivery also runs these cases")
 	}
 	runProjectRecordsBrowser(t)
 }

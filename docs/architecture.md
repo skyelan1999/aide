@@ -218,3 +218,5 @@ MapCanvas imports YAML + PGM/PNG through visible source APIs and binds only the 
 
 
 目标/验收与项目知识源码增补（2026-11-13）：[接口与存储说明](project-goals-knowledge.md)。`goal_acceptance.go` 扩展 `PlanItem`，以持久执行/文件/工具快照约束复核；`project_knowledge.go` 扩展 `memoryTokenStore`，复用项目缓存和上下文链路。执行状态、签收状态、模型提议与用户确认分别保存。
+
+变更影响与业务阶段：`change_impact.go` 将现有星图文件/符号关系归并成有界候选并扩展 Session JSON；`business_flow.go` 将可复用场景展开为 PlanItem/GoalContract，绑定插件身份和已验收 FlowInput，沿用原执行、审批和恢复。接口与限额见[说明](project-impact-workflows.md)。

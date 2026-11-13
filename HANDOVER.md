@@ -65,3 +65,5 @@ python3 scripts/agent-route.py verify quick
 
 
 [0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
+
+2026-11-13 续接：变更影响与分阶段业务流程见[说明](docs/project-impact-workflows.md)及[任务](docs/tasks/project-impact-workflows-20261113.json)。源码增补不等于 RC2 包或正在运行的实例已升级；新请求还要求当前功能完成后排查 Aide/插件可用性问题。

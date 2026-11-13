@@ -2417,7 +2417,7 @@ function renderSession() {
   $('prompt').placeholder = isAssistantSess ? t('对{0}说点什么…', voiceAssistantDisplayName()) : '';
   $('session-title').textContent = state.session?.title || t("开始新的探索");
   // #62：小秘会话始终隐藏通用 welcome（及其 4 个快捷入口），改渲染小蜜专属时间线/空状态
-  $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs.length);
+  $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs?.length);
   $('timeline').replaceChildren(); state.busy = false;
   if (state.session?.hasOlder) {
     const older = el('button', 'quiet load-older-history', t('加载更早的会话历史'));
@@ -5371,6 +5371,8 @@ function renderPermissionManager() {
     ['semantic_search', t('语义搜索'), t('本地 TF-IDF 语义检索文件片段')],
     ['web_search', t('网页搜索'), t('DuckDuckGo 在线搜索当前信息')],
     ['spawn_subagent', t('子代理'), t('派生独立子会话处理子任务')],
+    ['change_impact', t('需求变更影响分析'), t('只读检索本会话的影响分类、来源与复核记录')],
+    ['workflow_inputs', t('阶段输入与来源'), t('分页读取已验收前置成果与工具回执')],
     ['task_acceptance', t('目标与验收'), t('读取当前目标的验收条件及历史用户复核')],
     ['project_knowledge', t('项目知识与决策'), t('读取项目记录，或提议待用户确认的新记录')],
     ['read_memory', t('读记忆'), t('读取持久化记忆文件')],
@@ -10368,7 +10370,7 @@ const CALL_TYPES = {
   file: ['list_files','read_file','write_file','create_diagram'],
   shell: ['run_shell'],
   search: ['search_text','semantic_search','web_search'],
-  memory: ['read_memory','write_memory','project_knowledge','task_acceptance'],
+  memory: ['read_memory','write_memory','project_knowledge','task_acceptance','change_impact','workflow_inputs'],
   subagent: ['spawn_subagent'],
 };
 function callTypeOf(tool) {
