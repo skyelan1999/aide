@@ -1,0 +1,64 @@
+{
+  "id": "source-integrity-20261113",
+  "request": "把那个 integrity=degraded 告警也解决一下，保留现有草稿和数据，做好验证，Aide 还是不要 release。",
+  "baseline": "c36e359a27430338d3d3457b3654308780b83613",
+  "initial_status": "",
+  "acceptance": [
+    "Standard source builds retain dirty status and include their complete existing source fingerprint in build identity; clean/release identity remains unchanged.",
+    "Verified source-mode image readiness advances the baseline with byte-exact immutable old-baseline backup; legacy/ambiguous IDs, dirty release IDs, unsafe checksums, corrupt data and same-identity binary changes remain rejected.",
+    "Rebuild and activate original installation through existing launcher; health integrity becomes ok and remains ok after periodic check/restart.",
+    "All existing draft bytes, session IDs/statuses, plugin versions/settings/enabled state, mounts and credentials preserved with rollback references.",
+    "Run focused launcher and Linux root/race integrity tests, existing integrity regressions, vet/build and documentation checks; do not bump version, tag, trigger Delivery or publish Aide Release."
+  ],
+  "scope": [
+    "User authorizes fixing and updating the running Aide; preserve drafts and data; no Aide Release.",
+    "Use existing build/source fingerprint and readiness baseline machinery; no manual baseline rewrite or integrity bypass."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Live source runtime reproduced degraded warning; image checksum previously verified, identity is ambiguous legacy -dirty. No tasks currently executing; 87 sessions/35 plugins and 8 draft files recorded.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Existing source SHA-256 appended to dirty commit metadata; source-only readiness recognition. Clean/release identities and all checksum/backup/state guards retained.",
+      "evidence": [
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Launcher, integrity identity validation, focused regression tests and operational docs updated. No baseline edited and no draft/data moved.",
+      "evidence": [
+        "internal/server/integrity_upgrade.go",
+        "scripts/launcher.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "36 launcher tests and Linux root/race integrity suite passed. Isolated actual upgrade/rollback smoke and original-runtime activation are being verified.",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User explicitly excludes Aide Release/version bump/tag/Delivery. Only source merge and existing installation build/activation are authorized.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Current image pinned as aide:rollback-integrity-20261113 with stopped recovery container. New private essential data/plugin/config and byte-verified draft backup retained outside the source tree.",
+  "handoff": "",
+  "operator": "skyelan1999",
+  "issue": 888
+}

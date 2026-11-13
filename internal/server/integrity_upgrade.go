@@ -19,6 +19,7 @@ import (
 const imageBinaryChecksum = "/usr/local/bin/aide.sha256"
 
 var integrityCommitPattern = regexp.MustCompile(`^[a-f0-9]{40}$`)
+var integritySourceCommitPattern = regexp.MustCompile(`^[a-f0-9]{40}-dirty\.[a-f0-9]{64}$`)
 var integrityDigestPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
 
 type integrityUpgrade struct {
@@ -59,8 +60,13 @@ func onlyBinaryMismatch(rep IntegrityReport) bool {
 	return badBinary
 }
 
-func prepareIntegrityUpgrade(data, checksum, version, commit, digest string, rep IntegrityReport) *integrityUpgrade {
-	if !onlyBinaryMismatch(rep) || version == "" || version == "dev" || !integrityCommitPattern.MatchString(commit) {
+func prepareIntegrityUpgrade(data, checksum, version, commit, runtimeMode, digest string, rep IntegrityReport) *integrityUpgrade {
+	// Source-only identities include the launcher's full content fingerprint.
+	// The mode is compiled into the binary, not selected by a runtime setting.
+	// Legacy bare -dirty identities remain ambiguous and cannot advance a baseline.
+	validIdentity := integrityCommitPattern.MatchString(commit) ||
+		(runtimeMode == "source" && integritySourceCommitPattern.MatchString(commit))
+	if !onlyBinaryMismatch(rep) || version == "" || version == "dev" || !validIdentity {
 		return nil
 	}
 	trusted, err := readImageBinaryChecksum(checksum)
@@ -91,7 +97,7 @@ func (a *App) prepareImageIntegrityUpgrade() {
 	}
 	digest, err := currentBinarySHA256()
 	if err == nil {
-		a.integrityUpgrade = prepareIntegrityUpgrade(a.dataPath, imageBinaryChecksum, buildVersion, buildCommit, digest, a.integrityRep)
+		a.integrityUpgrade = prepareIntegrityUpgrade(a.dataPath, imageBinaryChecksum, buildVersion, buildCommit, buildRuntimeMode, digest, a.integrityRep)
 	}
 }
 

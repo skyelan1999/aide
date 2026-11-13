@@ -37,7 +37,7 @@ func integrityUpgradeFixture(t *testing.T) (string, string, string, []byte, *int
 	if err := os.WriteFile(checksum, []byte(digest+"  /usr/local/bin/aide\n"), 0444); err != nil {
 		t.Fatal(err)
 	}
-	u := prepareIntegrityUpgrade(data, checksum, "0.2.0", strings.Repeat("2", 40), digest, VerifyIntegrity(data))
+	u := prepareIntegrityUpgrade(data, checksum, "0.2.0", strings.Repeat("2", 40), "release", digest, VerifyIntegrity(data))
 	if u == nil {
 		t.Fatal("verified changed build must prepare a candidate")
 	}
@@ -89,10 +89,11 @@ func TestIntegrityUpgradeReadinessAndDataPreservation(t *testing.T) {
 }
 
 func TestIntegrityUpgradeRejectsUnverifiedTransitions(t *testing.T) {
-	for _, kind := range []string{"same-identity", "wrong-digest", "missing-checksum", "writable-checksum", "symlink-checksum", "runtime-owned-checksum", "unknown-build", "corrupt-data", "startup-errors", "malformed-baseline"} {
+	for _, kind := range []string{"same-identity", "wrong-digest", "missing-checksum", "writable-checksum", "symlink-checksum", "runtime-owned-checksum", "unknown-build", "corrupt-data", "startup-errors", "malformed-baseline", "legacy-dirty", "short-source-hash", "dirty-release", "unknown-mode"} {
 		t.Run(kind, func(t *testing.T) {
 			data, checksum, digest, _, _ := integrityUpgradeFixture(t)
 			version, commit := "0.2.0", strings.Repeat("2", 40)
+			runtimeMode := "release"
 			rep := VerifyIntegrity(data)
 			switch kind {
 			case "same-identity":
@@ -109,6 +110,14 @@ func TestIntegrityUpgradeRejectsUnverifiedTransitions(t *testing.T) {
 				checksum = p
 			case "runtime-owned-checksum":
 				os.Chown(checksum, 1000, 1000)
+			case "legacy-dirty":
+				runtimeMode, commit = "source", commit+"-dirty"
+			case "short-source-hash":
+				runtimeMode, commit = "source", commit+"-dirty."+strings.Repeat("a", 63)
+			case "dirty-release":
+				commit += "-dirty." + strings.Repeat("a", 64)
+			case "unknown-mode":
+				runtimeMode, commit = "", commit+"-dirty."+strings.Repeat("a", 64)
 			case "unknown-build":
 				commit = "unknown"
 			case "corrupt-data":
@@ -120,7 +129,7 @@ func TestIntegrityUpgradeRejectsUnverifiedTransitions(t *testing.T) {
 				os.WriteFile(baselinePath(data), []byte("{bad"), 0600)
 			}
 			before, _ := os.ReadFile(baselinePath(data))
-			if prepareIntegrityUpgrade(data, checksum, version, commit, digest, rep) != nil {
+			if prepareIntegrityUpgrade(data, checksum, version, commit, runtimeMode, digest, rep) != nil {
 				t.Fatal("unverified change was accepted")
 			}
 			after, _ := os.ReadFile(baselinePath(data))
@@ -166,7 +175,7 @@ func TestIntegrityUpgradeRollbackAndSubsequentTampering(t *testing.T) {
 	old.Version = "0.3.0"
 	old.BinarySHA256 = strings.Repeat("3", 64)
 	atomicJSON(baselinePath(data), old)
-	u = prepareIntegrityUpgrade(data, checksum, "0.2.0", strings.Repeat("2", 40), digest, VerifyIntegrity(data))
+	u = prepareIntegrityUpgrade(data, checksum, "0.2.0", strings.Repeat("2", 40), "release", digest, VerifyIntegrity(data))
 	if u == nil {
 		t.Fatal("verified rollback rejected")
 	}
@@ -182,5 +191,85 @@ func TestIntegrityUpgradeRollbackAndSubsequentTampering(t *testing.T) {
 	a.confirmImageIntegrityUpgrade()
 	if VerifyIntegrity(data).Status != IntegrityDegraded {
 		t.Fatal("later tampering was hidden")
+	}
+}
+
+func TestIntegritySourceBuildReadinessAndContentIdentity(t *testing.T) {
+	data, checksum, digest, _, _ := integrityUpgradeFixture(t)
+	commit := strings.Repeat("2", 40)
+	old := baselineManifest{Version: "0.2.0", Commit: commit + "-dirty", BinarySHA256: strings.Repeat("0", 64), BuiltAt: "old"}
+	if err := atomicJSON(baselinePath(data), old); err != nil {
+		t.Fatal(err)
+	}
+	previous, _ := os.ReadFile(baselinePath(data))
+	sentinel := filepath.Join(data, "sessions", "retained-draft")
+	want := []byte("unfinished draft and existing user data\n")
+	os.WriteFile(sentinel, want, 0600)
+	identity := commit + "-dirty." + strings.Repeat("a", 64)
+	u := prepareIntegrityUpgrade(data, checksum, "0.2.0", identity, "source", digest, VerifyIntegrity(data))
+	if u == nil {
+		t.Fatal("content-bound source build was rejected")
+	}
+	before, _ := os.ReadFile(baselinePath(data))
+	if !bytes.Equal(previous, before) {
+		t.Fatal("preparation changed the old baseline")
+	}
+	a := &App{dataPath: data, integrityRep: VerifyIntegrity(data), integrityUpgrade: u}
+	w := httptest.NewRecorder()
+	a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/healthz", nil))
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"integrity":"ok"`) {
+		t.Fatalf("source readiness: %d %s", w.Code, w.Body.String())
+	}
+	sum := sha256.Sum256(previous)
+	backup, _ := os.ReadFile(filepath.Join(IntegrityDir(data), "baseline-before-"+hex.EncodeToString(sum[:])+".json"))
+	actual, _ := os.ReadFile(sentinel)
+	if !bytes.Equal(backup, previous) || !bytes.Equal(actual, want) {
+		t.Fatal("legacy baseline backup or retained user data changed")
+	}
+	var next baselineManifest
+	b, _ := os.ReadFile(baselinePath(data))
+	json.Unmarshal(b, &next)
+	if next.Commit != identity || next.BinarySHA256 != digest {
+		t.Fatal("baseline did not retain the full source identity")
+	}
+	// A different binary claiming the same content identity is still rejected.
+	next.BinarySHA256 = strings.Repeat("0", 64)
+	atomicJSON(baselinePath(data), next)
+	if prepareIntegrityUpgrade(data, checksum, "0.2.0", identity, "source", digest, VerifyIntegrity(data)) != nil {
+		t.Fatal("same-identity source binary change was accepted")
+	}
+	// Two real source contents at one Git HEAD have distinguishable identities.
+	changed := commit + "-dirty." + strings.Repeat("b", 64)
+	if prepareIntegrityUpgrade(data, checksum, "0.2.0", changed, "source", digest, VerifyIntegrity(data)) == nil {
+		t.Fatal("different source content identity was rejected")
+	}
+}
+
+func TestIntegritySourceBuildRejectsUnverifiedImagesAndData(t *testing.T) {
+	for _, kind := range []string{"wrong-checksum", "writable-checksum", "corrupt-data", "startup-errors"} {
+		t.Run(kind, func(t *testing.T) {
+			data, checksum, digest, _, _ := integrityUpgradeFixture(t)
+			rep := VerifyIntegrity(data)
+			switch kind {
+			case "wrong-checksum":
+				digest = strings.Repeat("f", 64)
+			case "writable-checksum":
+				os.Chmod(checksum, 0666)
+			case "corrupt-data":
+				os.WriteFile(SettingsPath(data), []byte("{bad"), 0600)
+				rep = VerifyIntegrity(data)
+			case "startup-errors":
+				rep.Errors = []string{"failed initialization"}
+			}
+			before, _ := os.ReadFile(baselinePath(data))
+			identity := strings.Repeat("2", 40) + "-dirty." + strings.Repeat("a", 64)
+			if prepareIntegrityUpgrade(data, checksum, "0.2.0", identity, "source", digest, rep) != nil {
+				t.Fatal("source identity bypassed verification")
+			}
+			after, _ := os.ReadFile(baselinePath(data))
+			if !bytes.Equal(before, after) {
+				t.Fatal("rejected source build changed the baseline")
+			}
+		})
 	}
 }
