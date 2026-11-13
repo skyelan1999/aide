@@ -2417,7 +2417,7 @@ function renderSession() {
   $('prompt').placeholder = isAssistantSess ? t('对{0}说点什么…', voiceAssistantDisplayName()) : '';
   $('session-title').textContent = state.session?.title || t("开始新的探索");
   // #62：小秘会话始终隐藏通用 welcome（及其 4 个快捷入口），改渲染小蜜专属时间线/空状态
-  $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs.length);
+  $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs?.length);
   $('timeline').replaceChildren(); state.busy = false;
   if (state.session?.hasOlder) {
     const older = el('button', 'quiet load-older-history', t('加载更早的会话历史'));
@@ -5371,6 +5371,8 @@ function renderPermissionManager() {
     ['semantic_search', t('语义搜索'), t('本地 TF-IDF 语义检索文件片段')],
     ['web_search', t('网页搜索'), t('DuckDuckGo 在线搜索当前信息')],
     ['spawn_subagent', t('子代理'), t('派生独立子会话处理子任务')],
+    ['change_impact', t('需求变更影响分析'), t('只读检索本会话的影响分类、来源与复核记录')],
+    ['workflow_inputs', t('阶段输入与来源'), t('分页读取已验收前置成果与工具回执')],
     ['task_acceptance', t('目标与验收'), t('读取当前目标的验收条件及历史用户复核')],
     ['project_knowledge', t('项目知识与决策'), t('读取项目记录，或提议待用户确认的新记录')],
     ['read_memory', t('读记忆'), t('读取持久化记忆文件')],
@@ -7175,7 +7177,8 @@ function reviewPluginWorkbenchProposal(id){
  }
  return selectSession(id);
 }
-function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled),openPage:(plugin,selection)=>window.AidePluginWorkbenchTabs.open(plugin,{t,toast,selection,blocked:()=>lockScreen.locked||!state.token,workspace:recoveryScope})};}
+function pluginGuideServices(){return {api,t,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,settings:openPluginSettings,files:()=>{if(window.AidePluginWorkbenchTabs?.read()){history.replaceState(history.state,'',location.pathname+location.search);pluginPageKey='';document.title=t('aide · AI 开发工作台');}closeSidePanels();$('files-toggle').click();},openWorkbench:plugin=>window.AidePluginWorkbench.open(plugin,pluginWorkbenchServices())};}
+function pluginWorkbenchServices(){return {api,t,toast,guide:plugin=>window.AidePluginGuide.open(plugin,{...pluginGuideServices(),inWorkbench:true}),reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled),openPage:(plugin,selection)=>window.AidePluginWorkbenchTabs.open(plugin,{t,toast,selection,blocked:()=>lockScreen.locked||!state.token,workspace:recoveryScope})};}
 let pluginPageOpening=false,pluginPageKey='';
 async function openRoutedPluginWorkbench(){
  const route=window.AidePluginWorkbenchTabs?.read();if(!route||lockScreen.locked||!state.token||pluginPageOpening)return;
@@ -7185,8 +7188,9 @@ async function openRoutedPluginWorkbench(){
   if(route.workspace!==scope)throw Error(t('工作区已切换，请从当前工作区重新打开插件'));
   await loadPluginsPanel();
   if(lockScreen.locked||epoch!==chatRecoveryEpoch||scope!==recoveryScope())return;
-  const plugin=state.plugins.find(p=>p.id===route.id&&p.enabled&&!p.error&&p.workbench?.protocol===1);
+  const plugin=state.plugins.find(p=>p.id===route.id&&p.workbench?.protocol===1);
   if(!plugin)throw Error(t('插件工作台不可用，请检查插件是否已启用'));
+  if(!plugin.enabled||plugin.error||window.AidePluginGuide.fileFirst(plugin.id)){pluginPageKey=key;await window.AidePluginGuide.open(plugin,pluginGuideServices());return;}
   const opened=await window.AidePluginWorkbench.open(plugin,{...pluginWorkbenchServices(),inPage:true,selection:route.selection,onClose:()=>{pluginPageKey='';}});
   if(opened){pluginPageKey=key;document.title=(plugin.workbench.title||plugin.name)+' · aide';}
  }catch(error){toast(error.message);}finally{pluginPageOpening=false;}
@@ -7372,7 +7376,8 @@ function renderPluginList() {
     if (p.description) card.append(el('p', 'plugin-desc', trPlugin(p.description)));
     if (p.error) card.append(el('p', 'task-error', '⚠ ' + p.error));
     const foot = el('div', 'plugin-card-foot');
-    const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? t("✓ 使用中") : t("停用"));
+    const guide=el('button','quiet',t('怎么使用'));guide.type='button';guide.dataset.pluginGuide=p.id;guide.onclick=()=>window.AidePluginGuide.open(p,pluginGuideServices());foot.append(guide);
+    const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? t("停用插件") : t("启用插件"));
     toggle.type = 'button';
     toggle.onclick = action(async () => {
       await api('/plugins/' + encodeURIComponent(p.id), { method: 'PUT', body: JSON.stringify({ enabled: !p.enabled }) });
@@ -7380,11 +7385,13 @@ function renderPluginList() {
       toast(p.enabled ? t("已停用插件：") + p.name : t("已启用插件：") + p.name);
     });
     if(p.workbench?.protocol===1){
-      const launch=el('button','quiet',t('打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
-      launch.onclick=action(()=>window.AidePluginWorkbench.open(p,pluginWorkbenchServices()));
+      const needsFile=window.AidePluginGuide.fileFirst(p.id);
+      const launch=el('button','quiet',t(needsFile?'从项目文件打开':'打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
+      launch.title=!p.enabled?t('先启用插件，再打开工作台'):p.error?t('插件载入失败，请查看“怎么使用”和错误详情'):'';
+      launch.onclick=action(()=>needsFile?window.AidePluginGuide.open(p,pluginGuideServices()):window.AidePluginWorkbench.open(p,pluginWorkbenchServices()));
       foot.append(launch);
     }
-    foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
+    foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("已启用") : t("已停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
     card.append(foot);
     host.append(card);
   }
@@ -10368,7 +10375,7 @@ const CALL_TYPES = {
   file: ['list_files','read_file','write_file','create_diagram'],
   shell: ['run_shell'],
   search: ['search_text','semantic_search','web_search'],
-  memory: ['read_memory','write_memory','project_knowledge','task_acceptance'],
+  memory: ['read_memory','write_memory','project_knowledge','task_acceptance','change_impact','workflow_inputs'],
   subagent: ['spawn_subagent'],
 };
 function callTypeOf(tool) {

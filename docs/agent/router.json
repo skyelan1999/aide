@@ -1701,6 +1701,26 @@
         "node",
         "--check",
         "internal/server/web/session-plan.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/project-workflows.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-project-workflows.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plugin-guide.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-usability-audit.cjs"
       ]
     ],
     "full": [

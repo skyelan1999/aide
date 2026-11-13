@@ -68,7 +68,16 @@ func validateProjectKnowledge(rows []ProjectKnowledge) error {
 		default:
 			return errors.New("无效知识状态")
 		}
-		if strings.TrimSpace(k.Subject) == "" || len([]rune(k.Subject)) > 200 || strings.TrimSpace(k.Content) == "" || len([]rune(k.Content)) > 2000 || strings.TrimSpace(k.Source) == "" || len([]rune(k.Source)) > 1000 || !utf8.ValidString(k.Subject+k.Content+k.Source) {
+		if strings.TrimSpace(k.Subject) == "" {
+			return errors.New("请填写知识记录的主题")
+		}
+		if strings.TrimSpace(k.Content) == "" {
+			return errors.New("请填写知识记录的内容")
+		}
+		if strings.TrimSpace(k.Source) == "" {
+			return errors.New("请填写来源与版本，说明记录的依据")
+		}
+		if len([]rune(k.Subject)) > 200 || len([]rune(k.Content)) > 2000 || len([]rune(k.Source)) > 1000 || !utf8.ValidString(k.Subject+k.Content+k.Source) {
 			return errors.New("主题、内容、来源须为 UTF-8，且分别不超过 200、2000、1000 字")
 		}
 	}

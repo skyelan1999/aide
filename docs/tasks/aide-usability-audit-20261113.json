@@ -1,0 +1,76 @@
+{
+  "id": "aide-usability-audit-20261113",
+  "request": "做的时候一定要更人性化，不要让人不知道怎么用，你可以做完了之后全面排查aide和对应所有插件的类似问题",
+  "baseline": "6878e5f8c16229e55a064d9d910f93a5fdbfc1fb",
+  "initial_status": "",
+  "acceptance": [
+    "Inventory all current public market packages, private listings and corresponding independent local plugin IDs; pin package hashes/source revisions and separate visible/runtime/source-only evidence.",
+    "Actually inspect Aide core journeys and every applicable plugin entry/first-use or unavailable state, including desktop/narrow UI and contextual guidance; tool-only/adapters/presets must explain their use honestly.",
+    "Confirm and fix discoverability, configuration, save/recovery, draft, keyboard or misleading-state defects with focused meaningful regressions; preserve existing layout, user data, licensing/signatures and permission boundaries.",
+    "Provide readable help and next actions without forcing technical identifiers into primary user flows; keep private specifics out of public issues/docs.",
+    "Run relevant browser/API/race checks and complete the applicable full gates/CI for owned source changes, update usage docs and a per-plugin audit matrix with actual limits."
+  ],
+  "scope": [
+    "Owned host worktree based on 6878e5f8 and isolated plugin worktrees when confirmed source fixes are required; never overwrite the original local plugin work.",
+    "Synthetic data/disposable services; no production restart, live paid-provider/account calls, private artifact publication, signature/permission bypass or unsolicited UI redesign."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requested human-oriented UX and a comprehensive corresponding-plugin audit after the remaining core improvements.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse installed plugin manifests/surfaces and a confined read-only README endpoint for common guidance; classify workbench, file-first, chat, provider/router and declaration-only entry points. Page-local drafts retain their server snapshot and require explicit reconciliation when it changes.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented common contextual guidance, honest state/action labels, file-first routes, help Escape protection, draft retention and conflict reconciliation, required evidence validation, search Enter handling, narrow task creation and navigation. Confirmed bugs tracked in #883–886.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Combined frozen source 2cda6a20 full gate passed: all 346 commands exit 0; 24/24 server shards, 1662 passed/90 conditional skips of 1752 registered items, other packages race/platform contracts/vet. Two real zh/en x 1440/390 browser matrices passed 4/4 each. All 43 initial plugin artifacts installed normally; all 42 visible guides and 19 workbench entry types checked with explicit native/account/hardware limits. Private current-version fixes separately tested and merged; obsolete historical patch closed without merging.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/verification.json",
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual final behavior, first-use entry paths, API/storage/recovery guidance, source/runtime boundaries and public audit matrix updated. Exact private evidence remains local/private.",
+      "evidence": [
+        "docs/plugin-usage.md",
+        "docs/en/plugin-usage.md",
+        "docs/project-impact-workflows.md",
+        "docs/en/project-impact-workflows.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned source/tests/docs reviewed and explicitly staged. User original work preserved; raw evidence/private artifacts remain ignored/local. Disposable services stopped at final handoff; production untouched.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "This improvement stage delivers source through PR #881; no new program version/Release, marketplace package, production upgrade or runtime replacement. Prior release work is a separate delivery identity.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the source merge before rebuilding if needed; no production data migration or service replacement was performed.",
+  "handoff": "Verified source 2cda6a20 and unchanged code fingerprint c1d2f703d5077fbdd25b9fe47ffba73f5a3c2ba42f868048f9556dbcbc3d1c17; final documentation/evidence only commit follows. PR #881 tracks merge state. Production remains on its prior service build. Private fixes merged separately; private/native/account/hardware acceptance limits are explicit.",
+  "operator": "skyelan1999",
+  "issues": [
+    882,
+    883,
+    884,
+    885,
+    886
+  ],
+  "parent_task": "project-impact-workflows-20261113"
+}

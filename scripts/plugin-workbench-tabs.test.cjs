@@ -49,16 +49,17 @@ test('deep link parser rejects traversal, bad selections and missing workspace',
 });
 test('routed page rechecks workspace, current enabled plugin and lock before creating a bridge',async()=>{
  const app=fs.readFileSync('internal/server/web/app.js','utf8'),start=app.indexOf('let pluginPageOpening='),end=app.indexOf('async function loadPluginsPanel()',start);
- const calls=[],errors=[],state={token:'fixture',plugins:[]},lockScreen={locked:false};let scope='local|/Users/test/工作区 with spaces|';
+ const calls=[],guides=[],errors=[],state={token:'fixture',plugins:[]},lockScreen={locked:false};let scope='local|/Users/test/工作区 with spaces|';
  const route={id:'compare',workspace:scope,selection:undefined};
- const context={window:{AidePluginWorkbenchTabs:{read:()=>route},AidePluginWorkbench:{open:async(p,s)=>(calls.push({p,s}),true)}},state,lockScreen,recoveryScope:()=>scope,chatRecoveryEpoch:0,
-  loadPluginsPanel:async()=>{state.plugins=[plugin];},pluginWorkbenchServices:()=>({}),document:{title:''},t:x=>x,toast:e=>errors.push(e)};
+ const context={window:{AidePluginGuide:{fileFirst:id=>id==='video-preview',open:async p=>guides.push(p.id)},AidePluginWorkbenchTabs:{read:()=>route},AidePluginWorkbench:{open:async(p,s)=>(calls.push({p,s}),true)}},state,lockScreen,recoveryScope:()=>scope,chatRecoveryEpoch:0,
+  loadPluginsPanel:async()=>{state.plugins=[plugin];},pluginWorkbenchServices:()=>({}),pluginGuideServices:()=>({}),document:{title:''},t:x=>x,toast:e=>errors.push(e)};
  vm.runInNewContext(app.slice(start,end),context);
  lockScreen.locked=true;await context.openRoutedPluginWorkbench();assert.equal(calls.length,0);
  lockScreen.locked=false;scope='foreign';await context.openRoutedPluginWorkbench();assert.equal(calls.length,0);assert.equal(errors.length,1);
  scope='local|/Users/test/工作区 with spaces|';await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.equal(calls[0].s.inPage,true);
  await context.openRoutedPluginWorkbench();assert.equal(calls.length,1,'no duplicate after repeated unlock/reconciliation');
- calls[0].s.onClose();context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,enabled:false}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);
+ calls[0].s.onClose();context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,enabled:false}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.deepEqual(guides,['compare']);
+ route.id='video-preview';context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,id:'video-preview'}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.deepEqual(guides,['compare','video-preview']);
 });
 test('manual login resumes a plugin deep link after authentication and closes the login dialog',async()=>{
  const app=fs.readFileSync('internal/server/web/app.js','utf8');const line=app.split('\n').find(s=>s.startsWith("$('login-form').onsubmit ="));

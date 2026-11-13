@@ -75,10 +75,15 @@ func goalRunFingerprint(run *Task) string {
 	if run == nil {
 		return ""
 	}
-	return recoveryHash([]any{run.ID, run.Status, run.WorkspaceID, run.WorkspaceRev, run.Files, run.Delivery, run.ToolUses, run.ExecutionSequence})
+	values := []any{run.ID, run.Status, run.WorkspaceID, run.WorkspaceRev, run.Files, run.Delivery, run.ToolUses, run.ExecutionSequence}
+	// Keep existing non-flow sign-offs valid across this additive upgrade.
+	if len(run.FlowInputs) > 0 || len(run.FlowTools) > 0 || run.GoalInputsStale {
+		values = append(values, run.FlowInputs, run.FlowTools, run.GoalInputsStale)
+	}
+	return recoveryHash(values)
 }
 func goalExecutionReady(run *Task) bool {
-	if run == nil || run.Status != "completed" {
+	if run == nil || run.Status != "completed" || run.GoalInputsStale {
 		return false
 	}
 	if run.Delivery != nil && run.Delivery.State != "delivered" {
@@ -86,6 +91,18 @@ func goalExecutionReady(run *Task) bool {
 	}
 	for _, f := range run.Files {
 		if !f.Applied {
+			return false
+		}
+	}
+	for name := range run.FlowTools {
+		found := false
+		for _, use := range run.ToolUses {
+			if use.Tool == name {
+				found = true
+				break
+			}
+		}
+		if !found {
 			return false
 		}
 	}
@@ -166,7 +183,13 @@ func goalProjection(item *PlanItem, run *Task, workspaceID string) map[string]an
 			receipts = append(receipts, map[string]any{"index": i + 1, "tool": use.Tool, "digest": outcomeDigest(use)})
 		}
 	}
-	return map[string]any{"workspaceId": workspaceID, "snapshot": recoveryHash([]any{workspaceID, item, fingerprint}), "contract": item.Contract, "criteria": checks, "accepted": goalAcceptedAt(item, run, fingerprint), "executionReady": goalExecutionReady(run), "runId": item.RunID, "receipts": receipts}
+	view := map[string]any{"workspaceId": workspaceID, "snapshot": recoveryHash([]any{workspaceID, item, fingerprint}), "contract": item.Contract, "criteria": checks, "accepted": goalAcceptedAt(item, run, fingerprint), "executionReady": goalExecutionReady(run), "runId": item.RunID, "receipts": receipts}
+	view["canReview"] = run != nil && run.Status != "running" && run.Status != "awaiting_approval" && run.Status != "awaiting_clarification"
+	if run != nil {
+		view["flowInputs"] = run.FlowInputs
+		view["inputsStale"] = run.GoalInputsStale
+	}
+	return view
 }
 func goalContractContext(item PlanItem) string {
 	if item.Contract == nil {
@@ -236,6 +259,7 @@ func (a *App) goalAcceptanceAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("目标或执行证据已变化，请刷新后重试"))
 		return
 	}
+	undoFlow := flowInvalidationRollback(s)
 	oldRaw, _ := json.Marshal(s.Plan)
 	oldUpdated := s.Updated
 	if r.Method == "PUT" {
@@ -318,7 +342,10 @@ func (a *App) goalAcceptanceAPI(w http.ResponseWriter, r *http.Request) {
 		a.syncPlanOutcomeLocked(s, run)
 	}
 	if err := a.save(s); err != nil {
-		_ = json.Unmarshal(oldRaw, &s.Plan)
+		undoFlow()
+		var restoredPlan []PlanItem
+		_ = json.Unmarshal(oldRaw, &restoredPlan)
+		s.Plan = restoredPlan
 		s.Updated = oldUpdated
 		fail(w, 500, err)
 		return

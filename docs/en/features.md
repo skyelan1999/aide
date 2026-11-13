@@ -37,3 +37,5 @@ Appearance includes separate palette and light/dark/system preferences, reduced 
 
 
 Source additions (2026-11-13): [goals, acceptance and project knowledge](project-goals-knowledge.md), using existing plans/token memory with individual operator reviews, attributed records and explicit replacement. Not included in the RC2 package.
+
+2026-11-13 source additions: [change impact and staged workflows](project-impact-workflows.md), with evidence reviews, next-step guidance, plugin configuration, accepted inputs and invalidation. Not in RC2.

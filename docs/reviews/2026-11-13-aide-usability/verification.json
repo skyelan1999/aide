@@ -1,0 +1,2860 @@
+{
+  "status": "pass",
+  "sourceCommit": "2cda6a207abfd89dc43c5beaec7e2a014dd1729f",
+  "sourceFingerprint": "c1d2f703d5077fbdd25b9fe47ffba73f5a3c2ba42f868048f9556dbcbc3d1c17",
+  "full": {
+    "commands": 346,
+    "allExitCodesZero": true,
+    "receipt": {
+      "profile": "full",
+      "status": "pass",
+      "fingerprint": "c1d2f703d5077fbdd25b9fe47ffba73f5a3c2ba42f868048f9556dbcbc3d1c17",
+      "head": "2cda6a207abfd89dc43c5beaec7e2a014dd1729f",
+      "time": "20261113T124526521584Z",
+      "results": [
+        {
+          "command": [
+            "git",
+            "diff",
+            "--check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/app.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/live-markdown-scan.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/stable-markdown-cache.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_reminder_styles.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_approval_persistence.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/settings-init.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "scripts/version.sh",
+            "check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_agent_route.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_go_test_shards.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/check_docs.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/install.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/aide.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/docker-release.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_docker_release.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_install.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/i18n.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/locales/en.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_i18n.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_i18n_coverage.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_stream_url.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_accessibility_port.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_windows_port_lifecycle.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_local_root.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_control_bridge_launchers.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_ui_click_latency.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/ui-response-latency.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-image-path.test.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-download-export.test.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-pdf-layout.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-infrared.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-lensing.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-path.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-timeline.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-topics.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-live-preview.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-template-icons.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/attachment-source-label.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-history-writable.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-document-continuation.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-workspace-scene.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-cache.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-coverage-state.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/toast-lifecycle.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/lock-entry.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/lock-cluster.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/lock-cluster-state.test.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/lock-recovery.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/file-recovery-scroll.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/file-autosave-retry.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/file-open-request-ownership.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/continuity-isolation.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/continuity-lock-write.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/workspace-scene-transition.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/outcome-pagination.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/outcome-overview-lifecycle.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/outcome-request-ownership.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/session-render-cache.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/run-activity-cards.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/run-stop-ownership.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/session-run-controls.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/task-action-hub.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/recovery-transfer.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/markdown-code.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-code.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/context-meter.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/starmap-logbook.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-logbook.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/steer-user-bubbles.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/git-history.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/git-history.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/file-unix-metadata.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/parallel-chat.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/parallel-chat.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/session-model-selection.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/session-model-selection.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/xiaomi-model-picker.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pause-session-isolation.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/staged-output.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/reasoning-settings.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_source_fingerprint.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-progressive-cadence.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_maintenance.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_message_lan_launcher.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_local_dependency_image.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-local-frame.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-live-metadata.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-frame-work.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-stellar-scale.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-empty-state.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/plugin-plans.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/bootstrap-file-recovery.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-diagrams.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-ai-exploration.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-file-preview.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/workbench-background.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/knowledge-web-parser.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/crash-monitor.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/crash-monitor.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_launcher_data.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/urdf-preview.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/urdf-preview.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-upgrade.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/plugin-upgrade.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/starmap-background.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/file-route-location.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/resource-guard.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_resource_guard.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_pip_install_retry.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/mcp-source-form.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_prebuilt_publication.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_offline_bundle.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/message-center.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/message-center.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/message-notifications.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/message-notifications.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/identity-login-routing.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/assistant-live.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/assistant-live.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_voice_panel.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/qwen-tts.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/tts-playback.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/assistant-delegation.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/document-proposals.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/management.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/management-permissions.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-market.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/plugin-market.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-file-preview.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-workbench.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-workbench-client.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "scripts/plugin-workbench.test.cjs",
+            "scripts/plugin-workbench-client.test.cjs",
+            "scripts/plugin-file-preview.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-plugin-file-preview.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/local-mounts.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/auto-model-router-ui.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/model-token-chart.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "scripts/model-token-chart.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/account-balance-pool.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "scripts/account-balance-pool.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/generated-media.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/assistant-call.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/assistant-call.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/assistant-realtime.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/assistant-pcm-worklet.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/assistant-realtime.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_development_toolbox.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_reminder_popup.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_voice_sample_duration.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_starmap_identity_race.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/prebuild-wheels.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_prebuild_wheels.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_avatar_pack_paths.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_frame_interpolation.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_mermaid_proof_auth.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/ui_queue_check.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/ui_stream_check.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_ui_acceptance_scope.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/preview-safety.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_dxf_preview_bounds.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_docx_preview_bounds.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/drawio-preview-safety.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_preview_bounds.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/drawio-layout-fixes.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_layout_fixes.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_clone_constraints.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_geometry_fixes.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_lifecycle_alpha.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_obj_preview_bounds.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/avatar_asset_audit.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_ai_templates.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_animation_validation.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_visio_archive.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_visio_polyline.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_visio_nurbs.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_visio_media_errors.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_trello_limits.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_gif_frames.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_freehand_preview.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_palette_search.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/diagramly/Extensions.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/extensions.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/integrate.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/stencils.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_native_distribution.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_reference_relay_agent.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/source-relay-ui.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_windows_native_package.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/docx-style-bridge.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_png_import.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_tts_archive_integrity.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_zip_preview_bounds.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/drawio-layout-second-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/highlight-grammar-fixes.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_highlight_grammar_review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-editing-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-editing-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_editing_review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-data-integrity-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-data-integrity-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_data_integrity.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-workbench-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-workbench-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-workbench-palette-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_workbench_review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-import-plugin-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-import-plugin-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_import_plugin_review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/drawio-linear-regex.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_cors_linear.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_linear_regex.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-cors-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-device-shape-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-device-shape-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_device_shapes.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-mathjax-issue-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/ui/safe.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/bussproofs.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/centernot.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mathtools.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mhchem.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/physics.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-traversal-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_parser_layout_resources.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_traversal.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-resource-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--jitless",
+            "scripts/test_plantuml_converter_issues.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-plantuml-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/plantuml/drawio-plantuml.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_mermaid_native_issues.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-mermaid-native-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/mermaid/drawio-mermaid.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-mermaid-svg-issues.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/mermaid.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_drawio_ui_fallback.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-ui-robustness-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/sync_drawio_ui_robustness.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-mathjax-layout-issues.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_cad_light_aggregate.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-cad-asset-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/STLLoader.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-markdown-boundaries.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_libavoid_readiness.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_orgchart_assembly_mirror.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-orgchart-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/libavoid-js/libavoid.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-preview-lifecycle.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_marked_link_scans.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-marked-link-scans.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/marked.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/mermaid-math.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-mermaid-resource-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-freehand-corners.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-assistant-call-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-drawio-message-origin.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-mathjax-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/cases.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_marked_resource_scans.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-marked-resource-scans.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/test_html2canvas_scans.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-html2canvas-scans.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-template-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-dompurify-stack.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/vendor/drawio/js/sanitizer/purify.min.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-drawio-preview-bounds.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "internal/server/mixsoul/dynamics.test.cjs",
+            "internal/server/mixsoul/embedding-auth.test.cjs",
+            "internal/server/mixsoul/emotion.test.cjs",
+            "internal/server/mixsoul/initiative.test.cjs",
+            "internal/server/mixsoul/native-memory.test.cjs",
+            "internal/server/mixsoul/quotation.test.cjs",
+            "internal/server/mixsoul/store.test.cjs",
+            "internal/server/mixsoul/system.test.cjs",
+            "internal/server/mixsoul/topic.test.cjs",
+            "scripts/assistant-composer-entry.test.cjs",
+            "scripts/assistant-initiative.test.cjs",
+            "scripts/test_assistant_result_refresh.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-markdown-export-cancel.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/markdown-inline-image.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-markdown-inline-images.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/obj-triangle-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-obj-triangle-budget.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-predictor-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-resource-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/highlight-work-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-highlight-work-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-structure-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/sync_plantuml_resource_helpers.cjs",
+            "--check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plantuml-resource-helpers.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/plantuml-resource-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/drawio-plantuml-resource-browser-cases.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-page-canvas-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-page-canvas-budget.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-decoder-followup-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-decoder-followups.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/sync_pdf_openjpeg.cjs",
+            "--check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-components-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-jpx-components.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-function-depth-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-function-depth.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-markdown-recovery.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-resource-depth-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-resource-depth.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-font-annotation-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-font-annotation-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-graphics-fax-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-graphics-fax-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-flate-image-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-flate-image-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-embedded-dimension-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-embedded-dimensions.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/urdf-interaction-budget.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-urdf-interaction-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-font-program-budget-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-font-program-budgets.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-parser-followup-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-stream-sink-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-parser-followups.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-stream-lifecycle.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-font-attachment-review.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-pdf-font-attachments.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_mixsoul_embedding_follow.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_codex_host_source.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_launcher_contract.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_macos_desktop.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-workbench-tabs.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/plugin-workbench-tabs.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/runtime-lifecycle.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/runtime-lifecycle.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_runtime_assets_config.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/experience-runtime.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/native-touchid.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_windows_desktop.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/keybindings.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/desktop-capture.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_checkout_byte_integrity.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-triage-regressions.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-preflight.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_sherpa_build_integrity.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_release_base_images.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-alpha.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-colors.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-allocation-layer.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/sync_pdf_jpx_alpha.cjs",
+            "--check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-native-fixes.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "scripts/pdf-jpx-packet-borrow.test.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_host_bridge_vendor.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_windows_helper_notices.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/project-records.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/session-plan.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/project-workflows.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-project-workflows.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/plugin-guide.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "scripts/browser-usability-audit.cjs"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_runtime_assets.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_go_snapshot.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_optional_step.py"
+          ],
+          "exit": 0
+        }
+      ],
+      "log": ".agent-state/verify-20261113T124526521584Z.log"
+    },
+    "rawGoReportSHA256": "9df38e9ab4d2d6522f8a921501088b48240c10499e17cec79611e1b458400a2f",
+    "server": {
+      "inventory": 1752,
+      "shards": 24,
+      "passed": 1662,
+      "skipped": [
+        "TestAssistantAgenticPluginResultReturnedToModel",
+        "TestAssistantDeliveryBrowserFixture",
+        "TestAssistantOpenAICallLiveRelay",
+        "TestAssistantRealtimeLiveSyntheticAudio",
+        "TestAuthoringPrepareDoesNotExecuteAndApprovalInstalls",
+        "TestButtonFeedbackBrowser",
+        "TestCapabilityPluginLiveLifecycle",
+        "TestCommandPanelBrowser",
+        "TestContextRecoveryLiveModels",
+        "TestCurrentTimePluginAvailableToAideAndXiaomi",
+        "TestExecutionEnvironmentsLiveLuna",
+        "TestFileGitHistoryBrowserFixture",
+        "TestIssue103AskpassHelperProcess",
+        "TestIssue146CaseAliasesAreNotNewPaths",
+        "TestIssue76CurlOutputProcess",
+        "TestIssue79BatchOutputProcess",
+        "TestIssue96RejectsFractionalRevision",
+        "TestKnowledgeConclusionTopicsLiveBrowser",
+        "TestKnowledgeLocalFallbackRejectsChangedSourceIdentity",
+        "TestKnowledgeLocalProcessHelper",
+        "TestKnowledgeLocalReadFailurePublishesPrefixAndOtherSources",
+        "TestKnowledgeLocalUnavailableRootRetainsSameOriginObservation",
+        "TestKnowledgeUnreadableBodyDoesNotHideLaterFiles",
+        "TestLANAccessBrowserFixture",
+        "TestLargeEngineeringLiveLuna",
+        "TestLargeEngineeringPhaseTimingLiveLuna",
+        "TestLargeTransferBrowser",
+        "TestLargeTransferSSHLive",
+        "TestLockBrowserFixture",
+        "TestLunarCalendarPluginAvailableToAideAndXiaomi",
+        "TestManagementPermissionsPersistAndRoles",
+        "TestManagementReferenceLocksAndOrdinaryAccess",
+        "TestManagementUpgradePreservesSettingsAndDisabledState",
+        "TestMapCanvasInstalledCandidate",
+        "TestMarketBrowseLiveOfficialCatalog",
+        "TestMarketSourceCompatibilityBrowserFixture",
+        "TestMarketSourceOpenAIActualPackage",
+        "TestPWSignedAssetsAndExactWorkbenchBytes",
+        "TestPWSignedBundleInstallAndUpgradePreserveManifest",
+        "TestPWSignedRuntimeIntegrityAndVerifiedImage",
+        "TestPageBalanceBrowserFixture",
+        "TestPluginFilePreviewBrowser",
+        "TestPluginMarketExternalCatalogMetadata",
+        "TestPluginMarketPublishedPackages",
+        "TestPluginMarketRefreshBrowserHost",
+        "TestPluginQuotaActualPackage",
+        "TestPluginQuotaBrowserFixture",
+        "TestPluginRoutingBrowser",
+        "TestPluginSourceNativeComparison",
+        "TestPluginUpgradeBrowserFixture",
+        "TestPluginUpgradeButtonsBrowser",
+        "TestProfessionalWorkflowApprovalAndPermission",
+        "TestProfessionalWorkflowAutoReadRespectsDisabledTool",
+        "TestProfessionalWorkflowBranchContracts",
+        "TestProfessionalWorkflowBuiltinHonorsCurrentDisabledTools",
+        "TestProfessionalWorkflowBuiltinTools",
+        "TestProfessionalWorkflowFileBindingAndAutoInput",
+        "TestProfessionalWorkflowGraph",
+        "TestProfessionalWorkflowInferenceParallelAndOptions",
+        "TestProfessionalWorkflowManualOnlyBridge",
+        "TestProfessionalWorkflowModelNode",
+        "TestProfessionalWorkflowRunSnapshotAndCancel",
+        "TestProfessionalWorkflowShellKeepsOriginalApproval",
+        "TestProfessionalWorkflowStoreAndBindings",
+        "TestProjectRecordsBrowser",
+        "TestProjectWorkflowsBrowser",
+        "TestReferenceRelayBrowserFixture",
+        "TestReleaseBrowserMatrix",
+        "TestReleasePublicPackageFunctions",
+        "TestRemainingStarLinkDaemon",
+        "TestReminderScheduleBrowser",
+        "TestSFTPRelayBrowserFixture",
+        "TestSSHKnowledgeCursorRestartHelper",
+        "TestSSHLiveFinalPluginCompatibility",
+        "TestSSHLiveGitHistory",
+        "TestSSHLivePluginSourceSnapshots",
+        "TestSSHLiveWorkspaceAndIndependentSource",
+        "TestSkillLibraryBundleImportAndNativeOwner",
+        "TestSkillLibraryCancelsInflightAndRechecksGeneration",
+        "TestSkillLibraryLivePublicCatalog",
+        "TestSkillLibraryRejectsUntrustedDownloadsAndVirtualTraversal",
+        "TestSkillLibraryRolesReadonlyDisabledAndCancellation",
+        "TestSkillLibrarySearchCachePrepareConfirmReadAndLocks",
+        "TestSourceFileActionsLiveSFTP",
+        "TestSourcesLiveProtocols",
+        "TestStaticAuditLiveLuna",
+        "TestTerminalSessionFeaturesInstalledCandidate",
+        "TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools",
+        "TestTransferSFTPProcess",
+        "TestUsabilityBrowserFixture"
+      ],
+      "failedShards": []
+    },
+    "scope": "Entire registered server inventory partitioned exactly once; other packages race, platform contracts, vet and default-asset checks also passed. Conditional skips are not functionality acceptance."
+  },
+  "browser": {
+    "usability": {
+      "status": "pass",
+      "scope": "Real Aide HTTP/DOM/persistence, exact installed packages and unpaid deterministic provider; no production, paid accounts, external hardware or deployment",
+      "cases": [
+        {
+          "id": "zh-CN-1440",
+          "status": "pass",
+          "checks": [
+            "every visible installed plugin has readable context, settings and package documentation; Escape closes only help",
+            "enable/disable labels reflect actual action; disabled plugin guide remains available",
+            "file-dependent launch gives a working project-files action without opening an empty failing workbench",
+            "real workbench opens; contextual help Escape preserves the iframe, tab and connection",
+            "unsaved review state/note and contract edits survive real parent remount; newer stored contract blocks stale draft submission until explicit choice",
+            "project knowledge draft survives remount and clears after actual successful save",
+            "Enter in file/tool search never accidentally analyzes or creates a workflow"
+          ],
+          "guideCount": 42
+        },
+        {
+          "id": "zh-CN-390",
+          "status": "pass",
+          "checks": [
+            "every visible installed plugin has readable context, settings and package documentation; Escape closes only help",
+            "enable/disable labels reflect actual action; disabled plugin guide remains available",
+            "file-dependent launch gives a working project-files action without opening an empty failing workbench",
+            "real workbench opens; contextual help Escape preserves the iframe, tab and connection",
+            "unsaved review state/note and contract edits survive real parent remount; newer stored contract blocks stale draft submission until explicit choice",
+            "project knowledge draft survives remount and clears after actual successful save",
+            "Enter in file/tool search never accidentally analyzes or creates a workflow"
+          ],
+          "guideCount": 42
+        },
+        {
+          "id": "en-1440",
+          "status": "pass",
+          "checks": [
+            "every visible installed plugin has readable context, settings and package documentation; Escape closes only help",
+            "enable/disable labels reflect actual action; disabled plugin guide remains available",
+            "file-dependent launch gives a working project-files action without opening an empty failing workbench",
+            "real workbench opens; contextual help Escape preserves the iframe, tab and connection",
+            "unsaved review state/note and contract edits survive real parent remount; newer stored contract blocks stale draft submission until explicit choice",
+            "project knowledge draft survives remount and clears after actual successful save",
+            "Enter in file/tool search never accidentally analyzes or creates a workflow"
+          ],
+          "guideCount": 42
+        },
+        {
+          "id": "en-390",
+          "status": "pass",
+          "checks": [
+            "every visible installed plugin has readable context, settings and package documentation; Escape closes only help",
+            "enable/disable labels reflect actual action; disabled plugin guide remains available",
+            "file-dependent launch gives a working project-files action without opening an empty failing workbench",
+            "real workbench opens; contextual help Escape preserves the iframe, tab and connection",
+            "unsaved review state/note and contract edits survive real parent remount; newer stored contract blocks stale draft submission until explicit choice",
+            "project knowledge draft survives remount and clears after actual successful save",
+            "Enter in file/tool search never accidentally analyzes or creates a workflow"
+          ],
+          "guideCount": 42
+        }
+      ]
+    },
+    "workflow": {
+      "status": "pass",
+      "scope": "Actual HTTP/DOM/persistence with synthetic project files and an unpaid deterministic provider",
+      "cases": [
+        {
+          "id": "zh-CN-1440",
+          "status": "pass",
+          "checks": [
+            "empty legacy session opens without a runtime-error toast (#878)",
+            "indexed specification, calculation and report relations become saved review candidates",
+            "operator classification, completion and observation persist",
+            "stale write rejected and unsent review retained across refresh",
+            "actual downloaded impact JSON includes stored evidence and reviews",
+            "localized recipe materializes five accepted-goal stages with enforced dependencies",
+            "next-step navigator starts the correct stage and advances only after acceptance",
+            "real synthetic runs require acceptance and carry predecessor output/run provenance into the next stage",
+            "configured plugin receipt cannot be skipped; blocked stage preserves completed predecessors",
+            "revised predecessor invalidates downstream acceptance transitively",
+            "workflow and impact reviews survive reload; viewport fits without page errors"
+          ]
+        },
+        {
+          "id": "zh-CN-390",
+          "status": "pass",
+          "checks": [
+            "empty legacy session opens without a runtime-error toast (#878)",
+            "indexed specification, calculation and report relations become saved review candidates",
+            "operator classification, completion and observation persist",
+            "localized recipe materializes five accepted-goal stages with enforced dependencies",
+            "next-step navigator starts the correct stage and advances only after acceptance",
+            "real synthetic runs require acceptance and carry predecessor output/run provenance into the next stage",
+            "configured plugin receipt cannot be skipped; blocked stage preserves completed predecessors",
+            "revised predecessor invalidates downstream acceptance transitively",
+            "workflow and impact reviews survive reload; viewport fits without page errors"
+          ]
+        },
+        {
+          "id": "en-1440",
+          "status": "pass",
+          "checks": [
+            "empty legacy session opens without a runtime-error toast (#878)",
+            "indexed specification, calculation and report relations become saved review candidates",
+            "operator classification, completion and observation persist",
+            "localized recipe materializes five accepted-goal stages with enforced dependencies",
+            "next-step navigator starts the correct stage and advances only after acceptance",
+            "real synthetic runs require acceptance and carry predecessor output/run provenance into the next stage",
+            "configured plugin receipt cannot be skipped; blocked stage preserves completed predecessors",
+            "revised predecessor invalidates downstream acceptance transitively",
+            "workflow and impact reviews survive reload; viewport fits without page errors"
+          ]
+        },
+        {
+          "id": "en-390",
+          "status": "pass",
+          "checks": [
+            "empty legacy session opens without a runtime-error toast (#878)",
+            "indexed specification, calculation and report relations become saved review candidates",
+            "operator classification, completion and observation persist",
+            "localized recipe materializes five accepted-goal stages with enforced dependencies",
+            "next-step navigator starts the correct stage and advances only after acceptance",
+            "real synthetic runs require acceptance and carry predecessor output/run provenance into the next stage",
+            "configured plugin receipt cannot be skipped; blocked stage preserves completed predecessors",
+            "revised predecessor invalidates downstream acceptance transitively",
+            "workflow and impact reviews survive reload; viewport fits without page errors"
+          ]
+        }
+      ]
+    },
+    "workflowIdentity": {
+      "head": "2cda6a207abfd89dc43c5beaec7e2a014dd1729f",
+      "fixtureStartedAt": "2026-11-13T13:08:50.468981298Z",
+      "productFiles": 4158,
+      "productSHA256": "e275989e4dc5c41ac57295e1d4013d62225364724a3774f07fc8ea2e3158c751",
+      "browserDriverSHA256": "354d732580480ec4f182ac948250d88d071504ace394e885bc9f3a663dab87f5",
+      "productFilesModifiedAfterFixtureStart": []
+    },
+    "usabilityIdentity": {
+      "productSHA256": "1ea0781377a45add12d08bf5a75eefa639114a61a2b32f36cce6c76efebc343c",
+      "sourceHead": "2cda6a207abfd89dc43c5beaec7e2a014dd1729f",
+      "scope": "Isolated audit baseline; synthetic data and clean environment. No real account keys or installed user plugins.",
+      "container": "aide-usability-fixture-20261113",
+      "packageInventorySHA256": "f3a6acc2ee06787b7d29ecd6701a69093ac51803cceb73962b72e9e8853ff3c6"
+    }
+  },
+  "packageAudit": {
+    "publicMarketCommit": "7a7aa3d8912471ee53391d307b8c88ac74146726",
+    "publicZIPs": 32,
+    "additionalPrivateLocalIdentities": 11,
+    "ordinaryInitialZIPInstallations201": 43,
+    "visibleGuidesCheckedPerProfile": 42,
+    "workbenchEntryTypesInspected": 19,
+    "privateArtifacts": "Not published; exact identities, later current-version candidate upgrades and private implementation evidence remain local."
+  },
+  "limitations": [
+    "Synthetic workspace and unpaid deterministic provider; no production data, deployment or restart.",
+    "Native desktop/robot/hardware/CAD/renderer/provider/account integration not accepted by first-use screenshots.",
+    "Private current-version fixes separately tested and merged; historical obsolete patch closed without merging.",
+    "Existing dependency images validate assets/toolchain only, not a newly built distribution.",
+    "No new program Release or marketplace publication."
+  ]
+}

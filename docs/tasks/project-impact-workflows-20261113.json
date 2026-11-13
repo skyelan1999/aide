@@ -1,0 +1,87 @@
+{
+  "id": "project-impact-workflows-20261113",
+  "request": "其他的也都做了吧（核心业务建议第3项需求变化影响分析、第4项专业流程贯通；延续现有能力、测试和文档标准）",
+  "baseline": "dbf655e913af92987ac3c62ce9359eca7bbb4cd2",
+  "initial_status": "",
+  "acceptance": [
+    "Use existing knowledge graph relations for bounded file-level impact candidates, explicit uncertainty/coverage, relation evidence, editable must_change/review/unaffected classifications and persisted operator observations/completion with CAS and project isolation.",
+    "Expand repeatable software/engineering recipes into existing plan items with deliverables, individual acceptance and dependency gates; select installed plugin tools by stage and refuse missing/changed tools at launch.",
+    "Bind accepted predecessor output, file/tool receipts and source run snapshots to the next stage; preserve completed goals when a later stage fails; invalidate downstream sign-off after predecessor changes; imported plans retain reusable recipe metadata but reset identities/reviews.",
+    "Expose both in existing task/planning UI with English localization, export and desktop/narrow real browser checks.",
+    "Run focused race/persistence/concurrency, real synthetic plugin execution and input handoff tests, quick/full gates and bilingual current documentation.",
+    "Human-oriented first-use help, file and readable plugin selection, stage progress/next action and clear recovery guidance; then audit Aide and all corresponding plugins for similar discoverability/usage obstacles, preserving explicit evidence and environment limits."
+  ],
+  "scope": [
+    "Owned feature worktree, internal/server plan/knowledge/task/tool integration and existing task-board UI. Reuse plan items and existing plugin execution rather than another scheduler.",
+    "No production restart/upgrade, paid models, new version/Release, marketplace or commercial plugin modification; preserve original user files.",
+    "User follow-up: humanize these entry points, then comprehensive Aide/plugin usability audit; keep commercial information private and do not publish private plugin artifacts."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized both remaining core-business proposals: change-impact analysis and connected professional workflows, retaining existing test/documentation standards.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Existing indexed file/symbol relations and session/plan/run persistence; staged recipes use ordinary goals, dependencies, plugin tools and recovery. Explicit uncertainty, version/CAS checks, accepted-source snapshots, bounded model reads and monotonic descendant invalidation. First-use guidance, searchable file/plugin checkboxes and next-step navigation.",
+      "evidence": [
+        "docs/project-impact-workflows.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented persisted relation-backed impact reviews/history/CAS, bounded model reads, reusable localized plan recipes, selected plugin identities/receipts, accepted-input handoff, input invalidation, explicit tool reconfiguration and paused-stage recovery. Human first-use help, file/plugin checkboxes and live next-step navigator; fixed legacy null-runs toast #878.",
+      "evidence": [
+        "docs/project-impact-workflows.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Combined frozen source 2cda6a20 full gate passed: all 346 commands exit 0; 24/24 server shards, 1662 passed/90 conditional skips of 1752 registered items, other packages race/platform contracts/vet. Two real zh/en x 1440/390 browser matrices passed 4/4 each. All 43 initial plugin artifacts installed normally; all 42 visible guides and 19 workbench entry types checked with explicit native/account/hardware limits. Private current-version fixes separately tested and merged; obsolete historical patch closed without merging.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/verification.json",
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual final behavior, first-use entry paths, API/storage/recovery guidance, source/runtime boundaries and public audit matrix updated. Exact private evidence remains local/private.",
+      "evidence": [
+        "docs/plugin-usage.md",
+        "docs/en/plugin-usage.md",
+        "docs/project-impact-workflows.md",
+        "docs/en/project-impact-workflows.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned source/tests/docs reviewed and explicitly staged. User original work preserved; raw evidence/private artifacts remain ignored/local. Disposable services stopped at final handoff; production untouched.",
+      "evidence": [
+        "docs/reviews/2026-11-13-aide-usability/README.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "This improvement stage delivers source through PR #881; no new program version/Release, marketplace package, production upgrade or runtime replacement. Prior release work is a separate delivery identity.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the source merge before rebuilding if needed; no production data migration or service replacement was performed.",
+  "handoff": "Verified source 2cda6a20 and unchanged code fingerprint c1d2f703d5077fbdd25b9fe47ffba73f5a3c2ba42f868048f9556dbcbc3d1c17; final documentation/evidence only commit follows. PR #881 tracks merge state. Production remains on its prior service build. Private fixes merged separately; private/native/account/hardware acceptance limits are explicit.",
+  "issues": [
+    877,
+    878,
+    879,
+    880
+  ],
+  "operator": "skyelan1999",
+  "followup_usability_audit": {
+    "status": "pass",
+    "request": "做的时候一定要更人性化，不要让人不知道怎么用，你可以做完了之后全面排查aide和对应所有插件的类似问题",
+    "scope": "Inventory current Aide surfaces, installed/corresponding plugin sources and marketplace packages; inspect entry/first-run/empty/configuration/save/approval/failure/recovery flows, record what was actually opened and fix confirmed gaps. Source/package/runtime acceptance stays separate.",
+    "task": "aide-usability-audit-20261113",
+    "evidence": "docs/reviews/2026-11-13-aide-usability/README.md"
+  }
+}

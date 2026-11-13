@@ -15,6 +15,7 @@ import (
 // （source=aide，runId/step 指回所属 run）。它是编排视图的唯一数据源，
 // 也是 aide 后续轮次理解背景与历史的上下文来源。
 type PlanItem struct {
+	Flow            *PlanFlowStage        `json:"flow,omitempty"`
 	WorkspaceID     string                `json:"workspaceId,omitempty"`
 	ContractHistory []GoalContractArchive `json:"contractHistory,omitempty"`
 	Contract        *GoalContract         `json:"contract,omitempty"`
@@ -162,6 +163,7 @@ func (a *App) updatePlanTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+	undoFlow := flowInvalidationRollback(s)
 	old, oldClosed := item.Status, item.ClosedAt
 	if in.Status == "closed" {
 		item.Status, item.ClosedAt = "closed", now
@@ -169,7 +171,9 @@ func (a *App) updatePlanTask(w http.ResponseWriter, r *http.Request) {
 		item.Status, item.ClosedAt = "pending", ""
 	}
 	item.Updated = now
+	a.reconcileFlowInputsLocked(s)
 	if err := a.save(s); err != nil {
+		undoFlow()
 		item.Status, item.ClosedAt = old, oldClosed
 		fail(w, 500, err)
 		return
@@ -265,6 +269,10 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, fmt.Errorf("导入任务需为 1–%d 项", planItemLimit))
 		return
 	}
+	if err := validateImportedFlowTasks(doc.Tasks); err != nil {
+		fail(w, 400, err)
+		return
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
@@ -280,6 +288,8 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, fmt.Errorf("导入后超过 %d 项上限，请先关闭或清理旧任务", planItemLimit))
 		return
 	}
+	flowGroups := map[string]string{}
+	catalog := a.flowToolCatalogLocked()
 	idMap := map[string]string{}
 	for _, t := range doc.Tasks {
 		if strings.TrimSpace(t.ID) != "" {
@@ -313,7 +323,21 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 		if contract != nil {
 			workspaceID = a.wsID()
 		}
-		added = append(added, PlanItem{WorkspaceID: workspaceID, Contract: contract, ID: id, Title: title, Detail: t.Detail, Source: "user", Status: "pending",
+		var flow *PlanFlowStage
+		if t.Flow != nil {
+			if flowGroups[t.Flow.ID] == "" {
+				flowGroups[t.Flow.ID] = "flow-" + newID()
+			}
+			flow = &PlanFlowStage{ID: flowGroups[t.Flow.ID], Recipe: t.Flow.Recipe, Stage: t.Flow.Stage, Tools: map[string]string{}}
+			for name := range t.Flow.Tools {
+				if catalog[name] == "" {
+					fail(w, 409, errors.New("流程工具不可用："+name))
+					return
+				}
+				flow.Tools[name] = catalog[name]
+			}
+		}
+		added = append(added, PlanItem{Flow: flow, WorkspaceID: workspaceID, Contract: contract, ID: id, Title: title, Detail: t.Detail, Source: "user", Status: "pending",
 			DependsOn: deps, Agent: strings.TrimSpace(t.Agent), Created: now, Updated: now})
 	}
 	s.Plan = append(s.Plan, added...)
@@ -373,6 +397,7 @@ func (a *App) syncAgentPlanLocked(s *Session, task *Task) {
 // syncPlanOutcomeLocked 在 run 收尾时给规划收口：成功则未完成的步骤记为完成，
 // 失败/中止则记为失败；用户任务的状态跟随它启动的 run。
 func (a *App) syncPlanOutcomeLocked(s *Session, task *Task) {
+	defer a.reconcileFlowInputsLocked(s)
 	if s == nil || task == nil {
 		return
 	}
@@ -472,6 +497,7 @@ func (a *App) planContextLocked(s *Session, focusID string, approvalLimit int) s
 	if len(approvals) > 0 {
 		out += "\n最近审批记录：\n" + strings.Join(approvals, "\n")
 	}
+	out += impactPlanContext(s, a.wsID())
 	out += "\n以上为上下文参考；执行进度以实际工具结果为准，关闭的任务不要自行恢复。"
 	return out
 }
