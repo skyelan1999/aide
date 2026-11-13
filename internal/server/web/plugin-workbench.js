@@ -15,10 +15,11 @@
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
   const host=document.createElement('section');host.className='plugin-workbench'+(services.inPage?' plugin-workbench-page':'');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
-  title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>{if(close()!==false&&services.inPage)window.close();};
+  title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>{if(close()!==false&&services.inPage)window.close();};
   frame.title=plugin.workbench.title;frame.setAttribute('allow','fullscreen *');frame.setAttribute('allowfullscreen','');frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
   const speechStart=document.createElement('button'),speechStop=document.createElement('button');speechStart.textContent=services.t('开始本机录音');speechStop.textContent=services.t('停止本机录音');speechStart.hidden=true;speechStop.hidden=true;header.append(speechStart,speechStop);
   header.append(title,notice,button);host.append(header,frame);document.body.append(host);
+  if(services.guide){const help=document.createElement('button');help.type='button';help.textContent=services.t('怎么使用');help.onclick=()=>services.guide(plugin);header.insertBefore(help,button);}
   const reviewBack=document.createElement('button');reviewBack.type='button';reviewBack.className='plugin-workbench-return';reviewBack.hidden=true;reviewBack.textContent=services.t('返回插件工作台');document.body.append(reviewBack);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);
   const save=document.createElement('button');save.type='button';save.className='plugin-workbench-export';save.hidden=true;header.append(save);
@@ -144,7 +145,7 @@
    frame.src=result.url;return true;
   }catch(error){if(active===item){close(true,'error');if(error.name!=='AbortError')services.toast(error.message);}return false;}
  }
- document.addEventListener('keydown',e=>{if(active&&!active.reviewing&&e.key==='Escape'){e.preventDefault();const page=active.services.inPage;if(close()!==false&&page)window.close();}});
+ document.addEventListener('keydown',e=>{if(active&&!active.reviewing&&e.key==='Escape'&&!document.querySelector('dialog[open]')){e.preventDefault();const page=active.services.inPage;if(close()!==false&&page)window.close();}});
  window.addEventListener('beforeunload',event=>{if(active?.documentDirty){event.preventDefault();event.returnValue='';}});
  window.addEventListener('pagehide',()=>close(true,'unload'));
  window.AidePluginWorkbench={open,close,selection,isDirty:()=>active?.documentDirty===true,prepareFileOpen(){if(!active?.services.document)return true;return close(false,'replace')!==false;}};

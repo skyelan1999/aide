@@ -46,3 +46,5 @@
 [项目目标、验收与知识决策](project-goals-knowledge.md) · 2026-11-13 source additions.
 
 [变更影响与分阶段业务流程](project-impact-workflows.md)：文件勾选、影响复核、场景向导和前置成果接续。
+
+- [插件入口与首次使用](plugin-usage.md)

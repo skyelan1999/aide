@@ -7177,7 +7177,8 @@ function reviewPluginWorkbenchProposal(id){
  }
  return selectSession(id);
 }
-function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled),openPage:(plugin,selection)=>window.AidePluginWorkbenchTabs.open(plugin,{t,toast,selection,blocked:()=>lockScreen.locked||!state.token,workspace:recoveryScope})};}
+function pluginGuideServices(){return {api,t,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,settings:openPluginSettings,files:()=>{if(window.AidePluginWorkbenchTabs?.read()){history.replaceState(history.state,'',location.pathname+location.search);pluginPageKey='';document.title=t('aide · AI 开发工作台');}closeSidePanels();$('files-toggle').click();},openWorkbench:plugin=>window.AidePluginWorkbench.open(plugin,pluginWorkbenchServices())};}
+function pluginWorkbenchServices(){return {api,t,toast,guide:plugin=>window.AidePluginGuide.open(plugin,{...pluginGuideServices(),inWorkbench:true}),reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled),openPage:(plugin,selection)=>window.AidePluginWorkbenchTabs.open(plugin,{t,toast,selection,blocked:()=>lockScreen.locked||!state.token,workspace:recoveryScope})};}
 let pluginPageOpening=false,pluginPageKey='';
 async function openRoutedPluginWorkbench(){
  const route=window.AidePluginWorkbenchTabs?.read();if(!route||lockScreen.locked||!state.token||pluginPageOpening)return;
@@ -7187,8 +7188,9 @@ async function openRoutedPluginWorkbench(){
   if(route.workspace!==scope)throw Error(t('工作区已切换，请从当前工作区重新打开插件'));
   await loadPluginsPanel();
   if(lockScreen.locked||epoch!==chatRecoveryEpoch||scope!==recoveryScope())return;
-  const plugin=state.plugins.find(p=>p.id===route.id&&p.enabled&&!p.error&&p.workbench?.protocol===1);
+  const plugin=state.plugins.find(p=>p.id===route.id&&p.workbench?.protocol===1);
   if(!plugin)throw Error(t('插件工作台不可用，请检查插件是否已启用'));
+  if(!plugin.enabled||plugin.error||window.AidePluginGuide.fileFirst(plugin.id)){pluginPageKey=key;await window.AidePluginGuide.open(plugin,pluginGuideServices());return;}
   const opened=await window.AidePluginWorkbench.open(plugin,{...pluginWorkbenchServices(),inPage:true,selection:route.selection,onClose:()=>{pluginPageKey='';}});
   if(opened){pluginPageKey=key;document.title=(plugin.workbench.title||plugin.name)+' · aide';}
  }catch(error){toast(error.message);}finally{pluginPageOpening=false;}
@@ -7374,7 +7376,8 @@ function renderPluginList() {
     if (p.description) card.append(el('p', 'plugin-desc', trPlugin(p.description)));
     if (p.error) card.append(el('p', 'task-error', '⚠ ' + p.error));
     const foot = el('div', 'plugin-card-foot');
-    const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? t("✓ 使用中") : t("停用"));
+    const guide=el('button','quiet',t('怎么使用'));guide.type='button';guide.dataset.pluginGuide=p.id;guide.onclick=()=>window.AidePluginGuide.open(p,pluginGuideServices());foot.append(guide);
+    const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? t("停用插件") : t("启用插件"));
     toggle.type = 'button';
     toggle.onclick = action(async () => {
       await api('/plugins/' + encodeURIComponent(p.id), { method: 'PUT', body: JSON.stringify({ enabled: !p.enabled }) });
@@ -7382,11 +7385,13 @@ function renderPluginList() {
       toast(p.enabled ? t("已停用插件：") + p.name : t("已启用插件：") + p.name);
     });
     if(p.workbench?.protocol===1){
-      const launch=el('button','quiet',t('打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
-      launch.onclick=action(()=>window.AidePluginWorkbench.open(p,pluginWorkbenchServices()));
+      const needsFile=window.AidePluginGuide.fileFirst(p.id);
+      const launch=el('button','quiet',t(needsFile?'从项目文件打开':'打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
+      launch.title=!p.enabled?t('先启用插件，再打开工作台'):p.error?t('插件载入失败，请查看“怎么使用”和错误详情'):'';
+      launch.onclick=action(()=>needsFile?window.AidePluginGuide.open(p,pluginGuideServices()):window.AidePluginWorkbench.open(p,pluginWorkbenchServices()));
       foot.append(launch);
     }
-    foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
+    foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("已启用") : t("已停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
     card.append(foot);
     host.append(card);
   }

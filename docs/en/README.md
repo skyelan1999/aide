@@ -38,3 +38,5 @@ Dated task ledgers, reviews, old release notes, source-evidence snapshots and ar
 [Project goals, acceptance and decision records](project-goals-knowledge.md) · 2026-11-13 source additions.
 
 [Change impact and staged business workflows](project-impact-workflows.md): file selection, impact reviews, guided scenarios and accepted predecessor handoff.
+
+- [Plugin entry points and first use](plugin-usage.md)

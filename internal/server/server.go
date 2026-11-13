@@ -1608,6 +1608,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
+	mux.HandleFunc("GET /api/plugins/{id}/guide", a.pluginGuide)
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/open", a.openPluginWorkbench)
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/call", a.callWorkbenchBridge)
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/renew", a.renewWorkbenchBridge)

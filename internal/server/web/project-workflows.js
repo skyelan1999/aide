@@ -7,6 +7,7 @@
   function toolPicker(parent, choices, initial, t, remember = () => {}) {
     const selected = new Set(initial || []), picker = el('div', 'project-tool-picker'), search = el('input'), list = el('div', 'project-choice-list');
     search.type = 'search'; search.placeholder = t('搜索插件或功能'); search.setAttribute('aria-label', t('搜索插件或功能')); const notice = el('p', 'project-error'); notice.setAttribute('role', 'status'); picker.append(search, list, notice); parent.append(picker);
+    search.addEventListener('keydown', event => { if (event.key === 'Enter') event.preventDefault(); });
     function draw() {
       list.replaceChildren(); const query = search.value.trim().toLowerCase(), available = new Set(choices.map(c => c.name));
       for (const name of selected) if (!available.has(name)) { const label = el('label', 'project-replace'), check = el('input'); check.type = 'checkbox'; check.value = name; check.checked = true; check.onchange = () => { selected.delete(name); remember([...selected]); draw(); }; label.append(check, el('span', 'project-error', t('已选工具暂不可用：{0}。可启用对应插件，或取消选择后保存。', name))); list.append(label); }
@@ -61,6 +62,7 @@
           if (!files.length) choices.append(el('p', 'muted', t('还没找到文件。先刷新列表；索引未覆盖的文件可手动填写，但需要先完成索引。')));
           if (files.length > 40 || view.seedFilesLimited) choices.append(el('p', 'muted', t('列表只显示部分文件，请输入名称筛选，或手动填写路径。')));
         }
+        search.addEventListener('keydown', event => { if (event.key === 'Enter') event.preventDefault(); });
         search.oninput = drawFiles; paths.addEventListener('input', drawFiles); drawFiles();
         const save = el('button', 'primary', t('分析并保存影响清单')); save.type = 'submit'; const error = el('p', 'project-error'); error.setAttribute('role', 'alert'); form.append(save, error); body.append(form);
         async function mutate(data, control, error) {

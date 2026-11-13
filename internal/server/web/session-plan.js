@@ -143,7 +143,7 @@
       head.append(actions);
       row.append(head);
 
-      if (item.source === 'user' && window.AideProjectRecords) window.AideProjectRecords.goalCard(row, { api, sessionId: current.id, item, t, changed: reload, valid });
+      if (item.source === 'user' && window.AideProjectRecords) window.AideProjectRecords.goalCard(row, { api, workspaceId, sessionId: current.id, item, t, changed: reload, valid });
       if (item.flow && Object.keys(item.flow.tools || {}).length) row.append(node("p", "project-source", t("已选 {0} 项专业工具", Object.keys(item.flow.tools).length)));
       if (item.flow && window.AideProjectWorkflows) window.AideProjectWorkflows.stageTools(row, { api, sessionId: current.id, item, t, valid, changed: reload });
       if (item.detail) {

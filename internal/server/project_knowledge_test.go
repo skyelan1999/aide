@@ -19,6 +19,24 @@ func knowledgeAPI(t *testing.T, a *App) map[string]any {
 	}
 	return v
 }
+func TestProjectKnowledgeMissingEvidenceNamesFieldAndPreservesStore(t *testing.T) {
+	a := testApp(t)
+	for _, field := range []string{"subject", "content", "source"} {
+		before := knowledgeAPI(t, a)
+		in := map[string]any{"action": "propose", "kind": "fact", "subject": "Observed fixture", "content": "Synthetic result", "source": "Fixture v1", "workspaceId": before["workspaceId"], "snapshot": before["snapshot"]}
+		in[field] = " "
+		w := request(a, "POST", "/api/project-knowledge", in)
+		requireStatus(t, w, 400)
+		want := map[string]string{"subject": "主题", "content": "内容", "source": "来源与版本"}[field]
+		if !strings.Contains(w.Body.String(), want) || strings.Contains(w.Body.String(), "UTF-8") {
+			t.Fatal(w.Body.String())
+		}
+		after := knowledgeAPI(t, a)
+		if after["snapshot"] != before["snapshot"] {
+			t.Fatal("failed validation changed project records")
+		}
+	}
+}
 func mutateKnowledge(t *testing.T, a *App, in map[string]any) map[string]any {
 	t.Helper()
 	v := knowledgeAPI(t, a)

@@ -1,0 +1,66 @@
+{
+  "id": "aide-usability-audit-20261113",
+  "request": "做的时候一定要更人性化，不要让人不知道怎么用，你可以做完了之后全面排查aide和对应所有插件的类似问题",
+  "baseline": "6878e5f8c16229e55a064d9d910f93a5fdbfc1fb",
+  "initial_status": "",
+  "acceptance": [
+    "Inventory all current public market packages, private listings and corresponding independent local plugin IDs; pin package hashes/source revisions and separate visible/runtime/source-only evidence.",
+    "Actually inspect Aide core journeys and every applicable plugin entry/first-use or unavailable state, including desktop/narrow UI and contextual guidance; tool-only/adapters/presets must explain their use honestly.",
+    "Confirm and fix discoverability, configuration, save/recovery, draft, keyboard or misleading-state defects with focused meaningful regressions; preserve existing layout, user data, licensing/signatures and permission boundaries.",
+    "Provide readable help and next actions without forcing technical identifiers into primary user flows; keep private specifics out of public issues/docs.",
+    "Run relevant browser/API/race checks and complete the applicable full gates/CI for owned source changes, update usage docs and a per-plugin audit matrix with actual limits."
+  ],
+  "scope": [
+    "Owned host worktree based on 6878e5f8 and isolated plugin worktrees when confirmed source fixes are required; never overwrite the original local plugin work.",
+    "Synthetic data/disposable services; no production restart, live paid-provider/account calls, private artifact publication, signature/permission bypass or unsolicited UI redesign."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requested human-oriented UX and a comprehensive corresponding-plugin audit after the remaining core improvements.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse installed plugin manifests/surfaces and a confined read-only README endpoint for common guidance; classify workbench, file-first, chat, provider/router and declaration-only entry points. Page-local drafts retain their server snapshot and require explicit reconciliation when it changes.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented common contextual guidance, honest state/action labels, file-first routes, help Escape protection, draft retention and conflict reconciliation, required evidence validation, search Enter handling, narrow task creation and navigation. Confirmed bugs tracked in #883–886.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused PluginGuide/ProjectKnowledge race tests passed. Real zh/en 1440/390 matrix passed 4/4 after correcting narrow form CSS. 32 public ZIPs plus 5 existing private artifacts verified/installed; 4 more private development candidates built using tracked HEAD and normal packaging scripts, unpublished. Frozen rerun with expanded inventory and full remain pending.",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Bilingual plugin entry guide and per-public-plugin audit matrix written; final frozen verification evidence pending.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Combined final source verification and PR #881 will cover both remaining business improvements and usability follow-up. Original feature-only full ran all 24 server shards and other race/vet successfully, but overall failed a duplicate localization key; fixed in this owned follow-up, no failed receipt promoted to PASS.",
+  "operator": "skyelan1999",
+  "issues": [
+    882,
+    883,
+    884,
+    885,
+    886
+  ],
+  "parent_task": "project-impact-workflows-20261113"
+}
