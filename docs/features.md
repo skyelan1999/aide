@@ -61,3 +61,6 @@ Per-JPX limits: decompressed input 64 MiB; FTYP 64 KiB; JP2H 8 MiB; ICC 4 MiB; 4
 
 
 [0.1.19 使用与迁移](release-guide-0.1.19.md)。
+
+
+2026-11-13 源码增补：[目标与验收、项目知识与决策记录](project-goals-knowledge.md)。使用现有规划和项目 token 记忆，支持用户逐项复核、带来源的记录及明确替代；RC2 安装包不含此增补。

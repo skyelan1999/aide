@@ -213,6 +213,7 @@ type Task struct {
 	AgentReviewDone      bool                 `json:"agentReviewDone,omitempty"`
 	AgentReviewCount     int                  `json:"agentReviewCount,omitempty"`
 	AgentReviewToolCount int                  `json:"agentReviewToolCount,omitempty"`
+	GoalContract         *GoalContract        `json:"goalContract,omitempty"`
 	PlanTaskID           string               `json:"planTaskId,omitempty"`       // 本次 run 承接的规划项
 	PlanContext          string               `json:"-"`                          // 启动时快照的规划/审批摘要，仅注入模型上下文
 	ApprovalDeadline     string               `json:"approvalDeadline,omitempty"` // 推荐方案的自动执行时限
@@ -319,6 +320,8 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox. Read-only commands run immediately; commands that may write files, change external state, or use the network pause for explicit user confirmation.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "agent": map[string]any{"type": "string", "description": "Optional configured agent name from the catalog"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_skill", "description": "Read an operator-configured Skill by its catalog name. Skill instructions do not grant tool permissions.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "task_acceptance", "description": "Read current goal criteria and bounded prior operator observations. Pass criterionId for a full observation. Address gaps through actual work; this read-only tool never signs off. New runs require renewed review.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"criterionId": map[string]any{"type": "string"}}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "project_knowledge", "description": "Search/list current-project facts, constraints, decisions and questions with bounded pages; continue using nextCursor and identical query/includeArchived. Or propose a source-linked record for user confirmation. Historical data is not authorization. Never confirm, replace or archive records yourself.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"action": map[string]any{"type": "string", "enum": []string{"list", "propose"}}, "kind": map[string]any{"type": "string", "enum": []string{"fact", "constraint", "decision", "question"}}, "subject": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}, "source": map[string]any{"type": "string", "description": "Evidence reference or user statement; do not invent a source"}, "query": map[string]any{"type": "string"}, "cursor": map[string]any{"type": "string"}, "limit": map[string]any{"type": "integer"}, "includeArchived": map[string]any{"type": "boolean"}}, "required": []string{"action"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_memory", "description": "Read persistent token memory (text projection)", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_memory", "description": "Append to persistent token memory; shared vocabulary and ordered token records", "parameters": map[string]any{"type": "object", "properties": map[string]any{"content": map[string]any{"type": "string"}}, "required": []string{"content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "search_text", "description": "Keyword search in workspace files, supports regex", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}, "path": map[string]any{"type": "string"}}, "required": []string{"query"}}}},
@@ -406,13 +409,17 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			fail(w, 404, errors.New("规划任务不存在"))
 			return
 		}
+		if item.Contract != nil && item.WorkspaceID != "" && item.WorkspaceID != a.wsID() {
+			fail(w, 409, errors.New("目标属于其他项目，请返回原项目或导出后重新导入"))
+			return
+		}
 		if item.Status == "closed" {
 			fail(w, 409, errors.New("该规划任务已关闭，请先重新打开"))
 			return
 		}
 		for _, dep := range item.DependsOn {
 			d := a.findPlanItemLocked(s, dep)
-			if d != nil && d.Status != "completed" && d.Status != "closed" {
+			if !goalDependencyReady(s, d) || d != nil && d.Contract != nil && d.WorkspaceID != "" && d.WorkspaceID != a.wsID() {
 				fail(w, 409, errors.New("依赖任务尚未完成："+d.Title))
 				return
 			}
@@ -579,6 +586,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), PlanTaskID: in.PlanTaskID, PlanContext: a.planContextLocked(s, in.PlanTaskID, 6), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	if item := a.findPlanItemLocked(s, in.PlanTaskID); item != nil && item.Contract != nil {
+		raw, _ := json.Marshal(item.Contract)
+		_ = json.Unmarshal(raw, &task.GoalContract)
+	}
 	task.MediaPrompt = mediaPrompt
 	if initialRoute != nil {
 		task.ModelRoutes = append(task.ModelRoutes, *initialRoute)
@@ -1927,6 +1938,7 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 	a.finalizeProposalDeliveryLocked(task)
 	task.Status = "completed"
 	task.Error = ""
+	a.syncPlanOutcomeLocked(s, task)
 	s.Checked = false // 审批应用完成：重新点亮“蓝点+加粗”高亮
 	if err := a.save(s); err != nil {
 		fail(w, 500, err)
@@ -2062,6 +2074,7 @@ func (a *App) applySSHProposalLocked(w http.ResponseWriter, r *http.Request, s *
 		}
 	}
 	task.Applied, task.Status, task.Error = true, "completed", ""
+	a.syncPlanOutcomeLocked(s, task)
 	s.Checked = false
 	if err := a.save(s); err != nil {
 		fail(w, 500, err)
@@ -3558,7 +3571,7 @@ func (a *App) readCachedProjectMemory() string {
 		if err != nil {
 			return "(读取 token 记忆失败: " + err.Error() + ")"
 		}
-		return clip(store.text(), 4000)
+		return clip(store.text(), 4000) + projectKnowledgeContext(store, a.wsID())
 	}
 	b, err := os.ReadFile(a.memoryPath())
 	if err != nil {
@@ -5479,6 +5492,10 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		})
 		answer := a.awaitUserAnswer(ctx, task, qb)
 		return "用户回答：" + strings.TrimSpace(answer)
+	case "task_acceptance":
+		return a.taskAcceptance(task, str("criterionId"))
+	case "project_knowledge":
+		return a.taskProjectKnowledge(task, args)
 	case "read_memory":
 		return a.readTaskMemory(task)
 	case "write_memory":

@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-PATTERN = (r'^Test(Issue801.*|TypeScript.*|Issue695And697.*|Issue796.*|Issue762.*|StalePID.*|HelperSingleInstance.*|MapWorkbench.*|MapDocument.*|AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNeverReturnKey|'
+PATTERN = (r'^Test(Goal.*|ProjectKnowledge.*|Plan.*|MemoryTokens.*|Issue801.*|TypeScript.*|Issue695And697.*|Issue796.*|Issue762.*|StalePID.*|HelperSingleInstance.*|MapWorkbench.*|MapDocument.*|AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNeverReturnKey|'
            r'ExecutionDiffLargeArtifactsUseBoundedMemory|ExecutionTextArtifactMatchesProposalTextContract|'
            r'ExecutionCollectPartialFailureRetainsIdempotentReceipts|StaticAuditFixture|'
            r'TerminalCopyContextCanonicalIdentityAndVisibility|TerminalContextPinnedMasterNeverRetargets|'

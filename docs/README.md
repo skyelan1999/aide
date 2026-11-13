@@ -42,3 +42,5 @@
 
 
 [0.1.19 使用与迁移](release-guide-0.1.19.md)。
+
+[项目目标、验收与知识决策](project-goals-knowledge.md) · 2026-11-13 source additions.

@@ -44,6 +44,9 @@ flowchart LR
 
 并发倍率不是等比例提速承诺；模型审查不是测试通过。详细接口、约束与已有验收见[功能说明](docs/features.md)和[技术白皮书](docs/architecture/aide-technical-whitepaper.md)。
 
+
+源码增补（2026-11-13）：现有任务规划支持交付物与逐项验收，项目记忆支持带来源的事实、约束、决策和未决问题；见[项目目标与知识记录](docs/project-goals-knowledge.md)。此增补不包含在 v0.1.19.0-RC2 安装包中。
+
 ## 快速开始
 
 ### 使用发行版

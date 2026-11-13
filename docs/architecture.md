@@ -215,3 +215,6 @@ MapCanvas imports YAML + PGM/PNG through visible source APIs and binds only the 
 
 
 [0.1.19 架构变更与边界](release-guide-0.1.19.md)。
+
+
+目标/验收与项目知识源码增补（2026-11-13）：[接口与存储说明](project-goals-knowledge.md)。`goal_acceptance.go` 扩展 `PlanItem`，以持久执行/文件/工具快照约束复核；`project_knowledge.go` 扩展 `memoryTokenStore`，复用项目缓存和上下文链路。执行状态、签收状态、模型提议与用户确认分别保存。

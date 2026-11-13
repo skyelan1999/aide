@@ -2,6 +2,8 @@
 
 维护日期：2026-11-12；[v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)已公开，发行源码为 `a9f8f412`，七个附件与完整门禁见[发布回执](docs/reviews/2026-11-12-release-preparation/publication-rc2.json)。SQLite 1.0.3、StarLink 0.1.6 及市场登记已更新。本次未替换维护者的生产服务或已安装插件；主干、安装包与正在运行的实例分别核对，升级保留旧包及数据备份。
 
+源码增补：2026-11-13 的目标验收与项目知识记录见[使用说明](docs/project-goals-knowledge.md)及[任务](docs/tasks/project-goals-knowledge-20261113.json)。不属于 RC2 发行包；本轮不自动升级生产服务或已安装插件，回退前备份完整项目缓存。
+
 ## 接手顺序
 
 在实际 Aide 源码目录进行只读检查：

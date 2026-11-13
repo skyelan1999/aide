@@ -20,9 +20,12 @@ func recoveryOperation(tool string, args map[string]any) string {
 	return recoveryHash([]any{tool, args})
 }
 func (a *App) recoveryOperationError(task *Task, tool string, args map[string]any, skipPlan *PluginExecutionPlan) error {
+	if tool == "project_knowledge" && stringValue(args["action"]) == "list" {
+		return nil
+	}
 	// Built-in read observations are needed to verify external state.
 	switch tool {
-	case "browse_plugin_market", "read_file", "list_files", "list_sources", "document_search", "semantic_search":
+	case "task_acceptance", "browse_plugin_market", "read_file", "list_files", "list_sources", "document_search", "semantic_search":
 		return nil
 	}
 	a.mu.Lock()

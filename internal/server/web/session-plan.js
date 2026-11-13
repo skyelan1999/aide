@@ -4,6 +4,8 @@
 (function () {
   let generation = 0;
   let active = null;
+  // Page-local, project/session-scoped drafts survive parent panel remounts.
+  const drafts = new Map();
 
   const node = (tag, cls, text) => {
     const n = document.createElement(tag);
@@ -12,9 +14,9 @@
     return n;
   };
 
-  const ICON = { completed: '✓', failed: '✗', blocked: '✗', in_progress: '●', pending: '○', closed: '—' };
-  const LABEL = { completed: '已完成', failed: '失败', blocked: '受阻', in_progress: '进行中', pending: '待执行', closed: '已关闭' };
-  const STATUS_CLASS = { completed: 'ok', failed: 'bad', blocked: 'bad', in_progress: 'live', pending: 'idle', closed: 'closed' };
+  const ICON = { awaiting_acceptance: '◌', completed: '✓', failed: '✗', blocked: '✗', in_progress: '●', pending: '○', closed: '—' };
+  const LABEL = { awaiting_acceptance: '待验收', completed: '已完成', failed: '失败', blocked: '受阻', in_progress: '进行中', pending: '待执行', closed: '已关闭' };
+  const STATUS_CLASS = { awaiting_acceptance: 'idle', completed: 'ok', failed: 'bad', blocked: 'bad', in_progress: 'live', pending: 'idle', closed: 'closed' };
   const RUN_STATUS = { completed: '已完成', awaiting_approval: '待审批', running: '运行中', failed: '失败', cancelled: '已停止', paused: '已暂停', interrupted: '已中断', awaiting_clarification: '等待回答' };
 
   function stamp(value) {
@@ -32,7 +34,8 @@
   function sessionOverview(host, ctx) {
     close();
     const gen = ++generation;
-    const { session, t = key => key, api, blocked, selectRun, launchTask } = ctx || {};
+    const { session, t = key => key, api, workspaceId, blocked, selectRun, launchTask } = ctx || {};
+    const draftKey = JSON.stringify([workspaceId || "", session?.id || ""]);
     let current = session;
     let hostRef = host;
     const panelHost = () => (hostRef.isConnected ? hostRef : (document.querySelector('.traj-outcome-content') || hostRef));
@@ -48,7 +51,7 @@
       pollTimer = null;
       if (active && active.close === stop) active = null;
     };
-    active = { close: stop, sessionId: session && session.id, refresh: () => refreshFn && refreshFn() };
+    active = { close: stop, sessionId: session && session.id, draftKey, reload, refresh: () => refreshFn && refreshFn() };
 
     async function reload() {
       if (!api) return;
@@ -103,7 +106,7 @@
       if (item.source === 'user' && !['completed', 'closed'].includes(item.status)) {
         const depsReady = (item.dependsOn || []).every(id => {
           const dep = planOf(current).find(x => x.id === id);
-          return !dep || dep.status === 'completed' || dep.status === 'closed';
+          return !dep || dep.status === 'completed' || (dep.status === 'closed' && (!dep.contract || dep.contract.criteria.every(c => c.review?.state === 'passed' && c.review.runId === dep.runId)));
         });
         if (launchTask) {
           const launch = node('button', 'primary plan-launch', t('交给 aide'));
@@ -140,6 +143,7 @@
       head.append(actions);
       row.append(head);
 
+      if (item.source === 'user' && window.AideProjectRecords) window.AideProjectRecords.goalCard(row, { api, sessionId: current.id, item, t, changed: reload, valid });
       if (item.detail) {
         const detail = node('p', 'plan-detail', item.detail);
         row.append(detail);
@@ -179,10 +183,16 @@
 
     function draw() {
       hostRef = panelHost();
+      const openGoals = new Set(Array.from(hostRef.querySelectorAll('details[data-goal-item][open]'), d => d.dataset.goalItem));
+      const knowledgeOpen = !!hostRef.querySelector('details[data-project-knowledge][open]');
+      const savedDraft = drafts.get(draftKey);
+      const draftFields = new Map(savedDraft?.values || []);
       hostRef.replaceChildren();
+      hostRef.oninput = event => { const form = event.target.closest('form'); if (form) form.dataset.dirty = 'true'; };
+      hostRef.onchange = event => { const form = event.target.closest('form'); if (form) form.dataset.dirty = 'true'; };
       rowRefs.clear();
-      const plan = planOf(session);
-      const runs = runsOf(session);
+      const plan = planOf(current);
+      const runs = runsOf(current);
       const intro = node('div', 'outcome-intro plan-intro');
       intro.append(node('h3', '', t('会话任务与规划')));
       intro.append(node('p', 'muted', '#' + (session.number || '?') + ' · ' + (session.title || '')));
@@ -208,24 +218,42 @@
       const addForm = node('form', 'plan-add');
       const input = node('textarea', 'plan-add-input');
       input.rows = 2;
+      input.name = 'title';
+      input.setAttribute('aria-label', t('任务目标'));
       input.placeholder = t('用自然语言描述一个任务，交给 aide 拆解执行…');
       const submit = node('button', 'primary', t('添加任务'));
       submit.type = 'submit';
       addForm.append(input, submit);
+      const contractBox = node('details', 'plan-contract-fields');
+      contractBox.append(node('summary', '', t('交付物与验收条件（可选）')));
+      const readContract = window.AideProjectRecords ? window.AideProjectRecords.contractFields(contractBox, null, t) : () => null;
+      addForm.append(contractBox);
+      const rememberDraft = () => {
+        if (!valid() || !addForm.isConnected) return;
+        drafts.set(draftKey, { values: Array.from(addForm.querySelectorAll('textarea'), n => [n.name || 'title', n.value]), expanded: contractBox.open, busy: !!drafts.get(draftKey)?.busy });
+      };
+      addForm.addEventListener('input', rememberDraft);
+      contractBox.addEventListener('toggle', rememberDraft);
       addForm.onsubmit = async event => {
         event.preventDefault();
-        const liveInput = document.querySelector('.plan-add-input');
-        const liveSubmit = document.querySelector('.plan-add > button');
-        const text = (liveInput ? liveInput.value : input.value).trim();
+        if (!valid() || drafts.get(draftKey)?.busy) return;
+        const text = input.value.trim();
         if (!text) return;
-        const title = text.split('\n')[0].slice(0, 200);
-        if (liveSubmit) liveSubmit.disabled = true;
+        rememberDraft();
+        const original = drafts.get(draftKey);
+        drafts.set(draftKey, { ...original, busy: true });
+        for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = true;
         try {
-          await api(`/sessions/${current.id}/plan`, { method: 'POST', body: JSON.stringify({ title, detail: text }) });
-          if (liveInput) liveInput.value = '';
-          await reload();
-        } catch (e) { toast(e && e.message ? e.message : t('添加失败')); }
-        finally { if (liveSubmit) liveSubmit.disabled = false; }
+          await api(`/sessions/${current.id}/plan`, { method: 'POST', body: JSON.stringify({ title: Array.from(text.split('\n')[0]).slice(0, 200).join(''), detail: text, contract: readContract(), workspaceId }) });
+          drafts.set(draftKey, { values: [], expanded: false, busy: false });
+          if (active?.draftKey === draftKey) await active.reload();
+        } catch (e) {
+          drafts.set(draftKey, { ...original, busy: false });
+          toast(e && e.message ? e.message : t('添加失败'));
+          if (!valid() && active?.draftKey === draftKey) await active.reload();
+        } finally {
+          if (valid()) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = false;
+        }
       };
       toolbar.append(addForm);
 
@@ -259,7 +287,7 @@
         importBtn.disabled = true;
         try {
           const doc = JSON.parse(await file.text());
-          const result = await api(`/sessions/${current.id}/plan/import`, { method: 'POST', body: JSON.stringify(doc) });
+          const result = await api(`/sessions/${current.id}/plan/import`, { method: 'POST', body: JSON.stringify(Array.isArray(doc) ? { tasks: doc, destinationWorkspaceId: workspaceId } : { ...doc, destinationWorkspaceId: workspaceId }) });
           toast(t('已导入 {0} 个任务', result && result.imported ? result.imported : '?'));
           await reload();
         } catch (e) { toast(e && e.message ? e.message : t('导入失败：需要 aide.plan/v1 JSON')); }
@@ -268,6 +296,7 @@
       io.append(importBtn, importInput, exportBtn);
       toolbar.append(io);
       hostRef.append(toolbar);
+      if (window.AideProjectRecords) window.AideProjectRecords.knowledgePanel(hostRef, { api, t, valid });
 
       const board = node('div', 'plan-board');
       const userItems = plan.filter(i => i.source === 'user');
@@ -315,6 +344,12 @@
         hostRef.append(folded);
       }
 
+      for (const d of hostRef.querySelectorAll('details[data-goal-item]')) if (openGoals.has(d.dataset.goalItem)) d.open = true;
+      const knowledge = hostRef.querySelector('details[data-project-knowledge]');
+      if (knowledge && knowledgeOpen) knowledge.open = true;
+      for (const n of hostRef.querySelectorAll('.plan-add textarea')) if (draftFields.has(n.name || 'title')) n.value = draftFields.get(n.name || 'title');
+      contractBox.open = !!savedDraft?.expanded;
+      if (savedDraft?.busy) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = true;
       hostRef.append(node('p', 'outcome-boundary', t('规划只描述意图与进度，不代表文件已落盘；实际结果以工具记录和审批记录为准。导出 JSON 可用于在其它会话中复用这套工作流。')));
 
       const needsPolling = value => runsOf(value).some(run => run && run.status === 'running');
@@ -374,9 +409,10 @@
           current = next;
           syncPolling();
           if (nextRevision !== lastRevision || structural !== previous) {
+            const focused = document.activeElement;
+            if (hostRef.querySelector('form[data-dirty="true"]') || (focused && hostRef.contains(focused) && focused.matches('textarea,input,select'))) { patchStatuses(planOf(next)); return; }
             lastRevision = nextRevision;
-            if (structural !== previous) draw();
-            else patchStatuses(planOf(next));
+            draw();
           }
         } catch { /* 保留上一次可读的计划，轮询或全局事件会重试 */ }
         finally {
