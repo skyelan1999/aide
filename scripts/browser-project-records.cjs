@@ -34,9 +34,18 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
    await add.locator('.plan-contract-fields > summary').click();
    await add.locator('[name="deliverables"]').fill('Reviewed result');
    await add.locator('[name="criteria"]').fill('Fixture result inspected\nNo missing deliverables');
+   // Reopening the parent view while input is unsaved reproduces the same
+   // remount that initial session refresh can cause. No network stub is used.
+   await page.locator('.traj-main-seg [data-view="history"]').click(); await board();
+   assert.equal(await add.locator('.plan-add-input').inputValue(), `Goal fixture ${n} ${marker}`);
+   assert.equal(await add.locator('[name="deliverables"]').inputValue(), 'Reviewed result');
+   assert.equal(await add.locator('[name="criteria"]').inputValue(), 'Fixture result inspected\nNo missing deliverables');
+   const creation = page.waitForResponse(r => r.url().endsWith(`/api/sessions/project-records-${n}/plan`) && r.request().method() === 'POST');
    await add.locator('button[type="submit"]').click();
+   const creationResponse = await creation; assert.equal(creationResponse.status(), 201, await creationResponse.text());
+
    await page.locator('.plan-row').filter({ has: page.locator('.plan-title', { hasText: `Goal fixture ${n} ${marker}` }) }).waitFor();
-   let s = await call('GET', `/sessions/project-records-${n}`); let item = s.plan.find(p => p.title === `Goal fixture ${n} ${marker}`); assert.ok(item && item.contract.criteria.length === 2); row.checks.push('goal and criteria save and redraw immediately (#874)');
+   let s = await call('GET', `/sessions/project-records-${n}`); let item = s.plan.find(p => p.title === `Goal fixture ${n} ${marker}`); assert.ok(item && item.contract.criteria.length === 2); row.checks.push('unsent goal/criteria survive parent remount; save and redraw immediately (#874)');
    // Existing launch action performs a real task against the synthetic provider.
    await page.locator(`[data-plan-id="${item.id}"] .plan-launch`).click();
    for (let tries = 0; tries < 100; tries++) { s = await call('GET', `/sessions/project-records-${n}`); item = s.plan.find(p => p.id === item.id); if (item.runId && s.runs.find(r => r.id === item.runId)?.status === 'completed') break; await delay(100); }

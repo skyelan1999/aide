@@ -10,6 +10,8 @@ Choose **Hand to aide**. The focused goal's conditions and previous operator obs
 
 After execution, inspect actual files, commands and outputs. Under **Goal and acceptance**, record each criterion as pending, passed, failed or blocked, with an actual observation and optionally a tool-receipt index. Completed execution alone does not complete a contracted goal: it awaits acceptance. Failed criteria, unapplied files or missing delivery retain the gap. All criteria must pass before the goal completes.
 
+Unsent goal/criteria drafts are scoped to the project/session within this page and survive panel/view remounts. A full page reload or closing the page is not draft persistence.
+
 Acceptance is an **operator observation**, not an independent automated test result. Models cannot sign off through a tool. Legacy plans without criteria keep their behavior. Revising conditions requires new acceptance; a new run invalidates previous sign-off, while preserving history. Execution/project/file-proposal/tool snapshots reject stale writes. This is not continuous monitoring of disk or external business state; reread, execute and review after external changes.
 
 Contracted goals bind the project in which they were created. To reuse across projects, export/import the plan: import remaps IDs/dependencies and resets run/acceptance state in the destination project. Closing an unaccepted goal does not satisfy dependencies; closing an accepted goal preserves it as a completed dependency.

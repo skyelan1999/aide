@@ -4,6 +4,8 @@
 (function () {
   let generation = 0;
   let active = null;
+  // Page-local, project/session-scoped drafts survive parent panel remounts.
+  const drafts = new Map();
 
   const node = (tag, cls, text) => {
     const n = document.createElement(tag);
@@ -33,6 +35,7 @@
     close();
     const gen = ++generation;
     const { session, t = key => key, api, workspaceId, blocked, selectRun, launchTask } = ctx || {};
+    const draftKey = JSON.stringify([workspaceId || "", session?.id || ""]);
     let current = session;
     let hostRef = host;
     const panelHost = () => (hostRef.isConnected ? hostRef : (document.querySelector('.traj-outcome-content') || hostRef));
@@ -48,7 +51,7 @@
       pollTimer = null;
       if (active && active.close === stop) active = null;
     };
-    active = { close: stop, sessionId: session && session.id, refresh: () => refreshFn && refreshFn() };
+    active = { close: stop, sessionId: session && session.id, draftKey, reload, refresh: () => refreshFn && refreshFn() };
 
     async function reload() {
       if (!api) return;
@@ -182,7 +185,8 @@
       hostRef = panelHost();
       const openGoals = new Set(Array.from(hostRef.querySelectorAll('details[data-goal-item][open]'), d => d.dataset.goalItem));
       const knowledgeOpen = !!hostRef.querySelector('details[data-project-knowledge][open]');
-      const draftFields = new Map(Array.from(hostRef.querySelectorAll('.plan-add textarea'), n => [n.name || 'title', n.value]));
+      const savedDraft = drafts.get(draftKey);
+      const draftFields = new Map(savedDraft?.values || []);
       hostRef.replaceChildren();
       hostRef.oninput = event => { const form = event.target.closest('form'); if (form) form.dataset.dirty = 'true'; };
       hostRef.onchange = event => { const form = event.target.closest('form'); if (form) form.dataset.dirty = 'true'; };
@@ -224,20 +228,32 @@
       contractBox.append(node('summary', '', t('交付物与验收条件（可选）')));
       const readContract = window.AideProjectRecords ? window.AideProjectRecords.contractFields(contractBox, null, t) : () => null;
       addForm.append(contractBox);
+      const rememberDraft = () => {
+        if (!valid() || !addForm.isConnected) return;
+        drafts.set(draftKey, { values: Array.from(addForm.querySelectorAll('textarea'), n => [n.name || 'title', n.value]), expanded: contractBox.open, busy: !!drafts.get(draftKey)?.busy });
+      };
+      addForm.addEventListener('input', rememberDraft);
+      contractBox.addEventListener('toggle', rememberDraft);
       addForm.onsubmit = async event => {
         event.preventDefault();
-        const liveInput = document.querySelector('.plan-add-input');
-        const liveSubmit = document.querySelector('.plan-add > button');
-        const text = (liveInput ? liveInput.value : input.value).trim();
+        if (!valid() || drafts.get(draftKey)?.busy) return;
+        const text = input.value.trim();
         if (!text) return;
-        const title = text.split('\n')[0].slice(0, 200);
-        if (liveSubmit) liveSubmit.disabled = true;
+        rememberDraft();
+        const original = drafts.get(draftKey);
+        drafts.set(draftKey, { ...original, busy: true });
+        for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = true;
         try {
-          await api(`/sessions/${current.id}/plan`, { method: 'POST', body: JSON.stringify({ title, detail: text, contract: readContract(), workspaceId }) });
-          for (const field of addForm.querySelectorAll('textarea')) field.value = '';
-          await reload();
-        } catch (e) { toast(e && e.message ? e.message : t('添加失败')); }
-        finally { if (liveSubmit) liveSubmit.disabled = false; }
+          await api(`/sessions/${current.id}/plan`, { method: 'POST', body: JSON.stringify({ title: Array.from(text.split('\n')[0]).slice(0, 200).join(''), detail: text, contract: readContract(), workspaceId }) });
+          drafts.set(draftKey, { values: [], expanded: false, busy: false });
+          if (active?.draftKey === draftKey) await active.reload();
+        } catch (e) {
+          drafts.set(draftKey, { ...original, busy: false });
+          toast(e && e.message ? e.message : t('添加失败'));
+          if (!valid() && active?.draftKey === draftKey) await active.reload();
+        } finally {
+          if (valid()) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = false;
+        }
       };
       toolbar.append(addForm);
 
@@ -332,6 +348,8 @@
       const knowledge = hostRef.querySelector('details[data-project-knowledge]');
       if (knowledge && knowledgeOpen) knowledge.open = true;
       for (const n of hostRef.querySelectorAll('.plan-add textarea')) if (draftFields.has(n.name || 'title')) n.value = draftFields.get(n.name || 'title');
+      contractBox.open = !!savedDraft?.expanded;
+      if (savedDraft?.busy) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = true;
       hostRef.append(node('p', 'outcome-boundary', t('规划只描述意图与进度，不代表文件已落盘；实际结果以工具记录和审批记录为准。导出 JSON 可用于在其它会话中复用这套工作流。')));
 
       const needsPolling = value => runsOf(value).some(run => run && run.status === 'running');
