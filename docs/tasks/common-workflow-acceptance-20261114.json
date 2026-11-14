@@ -32,45 +32,65 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Confirmed host issues #891/#892/#893/#894 addressed in owned source; PjPlan private fix merged/released; Office merged, release underway; legacy ROS fix awaiting final PR/release.",
+      "status": "pass",
+      "summary": "Host fixes #891/#892/#893/#894/#896 merged in PR #895 and #897. Usage labels renamed 使用说明. Four changed plugins merged to owning main, released and installed. Compare existing 0.3.3 release commits merged to its main without altering the original dirty checkout.",
       "evidence": [
-        "https://github.com/skyelan1999/aide/issues/891",
-        "https://github.com/skyelan1999/aide/issues/892",
-        "https://github.com/skyelan1999/aide/issues/893",
-        "https://github.com/skyelan1999/aide/issues/894"
+        "https://github.com/skyelan1999/aide/pull/895",
+        "https://github.com/skyelan1999/aide/pull/897",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/40"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Current targeted Go race suite passes; quick checks pass; real common workflows progressively verified; comprehensive audit still in progress.",
+      "status": "pass",
+      "summary": "343 quick checks, targeted Go race and 25 workbench protocol tests passed; final PR CI passed. Real browser matrices: 4 records, 4 workflows, 4 usability cases, each final case opens 35 guides. Actual artifacts independently read. Native Office guide and 3D system-save/file-reopen passed. Production integrity=ok beyond 5 minutes; 87 sessions, 5 approvals, 13 draft files and protected config/auth/session bytes preserved. No real-account, hardware or paid-model claims.",
       "evidence": [
         ".agent-state/common-workflow-acceptance-20261114/targeted-race-final.log",
-        ".agent-state/common-workflow-acceptance-20261114/quick-final.log",
-        ".agent-state/common-workflow-acceptance-20261114/functional-results-private.json"
+        ".agent-state/common-workflow-acceptance-20261114/quick-final-followup.log",
+        ".agent-state/common-workflow-acceptance-20261114/core-records/project-records-report.json",
+        ".agent-state/common-workflow-acceptance-20261114/core-workflows/project-workflows-report.json",
+        ".agent-state/common-workflow-acceptance-20261114/usability-final/usability-report.json",
+        ".agent-state/common-workflow-acceptance-20261114/production-package-readback.json",
+        ".agent-state/common-workflow-acceptance-20261114/native-modulebox-acceptance.json",
+        ".agent-state/common-workflow-acceptance-20261114/production-stability.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Added source-backed 35-plugin acceptance and limits; updated user guide for 使用说明. Private implementation and detailed private evidence remain in owning repositories/local task state.",
+      "evidence": [
+        "docs/reviews/2026-11-14-common-workflow-acceptance.md",
+        "docs/user-guide.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Stopped only the two owned disposable fixtures; closed owned browser/component views and removed only the owned dependency symlink. Retained all user work, backups, quarantined originals, shared caches and rollback pins.",
+      "evidence": [
+        ".agent-state/common-workflow-acceptance-20261114/cleanup.json"
+      ]
     },
     "release": {
       "status": "not_run",
-      "summary": "Aide Release explicitly excluded by user. Independent plugin main/releases/market are tracked separately; PjPlan 3.1.1, Office 1.1.1 and ROS Map Editor 0.4.8 published, installation and market validation remain.",
+      "summary": "Aide Release/tag/version bump explicitly excluded. Independent plugin deliveries completed: PjPlan3.1.1, Office1.1.1, ROS0.4.8, Boiler0.3.1; all 35 installed versions have owning Releases with tags included in main. Applicable market update deployed and read back.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-PjPlan/releases/tag/v3.1.1",
-        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.1",
-        "https://github.com/skyelan1999/aide-pkg-RosMapEditor/releases/tag/v0.4.8"
+        ".agent-state/common-workflow-acceptance-20261114/release-main-audit-private.json",
+        ".agent-state/common-workflow-acceptance-20261114/market-live-readback.json"
       ]
     }
   },
   "release_authorization": "User: 所有插件记得和到main并release. User: Aide 还是不要 release.",
   "rollback": "Preserve original checkout and data; pin live image and create private essential data backup before production mutations.",
-  "handoff": ""
+  "handoff": "",
+  "runtime": {
+    "programSource": "562056f3ed02f88de6116ce387dff5f7a7e8da53",
+    "image": "sha256:c2b21f09939049559a34a74bd1a22ec7f3518f1c87eca96bdfd6b3333536778e",
+    "integrity": "ok",
+    "aideRelease": false,
+    "dirtyBuildReason": "Preserved pre-existing untracked work is included in the build fingerprint."
+  },
+  "limitations": [
+    "No real paid model/provider account calls, new permissions, real hardware writes or external messages.",
+    "Only the documented local common paths were accepted; unavailable real integrations remain NOT_RUN.",
+    "Detailed component artifact tests mostly ran in isolated browsers; native save/reopen was exercised for 3D ModuleBox."
+  ]
 }
