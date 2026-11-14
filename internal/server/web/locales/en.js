@@ -3428,7 +3428,6 @@ window.aideEnglish = {
   "适用平台": "Platforms",
   "许可证": "License",
   "权限说明": "Access",
-  "使用说明": "Instructions",
   "已安装版本": "Installed version",
   "更新保留设置、启用状态及数据；同版本内容变化不自动覆盖。": "Updates preserve settings, enablement and data. Same-version changes are not overwritten automatically.",
   "查看源码 ↗": "View source ↗",
