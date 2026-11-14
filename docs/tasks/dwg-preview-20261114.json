@@ -40,8 +40,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Targeted real converter/Go, quick and browser tests passed; full suite and production update pending.",
+      "status": "pass",
+      "summary": "Targeted real-converter Go/race, vet, quick, CI gate, runtime assets, desktop/narrow Chinese/English browser and native Aide passed. Full Go suite hit cumulative package limits twice; not claimed as passing. Production healthy/integrity ok and data preservation verified.",
       "evidence": [
         "docs/reviews/2026-11-14-dwg-preview.md"
       ]
@@ -55,9 +55,11 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed owned files; archived only synthetic native fixture, closed owned tabs. Runtime backup, rollback image, logs and user work preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-14-dwg-preview.md"
+      ]
     },
     "release": {
       "status": "not_run",
@@ -68,7 +70,7 @@
     }
   },
   "release_authorization": "Aide Release/tag/version bump prohibited; user authorizes implementation, validation and running service update.",
-  "rollback": "",
-  "handoff": "",
+  "rollback": "Preserved runtime backup and aide:rollback-dwg-task-lifecycle-20261114 image; source baseline b9b3038c. No data migration.",
+  "handoff": "DWG main 10bea827 deployed via standard build; version unchanged, no Aide Release. Open .dwg directly in project/reference files; readonly bounded 2D preview with original download.",
   "actor": "skyelan1999"
 }
