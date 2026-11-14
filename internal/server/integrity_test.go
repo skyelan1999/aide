@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -121,5 +123,108 @@ func TestIntegrityRecoveryLogIsWritten(t *testing.T) {
 	SelfHeal(data, VerifyIntegrity(data))
 	if _, err := os.Stat(recoveryLogPath(data)); err != nil {
 		t.Errorf("恢复日志未写: %v", err)
+	}
+}
+
+func TestIntegrityReadFailurePreservesValidOriginal(t *testing.T) {
+	for _, bucket := range []string{"settings", "active", "archived"} {
+		t.Run(bucket, func(t *testing.T) {
+			data := t.TempDir()
+			if err := EnsureDirs(data); err != nil {
+				t.Fatal(err)
+			}
+			if err := BuildBaseline(data); err != nil {
+				t.Fatal(err)
+			}
+			file := SettingsPath(data)
+			if bucket != "settings" {
+				file = filepath.Join(data, "sessions", bucket, "session-transient.json")
+			}
+			if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
+				t.Fatal(err)
+			}
+			body := []byte(`{"id":"transient","messages":[],"runs":[]}`)
+			if err := os.WriteFile(file, body, 0600); err != nil {
+				t.Fatal(err)
+			}
+			report := verifyIntegrity(data, func(path string) ([]byte, error) {
+				if path == file {
+					return nil, errors.New("synthetic transient I/O failure")
+				}
+				return os.ReadFile(path)
+			})
+			if report.Status != IntegrityDegraded {
+				t.Fatalf("read failure must be visible: %+v", report)
+			}
+			report = SelfHeal(data, report)
+			got, err := os.ReadFile(file)
+			if err != nil || string(got) != string(body) || len(report.Quarantined) != 0 {
+				t.Fatalf("read failure moved original: %v %+v", err, report)
+			}
+			if next := VerifyIntegrity(data); next.Status != IntegrityOK {
+				t.Fatalf("later readable data did not recover: %+v", next)
+			}
+		})
+	}
+}
+
+func TestIntegrityStaleCorruptionReportPreservesReplacement(t *testing.T) {
+	for _, replacement := range []string{`{"id":"repaired","messages":[],"runs":[]}`, `{"new incomplete write"`} {
+		t.Run(hash([]byte(replacement))[:8], func(t *testing.T) {
+			data := t.TempDir()
+			if err := EnsureDirs(data); err != nil {
+				t.Fatal(err)
+			}
+			if err := BuildBaseline(data); err != nil {
+				t.Fatal(err)
+			}
+			file := filepath.Join(data, "sessions", "archived", "session-replaced.json")
+			if err := os.WriteFile(file, []byte(`{{original invalid`), 0600); err != nil {
+				t.Fatal(err)
+			}
+			report := VerifyIntegrity(data)
+			if len(report.invalidFiles) != 1 {
+				t.Fatal("missing original corruption observation")
+			}
+			stage := file + ".replacement"
+			if err := os.WriteFile(stage, []byte(replacement), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Rename(stage, file); err != nil {
+				t.Fatal(err)
+			}
+			report = SelfHeal(data, report)
+			got, err := os.ReadFile(file)
+			if err != nil || string(got) != replacement || len(report.Quarantined) != 0 {
+				t.Fatalf("stale report moved replacement: %v %+v", err, report)
+			}
+		})
+	}
+}
+
+func TestIntegrityUnchangedCorruptArchiveKeepsOriginalBytes(t *testing.T) {
+	data := t.TempDir()
+	if err := EnsureDirs(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := BuildBaseline(data); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(data, "sessions", "archived", "session-invalid.json")
+	body := []byte(`{{stable invalid archive`)
+	if err := os.WriteFile(file, body, 0600); err != nil {
+		t.Fatal(err)
+	}
+	report := SelfHeal(data, VerifyIntegrity(data))
+	if len(report.Quarantined) != 1 {
+		t.Fatalf("genuine corruption not isolated: %+v", report)
+	}
+	files, err := os.ReadDir(QuarantineDir(data))
+	if err != nil || len(files) != 1 {
+		t.Fatalf("quarantine: %v %v", files, err)
+	}
+	got, err := os.ReadFile(filepath.Join(QuarantineDir(data), files[0].Name()))
+	if err != nil || string(got) != string(body) {
+		t.Fatalf("quarantine lost original bytes: %v", err)
 	}
 }

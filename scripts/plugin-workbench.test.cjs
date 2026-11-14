@@ -110,6 +110,21 @@ test('file bridge rejects iframe commit; only trusted parent Save publishes and 
  await port.postMessage({protocol:1,requestId:'ready',method:'document.save.request',arguments:{}});assert.equal(calls.length,1);
  const save=f.nodes.find(n=>n.tag==='button'&&n.textContent==='保存到原文件');assert.equal(save.hidden,false);await save.onclick({isTrusted:false});assert.equal(calls.length,1);await save.onclick({isTrusted:true});assert.equal(calls.length,2);assert.equal(calls.at(-1).body.method,'document.save.commit');assert(port.received.some(v=>v.event==='document.saved'));assert.equal(save.hidden,true);f.controller.close();
 });
+
+test('map binding accepts only known map plugins and retains parent-only commit',async()=>{
+ for(const id of ['mapcanvas','ros-map-editor','other']){
+  const f=fixture(bridgeResponse),p={...bridgePlugin,id},calls=[];
+  await f.controller.open(p,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0];
+  f.services.api=async(url,options)=>{const body=JSON.parse(options.body);calls.push(body);return {requestId:body.requestId,status:'result',result:{source:'context',path:'map.pgm',editable:false}};};
+  await port.postMessage({protocol:1,requestId:'bind',method:'map.document.bind',arguments:{source:'context',path:'map.pgm',version:'a'.repeat(64)}});
+  assert.equal(calls.length,id==='other'?0:1);
+  await port.postMessage({protocol:1,requestId:'begin',method:'document.save.begin',arguments:{size:13,version:'a'.repeat(64)}});
+  assert.equal(calls.length,id==='other'?0:2,'only known bound map documents reach server permission checks');
+  await port.postMessage({protocol:1,requestId:'commit',method:'document.save.commit'});
+  assert.equal(calls.length,id==='other'?0:2,'iframe cannot commit a map write');
+  f.controller.close(true);
+ }
+});
 test('leaving a dirty file viewer can be cancelled before removing the frame',async()=>{
  const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,document:true}});f.services.document={path:'model.obj',root:'workspace'};f.services.handlers=[bridgePlugin];await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0];await port.postMessage({protocol:1,requestId:'dirty',method:'document.dirty',arguments:{dirty:true}});f.confirm(false);assert.equal(f.controller.prepareFileOpen(),false);assert.notEqual(frame.src,'about:blank');f.confirm(true);assert.equal(f.controller.prepareFileOpen(),true);assert.equal(frame.src,'about:blank');
 });
