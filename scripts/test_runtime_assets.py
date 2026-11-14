@@ -31,6 +31,22 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
     assert not Path('/usr/local/lib/node_modules').exists()
     for tool in ('python3', 'node', 'git', 'ssh', 'curl'):
         assert shutil.which(tool), 'missing runtime tool: ' + tool
+    import tarfile
+    dwg = Path('/opt/aide/dwg')
+    pinned = json.loads((dwg/'source.json').read_text())
+    archive = dwg/'source'/('libredwg-'+pinned['version']+'.tar.xz')
+    assert hashlib.sha256(archive.read_bytes()).hexdigest() == pinned['sha256']
+    assert (dwg/'COPYING').is_file() and (dwg/'build-dwg-converter.sh').is_file()
+    assert 'not found' not in subprocess.check_output(['ldd', str(dwg/'bin/dwg2dxf')], text=True)
+    with tempfile.TemporaryDirectory() as td, tarfile.open(archive) as source:
+        for revision in ('2000', '2018'):
+            original = Path(td)/(revision+'.dwg')
+            member = source.extractfile('libredwg-'+pinned['version']+'/test/test-data/'+revision+'/Line.dwg')
+            original.write_bytes(member.read())
+            output = Path(td)/(revision+'.dxf')
+            subprocess.run([str(dwg/'bin/dwg2dxf'), '-o', str(output), str(original)], check=True, capture_output=True, timeout=20)
+            entities = output.read_text(errors='replace').split('\nENTITIES\n')[1].split('ENDSEC')[0]
+            assert '\nLINE\n' in entities, revision+' lost geometry'
     import sys, ezdxf, openpyxl, pptx, pypdf, cryptography
     engine = '/usr/local/bin/sherpa-onnx-offline-tts'
     assert Path(engine).is_file(), 'offline TTS engine missing'

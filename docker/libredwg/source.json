@@ -1,0 +1,8 @@
+{
+  "name": "GNU LibreDWG",
+  "version": "0.14",
+  "url": "https://ftp.gnu.org/gnu/libredwg/libredwg-0.14.tar.xz",
+  "sha256": "62ebb73b984f865960f20ed26619ea5f8789d5e3fd088fa40a2598384da81275",
+  "license": "GPL-3.0-or-later",
+  "upstream": "https://www.gnu.org/software/libredwg/"
+}

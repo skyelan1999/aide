@@ -7,16 +7,19 @@ async function fixture(doc, response) {
   class Element {
     constructor(tag, cls = '', text = '') {this.tag = tag;this.className = cls;this.textContent = text;this.children = [];this.style = {};this.classList = {add() {}, remove() {}};}
     append(...nodes) {this.children.push(...nodes);}
+    insertBefore(node) {this.append(node);}
+    replaceChildren(...nodes) {this.children=nodes;}
     appendChild(node) {this.append(node);return node;}
     set innerHTML(_value) {this.children = [];}
     setAttribute() {}
     closest() {return null;}
   }
-  const context = {console, Response, TextDecoder, Uint8Array, ArrayBuffer, Set, Map,
+  const context = {console, Response, TextDecoder, Uint8Array, ArrayBuffer, Set, Map, AbortController,
+    isDwgPath: () => false, teardownViewer() {},
     t: value => value, escapeHtml: value => value, el: (...args) => new Element(...args),
     fileRawUrl: () => '/owned.dxf', ensureDxfParser: async () => {},
     DxfParser: class {parseSync() {parses++;return doc;}}, fetch: async () => response || new Response('0\nSECTION\n0\nENDSEC\n0\nEOF\n'),
-    document: {createElementNS(_ns, tag) {svgNodes++;return new Element(tag);}, body: {classList: {contains: () => false}}},
+    document: {createElement: tag => new Element(tag), createElementNS(_ns, tag) {svgNodes++;return new Element(tag);}, body: {classList: {contains: () => false}}},
     window: {addEventListener() {}, removeEventListener() {}}, bindViewerTeardown() {}, history: {back() {}}};
   vm.createContext(context);
   if (fs.existsSync('internal/server/web/preview-safety.js')) vm.runInContext(fs.readFileSync('internal/server/web/preview-safety.js', 'utf8'), context);

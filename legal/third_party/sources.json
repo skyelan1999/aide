@@ -124,5 +124,12 @@
     "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/ThirdPartyNotices.txt",
     "path": "legal/third_party/runtime/onnxruntime/ThirdPartyNotices.txt",
     "sha256": "0e07b95f3a8d6230037707c5c4a2b554d12c4cb67369669ac255635528ffcee2"
+  },
+  {
+    "package": "GNU LibreDWG (separate dwg2dxf executable)",
+    "version": "0.14",
+    "source": "https://ftp.gnu.org/gnu/libredwg/libredwg-0.14.tar.xz#libredwg-0.14/COPYING",
+    "path": "legal/third_party/libredwg/COPYING",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
   }
 ]

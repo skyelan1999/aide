@@ -1844,3 +1844,8 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 @media (max-width: 600px) {
   .voice-reply-options select { grid-column: auto; }
 }
+
+/* CAD preview controls remain usable on narrow screens. */
+.dxf-toolbar{flex-wrap:wrap}.dxf-info{overflow-wrap:anywhere;min-width:0}.dxf-download{font-size:12px;white-space:nowrap}.dwg-notice{margin:0;padding:8px 12px;font-size:12px;line-height:1.6;color:var(--text-dim);border-bottom:1px solid var(--line-faint)}
+
+.dxf-canvas{touch-action:none}
