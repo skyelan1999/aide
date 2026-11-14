@@ -21,9 +21,11 @@ class RouteTests(unittest.TestCase):
         deadline = route.check_timeout(['python3', 'scripts/test_go_snapshot.py'])
         self.assertGreater(deadline, runner['HOST_TIMEOUT_SECONDS'] + 10)
         self.assertLessEqual(deadline, runner['HOST_TIMEOUT_SECONDS'] + 60)
+        self.assertEqual(route.check_timeout(['bash', 'scripts/aide.sh', 'test']), deadline)
         # Changing the child budget must move the owner budget too.
         with mock.patch.object(route.runpy, 'run_path', return_value={'HOST_TIMEOUT_SECONDS': 1234}):
             self.assertEqual(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), 1264)
+            self.assertEqual(route.check_timeout(['bash', 'scripts/aide.sh', 'test']), 1264)
         self.assertEqual(route.check_timeout(['node', 'scripts/example.test.cjs']), 600)
 
     def test_public_runtime_asset_gate_fails_closed(self):

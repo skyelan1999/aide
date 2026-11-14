@@ -61,6 +61,7 @@ if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
 # #640: source compilation and delivery have their own explicit interfaces.
 case "$MODE" in
   build|clean|docker_clean|verify|release) exec python3 scripts/launcher.py "$@" ;;
+  test) exec python3 scripts/test_go_snapshot.py ;;
 esac
 # Legacy environment switches cannot turn start into a compiler entrypoint.
 if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
@@ -70,12 +71,6 @@ if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; 
 fi
 if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then
   exec bash scripts/aide-maintenance.sh "$@"
-fi
-if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
-  # The caller already launched an isolated aide:local verification container.
-  export AIDE_BUILTIN_PLUGINS=
-  go test -race -count=1 -timeout=15m ./... && go vet ./...
-  exit
 fi
 if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
   source scripts/resource-guard.sh
@@ -412,7 +407,6 @@ case "$MODE" in
     ;;
   status) "$DOCKER_BIN" compose ps ;;
   logs) "$DOCKER_BIN" compose logs --tail=100 aide ;;
-  test) "$DOCKER_BIN" run --rm -e AIDE_BUILTIN_PLUGINS= -v "$PROJECT_DIR:/src" -w /src --entrypoint bash aide:local -c 'go test -race -count=1 -timeout=15m ./... && go vet ./...' ;;
   export)
     mkdir -p docker-images
     ARCHIVE="$PROJECT_DIR/docker-images/aide-local.tar.gz"

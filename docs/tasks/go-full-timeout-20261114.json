@@ -1,0 +1,77 @@
+{
+  "id": "go-full-timeout-20261114",
+  "request": "把全量 Go 测试超时的问题也查清楚并解决，跑完验证，保留现有数据，Aide 还是不要 release。",
+  "baseline": "958ae3e478db95688f537b0c676b2242a4892372",
+  "initial_status": "",
+  "acceptance": [
+    "Explain both prior timeout stacks and measure actual setup cost.",
+    "Reduce repeated executable hashing allocation without caching hashes or skipping integrity checks.",
+    "Complete every registered Go test/fuzz seed/example plus other packages, race and vet with pass/skip evidence.",
+    "Run isolated without production data mounts; verify current data and running service unchanged.",
+    "Document and merge the fix without Aide version/tag/Release.",
+    "Actually complete both verify full and aide.sh test; preserve errors and avoid legacy shared mounts/15m limit."
+  ],
+  "scope": [
+    "Integrity executable hashing and meaningful regression tests",
+    "Full-suite test evidence and developer documentation",
+    "Unify the legacy aide.sh test entry with the existing isolated Go snapshot runner"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests root cause, fix and complete Go validation while preserving data and prohibiting Aide Release.",
+      "evidence": [
+        "User request 2026-11-14"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Stream the executable into SHA-256 on every check to bound allocation; no digest cache, test bypass or deadline-only workaround. Measure before/after profiles and run complete inventory.",
+      "evidence": [
+        "docs/reviews/2026-11-14-dwg-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fresh streamed executable SHA-256 and content mutation/read-failure regressions; legacy aide.sh test delegates to existing isolated runner with exit-code/settings tests.",
+      "evidence": [
+        "internal/server/integrity.go",
+        "internal/server/integrity_binary_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final fingerprint-bound full and actual aide.sh test both exit 0; each processes all 1768 registered server items (1677 pass, 91 explicit skips, zero missing/fail), remaining race packages, platform contracts and vet. Quick 343 and targeted launcher/router tests pass.",
+      "evidence": [
+        "docs/reviews/2026-11-14-go-full-timeout.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current verification docs and root-cause/results updated; links checked.",
+      "evidence": [
+        "docs/verification.md",
+        "docs/reviews/2026-11-14-go-full-timeout.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned test containers removed; profiles and receipts retained locally. Production unchanged except independently observed plugin operations, which were preserved; 205 protected files and all session records verified.",
+      "evidence": [
+        "docs/reviews/2026-11-14-go-full-timeout.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Explicitly prohibited by user: no Aide version/tag/Release or deployment.",
+      "evidence": [
+        "User request 2026-11-14"
+      ]
+    }
+  },
+  "release_authorization": "Aide version/tag/Release prohibited. Isolated implementation and validation authorized.",
+  "rollback": "No production mutations. Git changes limited to hashing/tests/developer entry/docs; no migration or runtime data change.",
+  "handoff": "Implementation and complete validation are recorded in PR #904; delivery is a source/docs main merge with no runtime replacement or Aide Release.",
+  "actor": "skyelan1999",
+  "issue": 903
+}

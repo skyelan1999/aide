@@ -3,7 +3,10 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -14,6 +17,27 @@ spec.loader.exec_module(shards)
 
 
 class ShardTests(unittest.TestCase):
+    def test_launcher_delegates_without_runtime_mounts_or_legacy_timeout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / 'scripts').mkdir()
+            shutil.copyfile(Path(__file__).with_name('aide.sh'), root / 'scripts/aide.sh')
+            (root / 'scripts/test_go_snapshot.py').write_text(
+                'import os,sys\nfrom pathlib import Path\n'
+                'assert os.environ["AIDE_TEST_TOOLCHAIN_IMAGE"]=="sdk:fixture"\n'
+                'Path("delegated").write_text("snapshot")\n'
+                'sys.exit(int(os.environ["FIXTURE_EXIT"]))\n')
+            # No Docker/Go binary or production files are needed to delegate.
+            for legacy in ('0', '1'):
+                for code in (0, 7):
+                    env = dict(os.environ, AIDE_VERIFY_IN_CONTAINER=legacy,
+                               AIDE_TEST_TOOLCHAIN_IMAGE='sdk:fixture', FIXTURE_EXIT=str(code))
+                    result = subprocess.run(['bash', 'scripts/aide.sh', 'test'],
+                                            cwd=root, env=env, capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode, code, result.stderr)
+                    self.assertEqual((root / 'delegated').read_text(), 'snapshot')
+                    self.assertFalse((root / '.env').exists())
+
     def test_receipts_keep_skips_separate_and_missing_execution_fails(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
