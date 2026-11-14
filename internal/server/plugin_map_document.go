@@ -16,7 +16,8 @@ func workbenchToolArgumentsAllowed(id, tool string, args map[string]any) bool {
 	if pluginPlanArgumentsAllowed(args) {
 		return true
 	}
-	if id != "mapcanvas" || (tool != "mapcanvas_browse" && tool != "mapcanvas_read") {
+	prefix := mapWorkbenchToolPrefix(id)
+	if prefix == "" || (tool != prefix+"browse" && tool != prefix+"read") {
 		return false
 	}
 	source, ok := args["source"].(string)
@@ -24,12 +25,23 @@ func workbenchToolArgumentsAllowed(id, tool string, args map[string]any) bool {
 		return false
 	}
 	for key := range args {
-		if key != "source" && key != "path" && !(tool == "mapcanvas_read" && key == "offset") {
+		if key != "source" && key != "path" && !(tool == prefix+"read" && key == "offset") {
 			return false
 		}
 	}
 	// api.sources revalidates the selected source's current visibility and root.
 	return true
+}
+
+func mapWorkbenchToolPrefix(id string) string {
+	switch id {
+	case "mapcanvas":
+		return "mapcanvas_"
+	case "ros-map-editor":
+		return "ros_map_"
+	default:
+		return ""
+	}
 }
 
 func (a *App) bindMapImageDocument(w http.ResponseWriter, r *http.Request, req workbenchBridgeRequest) {
@@ -39,7 +51,7 @@ func (a *App) bindMapImageDocument(w http.ResponseWriter, r *http.Request, req w
 	version, versionOK := req.Arguments["version"].(string)
 	_, digestErr := hex.DecodeString(version)
 	ext := strings.ToLower(path.Ext(name))
-	if id != "mapcanvas" || !sourceOK || !pathOK || !versionOK || len(req.Arguments) != 3 || len(version) != 64 || digestErr != nil || validTransferPath(name) != nil || name == "." || path.Clean(name) != name || (ext != ".png" && ext != ".pgm") {
+	if mapWorkbenchToolPrefix(id) == "" || !sourceOK || !pathOK || !versionOK || len(req.Arguments) != 3 || len(version) != 64 || digestErr != nil || validTransferPath(name) != nil || name == "." || path.Clean(name) != name || (ext != ".png" && ext != ".pgm") {
 		fail(w, 400, errors.New("invalid map image selection"))
 		return
 	}

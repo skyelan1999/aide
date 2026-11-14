@@ -146,6 +146,12 @@ ZIP 插件包根目录包含 `manifest.json`、清单指定的 JS 入口、可�
 {"id":"python-cad-tools","name":"Python CAD 工具","version":"1.0.0","main":"index.js"}
 ```
 
+入口也可位于子目录，例如 `src/index.js`。首次导入在完整暂存包中按 `manifest.main` 校验，保留 `require('./helper.js')`、JSON 资源和 `__dirname` 的相对位置；这些文件必须一并放进 ZIP。真正缺失的依赖或无效入口会拒绝安装，并清理暂存目录，不登记半成品。单文件 JS 上传仍只包含该文件；需要辅助文件时使用 ZIP。
+
+Office 原生生成使用格式对应的结构：DOCX 为 `content={title,blocks:[{type:"paragraph",text:"正文"}]}`，表格区块用 `type:"table",rows:[[...]]`；XLSX 为 `content={sheets:[{name,rows:[[...]]}]}`；PPTX 为 `content={slides:[{title,body}]}`。生成器对未知正文键给出具体提示并拒绝创建文件，不静默丢弃 `paragraphs`、`data` 等误填字段。生成后仍从实际来源独立读取或打开，核对正文和表格。
+
+地图工作台桥接兼容 `mapcanvas` 与已安装的旧 `ros-map-editor`，各自只接受对应工具名前缀的来源读取参数。地图原图绑定继续复用当前来源可见性、路径范围、写权限及版本校验；只读来源可导入和导出，不能覆盖。插件准备保存后，须由宿主顶部的明确保存动作提交；iframe 不能直接提交写入。
+
 Python 脚本由 JS handler 通过 `api.runPython('worker.py', args)` 调用。工具包中的 `requirements.txt` 不会自动安装；依赖必须已经存在于所用的 aide 源码开发环境或 Release 镜像中。当前镜像包含 Python 3.12 与固定版本的 `ezdxf`、Office 库和 `pypdf`；增加默认依赖时需同步更新开发/发行镜像依赖和离线 wheels。
 
 ## 5. 生命周期与 API

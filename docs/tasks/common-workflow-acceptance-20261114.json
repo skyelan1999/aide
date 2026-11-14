@@ -1,0 +1,76 @@
+{
+  "id": "common-workflow-acceptance-20261114",
+  "request": "再从实际使用角度把 aide 和已安装插件的常用流程完整验收一遍，有问题直接修复，尤其看看有没有让人不知道怎么用的地方，保留现有数据，Aide 还是不要 release。所有插件记得合到main并release。",
+  "baseline": "f76acf2203c732661a12a4f10ecaea45e3010881",
+  "initial_status": "Clean owned worktree at f76acf22; production integrity=ok; 35 enabled plugins; 87 sessions and 5 pending approvals preserved.",
+  "acceptance": [
+    "Exercise core project/files/chat/approval/goal/knowledge/decision/impact/workflow common paths against real Aide APIs and UI using owned synthetic inputs.",
+    "For each of 35 installed plugins record discoverability, meaningful common action and result/reopen/error recovery; distinguish unavailable external integrations.",
+    "Inspect desktop and narrow layouts; preserve the existing layout, drafts, settings, files and pending approvals.",
+    "Confirmed bugs get owning issue, source repair, meaningful tests and actual browser/native verification.",
+    "All changed plugins merge to owning main, publish versioned verified packages, update applicable market and installed copies.",
+    "Aide fixes merge and update running service after validation; no Aide Release, tag or version bump."
+  ],
+  "scope": [
+    "Aide and exactly 35 currently installed plugin IDs",
+    "Synthetic project operations only; no real approval, paid provider call, external messaging or hardware write",
+    "Public evidence sanitized; private plugin code/packages remain private"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorizes workflow audit, direct fixes, preserving data, plugin main/releases/market, excluding Aide Release.",
+      "evidence": [
+        "User instructions 2026-11-14"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "35-plugin functional inventory; owned synthetic projects, exact packages, deterministic provider, TLS loopback, desktop/narrow UI and independent artifacts. No real approvals or paid calls.",
+      "evidence": [
+        ".agent-state/common-workflow-acceptance-20261114/qa-inventory.json"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Confirmed host issues #891/#892/#893/#894 addressed in owned source; PjPlan private fix merged/released; Office merged, release underway; legacy ROS fix awaiting final PR/release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/891",
+        "https://github.com/skyelan1999/aide/issues/892",
+        "https://github.com/skyelan1999/aide/issues/893",
+        "https://github.com/skyelan1999/aide/issues/894"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Current targeted Go race suite passes; quick checks pass; real common workflows progressively verified; comprehensive audit still in progress.",
+      "evidence": [
+        ".agent-state/common-workflow-acceptance-20261114/targeted-race-final.log",
+        ".agent-state/common-workflow-acceptance-20261114/quick-final.log",
+        ".agent-state/common-workflow-acceptance-20261114/functional-results-private.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Aide Release explicitly excluded by user. Independent plugin main/releases/market are tracked separately; PjPlan 3.1.1, Office 1.1.1 and ROS Map Editor 0.4.8 published, installation and market validation remain.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-PjPlan/releases/tag/v3.1.1",
+        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.1",
+        "https://github.com/skyelan1999/aide-pkg-RosMapEditor/releases/tag/v0.4.8"
+      ]
+    }
+  },
+  "release_authorization": "User: 所有插件记得和到main并release. User: Aide 还是不要 release.",
+  "rollback": "Preserve original checkout and data; pin live image and create private essential data backup before production mutations.",
+  "handoff": ""
+}

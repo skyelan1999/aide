@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -37,6 +38,39 @@ func TestUsabilityBrowserFixture(t *testing.T) {
 			http.Error(w, "bad fixture request", 400)
 			return
 		}
+		// Explicit synthetic prompts exercise actual host dispatch and approval
+		// without using an external provider or real account credentials.
+		if messages, ok := body["messages"].([]any); ok {
+			for i := len(messages) - 1; i >= 0; i-- {
+				message, _ := messages[i].(map[string]any)
+				if message["role"] == "tool" {
+					break
+				}
+				content, _ := message["content"].(string)
+				const marker = "COMMON_WORKFLOW_TOOL:"
+				if message["role"] != "user" || !strings.HasPrefix(content, marker) {
+					continue
+				}
+				var call struct {
+					Name      string          `json:"name"`
+					Arguments json.RawMessage `json:"arguments"`
+				}
+				input := strings.SplitN(strings.TrimPrefix(content, marker), "\n", 2)[0]
+				if json.Unmarshal([]byte(input), &call) != nil || call.Name == "" {
+					http.Error(w, "invalid synthetic tool request", 400)
+					return
+				}
+				tool := map[string]any{"index": 0, "id": "common-workflow-call", "type": "function", "function": map[string]any{"name": call.Name, "arguments": string(call.Arguments)}}
+				if body["stream"] == true {
+					w.Header().Set("Content-Type", "text/event-stream")
+					delta, _ := json.Marshal(map[string]any{"choices": []any{map[string]any{"delta": map[string]any{"tool_calls": []any{tool}}}}})
+					fmt.Fprintf(w, "data: %s\n\ndata: {\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n", delta)
+				} else {
+					jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"role": "assistant", "tool_calls": []any{tool}}, "finish_reason": "tool_calls"}}})
+				}
+				return
+			}
+		}
 		const text = "USABILITY_FIXTURE: synthetic result for operator review."
 		if body["stream"] == true {
 			w.Header().Set("Content-Type", "text/event-stream")
@@ -46,7 +80,10 @@ func TestUsabilityBrowserFixture(t *testing.T) {
 		}
 	}))
 	defer provider.Close()
-	a.token = "usability-synthetic-token"
+	a.token = env("AIDE_USABILITY_TOKEN", "usability-synthetic-token")
+	if err := os.WriteFile(AccessTokenPath(a.dataPath), []byte(a.token), 0600); err != nil {
+		t.Fatal(err)
+	}
 	a.settings = Settings{BaseURL: provider.URL, Model: "usability-fixture", APIKey: "synthetic-test-key", SandboxMode: "workspace-write"}
 	a.storeModelAPIKeyPlaintextLocked("synthetic-test-key")
 	root := os.Getenv("AIDE_USABILITY_PACKAGES")
@@ -88,6 +125,27 @@ func TestUsabilityBrowserFixture(t *testing.T) {
 		a.Handler().ServeHTTP(w, req)
 		rows = append(rows, map[string]any{"id": input.ID, "version": input.Version, "sha256": input.SHA256, "installationStatus": w.Code, "installationResponse": json.RawMessage(w.Body.Bytes())})
 	}
+	if os.Getenv("AIDE_COMMON_WORKFLOW_FIXTURE") == "1" {
+		// Match the production registry location used by native history policy,
+		// while keeping installed package assets outside the indexed project.
+		registry := filepath.Join(a.workPath, pluginsDirName, "registry.json")
+		if err := os.MkdirAll(filepath.Dir(registry), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Remove(registry); err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(filepath.Join(a.pluginsPath, "registry.json"), registry); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(a.workPath, "qa-documents"), 0700); err != nil {
+			t.Fatal(err)
+		}
+		a.wsConfig.Docs.Path = "/workspace/qa-documents"
+		if err := a.upsertSystemDocs(); err != nil {
+			t.Fatal(err)
+		}
+	}
 	a.runPluginHost(context.Background())
 	a.mu.Lock()
 	for i := 0; i < 4; i++ {
@@ -113,13 +171,25 @@ func TestUsabilityBrowserFixture(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(a.workspace.Name(), "calc.md"), []byte("# Synthetic calculation\nPressure: 10 MPa\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
+	if os.Getenv("AIDE_COMMON_WORKFLOW_FIXTURE") == "1" {
+		for name, content := range map[string]string{
+			"qa-map.yaml": "image: qa-map.pgm\nresolution: 0.05\norigin: [0.0, 0.0, 0.0]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n",
+			"qa-map.pgm": "P2\n4 4\n255\n255 255 255 255\n255 0 0 255\n255 0 0 255\n255 255 255 255\n",
+			"qa-left.txt": "Synthetic comparison\nValue: 10\n",
+			"qa-right.txt": "Synthetic comparison\nValue: 20\n",
+		} {
+			if err := os.WriteFile(filepath.Join(a.workPath, name), []byte(content), 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /fixture/summary", func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer "+a.token {
 			http.Error(w, "unauthorized", 401)
 			return
 		}
-		jsonOut(w, 200, map[string]any{"scope": "Synthetic workspace and exact pinned public packages; no real models/accounts or user plugins", "packages": rows})
+		jsonOut(w, 200, map[string]any{"scope": "Synthetic workspace and pinned packages; no real models/accounts or user data", "packages": rows, "dataPath": a.dataPath, "workspacePath": a.workspace.Name()})
 	})
 	mux.Handle("/", a.Handler())
 	listener, err := net.Listen("tcp", os.Getenv("AIDE_USABILITY_ADDRESS"))
@@ -129,6 +199,19 @@ func TestUsabilityBrowserFixture(t *testing.T) {
 	server := &http.Server{Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	defer server.Close()
 	go server.Serve(listener)
+	if address := os.Getenv("AIDE_USABILITY_TLS_ADDRESS"); address != "" {
+		cert, key, err := ensureTLSCert(CertsDir(a.dataPath))
+		if err != nil {
+			t.Fatal(err)
+		}
+		tlsListener, err := net.Listen("tcp", address)
+		if err != nil {
+			t.Fatal(err)
+		}
+		tlsServer := &http.Server{Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+		defer tlsServer.Close()
+		go tlsServer.ServeTLS(tlsListener, cert, key)
+	}
 	t.Log("Owned usability host ready")
 	stop := os.Getenv("AIDE_USABILITY_STOP")
 	for n := 0; n < 7200; n++ {

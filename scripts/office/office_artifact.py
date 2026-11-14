@@ -23,8 +23,19 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def object_fields(value, allowed, label):
+    if not isinstance(value, dict):
+        fail(f"{label} 必须为对象")
+    unknown = set(value) - set(allowed)
+    if unknown:
+        fail(f"{label} 不支持字段 {', '.join(sorted(unknown)[:5])}；请使用 {', '.join(allowed)}，不会忽略正文或创建文件")
+
+
 def create(kind, spec, output):
     if kind == "docx":
+        object_fields(spec, ("title", "blocks"), "DOCX content")
+        if not isinstance(spec.get("blocks", []), list):
+            fail('DOCX blocks 必须为数组，例如 [{"type":"paragraph","text":"正文"}]')
         doc = Document()
         if spec.get("title"):
             doc.add_heading(str(spec["title"]), 0)
@@ -32,6 +43,9 @@ def create(kind, spec, output):
             if not isinstance(block, dict):
                 fail("blocks must contain objects")
             block_type = block.get("type", "paragraph")
+            fields = {"heading": ("type", "text", "level"), "paragraph": ("type", "text"), "table": ("type", "rows")}
+            if block_type in fields:
+                object_fields(block, fields[block_type], "DOCX " + block_type)
             if block_type == "heading":
                 doc.add_heading(str(block.get("text", "")), level=max(1, min(9, int(block.get("level", 1)))))
             elif block_type == "paragraph":
@@ -50,14 +64,16 @@ def create(kind, spec, output):
                 fail("unsupported DOCX block type")
         doc.save(output)
     elif kind == "xlsx":
+        object_fields(spec, ("sheets",), "XLSX content")
         wb = Workbook()
         wb.remove(wb.active)
         sheets = spec.get("sheets", [])
         if not isinstance(sheets, list) or not sheets:
             fail("XLSX requires at least one sheet")
         for item in sheets:
-            if not isinstance(item, dict):
-                fail("sheet must be an object")
+            object_fields(item, ("name", "rows"), "XLSX sheet")
+            if not isinstance(item.get("rows", []), list):
+                fail("XLSX rows 必须为行数组，例如 [[\"名称\",\"数量\"],[\"样品\",2]]")
             ws = wb.create_sheet(str(item.get("name", "Sheet")))
             for row in item.get("rows", []):
                 if not isinstance(row, list):
@@ -65,10 +81,12 @@ def create(kind, spec, output):
                 ws.append(row)
         wb.save(output)
     elif kind == "pptx":
+        object_fields(spec, ("slides",), "PPTX content")
+        if not isinstance(spec.get("slides", []), list):
+            fail('PPTX slides 必须为数组，例如 [{"title":"标题","body":"正文"}]')
         prs = Presentation()
         for item in spec.get("slides", []):
-            if not isinstance(item, dict):
-                fail("slide must be an object")
+            object_fields(item, ("title", "body"), "PPTX slide")
             slide = prs.slides.add_slide(prs.slide_layouts[1])
             slide.shapes.title.text = str(item.get("title", ""))
             slide.placeholders[1].text = str(item.get("body", ""))

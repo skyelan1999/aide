@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -63,6 +65,43 @@ func TestPluginBundleInstallsAndRunsPythonTool(t *testing.T) {
 	}
 	if !strings.Contains(gotText(got), `\"echo\": \"ready\"`) && !strings.Contains(gotText(got), `\"echo\":\"ready\"`) {
 		t.Fatalf("unexpected Python output: %s", gotText(got))
+	}
+}
+
+func TestPluginBundleValidatesCompletePackageAtDeclaredEntry(t *testing.T) {
+	a := testApp(t)
+	w := pluginBundleRequest(t, a, map[string]string{
+		"pkg/manifest.json": `{"id":"bundle-relative","name":"Relative imports","version":"1.0.0","main":"src/index.js"}`,
+		"pkg/src/index.js":  `const tool = require('./tool.js'); const schema = require('../schema.json'); const fs = require('fs'); const path = require('path'); const manifest = JSON.parse(fs.readFileSync(path.join(__dirname,'../manifest.json'),'utf8')); module.exports={name:manifest.name,apply(ctx){ctx.tool({name:'relative-echo',description:schema.description,parameters:{type:'object'},handler:()=>tool.value});}};`,
+		"pkg/src/tool.js":   `module.exports={value:'relative dependency result'};`,
+		"pkg/schema.json":   `{"description":"Synthetic dependency"}`,
+	})
+	requireStatus(t, w, 201)
+	got, err := a.callPluginTool("bundle-relative", "relative-echo", map[string]any{})
+	if err != nil || !strings.Contains(gotText(got), "relative dependency result") {
+		t.Fatalf("installed package tool: %s, %v", gotText(got), err)
+	}
+}
+
+func TestPluginBundleMissingDependencyLeavesNoPartialInstall(t *testing.T) {
+	a := testApp(t)
+	before := append([]PluginManifest{}, a.pluginRegistry.Plugins...)
+	w := pluginBundleRequest(t, a, map[string]string{
+		"manifest.json": `{"id":"missing-dependency","name":"Missing dependency","main":"src/index.js"}`,
+		"src/index.js":  `require('./missing.json'); module.exports={apply(ctx){}};`,
+	})
+	requireStatus(t, w, 400)
+	if !reflect.DeepEqual(before, append([]PluginManifest{}, a.pluginRegistry.Plugins...)) {
+		t.Fatal("invalid package changed registry")
+	}
+	entries, err := os.ReadDir(a.pluginsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Name() == "missing-dependency" || strings.HasPrefix(entry.Name(), ".install-") {
+			t.Fatalf("invalid package left partial install: %s", filepath.Join(a.pluginsPath, entry.Name()))
+		}
 	}
 }
 

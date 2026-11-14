@@ -81,6 +81,28 @@ func TestOfficeCreateAndXlsxEdit(t *testing.T) {
 	}
 }
 
+func TestOfficeCreateRejectsIgnoredContentWithoutWritingFile(t *testing.T) {
+	a := testApp(t)
+	for _, tc := range []struct {
+		kind    string
+		content map[string]any
+	}{
+		{"docx", map[string]any{"title": "Synthetic", "paragraphs": []any{"must not disappear"}}},
+		{"docx", map[string]any{"blocks": []any{map[string]any{"type": "paragraph", "body": "must not disappear"}}}},
+		{"xlsx", map[string]any{"sheets": []any{map[string]any{"name": "QA", "data": []any{[]any{1}}}}}},
+		{"pptx", map[string]any{"slides": []any{map[string]any{"title": "QA", "content": "must not disappear"}}}},
+	} {
+		name := "rejected." + tc.kind
+		result := a.officeCreateTool(a.workspace, "local", "", name, tc.kind, tc.content)
+		if !strings.Contains(result, "不支持字段") || !strings.Contains(result, "请使用") {
+			t.Fatalf("missing recovery instruction: %s", result)
+		}
+		if _, err := os.Stat(filepath.Join(a.workPath, name)); !os.IsNotExist(err) {
+			t.Fatalf("invalid content left a file: %v", err)
+		}
+	}
+}
+
 func TestReadFileRawBackupUsesUnderlyingMIME(t *testing.T) {
 	a := testApp(t)
 	p := filepath.Join(a.workPath, "guide.pdf.v0.10.bak")

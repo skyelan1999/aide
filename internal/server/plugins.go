@@ -193,6 +193,13 @@ func (a *App) validatePluginCode(code string) (string, error) {
 	if err := os.WriteFile(file, []byte(code), 0644); err != nil {
 		return "", err
 	}
+	return a.validatePluginFile(file)
+}
+
+// Validate bundles in their complete staged directory so relative imports and
+// __dirname resolve exactly as they do after installation. Single-file uploads
+// still use an isolated temporary directory through validatePluginCode.
+func (a *App) validatePluginFile(file string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), pluginRunTimeout)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "validate", file).Output()
@@ -605,10 +612,6 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	main := manifest.Main
-	if _, err := a.validatePluginCode(string(packageFiles[main])); err != nil {
-		fail(w, 400, err)
-		return
-	}
 	if a.pluginsPath == "" {
 		a.pluginsPath = filepath.Join(a.workPath, pluginsDirName)
 	}
@@ -653,6 +656,10 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 	manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 	if err := writeInstalledPluginManifest(stage, manifest, packageFiles); err != nil {
 		fail(w, 500, err)
+		return
+	}
+	if _, err := a.validatePluginFile(filepath.Join(stage, filepath.FromSlash(main))); err != nil {
+		fail(w, 400, err)
 		return
 	}
 	if _, market := r.Context().Value(marketInstallReceipt{}).(marketInstallReceipt); market {

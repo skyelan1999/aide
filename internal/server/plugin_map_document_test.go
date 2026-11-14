@@ -12,11 +12,19 @@ import (
 )
 
 func mapWorkbenchFixture(t *testing.T) (*App, string) {
+	return mapWorkbenchFixtureID(t, "mapcanvas")
+}
+
+func mapWorkbenchFixtureID(t *testing.T, pluginID string) (*App, string) {
 	t.Helper()
 	a := testApp(t)
 	entries := map[string]string{"manifest.json": `{"id":"mapcanvas","name":"MapCanvas fixture","version":"0.1.0","main":"index.js","workbench":{"protocol":1,"entry":"viewer.html","title":"MapCanvas fixture","tools":["mapcanvas_browse","mapcanvas_read"],"fileHandler":{"extensions":[".pgm",".png"],"editable":true}}}`, "index.js": `module.exports={apply(ctx){for(const name of ['mapcanvas_browse','mapcanvas_read'])ctx.tool({name,description:'fixture',parameters:{type:'object',properties:{}},handler:()=>({})})}};`, "viewer.html": "<!doctype html><title>MapCanvas fixture</title>"}
+	entries["manifest.json"] = strings.ReplaceAll(entries["manifest.json"], `"id":"mapcanvas"`, `"id":"`+pluginID+`"`)
+	for _, name := range []string{"manifest.json", "index.js"} {
+		entries[name] = strings.ReplaceAll(entries[name], "mapcanvas_", mapWorkbenchToolPrefix(pluginID))
+	}
 	requireStatus(t, pluginBundleRequest(t, a, entries), 201)
-	out := request(a, "POST", "/api/plugins/mapcanvas/workbench/open", map[string]any{})
+	out := request(a, "POST", "/api/plugins/"+pluginID+"/workbench/open", map[string]any{})
 	requireStatus(t, out, 200)
 	var b struct {
 		URL    string `json:"url"`
@@ -33,6 +41,28 @@ func mapWorkbenchFixture(t *testing.T) (*App, string) {
 	}
 	return a, b.Bridge.Key
 }
+
+func TestLegacyMapDocumentReadonlyAndVersionGuard(t *testing.T) {
+	a, key := mapWorkbenchFixtureID(t, "ros-map-editor")
+	call := func(id, method string, args map[string]any) *httptest.ResponseRecorder {
+		return request(a, "POST", "/api/plugins/ros-map-editor/workbench/"+key+"/call", map[string]any{"protocol": 1, "requestId": id, "method": method, "arguments": args})
+	}
+	body, err := os.ReadFile(filepath.Join(a.workPath, "map.pgm"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireStatus(t, call("stale", "map.document.bind", map[string]any{"source": "workspace", "path": "map.pgm", "version": strings.Repeat("0", 64)}), 409)
+	requireStatus(t, call("write_target", "map.document.bind", map[string]any{"source": "workspace", "path": "map.pgm", "version": hash(body)}), 200)
+	if err := os.WriteFile(filepath.Join(a.reference.Name(), "map.pgm"), body, 0600); err != nil {
+		t.Fatal(err)
+	}
+	out := call("readonly_target", "map.document.bind", map[string]any{"source": "context", "path": "map.pgm", "version": hash(body)})
+	requireStatus(t, out, 200)
+	if !strings.Contains(out.Body.String(), `"editable":false`) {
+		t.Fatal(out.Body.String())
+	}
+	requireStatus(t, call("deny_readonly_save", "document.save.begin", map[string]any{"size": len(body), "version": hash(body)}), 403)
+}
 func mapCall(a *App, key, id, method string, args map[string]any) *httptest.ResponseRecorder {
 	return request(a, "POST", "/api/plugins/mapcanvas/workbench/"+key+"/call", map[string]any{"protocol": 1, "requestId": id, "method": method, "arguments": args})
 }
@@ -44,6 +74,12 @@ func TestMapWorkbenchSourceArgumentScope(t *testing.T) {
 	}{
 		{"mapcanvas", "mapcanvas_read", map[string]any{"source": "source:fixture", "path": "map.pgm", "offset": 0}, true},
 		{"mapcanvas", "mapcanvas_browse", map[string]any{"source": "context", "path": "."}, true},
+		{"ros-map-editor", "ros_map_read", map[string]any{"source": "context", "path": "map.pgm", "offset": 0}, true},
+		{"ros-map-editor", "ros_map_browse", map[string]any{"source": "source:fixture", "path": "."}, true},
+		{"ros-map-editor", "mapcanvas_read", map[string]any{"source": "context", "path": "map.pgm"}, false},
+		{"mapcanvas", "ros_map_read", map[string]any{"source": "context", "path": "map.pgm"}, false},
+		{"other", "ros_map_read", map[string]any{"source": "context", "path": "map.pgm"}, false},
+		{"ros-map-editor", "ros_map_read", map[string]any{"source": "context", "path": "map.pgm", "command": "x"}, false},
 		{"other", "mapcanvas_read", map[string]any{"source": "context", "path": "map.pgm"}, false},
 		{"mapcanvas", "other_read", map[string]any{"source": "context", "path": "map.pgm"}, false},
 		{"mapcanvas", "mapcanvas_read", map[string]any{"source": "context", "path": "map.pgm", "command": "x"}, false},

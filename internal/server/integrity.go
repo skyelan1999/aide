@@ -40,12 +40,13 @@ type IntegrityCheck struct {
 
 // IntegrityReport 一次完整性校验/自愈的完整报告。
 type IntegrityReport struct {
-	Status      IntegrityStatus  `json:"status"`
-	Checks      []IntegrityCheck `json:"checks"`
-	Quarantined []string         `json:"quarantined,omitempty"` // 移入隔离区的用户数据
-	Healed      []string         `json:"healed,omitempty"`      // 已自动恢复的项
-	Errors      []string         `json:"errors,omitempty"`      // 未解决的错误
-	CheckedAt   string           `json:"checkedAt"`
+	Status       IntegrityStatus   `json:"status"`
+	Checks       []IntegrityCheck  `json:"checks"`
+	Quarantined  []string          `json:"quarantined,omitempty"` // 移入隔离区的用户数据
+	Healed       []string          `json:"healed,omitempty"`      // 已自动恢复的项
+	Errors       []string          `json:"errors,omitempty"`      // 未解决的错误
+	CheckedAt    string            `json:"checkedAt"`
+	invalidFiles map[string]string // observed invalid bytes; never infer corruption from I/O errors
 }
 
 // baselineManifest 程序层基线清单（首次启动生成，随运行期比对）。
@@ -99,6 +100,10 @@ func currentBinarySHA256() (string, error) {
 
 // VerifyIntegrity 启动/巡检校验：程序哈希、目录结构、关键文件可解析。只读，不改盘。
 func VerifyIntegrity(data string) IntegrityReport {
+	return verifyIntegrity(data, os.ReadFile)
+}
+
+func verifyIntegrity(data string, readFile func(string) ([]byte, error)) IntegrityReport {
 	rep := IntegrityReport{CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 
 	// ① 程序层哈希比对
@@ -130,26 +135,36 @@ func VerifyIntegrity(data string) IntegrityReport {
 
 	// ③ 关键文件可解析性（存在但损坏才算问题；缺失视为正常——首次安装无数据）
 	corrupt := []string{}
-	if b, err := os.ReadFile(SettingsPath(data)); err == nil {
+	markInvalid := func(file string, b []byte) {
+		corrupt = append(corrupt, file)
+		if rep.invalidFiles == nil {
+			rep.invalidFiles = map[string]string{}
+		}
+		rep.invalidFiles[file] = hash(b)
+	}
+	markUnreadable := func(file string) {
+		rep.Checks = append(rep.Checks, IntegrityCheck{Name: "data-access", OK: false, Detail: file + ": 读取暂不可用；原件保留，下次巡检重试"})
+	}
+	if b, err := readFile(SettingsPath(data)); err == nil {
 		var s map[string]any
 		if json.Unmarshal(b, &s) != nil {
-			corrupt = append(corrupt, SettingsPath(data))
+			markInvalid(SettingsPath(data), b)
 		}
 	} else if !os.IsNotExist(err) {
-		rep.Errors = append(rep.Errors, err.Error())
+		markUnreadable(SettingsPath(data))
 	}
 	// 会话文件可逐条解析（坏文件只记录，不阻断）
 	for _, dir := range sessionBucketDirs(data) {
 		ents, _ := filepath.Glob(filepath.Join(dir, "session-*.json"))
 		for _, f := range ents {
-			b, err := os.ReadFile(f)
+			b, err := readFile(f)
 			if err != nil {
-				corrupt = append(corrupt, f)
+				markUnreadable(f)
 				continue
 			}
 			var s Session
 			if json.Unmarshal(b, &s) != nil {
-				corrupt = append(corrupt, f)
+				markInvalid(f, b)
 			}
 		}
 	}
@@ -190,14 +205,46 @@ func SelfHeal(data string, rep IntegrityReport) IntegrityReport {
 	}
 
 	// 损坏关键文件 → 移入隔离区（不自动删除）
-	for _, f := range rep.Errors {
-		if st, err := os.Stat(f); err != nil || st.IsDir() {
+	preserved := map[string]bool{}
+	for f, expected := range rep.invalidFiles {
+		// Startup reports may become stale while cloud storage hydrates or an
+		// atomic writer replaces a file. Only move the same invalid bytes.
+		before, err := os.Lstat(f)
+		if err != nil || !before.Mode().IsRegular() {
+			preserved[f] = true
+			rep.Checks = append(rep.Checks, IntegrityCheck{Name: "data-access", OK: false, Detail: f + ": 文件状态已变化；原件保留，下次巡检重试"})
 			continue
 		}
-		dst := filepath.Join(QuarantineDir(data), filepath.Base(f)+".corrupted."+time.Now().UTC().Format("20060102T150405"))
+		b, readErr := os.ReadFile(f)
+		after, statErr := os.Lstat(f)
+		if readErr != nil || statErr != nil || !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) {
+			preserved[f] = true
+			rep.Checks = append(rep.Checks, IntegrityCheck{Name: "data-access", OK: false, Detail: f + ": 读取或文件身份已变化；原件保留，下次巡检重试"})
+			continue
+		}
+		if hash(b) != expected {
+			preserved[f] = true
+			rep.Checks = append(rep.Checks, IntegrityCheck{Name: "data-access", OK: false, Detail: f + ": 内容在校验后已变化；原件保留，下次巡检重试"})
+			continue
+		}
+		dst := filepath.Join(QuarantineDir(data), filepath.Base(f)+".corrupted."+time.Now().UTC().Format("20060102T150405")+"."+newID())
 		if err := os.Rename(f, dst); err == nil {
 			rep.Quarantined = append(rep.Quarantined, filepath.Base(f))
 			logRecovery(data, "quarantine", f, "-> "+dst)
+		}
+	}
+	if len(preserved) > 0 {
+		remaining := rep.Errors[:0]
+		for _, item := range rep.Errors {
+			if !preserved[item] {
+				remaining = append(remaining, item)
+			}
+		}
+		rep.Errors = remaining
+		for i := range rep.Checks {
+			if rep.Checks[i].Name == "keyfiles" {
+				rep.Checks[i].OK = len(remaining) == 0
+			}
 		}
 	}
 	// 去重排序
@@ -243,7 +290,7 @@ func summarizeStatus(rep IntegrityReport) IntegrityStatus {
 
 func hasDegradedCheck(rep IntegrityReport) bool {
 	for _, c := range rep.Checks {
-		if !c.OK && c.Name == "binary" {
+		if !c.OK && (c.Name == "binary" || c.Name == "data-access") {
 			return true
 		}
 	}
