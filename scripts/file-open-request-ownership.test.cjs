@@ -7,7 +7,7 @@ function fixture(){
   const dialog={open:false,addEventListener(type,fn){this[type]=fn;}};
   const context={state,lockScreen:{locked:false},chatRecoveryEpoch:0,recoveryScope:()=>state.config.workspaceId,$:()=>dialog,
     api:query=>new Promise((resolve,reject)=>pending.push({query,resolve,reject})),showEditor:()=>shown.push({...state.file}),persistWorkspaceScene:async scene=>scenes.push(scene)};
-  for(const type of ['Image','Stl','Step','Pdf','Dxf','Docx','Xlsx','Sqlite','Zip'])context['is'+type+'Path']=path=>type==='Image'&&path.endsWith('.png');
+  for(const type of ['Image','Stl','Step','Pdf','CadDrawing','Docx','Xlsx','Sqlite','Zip'])context['is'+type+'Path']=path=>type==='Image'&&path.endsWith('.png');
   vm.createContext(context);vm.runInContext(code,context);
   const closeHook=source.split('\n').find(line=>line.startsWith("$('editor-dialog').addEventListener('close'"));
   if(closeHook)vm.runInContext(closeHook,context);

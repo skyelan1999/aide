@@ -3331,7 +3331,7 @@ async function openFile(path, options={}) {
   if(!options.native&&globalThis.AidePluginFilePreview){const handled=await globalThis.AidePluginFilePreview.open({path,root,source}, {...pluginWorkbenchServices(),current,native:()=>openFile(path,{native:true})});if(handled){if(current())await persistWorkspaceScene({openFile:{root,source,path}});return;}if(!current())return;}
   if(!options.native&&/\.pp$/i.test(path)){if(await openProjectFileWorkbench(path,root,source,current))return;if(!current())return;}
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isCadDrawingPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root, source, content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     await persistWorkspaceScene({openFile:{root:state.file.root,source:state.file.source||'',path:state.file.path}});
@@ -3506,7 +3506,7 @@ function showEditor() {
   const isStep = isStepPath(state.file.path);
   const isUrdf = isUrdfPath(state.file.path);
   const isPdf = isPdfPath(state.file.path);
-  const isDxf = isDxfPath(state.file.path);
+  const isDxf = isCadDrawingPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
   const isXlsx = isXlsxPath(state.file.path);
   const isSqlite = isSqlitePath(state.file.path);
@@ -8892,7 +8892,9 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
 }
 
 /* ── DXF 矢量渲染器：dxf-parser + SVG 离线渲染 ── */
+function isDwgPath(path) { return /\.dwg$/i.test(effectiveFileTypePath(path)); }
 function isDxfPath(path) { return /\.dxf$/i.test(effectiveFileTypePath(path)); }
+function isCadDrawingPath(path) { return isDxfPath(path) || isDwgPath(path); }
 function isDocxPath(path) { return /\.docx$/i.test(effectiveFileTypePath(path)); }
 /* XLSX 查看和单元格修改走服务端 openpyxl：仅传可见页，保留原工作簿。 */
 function csvColumnLabel(index) {
@@ -9160,21 +9162,34 @@ function bulgePts(x1, y1, x2, y2, bulge) {
 }
 
 async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
+  teardownViewer(container);
+  let canceled = false;
+  const controller = new AbortController();
+  let releaseEvents = () => {};
+  bindViewerTeardown(container, () => { canceled = true; controller.abort(); releaseEvents(); });
   container.innerHTML = '';
-  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
+  const dwg = isDwgPath(filePath);
+  const originalUrl = fileRawUrl(filePath, root, source, viewerSpec);
+  const rawUrl = dwg ? originalUrl.replace('/api/file/raw?', '/api/file/dwg-preview?') : originalUrl;
 
   const viewer = el('div', 'dxf-viewer');
   const toolbar = el('div', 'dxf-toolbar');
   const info = el('span', 'dxf-info', filePath.split('/').pop());
-  const meta = el('span', 'dxf-meta', t('加载中…'));
+  const meta = el('span', 'dxf-meta', dwg ? t('正在生成 DWG 预览…') : t('加载中…'));
   const btnZoomOut = el('button', 'dxf-ctrl', '－');
   const btnZoomIn = el('button', 'dxf-ctrl', '＋');
   const btnFit = el('button', 'dxf-ctrl', t('适应'));
   const btnClose = el('button', 'dxf-ctrl', '✕');
   btnZoomOut.title = t('缩小'); btnZoomIn.title = t('放大'); btnFit.title = t('适应窗口'); btnClose.title = t('关闭');
+  btnZoomOut.disabled = btnZoomIn.disabled = btnFit.disabled = true;
   toolbar.append(info, meta, btnZoomOut, btnZoomIn, btnFit, btnClose);
   const canvas = el('div', 'dxf-canvas');
-  viewer.append(toolbar, canvas);
+  const download = el('a', 'dxf-download', t('下载原文件'));
+  download.href = originalUrl; download.download = filePath.split('/').pop();
+  toolbar.insertBefore(download, btnClose);
+  viewer.append(toolbar);
+  if (dwg) viewer.append(el('p', 'dwg-notice', t('DWG 二维预览：滚轮缩放，拖动平移，点“适应”查看全图。原文件不会被修改。三维、外部参照、字体及部分复杂实体可能不显示，请用 CAD 核对。')));
+  viewer.append(canvas);
   container.append(viewer);
 
   const close = () => {
@@ -9187,13 +9202,23 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   let text;
   try {
     await ensureDxfParser();
-    const r = await fetch(rawUrl);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (canceled) return;
+    const r = await fetch(rawUrl, { signal: controller.signal });
+    if (!r.ok) {
+      const error = await r.json().catch(() => ({}));
+      throw new Error(t(error.error || ('HTTP ' + r.status)));
+    }
     text = new TextDecoder().decode(await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.dxfBytes));
+    if (canceled) return;
   } catch (e) {
+    if (canceled) return;
     meta.textContent = t('加载失败');
     canvas.innerHTML = '';
-    canvas.append(el('div', 'dxf-error', t('DXF 加载失败：') + ' ' + escapeHtml(e.message)));
+    const error = el('div', 'dxf-error', t(dwg ? 'DWG 预览失败：' : 'DXF 加载失败：') + ' ' + e.message);
+    const retry = el('button', 'dxf-ctrl', t('重试'));
+    retry.onclick = () => setupDxfPreview(container, filePath, root, source, viewerSpec);
+    error.append(document.createElement('br'), retry);
+    canvas.append(error);
     return;
   }
 
@@ -9205,7 +9230,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   } catch (e) {
     meta.textContent = t('解析失败');
     canvas.innerHTML = '';
-    canvas.append(el('div', 'dxf-error', t('DXF 解析失败：') + ' ' + escapeHtml(e.message)));
+    canvas.append(el('div', 'dxf-error', t(dwg ? 'DWG 预览失败：' : 'DXF 解析失败：') + ' ' + t(e.message)));
     return;
   }
   const entities = (doc && doc.entities) || [];
@@ -9214,11 +9239,12 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   if (!entities.length) {
     meta.textContent = t('无实体');
     canvas.innerHTML = '';
-    canvas.append(el('div', 'dxf-error', t('该 DXF 文件没有可显示的实体')));
+    canvas.append(el('div', 'dxf-error', t(dwg ? '该 DWG 没有可显示的二维实体，请下载原文件用 CAD 打开。' : '该 DXF 文件没有可显示的实体')));
     return;
   }
 
   // 包围盒（DXF Y-up 坐标）
+  let unsupported = 0;
   const bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
   const grow = (x, y) => { budget.point(); if (!isFinite(x) || !isFinite(y)) return; if (x < bb.minX) bb.minX = x; if (x > bb.maxX) bb.maxX = x; if (y < bb.minY) bb.minY = y; if (y > bb.maxY) bb.maxY = y; };
 
@@ -9380,6 +9406,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           break;
         }
         default:
+          unsupported++;
           break;
       }
     } catch (e) { if (window.AidePreviewSafety.isLimitError(e)) throw e; /* 单实体格式异常不中断整图 */ }
@@ -9389,12 +9416,17 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   catch (e) {
     meta.textContent = t('解析失败');
     canvas.innerHTML = '';
-    canvas.append(el('div', 'dxf-error', t('DXF 解析失败：') + ' ' + e.message));
+    canvas.append(el('div', 'dxf-error', t(dwg ? 'DWG 预览失败：' : 'DXF 解析失败：') + ' ' + t(e.message)));
     return;
   }
 
-  if (!isFinite(bb.minX) || bb.minX === bb.maxX) { bb.minX -= 1; bb.maxX += 1; }
-  if (!isFinite(bb.minY) || bb.minY === bb.maxY) { bb.minY -= 1; bb.maxY += 1; }
+  if (!isFinite(bb.minX) || !isFinite(bb.minY)) {
+    meta.textContent = t('无可显示内容');
+    canvas.replaceChildren(el('div', 'dxf-error', t('没有可显示的二维几何，请下载原文件用 CAD 打开。')));
+    return;
+  }
+  if (bb.minX === bb.maxX) { bb.minX -= 1; bb.maxX += 1; }
+  if (bb.minY === bb.maxY) { bb.minY -= 1; bb.maxY += 1; }
   const pad = Math.max((bb.maxX - bb.minX), (bb.maxY - bb.minY)) * 0.05 || 1;
   bb.minX -= pad; bb.maxX += pad; bb.minY -= pad; bb.maxY += pad;
 
@@ -9407,12 +9439,13 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   };
   const fit = () => { s = 1; cxv = fitVb.x + fitVb.w / 2; cyv = fitVb.y + fitVb.h / 2; applyVb(); };
   fit();
+  btnZoomOut.disabled = btnZoomIn.disabled = btnFit.disabled = false;
   btnZoomIn.onclick = () => { s = Math.min(200, s * 1.3); applyVb(); };
   btnZoomOut.onclick = () => { s = Math.max(0.05, s / 1.3); applyVb(); };
   btnFit.onclick = fit;
   canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.15 : 1 / 1.15; s = Math.max(0.05, Math.min(200, s * f)); applyVb(); };
   let dragging = false, lastX = 0, lastY = 0;
-  canvas.onmousedown = (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); };
+  canvas.onpointerdown = (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); };
   const onDxfMove = (e) => {
     if (!dragging) return;
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
@@ -9423,15 +9456,15 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     applyVb();
   };
   const onDxfUp = () => { dragging = false; canvas.classList.remove('grabbing'); };
-  window.addEventListener('mousemove', onDxfMove);
-  window.addEventListener('mouseup', onDxfUp);
-  bindViewerTeardown(container, () => {
-    window.removeEventListener('mousemove', onDxfMove);
-    window.removeEventListener('mouseup', onDxfUp);
-  });
+  window.addEventListener('pointermove', onDxfMove);
+  window.addEventListener('pointerup', onDxfUp);
+  releaseEvents = () => {
+    window.removeEventListener('pointermove', onDxfMove);
+    window.removeEventListener('pointerup', onDxfUp);
+  };
   canvas.classList.add('grab');
 
-  meta.textContent = entities.length + ' ' + t('个实体');
+  meta.textContent = entities.length + ' ' + t('个实体') + (unsupported ? ' · ' + t('部分实体未显示') : '');
 }
 
 /* ── docx-preview 渲染器：保留标题/表格/图片/列表，支持批注 ── */
@@ -9970,7 +10003,7 @@ async function openFileViewMode(forceNative=false) {
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
-  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf','.zip','.drawio'];
+  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf', '.dwg','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
   $('file-view-export-pdf').classList.toggle('hidden', !md);
@@ -9981,7 +10014,7 @@ async function openFileViewMode(forceNative=false) {
   const isStep = isStepPath(typePath);
   const isUrdf = isUrdfPath(typePath);
   const isPdf = isPdfPath(typePath);
-  const isDxf = isDxfPath(typePath);
+  const isDxf = isCadDrawingPath(typePath);
   const isDocx = isDocxPath(typePath);
   const isXlsx = isXlsxPath(typePath);
   const isZip = isZipPath(typePath);

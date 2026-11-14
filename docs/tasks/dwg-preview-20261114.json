@@ -1,0 +1,74 @@
+{
+  "id": "dwg-preview-20261114",
+  "request": "为Aide增加DWG预览，基于现有能力，操作简单直观，测试和文档，更新运行Aide，保留数据，Aide不要release",
+  "baseline": "b9b3038ca8910026866deb2aecb307bc4706deb2",
+  "initial_status": "?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Open DWG directly from project files and references; reuse existing fit/zoom/pan viewer and keep original downloads unchanged.",
+    "No cloud upload, no overwrite of original DWG, no manual conversion steps in standard source build.",
+    "Bound input/output/time/memory/concurrency; reject invalid/traversal/special files and stale source/workspace access.",
+    "Actual GNU sample DWGs produce independently checked geometry and work in desktop/narrow Chinese/English browser and native acceptance.",
+    "Preserve running sessions/settings/drafts/plugins, build and update only after validation; no Aide tag/version/Release."
+  ],
+  "scope": [
+    "Host readonly preview API and existing DXF viewer integration",
+    "Pinned separate conversion CLI, runtime assets and third-party notices/source/build recipe",
+    "Targeted tests, actual browser/native acceptance, documentation, main merge and standard local build"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests DWG preview, simple UX, tests/docs, running update and preserving data; excludes Aide Release.",
+      "evidence": [
+        "User request 2026-11-14"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Pinned standalone local LibreDWG, preserve source DXF version, reuse bounded viewer and source identity.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docker/libredwg/source.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Readonly endpoint, direct viewer, limits/cancellation/identity checks, standard builds and source/license.",
+      "evidence": [
+        "internal/server/dwg_preview.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Targeted real converter/Go, quick and browser tests passed; full suite and production update pending.",
+      "evidence": [
+        "docs/reviews/2026-11-14-dwg-preview.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Guide, feature, deployment and review docs updated; local links passed.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Explicitly prohibited by user. No Aide version/tag/Release.",
+      "evidence": [
+        "User request 2026-11-14"
+      ]
+    }
+  },
+  "release_authorization": "Aide Release/tag/version bump prohibited; user authorizes implementation, validation and running service update.",
+  "rollback": "",
+  "handoff": "",
+  "actor": "skyelan1999"
+}

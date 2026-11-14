@@ -29,6 +29,17 @@ RUN sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeou
 USER aide
 WORKDIR /src
 
+# Pinned standalone DWG conversion component, cached independently of app code.
+FROM toolchain AS dwg-converter
+USER root
+COPY docker/libredwg /dwg-build/docker/libredwg
+COPY scripts/build-dwg-converter.sh /dwg-build/scripts/build-dwg-converter.sh
+WORKDIR /dwg-build
+RUN if ! command -v make >/dev/null 2>&1 || ! command -v xz >/dev/null 2>&1 || ! command -v pkg-config >/dev/null 2>&1; then apt-get update -qq && apt-get install -y --no-install-recommends make xz-utils pkg-config; fi
+RUN --mount=type=cache,target=/root/.cache/aide/libredwg \
+    sh scripts/build-dwg-converter.sh /opt/aide/dwg docker/libredwg/source.json \
+    && cp docker/libredwg/source.json docker/libredwg/README.md scripts/build-dwg-converter.sh /opt/aide/dwg/
+
 # Stable public host components: UI/application edits do not invalidate this stage.
 FROM toolchain AS codex-host
 WORKDIR /src
@@ -199,6 +210,7 @@ RUN set -ux; \
 # 2.6) Office 工具脚本（#63）：aide 经 os/exec 调用（docx_structure/comments 等）。
 #      查找顺序：$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office（dev 挂仓）→ 本目录。
 COPY scripts/office /opt/aide/office-scripts
+COPY --from=dwg-converter /opt/aide/dwg /opt/aide/dwg
 COPY --from=build /opt/aide/licenses /opt/aide/licenses
 COPY --from=node /usr/local/LICENSE /opt/aide/licenses/platform/node-LICENSE
 
