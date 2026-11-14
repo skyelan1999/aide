@@ -8,11 +8,13 @@
     "Reduce repeated executable hashing allocation without caching hashes or skipping integrity checks.",
     "Complete every registered Go test/fuzz seed/example plus other packages, race and vet with pass/skip evidence.",
     "Run isolated without production data mounts; verify current data and running service unchanged.",
-    "Document and merge the fix without Aide version/tag/Release."
+    "Document and merge the fix without Aide version/tag/Release.",
+    "Actually complete both verify full and aide.sh test; preserve errors and avoid legacy shared mounts/15m limit."
   ],
   "scope": [
     "Integrity executable hashing and meaningful regression tests",
-    "Full-suite test evidence and developer documentation"
+    "Full-suite test evidence and developer documentation",
+    "Unify the legacy aide.sh test entry with the existing isolated Go snapshot runner"
   ],
   "stages": {
     "requirements": {
@@ -31,7 +33,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Fresh streamed executable SHA-256 and mutation/replacement/read failure regressions, preserving integrity checks.",
+      "summary": "Fresh streamed executable SHA-256 and content mutation/read-failure regressions; legacy aide.sh test delegates to existing isolated runner with exit-code/settings tests.",
       "evidence": [
         "internal/server/integrity.go",
         "internal/server/integrity_binary_test.go"
