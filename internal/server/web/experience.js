@@ -153,20 +153,26 @@
  }
  function bindSegment(node){
   let scheduled=0;
-  const selected=()=>node.querySelector('button[aria-selected="true"]')||node.querySelector('button.active');
+  const selected=()=>node.querySelector('button[aria-selected="true"]')||node.querySelector('button[aria-pressed="true"]')||node.querySelector('button.active');
   const sync=()=>{
    scheduled=0;
    if(!node.isConnected||!visible(node))return;
-   const button=selected();if(!button||!button.offsetWidth)return;
-   if(!node.classList.contains('motion-segment-ready'))node.classList.add('motion-segment-initial');
+   const button=selected();if(!button||!button.offsetWidth){
+    if(node.classList.contains('motion-segment-ready')||node.classList.contains('motion-segment-initial'))node.classList.remove('motion-segment-ready','motion-segment-initial');
+    node.style.removeProperty('--motion-segment-x');
+    node.style.removeProperty('--motion-segment-width');
+    return;
+   }
+   const initial=!node.classList.contains('motion-segment-ready');
+   if(initial)node.classList.add('motion-segment-initial');
    node.style.setProperty('--motion-segment-x',button.offsetLeft+'px');
    node.style.setProperty('--motion-segment-width',button.offsetWidth+'px');
-   node.classList.add('motion-segment-ready');
-   if(node.classList.contains('motion-segment-initial'))requestAnimationFrame(()=>node.classList.remove('motion-segment-initial'));
+   if(initial)node.classList.add('motion-segment-ready');
+   if(initial)requestAnimationFrame(()=>{if(node.classList.contains('motion-segment-initial'))node.classList.remove('motion-segment-initial');});
   };
   const queueSync=()=>{if(!scheduled)scheduled=requestAnimationFrame(sync);};
   segmentSyncs.push(queueSync);
-  new MutationObserver(queueSync).observe(node,{subtree:true,childList:true,attributes:true,attributeFilter:['class','aria-selected','hidden']});
+  new MutationObserver(queueSync).observe(node,{subtree:true,childList:true,attributes:true,attributeFilter:['class','aria-selected','aria-pressed','hidden']});
   if(window.ResizeObserver)new ResizeObserver(queueSync).observe(node);
   sync();
  }
@@ -356,7 +362,7 @@
   settlePanels();
   for(const node of running.keys())if(node!==document.body&&node.contains(event.target))cancel(node);
  },{capture:true,passive:true});
- window.addEventListener('resize',()=>{resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);for(const stop of [...sendEffects])stop();});
+ window.addEventListener('resize',()=>{resumeSamples=new WeakMap();settlePanels();for(const sync of segmentSyncs)sync();for(const node of exits.keys())settle(node);for(const stop of [...sendEffects])stop();});
  // Navigation owns this API even when the optional intro does not run.
  window.aideExperience=Object.assign(window.aideExperience||{},{leave,settle,reopen,changePanels,revealContent,beginSend,beginStop});
  root.dataset.motionLayer='ready';

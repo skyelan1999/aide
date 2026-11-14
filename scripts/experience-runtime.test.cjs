@@ -6,6 +6,12 @@ for(const mode of ['normal','hidden','reduced']){
  const root={dataset:{motion:mode==='reduced'?'reduced':'auto'},toggleAttribute(){}};
  let added=0,removed=0,idLookup=()=>null,lastLayer=null;
  const frames=[];
+ const segmentClasses=new Set(),segmentStyles=new Map(),segmentObservers=[];
+ let selectedSegment={offsetLeft:141,offsetWidth:67};
+ const segment={isConnected:true,closest:()=>null,getClientRects:()=>[1],
+  querySelector:selector=>selector==='button[aria-pressed="true"]'?selectedSegment:null,
+  classList:{contains:name=>segmentClasses.has(name),add:(...names)=>names.forEach(name=>segmentClasses.add(name)),remove:(...names)=>names.forEach(name=>segmentClasses.delete(name))},
+  style:{setProperty:(name,value)=>segmentStyles.set(name,value),removeProperty:name=>segmentStyles.delete(name)}};
  const paths=[];
  const animations=[],events={};
  const animate=()=>{let resolve,reject;const finished=new Promise((yes,no)=>{resolve=yes;reject=no;});const a={finished,finish:resolve,cancel(){reject(new Error('cancelled'));}};animations.push(a);return a;};
@@ -14,7 +20,19 @@ for(const mode of ['normal','hidden','reduced']){
  const svgNode=(_namespace,tag)=>{const node={attrs:{},classList:{add(){}},style:{},setAttribute(name,value){this.attrs[name]=value},append(){},remove(){removed++},getTotalLength(){return 200},animate};if(tag==='path')paths.push(node);return node};
  const context={document:{documentElement:root,body,hidden:mode==='hidden',getElementById:id=>idLookup(id),querySelector:()=>null,createElementNS:svgNode,addEventListener(){},removeEventListener(){}},location:{pathname:'/',hash:''},sessionStorage:{getItem:()=> '1'},MutationObserver:class{observe(){}disconnect(){}},getComputedStyle:()=>({gridTemplateColumns:'100px 100px',display:'block',visibility:'visible'}),innerWidth:1440,innerHeight:900,setTimeout,clearTimeout,cancelAnimationFrame(){},requestAnimationFrame:fn=>(frames.push(fn),frames.length)};
  context.window=context;context.addEventListener=(name,fn)=>{events[name]=fn;};context.matchMedia=()=>({matches:false,addEventListener(){}});
+ context.document.querySelector=selector=>selector==='.panel-switch'?segment:null;
+ context.MutationObserver=class{constructor(fn){this.fn=fn;}observe(node,options){if(node===segment)segmentObservers.push({fn:this.fn,options});}disconnect(){}};
  vm.createContext(context);vm.runInContext(source,context,{filename:'experience.js'});
+ assert.equal(segmentStyles.get('--motion-segment-x'),'141px','pressed selection gets an indicator');
+ selectedSegment={offsetLeft:70,offsetWidth:34};events.resize();
+ while(frames.length)frames.shift()();
+ assert.equal(segmentStyles.get('--motion-segment-x'),'70px','resize remeasures the selected indicator');
+ assert.equal(segmentStyles.get('--motion-segment-width'),'34px');
+ assert(segmentObservers[0].options.attributeFilter.includes('aria-pressed'));
+ selectedSegment=null;segmentObservers[0].fn();
+ while(frames.length)frames.shift()();
+ assert.equal(segmentClasses.has('motion-segment-ready'),false,'deselection clears the stale indicator');
+ assert.equal(segmentStyles.size,0,'deselection removes stale geometry');
  const api=context.aideExperience;
  assert(api,mode+': complete script creates the API');assert.equal(root.dataset.motionLayer,'ready');
  for(const name of ['leave','settle','reopen','changePanels','revealContent','beginSend'])assert.equal(typeof api[name],'function',name);

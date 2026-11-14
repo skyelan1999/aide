@@ -31,7 +31,7 @@
     const {t} = services, scope = services.scope(), focus = document.activeElement;
     const n = (tag, cls, text) => { const e = document.createElement(tag); e.className = cls || ''; if (text != null) e.textContent = text; return e; };
     const dialog = n('dialog', 'plugin-guide'); active = dialog;
-    const heading = n('h2', '', plugin.name + ' · ' + t('怎么使用')), status = n('p', 'muted', t('正在读取使用说明…')), body = n('div'), actions = n('div', 'dialog-actions'), dismiss = n('button', 'quiet', t('关闭说明'));
+    const heading = n('h2', '', plugin.name + ' · ' + t('使用说明')), status = n('p', 'muted', t('正在读取使用说明…')), body = n('div'), actions = n('div', 'dialog-actions'), dismiss = n('button', 'quiet', t('关闭说明'));
     dismiss.type = 'button'; dismiss.onclick = close; actions.append(dismiss); dialog.append(heading, status, body, actions); dialog.setAttribute('aria-label', heading.textContent);
     // Native dialog handles Escape. Do not let the workbench's Escape handler
     // close the underlying document (or its tab) while dismissing help.
