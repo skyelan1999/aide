@@ -1,0 +1,68 @@
+{
+  "id": "go-full-timeout-20261114",
+  "request": "把全量 Go 测试超时的问题也查清楚并解决，跑完验证，保留现有数据，Aide 还是不要 release。",
+  "baseline": "958ae3e478db95688f537b0c676b2242a4892372",
+  "initial_status": "",
+  "acceptance": [
+    "Explain both prior timeout stacks and measure actual setup cost.",
+    "Reduce repeated executable hashing allocation without caching hashes or skipping integrity checks.",
+    "Complete every registered Go test/fuzz seed/example plus other packages, race and vet with pass/skip evidence.",
+    "Run isolated without production data mounts; verify current data and running service unchanged.",
+    "Document and merge the fix without Aide version/tag/Release."
+  ],
+  "scope": [
+    "Integrity executable hashing and meaningful regression tests",
+    "Full-suite test evidence and developer documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests root cause, fix and complete Go validation while preserving data and prohibiting Aide Release.",
+      "evidence": [
+        "User request 2026-11-14"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Stream the executable into SHA-256 on every check to bound allocation; no digest cache, test bypass or deadline-only workaround. Measure before/after profiles and run complete inventory.",
+      "evidence": [
+        "docs/reviews/2026-11-14-dwg-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fresh streamed executable SHA-256 and mutation/replacement/read failure regressions, preserving integrity checks.",
+      "evidence": [
+        "internal/server/integrity.go",
+        "internal/server/integrity_binary_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Before/after allocation profiles, focused tests and runtime prerequisites passed; standard full (complete race inventory, remaining packages/platform/vet) running in isolated snapshot.",
+      "evidence": [
+        "docs/reviews/2026-11-14-go-full-timeout.md"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Aide version/tag/Release prohibited. Isolated implementation and validation authorized.",
+  "rollback": "",
+  "handoff": "",
+  "actor": "skyelan1999",
+  "issue": 903
+}

@@ -15,6 +15,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -90,12 +91,23 @@ func currentBinarySHA256() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	b, err := os.ReadFile(exe)
+	return binarySHA256(exe)
+}
+
+// Read afresh on every check, without allocating an executable-sized buffer.
+// In particular, do not cache by path, size or timestamp: replacement and
+// same-size modifications must still be detected by periodic verification.
+func binarySHA256(path string) (string, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
-	sum := sha256.Sum256(b)
-	return hex.EncodeToString(sum[:]), nil
+	defer f.Close()
+	digest := sha256.New()
+	if _, err := io.Copy(digest, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(digest.Sum(nil)), nil
 }
 
 // VerifyIntegrity 启动/巡检校验：程序哈希、目录结构、关键文件可解析。只读，不改盘。
