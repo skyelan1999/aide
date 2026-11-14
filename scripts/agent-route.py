@@ -57,10 +57,11 @@ def task_path(name):
 def check_timeout(command):
     # The owner must outlive the actual Docker host deadline and cleanup.
     # Read the runner's constants without executing its guarded main routine.
-    if command[:2] == ['python3', 'scripts/test_go_snapshot.py']:
+    if (command[:2] == ['python3', 'scripts/test_go_snapshot.py'] or
+            command[:3] == ['bash', 'scripts/aide.sh', 'test']):
         runner = runpy.run_path(str(ROOT / 'scripts/test_go_snapshot.py'))
         return runner['HOST_TIMEOUT_SECONDS'] + 30
-    return 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
+    return 600
 
 
 def check_public_runtime_assets():
