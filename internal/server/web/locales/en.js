@@ -11,7 +11,7 @@ window.aideEnglish = {
   "已核对当前记录，继续使用草稿": "I reviewed the current record; keep this draft",
   "放弃草稿，使用当前记录": "Discard draft and use the current record",
 
-  "怎么使用": "How to use",
+  "使用说明": "Usage guide",
   "关闭说明": "Close help",
   "正在读取使用说明…": "Loading usage guide…",
   "已启用不代表已经配置或执行成功；请按下面的步骤开始。": "Enabled does not mean configured or successfully run. Start with the steps below.",
@@ -40,7 +40,7 @@ window.aideEnglish = {
   "已停用": "Disabled",
   "从项目文件打开": "Open from project files",
   "先启用插件，再打开工作台": "Enable the plugin before opening its workbench",
-  "插件载入失败，请查看“怎么使用”和错误详情": "The plugin failed to load. Read How to use and its error details",
+  "插件载入失败，请查看“使用说明”和错误详情": "The plugin failed to load. Read Usage guide and its error details",
   "插件工作台": "Plugin workbench",
   "选择日期即可查看；宜忌是民俗资料，节日不等于放假安排。": "Select a date to view it. Almanac advice is folklore; festivals are not official holiday schedules.",
   "选择显示时区，再点“切换”。时间来自 Aide 主机，当前 SSH 设备可能不同。": "Select a display time zone and switch. Time comes from the Aide host, which may differ from your SSH device.",

@@ -7376,7 +7376,7 @@ function renderPluginList() {
     if (p.description) card.append(el('p', 'plugin-desc', trPlugin(p.description)));
     if (p.error) card.append(el('p', 'task-error', '⚠ ' + p.error));
     const foot = el('div', 'plugin-card-foot');
-    const guide=el('button','quiet',t('怎么使用'));guide.type='button';guide.dataset.pluginGuide=p.id;guide.onclick=()=>window.AidePluginGuide.open(p,pluginGuideServices());foot.append(guide);
+    const guide=el('button','quiet',t('使用说明'));guide.type='button';guide.dataset.pluginGuide=p.id;guide.onclick=()=>window.AidePluginGuide.open(p,pluginGuideServices());foot.append(guide);
     const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? t("停用插件") : t("启用插件"));
     toggle.type = 'button';
     toggle.onclick = action(async () => {
@@ -7387,7 +7387,7 @@ function renderPluginList() {
     if(p.workbench?.protocol===1){
       const needsFile=window.AidePluginGuide.fileFirst(p.id);
       const launch=el('button','quiet',t(needsFile?'从项目文件打开':'打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
-      launch.title=!p.enabled?t('先启用插件，再打开工作台'):p.error?t('插件载入失败，请查看“怎么使用”和错误详情'):'';
+      launch.title=!p.enabled?t('先启用插件，再打开工作台'):p.error?t('插件载入失败，请查看“使用说明”和错误详情'):'';
       launch.onclick=action(()=>needsFile?window.AidePluginGuide.open(p,pluginGuideServices()):window.AidePluginWorkbench.open(p,pluginWorkbenchServices()));
       foot.append(launch);
     }
