@@ -28,6 +28,10 @@ profile 位于当前用户 LocalAppData 的 `Aide/Desktop/<安装摘要>/`，与
 
 原生桥仅公开 status/create/get，接收有界 JSON，限制当前可见主工作台顶层文档；插件页、iframe、其他原点/端口不能调用身份验证。API 返回标准 WebAuthn 注册和签名响应，继续由服务端执行挑战、原点、公钥、UV、一次性、过期和锁代际检查，原生布尔值不能解锁。切换/隐藏/关闭窗口会取消进行中的系统认证，导航代际变化后不交付旧结果。Hello 不代替重启后用密码派生保险库主密钥的既有规则。
 
+### 插件工作台本机语音
+
+Windows 桌面宿主仅向受信的顶层 Aide 工作台注入 `AideNativeSpeech`；插件 iframe 仍只能通过已声明的 `microphone` + `onDeviceSpeech` 能力和既有 MessageChannel 请求录音。用户点击插件工作台的“开始本机录音”后，Aide 显示本机识别确认，再激活 Windows SAPI shared recognizer 的简体中文听写语法；音频不经过 Aide 网络 API，也没有 Web Speech 云端回退。若当前 Windows 默认识别器不支持 zh-CN、系统语音组件缺失或麦克风不可用，会显示错误并保持工作台可用。切换标签、隐藏/最小化、导航、关闭窗口或插件结束会话时停用听写并撤销 session；录音最长 15 分钟，文本通过插件现有的 `speech.local` 事件交付。系统实际语言资源、麦克风授权和转写效果须在目标 Windows 设备验收。
+
 ## 验证范围
 
 ```text

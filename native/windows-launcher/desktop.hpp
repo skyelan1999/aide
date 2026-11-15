@@ -6,6 +6,7 @@
 #include "desktop_policy.hpp"
 #include "desktop_com.hpp"
 #include "desktop_hello.hpp"
+#include "desktop_speech.hpp"
 #include "desktop_chrome.hpp"
 #include "computer_bridge.hpp"
 namespace aide_desktop {
@@ -23,7 +24,7 @@ struct Desktop {
  HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile,statusFile;std::vector<BYTE> pin;
  Ptr<ICoreWebView2Environment> environment;std::vector<std::shared_ptr<Tab>> tabs;
  Chrome chrome;Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
- ComputerBridge computer;
+ ComputerBridge computer;LocalSpeech speech;
  HMODULE loader=nullptr;HICON smallIcon=nullptr,bigIcon=nullptr;
  ~Desktop(){if(smallIcon)DestroyIcon(smallIcon);if(bigIcon)DestroyIcon(bigIcon);}
  void icons(){auto instance=GetModuleHandleW(nullptr);auto iconSmall=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(16),chrome.px(16),0)),iconBig=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(32),chrome.px(32),0));if(iconSmall){SendMessageW(window,WM_SETICON,ICON_SMALL,reinterpret_cast<LPARAM>(iconSmall));if(smallIcon)DestroyIcon(smallIcon);smallIcon=iconSmall;}if(iconBig){SendMessageW(window,WM_SETICON,ICON_BIG,reinterpret_cast<LPARAM>(iconBig));if(bigIcon)DestroyIcon(bigIcon);bigIcon=iconBig;}}
@@ -31,7 +32,7 @@ struct Desktop {
  void post(std::function<void()> fn){auto task=new std::function<void()>(std::move(fn));if(!PostMessageW(window,WM_APP+2,0,reinterpret_cast<LPARAM>(task)))delete task;}
  void fail(const wchar_t* text){std::wstring message=text;post([this,message]{MessageBoxW(window,message.c_str(),L"Aide",MB_OK|MB_ICONERROR);if(tabs.empty())DestroyWindow(window);});}
  std::shared_ptr<Tab> active(){return selected<tabs.size()?tabs[selected]:nullptr;}
- void pause(const std::shared_ptr<Tab>& tab){if(tab&&tab->web)tab->web->ExecuteScript(L"window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();document.querySelectorAll('audio,video').forEach(x=>x.pause());window.speechSynthesis?.cancel();",nullptr);}
+ void pause(const std::shared_ptr<Tab>& tab){if(tab&&tab==active())speech.stop();if(tab&&tab->web)tab->web->ExecuteScript(L"window.aideAssistantCall?.end?.();window.aideAssistantLive?.stop?.();if(typeof voiceClose==='function')voiceClose();if(typeof ttsCancel==='function')ttsCancel();document.querySelectorAll('audio,video').forEach(x=>x.pause());window.speechSynthesis?.cancel();",nullptr);}
  void resize(){if(!window)return;RECT bounds{};GetClientRect(window,&bounds);int h=chrome.height(),button=chrome.px(28),gap=chrome.px(4);int count=bar?std::max(1,TabCtrl_GetItemCount(bar)):1;int available=std::max(0,int(bounds.right)-button-gap);bounds.top=h;
   for(auto& t:tabs)if(t->controller)t->controller->put_Bounds(bounds);
   if(bar){MoveWindow(bar,0,0,available,h,TRUE);chrome.layout(bar,available);}
@@ -58,6 +59,16 @@ struct Desktop {
   auto id=body["id"].get<std::string>(),operation=body["operation"].get<std::string>();if(!std::regex_match(id,std::regex("[0-9]{1,9}")))return;
   if(operation=="appearance"){try{chrome.apply(window,bar,body["options"]);}catch(...){}return;}
   auto reject=[&](const char* name,const char* message){send(tab,id,{{"error",{{"name",name},{"message",message}}}});};
+  if(operation=="speech"){
+   auto action=body["options"].value("action",std::string{}),session=body["options"].value("session",std::string{});
+   if(action=="start"){
+    if(MessageBoxW(window,L"Aide 将使用 Windows 本机中文语音识别。音频由本机语音引擎处理，不发送到网络。是否开始？",L"Aide 本机语音",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)!=IDYES){send(tab,id,{{"error","你已取消本机语音识别。"}});return;}
+    send(tab,id,speech.start(session));return;
+   }
+   if(action=="status"){send(tab,id,speech.status(session));return;}
+   if(action=="stop"){send(tab,id,speech.stop(session));return;}
+   send(tab,id,{{"error","Unsupported local speech operation"}});return;
+  }
   if(operation=="status"){send(tab,id,hello.status(profile/L"hello-credentials.json"));return;}
   if(operation!="create"&&operation!="get"){reject("SecurityError","Unsupported native operation");return;}
   if(ceremony){reject("OperationError","Windows Hello is busy");return;}
@@ -81,7 +92,7 @@ struct Desktop {
   EventRegistrationToken token{};
   auto navigation=callback<ICoreWebView2NavigationStartingEventHandler,ICoreWebView2*,ICoreWebView2NavigationStartingEventArgs*>([this,tab](ICoreWebView2*,auto* args){
    LPWSTR raw=nullptr;args->get_Uri(&raw);auto uri=takeString(raw);BOOL user=FALSE;args->get_IsUserInitiated(&user);
-   ++tab->generation;if(tab==active())hello.cancel(ceremony);
+   ++tab->generation;if(tab==active()){hello.cancel(ceremony);speech.stop();}
    if(!local(uri,origin)){args->put_Cancel(TRUE);if(user&&external(uri))ShellExecuteW(window,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}return S_OK;});
   checked(tab->web->add_NavigationStarting(navigation.get(),&token),"Navigation guard unavailable");
   auto title=callback<ICoreWebView2DocumentTitleChangedEventHandler,ICoreWebView2*,IUnknown*>([this,tab](ICoreWebView2* web,IUnknown*){
@@ -100,7 +111,7 @@ struct Desktop {
    if(kind==COREWEBVIEW2_PERMISSION_KIND_MICROPHONE||kind==COREWEBVIEW2_PERMISSION_KIND_CAMERA){Ptr<ICoreWebView2Deferral> defer;if(FAILED(args->GetDeferral(defer.put()))){args->put_State(COREWEBVIEW2_PERMISSION_STATE_DENY);return S_OK;}Ptr<ICoreWebView2PermissionRequestedEventArgs> pending(args);post([this,tab,kind,pending,defer]{bool allow=!tab->closed&&tab==active()&&MessageBoxW(window,kind==COREWEBVIEW2_PERMISSION_KIND_MICROPHONE?L"Allow this Aide page to use the microphone?":L"Allow this Aide page to use the camera?",L"Aide",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)==IDYES;pending->put_State(allow?COREWEBVIEW2_PERMISSION_STATE_ALLOW:COREWEBVIEW2_PERMISSION_STATE_DENY);defer->Complete();});}return S_OK;});
   tab->web->add_PermissionRequested(permissions.get(),&token);
   auto messages=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([this,tab](ICoreWebView2*,auto* args){message(tab,args);return S_OK;});tab->web->add_WebMessageReceived(messages.get(),&token);
-  const wchar_t* script=LR"JS((()=>{if(window!==window.top||location.pathname!=='/'||location.search||new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')||new URLSearchParams(location.hash.slice(1)).has('file'))return;let sequence=0;const pending=new Map();const appearance=()=>{const s=getComputedStyle(document.documentElement),hex=(key,fallback)=>{const v=s.getPropertyValue(key).trim();return /^#[0-9a-f]{6}$/i.test(v)?v:fallback;};chrome.webview.postMessage({id:'0',operation:'appearance',options:{dark:document.documentElement.dataset.theme!=='light',background:hex('--bg','#202328'),surface:hex('--panel','#24282e'),selected:hex('--selected','#344252'),text:hex('--text','#e0e4eb'),muted:hex('--muted','#a4adb9'),line:hex('--line','#373c44')}});};addEventListener('DOMContentLoaded',()=>{appearance();new MutationObserver(appearance).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette']});},{once:true});chrome.webview.addEventListener('message',event=>{const m=event.data;if(!m?.aideBiometrics)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.result?.error)p.reject(new DOMException(m.result.error.message,m.result.error.name));else p.resolve(m.result);});const request=(operation,options={})=>new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(new DOMException('Windows Hello request expired','NotAllowedError'));},125000);pending.set(id,{resolve,reject,timer});chrome.webview.postMessage({id,operation,options});});Object.defineProperty(window,'AideNativeBiometrics',{value:Object.freeze({platform:'windows',status:()=>request('status'),create:o=>request('create',o),get:o=>request('get',o)}),writable:false,configurable:false});})();)JS";
+  const wchar_t* script=LR"JS((()=>{if(window!==window.top||location.pathname!=='/'||location.search||new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')||new URLSearchParams(location.hash.slice(1)).has('file'))return;let sequence=0;const pending=new Map();const appearance=()=>{const s=getComputedStyle(document.documentElement),hex=(key,fallback)=>{const v=s.getPropertyValue(key).trim();return /^#[0-9a-f]{6}$/i.test(v)?v:fallback;};chrome.webview.postMessage({id:'0',operation:'appearance',options:{dark:document.documentElement.dataset.theme!=='light',background:hex('--bg','#202328'),surface:hex('--panel','#24282e'),selected:hex('--selected','#344252'),text:hex('--text','#e0e4eb'),muted:hex('--muted','#a4adb9'),line:hex('--line','#373c44')}});};addEventListener('DOMContentLoaded',()=>{appearance();new MutationObserver(appearance).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette']});},{once:true});chrome.webview.addEventListener('message',event=>{const m=event.data;if(!m?.aideBiometrics)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.result?.error)p.reject(new DOMException(typeof m.result.error==='string'?m.result.error:m.result.error.message||'Native request failed',m.result.error.name||'NotAllowedError'));else p.resolve(m.result);});const request=(operation,options={})=>new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(new DOMException('Windows native request expired','NotAllowedError'));},125000);pending.set(id,{resolve,reject,timer});chrome.webview.postMessage({id,operation,options});});Object.defineProperty(window,'AideNativeBiometrics',{value:Object.freeze({platform:'windows',status:()=>request('status'),create:o=>request('create',o),get:o=>request('get',o)}),writable:false,configurable:false});Object.defineProperty(window,'AideNativeSpeech',{value:args=>request('speech',args),writable:false,configurable:false});})();)JS";
 
   auto security=tab->web.as<ICoreWebView2_14>();if(!security)throw std::runtime_error("Update Microsoft Edge WebView2 Runtime to enable local TLS validation");
   auto cert=callback<ICoreWebView2ServerCertificateErrorDetectedEventHandler,ICoreWebView2*,ICoreWebView2ServerCertificateErrorDetectedEventArgs*>([this](ICoreWebView2*,auto* args){
@@ -148,7 +159,7 @@ struct Desktop {
     else if(LOWORD(w)==103&&self->active()&&self->active()->web)self->active()->web->Reload();
     else if((LOWORD(w)==104||LOWORD(w)==105)&&!self->tabs.empty())self->select((self->selected+(LOWORD(w)==104?1:self->tabs.size()-1))%self->tabs.size());
     else if(LOWORD(w)==106&&self->active()&&self->active()->web)self->active()->web->ExecuteScript(L"if(!document.getElementById('lock-screen')?.hidden)document.getElementById('lock-password')?.focus();else document.getElementById('brand-mini')?.click();",nullptr);return 0;
-   case WM_CLOSE:if(l==1){self->hello.cancel(self->ceremony);DestroyWindow(hwnd);}else if(!self->closingAll){self->closingAll=true;self->hello.cancel(self->ceremony);if(self->tabs.empty())DestroyWindow(hwnd);else self->close(self->tabs.back());}return 0;
+   case WM_CLOSE:if(l==1){self->hello.cancel(self->ceremony);self->speech.stop();DestroyWindow(hwnd);}else if(!self->closingAll){self->closingAll=true;self->hello.cancel(self->ceremony);self->speech.stop();if(self->tabs.empty())DestroyWindow(hwnd);else self->close(self->tabs.back());}return 0;
    case WM_APP+2:{std::unique_ptr<std::function<void()>> task(reinterpret_cast<std::function<void()>*>(l));(*task)();return 0;}
    case WM_APP+3:if(size_t(w)<self->tabs.size())self->close(self->tabs[size_t(w)]);return 0;
    case WM_APP+1:{std::unique_ptr<Reply> reply(reinterpret_cast<Reply*>(l));if(self->ceremony==reply->operation)self->ceremony.reset();if(!reply->operation->cancelled&&!reply->tab->closed&&reply->tab==self->active()&&reply->generation==reply->tab->generation&&IsWindowVisible(hwnd)&&!IsIconic(hwnd))self->send(reply->tab,reply->id,reply->value);return 0;}

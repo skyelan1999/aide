@@ -1,0 +1,76 @@
+{
+  "id": "windows-parity-20261115",
+  "request": "核对当前系统运行 aide 产生的 bug，重点优化 Windows 并避免影响其他系统；识别 macOS 专属功能并在 Windows 实现相同体验；逐 topic 更新文档并创建审计 Issue，测试通过后关闭 Issue；每个变更经 CI 和实际测试后提交 PR，PR 保持未合并；更新 Discussion #916；改善 Windows UI；测试线性执行并监控资源。",
+  "baseline": "7da2f573384decf8776e5b7fba0d9fccf4f5bc45",
+  "initial_status": "main clean at 7da2f573384decf8776e5b7fba0d9fccf4f5bc45; previous local changes preserved in stash.",
+  "acceptance": [
+    "按系统功能矩阵核对当前 Windows 运行缺陷，逐项复现并优先修复确认问题",
+    "识别 macOS-only 用户能力并为 Windows 实现匹配体验，保留平台隔离与其他系统回归",
+    "每个主题具备项目文档、GitHub 审计 Issue、针对性测试、CI 与独立未合并 PR；通过完整验收后关闭 Issue",
+    "改善 Windows UI，并在实际 Windows 桌面和浏览器场景验收视觉与交互",
+    "将方案、进度和结论写入 GitHub Discussion #916",
+    "测试逐项线性执行，记录主机资源状况；PR 不合并"
+  ],
+  "scope": [
+    "Windows runtime/backend/frontend and desktop implementation",
+    "macOS/Windows feature parity inventory and architecture",
+    "docs/tasks/windows-parity-20261115.json and per-topic docs/tasks evidence",
+    "GitHub Issues, PRs and Discussion #916",
+    "Windows UI styling and interaction",
+    "No merge to main; no unrelated environment regression",
+    "首个独立主题：Windows desktop on-device speech parity, Issue #918"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "in_progress",
+      "summary": "跨平台功能盘点中；首个确认的源码差距为 Windows 原生桌面没有 macOS 插件工作台本机语音桥，已建立 topic 和审计 Issue。",
+      "evidence": [
+        "基线 main 7da2f573384decf8776e5b7fba0d9fccf4f5bc45；本轮确认仅总体任务账本未跟踪，其他工作区干净。",
+        "Discussion #916 当前标题 Windows Dev，正文 automatic test，0 comments；已读页面，无本会话可用的 discussion update API。",
+        "首个主题 Windows 本机语音转写：docs/tasks/windows-native-speech-parity-20261115.json；Issue #918 open。",
+        "Feature audit found macOS-only AideNativeSpeech bridge; created #918. Official Microsoft documentation rules out current WinRT default dictation and stable WebView2 local recognition as parity implementation today."
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Native SAPI COM proof on current Windows host passes shared recognizer/context/grammar creation and dictation grammar load without opening microphone; this supports implementation in unpackaged host, while real offline recognition quality still requires device acceptance.",
+      "evidence": [
+        "Official Windows speech API and Edge WebView2 docs reviewed; references recorded in docs/tasks/windows-native-speech-parity-20261115.json",
+        "Current Windows host System.Speech enumeration returned a zh-CN Microsoft Speech Recognizer 8.0 recognizer (read-only).",
+        "Official SAPI dictation activation/hypothesis docs reviewed; host System.Speech emulation returned empty metadata and is recorded as inconclusive, not pass.",
+        "MSVC 2022 + Windows SDK compiled native SAPI probe; sharedRecognizer/createContext/createGrammar/loadDictation all returned S_OK."
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "首个 topic 已在分支实现 Windows AideNativeSpeech/SAPI 语音工作台桥接，更新架构和用户指南；仍未完成真实话筒验收或 PR。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "首个主题定向 SAPI smoke PASS、插件测试25/25 PASS、文档链接 PASS。真实语音/完整 UI NOT_RUN；launcher完整脚本在后续代理 fixture 超时，桌面策略原生测试有异常退出待归因。",
+      "evidence": [
+        "Isolated Windows main launcher compile/link + native self-test passed while skipping only test_windows_bat_entrypoints.check after its proxy BAT timeout was reproduced.",
+        "No desktop/browser control connector exposed; actual microphone and visual UI acceptance remain NOT_RUN."
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "首个 topic 文档更新完成；总体能力矩阵、其他 Windows bug、Windows UI 美化和 Discussion #916 更新待继续。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "每个 topic 使用独立分支/PR；回滚通过关闭 PR 或 revert 该主题提交。",
+  "handoff": "Speech topic has code, docs, dedicated smoke, plugin tests, and issue #918 progress comment. Remaining goal includes actual UI/audio, CI PR, Discussion #916 update, broad Windows bug audit, remaining macOS parity, and Windows UI polish; do not merge."
+}

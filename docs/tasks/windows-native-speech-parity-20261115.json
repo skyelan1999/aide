@@ -1,0 +1,90 @@
+{
+  "id": "windows-native-speech-parity-20261115",
+  "request": "为 Windows Aide 桌面端插件工作台实现与 macOS 相当的本机中文语音转写体验。",
+  "baseline": "7da2f573384decf8776e5b7fba0d9fccf4f5bc45",
+  "issue": "https://github.com/skyelan1999/aide/issues/918",
+  "acceptance": [
+    "Windows 桌面仅在用户明确点击开始后请求麦克风/离线语音能力，且给出权限或离线语言不可用的清晰提示",
+    "符合现有 plugin microphone/onDeviceSpeech 声明和 speech.local MessageChannel 合约，持续返回中文转写文本",
+    "音频仅内存处理；无网络识别回退；插件 iframe、非当前顶层页面和过期 session 无法访问原生桥",
+    "切换/隐藏/关闭窗口停止采音并撤销 session；启动、停止和取消期间无悬挂授权",
+    "Windows 真实 WebView2/麦克风/离线识别验收及自动化测试通过，macOS/Linux 相关回归通过后关闭 Issue"
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "scripts Windows/native bridge tests",
+    "docs/architecture/windows-desktop.md",
+    "docs/user-guide.md",
+    "docs/tasks/windows-native-speech-parity-20261115.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认 macOS 插件工作台有独立 AideNativeSpeech 原生桥；Windows launcher 当前未注入此桥，WebView2 SpeechRecognition fallback 的离线与权限语义未由代码保证。",
+      "evidence": [
+        "macOS implementation: native/macos-desktop/main.swift lines 21-104, 396, 643-657",
+        "Windows native bridge: native/windows-launcher/desktop.hpp; only AideNativeBiometrics found",
+        "Existing plugin contract/lifecycle: internal/server/web/plugin-workbench.js lines 32-54, 103-107",
+        "Audit Issue #918 created and remains open"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "原生 SAPI COM proof 已通过：当前 Windows 主机上的 CLSID_SpSharedRecognizer 可成功实例化，创建 recognition context 与 grammar，并加载通用 dictation grammar（HRESULT 全部 S_OK），全程没有激活语音或打开麦克风。此证据证明当前主机的 shared recognizer/grammar 初始化路径可用，不证明真实离线识别质量或目标用户设备都安装语言组件；实现需在显式开始时 SetDictationState，处理设备/权限/语言失败。",
+      "evidence": [
+        "SAPI SetDictationState: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ms718917(v=vs.85) documents explicit activation and audio-open failures",
+        "SAPI Hypothesis event: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee125410(v=vs.85) documents interim recognition event",
+        "SAPI recognizer/context API: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee413260(v=vs.85) documents in-process and shared recognizer models",
+        "Host System.Speech emulation probe was inconclusive: result metadata empty; not counted as PASS",
+        "Current host has installed recognizer registry entry MS-2052-80-DESK / zh-CN, not proof of functioning engine",
+        "D:\\git\\aide\\.agent-state\\sapi-probe-20261115\\sapi.exe compiled with installed MSVC 2022 + Windows SDK; run output: sharedRecognizer=0, createContext=0, createGrammar=0, loadDictation=0; no microphone activation."
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Windows desktop 注入 AideNativeSpeech；SAPI shared recognizer 在显式用户确认后激活 zh-CN dictation，返回 interim/final 文本；仅当前可见 localhost 主工作台可调用。切换/隐藏/最小化/导航/关闭会停用并撤销 session；音频不走 Aide API，无云端 fallback。",
+      "evidence": [
+        "native/windows-launcher/desktop_speech.hpp",
+        "native/windows-launcher/desktop.hpp",
+        "internal/server/web/plugin-workbench.js",
+        "scripts/build-windows-launcher.py adds sapi import library for AMD64/ARM64"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向 Windows SAPI native bridge smoke、插件工作台交互测试和文档链接检查通过。未能完成真实麦克风/离线中文转写与完整 Windows desktop UI 验收。Launcher full compile script编译主宿主成功，但后续已有 proxy BAT fixture 两次均在其10秒超时失败；test_windows_desktop.py 生产策略临时可执行文件退出 0xC0000005，均待归因。",
+      "evidence": [
+        "python scripts/test_windows_speech_bridge.py — PASS; current Windows x64/MSVC 2022; rejects invalid sessions; microphone inactive",
+        "node scripts/plugin-workbench.test.cjs — PASS 25/25",
+        "node --check internal/server/web/plugin-workbench.js — PASS",
+        "python scripts/check_docs.py — PASS, 533 Markdown / 2555 local links",
+        "python scripts/test_windows_launcher_compile.py — main launcher compiled and linked with sapi.lib; later test_windows_build_proxy.check_cmd timed out after 10 seconds (reproduced twice)",
+        "python scripts/test_windows_desktop.py — FAIL: production-policy temp executable exit 3221225477 (0xC0000005); no speech microphone was used",
+        "git diff --check — PASS",
+        "python -X utf8 -c \"import sys; sys.path.insert(0,'scripts'); import test_windows_bat_entrypoints; test_windows_bat_entrypoints.check=lambda *args: None; import test_windows_launcher_compile; test_windows_launcher_compile.main()\" — PASS Windows main launcher compile/link + native self-test; explicitly skipped only the known failing BAT fixture helper.",
+        "Issue #918 progress comment posted (comment id 6896939330) with implementation and remaining verification status."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 Windows 桌面架构与用户指南，记录 SAPI zh-CN 要求、用户确认、权限失败、生命周期和不回退云端规则；标注真实设备语音验收仍需执行。",
+      "evidence": [
+        "docs/architecture/windows-desktop.md · 插件工作台本机语音",
+        "docs/user-guide.md · 插件工作台本机转写",
+        "python scripts/check_docs.py — PASS"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "尚未执行。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交/推送/创建 PR；真实硬件验收和 CI 尚未通过。最终 PR 必须保持未合并。",
+      "evidence": []
+    }
+  },
+  "rollback": "Isolated feature branch; revert or close its PR without merging.",
+  "handoff": "Main launcher compile/link and native self-test pass when isolating the unrelated BAT fixture; dedicated speech bridge smoke passes. Actual microphone and visual Aide UI acceptance are NOT_RUN because no desktop/browser control tool is available in this session. Continue investigate baseline Windows desktop policy executable crash and BAT fixture timeout, then run Windows CI and device acceptance before PR/issue closure."
+}
