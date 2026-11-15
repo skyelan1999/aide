@@ -20,6 +20,14 @@ EXE 嵌入现有 Aide 蓝底白色 a 标志，含 16/20/24/32/40/48/64/96/128/25
 
 Windows runner 的窄窗口和合成 WM_DPICHANGED 截图用于验证宿主响应；不代表已在实体廉价显示器或多显示器硬件上测试。
 
+## 全局前台窗口截图候选（Issue #922 / Draft PR pending）
+
+当前 Windows 候选实现把全局键盘/鼠标低层钩子默认关闭；用户在设置中启用后才安装监听，可选双击 Shift 或 Ctrl。短按两次之间出现其他按键、鼠标按钮或滚轮输入会取消手势。Windows 不提供 macOS 辅助功能/录屏权限面板的同类授权流程，因此设置区显示本机监听状态和最近结果。配置保存在该桌面安装的 profile 中。
+
+触发后宿主从当前 Aide 顶层页面获取一次性草稿 ticket，再确认前台 HWND 未变、且目标不是 Aide，最后将 PNG 与进程名、窗口标题、时间和像素尺寸交给共享 `AideDesktopCapture`。附件只进入当前已解锁会话草稿，用户自行检查和发送；不自动发起模型请求。页面导航、会话切换、锁屏或 ticket 过期会阻止附加。
+
+本候选复用了 `ComputerBridge` 当前的 GDI `PrintWindow` 截图实现。Microsoft 文档说明该调用由目标窗口同步绘制，可能阻塞；当前尚未验证所有 GPU 加速窗口，因此不能视作与 macOS ScreenCaptureKit 相同的捕获质量。Issue #922 的截图质量与实体桌面验收通过前，此实现不应发布或关闭 Issue；后续优先完成 GraphicsCaptureItem 按 HWND 捕获并对比真实应用窗口。
+
 ## 会话、证书与身份验证
 
 桌面子进程仅通过参数接收安装路径；它自行校验现有实例并经私有 Docker 管道读取 transport token 和当前服务证书。Token 不出现在子进程命令行、桌面日志或插件新页链接中。TLS 仅对精确 localhost 原点、端口及一致叶证书作例外，同时检查证书有效期和 localhost 名称；没有全局忽略证书错误或写入系统信任根。

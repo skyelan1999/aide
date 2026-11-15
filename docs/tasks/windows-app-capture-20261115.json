@@ -1,0 +1,84 @@
+{
+  "id": "windows-app-capture-20261115",
+  "request": "为 Windows 桌面端实现与 macOS 相当的全局前台窗口截图到 Aide 草稿能力；配置全局快捷键、权限反馈、应用/窗口/时间上下文、会话隔离；不自动发送，独立 Issue/文档/测试/PR，不合并。",
+  "baseline": "e8c47360cd1de50110c071c7d156810ec8cfff0a",
+  "initial_status": "codex/windows-app-capture-922 based on latest origin/main e8c47360; clean worktree.",
+  "issue": "https://github.com/skyelan1999/aide/issues/922",
+  "acceptance": [
+    "Windows Aide desktop exposes an opt-in configurable global modifier gesture with actionable permission/listening status.",
+    "A clean double modifier gesture captures only the current foreground application window and includes app name, window title and timestamp context.",
+    "Single/long press, intervening key or mouse, lock/hidden window and Aide itself do not trigger/attach.",
+    "One-time capture ticket binds image+context to the active unlocked Aide session and draft only; never sends automatically.",
+    "Windows CI and real Windows desktop acceptance pass; macOS/Linux behavior remains unchanged; topic docs and separate PR are ready; keep PR unmerged and close issue only after acceptance."
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "internal/server/web/desktop-capture.js shared contract only if required",
+    "scripts capture gesture/native UI tests",
+    "docs/architecture/windows-desktop.md",
+    "docs/user-guide.md",
+    "docs/tasks/windows-app-capture-20261115.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Mac global app capture is shipped and Windows launcher lacks AideNativeCapture.",
+      "evidence": [
+        "docs/tasks/global-app-capture-20261108.json",
+        "native/macos-desktop/app_capture.swift",
+        "native/macos-desktop/main.swift: injected AideNativeCapture and foreground capture",
+        "internal/server/web/desktop-capture.js: shared one-time ticket/draft flow",
+        "Issue #922 created and open"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Use a dedicated global low-level keyboard/mouse listener and the existing one-use ticket/draft contract. Windows has no macOS-style Accessibility/Screen Recording permission prompts for this unpackaged desktop bridge. Current draft reuses PrintWindow but that is not accepted as the final quality path; verify Windows.Graphics.Capture HWND interop against real GPU-backed windows.",
+      "evidence": [
+        "Microsoft Learn: IGraphicsCaptureItemInterop::CreateForWindow supports HWND capture from Windows 10 1903: https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow",
+        "Microsoft Learn: PrintWindow asks the target app to render synchronously and may block: https://learn.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-printwindow",
+        "Current Windows desktop's ComputerBridge uses PrintWindow, so hardware-accelerated-window quality remains an explicit acceptance risk; it is not accepted as the final screenshot path"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Added opt-in global low-level keyboard/mouse hooks, persistent Shift/Ctrl choice, Windows AideNativeCapture message channel, host foreground-HWND validation, background screenshot worker, and one-time ticket delivery through shared draft API. Current screenshot implementation still uses PrintWindow and is not accepted as parity quality.",
+      "evidence": [
+        "native/windows-launcher/desktop_capture.hpp",
+        "native/windows-launcher/desktop.hpp",
+        "native/windows-launcher/computer_bridge.hpp",
+        "internal/server/web/desktop-capture.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Current Windows host compiled and linked the integrated native launcher and self-test. Portable gesture-boundary smoke and shared draft ticket/session regression passed. No real global hook, visible WebView, GPU-backed target window, or visual Aide draft test was performed; screenshot quality remains unverified.",
+      "evidence": [
+        "python -X utf8 -c ... test_windows_launcher_compile.main() with only known test_windows_bat_entrypoints.check skipped — PASS main native compile/link and self-test",
+        "g++ -static -std=c++17 -O0 scripts/capture-gesture-smoke.cpp — PASS short double tap, long press, timeout, intervening input",
+        "node scripts/desktop-capture.test.cjs — PASS one-use ticket, draft attachment, session/lock/navigation rejection",
+        "node --check internal/server/web/desktop-capture.js — PASS",
+        "git diff --check — PASS"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Windows desktop architecture now documents the opt-in hook, ticket-bound no-auto-send flow, and PrintWindow quality limitation; user guide and final behavior docs remain pending until GraphicsCapture and real UI acceptance are settled.",
+      "evidence": [
+        "docs/tasks/windows-app-capture-20261115.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Not run.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Final result must be a separate open PR; do not merge.",
+      "evidence": []
+    }
+  },
+  "rollback": "Use a separate feature branch; close PR or revert its commit.",
+  "handoff": "Issue #922 remains open. Native hooks and shared draft flow exist in the isolated branch, but current PrintWindow capture may block or fail on GPU-backed windows and is not accepted as Mac parity. Implement and test GraphicsCaptureItem HWND capture, then verify actual Windows hotkey behavior and that PNG/context arrive in an unlocked Aide draft without auto-send. Keep PR draft/open/unmerged until acceptance; close Issue only after all visual/desktop tests pass."
+}

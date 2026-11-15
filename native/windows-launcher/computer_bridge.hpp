@@ -81,6 +81,14 @@ class ComputerBridge {
 public:
  explicit ComputerBridge(std::string secret):token(std::move(secret)){}
  ~ComputerBridge(){stop();}
+ json captureForeground(HWND expected){
+  std::lock_guard<std::mutex> operation(operationMutex);
+  auto target=frontmost();if(target.window!=expected||target.pid==GetCurrentProcessId())throw std::runtime_error("Foreground app changed or is Aide; capture cancelled");
+  auto image=screenshot(target);if(!same(target))throw std::runtime_error("Foreground app changed; screenshot discarded");
+  RECT bounds{};if(!GetWindowRect(target.window,&bounds))throw std::runtime_error("Cannot read foreground window size");
+  SYSTEMTIME time{};GetSystemTime(&time);wchar_t stamp[40]{};swprintf_s(stamp,L"%04u-%02u-%02uT%02u:%02u:%02u.%03uZ",time.wYear,time.wMonth,time.wDay,time.wHour,time.wMinute,time.wSecond,time.wMilliseconds);
+  return {{"imageBase64",base64(image)},{"app",utf8(target.process)},{"bundleId",std::string{}},{"windowTitle",utf8(target.title.substr(0,500))},{"capturedAt",utf8(stamp)},{"pixelWidth",bounds.right-bounds.left},{"pixelHeight",bounds.bottom-bounds.top}};
+ }
  void start(){if(token.size()<32)return;WSADATA wsa{};if(WSAStartup(MAKEWORD(2,2),&wsa)!=0)throw std::runtime_error("Computer bridge network startup failed");winsockStarted=true;Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)throw std::runtime_error("Screenshot encoder startup failed");listener=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(listener==INVALID_SOCKET)throw std::runtime_error("Computer bridge socket unavailable");BOOL exclusive=TRUE;setsockopt(listener,SOL_SOCKET,SO_EXCLUSIVEADDRUSE,reinterpret_cast<const char*>(&exclusive),sizeof(exclusive));sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_ANY);address.sin_port=htons(port);if(bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address))!=0||listen(listener,16)!=0){closesocket(listener);listener=INVALID_SOCKET;throw std::runtime_error("Computer bridge port 17778 is unavailable");}stopping=false;acceptThread=std::thread([this]{loop();});}
  void stop(){stopping=true;if(listener!=INVALID_SOCKET){shutdown(listener,SD_BOTH);closesocket(listener);listener=INVALID_SOCKET;}if(acceptThread.joinable())acceptThread.join();{std::lock_guard<std::mutex> lock(clientsMutex);for(auto& client:clients)if(client.joinable())client.join();clients.clear();}if(gdiplusToken){Gdiplus::GdiplusShutdown(gdiplusToken);gdiplusToken=0;}if(winsockStarted){WSACleanup();winsockStarted=false;}}
 };
