@@ -69,13 +69,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Preparing a source PR; no Aide formal release or production restart requested in this change.",
-      "evidence": []
+      "status": "not_run",
+      "summary": "Source API integration only: no formal Aide binary release, version bump or production deployment. The host must be rebuilt to expose the capability.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/910",
+        "https://github.com/skyelan1999/aide/actions/runs/43671693339"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Consumers may use the existing name fallback on older hosts. Device codes are labels, not identity or authorization credentials.",
+  "handoff": "API implementation and local/CI verification are complete. No production restart or binary replacement performed; old hosts remain compatible through consumer fallback. Source PR #910 integrates the capability into main.",
   "issue": "https://github.com/skyelan1999/aide/issues/909"
 }
