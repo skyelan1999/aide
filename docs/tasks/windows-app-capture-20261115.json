@@ -33,7 +33,7 @@
     },
     "design": {
       "status": "in_progress",
-      "summary": "Use a dedicated global low-level keyboard/mouse listener and the existing one-use ticket/draft contract. Windows has no macOS-style Accessibility/Screen Recording permission prompts for this unpackaged desktop bridge. Current draft reuses PrintWindow but that is not accepted as the final quality path; verify Windows.Graphics.Capture HWND interop against real GPU-backed windows.",
+      "summary": "Use a dedicated global low-level keyboard/mouse listener and the existing one-use ticket/draft contract. Windows has no macOS-style Accessibility/Screen Recording permission prompts for this unpackaged desktop bridge. The implementation now prefers Windows.Graphics.Capture HWND interop on supported Windows versions, with bounded PNG dimensions, a 1.8-second frame wait, and a legacy PrintWindow fallback. GPU capture quality remains unaccepted until the GPU pixel fixture and an interactive Windows foreground app pass.",
       "evidence": [
         "Microsoft Learn: IGraphicsCaptureItemInterop::CreateForWindow supports HWND capture from Windows 10 1903: https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow",
         "Microsoft Learn: PrintWindow asks the target app to render synchronously and may block: https://learn.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-printwindow",
@@ -52,7 +52,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current Windows host compiled and linked the integrated native launcher and self-test. Portable gesture-boundary smoke, shared draft ticket/session regression and documentation passed. PR Aide CI run 585 exposed two UI strings missing from the English catalog. They now use existing accurate catalog entries; targeted localization tests pass locally, but the updated source has not yet been pushed/rechecked by CI. Windows Desktop Check run 56 is in progress. No real global hook, visible WebView, GPU-backed target window, or visual Aide draft test was performed; screenshot quality remains unverified.",
+      "summary": "Existing gesture, draft-ticket, and localization checks passed before this WGC update. The updated launcher and GPU fixture compile/link on the local Windows host. GPU pixel acceptance FAILED in this automated session: the synthetic HWND could not become foreground, and both WGC and PrintWindow returned a black center pixel. This is recorded as a failure/environment limitation, not a pass. Updated WGC source is not yet pushed or checked by CI; real global hook, visible WebView, unlocked-draft attachment, and interactive foreground GPU app acceptance remain NOT_RUN.",
       "evidence": [
         "python -X utf8 -c ... test_windows_launcher_compile.main() with only known test_windows_bat_entrypoints.check skipped — PASS main native compile/link and self-test",
         "g++ -static -std=c++17 -O0 scripts/capture-gesture-smoke.cpp — PASS short double tap, long press, timeout, intervening input",
@@ -66,7 +66,7 @@
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "Windows desktop architecture and user guide document opt-in gestures, draft-only attachment, current device/quality limitations and the missing GPU-window acceptance.",
+      "summary": "Windows desktop architecture and user guide document opt-in gestures and draft-only attachment. Architecture now documents WGC, its legacy fallback and limits, plus the failed local GPU pixel check and pending interactive acceptance.",
       "evidence": [
         "docs/architecture/windows-desktop.md",
         "docs/user-guide.md",
@@ -85,5 +85,5 @@
     }
   },
   "rollback": "Use a separate feature branch; close PR or revert its commit.",
-  "handoff": "Issue #922 remains open. PR #923 is Draft/open/unmerged on main ba46ce28. Aide CI run 585 failed the i18n coverage test because two UI strings lacked English catalog entries; the browser fallback and Windows permission status now reuse existing English keys and pass local targeted i18n tests. Push this correction and confirm new CI. Windows Desktop Check run 56 was still running at last check. Native hooks and shared draft flow exist, but current PrintWindow capture may block or fail on GPU-backed windows and is not accepted as Mac parity. Continue GraphicsCaptureItem HWND capture evaluation, then verify actual Windows hotkey behavior and that PNG/context arrive in an unlocked Aide draft without auto-send."
+  "handoff": "Issue #922 remains open. PR #923 is Draft/open/unmerged on main ba46ce28. WGC HWND capture, D3D11 staging copy, hardware-to-WARP device fallback, old-OS PrintWindow fallback, 16 MiB PNG cap, and a GPU-rendered pixel fixture are implemented locally. Current automated-session GPU fixture FAILS because the HWND cannot become foreground and both capture paths return black. Do not claim screenshot parity or close the Issue. Updated source has not yet been pushed or rechecked by CI; next verify on an interactive Windows desktop, then push and wait for CI. Existing hotspot, shared draft flow and localization checks have prior PASS evidence; real hotkey and unlocked-draft visual workflow remain NOT_RUN."
 }

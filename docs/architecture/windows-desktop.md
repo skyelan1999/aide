@@ -26,7 +26,9 @@ Windows runner 的窄窗口和合成 WM_DPICHANGED 截图用于验证宿主响�
 
 触发后宿主从当前 Aide 顶层页面获取一次性草稿 ticket，再确认前台 HWND 未变、且目标不是 Aide，最后将 PNG 与进程名、窗口标题、时间和像素尺寸交给共享 `AideDesktopCapture`。附件只进入当前已解锁会话草稿，用户自行检查和发送；不自动发起模型请求。页面导航、会话切换、锁屏或 ticket 过期会阻止附加。
 
-本候选复用了 `ComputerBridge` 当前的 GDI `PrintWindow` 截图实现。Microsoft 文档说明该调用由目标窗口同步绘制，可能阻塞；当前尚未验证所有 GPU 加速窗口，因此不能视作与 macOS ScreenCaptureKit 相同的捕获质量。Issue #922 的截图质量与实体桌面验收通过前，此实现不应发布或关闭 Issue；后续优先完成 GraphicsCaptureItem 按 HWND 捕获并对比真实应用窗口。
+`ComputerBridge` 在 Windows 10 1903 及更新版本优先使用 `Windows.Graphics.Capture` 的 HWND interop 捕获窗口，并把最新的稳定帧复制到 PNG；光标不包含在图像中。硬件 D3D11 设备创建失败时尝试 WARP。旧版 Windows 或捕获 API 不可用时保留 `PrintWindow` 回退。窗口尺寸限制为每边 4096 像素、总计 4,000,000 像素；PNG 限制为 16 MiB。Graphics Capture 的首次画面最多等待 1.8 秒，并在返回帧前收集 120 毫秒内到达的最新帧，以避开刚启动会话时可能出现的空白帧。
+
+GPU 捕获仍是候选实现，尚未通过本地实体前台窗口验收：当前自动化会话不能将合成 D3D11 窗口设为前台，WGC 与 `PrintWindow` 得到的像素均为黑色。`scripts/windows_graphics_capture_smoke.cpp` 会检查 GPU 渲染像素，失败时以非零状态退出；Aide CI 和可交互 Windows 桌面验收通过前，不应将截图质量标记为通过或关闭 Issue #922。
 
 ## 会话、证书与身份验证
 
