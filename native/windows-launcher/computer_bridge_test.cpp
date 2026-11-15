@@ -122,7 +122,9 @@ void run() {
     require(resolved.first == 200 && resolved.second.value("pid", DWORD(0)) == child.info.dwProcessId, "exact app resolution failed");
     std::string rule = resolved.second.value("rule", "");
     require(rule.rfind("exe:", 0) == 0, "resolved identity omitted executable rule");
-    bool listed = false; for (const auto& item : health.second.value("applications", json::array())) if (item.value("pid", DWORD(0)) == child.info.dwProcessId) listed = true;
+    auto appsAfterLaunch = request("GET", "/healthz");
+    require(appsAfterLaunch.first == 200, "Windows app list health route failed");
+    bool listed = false; for (const auto& item : appsAfterLaunch.second.value("applications", json::array())) if (item.value("pid", DWORD(0)) == child.info.dwProcessId) listed = true;
     require(listed, "health route omitted the isolated running app identity");
     auto foreground = request("GET", "/v1/foreground-app");
     require(foreground.first == 200 && foreground.second.value("pid", DWORD(0)) > 0, "foreground app identity route failed");

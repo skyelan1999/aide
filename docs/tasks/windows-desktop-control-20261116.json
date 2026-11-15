@@ -49,7 +49,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "The first hosted Aide CI run exposed a packaging issue: placing a C++ fixture under scripts/ci made Go treat that directory as a package with unsupported C++ sources. The fixture was moved under native/windows-launcher for a clean rerun. Windows arm64/amd64 cross-builds passed; the focused Windows desktop job remains in progress.",
+      "summary": "Aide CI #637 and Windows arm64/amd64 builds pass. Windows Desktop Check #77 exposed a fixture-ordering issue: the test reused the health/app list collected before its synthetic child app was launched. The fixture now queries the app list after launch; the corrected native job is pending rerun. The host-local bridge check compiles but cannot run interactive desktop cases.",
       "evidence": [
         "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only (Visual Studio 2022/MSVC, x64 native compile/link, launcher self-test and dry-run checks).",
         "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — fixture compiled, but bridge reports desktopAvailable=false on this host, so no app was focused or screen captured.",
@@ -57,7 +57,9 @@
         "NOT_RUN: go test ./internal/server -run 'TestComputer(Control|Snapshot|Image|Gesture)' -count=1 — Go is not installed on this Windows host.",
         "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON/runner syntax parsed and git diff --check passed.",
         "FAIL then fix pending rerun: hosted Aide CI initially failed because scripts/ci/windows_computer_bridge.cpp was discovered as an unsupported Go package source; moved to native/windows-launcher/computer_bridge_test.cpp to keep scripts/ci Go-only.",
-        "PASS: Windows Desktop Check arm64 and amd64 cross-builds on PR #933; native-ui integration job was still in progress at the time of this update."
+        "PASS: Windows Desktop Check arm64 and amd64 cross-builds on PR #933; native-ui integration job was still in progress at the time of this update.",
+        "FAIL then fixture correction pending rerun: Windows Desktop Check #77 failed because the integration fixture checked a cached /healthz application list captured before launching its child window; the native bridge had already resolved the child app successfully. Updated the fixture to fetch /healthz after launch.",
+        "PASS: hosted Aide CI #637 (Go, quick, and gate jobs) and Windows arm64/amd64 cross-builds in Windows Desktop Check #77."
       ]
     },
     "documentation": {
