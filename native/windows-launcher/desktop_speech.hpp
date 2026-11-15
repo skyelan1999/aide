@@ -3,9 +3,15 @@
 #include <mutex>
 #include <thread>
 #include <sapi.h>
-#include <sphelper.h>
 
 namespace aide_desktop {
+
+inline void clearSpeechEvent(SPEVENT& event) {
+    if (event.elParamType == SPET_LPARAM_IS_OBJECT && event.lParam) {
+        reinterpret_cast<IUnknown*>(event.lParam)->Release();
+    }
+    event = {};
+}
 
 // Owns the recognizer on a dedicated COM thread. The thread waits without
 // opening the microphone; only an explicit start request activates dictation.
@@ -36,8 +42,9 @@ class LocalSpeech {
         HRESULT init = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         ISpRecoContext* context = nullptr;
         ISpRecoGrammar* grammar = nullptr;
-        HRESULT hr = FAILED(init) ? init : CoCreateInstance(CLSID_SpSharedRecoContext, nullptr, CLSCTX_ALL,
-            IID_ISpRecoContext, reinterpret_cast<void**>(&context));
+        static const CLSID sharedContext{0x47206204,0x5eca,0x11d2,{0x96,0x0f,0x00,0xc0,0x4f,0x8e,0xe6,0x28}};
+        HRESULT hr = FAILED(init) ? init : CoCreateInstance(sharedContext, nullptr, CLSCTX_ALL,
+            __uuidof(ISpRecoContext), reinterpret_cast<void**>(&context));
         if (SUCCEEDED(hr)) hr = context->SetNotifyWin32Event();
         const ULONGLONG speechEvents = SPFEI(SPEI_RECOGNITION) | SPFEI(SPEI_HYPOTHESIS);
         if (SUCCEEDED(hr)) hr = context->SetInterest(speechEvents, speechEvents);
@@ -105,7 +112,7 @@ class LocalSpeech {
                         }
                     }
                 }
-                SpClearEvent(&event);
+                clearSpeechEvent(event);
             }
         }
         if (active && grammar) grammar->SetDictationState(SPRS_INACTIVE);
