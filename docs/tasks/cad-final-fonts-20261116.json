@@ -62,16 +62,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source-only main fast-forward/push authorized; final regression passes, remote integration and CI pending. No binary Release, tag or version bump.",
+      "status": "pass",
+      "summary": "Tested source commit 960cf7a0132557c8d63c3cf257bbbd21f5ea4563 fast-forwarded and pushed to main; remote quick, go and gate pass in Actions run 43747846517. Existing account bypass accepted direct main push; branch protection unchanged. Source-only delivery, no tag/version bump/Release.",
       "evidence": [
-        ".agent-state/cad-final-fonts-20261116/full-final-receipt.json"
+        "https://github.com/skyelan1999/aide/commit/960cf7a0132557c8d63c3cf257bbbd21f5ea4563",
+        "https://github.com/skyelan1999/aide/actions/runs/43747846517",
+        "docs/reviews/2026-11-16-cad-final-fonts.md"
       ]
     }
   },
   "release_authorization": "Current explicit user instruction: 合并到main并推送",
   "rollback": "Local image aide-rollback:cad-final-fonts-20261116 and complete data/source backup under /Users/skyelan/WorkTrees/aide-runtime-backups/20261116-cad-final-fonts; do not restore stale session or lock data over newer work.",
-  "handoff": "Best-effort font recovery complete: 123 to 122 substitution entries, hmhz/eq_eng/eq_chs unavailable. PNG default native route fixed. XLSX contents audited with declared layout limits; PPT/PPTX current native renderer unsupported. Main integration/push and final CI pending; no Release, tag or version bump authorized.",
+  "handoff": "Source main pushed and source CI passes; installed local image 68ae36ad remains healthy with integrity ok. All 453 drawings retested. Best-effort original-font recovery reduces substitution entries 123 to 122; hmhz/eq_eng/eq_chs remain unavailable. PNG native viewing and explicit raster import pass. XLSX navigation fixed and 8 workbooks/23 sheets checked; original-layout limits remain, PPT/PPTX unsupported. No Release/tag/version bump. All 28 unrelated source paths and protected business data preserved.",
   "additional_requests": [
     "另外png打开就是原生打开，栅图要改的话只能先打开栅图导入文件或打开文件啥的再改",
     "你做完这块额外的核对一下当前xlsx的渲染是否正确 ppt和pptx的渲染是否正确"
