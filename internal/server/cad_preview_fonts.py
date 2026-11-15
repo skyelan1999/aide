@@ -1,9 +1,11 @@
 """Bounded, local-only CAD typeface selection and mixed stroke/outline text."""
 import copy
 import os
+import struct
 from pathlib import Path
 
-from ezdxf.fonts import fonts
+from ezdxf.fonts import fonts, shapefile
+from ezdxf.fonts.font_measurements import FontMeasurements
 from ezdxf.fonts.font_manager import get_ttf_font_face, get_shape_file_font_face
 from ezdxf.math import Matrix44
 from ezdxf.npshapes import NumpyPath2d
@@ -26,6 +28,155 @@ STROKES = {'txt': 'standard.lff', 'simplex': 'simplex.lff',
 
 class FontBudget(ValueError):
     pass
+
+
+class BigFont:
+    """Read regular indexed Big Fonts, retaining native subshape IDs and advances.
+
+    The container uses little-endian directory integers; character IDs themselves
+    are packed code-page bytes in big-endian order. Extended primitive placement
+    is deliberately rejected until supported, rather than producing wrong strokes.
+    """
+    def __init__(self, data, encoding='gbk'):
+        if len(data) > 32 << 20 or not data.startswith(b'AutoCAD-86 bigfont 1.0\r\n\x1a'):
+            raise ValueError('invalid Big Font header')
+        size, count, ranges = struct.unpack_from('<HHH', data, 25)
+        end = 31 + ranges * 4 + count * 8
+        if size != 8 or not count or ranges > 256 or end > len(data):
+            raise ValueError('invalid Big Font directory')
+        self.ranges = [struct.unpack_from('<HH', data, 31 + i * 4) for i in range(ranges)]
+        if any(not (0 <= a <= b <= 255) for a, b in self.ranges):
+            raise ValueError('invalid Big Font lead ranges')
+        self.shapes, self.cmap, self.calls = {}, {}, {}
+        self.above = self.below = None
+        spans, total = [], 0
+        for i in range(count):
+            code, length, offset = struct.unpack_from('<HHI', data, 31 + ranges * 4 + i * 8)
+            if not length:
+                continue  # vacant hash-table slots are not character definitions
+            if offset < end or offset + length > len(data) or code in self.shapes:
+                raise ValueError('invalid Big Font record')
+            spans.append((offset, offset + length))
+            record = data[offset:offset + length]
+            split = record.index(0)
+            name, program = record[:split], record[split + 1:]
+            if code == 0:
+                if len(program) != 4 or program[-1] or program[2] not in (0, 2):
+                    raise ValueError('unsupported Big Font metrics')
+                self.above, self.below = program[:2]
+                self.shapes[0] = shapefile.Symbol(0, length, name, ())
+                continue
+            codes, calls = self.parse(program)
+            total += len(codes)
+            if total > 2000000:
+                raise FontBudget('Big Font command budget')
+            self.shapes[code] = shapefile.Symbol(code, length, name, codes)
+            self.calls[code] = calls
+            if code > 255 and any(a <= code >> 8 <= b for a, b in self.ranges):
+                try:
+                    text = code.to_bytes(2, 'big').decode(encoding, errors='strict')
+                    if len(text) == 1:
+                        self.cmap[ord(text)] = code
+                except UnicodeError:
+                    pass
+        spans.sort()
+        if any(b > c for (_, b), (c, _) in zip(spans, spans[1:])):
+            raise ValueError('overlapping Big Font records')
+        if self.above is None or not self.cmap:
+            raise ValueError('missing Big Font metrics or characters')
+        self.shapes.pop(0, None)
+        # Memoized DAG validation also bounds expanded command work: a shallow
+        # graph alone does not prevent exponentially repeated subshape calls.
+        costs = {}
+        def visit(code, chain):
+            if code in chain or len(chain) >= 32 or code not in self.shapes:
+                raise ValueError('invalid Big Font subshape graph')
+            if code in costs:
+                return costs[code]
+            cost = len(self.shapes[code].data)
+            depth = 1
+            for child in self.calls.get(code, ()):
+                child_cost, child_depth = visit(child, chain + (code,))
+                cost += child_cost
+                depth = max(depth, child_depth + 1)
+            if cost > 100000 or depth > 32:
+                raise FontBudget('Big Font expansion budget')
+            costs[code] = (cost, depth)
+            return costs[code]
+        for code in self.calls:
+            visit(code, ())
+
+    def parse(self, program):
+        reader = shapefile.DataReader(program)
+        codes, calls = [], []
+        while reader.has_data:
+            code = reader.u8(); codes.append(code)
+            if code == 0:
+                if reader.has_data:
+                    raise ValueError('trailing Big Font program data')
+                return tuple(codes), calls
+            if code in (3, 4):
+                value = reader.u8()
+                if not value:
+                    raise ValueError('zero Big Font scale')
+                codes.append(value)
+            elif code == 7:
+                child = reader.u8()
+                if not child:
+                    raise ValueError('extended Big Font primitives unsupported')
+                if any(a <= child <= b for a, b in self.ranges):
+                    child = child * 256 + reader.u8()
+                codes.append(child); calls.append(child)
+            elif code in (8, 12):
+                codes.extend(reader.i8() for _ in range(3 if code == 12 else 2))
+            elif code in (9, 13):
+                while True:
+                    x, y = reader.i8(), reader.i8(); codes.extend((x, y))
+                    if not (x or y):
+                        break
+                    if code == 13:
+                        codes.append(reader.i8())
+            elif code == 10:
+                codes.extend((reader.u8(), reader.octant()))
+            elif code == 11:
+                codes.extend(reader.u8() for _ in range(4)); codes.append(reader.octant())
+            elif code == 15:
+                raise ValueError('unsupported Big Font opcode')
+            if reader.index > len(program) or len(codes) > 16384:
+                raise FontBudget('Big Font glyph budget')
+        raise ValueError('unterminated Big Font program')
+
+    def cache(self, inherited_height):
+        shape = shapefile.ShapeFile(b'Big Font', self.above or inherited_height,
+                                    self.below if self.above else 0)
+        shape.shapes = self.shapes
+        cmap = self.cmap
+
+        class Cache(shapefile.GlyphCache):
+            def detect_space_width(self, default_width):
+                # Low IDs belong to primitives, not ASCII space/A/x/p glyphs.
+                return default_width
+
+            def get_empty_box(self, char=65):
+                from ezdxf import path
+                from ezdxf.npshapes import NumpyPath2d
+                p = path.Path((0, 0))
+                p.line_to((shape.above, 0)); p.line_to((shape.above, shape.above))
+                p.line_to((0, shape.above)); p.close()
+                p.move_to((shape.above, 0))
+                return NumpyPath2d(p)
+
+            def _render_shape(self, number):
+                if number not in cmap:
+                    raise shapefile.UnsupportedShapeNumber(number)
+                return super()._render_shape(cmap[number])
+
+            def _get_font_measurements(self):
+                return FontMeasurements(0, shape.above, shape.above * 2 / 3, shape.below)
+
+        cache = Cache(shape)
+        cache.cmap = cmap
+        return cache
 
 
 class MixedFont(fonts.AbstractFont):
@@ -84,7 +235,9 @@ class CADFonts:
         self.find_name = fonts.find_font_file_name
         self.raw_cache, self.mixed_cache, self.choice_cache = {}, {}, {}
         self.records, self.used = {}, set()
-        self.glyph_fallbacks, self.missing = set(), set()
+        self.bigfonts, self.pairs, self.pair_faces = {}, {}, {}
+        self.invalid_shapes = set()
+        self.glyph_fallbacks, self.missing, self.bigfont_glyphs = set(), set(), set()
         self.profile_errors = 0
         self.manager = fonts.font_manager
         self.saved_state = {name: getattr(self.manager, name) for name in
@@ -125,18 +278,25 @@ class CADFonts:
             if size > 32 << 20 or total > 128 << 20:
                 raise FontBudget('font byte budget')
             try:
+                if file.suffix.lower() == '.shx' and file.read_bytes()[:23].startswith(b'AutoCAD-86 bigfont'):
+                    self.bigfonts[font_key(file.name)] = BigFont(file.read_bytes())
+                    count += 1
+                    continue
                 face = (get_ttf_font_face(file) if file.suffix.lower() in ('.ttf', '.ttc', '.otf')
                         else get_shape_file_font_face(file))
                 self.manager._font_cache.add_entry(file, face)
                 count += 1
             except Exception:
                 self.profile_errors += 1
+                self.invalid_shapes.add(font_key(file.name))
         # Previous family lookup misses must not mask newly installed fonts.
         self.manager._match_cache.clear()
         return count
 
     def family_face(self, family, bold=False, italic=False):
         family = font_key(family)
+        if not family:
+            return None
         family = FAMILIES.get(family, family)
         style = 'Bold Italic' if bold and italic else 'Bold' if bold else 'Italic' if italic else 'Regular'
         return self.manager.find_best_match(family=family, style=style,
@@ -149,11 +309,14 @@ class CADFonts:
             bigfont = parts[1]
         family, italic, bold = extended
         face, status = None, 'fallback'
-        if requested and self.manager.has_font(requested):
-            face, status = self.manager.get_font_face(requested), 'exact-file'
+        lookup = requested
+        if requested and not Path(requested).suffix and self.manager.has_font(requested + '.shx'):
+            lookup += '.shx'
+        if lookup and self.manager.has_font(lookup):
+            face, status = self.manager.get_font_face(lookup), 'exact-file'
         stem = Path(requested).stem
         if face is None:
-            face = self.family_face(family or stem, bold, italic)
+            face = self.family_face(stem, bold, italic) or self.family_face(family, bold, italic)
             if face is not None:
                 status = ('stroke-substitute' if (Path(requested).suffix in ('.shx', '.shp')
                           or stem in STROKES) else 'same-family')
@@ -171,11 +334,37 @@ class CADFonts:
                 face, status = self.cjk, 'unsupported-shape-substitute'
         except (ValueError, RuntimeError, fonts.UnsupportedFont):
             face, status = self.cjk, 'unsupported-font-substitute'
-        key = (requested or str(family), font_key(bigfont), face.filename, status)
-        self.records[key] = {'requested': requested or str(family), 'resolved': face.filename,
+        resolved = face.filename
+        big_key = font_key(bigfont)
+        if big_key and not Path(big_key).suffix:
+            big_key += '.shx'
+        big_status = ('unsupported-font' if big_key in self.invalid_shapes else 'unavailable') if bigfont else 'none'
+        if big_key in self.bigfonts and self.raw(face.filename, 1.0).font_render_type != fonts.FontRenderType.STROKE:
+            big_status = 'requires-stroke-primary'
+        elif big_key in self.bigfonts:
+            pair_key = (face.filename, big_key)
+            if pair_key not in self.pair_faces:
+                if len(self.pair_faces) >= 128:
+                    raise FontBudget('Big Font pairing budget')
+                primary = self.raw(face.filename, 1.0)
+                inherited = primary.glyph_cache.font_measurements.cap_height
+                pair_name = f'aide-pair-{len(self.pairs)}.shx'
+                secondary = f'aide-big-{len(self.pairs)}.shx'
+                secondary_face = face._replace(filename=secondary, family=big_key)
+                self.manager._font_cache.add_entry(Path(secondary), secondary_face)
+                self.manager._loaded_shape_file_glyph_caches[secondary] = self.bigfonts[big_key].cache(inherited)
+                self.pairs[pair_name] = (face.filename, secondary)
+                pair_face = face._replace(filename=pair_name)
+                self.manager._font_cache.add_entry(Path(pair_name), pair_face)
+                self.pair_faces[pair_key] = pair_face
+            face = self.pair_faces[pair_key]
+            big_status = 'exact-file'
+
+        key = (requested or str(family), font_key(bigfont), resolved, status)
+        self.records[key] = {'requested': requested or str(family), 'resolved': resolved,
                              'family': face.family, 'status': status,
                              'bigfont': font_key(bigfont),
-                             'bigfontStatus': 'unavailable' if bigfont else 'none'}
+                             'bigfontStatus': big_status}
         return face, key
 
     def mark(self, key):
@@ -184,7 +373,7 @@ class CADFonts:
     def raw(self, name, height, width=1.0):
         key = (name, height, width)
         if key not in self.raw_cache:
-            self.raw_cache[key] = self.make_font(name, height, width)
+            self.raw_cache[key] = self.make_font(self.pairs.get(name, (name,))[0], height, width)
         return self.raw_cache[key]
 
     @staticmethod
@@ -204,14 +393,17 @@ class CADFonts:
         key = (name, char)
         if key in self.choice_cache:
             return self.choice_cache[key]
-        primary = self.raw(name, 1.0)
-        candidates = [name, self.cjk.filename, 'wqy-zenhei.ttc',
+        primary_name = self.pairs.get(name, (name,))[0]
+        secondary = self.pairs.get(name, (None, None))[1]
+        candidates = ([secondary] if secondary and ord(char) > 127 else []) + [primary_name, self.cjk.filename, 'wqy-zenhei.ttc',
                       'DejaVuSans.ttf', 'NimbusSans-Regular.otf']
         for candidate in dict.fromkeys(candidates):
             if not self.manager.has_font(candidate):
                 continue
             if self.contains(self.raw(candidate, 1.0), char):
-                if candidate != name:
+                if candidate == secondary:
+                    self.bigfont_glyphs.add((secondary, ord(char)))
+                if candidate not in (primary_name, secondary):
                     self.glyph_fallbacks.add((name, ord(char), candidate))
                 self.choice_cache[key] = candidate
                 return candidate
@@ -223,6 +415,7 @@ class CADFonts:
         key = (name, height, width)
         if key not in self.mixed_cache:
             self.mixed_cache[key] = MixedFont(self.raw(name, height, width), self)
+            self.mixed_cache[key].name = name
         return self.mixed_cache[key]
 
     def file_name(self, face):
@@ -272,4 +465,7 @@ class CADFonts:
                 'substitutedFaces': sum(r['status'] not in ('exact-file', 'same-family') for r in rows),
                 'glyphFallbacks': len(self.glyph_fallbacks), 'missingGlyphs': len(self.missing),
                 'missingCodepoints': sorted({f'U+{code:04X}' for _,code in self.missing}),
+                'bigfontGlyphs': len(self.bigfont_glyphs),
+                'originalBigFonts': sum(r['bigfontStatus'] == 'exact-file' for r in rows),
+                'substitutedBigFonts': sum(r['bigfontStatus'] not in ('none', 'exact-file') for r in rows),
                 'localFontFiles': self.private_count, 'invalidLocalFonts': self.profile_errors}

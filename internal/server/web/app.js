@@ -9398,10 +9398,10 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
       releaseEvents = () => { release(); releaseMeasure(); themeObserver?.disconnect(); URL.revokeObjectURL(blobUrl); };
       meta.textContent = detailed.entities + ' ' + t('个实体') + (detailed.skipped ? ' · ' + t('未恢复 {0} 处内容', detailed.skipped) : '') + (detailed.degraded ? ' · ' + t('{0} 处仅显示轮廓', detailed.degraded) : '') + (detailed.warnings ? ' · ' + t('{0} 条绘制提示', detailed.warnings) : '');
       if (detailed.fontInfo) {
-        meta.textContent += ' · ' + t('字体匹配 {0} / 替代 {1}', detailed.fontInfo.originalFaces || 0, detailed.fontInfo.substitutedFaces || 0);
+        meta.textContent += ' · ' + t('字体匹配 {0} / 替代 {1}', (detailed.fontInfo.originalFaces || 0) + (detailed.fontInfo.originalBigFonts || 0), (detailed.fontInfo.substitutedFaces || 0) + (detailed.fontInfo.substitutedBigFonts || 0));
         if (detailed.fontInfo.missingGlyphs) meta.textContent += ' · ' + t('缺少 {0} 个字形', detailed.fontInfo.missingGlyphs);
       }
-      meta.title = Object.entries(detailed.skippedTypes || {}).map(([type,count]) => type + ': ' + count).concat(Object.entries(detailed.degradedTypes || {}).map(([type,count]) => type + ': ' + t('{0} 处仅显示轮廓',count))).concat((detailed.fontInfo?.faces || []).map(f => f.requested + ' → ' + f.family + (f.status === 'exact-file' || f.status === 'same-family' ? '' : ' (' + t('替代字体') + ')'))).join(', ');
+      meta.title = Object.entries(detailed.skippedTypes || {}).map(([type,count]) => type + ': ' + count).concat(Object.entries(detailed.degradedTypes || {}).map(([type,count]) => type + ': ' + t('{0} 处仅显示轮廓',count))).concat((detailed.fontInfo?.faces || []).map(f => f.requested + ' → ' + f.family + (f.status === 'exact-file' || f.status === 'same-family' ? '' : ' (' + t('替代字体') + ')') + (f.bigfont ? '; ' + f.bigfont + (f.bigfontStatus === 'exact-file' ? '' : ' (' + t('替代字体') + ')') : ''))).join(', ');
     } catch (e) {
       if (blobUrl) URL.revokeObjectURL(blobUrl);
       meta.textContent = t('解析失败');

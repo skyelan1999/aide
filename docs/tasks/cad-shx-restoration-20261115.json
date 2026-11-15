@@ -1,0 +1,79 @@
+{
+  "id": "cad-shx-restoration-20261115",
+  "request": "继续找一下缺少的原始SHX字体，尽量把替代字体也还原，处理完再把所有图纸测一遍。",
+  "baseline": "e8c47360cd1de50110c071c7d156810ec8cfff0a",
+  "initial_status": "M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/server/web/starmap.html\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Audit every unavailable SHX and Big Font declaration against local files and attributable online sources.",
+    "Load genuine same-name supported SHX files without relabeling substituted or unsupported faces as original.",
+    "Preserve read-only drawing access and existing conversion/resource budgets.",
+    "Retest all 453 archive entries (425 CAD requests, 413 unique CAD renders, 28 PDF documents and 40 pages) and report remaining unavailable fonts."
+  ],
+  "scope": [
+    "internal/server/cad_preview_fonts.py",
+    "internal/server/dwg_preview_svg.py",
+    "scripts/test_dwg_svg.py",
+    "docs/tasks/cad-shx-restoration-20261115.json",
+    "docs/reviews/2026-11-15-cad-shx-restoration.md",
+    "private local CAD font profile and ignored acceptance artifacts",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests best-effort source SHX recovery and another complete archive retest.",
+      "evidence": [
+        "font-sources-private.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bounded regular Big Font adapter, style-isolated primary/Big Font pairing, truthful unsupported status; no proprietary fonts in repository.",
+      "evidence": [
+        "docs/reviews/2026-11-15-cad-shx-restoration.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "SHX matching and indexed regular Big Font loading implemented; 17-file private profile prepared.",
+      "evidence": [
+        "internal/server/cad_preview_fonts.py",
+        "scripts/test_dwg_svg.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "348 full-profile commands passed, including all 24 Go race shards and vet; 25 final-image rendering regressions, 3 explicit real runtime opt-ins, all 453 archive entries, eight theme/viewport cases and six measurement modes passed.",
+      "evidence": [
+        ".agent-state/cad-shx-restoration-20261115/full-receipt.json",
+        "docs/reviews/2026-11-15-cad-shx-restoration.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Review documents actual font provenance, unavailable fonts, complete archive results and acceptance boundaries.",
+      "evidence": [
+        "docs/reviews/2026-11-15-cad-shx-restoration.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Explicit six-file scope reviewed; no drawings or font binaries staged. Owned test browser, API container and regenerable test binary removed; private evidence/backups retained.",
+      "evidence": [
+        ".agent-state/cad-shx-restoration-20261115/browser-cleanup-private.json",
+        ".agent-state/cad-shx-restoration-20261115/api-cleanup.log"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source merge/push authorized; local runtime already installed and verified. No version bump/tag or binary release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user instruction: 做好后合并到main并推送; no binary release requested.",
+  "rollback": "Private storage/source backup: /Users/skyelan/WorkTrees/aide-runtime-backups/20261115-cad-shx-restoration; prior image retained as aide-rollback:cad-shx-restoration-20261115. No stale lock state is restored.",
+  "handoff": "Seven same-name SHX versions installed locally; 418 CAD entries still have at least one unavailable/incompatible primary or Big Font declaration. All 453 archive entries open. Full regression passed; main source push pending. Normal idle lock policy unchanged.",
+  "operator": "skyelan1999 (gh api user verified)",
+  "verification_fingerprint": "f85daa2c7d0542a0fa91902eff71444f96b5998d4866c8817080357ed6b808de"
+}

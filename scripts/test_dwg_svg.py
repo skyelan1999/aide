@@ -341,5 +341,77 @@ class CADSVGTests(unittest.TestCase):
         self.assertEqual(result['recoveredTypes'].get('TEXT_UNICODE'),1)
         self.assertEqual(result['fontInfo']['missingGlyphs'],0)
 
+
+def bigfont_fixture(program=None, above=10, below=0):
+    """Original test bytecode; no third-party font data is redistributed."""
+    import struct
+    records = {0: b'test font\0' + bytes((above, below, 0, 0)),
+               0xD6D0: b'\0' + (program or bytes((1, 8, 8, 0, 8, 0, 10, 8, 248, 0, 2, 8, 12, 246, 0)))}
+    header = b'AutoCAD-86 bigfont 1.0\r\n\x1a' + struct.pack('<HHHHH', 8, len(records), 1, 0xA1, 0xFE)
+    offset = len(header) + len(records) * 8
+    directory, body = b'', b''
+    for code, record in records.items():
+        directory += struct.pack('<HHI', code, len(record), offset)
+        body += record; offset += len(record)
+    return header + directory + body
+
+
+class BigFontTests(unittest.TestCase):
+    def test_bigfont_codepage_native_advance_and_inherited_height(self):
+        from cad_preview_fonts import BigFont
+        font = BigFont(bigfont_fixture())
+        # Primitive IDs must not be mistaken for ASCII glyphs during cache setup.
+        font.shapes[32] = font.shapes[65] = font.shapes[0xD6D0]
+        cache = font.cache(6)
+        self.assertEqual(cache.cmap[ord('中')], 0xD6D0)
+        self.assertAlmostEqual(cache.get_text_length('中中', 1), 2.4)
+        self.assertEqual(len(cache.get_text_glyph_paths('中', 1)), 1)
+        inherited = BigFont(bigfont_fixture(above=0, below=64)).cache(6)
+        self.assertAlmostEqual(inherited.get_text_length('中', 1), 2)
+
+    def test_bigfont_pair_layout_draw_and_style_isolation(self):
+        import os
+        from cad_preview_fonts import CADFonts
+        from ezdxf.addons.drawing.properties import Properties
+        from ezdxf.math import Matrix44
+        class Pipeline:
+            default_font_face = None
+            def __init__(self): self.calls = []
+            def draw_text(self, text, transform, properties, height, kind):
+                self.calls.append((text, transform, properties.font))
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td)/'hztxt.shx').write_bytes(bigfont_fixture())
+            with patch.dict(os.environ, {'AIDE_CAD_FONT_DIR': td}), CADFonts() as resolver:
+                face, key = resolver.resolve('romans', bigfont='hztxt')
+                same, _ = resolver.resolve('romans', bigfont='hztxt.shx')
+                plain, _ = resolver.resolve('romans', bigfont='missing.shx')
+                self.assertEqual(face.filename, same.filename)
+                self.assertNotEqual(face.filename, plain.filename)
+                resolver.mark(key)
+                runs = list(resolver.mixed(face.filename, 1).runs('A中B'))
+                self.assertEqual([text for _, text in runs], ['A', '中', 'B'])
+                self.assertNotEqual(runs[0][0], runs[1][0])
+                width = resolver.raw(runs[0][0], 1).text_width('AB') + 1.2
+                self.assertAlmostEqual(resolver.mixed(face.filename, 1).text_width('A中B'), width)
+                pipeline = Pipeline(); resolver.bind_pipeline(pipeline)
+                props = Properties(); props.font = face
+                pipeline.draw_text('A中B', Matrix44.translate(10, 0, 0), props, 1, 'TEXT')
+                self.assertEqual(len(pipeline.calls), 3)
+                self.assertAlmostEqual(pipeline.calls[2][1].transform((0, 0, 0)).x,
+                                       10 + resolver.raw(runs[0][0], 1).text_width('A') + 1.2)
+                report = resolver.report()
+                self.assertEqual(report['originalBigFonts'], 1)
+                self.assertEqual(report['missingGlyphs'], 0)
+                self.assertEqual(report['glyphFallbacks'], 0)
+
+    def test_bigfont_corrupt_directory_cycles_and_extended_rejected(self):
+        from cad_preview_fonts import BigFont
+        for data in (bigfont_fixture()[:-1],
+                     bigfont_fixture(bytes((7, 0, 0))),
+                     bigfont_fixture(bytes((7, 0xD6, 0xD0, 0))),
+                     bigfont_fixture(bytes((3, 0, 0)))):
+            with self.assertRaises((ValueError, IndexError)):
+                BigFont(data)
+
 if __name__ == '__main__':
     unittest.main()
