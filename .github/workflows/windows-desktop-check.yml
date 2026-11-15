@@ -84,9 +84,9 @@ jobs:
       - name: Actual Win32 compiler and CMD source-build recovery contracts
         shell: cmd
         run: python scripts/test_windows_launcher_compile.py
-        - name: Windows UI Automation inspection and password exclusion
-          shell: cmd
-          run: python scripts/test_windows_computer_uia.py
+      - name: Windows UI Automation inspection and password exclusion
+        shell: cmd
+        run: python scripts/test_windows_computer_uia.py
       - name: Actual Windows atomic state writes, process jobs and stop recovery
         shell: cmd
         run: python scripts/ci/windows_stop_recovery.py
