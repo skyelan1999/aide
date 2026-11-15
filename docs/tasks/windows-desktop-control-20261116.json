@@ -41,36 +41,34 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "Windows bridge now provides foreground/explicit process discovery, bounded visible app list, PID/process-rule pinning, secure desktop denial, snapshot HWND/bounds metadata, stale-window rejection, window-bounded click, UTF-16 typing limit and CMD-to-Ctrl key chords. Drag/scroll, browser workflow, UIA actions, and virtual pointer remain tracked follow-ups.",
+      "summary": "Windows bridge provides foreground/explicit process discovery, bounded app listing, PID/process-rule pinning, secure desktop denial, screenshot HWND/bounds metadata, stale-window rejection, window-bounded click/drag/scroll, UTF-16 typing limit and CMD-to-Ctrl key chords. Browser workflows, UIA actions, OCR/GPU capture, independent scheduler lanes and virtual pointer remain tracked follow-ups.",
       "evidence": [
         "Only native/windows-launcher code changed; macOS Swift and shared Go/web behavior remain unchanged.",
-        "Added a Windows-only isolated bridge fixture and workflow step to exercise discovery, snapshot metadata, key chords, and safe denial paths where an interactive desktop is available."
+        "Added a Windows-only isolated bridge fixture and workflow step to exercise discovery, snapshot metadata, key chords, and safe denial paths where an interactive desktop is available.",
+        "Implemented /v1/drag and /v1/scroll against the approved foreground HWND, with bounded coordinates/duration/deltas, target/geometry revalidation, cleanup of held mouse state, and no cursor movement for invalid requests.",
+        "Extended isolated Windows fixture to verify drag and horizontal/vertical wheel delivery to the synthetic window plus out-of-window/out-of-range denials."
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "PASS: hosted Aide CI #639 and Windows Desktop Check #78 all jobs. The initial Go packaging failure was fixed by moving the fixture out of scripts/ci; the first Windows integration failure was a fixture ordering error (stale app list) corrected before the passing run. The host-local fixture compiles, but actual interaction with a user app is NOT_RUN because this host has no interactive Windows desktop.",
+      "summary": "The prior discovery/safety revision passed Aide CI #639 and Windows Desktop Check #78. New Windows drag/scroll code passes the local launcher native-only build and the isolated fixture compile-only mode. Full local fixture launch was blocked with Windows “Access is denied” after compilation; hosted runtime checks for this revision are pending. This host has no interactive target-app session for user-facing acceptance.",
       "evidence": [
-        "PASS: Aide CI #639 — quick, Go, and gate jobs completed successfully on de2e3b15095368365c68f7369338b476328bda29.",
-        "PASS: Windows Desktop Check #78 — amd64 cross-build, arm64 cross-build, and native-ui job all completed successfully on de2e3b15095368365c68f7369338b476328bda29.",
-        "PASS: Windows native-ui job ran Actual Win32 compiler and CMD recovery contracts, isolated computer bridge discovery/snapshot/denial checks, atomic state/process/stop recovery, and isolated WebView2 tabs/sandbox/dialog/auth guard.",
-        "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only — Visual Studio 2022/MSVC x64 compile/link, native self-test, and dry-run checks.",
-        "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py compiled locally but reported no interactive Windows desktop; no user app was focused or captured. Hosted isolated bridge fixture passed in Windows Desktop Check #78.",
-        "FAIL then corrected: hosted Aide CI #635 initially found the C++ fixture under scripts/ci as an unsupported Go package source; moved fixture to native/windows-launcher/computer_bridge_test.cpp.",
-        "FAIL then corrected: Windows Desktop Check #77 initially used the /healthz app list captured before launching its synthetic child; fixture now fetches the list after launch and passed in #78.",
-        "FAIL: full local python -X utf8 scripts/test_windows_launcher_compile.py previously reached an unrelated existing CMD proxy fixture timeout after 10 seconds; hosted Windows job ran the complete CMD recovery fixture successfully.",
-        "NOT_RUN: go test ./internal/server -run 'TestComputer(Control|Snapshot|Image|Gesture)' -count=1 — Go is not installed on this host; hosted Aide CI compiled/tested the Go packages successfully.",
+        "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only — Visual Studio 2022/MSVC x64 compile/link, native self-test and dry-run checks after bridge gesture changes.",
+        "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only — isolated native bridge fixture compiled; execution skipped by the explicit compile-only option.",
+        "FAIL/NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — fixture source compiled, but this host returned Windows “Access is denied” while launching the temporary executable; interactive route assertions did not run locally.",
         "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON parsed and git diff --check passed.",
-        "NOT_RUN: actual user-facing app screenshot/interaction and Windows UI appearance review; this machine has no interactive Windows desktop."
+        "PASS on prior discovery/safety revision: Aide CI #639 and Windows Desktop Check #78 (arm64/amd64 builds and native-ui integration including bridge, recovery and WebView2 checks). Gesture changes are not included in that passing head.",
+        "NOT_RUN: actual user-facing app screenshot/interaction and Windows UI appearance review; no interactive Windows desktop is available on this host.",
+        "NOT_RUN: local Go tests; Go is not installed on this host."
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Capability matrix distinguishes implemented Windows bridge routes from UIA, OCR/GPU capture, background control, browser, drag/scroll, scheduling and pointer gaps.",
+      "summary": "Capability matrix identifies implemented Windows routes, the Windows wheel-delta mapping and outstanding UIA, browser, OCR/GPU, background control, scheduler and visual pointer gaps.",
       "evidence": [
-        "docs/architecture/windows-desktop.md links Issue #932 and related UIA Issue #924, and separates implemented routes from unimplemented parity.",
         "python -X utf8 scripts/check_docs.py passed with 537 Markdown files and 2558 local links.",
-        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; intentionally unmerged."
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; intentionally unmerged.",
+        "Updated docs/architecture/windows-desktop.md with Windows drag/scroll behavior and platform-specific wheel-delta scaling."
       ]
     },
     "cleanup": {

@@ -43,6 +43,9 @@ LRESULT CALLBACK fixtureProc(HWND window, UINT message, WPARAM w, LPARAM l) {
         FillRect(dc, &rect, brush); DeleteObject(brush);
         EndPaint(window, &paint); return 0;
     }
+    if (message == WM_LBUTTONUP) { SetWindowTextW(window, L"Aide fixture drag completed"); return 0; }
+    if (message == WM_MOUSEWHEEL) { SetWindowTextW(window, L"Aide fixture vertical scroll completed"); return 0; }
+    if (message == WM_MOUSEHWHEEL) { SetWindowTextW(window, L"Aide fixture horizontal scroll completed"); return 0; }
     if (message == WM_CLOSE) { DestroyWindow(window); return 0; }
     if (message == WM_DESTROY) { PostQuitMessage(0); return 0; }
     return DefWindowProcW(window, message, w, l);
@@ -140,14 +143,32 @@ void run() {
     auto chord = request("POST", "/v1/key", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"key", "CMD+A"}});
     require(chord.first == 200, "Windows CMD-to-Control key chord failed");
 
-    RECT rect{}; GetWindowRect(window, &rect); POINT original{}; GetCursorPos(&original);
+    RECT rect{}; GetWindowRect(window, &rect);
+    POINT dragStart{rect.left + 80, rect.top + 100}, dragEnd{rect.left + 240, rect.top + 180};
+    auto drag = request("POST", "/v1/drag", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"expectedWindowId", snapshot.second.value("windowId", uint64_t(0))}, {"approved", true}, {"x", dragStart.x}, {"y", dragStart.y}, {"toX", dragEnd.x}, {"toY", dragEnd.y}, {"durationMs", 120}});
+    require(drag.first == 200 && drag.second.value("dragged", false), "approved Windows drag route failed");
+    POINT afterDrag{}; GetCursorPos(&afterDrag); require(afterDrag.x == dragEnd.x && afterDrag.y == dragEnd.y, "drag did not finish at its approved endpoint");
+    for (int i = 0; i < 20; ++i) { wchar_t title[128]{}; GetWindowTextW(window, title, 128); if (std::wstring(title) == L"Aide fixture drag completed") break; Sleep(25); }
+    { wchar_t title[128]{}; GetWindowTextW(window, title, 128); require(std::wstring(title) == L"Aide fixture drag completed", "drag input did not reach the isolated target window"); }
+    POINT scrollPoint{rect.left + 280, rect.top + 200};
+    auto scroll = request("POST", "/v1/scroll", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"expectedWindowId", snapshot.second.value("windowId", uint64_t(0))}, {"approved", true}, {"x", scrollPoint.x}, {"y", scrollPoint.y}, {"deltaX", 40}, {"deltaY", 80}});
+    require(scroll.first == 200 && scroll.second.value("scrolled", false), "approved Windows scroll route failed");
+    POINT afterScroll{}; GetCursorPos(&afterScroll); require(afterScroll.x == scrollPoint.x && afterScroll.y == scrollPoint.y, "scroll was not positioned at its approved region");
+    for (int i = 0; i < 20; ++i) { wchar_t title[128]{}; GetWindowTextW(window, title, 128); if (std::wstring(title) == L"Aide fixture horizontal scroll completed") break; Sleep(25); }
+    { wchar_t title[128]{}; GetWindowTextW(window, title, 128); require(std::wstring(title) == L"Aide fixture horizontal scroll completed", "scroll input did not reach the isolated target window"); }
+
+    POINT beforeDenied{}; GetCursorPos(&beforeDenied);
+    auto invalidDrag = request("POST", "/v1/drag", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"x", dragStart.x}, {"y", dragStart.y}, {"toX", rect.right + 30}, {"toY", rect.bottom + 30}, {"durationMs", 120}});
+    require(invalidDrag.first == 502, "out-of-window drag endpoint was not rejected");
+    auto invalidScroll = request("POST", "/v1/scroll", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"x", scrollPoint.x}, {"y", scrollPoint.y}, {"deltaX", 0}, {"deltaY", 3000}});
+    require(invalidScroll.first == 502, "out-of-range scroll amount was not rejected");
     auto stale = request("POST", "/v1/click", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId + 1}, {"expectedAppRule", rule}, {"approved", true}, {"x", rect.left + 30}, {"y", rect.top + 30}});
     require(stale.first == 502, "stale process approval was not rejected");
     auto staleWindow = request("POST", "/v1/click", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"expectedWindowId", snapshot.second.value("windowId", uint64_t(0)) + 1}, {"approved", true}, {"x", rect.left + 30}, {"y", rect.top + 30}});
     require(staleWindow.first == 502, "stale screenshot HWND was not rejected");
     auto outside = request("POST", "/v1/click", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"x", rect.right + 30}, {"y", rect.bottom + 30}});
     require(outside.first == 502, "out-of-window click was not rejected");
-    POINT after{}; GetCursorPos(&after); require(after.x == original.x && after.y == original.y, "denied actions moved the user's cursor");
+    POINT after{}; GetCursorPos(&after); require(after.x == beforeDenied.x && after.y == beforeDenied.y, "denied actions moved the user's cursor");
 
     child.window = nullptr; PostMessageW(window, WM_CLOSE, 0, 0); WaitForSingleObject(child.info.hProcess, 2000);
     bridge.stop(); WSACleanup();

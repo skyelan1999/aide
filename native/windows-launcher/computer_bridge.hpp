@@ -110,10 +110,47 @@ class ComputerBridge {
    json input=json::parse(data.substr(split+4,contentLength),nullptr,false);if(!input.is_object()){response(client,400,{{"ok",false},{"error","Invalid JSON"}});closesocket(client);return;}
    if(route=="/v1/resolve-app"){response(client,200,identity(resolve(input)));closesocket(client);return;}
    if(route=="/v1/inspect"){response(client,501,{{"ok",false},{"error","Windows accessibility inspection is not available in this bridge; use computer_snapshot."}});closesocket(client);return;}
-   if(route!="/v1/snapshot"&&route!="/v1/click"&&route!="/v1/type"&&route!="/v1/key"){response(client,404,{{"ok",false},{"error","Unsupported computer operation"}});closesocket(client);return;}
+   if(route!="/v1/snapshot"&&route!="/v1/click"&&route!="/v1/type"&&route!="/v1/key"&&route!="/v1/drag"&&route!="/v1/scroll"){response(client,404,{{"ok",false},{"error","Unsupported computer operation"}});closesocket(client);return;}
    auto target=authorized(input);
    if(route=="/v1/snapshot"){RECT rect{};auto image=screenshot(target,&rect);if(!same(target))throw std::runtime_error("Foreground app changed; screenshot discarded");auto current=windowBounds(target);if(std::memcmp(&rect,&current,sizeof(rect))!=0)throw std::runtime_error("App window moved or resized while the screenshot was captured");response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"windowId",reinterpret_cast<uintptr_t>(target.window)},{"window",{{"x",rect.left},{"y",rect.top},{"width",rect.right-rect.left},{"height",rect.bottom-rect.top}}},{"pixelWidth",rect.right-rect.left},{"pixelHeight",rect.bottom-rect.top},{"textLocations",json::array()},{"mimeType","image/png"},{"imageBase64",base64(image)}});closesocket(client);return;}
    if(!same(target)||!input.value("approved",false))throw std::runtime_error("Aide confirmation missing or foreground app changed");verifyExpectedWindow(target,input);
+   if(route=="/v1/drag"||route=="/v1/scroll"){
+    const int x=input.value("x",-1),y=input.value("y",-1);
+    const RECT initial=windowBounds(target);
+    auto inside=[&](int px,int py){return px>=initial.left&&px<initial.right&&py>=initial.top&&py<initial.bottom&&px>=-20000&&px<=20000&&py>=-20000&&py<=20000;};
+    if(!inside(x,y))throw std::runtime_error("Pointer origin must be inside the approved foreground window");
+    auto stable=[&](){if(!same(target))throw std::runtime_error("Foreground app changed; pointer gesture stopped");auto current=windowBounds(target);if(std::memcmp(&initial,&current,sizeof(initial))!=0)throw std::runtime_error("App window moved or resized; pointer gesture stopped");};
+    stable();
+    if(route=="/v1/scroll"){
+     const int dx=input.value("deltaX",0),dy=input.value("deltaY",0);
+     if(dx < -2000 || dx > 2000 || dy < -2000 || dy > 2000 || (dx==0&&dy==0))throw std::runtime_error("Scroll amount must be between 1 and 2000 pixels on either axis");
+     INPUT events[2]{};UINT count=0;
+     if(dy){events[count].type=INPUT_MOUSE;events[count].mi.dwFlags=MOUSEEVENTF_WHEEL;events[count].mi.mouseData=DWORD(-dy*3);++count;}
+     if(dx){events[count].type=INPUT_MOUSE;events[count].mi.dwFlags=MOUSEEVENTF_HWHEEL;events[count].mi.mouseData=DWORD(dx*3);++count;}
+     if(!SetCursorPos(x,y))throw std::runtime_error("Windows refused pointer positioning");
+     stable();
+     if(SendInput(count,events,sizeof(INPUT))!=count)throw std::runtime_error("Windows refused scroll input");
+     response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"scrolled",true},{"deltaX",dx},{"deltaY",dy}});closesocket(client);return;
+    }
+    const int toX=input.value("toX",-1),toY=input.value("toY",-1),duration=input.value("durationMs",900);
+    if(!inside(toX,toY)||duration<100||duration>2500)throw std::runtime_error("Drag endpoint or duration is invalid");
+    if(!SetCursorPos(x,y))throw std::runtime_error("Windows refused pointer positioning");
+    stable();
+    INPUT down{};down.type=INPUT_MOUSE;down.mi.dwFlags=MOUSEEVENTF_LEFTDOWN;
+    if(SendInput(1,&down,sizeof(INPUT))!=1)throw std::runtime_error("Windows refused drag start");
+    struct ReleaseLeftButton { bool armed=true; ~ReleaseLeftButton(){if(armed){INPUT up{};up.type=INPUT_MOUSE;up.mi.dwFlags=MOUSEEVENTF_LEFTUP;SendInput(1,&up,sizeof(INPUT));}} } release;
+    const int steps=std::max(6,std::min(156,duration/16));
+    for(int i=1;i<=steps;++i){
+     Sleep(DWORD(std::max(1,duration/steps)));
+     stable();
+     const double t=double(i)/steps,smooth=t*t*(3.0-2.0*t);
+     const int px=int(std::lround(x+(toX-x)*smooth)),py=int(std::lround(y+(toY-y)*smooth));
+     if(!SetCursorPos(px,py))throw std::runtime_error("Windows refused drag movement");
+     stable();
+    }
+    stable();
+    response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"dragged",true},{"durationMs",duration}});closesocket(client);return;
+   }
    if(route=="/v1/click"){int x=input.value("x",-1),y=input.value("y",-1);RECT rect=windowBounds(target);if(x<rect.left||x>=rect.right||y<rect.top||y>=rect.bottom||std::abs(x)>20000||std::abs(y)>20000||!same(target)||!SetCursorPos(x,y)||!same(target))throw std::runtime_error("Click coordinates must be inside the approved foreground window");INPUT click[2]{};click[0].type=click[1].type=INPUT_MOUSE;click[0].mi.dwFlags=MOUSEEVENTF_LEFTDOWN;click[1].mi.dwFlags=MOUSEEVENTF_LEFTUP;if(SendInput(2,click,sizeof(INPUT))!=2){INPUT release{};release.type=INPUT_MOUSE;release.mi.dwFlags=MOUSEEVENTF_LEFTUP;SendInput(1,&release,sizeof(INPUT));throw std::runtime_error("Windows refused click input");}response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"clicked",true}});closesocket(client);return;}
    if(route=="/v1/type"){auto text=input.value("text",std::string{});auto wideText=wide(text);if(wideText.size()>2000)throw std::runtime_error("Input exceeds 2000 UTF-16 code units");std::vector<INPUT> events;events.reserve(wideText.size()*2);for(wchar_t c:wideText){INPUT down{};down.type=INPUT_KEYBOARD;down.ki.wScan=WORD(c);down.ki.dwFlags=KEYEVENTF_UNICODE;events.push_back(down);INPUT up=down;up.ki.dwFlags|=KEYEVENTF_KEYUP;events.push_back(up);}if(!same(target))throw std::runtime_error("Foreground app changed; text was not sent");if(!events.empty()&&SendInput(UINT(events.size()),events.data(),sizeof(INPUT))!=events.size()){std::vector<INPUT> releases;releases.reserve(wideText.size());for(wchar_t c:wideText){INPUT up{};up.type=INPUT_KEYBOARD;up.ki.wScan=WORD(c);up.ki.dwFlags=KEYEVENTF_UNICODE|KEYEVENTF_KEYUP;releases.push_back(up);}SendInput(UINT(releases.size()),releases.data(),sizeof(INPUT));throw std::runtime_error("Windows refused the complete Unicode text input");}response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"typed",true}});closesocket(client);return;}
    auto key=input.value("key",std::string{});auto events=keyboardChord(key);if(!same(target))throw std::runtime_error("Foreground app changed; key was not sent");if(SendInput(UINT(events.size()),events.data(),sizeof(INPUT))!=events.size()){std::vector<INPUT> releases;for(const auto& event:events)if(event.type==INPUT_KEYBOARD&&!(event.ki.dwFlags&KEYEVENTF_KEYUP)){INPUT up=event;up.ki.dwFlags=KEYEVENTF_KEYUP;releases.push_back(up);}if(!releases.empty())SendInput(UINT(releases.size()),releases.data(),sizeof(INPUT));throw std::runtime_error("Windows refused the complete key chord");}response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"key",key}});closesocket(client);return;
@@ -127,3 +164,4 @@ public:
  void stop(){stopping=true;if(listener!=INVALID_SOCKET){shutdown(listener,SD_BOTH);closesocket(listener);listener=INVALID_SOCKET;}if(acceptThread.joinable())acceptThread.join();{std::lock_guard<std::mutex> lock(clientsMutex);for(auto& client:clients)if(client.joinable())client.join();clients.clear();}if(gdiplusToken){Gdiplus::GdiplusShutdown(gdiplusToken);gdiplusToken=0;}if(winsockStarted){WSACleanup();winsockStarted=false;}}
 };
 }
+

@@ -38,7 +38,7 @@ Windows 桌面桥只在交互桌面运行：锁屏或安全桌面不可读写。
 | window snapshot | Current approved foreground HWND, PNG, HWND, physical bounds and pixel size | No OCR text locations or background capture yet; PrintWindow may omit GPU-only content. |
 | inspect controls | Tracked separately in [#924](https://github.com/skyelan1999/aide/issues/924) | UIA inspection/semantic actions require bounded-provider and real-app acceptance. |
 | click / type / key | Approved current foreground process | Click is window-bounded; stale PID/HWND/bounds are rejected. `CMD` maps to Windows `Ctrl` for common key chords. Background semantic focus is not yet equivalent. |
-| drag / scroll | Not yet implemented | Tracked in [#932](https://github.com/skyelan1999/aide/issues/932); never silently report support. |
+| drag / scroll | Approved foreground-window drag with bounded duration and guaranteed mouse release; wheel input is constrained to the approved window and revalidates focus/geometry | Windows wheel messages approximate shared pixel deltas at 3 wheel units per pixel; no animated controller pointer yet. The isolated integration fixture checks successful input and invalid-target denial. |
 | open browser / browser page balance | Not yet implemented | Safari-specific balance workflow has no Windows equivalent; browser open can target Windows browsers, subject to the same approval. |
 | system input / app / capture scheduling | Bridge currently serializes all requests | Safer than concurrent global input, but independent app/capture lanes are not yet equivalent. |
 | virtual controller pointer | Not yet implemented | The Windows design must remain non-activating, non-intercepting, DPI aware, high contrast and auto-dismissing. |
@@ -57,3 +57,4 @@ python scripts/agent-route.py verify quick
 `Windows Desktop Check` 只做验证，不调用 Delivery 或发布 Release：Linux 分别交叉编译 AMD64/ARM64；Windows runner 用单独测试 EXE 和合成 localhost TLS 服务，实际检查 WebView2 窗口、应用内新标签、共享存储、沙箱 MessagePort、插件页原生桥隔离、未保存关闭取消及下载取消。测试 EXE 不编译进产品；测试不读真实账户、启动 Docker 或发起真实 Hello 注册/签名。合成界面不等于 Compare/ProfessionalProject 真正功能或用户设备验收。
 
 精确通过/未执行项、源码与构建证据见 [任务记录](../tasks/windows-desktop-20261103.json)。Windows Hello 硬件签名、用户环境完整 build/start 和实际插件操作仍须在对应 Windows 设备验证，不能用跨编译或隔离窗口测试替代。
+
