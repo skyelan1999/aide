@@ -1,0 +1,81 @@
+{
+  "id": "plugin-device-code-name-20261115",
+  "request": "设备申请名称自动换成我的设备码",
+  "baseline": "d6354f2b8e864148df2caa81d666d79258692602",
+  "initial_status": "",
+  "acceptance": [
+    "An admitted plugin call reads the existing Aide device code via api.deviceInfo().",
+    "Only available/code are returned; no identity creation, message enablement, contacts, messages, keys or full fingerprints.",
+    "The capability remains local to the invocation and rejects reads after lock generation changes.",
+    "Real Node plugin-host integration and targeted Go race tests pass with synthetic device identities."
+  ],
+  "scope": [
+    "internal/server/plugin_sources.go",
+    "internal/server/plugin_host.js",
+    "internal/server/plugin_device_info.go",
+    "internal/server/plugin_device_info_test.go",
+    "docs/plugin-protocol.md",
+    "docs/tasks/plugin-device-code-name-20261115.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User asks device-request name to match the Aide device code automatically. Code is a display label, not license binding.",
+      "evidence": [
+        "User screenshot and request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Expose existing public display metadata through api.deviceInfo() and the admitted per-call Unix channel. Do not create an identity or enable messaging.",
+      "evidence": [
+        "plugin_host.js makeToolAPI",
+        "messaging/identity.go Device.Code"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added api.deviceInfo(), capability marker, read-only code lookup and protocol docs.",
+      "evidence": [
+        "internal/server/plugin_device_info_test.go",
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Quick gate passed; targeted server tests and real Node host passed, including lock revocation; targeted server race tests passed. Existing optional source-comparison bundle tests remain conditional.",
+      "evidence": [
+        "internal/server/plugin_device_info_test.go",
+        "docs/plugin-protocol.md",
+        ".agent-state/quick.json",
+        "go test -race -p 2 ./internal/server -run ^TestPlugin(DeviceInfo|Source|Checkout)|^TestMessageCenterOptIn -count=1 -timeout=180s",
+        "node --test scripts/plugin-workspace.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Plugin protocol documents two-field result, old-host compatibility and the non-authoritative display-code boundary.",
+      "evidence": [
+        "internal/server/plugin_device_info_test.go",
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped files in isolated worktree; original checkout and user data retained.",
+      "evidence": [
+        "internal/server/plugin_device_info_test.go",
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Preparing a source PR; no Aide formal release or production restart requested in this change.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Consumers may use the existing name fallback on older hosts. Device codes are labels, not identity or authorization credentials.",
+  "issue": "https://github.com/skyelan1999/aide/issues/905"
+}

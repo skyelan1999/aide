@@ -172,7 +172,9 @@ func (a *App) startPluginSources(ctx context.Context) (string, func(), func() bo
 		defer cancel()
 		var result any
 		var e error
-		if in.Operation == "checkout" || in.Operation == "commit" {
+		if in.Operation == "device-info" {
+			result, e = a.pluginDeviceInfo()
+		} else if in.Operation == "checkout" || in.Operation == "commit" {
 			result, e = a.pluginCheckoutRequest(callCtx, areas, dir, &total, checkouts, in)
 		} else {
 			result, e = a.pluginSourceRequest(callCtx, areas, dir, &total, used, in)

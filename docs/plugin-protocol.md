@@ -418,6 +418,8 @@ Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注�
 
 短命 `call` handler 可使用 `await api.sources(request)`。宿主为每次已准入调用建立私有 Unix socket；不向插件传递 SSH/SFTP 密码或私钥，不开放公共 HTTP 路由。当前支持本地/SSH 工作区及已启用且允许 AI 访问的 local/skill/SFTP/workspace-sftp 引用。daemon 暂不提供此接口，其他协议来源需单独适配。
 
+新增只读能力 `plugin-device-info-v1`：短命 handler 可调用 `await api.deviceInfo()`，返回 `{available:true,code:"ABC123"}`。`code` 与消息面板“我的设备码”相同，只用于设备申请等显示名称；不唯一，也不是身份认证或授权凭据。接口只返回这两个字段，不返回完整指纹、公钥、联系人、消息或密钥。它读取已存在的设备标识，不创建身份，不启用设备通信；尚无标识时返回 `{available:false,code:""}`。旧宿主可能没有此方法，调用方应明确提示并保留其既有名称策略。锁屏或调用失效时拒绝读取。此接口复用同次调用的私有 Unix 通道，daemon 暂不支持。
+
 - `{operation:'sources'}` 返回 `sources:[{id,name,type,origin}]`；ID 为 `workspace`、`context` 或 `source:<id>`，不含端点及凭据。 工作区来源额外返回不透明的 `workspaceKey`，供插件隔离本地恢复缓存；相同工作区在服务重启后保持，SSH 用户或端口不同则改变。此键由工作区身份摘要生成，不含凭据，不授予访问权限；`origin` 仍表示当前进程来源，不能用作长期缓存键。
 - `{operation:'browse',source,path}` 返回有界目录条目；路径是所选来源内的规范相对路径，列表包含点文件，不跟随链接。
 - `{operation:'stage',source,path,slot,recursive,maxBytes,maxFiles,maxDepth,exclude}` 返回 `{workspace,path,source}`：`workspace` 是本次调用独有的临时本地根，`path` 是其内快照相对路径；`source` 记录原始来源/路径、配置身份、文件/字节数、宿主保护路径排除项与原始时间戳未保留标志。`slot` 为唯一的 `left`、`right` 或 `path`，同次调用不能重复。
