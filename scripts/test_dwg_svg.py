@@ -404,6 +404,35 @@ class BigFontTests(unittest.TestCase):
                 self.assertEqual(report['missingGlyphs'], 0)
                 self.assertEqual(report['glyphFallbacks'], 0)
 
+    def test_bigfont_loading_is_demanded_and_invalid_font_stays_explicit(self):
+        import os
+        from cad_preview_fonts import CADFonts
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td)/'hztxt.shx').write_bytes(bigfont_fixture())
+            (Path(td)/'broken.shx').write_bytes(b'AutoCAD-86 bigfont 1.0\r\n\x1a')
+            with patch.dict(os.environ, {'AIDE_CAD_FONT_DIR': td}), CADFonts() as resolver:
+                self.assertEqual(resolver.loaded_bigfonts, {})
+                face, key = resolver.resolve('romans', bigfont='hztxt')
+                self.assertEqual(set(resolver.loaded_bigfonts), {'hztxt.shx'})
+                resolver.mark(key)
+                _, bad = resolver.resolve('romans', bigfont='broken')
+                resolver.mark(bad)
+                self.assertEqual(resolver.records[bad]['bigfontStatus'], 'unsupported-font')
+                self.assertEqual(resolver.report()['invalidLocalFonts'], 1)
+                self.assertEqual(resolver.report()['originalBigFonts'], 1)
+
+    def test_bigfont_zero_padded_legacy_records(self):
+        from cad_preview_fonts import BigFont
+        program = bytes((1, 8, 8, 0, 2, 8, 4, 0, 0))
+        plain = BigFont(bigfont_fixture(program)).cache(6)
+        padded = BigFont(bigfont_fixture(program + bytes(128))).cache(6)
+        self.assertEqual(plain.get_advance_width(ord('中')), padded.get_advance_width(ord('中')))
+        self.assertEqual(len(plain.get_shape(ord('中'))), len(padded.get_shape(ord('中'))))
+        # Stale padding is not bytecode: even an invalid extended call or
+        # zero divisor after the terminator must never be executed.
+        stale = BigFont(bigfont_fixture(program + bytes((7, 0, 3, 0)))).cache(6)
+        self.assertEqual(plain.get_advance_width(ord('中')), stale.get_advance_width(ord('中')))
+
     def test_bigfont_corrupt_directory_cycles_and_extended_rejected(self):
         from cad_preview_fonts import BigFont
         for data in (bigfont_fixture()[:-1],

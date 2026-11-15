@@ -112,8 +112,10 @@ class BigFont:
         while reader.has_data:
             code = reader.u8(); codes.append(code)
             if code == 0:
-                if reader.has_data:
-                    raise ValueError('trailing Big Font program data')
+                # Opcode 0 ends the program. Indexed legacy records may retain
+                # allocation padding after it, including stale nonzero bytes.
+                # Never interpret that tail; directory spans and raw-byte limits
+                # still bound the complete record and all referenced programs.
                 return tuple(codes), calls
             if code in (3, 4):
                 value = reader.u8()
@@ -235,7 +237,7 @@ class CADFonts:
         self.find_name = fonts.find_font_file_name
         self.raw_cache, self.mixed_cache, self.choice_cache = {}, {}, {}
         self.records, self.used = {}, set()
-        self.bigfonts, self.pairs, self.pair_faces = {}, {}, {}
+        self.bigfonts, self.loaded_bigfonts, self.pairs, self.pair_faces = {}, {}, {}, {}
         self.invalid_shapes = set()
         self.glyph_fallbacks, self.missing, self.bigfont_glyphs = set(), set(), set()
         self.profile_errors = 0
@@ -278,8 +280,10 @@ class CADFonts:
             if size > 32 << 20 or total > 128 << 20:
                 raise FontBudget('font byte budget')
             try:
-                if file.suffix.lower() == '.shx' and file.read_bytes()[:23].startswith(b'AutoCAD-86 bigfont'):
-                    self.bigfonts[font_key(file.name)] = BigFont(file.read_bytes())
+                with file.open('rb') as stream:
+                    big_header = file.suffix.lower() == '.shx' and stream.read(25).startswith(b'AutoCAD-86 bigfont')
+                if big_header:
+                    self.bigfonts[font_key(file.name)] = file
                     count += 1
                     continue
                 face = (get_ttf_font_face(file) if file.suffix.lower() in ('.ttf', '.ttc', '.otf')
@@ -292,6 +296,21 @@ class CADFonts:
         # Previous family lookup misses must not mask newly installed fonts.
         self.manager._match_cache.clear()
         return count
+
+    def load_bigfont(self, name):
+        # The profile remains byte/count bounded at scan time. Parse only fonts
+        # referenced by this drawing, so unrelated large dictionaries do not
+        # consume the worker's fixed address-space budget.
+        if name not in self.loaded_bigfonts:
+            try:
+                self.loaded_bigfonts[name] = BigFont(self.bigfonts[name].read_bytes())
+            except MemoryError:
+                raise FontBudget('font memory budget')
+            except (ValueError, IndexError, struct.error):
+                self.profile_errors += 1
+                self.invalid_shapes.add(name)
+                self.loaded_bigfonts[name] = None
+        return self.loaded_bigfonts[name]
 
     def family_face(self, family, bold=False, italic=False):
         family = font_key(family)
@@ -341,7 +360,7 @@ class CADFonts:
         big_status = ('unsupported-font' if big_key in self.invalid_shapes else 'unavailable') if bigfont else 'none'
         if big_key in self.bigfonts and self.raw(face.filename, 1.0).font_render_type != fonts.FontRenderType.STROKE:
             big_status = 'requires-stroke-primary'
-        elif big_key in self.bigfonts:
+        elif big_key in self.bigfonts and self.load_bigfont(big_key) is not None:
             pair_key = (face.filename, big_key)
             if pair_key not in self.pair_faces:
                 if len(self.pair_faces) >= 128:
@@ -352,13 +371,15 @@ class CADFonts:
                 secondary = f'aide-big-{len(self.pairs)}.shx'
                 secondary_face = face._replace(filename=secondary, family=big_key)
                 self.manager._font_cache.add_entry(Path(secondary), secondary_face)
-                self.manager._loaded_shape_file_glyph_caches[secondary] = self.bigfonts[big_key].cache(inherited)
+                self.manager._loaded_shape_file_glyph_caches[secondary] = self.loaded_bigfonts[big_key].cache(inherited)
                 self.pairs[pair_name] = (face.filename, secondary)
                 pair_face = face._replace(filename=pair_name)
                 self.manager._font_cache.add_entry(Path(pair_name), pair_face)
                 self.pair_faces[pair_key] = pair_face
             face = self.pair_faces[pair_key]
             big_status = 'exact-file'
+        elif big_key in self.invalid_shapes:
+            big_status = 'unsupported-font'
 
         key = (requested or str(family), font_key(bigfont), resolved, status)
         self.records[key] = {'requested': requested or str(family), 'resolved': resolved,

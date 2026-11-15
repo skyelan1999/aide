@@ -1,0 +1,71 @@
+{
+  "id": "cad-remaining-shx-20261116",
+  "request": "继续找一下 hzfs、hmhz 等剩余缺失的原始字体，尽量把这 418 份图纸的替代字体还原，处理完再把所有图纸测一遍。",
+  "baseline": "ba46ce28e9502d697321667b24de8d27d2d6d426",
+  "initial_status": "M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/server/web/starmap.html\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Search remaining fonts individually using attributable distribution sources; inspect internal headers and actual glyphs.",
+    "Do not rename unrelated fonts or mark partial/unsupported glyphs as fully restored.",
+    "Reduce the 418 CAD entries with substitution declarations where genuine same-name files can be loaded.",
+    "Retest all 453 archive entries, 425 CAD requests, 413 unique CAD images and 28 PDFs / 40 pages.",
+    "Preserve original drawings, local changes, sessions, settings and resource limits."
+  ],
+  "scope": [
+    "private CAD font profile and ignored research/acceptance artifacts",
+    "internal/server/cad_preview_fonts.py if required by recovered fonts",
+    "scripts/test_dwg_svg.py if parser changes are needed",
+    "docs/tasks/cad-remaining-shx-20261116.json",
+    "docs/reviews/2026-11-16-cad-remaining-shx.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Follow-up to 418 CAD entries retaining primary/Big Font substitution declarations; best-effort original-font search and archive-wide retest.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Selected eight same-name distributed SHX files using source commits/URLs, internal identifiers and byte hashes; remaining hmhz/equipment-specific names remain explicitly unavailable.",
+      "evidence": [
+        "docs/reviews/2026-11-16-cad-remaining-shx.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Private 25-font local profile installed; Big Fonts load on demand and indexed glyph padding after opcode 0 is not interpreted. Resource limits retained.",
+      "evidence": [
+        "internal/server/cad_preview_fonts.py",
+        "scripts/test_dwg_svg.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "All 348 full-profile commands pass (fingerprint bd730ebe7f27d65c38a24cd40ea85eda01f75978bdd9dbe199405ddc0fb60505); server race inventory 1781, 1689 pass and 92 conditional skips retained. Three real runtime opt-ins, 27 focused tests, 453 archive entries and source geometry/hash checks pass.",
+      "evidence": [
+        ".agent-state/full.json",
+        ".agent-state/go-suite-d75ffb118373/report.json",
+        ".agent-state/cad-remaining-shx-20261116/acceptance-private.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Source and parser review documents plus private searchable 453-entry report; remaining substitutions 418 to 123, without claiming original byte identity.",
+      "evidence": [
+        "docs/reviews/2026-11-16-cad-remaining-shx.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed only owned browser/API fixture; removed copied test binary after recording its hash. Original native drawing, directory and unrelated work preserved. Backup and pinned runtime images retained.",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Full checks pass; preparing authorized main fast-forward and push, without tag/version change.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user instruction: 做好后合并到main并推送; no binary release requested.",
+  "rollback": "Complete runtime/data backup and prior immutable image tag aide-rollback:cad-remaining-shx-20261116; original drawings and 28 unrelated local paths preserved.",
+  "handoff": "Eight recovered font files remain local. hmhz, eq_eng, eq_chs, hgcad and proxy 2 remain unavailable; same-name distributed versions are not proof of original author byte identity."
+}
