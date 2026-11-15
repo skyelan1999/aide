@@ -7,7 +7,7 @@
 #include <bcrypt.h>
 #include <wincrypt.h>
 #include <objidl.h>
-#include <UIAutomation.h>
+#include <uiautomation.h>
 #include <ws2tcpip.h>
 #include <atomic>
 #include <climits>
