@@ -49,17 +49,19 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Aide CI #637 and Windows arm64/amd64 builds pass. Windows Desktop Check #77 exposed a fixture-ordering issue: the test reused the health/app list collected before its synthetic child app was launched. The fixture now queries the app list after launch; the corrected native job is pending rerun. The host-local bridge check compiles but cannot run interactive desktop cases.",
+      "summary": "PASS: hosted Aide CI #639 and Windows Desktop Check #78 all jobs. The initial Go packaging failure was fixed by moving the fixture out of scripts/ci; the first Windows integration failure was a fixture ordering error (stale app list) corrected before the passing run. The host-local fixture compiles, but actual interaction with a user app is NOT_RUN because this host has no interactive Windows desktop.",
       "evidence": [
-        "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only (Visual Studio 2022/MSVC, x64 native compile/link, launcher self-test and dry-run checks).",
-        "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — fixture compiled, but bridge reports desktopAvailable=false on this host, so no app was focused or screen captured.",
-        "FAIL: python -X utf8 scripts/test_windows_launcher_compile.py — after native compilation/self-test, existing scripts/test_windows_build_proxy.py CMD driver exceeded its 10-second timeout.",
-        "NOT_RUN: go test ./internal/server -run 'TestComputer(Control|Snapshot|Image|Gesture)' -count=1 — Go is not installed on this Windows host.",
-        "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON/runner syntax parsed and git diff --check passed.",
-        "FAIL then fix pending rerun: hosted Aide CI initially failed because scripts/ci/windows_computer_bridge.cpp was discovered as an unsupported Go package source; moved to native/windows-launcher/computer_bridge_test.cpp to keep scripts/ci Go-only.",
-        "PASS: Windows Desktop Check arm64 and amd64 cross-builds on PR #933; native-ui integration job was still in progress at the time of this update.",
-        "FAIL then fixture correction pending rerun: Windows Desktop Check #77 failed because the integration fixture checked a cached /healthz application list captured before launching its child window; the native bridge had already resolved the child app successfully. Updated the fixture to fetch /healthz after launch.",
-        "PASS: hosted Aide CI #637 (Go, quick, and gate jobs) and Windows arm64/amd64 cross-builds in Windows Desktop Check #77."
+        "PASS: Aide CI #639 — quick, Go, and gate jobs completed successfully on de2e3b15095368365c68f7369338b476328bda29.",
+        "PASS: Windows Desktop Check #78 — amd64 cross-build, arm64 cross-build, and native-ui job all completed successfully on de2e3b15095368365c68f7369338b476328bda29.",
+        "PASS: Windows native-ui job ran Actual Win32 compiler and CMD recovery contracts, isolated computer bridge discovery/snapshot/denial checks, atomic state/process/stop recovery, and isolated WebView2 tabs/sandbox/dialog/auth guard.",
+        "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only — Visual Studio 2022/MSVC x64 compile/link, native self-test, and dry-run checks.",
+        "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py compiled locally but reported no interactive Windows desktop; no user app was focused or captured. Hosted isolated bridge fixture passed in Windows Desktop Check #78.",
+        "FAIL then corrected: hosted Aide CI #635 initially found the C++ fixture under scripts/ci as an unsupported Go package source; moved fixture to native/windows-launcher/computer_bridge_test.cpp.",
+        "FAIL then corrected: Windows Desktop Check #77 initially used the /healthz app list captured before launching its synthetic child; fixture now fetches the list after launch and passed in #78.",
+        "FAIL: full local python -X utf8 scripts/test_windows_launcher_compile.py previously reached an unrelated existing CMD proxy fixture timeout after 10 seconds; hosted Windows job ran the complete CMD recovery fixture successfully.",
+        "NOT_RUN: go test ./internal/server -run 'TestComputer(Control|Snapshot|Image|Gesture)' -count=1 — Go is not installed on this host; hosted Aide CI compiled/tested the Go packages successfully.",
+        "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON parsed and git diff --check passed.",
+        "NOT_RUN: actual user-facing app screenshot/interaction and Windows UI appearance review; this machine has no interactive Windows desktop."
       ]
     },
     "documentation": {
@@ -72,20 +74,23 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Temporary test executables were created in temporary folders and removed by the fixture runners; no workspace cleanup or untracked-file deletion was performed.",
+      "evidence": [
+        "The native fixture runners use temporary directories and clean up their generated binaries."
+      ]
     },
     "release": {
       "status": "not_run",
-      "summary": "User requested all code remain in open pull requests; no merge, release, or main update is authorized or performed.",
+      "summary": "User requested code stay in an open pull request. No merge, release, or main update was performed.",
       "evidence": [
-        "Final change will be submitted as an open draft PR; Issue #932 stays open while drag/scroll, browser, UIA, overlay, and interactive real-app acceptance remain incomplete."
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; latest passing CI head de2e3b15095368365c68f7369338b476328bda29.",
+        "Issue #932 remains open because drag/scroll, browser workflow, UIA semantic actions, visual controller parity, and actual interactive user-app acceptance remain incomplete."
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": ""
+  "handoff": "Implemented Windows app discovery and safety foundation is in draft PR #933 with hosted CI passing. Remaining: drag/scroll, browser workflows, UIA parity tracked in #924, OCR/GPU capture strategy, background actions, independent scheduler lanes, visual controller pointer, real interactive app/screenshot acceptance, and Discussion #916 update (no discussion-write or browser automation tool available in this session). Keep issue open and PR unmerged."
 }
 
