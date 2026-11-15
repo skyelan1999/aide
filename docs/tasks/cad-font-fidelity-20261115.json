@@ -60,7 +60,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Explicit source/resource files reviewed; no customer drawings, private font bytes or credentials staged. Owned API container and browser closed, original native file view and browser directories restored; business data and installed font hashes verified. Unrelated source work remains untouched pending the guarded merge.",
+      "summary": "All 29 scoped source/resource files reviewed; private fonts, drawings and credentials excluded. Owned API/browser closed and native original file/browser locations restored. All 28 unrelated dirty/untracked paths retain exact pre-merge bytes; recovery stash and independent source/runtime backups retained.",
       "evidence": [
         ".agent-state/cad-font-fidelity-20261115/browser-cleanup-private.json",
         ".agent-state/cad-font-fidelity-20261115/production-verification.json",
@@ -68,14 +68,19 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Preparing the authorized source-only main merge/push. No binary Release/version/tag requested.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Authorized source implementation d4547563b7356658eb46ef6f5d2b4ffa0166bf71 fast-forwarded main, pushed and read back from origin/main. Existing account bypass accepted direct main push; no branch rules changed. Final runtime 6769be37 remains healthy/integrity OK at the unchanged version. Remote Actions are tracked separately against final main; no binary Release/tag/version bump requested or performed.",
+      "evidence": [
+        ".agent-state/cad-font-fidelity-20261115/source-integration-private.json",
+        ".agent-state/cad-font-fidelity-20261115/production-verification.json",
+        "https://github.com/skyelan1999/aide/commit/d4547563b7356658eb46ef6f5d2b4ffa0166bf71"
+      ]
     }
   },
   "release_authorization": "Existing user request in this ongoing task: 有 89 份存在实体缺失或填充降级 完成所有问题的解决并测试，做好后合并到main并推送。 Current follow-up requests font fidelity and a fresh whole-archive regression. Source merge/push only; no version/tag/binary Release requested.",
-  "rollback": "Previous local image tagged aide-rollback:cad-font-fidelity-20261115; private storage/env/draft/source backups retained outside Git. Do not restore stale lock state or overwrite concurrent user data.",
-  "handoff": "",
+  "rollback": "Previous local image tagged aide-rollback:cad-font-fidelity-20261115; private storage/env/draft/source backups retained outside Git. Do not restore stale lock state or overwrite concurrent user data. Pre-merge source recovery stash: 42c2c07180f533d42d62a4d1ea09367be5e38248.",
+  "handoff": "Font fidelity and all 453 drawing checks complete; source implementation merged and remote push verified. Remaining unavailable SHX/bigfont files use explicit substitutes. Native Aide retains the tested local source image and original file view; unrelated work and business data preserved. Remote CI status is a separate delivery receipt; no binary Release was published.",
   "verification_fingerprint": "0074a7b20bfa9fc4123960920e95b6fbe6c5d97b17c83a2218f444e2aa2f32ee",
-  "runtime_image": "sha256:6769be37e77c295a7ec10f56e131db8ffc73a5abd9c5b0ff422ada3d95e5390c"
+  "runtime_image": "sha256:6769be37e77c295a7ec10f56e131db8ffc73a5abd9c5b0ff422ada3d95e5390c",
+  "source_implementation_commit": "d4547563b7356658eb46ef6f5d2b4ffa0166bf71"
 }
