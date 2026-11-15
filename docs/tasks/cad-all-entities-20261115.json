@@ -71,16 +71,23 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source full gate passed on isolated integration checkout and final local runtime installed. User-authorized main fast-forward and push are next. Version/tag/binary Release and separate Delivery matrix are not requested.",
+      "status": "pass",
+      "summary": "Implementation f62a9eb287d35f246af7967a3ae645eb8bec75fe fast-forwarded local main and was verified on origin/main after push. All 44 unrelated dirty/untracked paths retain exact pre-merge bytes; recovery stash and independent backup retained. Final installed runtime 734bbea7 is healthy/integrity ok with unchanged version. GitHub accepted source push using existing account bypass for PR/required gate; no rules changed. Local full is acceptance evidence; remote CI is separate. No binary Release/tag/version bump requested or performed.",
       "evidence": [
-        "User authorization 2026-11-15",
-        ".agent-state/cad-all-entities-20261115/full-receipt.json"
+        ".agent-state/cad-all-entities-20261115/source-integration-private.json",
+        ".agent-state/cad-all-entities-20261115/production-verification.json",
+        "https://github.com/skyelan1999/aide/commit/f62a9eb287d35f246af7967a3ae645eb8bec75fe"
       ]
     }
   },
   "release_authorization": "User explicitly requested: 做好后合并到main并推送. This authorizes source integration and main push, without a version bump, tag or binary GitHub Release.",
-  "rollback": "Local runtime/data backup and aide-rollback:cad-all-entities-20261115 retained. Source integration is additive; unrelated working files will retain exact private backups and hashes. Do not restore lock state or overwrite current user data.",
-  "handoff": "All requested archive/CAD/PDF/measurement/idle implementation and acceptance complete. Source commit, local main integration and remote main push pending; preserve unrelated working files. Local image 734bbea7 remains version 0.1.19.0 RC2.",
-  "verification_fingerprint": "933b229a66ec8a28d324f91df7073b0edacb348b4c2e250efd2fdedacaf1cfdf"
+  "rollback": "Local runtime/data backup and aide-rollback:cad-all-entities-20261115 retained. Source integration is additive; unrelated working files will retain exact private backups and hashes. Do not restore lock state or overwrite current user data. Preserved pre-merge source stash: cc6ba3307285c174ed32ad42c64aa86d7668617a. Restoring unrelated work has been hash-verified; retain this recovery point.",
+  "handoff": "Requested 89 partial drawings resolved, full archive and source checks complete, implementation merged to local main and pushed/remote verified. Other local work and all business data remain preserved. Native Aide remains running with the tested local image; no new binary release was published. Source-only receipt updates do not alter the verified code fingerprint.",
+  "verification_fingerprint": "933b229a66ec8a28d324f91df7073b0edacb348b4c2e250efd2fdedacaf1cfdf",
+  "source_implementation_commit": "f62a9eb287d35f246af7967a3ae645eb8bec75fe",
+  "runtime_image": "sha256:734bbea7e33f0651376d57668e4408b93fa7489824095156aa982e524ea96406",
+  "runtime_build_identity": {
+    "buildVersion": "0.1.19.0 RC2",
+    "buildCommit": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.5a82eb88b82868fbb04b6c80a576b20d4f57e87bf25a5eb6c83978e55d51c918"
+  }
 }
