@@ -51,7 +51,7 @@
       "evidence": [
         "python scripts/test_windows_launcher_compile.py: MSVC compilation/link and launcher self-test passed; later scripts/test_windows_build_proxy.py timed out in proxy-policy.cmd after 10 seconds, so the complete suite did not pass.",
         "git diff --check passed.",
-        "No Windows Desktop Check CI result exists for this unpushed topic branch yet.",
+        "Aide CI run 600 is pending; Windows Desktop Check run 62 is in progress for PR #927 head 99f5c878482da066e64ad4cdb9b4922f32183c3b.",
         "Human screenshot inspection: NOT_RUN; no in-session browser/computer-use UI inspection tool is available."
       ]
     },
@@ -63,17 +63,22 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Remove the confirmed temporary compiler probe object, verify only intended source/docs/task files remain, then publish a draft PR. Keep issue open until CI and visual review pass.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Removed the confirmed temporary compiler probe object and verified the topic contains only intended source, documentation, and task evidence files.",
+      "evidence": [
+        "git status showed only the four intended implementation/documentation files and this task record before commit; no generated test executables or captures remain."
+      ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Authorized draft PR will be opened and left unmerged; CI and screenshot acceptance are still outstanding.",
-      "evidence": []
+      "summary": "Draft PR #927 is open and linked to Issue #925. It remains unmerged; CI and screenshot acceptance are outstanding.",
+      "evidence": [
+        "PR: https://github.com/skyelan1999/aide/pull/927 (draft, open, head 99f5c878482da066e64ad4cdb9b4922f32183c3b).",
+        "Issue #925 has a progress comment linking the PR and accurately recording the failing timeout and pending acceptance."
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "User authorized push and PR creation, and explicitly requires all merges to remain in PRs; do not merge.",
   "rollback": "Revert the topic commit/PR branch; native chrome returns to current light/dark CSS palette, with no persistent data changes.",
-  "handoff": "Issue #925 requires visual screenshot review. CI artifacts can collect synthetic layouts, but no browser/computer-use UI inspection tool is available in this session; do not claim actual visual acceptance until screenshots are manually reviewed."
+  "handoff": "PR #927 is a draft and must remain unmerged. Aide CI run 600 is pending and Windows Desktop Check run 62 is in progress. Full local launcher/entrypoint suite did not pass because the CMD proxy policy fixture timed out after 10 seconds. Issue #925 must remain open until CI passes and screenshots are manually reviewed at the requested scale/theme/layout matrix. Discussion #916 was not updated: the available GitHub connector supports read-only discussion retrieval only, no discussion write tool or browser/computer-use UI is available, and gh is not installed."
 }
