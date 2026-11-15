@@ -34,7 +34,7 @@ WORKDIR /src
 FROM toolchain AS dwg-converter
 USER root
 COPY docker/libredwg /dwg-build/docker/libredwg
-COPY scripts/build-dwg-converter.sh /dwg-build/scripts/build-dwg-converter.sh
+COPY scripts/build-dwg-converter.sh scripts/test_libredwg_strings.py /dwg-build/scripts/
 WORKDIR /dwg-build
 RUN if ! command -v make >/dev/null 2>&1 || ! command -v xz >/dev/null 2>&1 || ! command -v pkg-config >/dev/null 2>&1; then sh /usr/local/lib/aide/apt-install-retry.sh make xz-utils pkg-config; fi
 RUN --mount=type=cache,target=/root/.cache/aide/libredwg \
@@ -221,6 +221,13 @@ COPY --from=node /usr/local/LICENSE /opt/aide/licenses/platform/node-LICENSE
 RUN chmod -R a+rX /opt/aide
 
 # 3) 业务二进制（随每次代码/前端改动变化）——最易失效的层放在最后
+# Open CJK glyph outlines for local CAD SVG rendering; license: Debian package copyright.
+RUN sh /usr/local/lib/aide/apt-install-retry.sh fonts-wqy-zenhei=0.9.45-8 poppler-utils=22.12.0-2+deb12u3 \
+    && mkdir -p /opt/aide/licenses/platform \
+    && cp /usr/share/doc/fonts-wqy-zenhei/copyright /opt/aide/licenses/platform/wqy-zenhei-copyright \
+    && cp /usr/share/doc/poppler-utils/copyright /opt/aide/licenses/platform/poppler-copyright \
+    && chmod a+r /opt/aide/licenses/platform/*copyright \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 # Root-managed build identity; runtime upgrades may accept it only after readiness.
 RUN sha256sum /usr/local/bin/aide > /usr/local/bin/aide.sha256 && chmod 0444 /usr/local/bin/aide.sha256

@@ -36,6 +36,8 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
     pinned = json.loads((dwg/'source.json').read_text())
     archive = dwg/'source'/('libredwg-'+pinned['version']+'.tar.xz')
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == pinned['sha256']
+    for patch in pinned.get('patches', []):
+        assert hashlib.sha256((dwg/'source'/patch['file']).read_bytes()).hexdigest() == patch['sha256']
     assert (dwg/'COPYING').is_file() and (dwg/'build-dwg-converter.sh').is_file()
     assert 'not found' not in subprocess.check_output(['ldd', str(dwg/'bin/dwg2dxf')], text=True)
     with tempfile.TemporaryDirectory() as td, tarfile.open(archive) as source:
@@ -47,6 +49,10 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
             subprocess.run([str(dwg/'bin/dwg2dxf'), '-o', str(output), str(original)], check=True, capture_output=True, timeout=20)
             entities = output.read_text(errors='replace').split('\nENTITIES\n')[1].split('ENDSEC')[0]
             assert '\nLINE\n' in entities, revision+' lost geometry'
+    assert Path('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc').is_file(), 'CAD CJK font missing'
+    assert Path('/opt/aide/licenses/platform/wqy-zenhei-copyright').is_file(), 'CAD font notice missing'
+    assert shutil.which('pdftoppm'), 'PDF compatibility renderer missing'
+    assert Path('/opt/aide/licenses/platform/poppler-copyright').is_file(), 'Poppler notice missing'
     import sys, ezdxf, openpyxl, pptx, pypdf, cryptography
     engine = '/usr/local/bin/sherpa-onnx-offline-tts'
     assert Path(engine).is_file(), 'offline TTS engine missing'

@@ -1,0 +1,86 @@
+{
+  "id": "cad-all-entities-20261115",
+  "request": "解决89份实体缺失或填充降级的图纸，修复测试后合并main并推送",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "Original checkout main at bd5c6456 had unrelated native launcher/build changes and untracked drafts. Exact status and preservation receipts remain private in .agent-state/cad-all-entities-20261115. Source integration uses an isolated worktree based on origin/main 1ece8499; only explicitly selected CAD/PDF/measurement/idle changes are included.",
+  "acceptance": [
+    "Resolve all 89 classified partial archive previews from source geometry, including HATCH, REGION, TEXT and proxy data; never hide or zero diagnostics to manufacture success.",
+    "Fresh complete archive API, SVG and all PDF page regression, geometry-specific evidence and browser/native acceptance; preserve originals and measurement/theme/idle fixes.",
+    "Complete quick/full checks on isolated clean integration tree; commit only authorized CAD/PDF/measurement/idle changes, merge latest main and push main as explicitly requested; preserve unrelated dirty work."
+  ],
+  "scope": [
+    "CAD converter patches and bounded preview renderer; geometry diagnostics/tests; prior authorized CAD/PDF/measurement/idle feature chain and dependency assets",
+    "De-identified docs, task records, private whole-archive report",
+    "Isolated integration checkout, latest main merge and source push; no version bump or public binary Release requested"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Explicit request to resolve every remaining partial file, test, merge main and push. 80 HATCH, 2 REGION, 2 TEXT, 5 proxy archive records. Existing unrelated changes must remain untouched.",
+      "evidence": [
+        "User request 2026-11-15: 有 89 份存在实体缺失或填充降级 完成所有问题的解决并测试，做好后合并到main并推送",
+        "docs/reviews/2026-11-15-cad-all-entities.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Recover original HATCH paths/patterns, handle-indexed exact SAB, common proxy preview bytes and tiny TEXT without replacing source geometry. Bound topology and process work; preserve diagnostics. Additional MTEXT layout and deterministic Asian MIF fixes remain explicit. No cloud conversion or original file writes.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docker/libredwg/source.json",
+        "docs/reviews/2026-11-15-cad-all-entities.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Five checksum-pinned LibreDWG source patches, planar curve-aware REGION renderer, bounded SVG/PDF previews, local font resources, six direct measurement tools plus pan, theme-aware backgrounds and genuine-input idle tracking. Corresponding source and upstream license bytes preserved.",
+      "evidence": [
+        "internal/server/dwg_preview_svg.py",
+        "internal/server/pdf_preview.go",
+        "internal/server/web/cad-measure.js",
+        "scripts/test_libredwg_strings.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final image 734bbea7: all 453 archive records covered; 425 CAD API HTTP200 with skipped=0 and degraded=0; 413 SVGs and all 40 PDF pages visible. 413 hatch audits have no silent fallback/timeout, 8 exact SABs retain curved loops, originals unchanged. 348 full checks succeeded; Go server race 1686 pass/91 conditional skip out of all 1777 inventory entries, other packages/platform/vet pass. Two explicit real DWG Go tests additionally pass in final runtime; remaining conditional external checks are not claimed.",
+      "evidence": [
+        "docs/reviews/2026-11-15-cad-all-entities.md",
+        ".agent-state/cad-all-entities-20261115/full-receipt.json",
+        ".agent-state/cad-all-entities-20261115/go-full-report.json",
+        ".agent-state/cad-all-entities-20261115/go-real-dwg-final.log",
+        ".agent-state/cad-all-entities-20261115/report-summary.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture, five converter source patches, tests, corresponding-source/license notices, private whole-archive report and de-identified review updated. Runtime/local source identity, source push and unrequested binary release are distinguished.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docker/libredwg/README.md",
+        "docs/reviews/2026-11-15-cad-all-entities.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only 229 explicitly reviewed source/resource paths staged; no customer drawings, names, geometry artifacts or secrets. Owned browser and isolated API container closed; native original tabs/view restored. Private source/runtime backups retained; unrelated work will be preserved through source integration.",
+      "evidence": [
+        ".agent-state/cad-all-entities-20261115/source-before-private.json",
+        ".agent-state/cad-all-entities-20261115/production-verification.json",
+        ".agent-state/cad-all-entities-20261115/report-browser.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source full gate passed on isolated integration checkout and final local runtime installed. User-authorized main fast-forward and push are next. Version/tag/binary Release and separate Delivery matrix are not requested.",
+      "evidence": [
+        "User authorization 2026-11-15",
+        ".agent-state/cad-all-entities-20261115/full-receipt.json"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested: 做好后合并到main并推送. This authorizes source integration and main push, without a version bump, tag or binary GitHub Release.",
+  "rollback": "Local runtime/data backup and aide-rollback:cad-all-entities-20261115 retained. Source integration is additive; unrelated working files will retain exact private backups and hashes. Do not restore lock state or overwrite current user data.",
+  "handoff": "All requested archive/CAD/PDF/measurement/idle implementation and acceptance complete. Source commit, local main integration and remote main push pending; preserve unrelated working files. Local image 734bbea7 remains version 0.1.19.0 RC2.",
+  "verification_fingerprint": "933b229a66ec8a28d324f91df7073b0edacb348b4c2e250efd2fdedacaf1cfdf"
+}

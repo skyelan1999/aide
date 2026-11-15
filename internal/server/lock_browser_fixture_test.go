@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -13,12 +14,28 @@ func TestLockBrowserFixture(t *testing.T) {
 		t.Skip("opt-in isolated lock browser fixture")
 	}
 	a := testApp(t)
+	idle, err := strconv.Atoi(os.Getenv("AIDE_LOCK_BROWSER_IDLE_SECONDS"))
+	if os.Getenv("AIDE_LOCK_BROWSER_IDLE_SECONDS") == "" {
+		idle, err = 0, nil
+	}
+	if err != nil || idle < 0 || idle > 60 {
+		t.Fatal("fixture idle seconds must be 0..60")
+	}
 	a.mu.Lock()
 	a.settings.UserPasswordHash = mustHashPassword("123456")
-	a.settings.LockTimeoutSec = 0
+	a.settings.LockTimeoutSec = idle
 	a.mu.Unlock()
-	if _, err := a.writeLockState(true); err != nil {
+	if _, err := a.writeLockState(idle == 0); err != nil {
 		t.Fatal(err)
+	}
+	if name := os.Getenv("AIDE_DWG_TEST_FILE"); name != "" {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := a.workspace.WriteFile("fixture.dwg", data, 0600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /fixture", func(w http.ResponseWriter, r *http.Request) {

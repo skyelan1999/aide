@@ -36,11 +36,11 @@ function environment(){
    }
   };
   vm.createContext(context);vm.runInContext(source,context);
-  return {lc:w.LockCluster,stats,events,receive(message){const c=channels.find(c=>c.owner===id);c.onmessage({data:structuredClone(message)});},close(){for(const fn of events.beforeunload||[])fn();for(const fn of events.pagehide||[])fn();for(const [key,t]of timers)if(t.owner===id)timers.delete(key);channels=channels.filter(c=>c.owner!==id);}};
+  return {lc:w.LockCluster,context,stats,events,receive(message){const c=channels.find(c=>c.owner===id);c.onmessage({data:structuredClone(message)});},close(){for(const fn of events.beforeunload||[])fn();for(const fn of events.pagehide||[])fn();for(const [key,t]of timers)if(t.owner===id)timers.delete(key);channels=channels.filter(c=>c.owner!==id);}};
  }
  return {server,tab,advance,flush};
 }
-(async()=>{
+async function main(){
  const e=environment(),file=e.tab('/starmap.html');await e.advance(1800);assert(file.lc.isMaster());
  const main=e.tab('/');await e.advance(1800);assert(main.lc.isMaster());assert(file.lc.isSlave());
  const oldHeartbeats=file.stats.asserts;await e.advance(4500);assert.equal(file.stats.asserts,oldHeartbeats,'demoted tab kept sending master assertions');
@@ -121,4 +121,6 @@ function environment(){
  await assert.rejects(view.dismissAfterUnlock({global:true,gen:0},{locked:false,gen:1}),/锁屏状态已变化/);
  assert.equal(veil.hidden,false,'old unlock continuation hid a newer lock');
  console.log('PASS: master demotion, map sync, local dismissal, new-tab welcome, unlock then refresh, write failure, stale unlock, server recovery, out-of-order GET');
-})().catch(error=>{console.error(error);process.exitCode=1;});
+}
+module.exports={environment};
+if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});

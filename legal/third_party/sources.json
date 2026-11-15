@@ -131,5 +131,33 @@
     "source": "https://ftp.gnu.org/gnu/libredwg/libredwg-0.14.tar.xz#libredwg-0.14/COPYING",
     "path": "legal/third_party/libredwg/COPYING",
     "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+  },
+  {
+    "package": "fonts-wqy-zenhei",
+    "version": "0.9.45-8",
+    "source": "https://deb.debian.org/debian/pool/main/f/fonts-wqy-zenhei/fonts-wqy-zenhei_0.9.45-8_all.deb#usr/share/doc/fonts-wqy-zenhei/copyright",
+    "path": "legal/third_party/runtime/wqy-zenhei/COPYRIGHT",
+    "sha256": "d183af7db6d782fe7009eeafef0cef67099ef50ef18dd81513de8004b0361cb7"
+  },
+  {
+    "package": "pdfjs-dist resources",
+    "version": "4.4.168",
+    "source": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.4.168.tgz#package/cmaps/LICENSE",
+    "path": "legal/third_party/npm/pdfjs-dist-resources/LICENSE",
+    "sha256": "aa92ab5a472974865a96fd4a4e9c13bb41bf6fe1b309cb6b8da48bc9e19839a2"
+  },
+  {
+    "package": "pdfjs-dist resources",
+    "version": "4.4.168",
+    "source": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.4.168.tgz#package/standard_fonts/LICENSE_FOXIT",
+    "path": "legal/third_party/npm/pdfjs-dist-resources/LICENSE_FOXIT",
+    "sha256": "b578cdd2345840ada550bd12519533812320d5f1d21cf4c1c7e1b1b0a31c98b7"
+  },
+  {
+    "package": "pdfjs-dist resources",
+    "version": "4.4.168",
+    "source": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.4.168.tgz#package/standard_fonts/LICENSE_LIBERATION",
+    "path": "legal/third_party/npm/pdfjs-dist-resources/LICENSE_LIBERATION",
+    "sha256": "93fed46019c38bbe566b479d22148e2e8a1e85ada614accb0211c37b2c61c19b"
   }
 ]

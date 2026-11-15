@@ -165,3 +165,16 @@ Type1只对1–1048576内的整数Length1使用快速读取；非法/过大提�
 新增内部getDocument选项disableEmbeddedFiles，默认false以保留原API。Aide普通预览显式启用：AnnotationFactory globals不提前读取catalog attachments，FileAttachment仅提供文件名/描述，content为null。显式getAttachments仍可提取，默认API下的附件标注与catalog内容也保持。跳过附件不是添加提取文件大小限制；显式提取仍使用既有解码预算。
 
 `pdf-font-attachment-review.cjs`含5组真实模块/分配读取陷阱；`browser-pdf-font-attachments.cjs`含5项真实PDF，正常/过大/零Length1均检查黑色字形，带NameTree和附件标注的页面检查蓝色像素/关闭释放；非法压缩附件不阻塞普通预览。正常附件同时验收默认标注、默认catalog和预览后的显式提取字节一致。
+
+### Offline CMaps and standard fonts (2026-11-15)
+
+`cmaps/` and `standard_fonts/` are the unchanged resources from the matching
+`pdfjs-dist@4.4.168` npm tarball. `resources-source.json` pins npm integrity and
+each file SHA256; CMap, Foxit and Liberation notices are retained beside them.
+The viewer supplies local resource URLs and disables system font probing; this
+restores non-embedded CJK character mapping without requiring SimSun. Available
+open/platform CJK glyph fallback is a substitution, not the original font.
+The hardened worker, OpenJPEG payload and decoder budgets remain unchanged.
+
+Blank/failed pages may use the separate bounded `/api/file/pdf-preview` local
+Poppler process. The server never hands original source paths to that process.

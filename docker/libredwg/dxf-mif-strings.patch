@@ -1,0 +1,56 @@
+--- a/src/out_dxf.c
++++ b/src/out_dxf.c
+@@ -1340,8 +1340,12 @@
+       // 5: 936 Simplified Chinese
+       // See
+       // https://docs.intellicad.org/files/oda/2021_11/oda_drawings_docs/frames.html?frmname=topic&frmfile=FontHandling.html
+-      else if (c == '\\' && dest + 7 < dend && s + 6 < send
+-               && memBEGINc (s, "M+") && s[3] >= '1' && s[3] <= '5')
++      else if (c == '\\' && dend - dest >= 8 && send - s >= 7
++               && memBEGINc (s, "M+") && s[2] >= '1' && s[2] <= '5'
++               && isxdigit ((unsigned char)s[3])
++               && isxdigit ((unsigned char)s[4])
++               && isxdigit ((unsigned char)s[5])
++               && isxdigit ((unsigned char)s[6]))
+         {
+           const Dwg_Codepage mif_tbl[]
+               = { CP_UNDEFINED, CP_ANSI_932,  CP_ANSI_950,
+@@ -1350,16 +1354,21 @@
+           uint16_t x;
+           uint32_t uc;
+           Dwg_Codepage cp;
+-          sscanf (s, "M+%d", &i);
++          sscanf (s, "M+%1d", &i);
+           if (i >= 1 && i <= 5)
+             {
+               cp = mif_tbl[i];
+               sscanf (&s[3], "%4X", &uc);
+               x = uc & 0xFFFF;
+               uc = dwg_codepage_uwc (cp, x);
+-              snprintf (dest, dend - dest, "\\U+%04X", uc);
+-              dest += 7;
+-              s += 7;
++              if (uc)
++                {
++                  snprintf (dest, dend - dest, "\\U+%04X", uc);
++                  dest += 7;
++                  s += 7;
++                }
++              else
++                *dest++ = c; /* Preserve an unmapped source escape verbatim. */
+             }
+           else
+             {
+@@ -1370,7 +1379,11 @@
+       else
+         *dest++ = c;
+     }
+-  d[len - 1] = '\0'; // add final delim, skipped above
++  /* Terminate at the written cursor, not at unused malloc capacity. */
++  if (dest < dend)
++    *dest = '\0';
++  else if (len)
++    d[len - 1] = '\0';
+   return d;
+ }
+ 

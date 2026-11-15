@@ -1,0 +1,18 @@
+--- a/src/dwg.spec
++++ b/src/dwg.spec
+@@ -5183,9 +5183,12 @@
+                         {
+ #define seg segx[rcount2]
+                           SUB_FIELD_BL (seg, num_fitpts, 97);
+-                          FIELD_2RD_VECTOR (seg.fitpts, seg.num_fitpts, 11);
+-                          SUB_FIELD_2RD (seg, start_tangent, 12);
+-                          SUB_FIELD_2RD (seg, end_tangent, 13);
++                          if (FIELD_VALUE (seg.num_fitpts) > 0)
++                            {
++                              FIELD_2RD_VECTOR (seg.fitpts, seg.num_fitpts, 11);
++                              SUB_FIELD_2RD (seg, start_tangent, 12);
++                              SUB_FIELD_2RD (seg, end_tangent, 13);
++                            }
+                         }
+                       break;
+                     default:

@@ -1,0 +1,25 @@
+--- a/src/dwg.spec
++++ b/src/dwg.spec
+@@ -6072,14 +6072,20 @@
+     FIELD_B (from_dxf, 70); // Original Data Format: 0 dwg, 1 dxf
+   }
+ 
+-  // proxy_data_size is _ent->preview_size. see par 29
++  // DXF proxy graphics are the already decoded common preview, not the
++  // following opaque custom-object data (which may be NULL or non-graphic).
++#ifdef IS_DXF
++  VALUE_BL (_ent->preview_size, 92);
++  if (_ent->preview && _ent->preview_size)
++    VALUE_BINARY (_ent->preview, _ent->preview_size, 310);
++#else
+   DXF_OR_PRINT {
+-    // preview 92/310 is also proxy data
+     FIELD_BL (proxy_data_size, 92)
+   } else {
+     FIELD_VALUE (proxy_data_size) = _ent->preview_size;
+   }
+   FIELD_TF (proxy_data, _obj->proxy_data_size, 310);
++#endif
+ 
+   DECODER {
+     _obj->data_numbits = (obj->hdlpos - bit_position (dat)) & 0xFFFFFFFF;

@@ -64,6 +64,7 @@
   let dismissGen = -1, optimisticGen = null, lockIntent = 0, lastEffective = null;
   let joinTimer = null, watchdogTimer = null, heartbeatTimer = null, electionTimer = null, hardJoinTimer = null;
   let lastPingAt = 0;
+  let lastActivityAt = 0, activityTimer = null;
   let onRemoteActivity = null;     // master 收到 slave ping 时回调（app.js 注入重置空闲表）
   let readyResolve = null;
   let readySettled = false;
@@ -162,6 +163,7 @@
   }
 
   function becomeMaster(inheritLocked) {
+    clearT(activityTimer); activityTimer=null;
     phase = 'master';
     masterGen++;
     emit('role','master');
@@ -304,7 +306,7 @@
         break;
 
       case 'ping':
-        if (phase === 'master' && onRemoteActivity) { try { onRemoteActivity(); } catch (_) {} }
+        if (phase === 'master' && onRemoteActivity) { try { onRemoteActivity(m.activityAt); } catch (_) {} }
         break;
 
       case 'req-lock':
@@ -319,6 +321,7 @@
 
   /* ── 对外 API ── */
   function requestLock(reason) {
+    clearT(activityTimer); activityTimer=null;
     // Any tab may lock the server; acknowledgement precedes durable peer notification.
     optimisticGen=backendState?.gen??0;lockIntent++;
     localDismiss=false; masterLocked=true; lastSeenMasterLocked=true; masterGen++;
@@ -361,16 +364,23 @@
       emit('effective',effectiveLocked());
     }
   }
+  function sendActivity() {
+    activityTimer=null;
+    if(phase!=='slave'||effectiveLocked())return;
+    lastPingAt=Date.now();
+    send('ping',{activityAt:lastActivityAt});
+  }
   function noteActivity() {
     if (!supported || effectiveLocked() || phase==='joining') return;
     if (phase === 'master') {
-      if (onRemoteActivity) { try { onRemoteActivity(); } catch (_) {} }
+      if (onRemoteActivity) { try { onRemoteActivity(Date.now()); } catch (_) {} }
     } else if (phase === 'slave') {
       const now = Date.now();
+      lastActivityAt=now;
       if (now - lastPingAt >= PING_THROTTLE_MS) {
-        lastPingAt = now;
-        send('ping');
-      }
+        clearT(activityTimer); activityTimer=null;
+        sendActivity();
+      } else if(!activityTimer) activityTimer=setTimeout(sendActivity,PING_THROTTLE_MS-(now-lastPingAt));
     }
   }
 
@@ -419,7 +429,7 @@
     }
     fetchBackendState();
   });
-  window.addEventListener('pagehide',()=>{clearT(syncTimer);clearT(heartbeatTimer);clearT(watchdogTimer);clearT(electionTimer);clearT(joinTimer);clearT(hardJoinTimer);});
+  window.addEventListener('pagehide',()=>{clearT(syncTimer);clearT(heartbeatTimer);clearT(watchdogTimer);clearT(electionTimer);clearT(joinTimer);clearT(hardJoinTimer);clearT(activityTimer);activityTimer=null;});
 
 })();
 

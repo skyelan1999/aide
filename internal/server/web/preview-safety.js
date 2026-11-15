@@ -1,7 +1,7 @@
 'use strict';
 (function (root) {
   const MiB = 1024 * 1024;
-  const limits = Object.freeze({dxfBytes: 4 * MiB, dxfLines: 100000, dxfEntities: 50000, dxfDepth: 32, dxfNodes: 50000, dxfPoints: 200000, dxfTextChars: MiB, dxfTextEntityChars: 16384,
+  const limits = Object.freeze({dxfBytes: 4 * MiB, dxfLines: 100000, dwgDxfBytes: 16 * MiB, dwgDxfLines: 2000000, dxfEntities: 50000, dxfDepth: 32, dxfNodes: 50000, dxfPoints: 200000, dxfTextChars: MiB, dxfTextEntityChars: 16384,
     docxBytes: 16 * MiB, docxPartBytes: 8 * MiB, docxExpandedBytes: 32 * MiB, docxEntries: 512, docxMs: 10000, zipBytes: 64 * MiB, zipEntries: 1000, zipPageRows: 100});
   function limit(key) {
     const error = new Error(root.aideI18n?.t(key) || key);error.code = 'AIDE_PREVIEW_LIMIT';return error;
@@ -28,12 +28,12 @@
       try {await reader.cancel();} catch (_) {}throw error;
     } finally {reader.releaseLock();}
   }
-  function checkDxfText(text) {
+  function checkDxfText(text, dwg = false) {
     let lines = 1;
     for (let i = 0; i < text.length; i++) {
       if (text[i] === '\r') {lines++;if (text[i + 1] === '\n') i++;}
       else if (text[i] === '\n') lines++;
-      if (lines > limits.dxfLines) throw limit('DXF 内容超过预览限制，请下载后查看。');
+      if (lines > (dwg ? limits.dwgDxfLines : limits.dxfLines)) throw limit('DXF 内容超过预览限制，请下载后查看。');
     }
   }
   function createDxfBudget(doc) {

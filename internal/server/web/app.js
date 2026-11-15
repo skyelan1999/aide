@@ -8642,7 +8642,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   const viewer = el('div', 'pdf-viewer');
   const toolbar = el('div', 'pdf-toolbar');
   const info = el('span', 'pdf-info', filePath.split('/').pop());
-  info.title = t('PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。');
+  info.title = t('PDF 页面最长边 8192 像素、画布最多 16 Mi 像素；空白或解码失败时自动尝试本地兼容预览（最长边 4096 像素）。');
   const meta = el('span', 'pdf-meta', t('加载中…'));
   const btnPrev = el('button', 'pdf-ctrl', '‹');
   const pageInput = el('input', 'pdf-page-input'); pageInput.type = 'text'; pageInput.inputMode = 'numeric'; pageInput.value = '–';
@@ -8676,10 +8676,10 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   };
   const pageList = [], holders = [];
   const dpr = window.devicePixelRatio || 1;
-  let scale = 1, baseWidth = 0, numPages = 0, sizeLimited = false;
+  let scale = 1, baseWidth = 0, numPages = 0, sizeLimited = false, compatibilityUsed = false;
   let renderGeneration = 0; // 渲染代次：layoutPages/缩放使其递增，旧 renderVisible 循环发现过期即退出
 
-  const setMeta = (txt) => { meta.textContent = txt + (sizeLimited ? ' · ' + t('预览尺寸已受限') : ''); };
+  const setMeta = (txt) => { meta.textContent = txt + (compatibilityUsed ? ' · ' + t('兼容预览') : '') + (sizeLimited ? ' · ' + t('预览尺寸已受限') : ''); };
   const fail = (msg) => { sizeLimited = false; scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
   const teardown = () => {
     if (cancelled) return;
@@ -8688,6 +8688,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     renderGeneration++;
     for (const h of holders) {
       if (!h) continue;
+      h.compatAbort?.abort();
       if (h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; }
       h.canvas.width = h.canvas.height = 0;
     }
@@ -8714,7 +8715,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
 
   // 3) 打开文档（加密 PDF 走 onPassword 回调）
   // Apply the worker's image guard before any full-resolution decode/resize.
-  const task = loadingTask = pdfjs.getDocument({ data: buf, disableEmbeddedFiles: true, maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
+  const task = loadingTask = pdfjs.getDocument({ data: buf, disableEmbeddedFiles: true, useSystemFonts: false, cMapUrl: '/vendor/pdfjs/cmaps/', cMapPacked: true, standardFontDataUrl: '/vendor/pdfjs/standard_fonts/', maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
   task.onPassword = (updatePassword, reason) => {
     if (cancelled) return;
     // reason: 0 = NEED_PASSWORD，1 = INCORRECT_PASSWORD
@@ -8804,6 +8805,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
 
   // 取消某 holder 上在途的渲染任务（与新渲染/拆构竞态安全：用身份判断避免误清新任务）
   function cancelHolderRender(h) {
+    h?.compatAbort?.abort();
     if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; }
   }
   async function layoutPages() {
@@ -8830,6 +8832,65 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     setMeta(numPages + ' ' + t('页'));
     renderVisible();
   }
+  function blankCanvas(canvas) {
+    const probe = document.createElement('canvas'); probe.width = probe.height = 256;
+    const ctx = probe.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(canvas, 0, 0, 256, 256);
+    const pixels = ctx.getImageData(0, 0, 256, 256).data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i+3] > 8 && Math.min(pixels[i], pixels[i+1], pixels[i+2]) < 245) return false;
+    }
+    return true;
+  }
+  async function compatibilityPage(h, gen) {
+    // Only the same authorized raw-file source may supply a raster page.
+    const url = new URL(rawUrl, location.href);
+    if (url.origin !== location.origin || url.pathname !== '/api/file/raw') throw new Error('compatibility unavailable');
+    url.pathname = '/api/file/pdf-preview';
+    url.searchParams.set('page', String(h.page));
+    url.searchParams.set('size', String(Math.max(256, Math.min(4096, Math.ceil(Math.max(h.metrics.width, h.metrics.height))))));
+    const controller = new AbortController(); h.compatAbort = controller;
+    const stop = () => controller.abort(); abort.signal.addEventListener('abort', stop, { once: true });
+    const timer = setTimeout(stop, 25000);
+    let objectUrl;
+    try {
+      let response;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        response = await fetch(url, { signal: controller.signal });
+        if (response.status !== 429 || attempt === 3) break;
+        await response.body?.cancel();
+        await new Promise((resolve, reject) => {
+          const stop = () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); };
+          const timer = setTimeout(() => { controller.signal.removeEventListener('abort', stop); resolve(); }, 500);
+          if (controller.signal.aborted) stop();
+          else controller.signal.addEventListener('abort', stop, { once: true });
+        });
+      }
+      if (!response.ok) throw new Error('compatibility HTTP ' + response.status);
+      // Stream with an output cap, including responses without Content-Length.
+      const reader = response.body.getReader(), chunks = []; let bytes = 0;
+      while (true) {
+        const next = await reader.read(); if (next.done) break;
+        bytes += next.value.byteLength;
+        if (bytes > 16 * 1024 * 1024) { await reader.cancel(); throw new Error('compatibility output limit'); }
+        chunks.push(next.value);
+      }
+      if (cancelled || gen !== renderGeneration || controller.signal.aborted) return;
+      objectUrl = URL.createObjectURL(new Blob(chunks, { type: 'image/png' }));
+      const image = new Image(); image.src = objectUrl; await image.decode();
+      if (cancelled || gen !== renderGeneration || controller.signal.aborted) return;
+      if (image.naturalWidth > 4096 || image.naturalHeight > 4096) throw new Error('compatibility dimensions');
+      const ctx = h.canvas.getContext('2d');
+      ctx.clearRect(0, 0, h.canvas.width, h.canvas.height);
+      ctx.drawImage(image, 0, 0, h.canvas.width, h.canvas.height);
+      h.el.dataset.compatibility = 'true'; compatibilityUsed = true;
+      setMeta(numPages + ' ' + t('页'));
+    } finally {
+      clearTimeout(timer); abort.signal.removeEventListener('abort', stop);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (h.compatAbort === controller) h.compatAbort = null;
+    }
+  }
   // Keep synchronous allocation/render errors inside the same lifecycle as asynchronous rendering.
   async function renderPage(h, gen) {
     if (gen !== renderGeneration || cancelled) return;
@@ -8851,7 +8912,16 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
       const timeout = new Promise((_, rej) => {
         timer = setTimeout(() => { try { task.cancel(); } catch (e) {} rej(new Error('render-timeout')); }, 20000);
       });
-      await Promise.race([task.promise, timeout]);
+      try {
+        await Promise.race([task.promise, timeout]);
+      } catch (e) {
+        if (cancelled || gen !== renderGeneration || e?.name === 'RenderingCancelledException') throw e;
+        clearTimeout(timer);
+        await compatibilityPage(h, gen);
+        return;
+      }
+      clearTimeout(timer);
+      if (!cancelled && gen === renderGeneration && blankCanvas(c) && (await p.getOperatorList()).fnArray.length) await compatibilityPage(h, gen);
     } catch (e) {
       if (cancelled || gen !== renderGeneration) return;
       if ((e && e.name === 'RenderingCancelledException') || (e && e.message === 'render-timeout')) {
@@ -9124,6 +9194,41 @@ function dxfSvgEl(tag, attrs) {
   if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
   return e;
 }
+function bindDxfViewport(svg, canvas, fitVb, btnZoomIn, btnZoomOut, btnFit) {
+  let s = 1, cxv = fitVb.x + fitVb.w / 2, cyv = fitVb.y + fitVb.h / 2;
+  const applyVb = () => {
+    const w = fitVb.w / s, h = fitVb.h / s;
+    svg.setAttribute('viewBox', (cxv - w / 2) + ' ' + (cyv - h / 2) + ' ' + w + ' ' + h);
+  };
+  const fit = () => { s = 1; cxv = fitVb.x + fitVb.w / 2; cyv = fitVb.y + fitVb.h / 2; applyVb(); };
+  fit();
+  btnZoomOut.disabled = btnZoomIn.disabled = btnFit.disabled = false;
+  btnZoomIn.onclick = () => { s = Math.min(200, s * 1.3); applyVb(); };
+  btnZoomOut.onclick = () => { s = Math.max(0.05, s / 1.3); applyVb(); };
+  btnFit.onclick = fit;
+  canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.15 : 1 / 1.15; s = Math.max(0.05, Math.min(200, s * f)); applyVb(); };
+  let dragging = false, lastX = 0, lastY = 0;
+  canvas.onpointerdown = (e) => { if (canvas.dataset?.cadTool && canvas.dataset.cadTool !== 'pan' && e.button === 0 && !e.altKey) return; if (e.button !== undefined && e.button !== 0 && e.button !== 1) return; e.preventDefault?.(); dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); };
+  const onDxfMove = (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    const vbW = fitVb.w / s, vbH = fitVb.h / s;
+    const cw = canvas.clientWidth || 1, ch = canvas.clientHeight || 1;
+    cxv -= dx * vbW / cw; cyv -= dy * vbH / ch;
+    applyVb();
+  };
+  const onDxfUp = () => { dragging = false; canvas.classList.remove('grabbing'); };
+  window.addEventListener('pointermove', onDxfMove);
+  window.addEventListener('pointerup', onDxfUp);
+  canvas.classList.add('grab');
+  return () => {
+    window.removeEventListener('pointermove', onDxfMove);
+    window.removeEventListener('pointerup', onDxfUp);
+  };
+
+}
+
 // ACI colorIndex → CSS 颜色；7(白/黑 auto) 与 byLayer 回退到主题变量
 function dxfEntityColor(ent, layers) {
   const ci = ent.colorIndex;
@@ -9170,7 +9275,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
   const dwg = isDwgPath(filePath);
   const originalUrl = fileRawUrl(filePath, root, source, viewerSpec);
-  const rawUrl = dwg ? originalUrl.replace('/api/file/raw?', '/api/file/dwg-preview?') : originalUrl;
+  const rawUrl = dwg ? originalUrl.replace('/api/file/raw?', '/api/file/dwg-preview?') + '&format=svg' : originalUrl;
 
   const viewer = el('div', 'dxf-viewer');
   const toolbar = el('div', 'dxf-toolbar');
@@ -9188,7 +9293,6 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   download.href = originalUrl; download.download = filePath.split('/').pop();
   toolbar.insertBefore(download, btnClose);
   viewer.append(toolbar);
-  if (dwg) viewer.append(el('p', 'dwg-notice', t('DWG 二维预览：滚轮缩放，拖动平移，点“适应”查看全图。原文件不会被修改。三维、外部参照、字体及部分复杂实体可能不显示，请用 CAD 核对。')));
   viewer.append(canvas);
   container.append(viewer);
 
@@ -9199,17 +9303,18 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   };
   btnClose.onclick = close;
 
-  let text;
+  let text, detailed = null;
   try {
-    await ensureDxfParser();
+    if (!dwg) await ensureDxfParser();
     if (canceled) return;
     const r = await fetch(rawUrl, { signal: controller.signal });
     if (!r.ok) {
       const error = await r.json().catch(() => ({}));
       throw new Error(t(error.error || ('HTTP ' + r.status)));
     }
-    text = new TextDecoder().decode(await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.dxfBytes));
+    text = new TextDecoder().decode(await window.AidePreviewSafety.readBytes(r, dwg ? window.AidePreviewSafety.limits.dwgDxfBytes : window.AidePreviewSafety.limits.dxfBytes));
     if (canceled) return;
+    if (dwg && r.headers.get('Content-Type')?.includes('application/json')) detailed = JSON.parse(text);
   } catch (e) {
     if (canceled) return;
     meta.textContent = t('加载失败');
@@ -9222,9 +9327,52 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     return;
   }
 
+  if (detailed) {
+    let blobUrl = '';
+    try {
+      if (typeof detailed.svg !== 'string' || !detailed.svg.startsWith('<svg') || !detailed.svg.endsWith('</svg>') ||
+          ![detailed.width, detailed.height].every(v => Number.isFinite(v) && v > 0 && v <= 1e8) ||
+          ![detailed.entities, detailed.skipped].every(v => Number.isSafeInteger(v) && v >= 0 && v <= 50000)) throw new Error(t('DWG 详细预览生成失败，请下载原文件用 CAD 核对。'));
+      const svg = dxfSvgEl('svg', {class: 'dxf-svg', preserveAspectRatio: 'xMidYMid meet', role: 'img', 'aria-label': filePath.split('/').pop()});
+      // An isolated SVG image cannot execute drawing-provided scripts or add DOM.
+      const image = dxfSvgEl('image', { x: 0, y: 0, width: detailed.width, height: detailed.height});
+      image.onerror = () => {
+        if (canceled) return;
+        releaseEvents();
+        meta.textContent = t('加载失败');
+        canvas.replaceChildren(el('div', 'dxf-error', t('DWG 详细预览生成失败，请下载原文件用 CAD 核对。')));
+      };
+      svg.appendChild(image);
+      canvas.appendChild(svg);
+      const release = bindDxfViewport(svg, canvas, {x: 0, y: 0, w: detailed.width, h: detailed.height}, btnZoomIn, btnZoomOut, btnFit);
+      // Generated SVG remains an isolated image; recolor its monochrome ink
+      // when the effective theme/palette changes, preserving ACI color hues.
+      const refreshTheme = () => {
+        const fg = typeof getComputedStyle === 'function' ? getComputedStyle(canvas).color : '#202020';
+        const next = URL.createObjectURL(new Blob([detailed.svg.replace(/#000000\b/gi, fg)], {type: 'image/svg+xml'}));
+        image.setAttribute('href', next);
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+        blobUrl = next;
+      };
+      refreshTheme();
+      const themeObserver = typeof MutationObserver === 'function' ? new MutationObserver(refreshTheme) : null;
+      themeObserver?.observe(document.documentElement, {attributes:true, attributeFilter:['data-theme','data-palette']});
+      const releaseMeasure = window.AideCADMeasure && detailed.modelToSvg ? window.AideCADMeasure.mount({svg,canvas,toolbar,modelToSvg:detailed.modelToSvg,units:detailed.units,snapPoints:detailed.snapPoints,t}) : () => {};
+      releaseEvents = () => { release(); releaseMeasure(); themeObserver?.disconnect(); URL.revokeObjectURL(blobUrl); };
+      meta.textContent = detailed.entities + ' ' + t('个实体') + (detailed.skipped ? ' · ' + t('未恢复 {0} 处内容', detailed.skipped) : '') + (detailed.degraded ? ' · ' + t('{0} 处仅显示轮廓', detailed.degraded) : '') + (detailed.warnings ? ' · ' + t('{0} 条绘制提示', detailed.warnings) : '');
+      meta.title = Object.entries(detailed.skippedTypes || {}).map(([type,count]) => type + ': ' + count).concat(Object.entries(detailed.degradedTypes || {}).map(([type,count]) => type + ': ' + t('{0} 处仅显示轮廓',count))).join(', ');
+    } catch (e) {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      meta.textContent = t('解析失败');
+      canvas.replaceChildren(el('div', 'dxf-error', t(e.message)));
+    }
+    return;
+  }
+  await ensureDxfParser();
+  if (canceled) return;
   let doc, budget;
   try {
-    window.AidePreviewSafety.checkDxfText(text);
+    window.AidePreviewSafety.checkDxfText(text, dwg);
     doc = new DxfParser().parseSync(text);
     budget = window.AidePreviewSafety.createDxfBudget(doc);
   } catch (e) {
@@ -9254,6 +9402,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   svg.appendChild(content);
   canvas.appendChild(svg);
 
+  const snapPoints = [];
   const penWidth = 0.35; // 模型单位下的默认线宽
   function strokeAttrs(ent) {
     return { stroke: dxfEntityColor(ent, layers), 'stroke-width': penWidth, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
@@ -9268,6 +9417,14 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
       const rx = x * sxp, ry = y * syp;
       return [tx + rx * Math.cos(rot) - ry * Math.sin(rot), ty + rx * Math.sin(rot) + ry * Math.cos(rot)];
     };
+    const snapVertices = ent.type === 'LINE' ? (ent.vertices || []).slice(0,2) :
+      ['POLYLINE','LWPOLYLINE'].includes(ent.type) ? (ent.vertices || []) :
+      ['CIRCLE','ARC'].includes(ent.type) && ent.center ? [ent.center] : [];
+    for (const p of snapVertices) {
+      if (snapPoints.length >= 25000) break;
+      const point = xf(p.x, p.y);
+      if (point.every(v => Number.isFinite(v) && Math.abs(v) <= 1e12)) snapPoints.push(point);
+    }
     try {
       switch (ent.type) {
         case 'LINE': {
@@ -9350,6 +9507,12 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
         case 'SPLINE': {
           const pts = ent.fitPoints && ent.fitPoints.length ? ent.fitPoints : (ent.controlPoints || []);
           if (pts.length < 2) break;
+          // Some DWG splines decode to finite but astronomically large fit
+          // points. Skip the whole curve before touching SVG or fit bounds.
+          if (pts.some(p => xf(p.x ?? 0, p.y ?? 0).some(v => !Number.isFinite(v) || Math.abs(v) > 1e12))) {
+            unsupported++;
+            break;
+          }
           let d = '';
           pts.forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
           if (ent.closed) d += ' Z';
@@ -9432,37 +9595,9 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
 
   // viewBox：DXF Y-up → SVG Y-down（y 取负）
   const fitVb = { x: bb.minX, y: -bb.maxY, w: bb.maxX - bb.minX, h: bb.maxY - bb.minY };
-  let s = 1, cxv = fitVb.x + fitVb.w / 2, cyv = fitVb.y + fitVb.h / 2;
-  const applyVb = () => {
-    const w = fitVb.w / s, h = fitVb.h / s;
-    svg.setAttribute('viewBox', (cxv - w / 2) + ' ' + (cyv - h / 2) + ' ' + w + ' ' + h);
-  };
-  const fit = () => { s = 1; cxv = fitVb.x + fitVb.w / 2; cyv = fitVb.y + fitVb.h / 2; applyVb(); };
-  fit();
-  btnZoomOut.disabled = btnZoomIn.disabled = btnFit.disabled = false;
-  btnZoomIn.onclick = () => { s = Math.min(200, s * 1.3); applyVb(); };
-  btnZoomOut.onclick = () => { s = Math.max(0.05, s / 1.3); applyVb(); };
-  btnFit.onclick = fit;
-  canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.15 : 1 / 1.15; s = Math.max(0.05, Math.min(200, s * f)); applyVb(); };
-  let dragging = false, lastX = 0, lastY = 0;
-  canvas.onpointerdown = (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); };
-  const onDxfMove = (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - lastX, dy = e.clientY - lastY;
-    lastX = e.clientX; lastY = e.clientY;
-    const vbW = fitVb.w / s, vbH = fitVb.h / s;
-    const cw = canvas.clientWidth || 1, ch = canvas.clientHeight || 1;
-    cxv -= dx * vbW / cw; cyv -= dy * vbH / ch;
-    applyVb();
-  };
-  const onDxfUp = () => { dragging = false; canvas.classList.remove('grabbing'); };
-  window.addEventListener('pointermove', onDxfMove);
-  window.addEventListener('pointerup', onDxfUp);
-  releaseEvents = () => {
-    window.removeEventListener('pointermove', onDxfMove);
-    window.removeEventListener('pointerup', onDxfUp);
-  };
-  canvas.classList.add('grab');
+  const releaseViewport = bindDxfViewport(svg, canvas, fitVb, btnZoomIn, btnZoomOut, btnFit);
+  const releaseMeasure = window.AideCADMeasure ? window.AideCADMeasure.mount({svg,canvas,toolbar,modelToSvg:[1,0,0,-1,0,0],units:doc.header?.$INSUNITS || 0,snapPoints,t}) : () => {};
+  releaseEvents = () => { releaseViewport(); releaseMeasure(); };
 
   meta.textContent = entities.length + ' ' + t('个实体') + (unsupported ? ' · ' + t('部分实体未显示') : '');
 }
@@ -12561,15 +12696,28 @@ function lockTimeoutActive() {
   return !!(state.config && state.config.hasPassword && (state.config.lockTimeoutSec || 0) > 0);
 }
 // 空闲定时器只在 master 持有；slave 的活动经 ping 续 master 的表。
-function resetIdleTimer(activity = false) {
-  if(activity && !lockScreen.locked)lockScreen.lastActivity=Date.now();
+function resetIdleTimer(activity = false, activityAt = Date.now()) {
+  if(activity && !lockScreen.locked){
+    const at=Number.isFinite(activityAt)?Math.min(Date.now(),activityAt):Date.now();
+    lockScreen.lastActivity=Math.max(lockScreen.lastActivity,at);
+  }
   clearTimeout(lockScreen.timer);
   lockScreen.timer = null;
   if (typeof LockCluster !== 'undefined' && !LockCluster.isMaster()) return;
   if (lockScreen.locked) return;
   if (!lockTimeoutActive()) return;
   const remaining=Math.max(0,state.config.lockTimeoutSec*1000-(Date.now()-lockScreen.lastActivity));
-  lockScreen.timer = setTimeout(lockScreenNow, remaining);
+  const timer = setTimeout(() => {
+    // Input, configuration or leadership may have changed after this callback
+    // was queued. Only the current timer may enforce the current idle deadline.
+    if (lockScreen.timer !== timer) return;
+    lockScreen.timer = null;
+    if (lockScreen.locked || !lockTimeoutActive()) return;
+    if (typeof LockCluster !== 'undefined' && !LockCluster.isMaster()) return;
+    if (Date.now() - lockScreen.lastActivity < state.config.lockTimeoutSec * 1000) resetIdleTimer();
+    else lockScreenNow();
+  }, remaining);
+  lockScreen.timer = timer;
 }
 function refreshLockStatus() {
   const host = $('lock-status');
@@ -12837,16 +12985,19 @@ if (typeof LockCluster !== 'undefined') {
   LockCluster.on('effective', locked => { if (locked) applyLockVisual(); else { releaseLockVisual(); resetIdleTimer(); } });
   LockCluster.on('role', () => resetIdleTimer());
   LockCluster.on('error', message=>{if(lockScreen.locked)$('lock-error').textContent=message;});
-  LockCluster.setRemoteActivityHook(() => resetIdleTimer(true)); // master 续表
+  LockCluster.setRemoteActivityHook(at => resetIdleTimer(true, at)); // master uses the actual last input, including trailing pings
 }
-['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(ev =>
+// Capture viewer input before pan/zoom/measurement handlers cancel defaults or
+// stop bubbling. Wheel zoom need not cause a DOM scroll or a compatibility click.
+const lockActivityEvents = ['pointerdown', 'pointermove', 'pointerup', 'wheel', 'mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+lockActivityEvents.forEach(ev =>
   window.addEventListener(ev, () => {
     // master 自己活动即续表；slave 活动节流发 ping，由 master 续表
     if(lockScreen.locked)return;
     window.AideLANAccess?.activity();
     if (typeof LockCluster !== 'undefined') LockCluster.noteActivity();
     resetIdleTimer(true);
-  }, { passive: true }));
+  }, { passive: true, capture: true }));
 setInterval(() => { if (lockScreen.locked) refreshLockStatus(); }, 1000);
 
 // 设置面板「账户」：用户名 / 锁屏密码 / 锁屏时间 / 立即锁屏

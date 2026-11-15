@@ -1,0 +1,19 @@
+--- a/src/dwg.spec
++++ b/src/dwg.spec
+@@ -2584,10 +2584,13 @@
+     LOG_SPLINE_SPLINEFLAGS
+     FIELD_BL (knotparam, 0);
+     LOG_SPLINE_KNOTPARAM
+-    if (FIELD_VALUE (splineflags) & 1)
++    /* Fit-point selection is meaningful only with knot parameterization.
++       Otherwise the stored control-point scenario must be retained. */
++    if (FIELD_VALUE (knotparam) == 15
++        || !(FIELD_VALUE (splineflags) & 8))
++      FIELD_VALUE (scenario) = 1;
++    else if (FIELD_VALUE (splineflags) & 1)
+       FIELD_VALUE (scenario) = 2;
+-    if (FIELD_VALUE (knotparam) == 15)
+-      FIELD_VALUE (scenario) = 1;
+   }
+ 
+   // extrusion on planar

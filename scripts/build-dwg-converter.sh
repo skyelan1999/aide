@@ -1,8 +1,10 @@
 #!/bin/sh
 # Build a separate readonly DWG-to-DXF CLI; never link it into the Aide binary.
 set -eu
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 destination=${1:-/opt/aide/dwg}
 metadata=${2:-docker/libredwg/source.json}
+metadata=$(python3 -c 'import os,sys;print(os.path.abspath(sys.argv[1]))' "$metadata")
 cache=${AIDE_DWG_SOURCE_CACHE:-/root/.cache/aide/libredwg}
 version=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["version"])' "$metadata")
 url=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["url"])' "$metadata")
@@ -30,10 +32,27 @@ build=$(mktemp -d /tmp/aide-libredwg-build.XXXXXX)
 trap 'rm -rf "$build"' EXIT HUP INT TERM
 tar -xf "$archive" -C "$build"
 cd "$build/libredwg-$version"
+# Verify and apply the exact corresponding-source patches before compilation.
+python3 - "$metadata" "$destination/source" <<'PY_PATCH'
+import hashlib, json, pathlib, shutil, subprocess, sys
+metadata = pathlib.Path(sys.argv[1])
+for patch in json.loads(metadata.read_text()).get("patches", []):
+    name = patch["file"]
+    if pathlib.Path(name).name != name:
+        raise SystemExit("invalid source patch name")
+    source = metadata.parent / name
+    if hashlib.sha256(source.read_bytes()).hexdigest() != patch["sha256"]:
+        raise SystemExit("source patch digest mismatch")
+    subprocess.run(["git", "apply", "--check", str(source)], check=True)
+    subprocess.run(["git", "apply", str(source)], check=True)
+    shutil.copyfile(source, pathlib.Path(sys.argv[2]) / name)
+PY_PATCH
 CFLAGS='-O1 -g0' ./configure --disable-shared --enable-static --disable-write \
   --disable-json --disable-bindings --disable-python --disable-docs --disable-dependency-tracking
 make -C src -j2
 make -C programs -j2 dwg2dxf
+python3 "$script_dir/test_libredwg_strings.py" "$PWD"
+cp "$script_dir/test_libredwg_strings.py" "$destination/"
 install -m 0755 programs/dwg2dxf "$destination/bin/dwg2dxf"
 strip "$destination/bin/dwg2dxf"
 cp COPYING AUTHORS "$destination/"

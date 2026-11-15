@@ -49,3 +49,9 @@ vendor/github.com/go-git/** -text -whitespace
 vendor/github.com/hashicorp/** -text -whitespace
 vendor/github.com/rasky/** -text -whitespace
 vendor/github.com/willscott/** -text -whitespace
+
+# Preserve checksum-pinned CAD patches and PDF resource license bytes.
+docker/libredwg/*.patch -text -whitespace
+internal/server/web/vendor/pdfjs/cmaps/LICENSE -whitespace
+internal/server/web/vendor/pdfjs/standard_fonts/LICENSE* -whitespace
+legal/third_party/npm/pdfjs-dist-resources/LICENSE* -whitespace

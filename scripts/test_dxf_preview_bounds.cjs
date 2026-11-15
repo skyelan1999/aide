@@ -2,31 +2,31 @@
 const assert = require('node:assert/strict'), fs = require('node:fs'), vm = require('node:vm');
 const app = fs.readFileSync('internal/server/web/app.js', 'utf8');
 function source() {return app.slice(app.indexOf('const DXF_SVG_NS ='), app.indexOf('/* ── docx-preview 渲染器'));}
-async function fixture(doc, response) {
-  let svgNodes = 0, parses = 0;
+async function fixture(doc, response, dwg = false) {
+  let svgNodes = 0, parses = 0, cleanup, createdUrls = 0, revokedUrls = 0;
   class Element {
-    constructor(tag, cls = '', text = '') {this.tag = tag;this.className = cls;this.textContent = text;this.children = [];this.style = {};this.classList = {add() {}, remove() {}};}
+    constructor(tag, cls = '', text = '') {this.tag = tag;this.className = cls;this.textContent = text;this.children = [];this.style = {};this.attrs = {};this.classList = {add() {}, remove() {}};}
     append(...nodes) {this.children.push(...nodes);}
     insertBefore(node) {this.append(node);}
     replaceChildren(...nodes) {this.children=nodes;}
     appendChild(node) {this.append(node);return node;}
     set innerHTML(_value) {this.children = [];}
-    setAttribute() {}
+    setAttribute(key, value) {this.attrs[key] = value;}
     closest() {return null;}
   }
-  const context = {console, Response, TextDecoder, Uint8Array, ArrayBuffer, Set, Map, AbortController,
-    isDwgPath: () => false, teardownViewer() {},
-    t: value => value, escapeHtml: value => value, el: (...args) => new Element(...args),
+  const context = {console, Response, Blob, URL: {createObjectURL() {createdUrls++;return "blob:owned";}, revokeObjectURL() {revokedUrls++;}}, TextDecoder, Uint8Array, ArrayBuffer, Set, Map, AbortController,
+    isDwgPath: () => dwg, teardownViewer() {},
+    t: (value, ...args) => value.replace(/\{(\d+)\}/g, (match, index) => args[index] ?? match), escapeHtml: value => value, el: (...args) => new Element(...args),
     fileRawUrl: () => '/owned.dxf', ensureDxfParser: async () => {},
     DxfParser: class {parseSync() {parses++;return doc;}}, fetch: async () => response || new Response('0\nSECTION\n0\nENDSEC\n0\nEOF\n'),
     document: {createElement: tag => new Element(tag), createElementNS(_ns, tag) {svgNodes++;return new Element(tag);}, body: {classList: {contains: () => false}}},
-    window: {addEventListener() {}, removeEventListener() {}}, bindViewerTeardown() {}, history: {back() {}}};
+    window: {addEventListener() {}, removeEventListener() {}}, bindViewerTeardown(_container, fn) {cleanup = fn;}, history: {back() {}}};
   vm.createContext(context);
   if (fs.existsSync('internal/server/web/preview-safety.js')) vm.runInContext(fs.readFileSync('internal/server/web/preview-safety.js', 'utf8'), context);
   vm.runInContext(source(), context);const container = new Element('div');context.ownedContainer = container;
   await vm.runInContext('setupDxfPreview(ownedContainer,"owned.dxf","workspace","")', context);
   const all = [];function walk(node) {all.push(node);for (const child of node.children) walk(child);}walk(container);
-  return {all, svgNodes, parses};
+  return {all, svgNodes, parses, cleanup, urls: () => ({createdUrls, revokedUrls})};
 }
 const line = {type: 'LINE', vertices: [{x: 0, y: 0}, {x: 1, y: 1}]};
 async function main() {
@@ -56,7 +56,38 @@ async function main() {
   assert.equal(oversized.parses, 0);assert.equal(canceled, true, 'oversized response must cancel before read/parse');
   const tooManyLines = await fixture({entities: [line]}, new Response('0\n'.repeat(100001)));
   assert.equal(tooManyLines.parses, 0, 'line scan must reject parser-heavy input before parseSync');
+  for (const invalid of [1e278, Infinity, NaN]) {
+    const malformedCurve = await fixture({entities: [line, {type: 'SPLINE', fitPoints: [{x: 0, y: 0}, {x: invalid, y: 1}]}]}, undefined, true);
+    const vb = malformedCurve.all.find(node => node.tag === 'svg').attrs.viewBox.split(' ').map(Number);
+    assert.ok(vb.every(value => Number.isFinite(value) && Math.abs(value) < 10), 'invalid spline must not destroy fit bounds');
+    assert.equal(malformedCurve.all.filter(node => node.tag === 'path').length, 0, 'skip whole malformed curve');
+    assert.ok(malformedCurve.all.some(node => node.className === 'dxf-meta' && node.textContent.includes('部分实体未显示')));
+  }
+  // A real sub-MiB DWG can expand beyond both old DXF byte and line caps.
+  const expandedText = '0\n'.repeat(150000) + ' '.repeat(4 * 1024 * 1024);
+  const expandedDwg = await fixture({entities: [line]}, new Response(expandedText), true);
+  assert.equal(expandedDwg.parses, 1);assert.equal(expandedDwg.all.some(node => node.className === 'dxf-error'), false);
+  const dwgLineOverflow = await fixture({entities: [line]}, new Response('0\n'.repeat(2000001)), true);
+  assert.equal(dwgLineOverflow.parses, 0, 'DWG line cap must still reject before parsing');
+  let dwgCanceled = false;
+  const dwgByteOverflow = await fixture({entities: [line]}, new Response(new ReadableStream({cancel() {dwgCanceled = true;}}), {headers: {'Content-Length': String(16 * 1024 * 1024 + 1)}}), true);
+  assert.equal(dwgByteOverflow.parses, 0);assert.equal(dwgCanceled, true);
+  const dwgFanout = await fixture({entities: [{type: 'INSERT', name: 'E0'}], blocks: expansion}, undefined, true);
+  assert.ok(dwgFanout.all.some(node => node.className === 'dxf-error'), 'expanded DWG must retain geometry budget');
+  const detailed = {svg: '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 L1 1"/></svg>', width: 100, height: 50, entities: 10, skipped: 1, skippedTypes: {SPLINE: 1}};
+  const json = value => new Response(JSON.stringify(value), {headers: {'Content-Type': 'application/json'}});
+  const vector = await fixture({}, json(detailed), true);
+  assert.ok(vector.all.some(node => node.className === 'dxf-meta' && node.textContent.includes('未恢复 1 处内容')));
+  assert.equal(vector.parses, 0, 'detailed DWG must bypass lossy browser DXF parsing');
+  assert.equal(vector.all.filter(node => node.tag === 'image').length, 1);
+  assert.equal(vector.all.filter(node => node.tag === 'path').length, 0, 'SVG is an isolated image, never drawing-controlled DOM');
+  const viewport = vector.all.find(node => node.tag === 'svg');const originalBox = viewport.attrs.viewBox;
+  vector.all.find(node => node.textContent === '＋').onclick();assert.notEqual(viewport.attrs.viewBox, originalBox);
+  vector.all.find(node => node.textContent === '适应').onclick();assert.equal(viewport.attrs.viewBox, originalBox);
+  vector.cleanup();assert.deepEqual(vector.urls(), {createdUrls: 1, revokedUrls: 1}, 'closing must release the vector image');
+  const badVector = await fixture({}, json({...detailed, width: 0}), true);
+  assert.ok(badVector.all.some(node => node.className === 'dxf-error'));assert.equal(badVector.urls().createdUrls, 0);
   console.log('PASS actual DXF renderer cycle/depth/fanout/node/geometry guards, repeated valid blocks, input cancellation and pre-parser line bound');
 }
-module.exports = {source};
+module.exports = {source, fixture};
 if (require.main === module) main().catch(error => {console.error(error);process.exitCode = 1;});

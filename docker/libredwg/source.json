@@ -4,5 +4,32 @@
   "url": "https://ftp.gnu.org/gnu/libredwg/libredwg-0.14.tar.xz",
   "sha256": "62ebb73b984f865960f20ed26619ea5f8789d5e3fd088fa40a2598384da81275",
   "license": "GPL-3.0-or-later",
-  "upstream": "https://www.gnu.org/software/libredwg/"
+  "upstream": "https://www.gnu.org/software/libredwg/",
+  "patches": [
+    {
+      "file": "spline-scenario.patch",
+      "sha256": "dfac271eadf2835dbf9bf49a502857d2e3b066875dbafa6d312c2b8c958acd7a",
+      "description": "Retain control-point scenario when R2013+ SPLINE has no knot-parameterization flag."
+    },
+    {
+      "file": "hatch-empty-fitpoints.patch",
+      "sha256": "69a37b7c6dadb6fbb7a2316693fc2c5eb5ac1c5ad5c703b81043053293872da5",
+      "description": "Read remaining hatch paths and pattern after a valid zero fit-point spline boundary."
+    },
+    {
+      "file": "acds-sab-region.patch",
+      "sha256": "a55ab656f5462ac889eee758a526d3e580b661bd004311cfdd07998ff20c86c5",
+      "description": "Recover bounded AcDs SAB records by object handle and preserve exact binary modeler data in R2013+ DXF."
+    },
+    {
+      "file": "proxy-binary-dxf.patch",
+      "sha256": "8e21c15e7200eb78b1d9d2c64a70016b7f341478e9a2a12858e718f6470a2a16",
+      "description": "Serialize exact common proxy preview bytes as DXF hex, independently of opaque custom-object data."
+    },
+    {
+      "file": "dxf-mif-strings.patch",
+      "sha256": "1c9073a21769a7ec6aa620464e4a0edcb128d9ace203e4a2d7734123c00186a4",
+      "description": "Decode bounded Asian MIF escapes with the correct codepage digit and terminate DXF quote output at the written cursor."
+    }
+  ]
 }

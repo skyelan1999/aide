@@ -394,6 +394,10 @@
       ],
       [
         "node",
+        "scripts/lock-idle-activity.test.cjs"
+      ],
+      [
+        "node",
         "scripts/lock-recovery.test.cjs"
       ],
       [

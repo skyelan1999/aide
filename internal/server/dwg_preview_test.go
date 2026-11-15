@@ -3,6 +3,9 @@ package server
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -109,7 +112,7 @@ func TestDWGPreviewConverterFailureCancelAndOutputBounds(t *testing.T) {
 	for _, tc := range []struct{ name, body string }{
 		{"failed", "sys.exit(1)\n"},
 		{"incomplete", "out.write_text('0\\nSECTION\\n')\n"},
-		{"oversized", "out.write_bytes(b'x'*(4*1024*1024+1))\n"},
+		{"oversized", "out.write_bytes(b'x'*(16*1024*1024+1))\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dwgFakeConverter(t, tc.body)
@@ -128,6 +131,34 @@ func TestDWGPreviewConverterFailureCancelAndOutputBounds(t *testing.T) {
 	start := time.Now()
 	if _, err := convertDWG(ctx, dwgTestInput()); err == nil || time.Since(start) > 3*time.Second {
 		t.Fatal("cancel did not stop converter", err)
+	}
+}
+
+// Reproduce expansion beyond the old 4 MiB cap and LibreDWG's zero-exit
+// truncation behavior without committing customer drawings.
+func TestDWGPreviewExpandedOutputAndFileCap(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		size, exit, status int
+	}{
+		{"expanded", 6 << 20, 0, 0},
+		{"cap-success", dwgOutputLimit, 0, 413},
+		{"cap-failed", dwgOutputLimit, 1, 413},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dwgFakeConverter(t, "out.write_bytes(b' '*"+fmt.Sprint(tc.size-len(dwgTestDXF))+"+"+fmtPythonString(dwgTestDXF)+".encode())\nsys.exit("+fmt.Sprint(tc.exit)+")\n")
+			result, err := convertDWG(context.Background(), dwgTestInput())
+			if tc.status == 0 {
+				if err != nil || len(result) != tc.size {
+					t.Fatal(len(result), err)
+				}
+			} else {
+				var previewErr *dwgPreviewError
+				if !errors.As(err, &previewErr) || previewErr.status != tc.status {
+					t.Fatal(err)
+				}
+			}
+		})
 	}
 }
 
@@ -199,5 +230,57 @@ func TestDWGPreviewReadonlyReferenceAndRevocation(t *testing.T) {
 	b, _ := os.ReadFile(filepath.Join(dir, "reference.dwg"))
 	if !bytes.Equal(b, dwgTestInput()) {
 		t.Fatal("reference modified")
+	}
+}
+
+func TestDWGPreviewRealSVG(t *testing.T) {
+	if os.Getenv("AIDE_DWG_TEST_SVG") != "1" {
+		t.Skip("set AIDE_DWG_TEST_SVG=1 in real CAD runtime")
+	}
+	input, err := os.ReadFile(os.Getenv("AIDE_DWG_TEST_FILE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	dxf, err := convertDWG(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := renderDWGSVG(context.Background(), dxf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var preview struct {
+		SVG               string
+		Entities, Skipped int
+		Width, Height     float64
+	}
+	if json.Unmarshal(result, &preview) != nil || preview.Entities <= 0 || !strings.Contains(preview.SVG, "<path") || preview.Width <= 0 || preview.Height <= 0 {
+		t.Fatal("missing actual CAD geometry")
+	}
+	a := testApp(t)
+	dwgWrite(t, a, "real.dwg", input)
+	w := request(a, "GET", "/api/file/dwg-preview?path=real.dwg&format=svg", nil)
+	if w.Code != 200 || w.Header().Get("Content-Type") != "application/json" {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	original, _ := a.workspace.ReadFile("real.dwg")
+	if !bytes.Equal(original, input) {
+		t.Fatal("original changed")
+	}
+}
+
+func TestDWGPreviewSVGRejectsInvalidDXF(t *testing.T) {
+	if _, err := renderDWGSVG(context.Background(), []byte("invalid DXF")); err == nil {
+		t.Fatal("invalid DXF accepted")
+	}
+}
+
+func TestDWGPreviewSVGCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := renderDWGSVG(ctx, []byte(dwgTestDXF))
+	var e *dwgPreviewError
+	if !errors.As(err, &e) || e.status != 504 {
+		t.Fatal(err)
 	}
 }

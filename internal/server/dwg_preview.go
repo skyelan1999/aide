@@ -3,9 +3,12 @@ package server
 import (
 	"bytes"
 	"context"
+	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -16,7 +19,7 @@ import (
 )
 
 const dwgInputLimit = 16 << 20
-const dwgOutputLimit = 4 << 20 // Same bound as the existing DXF browser parser.
+const dwgOutputLimit = 16 << 20 // DWG expansion can be much larger than the source file.
 const dwgPreviewTimeout = 20 * time.Second
 
 var dwgPreviewSlots = make(chan struct{}, 2)
@@ -34,10 +37,10 @@ func dwgError(status int, message string) error { return &dwgPreviewError{status
 const dwgLimitBootstrap = `import os, resource, sys
 resource.setrlimit(resource.RLIMIT_AS, (512*1024*1024, 512*1024*1024))
 resource.setrlimit(resource.RLIMIT_CPU, (15, 16))
-resource.setrlimit(resource.RLIMIT_FSIZE, (4*1024*1024, 4*1024*1024))
+resource.setrlimit(resource.RLIMIT_FSIZE, (int(sys.argv[1]), int(sys.argv[1])))
 resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
 resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-os.execv(sys.argv[1], sys.argv[1:])
+os.execv(sys.argv[2], sys.argv[2:])
 `
 
 func dwgConverter() (string, error) {
@@ -79,7 +82,7 @@ func convertDWG(ctx context.Context, input []byte) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, dwgPreviewTimeout)
 	defer cancel()
 	// Preserve the source DXF version: forced version changes can silently lose entities.
-	cmd := exec.CommandContext(ctx, python, "-c", dwgLimitBootstrap, converter, "-o", outPath, inPath)
+	cmd := exec.CommandContext(ctx, python, "-c", dwgLimitBootstrap, fmt.Sprint(dwgOutputLimit), converter, "-o", outPath, inPath)
 	cmd.Dir = dir
 	cmd.Env = []string{"PATH=/usr/bin:/bin", "LANG=C.UTF-8", "HOME=" + dir, "TMPDIR=" + dir}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -95,6 +98,11 @@ func convertDWG(ctx context.Context, input []byte) ([]byte, error) {
 	if ctx.Err() != nil {
 		return nil, dwgError(504, "DWG 预览已超时或取消。可重试，或下载原文件用 CAD 打开。")
 	}
+	// LibreDWG may exit successfully after hitting RLIMIT_FSIZE. Check the cap
+	// before interpreting its exit status or treating missing EOF as corruption.
+	if info, statErr := os.Stat(outPath); statErr == nil && info.Size() >= dwgOutputLimit {
+		return nil, dwgError(413, "DWG 转换结果达到 16 MiB 预览上限，请下载原文件用 CAD 打开。")
+	}
 	if err != nil {
 		return nil, dwgError(422, "DWG 转换失败：文件可能损坏、包含不支持的内容或超过预览资源上限。可下载原文件用 CAD 打开。")
 	}
@@ -105,7 +113,7 @@ func convertDWG(ctx context.Context, input []byte) ([]byte, error) {
 	defer f.Close()
 	info, err := f.Stat()
 	if err != nil || !info.Mode().IsRegular() || info.Size() > dwgOutputLimit {
-		return nil, dwgError(413, "DWG 转换结果超过 4 MiB 预览上限，请下载原文件用 CAD 打开。")
+		return nil, dwgError(413, "DWG 转换结果超过 16 MiB 预览上限，请下载原文件用 CAD 打开。")
 	}
 	output, err := io.ReadAll(io.LimitReader(f, dwgOutputLimit+1))
 	if err != nil {
@@ -116,6 +124,68 @@ func convertDWG(ctx context.Context, input []byte) ([]byte, error) {
 		return nil, dwgError(422, "DWG 未生成完整的二维预览，请下载原文件用 CAD 打开。")
 	}
 	return output, nil
+}
+
+//go:embed dwg_preview_svg.py
+var dwgSVGRenderer string
+
+// The optional detailed preview uses the already pinned runtime ezdxf package.
+// SVG is delivered as an image, never inserted as drawing-controlled DOM.
+func renderDWGSVG(ctx context.Context, dxf []byte) ([]byte, error) {
+	python, err := exec.LookPath("python3")
+	if err != nil {
+		return nil, dwgError(503, "DWG 详细预览组件不可用，请更新标准 Aide 构建。")
+	}
+	dir, err := os.MkdirTemp("", "aide-dwg-svg-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(dir)
+	input, output := filepath.Join(dir, "input.dxf"), filepath.Join(dir, "preview.json")
+	if err = os.WriteFile(input, dxf, 0600); err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, dwgPreviewTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, python, "-c", dwgLimitBootstrap, fmt.Sprint(dwgOutputLimit), python, "-c", dwgSVGRenderer, input, output)
+	cmd.Dir = dir
+	cmd.Env = []string{"PATH=/usr/bin:/bin", "LANG=C.UTF-8", "HOME=" + dir, "TMPDIR=" + dir, "OPENBLAS_NUM_THREADS=1", "OMP_NUM_THREADS=1"}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return os.ErrProcessDone
+		}
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
+	cmd.WaitDelay = time.Second
+	cmd.Stdout, cmd.Stderr = io.Discard, io.Discard
+	err = cmd.Run()
+	if ctx.Err() != nil {
+		return nil, dwgError(504, "DWG 预览已超时或取消。可重试，或下载原文件用 CAD 打开。")
+	}
+	if info, e := os.Stat(output); e == nil && info.Size() >= dwgOutputLimit {
+		return nil, dwgError(413, "DWG 转换结果达到 16 MiB 预览上限，请下载原文件用 CAD 打开。")
+	}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 3 {
+		return nil, dwgError(413, "DWG 二维绘制超过预览资源上限，请下载原文件用 CAD 打开。")
+	}
+	if err != nil {
+		return nil, dwgError(422, "DWG 详细预览生成失败，请下载原文件用 CAD 核对。")
+	}
+	data, err := os.ReadFile(output)
+	if err != nil || len(data) > dwgOutputLimit {
+		return nil, dwgError(422, "DWG 详细预览生成失败，请下载原文件用 CAD 核对。")
+	}
+	var result struct {
+		SVG               string `json:"svg"`
+		Width, Height     float64
+		Entities, Skipped int
+	}
+	if json.Unmarshal(data, &result) != nil || !strings.HasPrefix(result.SVG, "<svg") || !strings.HasSuffix(result.SVG, "</svg>") || result.Width <= 0 || result.Height <= 0 || math.IsNaN(result.Width+result.Height) || math.IsInf(result.Width+result.Height, 0) || result.Entities < 0 || result.Skipped < 0 {
+		return nil, dwgError(422, "DWG 详细预览生成失败，请下载原文件用 CAD 核对。")
+	}
+	return data, nil
 }
 
 // O_NONBLOCK prevents a replaced FIFO from blocking between Lstat and Open.
@@ -170,6 +240,41 @@ func (a *App) readDWGPreview(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
+	input, current, err := a.readBoundedPreviewInput(ctx, r)
+	if err == nil && !current() {
+		err = dwgError(409, "文件来源已变化，请从当前目录重新打开图纸。")
+	}
+	var output []byte
+	if err == nil {
+		output, err = convertDWG(ctx, input)
+	}
+	if err == nil && q.Get("format") == "svg" {
+		output, err = renderDWGSVG(ctx, output)
+	}
+	if err == nil && !current() {
+		err = dwgError(409, "文件来源已变化，请从当前目录重新打开图纸。")
+	}
+	if err != nil {
+		var previewErr *dwgPreviewError
+		if errors.As(err, &previewErr) {
+			fail(w, previewErr.status, previewErr)
+			return
+		}
+		fail(w, 400, fmt.Errorf("无法读取 DWG 文件，请确认目录权限、文件大小和来源连接后重试。"))
+		return
+	}
+	if q.Get("format") == "svg" {
+		w.Header().Set("Content-Type", "application/json")
+	} else {
+		w.Header().Set("Content-Type", "application/dxf")
+	}
+	w.Write(output)
+}
+
+// Shared source authorization and identity checks for bounded local previews.
+func (a *App) readBoundedPreviewInput(ctx context.Context, r *http.Request) ([]byte, func() bool, error) {
+	q := r.URL.Query()
+	p := q.Get("path")
 	var input []byte
 	var err error
 	var current func() bool
@@ -208,25 +313,5 @@ func (a *App) readDWGPreview(w http.ResponseWriter, r *http.Request) {
 		}
 		current = func() bool { return a.knowledgeAreaCurrent(ar) }
 	}
-	if err == nil && !current() {
-		err = dwgError(409, "文件来源已变化，请从当前目录重新打开图纸。")
-	}
-	var output []byte
-	if err == nil {
-		output, err = convertDWG(ctx, input)
-	}
-	if err == nil && !current() {
-		err = dwgError(409, "文件来源已变化，请从当前目录重新打开图纸。")
-	}
-	if err != nil {
-		var previewErr *dwgPreviewError
-		if errors.As(err, &previewErr) {
-			fail(w, previewErr.status, previewErr)
-			return
-		}
-		fail(w, 400, fmt.Errorf("无法读取 DWG 文件，请确认目录权限、文件大小和来源连接后重试。"))
-		return
-	}
-	w.Header().Set("Content-Type", "application/dxf")
-	w.Write(output)
+	return input, current, err
 }
