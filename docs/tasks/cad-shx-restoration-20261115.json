@@ -66,14 +66,20 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source merge/push authorized; local runtime already installed and verified. No version bump/tag or binary release.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Authorized source main merge and push completed at 9d28bdfb; installed local image a8dba444 is healthy/integrity ok. No version bump, tag, GitHub Release or published font binaries. Remote CI is a separate live check on the final receipt commit.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/commit/9d28bdfbecf1c8656ef80054ad3406e502fb312b",
+        ".agent-state/cad-shx-restoration-20261115/source-integration-private.json"
+      ]
     }
   },
   "release_authorization": "Existing user instruction: 做好后合并到main并推送; no binary release requested.",
   "rollback": "Private storage/source backup: /Users/skyelan/WorkTrees/aide-runtime-backups/20261115-cad-shx-restoration; prior image retained as aide-rollback:cad-shx-restoration-20261115. No stale lock state is restored.",
-  "handoff": "Seven same-name SHX versions installed locally; 418 CAD entries still have at least one unavailable/incompatible primary or Big Font declaration. All 453 archive entries open. Full regression passed; main source push pending. Normal idle lock policy unchanged.",
+  "handoff": "Complete: seven same-name SHX versions installed locally, 453 archive entries retested, main source change merged/pushed. Remaining source-font limitation: 418 CAD entries retain at least one unavailable/incompatible primary or Big Font declaration. Source originals and all 28 unrelated local paths preserved. 86 sessions, 37 plugins and 194 protected files retained. Normal idle lock policy unchanged.",
   "operator": "skyelan1999 (gh api user verified)",
-  "verification_fingerprint": "f85daa2c7d0542a0fa91902eff71444f96b5998d4866c8817080357ed6b808de"
+  "verification_fingerprint": "f85daa2c7d0542a0fa91902eff71444f96b5998d4866c8817080357ed6b808de",
+  "source_code_commit": "9d28bdfbecf1c8656ef80054ad3406e502fb312b",
+  "runtime_image": "sha256:a8dba444256dae5d66a74a531b708606623b8dfad47ac1b930b1cef2740dc2ed",
+  "remote_ci": "Final main commit checks are verified separately after pushing this documentation receipt; see live GitHub checks and private delivery report."
 }
