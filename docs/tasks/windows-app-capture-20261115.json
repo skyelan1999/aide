@@ -52,9 +52,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Existing gesture, draft-ticket, and localization checks passed before this WGC update. The updated launcher and GPU fixture compile/link on the local Windows host. GPU pixel acceptance FAILED in this automated session: the synthetic HWND could not become foreground, and both WGC and PrintWindow returned a black center pixel. This is recorded as a failure/environment limitation, not a pass. Updated WGC source is not yet pushed or checked by CI; real global hook, visible WebView, unlocked-draft attachment, and interactive foreground GPU app acceptance remain NOT_RUN.",
+      "summary": "Existing gesture, draft-ticket, and localization checks passed before this WGC update. The updated launcher and GPU fixture compile/link on the local Windows host. GPU pixel acceptance FAILED in this automated session: the synthetic HWND could not become foreground, and both WGC and PrintWindow returned a black center pixel. This is recorded as a failure/environment limitation, not a pass. WGC update is pushed to PR #923 as commit be77a1ba9dd8f10ad8422e4dbbd90cd8957ae8ae; CI results are pending; real global hook, visible WebView, unlocked-draft attachment, and interactive foreground GPU app acceptance remain NOT_RUN.",
       "evidence": [
         "python -X utf8 -c ... test_windows_launcher_compile.main() with only known test_windows_bat_entrypoints.check skipped — PASS main native compile/link and self-test",
+          "python -X utf8 -c ... test_windows_launcher_compile.main() with CMD/BAT suite bypassed — FAIL GPU pixel fixture (expected RGB 230,26,51, captured 0,0,0); synthetic HWND was not foreground and PrintWindow also returned black",
+          "python -X utf8 scripts/check_docs.py — PASS, 535 Markdown / 2557 local links",
+          "git -c core.whitespace=cr-at-eol diff --check — PASS",
         "g++ -static -std=c++17 -O0 scripts/capture-gesture-smoke.cpp — PASS short double tap, long press, timeout, intervening input",
         "node scripts/desktop-capture.test.cjs — PASS one-use ticket, draft attachment, session/lock/navigation rejection",
         "node --check internal/server/web/desktop-capture.js — PASS",
@@ -85,5 +88,5 @@
     }
   },
   "rollback": "Use a separate feature branch; close PR or revert its commit.",
-  "handoff": "Issue #922 remains open. PR #923 is Draft/open/unmerged on main ba46ce28. WGC HWND capture, D3D11 staging copy, hardware-to-WARP device fallback, old-OS PrintWindow fallback, 16 MiB PNG cap, and a GPU-rendered pixel fixture are implemented locally. Current automated-session GPU fixture FAILS because the HWND cannot become foreground and both capture paths return black. Do not claim screenshot parity or close the Issue. Updated source has not yet been pushed or rechecked by CI; next verify on an interactive Windows desktop, then push and wait for CI. Existing hotspot, shared draft flow and localization checks have prior PASS evidence; real hotkey and unlocked-draft visual workflow remain NOT_RUN."
+  "handoff": "Issue #922 remains open. PR #923 is Draft/open/unmerged on main ba46ce28. WGC HWND capture, D3D11 staging copy, hardware-to-WARP device fallback, old-OS PrintWindow fallback, 16 MiB PNG cap, and a GPU-rendered pixel fixture are included in PR commit be77a1ba9dd8f10ad8422e4dbbd90cd8957ae8ae. Current automated-session GPU fixture FAILS because the HWND cannot become foreground and both capture paths return black. Do not claim screenshot parity or close the Issue. CI status is pending; next inspect CI, then repeat on an interactive Windows desktop. Existing hotspot, shared draft flow and localization checks have prior PASS evidence; real hotkey and unlocked-draft visual workflow remain NOT_RUN."
 }
