@@ -55,3 +55,6 @@ docker/libredwg/*.patch -text -whitespace
 internal/server/web/vendor/pdfjs/cmaps/LICENSE -whitespace
 internal/server/web/vendor/pdfjs/standard_fonts/LICENSE* -whitespace
 legal/third_party/npm/pdfjs-dist-resources/LICENSE* -whitespace
+
+# Preserve pinned LibreCAD stroke font sources and their upstream notices.
+docker/cad-fonts/* -text -whitespace

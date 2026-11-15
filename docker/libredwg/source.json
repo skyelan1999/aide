@@ -30,6 +30,11 @@
       "file": "dxf-mif-strings.patch",
       "sha256": "1c9073a21769a7ec6aa620464e4a0edcb128d9ace203e4a2d7734123c00186a4",
       "description": "Decode bounded Asian MIF escapes with the correct codepage digit and terminate DXF quote output at the written cursor."
+    },
+    {
+      "file": "dxf-utf8-chunks.patch",
+      "sha256": "e9ef9640c5d099d547ed4d78e6f1d29786424b10632af2eae74e8c7c1ed69321",
+      "description": "Preserve complete UTF-8/escape chunks and legacy-codepage multiline text, including exact 250-byte final groups."
     }
   ]
 }

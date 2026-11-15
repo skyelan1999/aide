@@ -129,6 +129,9 @@ func convertDWG(ctx context.Context, input []byte) ([]byte, error) {
 //go:embed dwg_preview_svg.py
 var dwgSVGRenderer string
 
+//go:embed cad_preview_fonts.py
+var cadPreviewFonts string
+
 // The optional detailed preview uses the already pinned runtime ezdxf package.
 // SVG is delivered as an image, never inserted as drawing-controlled DOM.
 func renderDWGSVG(ctx context.Context, dxf []byte) ([]byte, error) {
@@ -142,6 +145,9 @@ func renderDWGSVG(ctx context.Context, dxf []byte) ([]byte, error) {
 	}
 	defer os.RemoveAll(dir)
 	input, output := filepath.Join(dir, "input.dxf"), filepath.Join(dir, "preview.json")
+	if err = os.WriteFile(filepath.Join(dir, "cad_preview_fonts.py"), []byte(cadPreviewFonts), 0600); err != nil {
+		return nil, err
+	}
 	if err = os.WriteFile(input, dxf, 0600); err != nil {
 		return nil, err
 	}
@@ -149,7 +155,7 @@ func renderDWGSVG(ctx context.Context, dxf []byte) ([]byte, error) {
 	defer cancel()
 	cmd := exec.CommandContext(ctx, python, "-c", dwgLimitBootstrap, fmt.Sprint(dwgOutputLimit), python, "-c", dwgSVGRenderer, input, output)
 	cmd.Dir = dir
-	cmd.Env = []string{"PATH=/usr/bin:/bin", "LANG=C.UTF-8", "HOME=" + dir, "TMPDIR=" + dir, "OPENBLAS_NUM_THREADS=1", "OMP_NUM_THREADS=1"}
+	cmd.Env = []string{"PATH=/usr/bin:/bin", "LANG=C.UTF-8", "HOME=" + dir, "TMPDIR=" + dir, "OPENBLAS_NUM_THREADS=1", "OMP_NUM_THREADS=1", "AIDE_CAD_FONT_DIR=" + cadFontDirectory()}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
@@ -314,4 +320,15 @@ func (a *App) readBoundedPreviewInput(ctx context.Context, r *http.Request) ([]b
 		current = func() bool { return a.knowledgeAreaCurrent(ar) }
 	}
 	return input, current, err
+}
+
+// Font files are administrator-provided local data, never drawing-selected paths.
+func cadFontDirectory() string {
+	if dir := os.Getenv("AIDE_CAD_FONT_DIR"); dir != "" {
+		return dir
+	}
+	if data := os.Getenv("AIDE_DATA"); data != "" {
+		return filepath.Join(data, "cad-fonts")
+	}
+	return "/data/cad-fonts"
 }

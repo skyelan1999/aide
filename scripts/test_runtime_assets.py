@@ -50,6 +50,11 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
             entities = output.read_text(errors='replace').split('\nENTITIES\n')[1].split('ENDSEC')[0]
             assert '\nLINE\n' in entities, revision+' lost geometry'
     assert Path('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc').is_file(), 'CAD CJK font missing'
+    font_root = Path('/opt/aide/cad-fonts')
+    font_meta = json.loads((font_root/'source.json').read_text())
+    assert len(font_meta['files']) == 4
+    assert all(hashlib.sha256((font_root/name).read_bytes()).hexdigest() == record['sha256'] for name,record in font_meta['files'].items())
+
     assert Path('/opt/aide/licenses/platform/wqy-zenhei-copyright').is_file(), 'CAD font notice missing'
     assert shutil.which('pdftoppm'), 'PDF compatibility renderer missing'
     assert Path('/opt/aide/licenses/platform/poppler-copyright').is_file(), 'Poppler notice missing'

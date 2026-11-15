@@ -159,5 +159,14 @@
     "source": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.4.168.tgz#package/standard_fonts/LICENSE_LIBERATION",
     "path": "legal/third_party/npm/pdfjs-dist-resources/LICENSE_LIBERATION",
     "sha256": "93fed46019c38bbe566b479d22148e2e8a1e85ada614accb0211c37b2c61c19b"
+  },
+  {
+    "version": "8a82e35965d8d56a8f8608abd739fbb2c0de2f3e",
+    "license": "GPL-2.0-or-later",
+    "source": "https://github.com/LibreCAD/LibreCAD/tree/8a82e35965d8d56a8f8608abd739fbb2c0de2f3e/librecad/support/fonts",
+    "notes": "Four explicit fallback stroke font source files; hashes/source URLs and original per-file notices retained in docker/cad-fonts. No proprietary fonts are bundled.",
+    "package": "LibreCAD stroke fonts",
+    "path": "legal/third_party/runtime/librecad-fonts/LICENSE",
+    "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
   }
 ]

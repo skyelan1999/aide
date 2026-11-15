@@ -241,6 +241,9 @@ ARG AIDE_SRC_SHA=unknown
 LABEL aide.srcsha="${AIDE_SRC_SHA}"
 ENV AIDE_ADDR=0.0.0.0:8080 AIDE_WORKSPACE=/workspace AIDE_CONTEXT=/context AIDE_DATA=/data
 USER aide
+# Open stroke-font source is hash-pinned; local original fonts stay in /data.
+COPY docker/cad-fonts /opt/aide/cad-fonts
+RUN python3 -c 'import pathlib,json,hashlib; r=pathlib.Path("/opt/aide/cad-fonts"); m=json.loads((r/"source.json").read_text()); assert all(hashlib.sha256((r/n).read_bytes()).hexdigest()==v["sha256"] for n,v in m["files"].items())'
 WORKDIR /workspace
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 CMD curl -fsSk https://127.0.0.1:8080/healthz || exit 1

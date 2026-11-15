@@ -1,0 +1,119 @@
+--- a/src/out_dxf.c
++++ b/src/out_dxf.c
+@@ -1387,6 +1387,26 @@
+   return d;
+ }
+ 
++/* DXF group 3 continuation chunks must not divide a UTF-8 code point. */
++static int
++dxf_utf8_chunk (const char *text, long length)
++{
++  int count = length > 250 ? 250 : (int)length;
++  if (length > count)
++    while (count > 0 && (((unsigned char)text[count] & 0xc0) == 0x80))
++      count--;
++  if (length > count)
++    {
++      int i;
++      for (i = count > 7 ? count - 7 : 0; i < count; i++)
++        if (text[i] == '\\' && i + 2 < length && text[i + 2] == '+'
++            && ((text[i + 1] == 'U' && i + 7 > count && length - i >= 7)
++                || (text[i + 1] == 'M' && i + 8 > count && length - i >= 8)))
++          { count = i; break; }
++    }
++  return count > 0 ? count : 250;
++}
++
+ /*
+    Splits overlong (len>250) lines into dxf 3 chunks ending with group dxf.
+    Only TFF sets opts=0, TV and TU to 1.
+@@ -1408,16 +1428,24 @@
+               || strstr (str, "\\M+")))
+         {
+           static char *cstr, *ubuf;
+-          const size_t origlen = strlen (str);
++          /* Pre-R2007 TV strings use the drawing codepage, not UTF-8. */
++          char *u8 = dat->version < R_2007
++                         ? bit_TV_to_utf8 (str, dat->codepage) : NULL;
++          const char *input = u8 ? u8 : str;
++          const size_t origlen = strlen (input);
+           long len = (long)((2 * origlen) + 1);
+           BITCODE_TU wstr;
++          char *embedded, *cursor;
++          size_t bytes;
+           cstr = malloc (len);
+           if (!cstr)
+             {
+               LOG_ERROR ("Out of memory");
++              if (u8 && u8 != str) free (u8);
+               return;
+             }
+-          len = (long)strlen (cquote (cstr, len, str));
++          len = (long)strlen (cquote (cstr, len, input));
++          if (u8 && u8 != str) free (u8);
+           if (len < 0)
+             {
+               LOG_ERROR ("Overlong DXF string");
+@@ -1429,15 +1457,31 @@
+             }
+           wstr = bit_utf8_to_TU (cstr, 0);
+           free (cstr);
+-          cstr = ubuf = bit_embed_TU (wstr);
++          embedded = bit_embed_TU (wstr);
+           free (wstr);
+-          len = (long)strlen (ubuf);
++          if (!embedded) return;
++          bytes = strlen (embedded);
++          if (bytes > (SIZE_MAX - 1) / 7) { free (embedded); return; }
++          cstr = ubuf = malloc (bytes * 7 + 1);
++          if (!cstr) { free (embedded); return; }
++          /* bit_embed_TU leaves Latin-1 bytes raw; those are neither UTF-8
++             nor necessarily valid in the drawing's legacy codepage. */
++          cursor = ubuf;
++          for (size_t i = 0; i < bytes; i++)
++            if ((unsigned char)embedded[i] >= 128)
++              { sprintf (cursor, "\\U+%04X", (unsigned char)embedded[i]); cursor += 7; }
++            else
++              *cursor++ = embedded[i];
++          *cursor = '\0';
++          free (embedded);
++          len = (long)(cursor - ubuf);
+           while (len > 0)
+             {
+-              fprintf (dat->fh, "%3d\r\n", len < 250 ? dxf : 3);
+-              fprintf (dat->fh, "%.*s\r\n", len > 250 ? 250 : (int)len, ubuf);
+-              len -= 250;
+-              ubuf += 250;
++              int count = dxf_utf8_chunk (ubuf, len);
++              fprintf (dat->fh, "%3d\r\n", len <= 250 ? dxf : 3);
++              fprintf (dat->fh, "%.*s\r\n", count, ubuf);
++              len -= count;
++              ubuf += count;
+             }
+           free (cstr);
+         }
+@@ -1446,10 +1490,12 @@
+           long len = (long)strlen (str);
+           while (len > 0)
+             {
+-              fprintf (dat->fh, "%3d\r\n", len < 250 ? dxf : 3);
+-              fprintf (dat->fh, "%.*s\r\n", len > 250 ? 250 : (int)len, str);
+-              len -= 250;
+-              str += 250;
++              int count = dat->version >= R_2007 ? dxf_utf8_chunk (str, len)
++                                               : (len > 250 ? 250 : (int)len);
++              fprintf (dat->fh, "%3d\r\n", len <= 250 ? dxf : 3);
++              fprintf (dat->fh, "%.*s\r\n", count, str);
++              len -= count;
++              str += count;
+             }
+         }
+     }
+@@ -4122,6 +4168,7 @@
+   // struct Dwg_Header *obj = &dwg->header;
+ 
+   loglevel = dwg->opts & DWG_OPTS_LOGLEVEL;
++  dat->codepage = dwg->header.codepage;
+   if (dat->from_version == R_INVALID)
+     dat->from_version = dwg->header.from_version;
+   if (dwg->dirty_refs)

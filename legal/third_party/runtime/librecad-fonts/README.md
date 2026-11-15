@@ -1,0 +1,1 @@
+LibreCAD stroke fonts, GPL-2.0-or-later; original per-file notices and corresponding font source are retained in docker/cad-fonts. Revision and SHA-256 are pinned in docker/cad-fonts/source.json. These are explicit fallbacks for unavailable CAD stroke fonts, not recovered Autodesk SHX files. Proprietary/local original fonts are data only and are not bundled.

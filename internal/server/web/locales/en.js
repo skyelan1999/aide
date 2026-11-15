@@ -4857,4 +4857,9 @@ window.aideEnglish = {
   "每阶段最多选择 8 项工具，请先取消不需要的工具。": "Select at most 8 tools per stage. Deselect tools you do not need first.",
   "PDF 页面最长边 8192 像素、画布最多 16 Mi 像素；空白或解码失败时自动尝试本地兼容预览（最长边 4096 像素）。": "PDF pages are limited to an 8192-pixel edge and 16 Mi canvas pixels. Blank or failed pages automatically try local compatibility preview, up to a 4096-pixel edge.",
   "兼容预览": "Compatibility preview",
+  '同名字体预览': 'Matching original font family',
+  '字体检查未完成': 'Font check incomplete',
+  '字体匹配 {0} / 替代 {1}': 'Matched fonts {0} / substitutes {1}',
+  '替代字体': 'Substitute font',
+  '缺少 {0} 个字形': 'Missing {0} glyphs',
 };

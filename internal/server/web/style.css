@@ -1043,6 +1043,7 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 .pdf-ctrl{min-width:26px;height:24px;padding:0 7px;border:1px solid var(--line-mid,var(--line));border-radius:5px;background:var(--field,transparent);color:var(--text);font-size:12px;line-height:1;cursor:pointer}
 .pdf-ctrl:hover{background:var(--selected-alt)}
 .pdf-page-input{width:44px;height:24px;padding:0 4px;text-align:center;font-size:11px;border:1px solid var(--line-mid,var(--line));border-radius:5px;background:var(--field);color:var(--text)}
+.pdf-viewer .pdf-toolbar input.pdf-page-input{width:44px;min-width:44px;max-width:44px;flex:0 0 44px}
 .pdf-page-total{font-size:10px;color:var(--muted)}
 .pdf-scroll{position:relative;flex:1;min-height:0;overflow:auto;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .pdf-page{position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.35);border-radius:2px;flex-shrink:0}

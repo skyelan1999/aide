@@ -8,7 +8,7 @@ import tempfile
 root = Path(sys.argv[1]).resolve()
 source = (root / 'src/out_dxf.c').read_text()
 start = source.index('static char *\ncquote (')
-end = source.index('\n/*\n   Splits overlong', start)
+end = source.index('\nstatic int\ndxf_write_eed', start)
 function = source[start:end]
 test = r'''
 #include <assert.h>
@@ -19,8 +19,9 @@ test = r'''
 #include <string.h>
 #include "dwg.h"
 #include "codepages.h"
-#define memBEGINc(s, literal) (!memcmp((s), (literal), sizeof(literal)-1))
+#include "bits.h"
 #define LOG_ERROR(...) ((void)0)
+#define LOG_TRACE(...) ((void)0)
 '''+function+r'''
 static void check(const char *input, const char *expected) {
   unsigned char buffer[512];
@@ -59,6 +60,29 @@ int main(void) {
   check("\\M+5ZZZZ", "\\M+5ZZZZ");
   check("\\M+6C50A", "\\M+6C50A");
   check("\\M+0C50A", "\\M+0C50A");
+  char long_text[300];
+  memset(long_text,'A',sizeof(long_text));
+  long_text[249]=(char)0xE4;long_text[250]=(char)0xB8;long_text[251]=(char)0xAD;
+  assert(dxf_utf8_chunk(long_text,270)==249);
+  assert(dxf_utf8_chunk(long_text+249,21)==21);
+  assert(dxf_utf8_chunk(long_text,250)==250);
+  assert(dxf_utf8_chunk(long_text,248)==248);
+  memcpy(long_text+247,"\\U+4E2D",7);
+  assert(dxf_utf8_chunk(long_text,270)==247);
+  Bit_Chain dat = {0};
+  dat.version = R_2004; dat.codepage = CP_ANSI_936; dat.fh = tmpfile();
+  assert(dat.fh);
+  char gbk[] = "\xD6\xD0\xCE\xC4\n\xA1\xC0";
+  dxf_fixup_string(&dat, gbk, 1, 1);
+  fflush(dat.fh); rewind(dat.fh);
+  char output[1024] = {0}; fread(output, 1, sizeof(output)-1, dat.fh); fclose(dat.fh);
+  assert(strstr(output, "\\U+4E2D\\U+6587^J\\U+00B1"));
+  dat.version = R_2007; dat.fh = tmpfile();
+  char utf8[] = "\xE4\xB8\xAD\xE6\x96\x87\n\xC2\xB1";
+  dxf_fixup_string(&dat, utf8, 1, 1);
+  fflush(dat.fh); rewind(dat.fh); memset(output,0,sizeof(output));
+  fread(output,1,sizeof(output)-1,dat.fh); fclose(dat.fh);
+  assert(strstr(output,"\\U+4E2D\\U+6587^J\\U+00B1"));
   puts("PASS actual LibreDWG DXF quoting: Asian MIF, bounds, deterministic termination");
 }
 '''

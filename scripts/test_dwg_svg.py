@@ -6,12 +6,14 @@ import math
 import re
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import ezdxf
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'internal/server'))
 spec = importlib.util.spec_from_file_location('dwg_svg', Path(__file__).resolve().parents[1] / 'internal/server/dwg_preview_svg.py')
 cad = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cad)
@@ -242,6 +244,102 @@ class CADSVGTests(unittest.TestCase):
         self.assertEqual(result['skipped'], 0)
         self.assertGreaterEqual(result['renderedTypes']['REGION'], 1)
 
+
+    def test_declared_outline_font_and_width_are_preserved(self):
+        from cad_preview_fonts import CADFonts
+        with CADFonts() as resolver:
+            face, key = resolver.resolve('NimbusSans-Regular.otf')
+            resolver.mark(key)
+            self.assertEqual(face.filename, 'NimbusSans-Regular.otf')
+            self.assertTrue(resolver.family_face(face.family, True, False).is_bold)
+            self.assertTrue(resolver.family_face(face.family, False, True).is_italic)
+            styled = resolver.family_face(face.family, True, True)
+            self.assertTrue(styled.is_bold and styled.is_italic)
+            self.assertEqual(resolver.report()['faces'][0]['status'], 'exact-file')
+            expected = resolver.raw(face.filename, 2.5, 0.7).text_width('Wi 123')
+            self.assertAlmostEqual(resolver.mixed(face.filename, 2.5, 0.7).text_width('Wi 123'), expected)
+        doc = ezdxf.new(); doc.styles.new('original', dxfattribs={'font': 'NimbusSans-Regular.otf'})
+        doc.modelspace().add_text('Original font', dxfattribs={'style': 'original', 'height': 2.5})
+        result = self.render(doc)
+        self.assertEqual(result['fontInfo']['originalFaces'], 1)
+        self.assertEqual(doc.styles.get('original').dxf.font, 'NimbusSans-Regular.otf')
+
+    def test_mixed_stroke_and_chinese_use_same_advances_for_drawing_and_measurement(self):
+        from cad_preview_fonts import CADFonts
+        from ezdxf.addons.drawing.properties import Properties
+        from ezdxf.math import Matrix44
+        class Pipeline:
+            def __init__(self): self.calls=[]
+            def draw_text(self, text, transform, properties, cap_height, dxftype):
+                self.calls.append((text, transform, properties.font))
+        with CADFonts() as resolver:
+            face, _ = resolver.resolve('txt.shx')
+            self.assertEqual(Path(face.filename).suffix, '.lff')
+            pipeline=Pipeline(); resolver.bind_pipeline(pipeline)
+            props=Properties(); props.font=face
+            pipeline.draw_text('A中', Matrix44.translate(10,20,0), props, 2.0, 'TEXT')
+            self.assertEqual(len(pipeline.calls), 2)
+            self.assertEqual(pipeline.calls[0][2].filename, face.filename)
+            self.assertNotEqual(Path(pipeline.calls[1][2].filename).suffix, '.lff')
+            advance=resolver.raw(face.filename,2.0).text_width('A')
+            self.assertAlmostEqual(pipeline.calls[1][1].transform((0,0,0)).x, 10+advance)
+            self.assertEqual(props.font,face)
+            self.assertAlmostEqual(resolver.mixed(face.filename,2.0).text_width('A中'),
+                                   advance+resolver.raw(pipeline.calls[1][2].filename,2.0).text_width('中'))
+            self.assertEqual(resolver.report()['missingGlyphs'],0)
+
+    def test_original_style_and_bigfont_declaration_are_not_rewritten(self):
+        doc=ezdxf.new(); style=doc.styles.new('cad',dxfattribs={'font':'romans.shx','bigfont':'missing-big.shx'})
+        doc.modelspace().add_text('ABC中文',dxfattribs={'style':'cad','height':1})
+        result=self.render(doc)
+        self.assertEqual(result['skipped'],0)
+        self.assertEqual(result['fontInfo']['missingGlyphs'],0)
+        self.assertTrue(any(r['status']=='stroke-substitute' and r['bigfont']=='missing-big.shx'
+                            for r in result['fontInfo']['faces']))
+        self.assertEqual(style.dxf.font,'romans.shx');self.assertEqual(style.dxf.bigfont,'missing-big.shx')
+
+    def test_font_profile_bounds_restore_global_font_state(self):
+        import os
+        from cad_preview_fonts import CADFonts
+        before=cad.fonts.font_manager._font_cache
+        with tempfile.TemporaryDirectory() as td:
+            for n in range(33): (Path(td)/('font'+str(n)+'.ttf')).touch()
+            with patch.dict(os.environ,{'AIDE_CAD_FONT_DIR':td}):
+                with self.assertRaisesRegex(ValueError,'font file budget'): CADFonts()
+        self.assertIs(cad.fonts.font_manager._font_cache,before)
+
+    def test_unavailable_glyph_is_reported(self):
+        from cad_preview_fonts import CADFonts
+        with CADFonts() as resolver:
+            resolver.mixed('NimbusSans-Regular.otf',1.0).text_width(chr(0x10ffff))
+            self.assertEqual(resolver.report()['missingGlyphs'],1)
+
+    def test_fragmented_utf8_text_is_recovered_without_changing_original(self):
+        doc=ezdxf.new('R2018'); text='A'*249+'中';doc.modelspace().add_mtext(text)
+        with tempfile.TemporaryDirectory()as td:
+            source,output=Path(td)/'source.dxf',Path(td)/'out.json';doc.saveas(source)
+            data=source.read_bytes();encoded=text.encode('utf8')
+            original=b'  1\n'+encoded+b'\n';broken=b'  3\n'+encoded[:250]+b'\n  1\n'+encoded[250:]+b'\n'
+            self.assertIn(original,data);data=data.replace(original,broken,1);source.write_bytes(data)
+            captured=[];draw=cad.CADFrontend.draw_mtext_entity
+            def capture(frontend,entity,properties):
+                captured.append(entity.text);return draw(frontend,entity,properties)
+            with patch.object(cad.CADFrontend,'draw_mtext_entity',capture):cad.render(source,output)
+            result=json.loads(output.read_text());self.assertIn(text,captured)
+            self.assertEqual(result['recoveredTypes'].get('TEXT_ENCODING'),1)
+            self.assertEqual(result['fontInfo']['missingGlyphs'],0)
+            self.assertEqual(source.read_bytes(),data)
+
+    def test_dxf_unicode_escapes_are_decoded_before_text_layout(self):
+        doc=ezdxf.new('R2004')
+        doc.modelspace().add_mtext(r'\U+6280\U+672F^J\U+00B16mm')
+        captured=[]; draw=cad.CADFrontend.draw_mtext_entity
+        def capture(frontend,entity,properties):
+            captured.append(entity.text);return draw(frontend,entity,properties)
+        with patch.object(cad.CADFrontend,'draw_mtext_entity',capture):result=self.render(doc)
+        self.assertIn('技术^J±6mm',captured)
+        self.assertEqual(result['recoveredTypes'].get('TEXT_UNICODE'),1)
+        self.assertEqual(result['fontInfo']['missingGlyphs'],0)
 
 if __name__ == '__main__':
     unittest.main()

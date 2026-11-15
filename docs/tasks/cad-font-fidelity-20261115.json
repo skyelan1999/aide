@@ -1,0 +1,81 @@
+{
+  "id": "cad-font-fidelity-20261115",
+  "request": "字体替代的问题也继续处理一下，尽量还原原图字体，修完再把所有图纸测一遍。",
+  "baseline": "7da2f573384decf8776e5b7fba0d9fccf4f5bc45",
+  "initial_status": "Two unrelated tracked edits and unrelated untracked drafts preserved; private path/hash inventory retained locally.",
+  "acceptance": [
+    "Prefer original declared CAD font/family and preserve style, width, alignment and inline formatting; use original embedded fonts from supplied PDFs where recoverable; disclose unavailable SHX/bigfonts honestly.",
+    "Fix the nonembedded PDF font case using local original fonts without weakening existing resource/source access guards.",
+    "Retest all 453 drawing records, 413 distinct CAD SVGs and all 40 PDF pages; zero geometry regressions, preserve original hashes, native/browser acceptance and business data."
+  ],
+  "scope": [
+    "Bounded font resolution and per-glyph fallback, private local font profile, PDF font-aware raster rendering, tests and diagnostics.",
+    "Corresponding-source open fallback font assets if needed; no proprietary font files or customer data committed or published.",
+    "Standard local build and regression; preserve unrelated local work; source integration follows the existing user authorization only after acceptance."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User asks to improve font fidelity and repeat entire archive regression. Confirmed forced WQ replacement; originals available locally and as embedded PDF fonts; absent SHX/bigfont files remain explicit.",
+      "evidence": [
+        "User request 2026-11-15",
+        ".agent-state/cad-font-fidelity-20261115/font-audit-private.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bounded local font resolver preserves actual faces and mixed-run metrics; PDF embedded fonts remain embedded; matching unembedded fonts use isolated local fontconfig. Missing SHX/bigfont remains explicit.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added named/private font resolution, per-glyph fallback, four pinned open stroke fonts, actual PDF family inspection, compact PDF pager and font diagnostics. Fixed UTF-8 continuation boundaries, legacy codepage multiline text and Latin-1 symbol escaping in the pinned converter.",
+      "evidence": [
+        "internal/server/cad_preview_fonts.py",
+        "internal/server/pdf_preview.go",
+        "docker/libredwg/dxf-utf8-chunks.patch",
+        "scripts/test_libredwg_strings.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "453 records retested: 425 actual CAD requests, 413 SVG decodes and 40 PDF pages; zero skipped/degraded/missing glyphs/blank pages. 22 renderer tests, converter encoding tests, 3 real opt-ins, geometry comparison and UI pass. Go race/vet and all other code checks pass (1689 server passes, 92 conditional skips). Full initially failed only on a missing new review link; docs retry passed, same code fingerprint, composite receipt retains the original failure.",
+      "evidence": [
+        ".agent-state/cad-font-fidelity-20261115/verification-final-receipt.json",
+        ".agent-state/cad-font-fidelity-20261115/report-summary.json",
+        ".agent-state/cad-font-fidelity-20261115/go-real-style-final.log",
+        ".agent-state/cad-font-fidelity-20261115/geometry-comparison-private.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture, sixth converter patch, bounded local font profile guidance, source/license notices, deidentified review and private per-drawing report updated; unavailable SHX/bigfont and historical-version limits explicit.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docker/libredwg/README.md",
+        "docs/reviews/2026-11-15-cad-font-fidelity.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Explicit source/resource files reviewed; no customer drawings, private font bytes or credentials staged. Owned API container and browser closed, original native file view and browser directories restored; business data and installed font hashes verified. Unrelated source work remains untouched pending the guarded merge.",
+      "evidence": [
+        ".agent-state/cad-font-fidelity-20261115/browser-cleanup-private.json",
+        ".agent-state/cad-font-fidelity-20261115/production-verification.json",
+        ".agent-state/cad-font-fidelity-20261115/font-profile-verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Preparing the authorized source-only main merge/push. No binary Release/version/tag requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user request in this ongoing task: 有 89 份存在实体缺失或填充降级 完成所有问题的解决并测试，做好后合并到main并推送。 Current follow-up requests font fidelity and a fresh whole-archive regression. Source merge/push only; no version/tag/binary Release requested.",
+  "rollback": "Previous local image tagged aide-rollback:cad-font-fidelity-20261115; private storage/env/draft/source backups retained outside Git. Do not restore stale lock state or overwrite concurrent user data.",
+  "handoff": "",
+  "verification_fingerprint": "0074a7b20bfa9fc4123960920e95b6fbe6c5d97b17c83a2218f444e2aa2f32ee",
+  "runtime_image": "sha256:6769be37e77c295a7ec10f56e131db8ffc73a5abd9c5b0ff422ada3d95e5390c"
+}

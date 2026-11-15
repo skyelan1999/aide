@@ -11,6 +11,8 @@ from ezdxf.addons.drawing import Frontend, RenderContext, config, layout, svg
 from ezdxf.addons.drawing.properties import Filling
 from ezdxf.addons.drawing.frontend import closed_loops, ignore_text_boxes
 from ezdxf.fonts import fonts
+from ezdxf.lldxf.encoding import decode_dxf_unicode
+from cad_preview_fonts import CADFonts, FontBudget
 from ezdxf.acis import api as acis
 from ezdxf.acis.entities import Curve, Surface, register
 from ezdxf.math import Vec3, ConstructionEllipse, cubic_bezier_from_ellipse
@@ -147,6 +149,27 @@ def invalid_hatch_scale(entity):
 
 
 class CADContext(RenderContext):
+    def __init__(self, doc, font_resolver=None):
+        self.font_resolver = font_resolver
+        self.font_keys = {}
+        super().__init__(doc)
+
+    def add_text_style(self, style):
+        if self.font_resolver is None:
+            return super().add_text_style(style)
+        face, key = self.font_resolver.resolve(style.dxf.font,
+                                               style.get_extended_font_data(),
+                                               style.dxf.bigfont)
+        name = style.dxf.name.casefold()
+        self.fonts[name] = face
+        self.font_keys[name] = key
+
+    def resolve_font(self, entity):
+        name = entity.dxf.get('style', 'Standard').casefold()
+        if self.font_resolver is not None and name in self.font_keys:
+            self.font_resolver.mark(self.font_keys[name])
+        return super().resolve_font(entity)
+
     def resolve_filling(self, entity):
         # A malformed pattern scale must not prevent every other entity opening.
         if invalid_hatch_scale(entity):
@@ -428,6 +451,15 @@ class CADFrontend(Frontend):
 
 def render(source, destination):
     logging.disable(logging.CRITICAL)
+    try:
+        with CADFonts() as resolver:
+            _render(source, destination, resolver)
+    except FontBudget as exc:
+        raise PreviewLimit('font budget') from exc
+
+
+def _render(source, destination, resolver):
+    logging.disable(logging.CRITICAL)
     if Path(source).stat().st_size > MAX_BYTES:
         raise PreviewLimit('input budget')
     data = Path(source).read_bytes()
@@ -454,18 +486,36 @@ def render(source, destination):
         repaired.unlink(missing_ok=True)
     if len(doc.entitydb) > MAX_SOURCE_OBJECTS:
         raise PreviewLimit('source entity budget')
-    # A standard build supplies an open CJK font. Glyph outlines remain local
-    # and make SVG independent of browser font installations and external URLs.
-    cjk = Path('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc')
-    if cjk.is_file():
-        fonts.font_manager.scan_folder(cjk.parent)
-        fonts.font_manager._fallback_font_name = cjk.name
-        for style in doc.styles:
-            style.dxf.font = cjk.name
-            style.dxf.bigfont = ''
+    # A legacy DXF writer may split a multibyte character between group 3
+    # continuation chunks. Reconstitute only byte sequences that decode strictly
+    # in the document's actual output encoding; never guess another encoding.
+    recovered_text = unicode_text = 0
+    for entity in doc.entitydb.values():
+        if entity.dxftype() not in ('TEXT', 'MTEXT', 'ATTRIB', 'ATTDEF'):
+            continue
+        value = entity.text if entity.dxftype() == 'MTEXT' else entity.dxf.get('text', '')
+        fixed = value
+        if any(0xDC80 <= ord(char) <= 0xDCFF for char in value):
+            try:
+                fixed = value.encode(doc.output_encoding, 'surrogateescape').decode(doc.output_encoding, 'strict')
+                recovered_text += 1
+            except (UnicodeError, LookupError):
+                pass
+        decoded = decode_dxf_unicode(fixed)
+        if decoded != fixed:
+            unicode_text += 1
+        if decoded != value:
+            if entity.dxftype() == 'MTEXT': entity.text = decoded
+            else: entity.dxf.text = decoded
     backend = BoundedSVG()
-    frontend = CADFrontend(CADContext(doc), backend)
+    frontend = CADFrontend(CADContext(doc, resolver), backend)
+    resolver.bind_pipeline(frontend.pipeline)
     frontend.messages += repaired_entries
+    if recovered_text:
+        frontend.recovered['TEXT_ENCODING'] += recovered_text
+        frontend.messages += recovered_text
+    if unicode_text:
+        frontend.recovered['TEXT_UNICODE'] += unicode_text
     if dropped:
         frontend.skipped['ACAD_PROXY_ENTITY'] += dropped
     for drawing_layout in doc.layouts:
@@ -500,7 +550,7 @@ def render(source, destination):
                   entities=entity_count, skipped=sum(frontend.skipped.values()),
                   skippedTypes=dict(frontend.skipped), renderedTypes=dict(frontend.rendered), warnings=frontend.messages,
                   degraded=sum(frontend.degraded.values()), degradedTypes=dict(frontend.degraded),
-                  recoveredTypes=dict(frontend.recovered),
+                  recoveredTypes=dict(frontend.recovered), fontInfo=resolver.report(),
                   visits=frontend.visits, points=backend.point_count)
     encoded = json.dumps(result, ensure_ascii=True).encode()
     if len(encoded) >= MAX_BYTES:

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -26,6 +29,114 @@ func pdfFakeRaster(t *testing.T, body string) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
+}
+
+func pdfFakeFontTools(t *testing.T, list, match string) {
+	t.Helper()
+	dir := t.TempDir()
+	for name, body := range map[string]string{"pdffonts": list, "fc-match": match} {
+		script := "#!/usr/bin/python3\nimport sys,time\n" + body + "\n"
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
+}
+
+func TestPDFFontInspectionRequiresActualFamilyAndPreservesInput(t *testing.T) {
+	if canonicalPDFFont("新宋体") != "nsimsun" || canonicalPDFFont("宋体") != "simsun" {
+		t.Fatal("distinct font families conflated")
+	}
+	list := "Embedded CID TrueType Identity-H yes no yes 1 0\nSimSun TrueType WinAnsi no no no 2 0\nSimSun CID TrueType GBK-EUC-H no no no 3 0\n"
+	pdfFakeFontTools(t, "print("+fmtPythonString(list)+")", "assert sys.argv[-1] == ':family=simsun'\nprint('SimSun,宋体')")
+	a := testApp(t)
+	input := []byte("%PDF-1.4\noriginal")
+	dwgWrite(t, a, "font.pdf", input)
+	u := "/api/file/pdf-preview?path=font.pdf&format=fonts"
+	w := request(a, "GET", u, nil)
+	var result pdfFontInspection
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &result) != nil {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	if !result.PreferOriginalFonts || result.EmbeddedFonts != 1 || len(result.MissingFonts) != 1 || !result.MissingFonts[0].Available {
+		t.Fatal(result)
+	}
+	after, _ := a.workspace.ReadFile("font.pdf")
+	if !bytes.Equal(input, after) {
+		t.Fatal("font inspection modified original")
+	}
+	unauthorized := httptest.NewRecorder()
+	a.Handler().ServeHTTP(unauthorized, httptest.NewRequest("GET", u, nil))
+	if unauthorized.Code != 401 {
+		t.Fatal(unauthorized.Code)
+	}
+	pdfFakeFontTools(t, "print("+fmtPythonString(list)+")", "print('WenQuanYi Zen Hei')")
+	data, err := inspectPDFFonts(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if json.Unmarshal(data, &result) != nil || result.PreferOriginalFonts || result.MissingFonts[0].Available {
+		t.Fatal("fallback family called original", string(data))
+	}
+}
+
+func TestPDFFontInspectionBoundsAndCancellation(t *testing.T) {
+	var list strings.Builder
+	for n := 0; n < 129; n++ {
+		fmt.Fprintf(&list, "Font%d TrueType WinAnsi no no no %d 0\n", n, n)
+	}
+	if _, err := parsePDFFontList([]byte(list.String())); err == nil {
+		t.Fatal("font budget bypass")
+	}
+	pdfFakeFontTools(t, "time.sleep(30)", "print('SimSun')")
+	ctx, cancel := context.WithTimeout(context.Background(), 80*time.Millisecond)
+	defer cancel()
+	start := time.Now()
+	if _, err := inspectPDFFonts(ctx, []byte("%PDF-1.4\noriginal")); err == nil || time.Since(start) > 3*time.Second {
+		t.Fatal("font inspection not cancelled", err)
+	}
+}
+
+func TestPDFFontConfigUsesEscapedPrivateDirectory(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "fonts&<local>")
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AIDE_CAD_FONT_DIR", dir)
+	tmp := t.TempDir()
+	env, err := pdfFontEnvironment(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(tmp, "fonts.conf"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "fonts&amp;&lt;local&gt;") || !strings.Contains(strings.Join(env, "\n"), "FONTCONFIG_FILE=") {
+		t.Fatal("unescaped font directory", string(data))
+	}
+}
+
+func TestPDFOriginalFontRuntime(t *testing.T) {
+	path := os.Getenv("AIDE_PDF_FONT_TEST_FILE")
+	if path == "" {
+		t.Skip("set AIDE_PDF_FONT_TEST_FILE in the configured original-font runtime")
+	}
+	input, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := inspectPDFFonts(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result pdfFontInspection
+	if json.Unmarshal(data, &result) != nil || !result.PreferOriginalFonts {
+		t.Fatal("original font not selected", string(data))
+	}
+	if _, err = rasterPDFPage(context.Background(), input, 1, 1024); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestPDFPreviewAuthorizationBoundsAndReadonly(t *testing.T) {

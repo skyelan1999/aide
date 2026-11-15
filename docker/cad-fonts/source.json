@@ -1,0 +1,23 @@
+{
+  "upstream": "https://github.com/LibreCAD/LibreCAD",
+  "revision": "8a82e35965d8d56a8f8608abd739fbb2c0de2f3e",
+  "license": "GPL-2.0-or-later; per-font source notices retained",
+  "files": {
+    "standard.lff": {
+      "sha256": "06218d62b1bfca6240d734911b537bdfa75701e37ce93210ef44123f534cd2b4",
+      "source": "https://raw.githubusercontent.com/LibreCAD/LibreCAD/8a82e35965d8d56a8f8608abd739fbb2c0de2f3e/librecad/support/fonts/standard.lff"
+    },
+    "romans.lff": {
+      "sha256": "8ceb7791be4b937fb11c72c9e91b78d392caa722499c4fa508856b01315231df",
+      "source": "https://raw.githubusercontent.com/LibreCAD/LibreCAD/8a82e35965d8d56a8f8608abd739fbb2c0de2f3e/librecad/support/fonts/romans.lff"
+    },
+    "iso.lff": {
+      "sha256": "6125781bf3730b34ce46988603cf57be84eacf06fdbcd98c82f7b6b5c51ab204",
+      "source": "https://raw.githubusercontent.com/LibreCAD/LibreCAD/8a82e35965d8d56a8f8608abd739fbb2c0de2f3e/librecad/support/fonts/iso.lff"
+    },
+    "simplex.lff": {
+      "sha256": "04e9c18b2bf1cbf030a43ab1b1b46e815f5bf850125c7272eb18b46808080906",
+      "source": "https://raw.githubusercontent.com/LibreCAD/LibreCAD/8a82e35965d8d56a8f8608abd739fbb2c0de2f3e/librecad/support/fonts/simplex.lff"
+    }
+  }
+}

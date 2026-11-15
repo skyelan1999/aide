@@ -8676,10 +8676,10 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   };
   const pageList = [], holders = [];
   const dpr = window.devicePixelRatio || 1;
-  let scale = 1, baseWidth = 0, numPages = 0, sizeLimited = false, compatibilityUsed = false;
+  let scale = 1, baseWidth = 0, numPages = 0, sizeLimited = false, compatibilityUsed = false, preferOriginalFonts = false, originalFontsUsed = false, fontLookupFailed = false;
   let renderGeneration = 0; // 渲染代次：layoutPages/缩放使其递增，旧 renderVisible 循环发现过期即退出
 
-  const setMeta = (txt) => { meta.textContent = txt + (compatibilityUsed ? ' · ' + t('兼容预览') : '') + (sizeLimited ? ' · ' + t('预览尺寸已受限') : ''); };
+  const setMeta = (txt) => { meta.textContent = txt + (originalFontsUsed ? ' · ' + t('同名字体预览') : compatibilityUsed ? ' · ' + t('兼容预览') : '') + (fontLookupFailed ? ' · ' + t('字体检查未完成') : '') + (sizeLimited ? ' · ' + t('预览尺寸已受限') : ''); };
   const fail = (msg) => { sizeLimited = false; scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
   const teardown = () => {
     if (cancelled) return;
@@ -8745,6 +8745,34 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     teardown();
     fail(t('PDF 页数无效或超过预览上限（2000 页），请拆分后查看'));
     return;
+  }
+  // Unembedded fonts can use a matching local original face. Embedded PDF
+  // fonts stay in PDF.js and are never replaced by the local font profile.
+  const fontURL = new URL(rawUrl, location.href);
+  if (fontURL.origin === location.origin && fontURL.pathname === '/api/file/raw') {
+    const fontAbort = new AbortController(), stopFonts = () => fontAbort.abort();
+    abort.signal.addEventListener('abort', stopFonts, {once:true});
+    const timer = setTimeout(stopFonts, 5000);
+    try {
+      fontURL.pathname = '/api/file/pdf-preview'; fontURL.searchParams.set('format', 'fonts');
+      let response;
+      for (let attempt=0; attempt<4; attempt++) {
+        response = await fetch(fontURL, {signal:fontAbort.signal});
+        if (response.status !== 429 || attempt===3) break;
+        await response.body?.cancel();
+        await new Promise(resolve=>setTimeout(resolve,500));
+        if (cancelled) return;
+      }
+      if (!response.ok) throw new Error('font inspection unavailable');
+      const bytes = await window.AidePreviewSafety.readBytes(response, 64*1024);
+      const info = JSON.parse(new TextDecoder().decode(bytes));
+      preferOriginalFonts = info.preferOriginalFonts === true;
+    } catch (e) {
+      if (!cancelled) fontLookupFailed = true;
+    } finally {
+      clearTimeout(timer); abort.signal.removeEventListener('abort',stopFonts);
+    }
+    if (cancelled) return;
   }
   pageTotal.textContent = '/ ' + numPages;
   pageInput.value = '1';
@@ -8884,6 +8912,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
       ctx.clearRect(0, 0, h.canvas.width, h.canvas.height);
       ctx.drawImage(image, 0, 0, h.canvas.width, h.canvas.height);
       h.el.dataset.compatibility = 'true'; compatibilityUsed = true;
+      if (preferOriginalFonts) { h.el.dataset.fontMode = 'original'; originalFontsUsed = true; }
       setMeta(numPages + ' ' + t('页'));
     } finally {
       clearTimeout(timer); abort.signal.removeEventListener('abort', stop);
@@ -8904,6 +8933,14 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
       c.width = c.height = 0;
       c.width = metrics.width; c.height = metrics.height;
       c.style.width = metrics.cssWidth + 'px'; c.style.height = metrics.cssHeight + 'px';
+      if (preferOriginalFonts) {
+        h.renderedScale = renderScale;
+        try { await compatibilityPage(h, gen); return; }
+        catch (e) {
+          if (cancelled || gen !== renderGeneration) return;
+          preferOriginalFonts = false; fontLookupFailed = true;
+        }
+      }
       const context = c.getContext('2d');
       if (!context) throw new Error('canvas unavailable');
       const ratio = metrics.outputScale;
@@ -9360,7 +9397,11 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
       const releaseMeasure = window.AideCADMeasure && detailed.modelToSvg ? window.AideCADMeasure.mount({svg,canvas,toolbar,modelToSvg:detailed.modelToSvg,units:detailed.units,snapPoints:detailed.snapPoints,t}) : () => {};
       releaseEvents = () => { release(); releaseMeasure(); themeObserver?.disconnect(); URL.revokeObjectURL(blobUrl); };
       meta.textContent = detailed.entities + ' ' + t('个实体') + (detailed.skipped ? ' · ' + t('未恢复 {0} 处内容', detailed.skipped) : '') + (detailed.degraded ? ' · ' + t('{0} 处仅显示轮廓', detailed.degraded) : '') + (detailed.warnings ? ' · ' + t('{0} 条绘制提示', detailed.warnings) : '');
-      meta.title = Object.entries(detailed.skippedTypes || {}).map(([type,count]) => type + ': ' + count).concat(Object.entries(detailed.degradedTypes || {}).map(([type,count]) => type + ': ' + t('{0} 处仅显示轮廓',count))).join(', ');
+      if (detailed.fontInfo) {
+        meta.textContent += ' · ' + t('字体匹配 {0} / 替代 {1}', detailed.fontInfo.originalFaces || 0, detailed.fontInfo.substitutedFaces || 0);
+        if (detailed.fontInfo.missingGlyphs) meta.textContent += ' · ' + t('缺少 {0} 个字形', detailed.fontInfo.missingGlyphs);
+      }
+      meta.title = Object.entries(detailed.skippedTypes || {}).map(([type,count]) => type + ': ' + count).concat(Object.entries(detailed.degradedTypes || {}).map(([type,count]) => type + ': ' + t('{0} 处仅显示轮廓',count))).concat((detailed.fontInfo?.faces || []).map(f => f.requested + ' → ' + f.family + (f.status === 'exact-file' || f.status === 'same-family' ? '' : ' (' + t('替代字体') + ')'))).join(', ');
     } catch (e) {
       if (blobUrl) URL.revokeObjectURL(blobUrl);
       meta.textContent = t('解析失败');
