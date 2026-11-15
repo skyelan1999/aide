@@ -30,6 +30,6 @@ int main(){
  std::cerr<<"Pixel check "<<(valid?"PASS":"FAIL")<<" raw=0x"<<std::hex<<actual<<std::dec<<"\n";
  HDC screen=GetDC(nullptr),printDc=CreateCompatibleDC(screen);HBITMAP printBitmap=CreateCompatibleBitmap(screen,320,240);auto oldPrint=SelectObject(printDc,printBitmap);BOOL printOk=PrintWindow(window,printDc,PW_RENDERFULLCONTENT);auto printPixel=GetPixel(printDc,160,120);std::cerr<<"Fixture foreground="<<(GetForegroundWindow()==window)<<" PrintWindow="<<printOk<<" RGB "<<int(GetRValue(printPixel))<<","<<int(GetGValue(printPixel))<<","<<int(GetBValue(printPixel))<<"\n";SelectObject(printDc,oldPrint);DeleteObject(printBitmap);DeleteDC(printDc);ReleaseDC(nullptr,screen);
  SelectObject(dc,old);DeleteDC(dc);DeleteObject(image);swap->Release();context->Release();device->Release();DestroyWindow(window);UnregisterClassW(className,wc.hInstance);
- if(!valid){std::cerr<<"FAIL Windows Graphics Capture GPU-frame pixel validation\n";ExitProcess(5);}
+ if(!valid){std::cerr<<"FAIL Windows Graphics Capture GPU-frame pixel validation\n";return 5;}
  std::cout<<"PASS Windows Graphics Capture returned expected GPU-rendered HWND pixels "<<bitmap.bmWidth<<"x"<<bitmap.bmHeight<<"\n";return 0;
 }

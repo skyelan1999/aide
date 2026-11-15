@@ -13,6 +13,7 @@
 #include <winrt/Windows.Graphics.Capture.h>
 #include <winrt/Windows.Graphics.DirectX.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
+#include "winrt_imports.hpp"
 #include "capture_graphics_interop.hpp"
 
 namespace aide_desktop {
