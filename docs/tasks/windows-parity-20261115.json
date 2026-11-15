@@ -50,22 +50,23 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "首个主题定向 SAPI smoke PASS、插件测试25/25 PASS；ARM64/AMD64 cross-compile 和 Aide CI PASS。Windows UI job 暴露语音 smoke 临时目录锁定，已修复测试工作目录并在等待新 CI。真实语音/完整 UI NOT_RUN；launcher完整脚本代理 fixture 超时、桌面策略原生测试 0xC0000005 待归因。第二个主题手势边界和草稿票据回归通过，原生全局监听/真实桌面验收未完成。",
+      "summary": "Topic #918 的 Aide CI run 584 和 Windows Desktop Check run 55 全绿（amd64/arm64/native-ui）；实际麦克风与可视 WebView 验收未运行。Topic #922 的手势/草稿/本地 i18n 测试通过；run 585 曾因两个英文 catalog key 缺失失败，修复后 PR head e24269323e17791a49064ff5999f739c0ee45dee 的 run 587/57 正在复验。截图 GPU 质量、真实全局监听/UI 仍未验收。",
       "evidence": [
         "python scripts/test_windows_speech_bridge.py — PASS on Windows MSVC; temporary output moved out of compiler process working directory to avoid hosted-runner directory lock.",
-        "PR #921 commit 28933fe42dc9573a42d3c372133eb2d61e89c955: Aide CI, compile (arm64), and compile (amd64) PASS; native-ui failed only on temp cleanup after the smoke printed PASS. Cleanup fix is local and awaits a new CI run.",
+        "PR #921 head 1946fd5a89ab2cf2ffd9081aaf0263c33752dd7c: Aide CI run 584 PASS; Windows Desktop Check run 55 PASS including amd64, arm64 and native-ui.",
+        "PR #923 head 12d95a3b438037638a8e1411e88458edd6f55ae2 Aide CI run 585 failed because two new UI strings lacked English catalog entries; existing English keys are now reused at e24269323e17791a49064ff5999f739c0ee45dee and recheck runs 587/57 are in progress.",
         "No desktop/browser control connector exposed; actual microphone and visual UI acceptance remain NOT_RUN.",
         "2026-11-16 Windows host resource check: 14.5 GiB free of 31.7 GiB visible RAM; tests ran one at a time."
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "首个 topic 架构与用户指南已更新；第二个 topic 审计记录已创建。总体能力矩阵、其他 Windows bug、Windows UI 美化和 Discussion #916 更新待继续。",
+      "summary": "首个 topic 架构/用户指南和第二个 topic 架构/用户指南均已更新。总体能力矩阵、其他 Windows bug、Windows UI 美化和 Discussion #916 更新待继续。",
       "evidence": []
     },
     "cleanup": {
       "status": "in_progress",
-      "summary": "Topic #918 的 Draft PR #921 保持 open/unmerged；ARM64/AMD64 编译和 Aide CI 已通过，native-ui 清理修复正在准备下一次 CI。Topic #922 独立工作树中，尚未形成 PR。所有 PR 必须保持未合并。",
+      "summary": "Topic #918 的 Draft PR #921 保持 open/unmerged；Aide CI 和 Windows Desktop Check 全绿。Topic #922 的 Draft PR #923 保持 open/unmerged；针对 CI 暴露的 i18n 回归已本地修复并等待新 CI。所有 PR 必须保持未合并。",
       "evidence": ["https://github.com/skyelan1999/aide/pull/921", "https://github.com/skyelan1999/aide/issues/918", "https://github.com/skyelan1999/aide/issues/922"]
     },
     "release": {
@@ -76,5 +77,5 @@
   },
   "release_authorization": "",
   "rollback": "每个 topic 使用独立分支/PR；回滚通过关闭 PR 或 revert 该主题提交。",
-  "handoff": "Speech topic has code/docs, Issue #918, and Draft PR #921 (unmerged); CI and real audio/UI remain pending. Capture topic #922 has requirements/design notes and gesture/ticket tests, but native listener, high-fidelity window capture, documentation and PR are not complete. No Discussion #916 write tool or desktop/browser control was available. Continue the Windows runtime audit, macOS-only feature inventory and Windows UI polish. Linear resource-conscious testing. Never merge these PRs."
+  "handoff": "Speech topic Issue #918 / Draft PR #921: Aide CI and Windows Desktop Check pass at head 1946fd5a89ab2cf2ffd9081aaf0263c33752dd7c; real mic/visual UI remain NOT_RUN. Capture topic Issue #922 / Draft PR #923: code, docs, local tests and first CI failure correction are present; latest CI is being rechecked. PrintWindow GPU quality and real global hotkey/UI remain NOT_RUN. Discussion #916 still has no write tool available, and this session has no visual desktop/browser control. Continue broad Windows issue audit, macOS-only feature inventory, capture quality evaluation and UI polish. Run tests linearly while monitoring memory. Keep both PRs unmerged."
 }
