@@ -264,6 +264,36 @@ class CADSVGTests(unittest.TestCase):
         self.assertEqual(result['fontInfo']['originalFaces'], 1)
         self.assertEqual(doc.styles.get('original').dxf.font, 'NimbusSans-Regular.otf')
 
+    def test_platform_family_alias_uses_original_outline_and_keeps_direct_match(self):
+        import os
+        from fontTools.fontBuilder import FontBuilder
+        from fontTools.pens.ttGlyphPen import TTGlyphPen
+        from cad_preview_fonts import CADFonts
+        with tempfile.TemporaryDirectory() as td:
+            builder = FontBuilder(1000, isTTF=True)
+            builder.setupGlyphOrder(['.notdef', 'A'])
+            pen = TTGlyphPen(None)
+            pen.moveTo((0, 0)); pen.lineTo((400, 0)); pen.lineTo((200, 700)); pen.closePath()
+            builder.setupGlyf({'.notdef': TTGlyphPen(None).glyph(), 'A': pen.glyph()})
+            builder.setupHorizontalMetrics({'.notdef': (500, 0), 'A': (600, 0)})
+            builder.setupHorizontalHeader(ascent=800, descent=-200)
+            builder.setupCharacterMap({ord('A'): 'A'})
+            builder.setupNameTable({'familyName': 'Prx2', 'styleName': 'Regular',
+                                   'fullName': 'Prx2', 'psName': 'SyntheticPlatformAlias'})
+            builder.font['name'].setName('Proxy 2', 1, 3, 1, 0x409)
+            builder.setupOS2(sTypoAscender=800, sTypoDescender=-200, usWinAscent=800, usWinDescent=200)
+            builder.setupPost(); builder.setupMaxp()
+            builder.save(Path(td)/'platform.ttf')
+            with patch.dict(os.environ, {'AIDE_CAD_FONT_DIR': td}), CADFonts() as resolver:
+                face, key = resolver.resolve('Proxy 2')
+                self.assertEqual(face.filename, 'platform.ttf')
+                self.assertEqual(resolver.records[key]['status'], 'same-family')
+                self.assertGreater(resolver.raw(face.filename, 2.5).text_width('AA'), 0)
+                direct = face._replace(family='Proxy 2', filename='direct.ttf')
+                with patch.object(resolver.manager, 'find_best_match', return_value=direct) as lookup:
+                    self.assertEqual(resolver.family_face('Proxy 2'), direct)
+                    self.assertEqual(lookup.call_args.kwargs['family'], 'proxy 2')
+
     def test_mixed_stroke_and_chinese_use_same_advances_for_drawing_and_measurement(self):
         from cad_preview_fonts import CADFonts
         from ezdxf.addons.drawing.properties import Properties

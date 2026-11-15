@@ -9109,7 +9109,7 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
     } catch (err) { grid.textContent = err.message || String(err); }
     finally { loading = false; }
   }
-  sheetSelect.onchange = () => { startRow = 1; load(sheetSelect.value); };
+  sheetSelect.onchange = () => { startRow = 1; startCol = 1; load(sheetSelect.value); };
   previous.onclick = () => { startRow = Math.max(1, startRow - 100); load(sheetSelect.value); };
   next.onclick = () => { startRow += 100; load(sheetSelect.value); };
   previousCol.onclick = () => { startCol = Math.max(1, startCol - 26); load(sheetSelect.value); };

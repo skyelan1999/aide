@@ -21,6 +21,9 @@ FAMILIES = {
     'simfang': 'fangsong', '楷体': 'kaiti', '楷体_gb2312': 'kaiti',
     'kaiti_gb2312': 'kaiti', 'simkai': 'kaiti', '黑体': 'simhei',
     'arialmt': 'arial', 'timesnewromanpsmt': 'times new roman',
+    # The same Proxy 2 font names its Macintosh family Prx2 and its Windows
+    # family Proxy 2. Preserve that documented platform-name relationship.
+    'proxy 2': 'prx2', 'proxy2': 'prx2',
 }
 STROKES = {'txt': 'standard.lff', 'simplex': 'simplex.lff',
            'romans': 'romans.lff', 'isocp': 'iso.lff', 'iso': 'iso.lff'}
@@ -316,10 +319,14 @@ class CADFonts:
         family = font_key(family)
         if not family:
             return None
-        family = FAMILIES.get(family, family)
+        mapped = FAMILIES.get(family, family)
         style = 'Bold Italic' if bold and italic else 'Bold' if bold else 'Italic' if italic else 'Regular'
-        return self.manager.find_best_match(family=family, style=style,
-                                            weight=700 if bold else 400, italic=italic)
+        match = self.manager.find_best_match(family=family, style=style,
+                                             weight=700 if bold else 400, italic=italic)
+        if match is not None or mapped == family:
+            return match
+        return self.manager.find_best_match(family=mapped, style=style,
+                                             weight=700 if bold else 400, italic=italic)
 
     def resolve(self, requested, extended=('', False, False), bigfont=''):
         parts = font_key(requested).split(',', 1)

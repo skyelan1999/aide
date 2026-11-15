@@ -1190,6 +1190,7 @@ body{grid-template-columns:var(--aide-left-sidebar-width,238px) minmax(420px,1fr
 body.files-hidden{grid-template-columns:var(--aide-left-sidebar-width,238px) minmax(420px,1fr)}
 .sidebar-resizer{position:fixed;top:0;bottom:0;width:8px;margin:0;transform:translateX(-50%);z-index:70;cursor:col-resize;touch-action:none;outline:none}
 .sidebar-resizer-left{left:var(--aide-left-sidebar-width,238px)}
+body.file-view-mode>.sidebar-resizer{display:none}
 .sidebar-resizer-right{left:calc(100vw - var(--aide-right-sidebar-width,286px))}
 .sidebar-resizer::after{content:"";position:absolute;left:3px;top:calc(50% - 20px);width:2px;height:40px;border-radius:2px;background:transparent;transition:background .15s,box-shadow .15s}
 .sidebar-resizer:hover::after,.sidebar-resizer:focus-visible::after,body.sidebar-resizing .sidebar-resizer::after{background:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 15%,transparent)}

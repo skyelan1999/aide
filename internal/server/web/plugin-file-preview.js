@@ -4,6 +4,10 @@
  let generation=0;
  async function open(spec,services){
   if(!spec?.path||services.blocked()||!services.current())return false;
+  // PNG is an ordinary image by default. Raster editing starts explicitly
+  // inside the selected workbench through its own open/import controls.
+  const typePath=spec.format?'file'+spec.format:spec.path;
+  if(/\.png$/i.test(globalThis.AideFileTypes?.effectiveTypePath(typePath)||typePath))return false;
   const query=new URLSearchParams({path:spec.path,root:spec.root||'workspace'});for(const key of ['source','origin','knowledgeWorkspace'])if(spec[key])query.set(key,spec[key]);if(spec.readOnly)query.set('readOnly','true');
   let response;try{response=await services.api('/plugins/file-handlers?'+query);}catch(_){return false;}
   if(!services.current()||services.blocked())return true;

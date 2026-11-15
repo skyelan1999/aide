@@ -1,0 +1,79 @@
+{
+  "id": "cad-final-fonts-20261116",
+  "request": "继续找剩下的 hmhz、eq_eng、eq_chs、hgcad 和 proxy 2 字体，尽量把这123份图纸的替代也还原，处理完再全量测一遍，合并到main并推送。",
+  "baseline": "4737cb9780aa5983b4b3bc8b3dd54f449c7dc6af",
+  "initial_status": "M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/server/web/starmap.html\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Locate remaining same-name font files using attributable sources; verify internal identity and mapped glyphs without invented aliases.",
+    "Retest all 453 archive entries: 425 CAD API requests, 413 distinct SVG renders and 28 PDFs with 40 visible pages.",
+    "Compare CAD entity metadata, source numeric geometry and source hashes; retain explicit fallback for unavailable or incompatible fonts.",
+    "Preserve local work, settings, sessions and original drawings; merge and push tested source/docs to main without a binary Release.",
+    "Additional steering: PNG opens in the native Aide image viewer by default; raster editing requires opening the raster tool and explicitly importing/opening a file.",
+    "After font/raster work, exercise the current XLSX, PPT and PPTX rendering paths and report content, layout, fonts/images, blank pages and failures separately."
+  ],
+  "scope": [
+    "private CAD font profile and ignored font search/testing evidence",
+    "internal/server/cad_preview_fonts.py only if required by recovered fonts",
+    "scripts/test_dwg_svg.py if parser/resolver changes are required",
+    "docs/tasks/cad-final-fonts-20261116.json",
+    "docs/reviews/2026-11-16-cad-final-fonts.md",
+    "internal/server/web/plugin-file-preview.js and adjacent tests if raster file routing needs correction",
+    "raster plugin source and metadata only where required by explicit PNG native-opening behavior",
+    "current XLSX/PPT/PPTX renderer validation and directly required fixes",
+    "internal/server/web/style.css: standalone-file resize-handle obstruction",
+    "internal/server/web/app.js: XLSX sheet-switch navigation reset"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Best-effort remaining five font-name recovery, complete archive validation and authorized main delivery.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Recover attributable publisher/font payloads; preserve explicit fallback for unavailable fonts. PNG default route stays native; Office rendering is audited separately.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Private 27-font profile plus platform-family alias; PNG native default and standalone control obstruction fixed; XLSX sheet-switch blank-grid bug fixed. Office layout/unsupported-format limits documented.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final image: 425 CAD APIs, 413 browser SVGs, 28 PDFs/40 pages, 1,764,391 geometry records, 453 source hashes pass. Three real runtime cases, 28 font regressions and five route tests pass. Actual native PNG/CAD, six measurement buttons and eight theme/width cases pass. Eight XLSX/23 sheets/22,518 cells audited; navigation fixed, fidelity limits and PPT/PPTX unsupported recorded. Full repository check in progress. Final full profile passes all 348 commands; Go 1,781 registered cases in 24 race shards: 1,689 pass and 92 conditional skips, none failed. Three relevant skipped-by-default real runtime cases executed separately and pass.",
+      "evidence": [
+        "docs/reviews/2026-11-16-cad-final-fonts.md",
+        ".agent-state/cad-final-fonts-20261116/"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Final behavior, font provenance, remaining 122 substitution entries and Office audit limits recorded; private HTML/JSON report contains all 453 drawings.",
+      "evidence": [
+        "docs/reviews/2026-11-16-cad-final-fonts.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned audit browser pages and two disposable fixture containers removed, copied Go probe removed after recording hash. Production, rollback image, backups and unrelated source preserved.",
+      "evidence": [
+        ".agent-state/cad-final-fonts-20261116/real-optins-receipt.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source-only main fast-forward/push authorized; final regression passes, remote integration and CI pending. No binary Release, tag or version bump.",
+      "evidence": [
+        ".agent-state/cad-final-fonts-20261116/full-final-receipt.json"
+      ]
+    }
+  },
+  "release_authorization": "Current explicit user instruction: 合并到main并推送",
+  "rollback": "Local image aide-rollback:cad-final-fonts-20261116 and complete data/source backup under /Users/skyelan/WorkTrees/aide-runtime-backups/20261116-cad-final-fonts; do not restore stale session or lock data over newer work.",
+  "handoff": "Best-effort font recovery complete: 123 to 122 substitution entries, hmhz/eq_eng/eq_chs unavailable. PNG default native route fixed. XLSX contents audited with declared layout limits; PPT/PPTX current native renderer unsupported. Main integration/push and final CI pending; no Release, tag or version bump authorized.",
+  "additional_requests": [
+    "另外png打开就是原生打开，栅图要改的话只能先打开栅图导入文件或打开文件啥的再改",
+    "你做完这块额外的核对一下当前xlsx的渲染是否正确 ppt和pptx的渲染是否正确"
+  ]
+}
