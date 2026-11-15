@@ -28,7 +28,7 @@ Windows runner 的窄窗口和合成 WM_DPICHANGED 截图用于验证宿主响�
 
 `ComputerBridge` 在 Windows 10 1903 及更新版本优先使用 `Windows.Graphics.Capture` 的 HWND interop 捕获窗口，并把最新的稳定帧复制到 PNG；光标不包含在图像中。硬件 D3D11 设备创建失败时尝试 WARP。旧版 Windows 或捕获 API 不可用时保留 `PrintWindow` 回退。窗口尺寸限制为每边 4096 像素、总计 4,000,000 像素；PNG 限制为 16 MiB。Graphics Capture 的首次画面最多等待 1.8 秒，并在返回帧前收集 120 毫秒内到达的最新帧，以避开刚启动会话时可能出现的空白帧。
 
-GPU 捕获仍是候选实现，尚未通过本地实体前台窗口验收：当前自动化会话不能将合成 D3D11 窗口设为前台，WGC 与 `PrintWindow` 得到的像素均为黑色。`scripts/windows_graphics_capture_smoke.cpp` 会检查 GPU 渲染像素，失败时以非零状态退出；Aide CI 和可交互 Windows 桌面验收通过前，不应将截图质量标记为通过或关闭 Issue #922。
+GPU 路径已通过 Windows Desktop Check #74：Windows runner 上的 D3D11 合成窗口经 WGC 捕获为 320×240，中心像素匹配预期 RGB 230,26,51。当前开发会话无法把本地合成窗口设为前台，因此本地像素夹具返回黑帧/Access denied；这属于本地桌面会话限制，记录为 NOT_RUN/FAIL，不覆盖 CI 证据。真实前台应用、全局热键触发及图像附加到 Aide 解锁会话草稿的端到端交互仍未验收，Issue #922 保持开放。
 
 ## 会话、证书与身份验证
 
