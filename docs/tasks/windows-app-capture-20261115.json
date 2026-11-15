@@ -1,8 +1,8 @@
 {
   "id": "windows-app-capture-20261115",
   "request": "为 Windows 桌面端实现与 macOS 相当的全局前台窗口截图到 Aide 草稿能力；配置全局快捷键、权限反馈、应用/窗口/时间上下文、会话隔离；不自动发送，独立 Issue/文档/测试/PR，不合并。",
-  "baseline": "e8c47360cd1de50110c071c7d156810ec8cfff0a",
-  "initial_status": "codex/windows-app-capture-922 based on latest origin/main e8c47360; clean worktree.",
+  "baseline": "ba46ce28e9502d697321667b24de8d27d2d6d426",
+  "initial_status": "Topic branch rebased onto main ba46ce28; pushed as PR #923 head 12d95a3b438037638a8e1411e88458edd6f55ae2.",
   "issue": "https://github.com/skyelan1999/aide/issues/922",
   "acceptance": [
     "Windows Aide desktop exposes an opt-in configurable global modifier gesture with actionable permission/listening status.",
@@ -42,7 +42,7 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "Added opt-in global low-level keyboard/mouse hooks, persistent Shift/Ctrl choice, Windows AideNativeCapture message channel, host foreground-HWND validation, background screenshot worker, and one-time ticket delivery through shared draft API. Current screenshot implementation still uses PrintWindow and is not accepted as parity quality.",
+      "summary": "Added opt-in global low-level keyboard/mouse hooks, persistent Shift/Ctrl choice, Windows AideNativeCapture message channel, host foreground-HWND validation, background screenshot worker, and one-time ticket delivery through shared draft API. Reused existing English catalog keys for the browser-only fallback and Windows permission status; added user-guide setup steps. Current screenshot implementation still uses PrintWindow and is not accepted as parity quality.",
       "evidence": [
         "native/windows-launcher/desktop_capture.hpp",
         "native/windows-launcher/desktop.hpp",
@@ -52,19 +52,24 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current Windows host compiled and linked the integrated native launcher and self-test. Portable gesture-boundary smoke and shared draft ticket/session regression passed. No real global hook, visible WebView, GPU-backed target window, or visual Aide draft test was performed; screenshot quality remains unverified.",
+      "summary": "Current Windows host compiled and linked the integrated native launcher and self-test. Portable gesture-boundary smoke, shared draft ticket/session regression and documentation passed. PR Aide CI run 585 exposed two UI strings missing from the English catalog. They now use existing accurate catalog entries; targeted localization tests pass locally, but the updated source has not yet been pushed/rechecked by CI. Windows Desktop Check run 56 is in progress. No real global hook, visible WebView, GPU-backed target window, or visual Aide draft test was performed; screenshot quality remains unverified.",
       "evidence": [
         "python -X utf8 -c ... test_windows_launcher_compile.main() with only known test_windows_bat_entrypoints.check skipped — PASS main native compile/link and self-test",
         "g++ -static -std=c++17 -O0 scripts/capture-gesture-smoke.cpp — PASS short double tap, long press, timeout, intervening input",
         "node scripts/desktop-capture.test.cjs — PASS one-use ticket, draft attachment, session/lock/navigation rejection",
         "node --check internal/server/web/desktop-capture.js — PASS",
+        "node scripts/test_i18n_coverage.cjs — PASS, 4020 UI translation sites after reusing existing English keys for native desktop requirement and Windows permission status",
+        "node scripts/test_i18n.cjs — PASS",
+        "python -X utf8 scripts/check_docs.py — PASS, 535 Markdown / 2556 local links after adding Windows capture user-guide instructions",
         "git diff --check — PASS"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "Windows desktop architecture now documents the opt-in hook, ticket-bound no-auto-send flow, and PrintWindow quality limitation; user guide and final behavior docs remain pending until GraphicsCapture and real UI acceptance are settled.",
+      "summary": "Windows desktop architecture and user guide document opt-in gestures, draft-only attachment, current device/quality limitations and the missing GPU-window acceptance.",
       "evidence": [
+        "docs/architecture/windows-desktop.md",
+        "docs/user-guide.md",
         "docs/tasks/windows-app-capture-20261115.json"
       ]
     },
@@ -80,5 +85,5 @@
     }
   },
   "rollback": "Use a separate feature branch; close PR or revert its commit.",
-  "handoff": "Issue #922 remains open. Native hooks and shared draft flow exist in the isolated branch, but current PrintWindow capture may block or fail on GPU-backed windows and is not accepted as Mac parity. Implement and test GraphicsCaptureItem HWND capture, then verify actual Windows hotkey behavior and that PNG/context arrive in an unlocked Aide draft without auto-send. Keep PR draft/open/unmerged until acceptance; close Issue only after all visual/desktop tests pass."
+  "handoff": "Issue #922 remains open. PR #923 is Draft/open/unmerged on main ba46ce28. Aide CI run 585 failed the i18n coverage test because two UI strings lacked English catalog entries; the browser fallback and Windows permission status now reuse existing English keys and pass local targeted i18n tests. Push this correction and confirm new CI. Windows Desktop Check run 56 was still running at last check. Native hooks and shared draft flow exist, but current PrintWindow capture may block or fail on GPU-backed windows and is not accepted as Mac parity. Continue GraphicsCaptureItem HWND capture evaluation, then verify actual Windows hotkey behavior and that PNG/context arrive in an unlocked Aide draft without auto-send."
 }
