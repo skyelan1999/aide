@@ -23,7 +23,7 @@
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "需求限定为 Windows 原生 Computer Bridge 的只读控件检查首阶段；Issue #924 整体仍包含后续语义操作及实际验收，因此不在本阶段关闭。",
+      "summary": "�����޶�Ϊ Windows ԭ�� Computer Bridge ��ֻ���ؼ�����׽׶Σ�Issue #924 �����԰����������������ʵ�����գ���˲��ڱ��׶ιرա�",
       "evidence": [
         "Issue #924 open; user requires topic issue/docs, CI and actual testing, no merge.",
         "Existing Aide server calls authenticated POST /v1/inspect; macOS response and approval consumer require roles/labels/value/focus/rect; native Windows currently returns 501."
@@ -47,7 +47,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Local Windows UIA and launcher verification passed. Windows Desktop Check run 61 failed because the Linux cross-compiler could not resolve the Windows-cased UIAutomation.h include; the include casing is corrected in this follow-up and CI must rerun before acceptance.",
+      "summary": "Local Windows UIA smoke passed after the include-casing fix; Aide CI run 604 and Windows Desktop Check run 64 passed on head 93af41fc, including AMD64/ARM64 cross-build and the hosted Windows UIA fixture. Real app/provider acceptance remains open.",
       "evidence": [
         "PASS `python scripts/test_windows_computer_uia.py` on Windows: real UIA provider returned editable value and button metadata, password value excluded; executed after final traversal bound change.",
         "PASS `$env:PYTHONUTF8=1; python scripts/test_windows_launcher_compile.py`: MSVC compile/link, native self-test, actual BAT/CMD fixtures including proxy/fallback and data preservation. Existing fixture emits C4244 conversion warnings from scripts/fixtures/windows-entrypoint.cpp.",
@@ -57,7 +57,8 @@
         "After implementation and local verification, rebased topic commit onto latest fetched origin/main 4737cb97 (2026-11-16); no overlapping files.",
         "Windows Desktop Check run 61 failed on AMD64 at computer_bridge.hpp:10 with fatal error UIAutomation.h file not found; ARM64 was cancelled. Aide CI run 597 succeeded.",
         "Changed the include to lowercase uiautomation.h for case-sensitive Linux cross-compilation; `python scripts/test_windows_computer_uia.py` passes locally after this change.",
-        "CI for the casing fix is pending; Docker Desktop Linux engine is unavailable locally, so do not claim cross-build acceptance."
+        "Aide CI run 604 and Windows Desktop Check run 64 passed for PR head 93af41fce12a931985a1eeb72ca924a016e5078b; both architecture cross-builds and the hosted native UIA/password fixture passed.",
+        "Docker Desktop Linux engine is unavailable locally; cross-build evidence comes from CI. Real app/provider matrix, semantic actions, browser workflows, and visual acceptance are still NOT_RUN."
       ]
     },
     "documentation": {
@@ -76,14 +77,14 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "Draft PR #926 remains open and unmerged; a follow-up fixes the cross-build header casing and awaits CI.",
+      "summary": "Draft PR #926 remains open and unmerged; the cross-build casing fix passed CI. Real application and semantic-action acceptance remain outstanding.",
       "evidence": [
         "User requested the final merge stay in a PR; GitHub confirms #926 state=open, draft=true, merged=false.",
-        "Windows Desktop Check run 61 failed for the prior head; follow-up commit is pending fresh CI."
+        "Aide CI #604 and Windows Desktop Check #64 passed on follow-up head 93af41fce12a931985a1eeb72ca924a016e5078b."
       ]
     }
   },
   "release_authorization": "User authorized push and PR creation; the PR must remain unmerged.",
   "rollback": "Revert the topic commit or PR branch; Windows bridge inspect returns to HTTP 501; no stored data migration. Keep PR open unless explicitly closed later.",
-  "handoff": "Issue #924 remains open. Draft PR #926 contains the bounded read-only Windows UIA inspection first slice and must stay unmerged. Prior head e875921672cc997b93958de74c97ef6bfb07c5a6 failed Windows Desktop Check AMD64 because Linux is case-sensitive for UIAutomation.h; lowercase include fix and local UIA fixture pass are now in this follow-up. Wait for fresh CI. Linux AMD64/ARM64 compile is not locally verifiable because Docker is unavailable. Real app/provider matrix, semantic UIA actions, browser workflows, and visual acceptance remain."
+  "handoff": "Issue #924 remains open. Draft PR #926 contains the bounded read-only Windows UIA inspection first slice and must stay unmerged. The lowercase uiautomation.h fix passed local Windows UIA smoke, Aide CI #604, and Windows Desktop Check #64 (AMD64/ARM64 and hosted UIA fixture) on head 93af41fce12a931985a1eeb72ca924a016e5078b. Linux cross-build is not locally verifiable because Docker is unavailable. Real app/provider matrix, semantic UIA actions, browser workflows, and visual acceptance remain."
 }
