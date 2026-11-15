@@ -84,6 +84,9 @@ jobs:
       - name: Actual Win32 compiler and CMD source-build recovery contracts
         shell: cmd
         run: python scripts/test_windows_launcher_compile.py
+      - name: Isolated native computer bridge discovery, snapshot and denial checks
+        shell: cmd
+        run: python scripts/ci/windows_computer_bridge.py
       - name: Actual Windows atomic state writes, process jobs and stop recovery
         shell: cmd
         run: python scripts/ci/windows_stop_recovery.py

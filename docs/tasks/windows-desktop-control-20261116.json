@@ -1,0 +1,86 @@
+{
+  "id": "windows-desktop-control-20261116",
+  "request": "核对 macOS 独立工作台电脑控制功能在 Windows 的缺口；完成安全有限的 Windows 对等能力，更新架构/任务文档，关联 Issue #932，提供独立草稿 PR 和真实 CI/用户场景验收，不合入 main。",
+  "baseline": "f3cceb37e4accfab2007e045687f8b9765d641e6",
+  "initial_status": "New isolated worktree from origin/main f3cceb37e4accfab2007e045687f8b9765d641e6; task opened with scripts/agent-route.py. Root workspace untouched.",
+  "acceptance": [
+    "Document Windows/macOS desktop computer-control capability differences, including known platform-specific limits; link Issue #932 and related #924.",
+    "Make Windows foreground/explicit app discovery compatible with the core computer-control contract, with process identity and ambiguity checks.",
+    "Pin every approved Windows action to the discovered PID/process rule and current HWND; deny unavailable/secure desktop access, stale screenshot windows, and out-of-window clicks.",
+    "Return bounded screenshot window geometry/identity metadata required for image-coordinate conversion without claiming OCR or GPU capture parity.",
+    "Map the shared CMD modifier to Windows Ctrl and support the core approved key-chord grammar without changing macOS/Linux code.",
+    "Run focused Windows compile/runtime checks and supported CI; record actual interactive target-app and screenshot evidence or mark NOT_RUN.",
+    "Link a separate draft PR to Issue #932; leave all issues open until full parity scenarios are accepted; do not merge."
+  ],
+  "scope": [
+    "native/windows-launcher/computer_bridge.hpp",
+    "scripts/test_windows_launcher_compile.py",
+    "scripts/ci/windows_computer_bridge.cpp",
+    "scripts/ci/windows_computer_bridge.py",
+    ".github/workflows/windows-desktop-check.yml",
+    "docs/architecture/windows-desktop.md",
+    "docs/tasks/windows-desktop-control-20261116.json",
+    "focused computer bridge tests and Windows Desktop Check"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Audit is separated from #924 UIA parity; #932 tracks remaining desktop route, scheduler and visual controller differences.",
+      "evidence": [
+        "Latest upstream main: f3cceb37e4accfab2007e045687f8b9765d641e6 (fetched 2026-11-16).",
+        "GitHub Issue #932 opened with the observed macOS/Windows capability gaps.",
+        "Windows source currently handles snapshot/click/type/key only; core Go caller also requests /v1/foreground-app and /v1/resolve-app."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Implement the least risky user-visible foundation first: metadata-only app discovery, strict identity pinning, stale-window rejection, and screenshot coordinate metadata.",
+      "evidence": [
+        "Windows implementation remains under native/windows-launcher; no macOS/Linux source changes are in scope."
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Windows bridge now provides foreground/explicit process discovery, bounded visible app list, PID/process-rule pinning, secure desktop denial, snapshot HWND/bounds metadata, stale-window rejection, window-bounded click, UTF-16 typing limit and CMD-to-Ctrl key chords. Drag/scroll, browser workflow, UIA actions, and virtual pointer remain tracked follow-ups.",
+      "evidence": [
+        "Only native/windows-launcher code changed; macOS Swift and shared Go/web behavior remain unchanged.",
+        "Added a Windows-only isolated bridge fixture and workflow step to exercise discovery, snapshot metadata, key chords, and safe denial paths where an interactive desktop is available."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Local native launcher compile/link/self-test passes. The focused bridge fixture compiles, but this host has no interactive desktop, so runtime app/window cases are NOT_RUN. Full combined local script reached an unrelated CMD proxy fixture timeout. CI is pending the PR.",
+      "evidence": [
+        "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only (Visual Studio 2022/MSVC, x64 native compile/link, launcher self-test and dry-run checks).",
+        "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — fixture compiled, but bridge reports desktopAvailable=false on this host, so no app was focused or screen captured.",
+        "FAIL: python -X utf8 scripts/test_windows_launcher_compile.py — after native compilation/self-test, existing scripts/test_windows_build_proxy.py CMD driver exceeded its 10-second timeout.",
+        "NOT_RUN: go test ./internal/server -run 'TestComputer(Control|Snapshot|Image|Gesture)' -count=1 — Go is not installed on this Windows host.",
+        "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON/runner syntax parsed and git diff --check passed.",
+        "NOT_RUN: GitHub Aide CI and Windows Desktop Check on this topic branch; awaiting PR branch CI."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Capability matrix distinguishes implemented Windows bridge routes from UIA, OCR/GPU capture, background control, browser, drag/scroll, scheduling and pointer gaps.",
+      "evidence": [
+        "docs/architecture/windows-desktop.md links Issue #932 and related UIA Issue #924, and separates implemented routes from unimplemented parity.",
+        "python -X utf8 scripts/check_docs.py passed with 537 Markdown files and 2558 local links."
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requested all code remain in open pull requests; no merge, release, or main update is authorized or performed.",
+      "evidence": [
+        "Final change will be submitted as an open draft PR; Issue #932 stays open while drag/scroll, browser, UIA, overlay, and interactive real-app acceptance remain incomplete."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

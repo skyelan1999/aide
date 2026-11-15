@@ -6,6 +6,7 @@ executable is never installed or published and cannot provide host helpers.
 """
 import os
 import importlib.util
+import argparse
 from pathlib import Path
 import re
 import subprocess
@@ -16,6 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--native-only', action='store_true', help='compile/link the real launcher and run its native self-test without the separate CMD proxy fixtures')
+    args = parser.parse_args()
     if os.name != 'nt':
         raise SystemExit('NOT_RUN: Windows SDK compiler required')
     vswhere = Path(os.environ['ProgramFiles(x86)']) / 'Microsoft Visual Studio/Installer/vswhere.exe'
@@ -59,9 +63,11 @@ def main():
                 assert not (root / '.aide-data').exists(), 'dry run mutated launcher state'
                 if allowed:
                     assert 'Dry run:' in result.stdout
-        from test_windows_bat_entrypoints import check
-        check(binary, folder, installation)
-    print('PASS real Win32 launcher compile/link and native self-test; fixture executable removed')
+        if not args.native_only:
+            from test_windows_bat_entrypoints import check
+            check(binary, folder, installation)
+    suffix = '; CMD proxy fixtures not run' if args.native_only else ''
+    print('PASS real Win32 launcher compile/link and native self-test; fixture executable removed' + suffix)
 
 
 if __name__ == '__main__':
