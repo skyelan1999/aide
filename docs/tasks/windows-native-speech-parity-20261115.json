@@ -47,21 +47,24 @@
         "native/windows-launcher/desktop_speech.hpp",
         "native/windows-launcher/desktop.hpp",
         "internal/server/web/plugin-workbench.js",
-        "scripts/build-windows-launcher.py adds sapi import library for AMD64/ARM64"
+        "scripts/build-windows-launcher.py links without a sapi import library; shared recognizer activation uses the SAPI class GUID and COM interface UUID"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "定向 Windows SAPI native bridge smoke、插件工作台交互测试和文档链接检查通过。未能完成真实麦克风/离线中文转写与完整 Windows desktop UI 验收。Launcher full compile script编译主宿主成功，但后续已有 proxy BAT fixture 两次均在其10秒超时失败；test_windows_desktop.py 生产策略临时可执行文件退出 0xC0000005，均待归因。",
+      "summary": "定向 Windows SAPI native bridge smoke、插件工作台交互测试通过。ARM64/AMD64 编译和 Aide CI 已通过；Windows native-ui 曾因 smoke 临时目录清理失败，已修测试工作目录并在等待下一轮 CI。真实麦克风/离线中文转写与完整 Windows desktop UI 仍 NOT_RUN。Launcher 主宿主编译/链接成功，但已有 proxy BAT fixture 第三次在 10 秒超时；test_windows_desktop.py 生产策略临时可执行文件退出 0xC0000005，均待归因。",
       "evidence": [
         "python scripts/test_windows_speech_bridge.py — PASS; current Windows x64/MSVC 2022; rejects invalid sessions; microphone inactive",
         "node scripts/plugin-workbench.test.cjs — PASS 25/25",
         "node --check internal/server/web/plugin-workbench.js — PASS",
-        "python scripts/check_docs.py — PASS, 533 Markdown / 2555 local links",
-        "python scripts/test_windows_launcher_compile.py — main launcher compiled and linked with sapi.lib; later test_windows_build_proxy.check_cmd timed out after 10 seconds (reproduced twice)",
+        "python -X utf8 scripts/check_docs.py — PASS, 534 Markdown / 2556 local links (2026-11-16)",
+        "python scripts/test_windows_launcher_compile.py — main launcher compiled and linked; later test_windows_build_proxy.check_cmd timed out after 10 seconds (reproduced three times)",
         "python scripts/test_windows_desktop.py — FAIL: production-policy temp executable exit 3221225477 (0xC0000005); no speech microphone was used",
         "git diff --check — PASS",
         "python -X utf8 -c \"import sys; sys.path.insert(0,'scripts'); import test_windows_bat_entrypoints; test_windows_bat_entrypoints.check=lambda *args: None; import test_windows_launcher_compile; test_windows_launcher_compile.main()\" — PASS Windows main launcher compile/link + native self-test; explicitly skipped only the known failing BAT fixture helper.",
+        "PR #921 commit 28933fe42dc9573a42d3c372133eb2d61e89c955 removes the sapi import-library dependency after ARM64 CI failure.",
+        "2026-11-16 CI run 51: Aide CI PASS, Windows compile amd64 PASS, compile arm64 PASS; native-ui failed after smoke PASS because MSVC telemetry process retained the temporary directory as its CWD.",
+        "Updated scripts/test_windows_speech_bridge.py to build/run with the repository as CWD and keep only compiler output files in its temp directory; local MSVC 2022 smoke and cleanup PASS. CI re-run awaits publishing this harness fix.",
         "Issue #918 progress comment posted (comment id 6896939330) with implementation and remaining verification status."
       ]
     },
@@ -81,10 +84,10 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "未提交/推送/创建 PR；真实硬件验收和 CI 尚未通过。最终 PR 必须保持未合并。",
-      "evidence": []
+      "summary": "PR #921 保持 Draft/open/unmerged；真实麦克风验收未运行。已通过的三个 CI job 与 native-ui 临时目录清理修复需由下一轮 CI 复核。",
+      "evidence": ["https://github.com/skyelan1999/aide/pull/921", "Commit 28933fe42dc9573a42d3c372133eb2d61e89c955", "2026-11-16 local smoke harness cleanup PASS"]
     }
   },
   "rollback": "Isolated feature branch; revert or close its PR without merging.",
-  "handoff": "Main launcher compile/link and native self-test pass when isolating the unrelated BAT fixture; dedicated speech bridge smoke passes. Actual microphone and visual Aide UI acceptance are NOT_RUN because no desktop/browser control tool is available in this session. Continue investigate baseline Windows desktop policy executable crash and BAT fixture timeout, then run Windows CI and device acceptance before PR/issue closure."
+  "handoff": "PR #921 is open as Draft and must remain unmerged. SAPI bridge smoke and local temp cleanup pass; Aide CI plus amd64/arm64 compile jobs pass at 28933fe42dc9573a42d3c372133eb2d61e89c955. Native-ui CI failed only during temp-directory cleanup after the test printed PASS; a harness CWD fix is local but needs publishing and CI confirmation. The proxy BAT fixture timeout and test_windows_desktop.py 0xC0000005 remain unresolved. Actual microphone/offline transcription and visual UI acceptance remain NOT_RUN because no desktop/browser control tool is available. Keep Issue #918 open until required hardware/UI acceptance passes."
 }
