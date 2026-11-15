@@ -124,17 +124,19 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext, sourc
     if (target !== base && !target.startsWith(base + path2.sep)) throw new Error('路径越界');
     return target;
   };
-  return {
-    capabilities: ["plugin-tool-images-v1", "plugin-file-chunks-v1", ...(sourceSocket ? ["plugin-source-checkout-v1"] : [])],
-    workspaceRoot: workspace,
-    terminalContext,
-    sources: sourceSocket ? input => new Promise((resolve,reject) => {
+  const sourceRequest = input => new Promise((resolve,reject) => {
       const data=JSON.stringify(input); if(data.length>16384)return reject(Error('Source request exceeds budget'));
       const req=require('http').request({socketPath:sourceSocket,path:'/',method:'POST',headers:{'Content-Type':'application/json'}},res=>{
         let output='';res.setEncoding('utf8');res.on('data',chunk=>{output+=chunk;if(output.length>2<<20){res.destroy();reject(Error('Source response exceeds budget'))}});
         res.on('error',reject);res.on('end',()=>{try{const value=JSON.parse(output);if(res.statusCode!==200)reject(Error(value.error||'Source request failed'));else resolve(value)}catch(e){reject(e)}});
       });req.setTimeout(95000,()=>req.destroy(Error('Source request timed out')));req.on('error',reject);req.end(data);
-    }) : undefined,
+    });
+  return {
+    capabilities: ["plugin-tool-images-v1", "plugin-file-chunks-v1", ...(sourceSocket ? ["plugin-source-checkout-v1", "plugin-device-info-v1"] : [])],
+    workspaceRoot: workspace,
+    terminalContext,
+    sources: sourceSocket ? sourceRequest : undefined,
+    deviceInfo: sourceSocket ? () => sourceRequest({operation:'device-info'}) : undefined,
     readFile: rel => fs2.readFileSync(safeJoin(rel), 'utf8'),
     readFileChunk: (rel, options = {}) => {
       if (!options || typeof options !== 'object' || Array.isArray(options)) throw new Error('文件分块参数无效');
