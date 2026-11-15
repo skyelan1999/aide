@@ -77,5 +77,5 @@
   "release_authorization": "",
   "rollback": "",
   "handoff": "Consumers may use the existing name fallback on older hosts. Device codes are labels, not identity or authorization credentials.",
-  "issue": "https://github.com/skyelan1999/aide/issues/905"
+  "issue": "https://github.com/skyelan1999/aide/issues/909"
 }
