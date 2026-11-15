@@ -61,6 +61,7 @@ json parseJson(const std::string& text){try{return json::parse(text);}catch(cons
 std::wstring env(const wchar_t* key){DWORD n=GetEnvironmentVariableW(key,nullptr,0);if(!n)return {};std::wstring v(n,0);GetEnvironmentVariableW(key,v.data(),n);v.resize(n-1);return v;}
 void setenvw(const wchar_t* k,const std::wstring& v){if(!SetEnvironmentVariableW(k,v.c_str()))throw std::runtime_error("Cannot set launcher process environment");}
 #include "build_proxy_windows.hpp"
+#include "build_sources.hpp"
 std::string read(const fs::path& p,size_t max=32*1024*1024){
  // Readers allow atomic rename of live status/journal files. CRT ifstream
  // sharing semantics can otherwise make a concurrent status read kill a writer.

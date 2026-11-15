@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import re
+import selectors
 import shutil
 import signal
 import subprocess
@@ -21,6 +22,30 @@ ROOT = Path(__file__).resolve().parents[1]
 IMAGE_ID = re.compile(r"sha256:[a-f0-9]{64}\Z")
 PROGRESS_INTERVAL = 10
 CONTAINER_ID = re.compile(r"[a-f0-9]{12,64}\Z")
+
+
+class BuildFailure(RuntimeError):
+    def __init__(self, code, output):
+        super().__init__(f'Docker source build failed ({code}); see local launcher output')
+        self.output = output
+
+
+def mainland_base_arguments(output, dockerfile, arguments):
+    """Map only the failed public official base, keeping its tag/digest intact."""
+    if str(arguments.get('AIDE_CN_SOURCE_FALLBACK', '1')) == '0':
+        return {}
+    errors = '\n'.join(line for line in output.splitlines() if 'ERROR' in line or 'error:' in line)
+    if not re.search(r'failed to (resolve source metadata|authorize|fetch (anonymous |oauth )?token|do request)|pull access denied|unexpected status from (HEAD|GET)', errors):
+        return {}
+    result = {}
+    for key in ('PYTHON_BASE', 'NODE_BASE', 'GO_BASE'):
+        default = re.search(r'(?m)^ARG ' + key + r'=([^\r\n ]+)', dockerfile)
+        ref = str(arguments[key]) if key in arguments else (default[1] if default else '')
+        canonical = re.sub(r'^(docker\.io/library/|docker\.io/|library/)', '', ref)
+        if (re.fullmatch(r'(python|node|golang)(:[A-Za-z0-9_.-]+)?(@sha256:[a-f0-9]{64})?', canonical)
+                and (ref in errors or canonical in errors)):
+            result[key] = 'docker.m.daocloud.io/library/' + canonical
+    return result
 
 
 def source_package(root=ROOT):
@@ -66,6 +91,8 @@ class Launcher:
         self.docker = shutil.which('docker') or str(Path.home() / '.docker/bin/docker')
 
     def call(self, args, capture=False, check=True, timeout=180, env=None, progress=None):
+        if args[1:3] == ['buildx', 'build'] and not capture:
+            return self.stream_build(args, timeout)
         if progress:
             return self.capture_with_progress(args, timeout, env, progress)
         result = subprocess.run(args, cwd=self.root, env=env, text=True,
@@ -75,6 +102,38 @@ class Launcher:
         if check and result.returncode:
             raise RuntimeError(f'{Path(args[0]).name} {args[1] if len(args) > 1 else ""} failed ({result.returncode}); see local launcher output')
         return result.stdout.strip() if capture and result.returncode == 0 else result
+
+    def stream_build(self, args, timeout):
+        """Show BuildKit output live, bound diagnostics, and reap on interruption."""
+        tail = ''
+        started = time.monotonic()
+        with subprocess.Popen(args, cwd=self.root, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, start_new_session=True) as process:
+            try:
+                with selectors.DefaultSelector() as reader:
+                    reader.register(process.stdout, selectors.EVENT_READ)
+                    while reader.get_map():
+                        if time.monotonic() - started >= timeout:
+                            raise subprocess.TimeoutExpired(args, timeout)
+                        for key, _ in reader.select(timeout=.25):
+                            chunk = os.read(key.fd, 65536)
+                            if not chunk:
+                                reader.unregister(key.fileobj)
+                                break
+                            value = chunk.decode('utf-8', errors='replace')
+                            print(value, end='', flush=True)
+                            tail = (tail + value)[-262144:]
+                code = process.wait(timeout=max(.1, timeout - (time.monotonic() - started)))
+            except BaseException:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+                raise
+        if code:
+            raise BuildFailure(code, tail)
+        return subprocess.CompletedProcess(args, code)
 
     def capture_with_progress(self, args, timeout, env, progress):
         """Keep slow source reads visible and reap the whole reader pipeline."""
@@ -319,7 +378,19 @@ class Launcher:
                    '--cache-dir', str(self.state / 'host-sources'),
                    '--bundle-dir', str(self.root / 'docker/host-sources')], timeout=180)
         print('AIDE: 开始 Docker 源码构建…', flush=True)
-        self.d(*command, '.', timeout=7200)
+        for attempt in range(4):
+            try:
+                self.d(*command, '.', timeout=7200)
+                break
+            except BuildFailure as error:
+                fallback = mainland_base_arguments(error.output,
+                    (self.root / build.get('dockerfile', 'Dockerfile')).read_text(), arguments)
+                if not fallback or attempt == 3:
+                    raise
+                print('AIDE: 基础镜像拉取失败，按原版本/摘要匹配 DaoCloud Docker Hub 镜像源（每种基础镜像最多换源一次）…', flush=True)
+                arguments.update(fallback)
+                for key, value in sorted(fallback.items()):
+                    command += ['--build-arg', key + '=' + value]
         metadata = json.loads(self.d('image', 'inspect', self.image, '--format', '{{json .}}', capture=True))
         labels = metadata.get('Config', {}).get('Labels', {})
         if (not IMAGE_ID.fullmatch(metadata.get('Id', '')) or metadata.get('Os') != 'linux'

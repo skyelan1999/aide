@@ -4,6 +4,7 @@
 #include "../native/windows-launcher/source_inputs.hpp"
 #include "../native/windows-launcher/installation.hpp"
 #include "../native/windows-launcher/build_proxy.hpp"
+#include "../native/windows-launcher/build_sources.hpp"
 #include <iostream>
 int main(int argc,char** argv){
  try{
@@ -23,6 +24,10 @@ int main(int argc,char** argv){
    aide_build_proxy::System system{s.value("enabled",false),s.value("server",""),s.value("bypass",""),s.value("pac","")};
    auto plan=aide_build_proxy::resolve(input.value("env",aide_build_proxy::Environment{}),system);
    std::cout<<nlohmann::json{{"additions",plan.additions},{"source",plan.source},{"warning",plan.bypassWarning}};return 0;
+  }
+  if(argc==2&&std::string(argv[1])=="build-sources"){
+   auto input=nlohmann::json::parse(std::cin);
+   std::cout<<nlohmann::json(aide_build_sources::fallback(input["output"],input["dockerfile"],input.value("arguments",aide_build_sources::Values{})));return 0;
   }
   throw std::runtime_error("Unknown test action");
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

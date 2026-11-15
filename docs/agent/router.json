@@ -650,6 +650,10 @@
         "scripts/test_pip_install_retry.py"
       ],
       [
+        "python3",
+        "scripts/test_build_cn_sources.py"
+      ],
+      [
         "node",
         "scripts/mcp-source-form.test.cjs"
       ],

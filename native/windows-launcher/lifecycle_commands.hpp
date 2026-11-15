@@ -15,6 +15,18 @@
   required(d({L"buildx",L"create",L"--name",wide(builder),L"--driver",L"docker-container",L"--driver-opt",L"memory=4g,memory-swap=4g,cpu-period=100000,cpu-quota=200000,restart-policy=no"}),"Cannot create this installation build environment");
   privateDirectory(root/L".aide-data/build");write(root/L".aide-data/build/owner.json",json{{"version",1},{"scope",scope},{"builder",builder}}.dump());
  }
+ void buildWithMainlandFallback(Args arguments,const std::string& file,const json& values,const char* message){
+  aide_build_sources::Values supplied;for(auto item=values.begin();item!=values.end();++item)if(!item.value().is_null())supplied[item.key()]=item.value().is_string()?item.value().get<std::string>():item.value().dump();
+  auto result=d(arguments,7200000);
+  for(int attempt=0;result.code&&attempt<3;++attempt){
+   auto fallback=aide_build_sources::fallback(result.out+"\n"+result.err,read(root/fs::u8path(file)),supplied);
+   if(fallback.empty())break;
+   say("Base image pull failed; retrying the same tags/digests through the mainland DaoCloud Docker Hub mirror (once per base)...");
+   for(const auto& item:fallback){supplied[item.first]=item.second;arguments.insert(arguments.end()-1,{L"--build-arg",wide(item.first+"="+item.second)});}
+   result=d(arguments,7200000);
+  }
+  requiredBuild(result,message);
+ }
  fs::path buildSource(){
   requireSource();auto proxy=configureBuildProxy();say(aide_build_proxy::message(proxy));if(proxy.bypassWarning)say(aide_build_proxy::bypassMessage());disk(true);engine(allowDesktop);auto scope=buildScope();ensureBuilder(scope);auto builder="aide-"+scope,ref="aide:source-"+scope;
   auto identity=versionIdentity();auto git=findExe(L"git.exe");if(git.empty())throw std::runtime_error("Git is required for a source build");auto revision=run(git,{L"-C",root.wstring(),L"rev-parse",L"HEAD"});required(revision,"Cannot identify source commit");auto commit=trim(revision.out);if(!std::regex_match(commit,std::regex("[a-f0-9]{40}")))throw std::runtime_error("Invalid source commit");auto dirty=run(git,{L"-C",root.wstring(),L"status",L"--porcelain"});required(dirty,"Cannot inspect source changes");if(!trim(dirty.out).empty())commit+="-dirty";
@@ -24,10 +36,11 @@
   if(configuredBuild.contains("network"))arguments.insert(arguments.end(),{L"--network",wide(configuredBuild["network"].get<std::string>())});
   auto values=configuredBuild.value("args",json::object());values["AIDE_VERSION"]=identity.first;values["AIDE_COMMIT"]=commit;values["AIDE_SRC_SHA"]=source;values["AIDE_RUNTIME_MODE"]="source";
   for(auto item=values.begin();item!=values.end();++item)if(!item.value().is_null())arguments.insert(arguments.end(),{L"--build-arg",wide(item.key()+"="+(item.value().is_string()?item.value().get<std::string>():item.value().dump()))});
-  if(force)arguments.push_back(L"--no-cache");arguments.push_back(L".");say("Building current source and embedded runtime components in the owned builder...");requiredBuild(d(arguments,7200000),"Source build failed; no Release substitution was performed");
+  if(force)arguments.push_back(L"--no-cache");arguments.push_back(L".");say("Building current source and embedded runtime components in the owned builder...");buildWithMainlandFallback(arguments,file,values,"Source build failed; no Release substitution was performed");
   auto built=inspect(ref);if(!runtime(built,platform)||label(built,"aide.srcsha")!=source||label(built,"aide.installation")!=scope)throw std::runtime_error("Built source image identity/fingerprint/installation did not verify");
   auto hostRef="aide:native-"+scope;Args native={L"buildx",L"build",L"--builder",wide(builder),L"--load",L"--pull=false",L"--target",L"native-launcher",L"--file",L"Dockerfile",L"--label",wide("aide.installation="+scope),L"--label",L"aide.build-role=native-launcher",L"--build-arg",wide("AIDE_LAUNCHER_ARCH="+hostArch()),L"--tag",wide(hostRef),L"."};
-  say("Building the current native Windows host inside Docker...");requiredBuild(d(native,7200000),"Native host build failed; existing startup configuration retained");
+  auto nativeValues=json::object();for(auto key:{"AIDE_CN_SOURCE_FALLBACK","PYTHON_BASE","NODE_BASE","GO_BASE"})if(values.contains(key)&&!values[key].is_null()){nativeValues[key]=values[key];auto value=values[key].is_string()?values[key].get<std::string>():values[key].dump();native.insert(native.end()-1,{L"--build-arg",wide(std::string(key)+"="+value)});}
+  say("Building the current native Windows host inside Docker...");buildWithMainlandFallback(native,"Dockerfile",nativeValues,"Native host build failed; existing startup configuration retained");
   auto created=d({L"create",L"--network",L"none",L"--entrypoint",L"/bin/true",wide(hostRef)});required(created,"Cannot extract compiled native host");auto cid=trim(created.out);if(!digest(cid))throw std::runtime_error("Invalid extraction container identity");
   auto dir=stateRoot/L"compiled";privateDirectory(dir);auto temporary=dir/(L"extract-"+std::to_wstring(GetCurrentProcessId())+L".exe");realPath(temporary);
   try{required(d({L"cp",wide(cid+":/out/aide-launcher.exe"),temporary.wstring()}),"Cannot copy compiled native host");required(d({L"rm",wide(cid)}),"Cannot remove owned extraction container");}catch(...){d({L"rm",wide(cid)});fs::remove(temporary);throw;}

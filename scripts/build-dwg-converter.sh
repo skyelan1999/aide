@@ -10,7 +10,19 @@ digest=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["sha256"
 mkdir -p "$cache" "$destination/bin" "$destination/source"
 archive="$cache/libredwg-$version.tar.xz"
 if ! printf '%s  %s\n' "$digest" "$archive" | sha256sum -c - >/dev/null 2>&1; then
-  curl -fSL --retry 3 --connect-timeout 15 --max-time 180 "$url" -o "$archive.partial"
+  if curl -fSL --retry 3 --connect-timeout 15 --max-time 180 "$url" -o "$archive.partial"; then
+    :
+  else
+    result=$?
+    case "$result:${AIDE_CN_SOURCE_FALLBACK:-1}:$url" in
+      5:1:https://ftp.gnu.org/gnu/*|6:1:https://ftp.gnu.org/gnu/*|7:1:https://ftp.gnu.org/gnu/*|18:1:https://ftp.gnu.org/gnu/*|22:1:https://ftp.gnu.org/gnu/*|28:1:https://ftp.gnu.org/gnu/*|35:1:https://ftp.gnu.org/gnu/*|52:1:https://ftp.gnu.org/gnu/*|56:1:https://ftp.gnu.org/gnu/*)
+        echo '[Aide] GNU source download failed; matching the same archive in the mainland TUNA GNU mirror.' >&2
+        curl -fSL --retry 2 --connect-timeout 15 --max-time 180 \
+          "https://mirrors.tuna.tsinghua.edu.cn/gnu/${url#https://ftp.gnu.org/gnu/}" -o "$archive.partial"
+        ;;
+      *) exit "$result" ;;
+    esac
+  fi
   printf '%s  %s\n' "$digest" "$archive.partial" | sha256sum -c -
   mv "$archive.partial" "$archive"
 fi

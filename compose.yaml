@@ -23,6 +23,7 @@ services:
         # #46：pip 依赖源；离线/air-gap 首次构建先 scripts/prebuild-wheels.sh 再置 PIP_OFFLINE=1。
         PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
         PIP_OFFLINE: ${PIP_OFFLINE:-0}
+        AIDE_CN_SOURCE_FALLBACK: ${AIDE_CN_SOURCE_FALLBACK:-1}
     ports:
       # 容器内 8080 现为 HTTPS（自签证书自动生成）；宿主机仅回环绑定。
       # 8081 明文跳转端口不向宿主机暴露，用户直接用 https://localhost:${AIDE_PORT} 访问。

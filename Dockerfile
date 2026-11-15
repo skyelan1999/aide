@@ -8,7 +8,8 @@ ARG GO_BASE=golang:1.26-bookworm
 FROM ${NODE_BASE} AS node
 FROM ${PYTHON_BASE} AS python
 FROM ${GO_BASE} AS toolchain
-COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
+COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/
+ARG AIDE_CN_SOURCE_FALLBACK=1
 COPY --from=python /usr/local /usr/local
 RUN ldconfig
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
@@ -35,7 +36,7 @@ USER root
 COPY docker/libredwg /dwg-build/docker/libredwg
 COPY scripts/build-dwg-converter.sh /dwg-build/scripts/build-dwg-converter.sh
 WORKDIR /dwg-build
-RUN if ! command -v make >/dev/null 2>&1 || ! command -v xz >/dev/null 2>&1 || ! command -v pkg-config >/dev/null 2>&1; then apt-get update -qq && apt-get install -y --no-install-recommends make xz-utils pkg-config; fi
+RUN if ! command -v make >/dev/null 2>&1 || ! command -v xz >/dev/null 2>&1 || ! command -v pkg-config >/dev/null 2>&1; then sh /usr/local/lib/aide/apt-install-retry.sh make xz-utils pkg-config; fi
 RUN --mount=type=cache,target=/root/.cache/aide/libredwg \
     sh scripts/build-dwg-converter.sh /opt/aide/dwg docker/libredwg/source.json \
     && cp docker/libredwg/source.json docker/libredwg/README.md scripts/build-dwg-converter.sh /opt/aide/dwg/
@@ -124,9 +125,10 @@ RUN --mount=type=cache,target=/toolchain \
 FROM ${PYTHON_BASE} AS runtime
 ARG TARGETOS
 ARG TARGETARCH
-COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
+COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/
+ARG AIDE_CN_SOURCE_FALLBACK=1
 # A fresh root is essential: deleting SDK files from toolchain retains its layers.
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sh /usr/local/lib/aide/apt-install-retry.sh \
       ca-certificates curl git openssh-client xauth procps bzip2 \
       xvfb x11vnc openbox novnc websockify \
       libstdc++6 libgcc-s1 libgomp1 \

@@ -42,6 +42,23 @@ int wmain(int argc,wchar_t** argv){
   return 8;
  }
  if(first==L"buildx"&&second==L"build"&&env(L"FIXTURE_BUILD_FAIL")==L"1")return 9;
+ if(first==L"buildx"&&second==L"build"&&!env(L"FIXTURE_BASE_KIND").empty()){
+  auto kind=env(L"FIXTURE_BASE_KIND");
+  for(auto key:{L"PYTHON_BASE",L"NODE_BASE",L"GO_BASE"}){
+   if(kind!=L"sequence"&&std::wstring(key)!=L"PYTHON_BASE")continue;
+   std::wstring ref=std::wstring(key)==L"PYTHON_BASE"?L"python:3.12-slim-bookworm":std::wstring(key)==L"NODE_BASE"?L"node:24-bookworm-slim":L"golang:1.26-bookworm";
+   if(kind==L"digest")ref+=L"@sha256:"+std::wstring(64,L'a');
+   if(kind==L"private")ref=L"private.example/team/python:3.12";
+   bool mapped=false;for(int i=1;i<argc;++i)if(std::wstring(argv[i])==std::wstring(key)+L"=docker.m.daocloud.io/library/"+ref)mapped=true;
+   log(std::string("docker:base:")+utf8(key)+(mapped?":mapped":":origin"));
+   if(!mapped||kind==L"permanent"){
+    if(kind==L"compile")std::cerr<<"ERROR: compilation failed: syntax error\n";
+    else std::cerr<<"ERROR: "<<utf8(mapped?L"docker.m.daocloud.io/library/"+ref:ref)<<": failed to resolve source metadata: connection timed out\n";
+    return 9;
+   }
+  }
+ }
+
  if(first==L"create"){for(int i=2;i+1<argc;i++)if(std::wstring(argv[i])==L"--cidfile"){std::ofstream file{fs::path(argv[i+1])};auto bad=env(L"FIXTURE_CID_BAD");file<<(bad==L"short"?std::string(63,'a'):bad==L"nonhex"?std::string(63,'a')+"&":bad==L"extra"?std::string(64,'a')+"\n&echo unsafe>injected":std::string(64,'a'))<<std::endl;}}
  if(first==L"cp")return argc==4&&CopyFileW(env(L"FIXTURE_NEW_EXE").c_str(),argv[3],FALSE)?0:7;
  return 0;

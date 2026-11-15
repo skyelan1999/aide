@@ -1,0 +1,371 @@
+{
+  "id": "build-cn-source-fallback-20261115",
+  "request": "当aide build失败时，自动为aide匹配中国大陆的适配源进行拉取",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "默认先使用现有构建配置；支持的公共依赖下载失败时按依赖类型自动换中国大陆适配源，次数有界。",
+    "Docker 官方基础镜像保留名称、tag/digest 与原构建平台；每种基础镜像仅换源一次。",
+    "PyPI 保留固定版本和其他参数；不混入 extra-index；私有源及离线模式保持原选择。",
+    "Debian 换源兼容 sources.list 与 DEB822，保留发行版、组件、密钥和签名验证。",
+    "GNU 源归档换源后仍校验既有 SHA256；拒绝内容损坏。",
+    "永久失败不切换 .env 镜像、不启动替代发行包、不清理原运行实例。",
+    "POSIX、Windows 原生构建及首次 Windows 引导均接入逻辑，区分本机执行与未执行的 Windows 实机验收。"
+  ],
+  "scope": [
+    "Dockerfile",
+    "Dockerfile.local",
+    "compose.yaml",
+    "scripts/launcher.py",
+    "scripts/pip-install-retry.sh",
+    "scripts/apt-install-retry.sh",
+    "scripts/build-dwg-converter.sh",
+    "scripts/aide.sh",
+    "scripts/windows-bootstrap.bat",
+    "scripts/windows-build-source.ps1",
+    "native/windows-launcher/build_sources.hpp",
+    "native/windows-launcher/main.cpp",
+    "native/windows-launcher/lifecycle_commands.hpp",
+    "scripts/native_launcher_portable.cpp",
+    "scripts/test_build_cn_sources.py",
+    "scripts/test_windows_bat_entrypoints.py",
+    "docs/agent/router.json",
+    "docs/architecture/launcher-contract.md",
+    "docs/tasks/build-cn-source-fallback-20261115.json",
+    ".github/workflows/windows-desktop-check.yml",
+    "scripts/fixtures/windows-entrypoint.cpp"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确默认启用、按类型匹配、保留版本和失败隔离；全量冷构建与 Windows 实机验收独立列出。",
+      "evidence": [
+        "用户原始需求",
+        "docs/architecture/launcher-contract.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在统一 POSIX/原生 Windows 构建器识别失败基础镜像；APT/PyPI/GNU 在容器内恢复；首次 Windows 引导复用其已有 PowerShell 前提。",
+      "evidence": [
+        "scripts/launcher.py",
+        "native/windows-launcher/build_sources.hpp",
+        "scripts/windows-build-source.ps1"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "接入官方基础镜像 DaoCloud 映射、在线公共 PyPI TUNA/华为备用、APT TUNA/阿里备用和 GNU 同路径 TUNA 备用；新增输入纳入源码指纹；quick 纳入回归。",
+      "evidence": [
+        "Dockerfile",
+        "Dockerfile.local",
+        "compose.yaml",
+        "scripts/launcher.py",
+        "scripts/pip-install-retry.sh",
+        "scripts/apt-install-retry.sh",
+        "scripts/build-dwg-converter.sh",
+        "scripts/aide.sh",
+        "scripts/windows-bootstrap.bat",
+        "scripts/windows-build-source.ps1",
+        "native/windows-launcher/build_sources.hpp",
+        "native/windows-launcher/main.cpp",
+        "native/windows-launcher/lifecycle_commands.hpp",
+        "scripts/native_launcher_portable.cpp",
+        "scripts/test_build_cn_sources.py",
+        "scripts/test_windows_bat_entrypoints.py",
+        "docs/agent/router.json",
+        "docs/architecture/launcher-contract.md",
+        ".github/workflows/windows-desktop-check.yml",
+        "scripts/fixtures/windows-entrypoint.cpp"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "独立工作树 full 347/347 命令成功；完整 ARM64 runtime 启用 AIDE_RUN_TESTS=1 构建通过；服务器 race 24 分片覆盖1770项（1680通过、90条件跳过），其他包 race、平台契约与 vet 通过。Mac 宿主和 Windows 双架构完整编译/签名或PE检查通过；Windows实际CMD用例已接入CI，推送后由关联PR提供收据。",
+      "evidence": [
+        ".agent-state/verify-20261115T061108863600Z.log",
+        ".agent-state/build-cn-source-fallback-20261115/build-result.json",
+        ".agent-state/build-cn-source-fallback-20261115/go-full/report.json",
+        ".agent-state/build-cn-source-fallback-20261115/runtime-smoke.json",
+        ".agent-state/build-cn-source-fallback-20261115/windows-binaries.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "启动契约和任务记录区分源码恢复、完整构建、race条件跳过、Windows交叉编译与实际Windows CI；发布/部署仍未进行。",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "docs/tasks/build-cn-source-fallback-20261115.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "独立工作树仅本任务21个文件；diff检查通过；所有自身临时运行/测试/提取容器退出并清理。保留候选运行镜像、SDK与双架构编译产物用于复核。共享工作区和并行DWG修改均保留，未执行全局清理。",
+      "evidence": [
+        "git diff --check",
+        "git status --short",
+        ".agent-state/build-cn-source-fallback-20261115/windows-binaries.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户只授权测试通过后提交和推送源码；main要求gate与评审，交付走独立分支/PR。未升版、tag、正式Release或执行本任务生产替换。",
+      "evidence": [
+        "继续完成完整构建验证，测试通过后提交并推送"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅撤回 scope 中本次新增文件及 diff 的对应 hunks；不覆盖初始未跟踪文件，不用 git reset --hard/git clean；本次未修改 .env、运行镜像或 daemon。",
+  "handoff": "独立工作树完整构建及full验证通过；按用户授权仅提交/推送本任务21个文件，main通过受保护PR评审。#912用于关联提交、PR和推送后CI。源工作区保留原文件与并行DWG改动。无正式Release和本任务生产部署。",
+  "inference": "将用户要求实现为下载层公共源的有界自动恢复；不将语法/编译、磁盘或私有仓库错误泛化为任意换源。未要求推送、发布或替换正在运行的实例。",
+  "verification_details": [
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "checks": 344,
+      "failed": 0,
+      "head": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+      "fingerprint": "5744ee99b3abd6b890506387d3941f63441e5eaad87300d4bf8a6f1d14c9bbcc"
+    },
+    {
+      "command": "python3 scripts/test_build_cn_sources.py",
+      "result": "PASS",
+      "tests": 12,
+      "coverage": "实际 POSIX 包装器；编译并执行真实 C++ 策略；永久失败/编译错误/私有与离线/原配置保留/三种基础镜像依次失败/超时杀进程/GNU 内容损坏。"
+    },
+    {
+      "command": "python3 scripts/test_launcher_contract.py",
+      "result": "PASS",
+      "tests": 36
+    },
+    {
+      "command": "python3 scripts/test_pip_install_retry.py",
+      "result": "PASS",
+      "tests": 3
+    },
+    {
+      "command": "python3 scripts/test_windows_bootstrap_cache.py",
+      "result": "PASS",
+      "limit": "现有缓存/收据静态契约，不是 CMD/PowerShell 实机执行。"
+    },
+    {
+      "command": "python3 scripts/check_docs.py",
+      "result": "PASS",
+      "markdown_files": 536,
+      "local_links": 2550
+    },
+    {
+      "command": "docker buildx imagetools inspect docker.m.daocloud.io/library/python:3.12-slim-bookworm",
+      "result": "PASS",
+      "manifest_index": "sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df",
+      "platforms": "含 linux/arm64 与 linux/amd64"
+    },
+    {
+      "command": "isolated docker buildx build --builder desktop-linux; Python version smoke",
+      "result": "PASS",
+      "limit": "真实 registry 元数据、构建与 RUN，FROM 层 CACHED；不是冷下载或完整 Aide。初次使用 default builder 与当前 desktop-linux context 不匹配，改用当前 context 的 builder 后通过。"
+    },
+    {
+      "command": "isolated Docker dependency fault-injection build",
+      "result": "PASS",
+      "coverage": "首次 apt/pip 调用注入网络失败；随后真实 apt 从 TUNA 下载约9.3MB 索引并签名验证/确认 ca-certificates；真实 pip --dry-run --no-deps 从 TUNA 下载 python-docx==1.2.0 wheel。不是首次真实网络事故复现。"
+    },
+    {
+      "command": "bash -n scripts/aide.sh; sh -n scripts/pip-install-retry.sh scripts/apt-install-retry.sh; python3 -m py_compile scripts/launcher.py scripts/test_build_cn_sources.py; git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify full",
+      "result": "PASS",
+      "worktree": "/Users/skyelan/WorkTrees/aide-build-cn-source-fallback-20261115",
+      "commands": 347,
+      "failed": 0,
+      "fingerprint": "9dee4693726b8b68f5db0214b241bed9b7b8b084c0eb04d9427438749e7ebf68",
+      "head_at_verification": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+      "log": ".agent-state/verify-20261115T061108863600Z.log"
+    },
+    {
+      "command": "complete runtime/dev/native-launcher Dockerfile targets",
+      "result": "PASS",
+      "proof": {
+        "status": "pass",
+        "source": "54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+        "commit": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+        "version": "0.1.19.0 RC2",
+        "steps": [
+          {
+            "target": "runtime",
+            "tag": "aide:cn-full-verify-20261115",
+            "id": "sha256:fdf93d9fdf0844543f1c4a90e9af0aa260a0d279346e2f74f578c33ef76994cf",
+            "architecture": "arm64",
+            "seconds": 735.04,
+            "build_args": {
+              "AIDE_VERSION": "0.1.19.0 RC2",
+              "AIDE_COMMIT": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+              "AIDE_SRC_SHA": "54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+              "AIDE_RUNTIME_MODE": "release-image",
+              "AIDE_RUN_TESTS": "1"
+            }
+          },
+          {
+            "target": "dev",
+            "tag": "aide:cn-sdk-verify-20261115",
+            "id": "sha256:1952cf45d117327a28c57d41cbd85f06c69f8096a778a4cb9d07d3c2a2aa867d",
+            "architecture": "arm64",
+            "seconds": 26.86,
+            "build_args": {
+              "AIDE_VERSION": "0.1.19.0 RC2",
+              "AIDE_COMMIT": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+              "AIDE_SRC_SHA": "54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+              "AIDE_RUNTIME_MODE": "release-image"
+            }
+          },
+          {
+            "target": "native-launcher",
+            "tag": "aide:cn-windows-verify-amd64-20261115",
+            "id": "sha256:76dd16f0bb6e2c9636e750d973cec005f90fc597746df4f0761661a6fbd017b1",
+            "architecture": "arm64",
+            "seconds": 125.53,
+            "build_args": {
+              "AIDE_VERSION": "0.1.19.0 RC2",
+              "AIDE_COMMIT": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+              "AIDE_SRC_SHA": "54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+              "AIDE_RUNTIME_MODE": "release-image",
+              "AIDE_LAUNCHER_ARCH": "amd64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "command": "Windows arm64 native-launcher Docker target",
+      "result": "PASS",
+      "proof": {
+        "status": "pass",
+        "seconds": 202.37,
+        "tag": "aide:cn-windows-verify-arm64-20261115"
+      }
+    },
+    {
+      "command": "complete Go race shards / remaining packages / xsys platform contracts / vet",
+      "result": "PASS",
+      "server_inventory": 1770,
+      "server_passed": 1680,
+      "server_skipped": 90,
+      "failed_shards": [],
+      "skip_limit": "90 skipped cases are conditional online/browser/host integration checks, not accepted functionality; reasons retained in shard logs."
+    },
+    {
+      "command": "test_runtime_assets.py --require-lan-bridge and test_optional_step.py against new runtime",
+      "result": "PASS",
+      "uid": 1000,
+      "readable_files": 114,
+      "docx_roundtrip": true,
+      "network": "none"
+    },
+    {
+      "command": "scripts/ci/build_candidate.py smoke(new image)",
+      "result": "PASS",
+      "proof": {
+        "status": "pass",
+        "commit": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a",
+        "version": "0.1.19.0 RC2",
+        "installedPlugins": 0,
+        "runtimeMode": "release-image",
+        "xauth": {
+          "status": "pass",
+          "version": "1.1.2"
+        }
+      }
+    },
+    {
+      "command": "scripts/build-macos-desktop.py --root isolated source context (no install/open)",
+      "result": "PASS",
+      "codesign": "verified deep/strict",
+      "limit": "Compiled and signed only; existing Swift 5 concurrency warnings remain; no new UI acceptance claimed."
+    },
+    {
+      "command": "complete native Windows amd64/arm64 PE build / architecture / payload notices / DLL import checks",
+      "result": "PASS",
+      "proof": {
+        "amd64": {
+          "status": "pass",
+          "sha256": "a4f776297400355c541b63669ce6f2521dae775aaa44619c1f8ec7d1229908c0",
+          "bytes": 11920896
+        },
+        "arm64": {
+          "status": "pass",
+          "sha256": "825694c4fd4671eba71effae831b0fbf8b80ef8442d4abb22f9a16dd6b56dd76",
+          "bytes": 10983424
+        }
+      },
+      "limit": "Cross-build is not execution on Windows. Actual Win32/CMD fixtures are in Windows Desktop Check."
+    },
+    {
+      "command": "test_windows_native_host.py / test_windows_native_portable.py / scripts/ci unittest discovery",
+      "result": "PASS",
+      "host_core_checks": 35,
+      "portable_checks": 66,
+      "ci_tests": 37
+    }
+  ],
+  "not_run": [
+    "真实用户 Windows Docker Desktop 完整 build.bat/受限网络现场；本地完成双架构交叉编译。Windows原生/CMD/PowerShell与UI测试需以关联PR的Windows Desktop Check结果为准。",
+    "完整 Linux AMD64 runtime 镜像未在本机作原生构建；本机完成 Linux ARM64 runtime/dev、macOS宿主及Windows amd64/arm64交叉编译。",
+    "90项服务器条件检查按原要求skip；没有把硬件、付费模型、浏览器和在线集成的条件跳过算成实际验收。",
+    "正式Release、tag/升版和本任务生产部署未执行。"
+  ],
+  "source_probes": {
+    "date": "2026-11-15 Asia/Shanghai",
+    "http_200": [
+      "TUNA PyPI python-docx",
+      "TUNA Debian bookworm Release",
+      "Huawei PyPI python-docx",
+      "Aliyun Debian bookworm Release",
+      "TUNA GNU libredwg-0.14.tar.xz"
+    ],
+    "registry": "DaoCloud /v2/ HTTP401 challenge 正常，Docker CLI 实际获取多架构 manifest 和 smoke build 通过。",
+    "excluded": "NJU Docker 与 USTC PyPI/Debian 在当前网络 HTTP403，未纳入默认候选。可达性不代表全部地区或未来始终可用。"
+  },
+  "file_sha256": {
+    "Dockerfile": "ab2a92d997851226c0df1510c4bfa12b518a689d1505396bef485a6914ecfe82",
+    "Dockerfile.local": "4e5f8d77283c73686223245126a15d1271ad05b39771aa1c39806dcffff75ae5",
+    "compose.yaml": "d94a328a9558ee69cae7a83b34626ca08051bde1ac94f7e1ee427229e4c6655f",
+    "scripts/launcher.py": "9c257e320b7df741ca76586bfba557c72f3220ea55a335f81abbb4b8a8f188c7",
+    "scripts/pip-install-retry.sh": "b6db844e27fb559529a1b4b22aa9f62c593a0187d6a85407a4ba6f77590f76f7",
+    "scripts/apt-install-retry.sh": "687f9d2ec0aa388b40143def9e7041575b10b7b7b272e170842d4d86e77e6061",
+    "scripts/build-dwg-converter.sh": "3f53435be4f1b594b8fc58d5621a27c6dce4326ee55527f56d039bee5c81b188",
+    "scripts/aide.sh": "dcabe63f96e3f6f9b0b18c0bd389908cac5a53d797f0a7cc1d9061e7b6121ccc",
+    "scripts/windows-bootstrap.bat": "94d930793dbf1b547c5501508a3962f1ef316b70fa004e686561481a66cff354",
+    "scripts/windows-build-source.ps1": "21ca6b042738cbc185eba63c11d3bfafd395471e44414ceb7a9ade62fcd02882",
+    "native/windows-launcher/build_sources.hpp": "1ca4137cb77cd92691aee8c97f033fc2cf670eaf78e005cb7d421158a499ade2",
+    "native/windows-launcher/main.cpp": "07b766e650cf6e1c312cae9a8d6feb78f34a58681a45e36fa79e1c738bf02f0e",
+    "native/windows-launcher/lifecycle_commands.hpp": "e6b228e8afddf49da34ec063a00f0dbd60cea11f2abafc137e8ec33ef3e8eaee",
+    "scripts/native_launcher_portable.cpp": "d7a2eca24f0cc85e3fd9e9cac693871533aeb423cc6422cc741c67ccbdea7c34",
+    "scripts/test_build_cn_sources.py": "4311ca79b972094271d07755ecc9112850cd158e17c6ebae52476178be24ca75",
+    "scripts/test_windows_bat_entrypoints.py": "a0fc8b266d2ba003c24aadd9a0ed44c454dc7042cc3854ace467e398b3f539a5",
+    "docs/agent/router.json": "5b8cd77b73ad712968ad16e0033e97f17277b899d0d3c3d960ec7b94b3de0889",
+    "docs/architecture/launcher-contract.md": "df1dcca808bdce59ae1a638f0334b2db23f8906820153c90286708e76c7cf21b",
+    ".github/workflows/windows-desktop-check.yml": "1110058ead8b3272bd911af205406d03f921f8af4a8a0598330d7163c7353231",
+    "scripts/fixtures/windows-entrypoint.cpp": "9966374d05fcd9c1ef9d205b7283edaf4610b46db18299a5ad958472e1c4abfc"
+  },
+  "followup_request": "继续完成完整构建验证，测试通过后提交并推送",
+  "commit_push_authorization": "继续完成完整构建验证，测试通过后提交并推送",
+  "issue": "https://github.com/skyelan1999/aide/issues/912",
+  "isolated_worktree": "/Users/skyelan/WorkTrees/aide-build-cn-source-fallback-20261115",
+  "isolation_note": "共享主工作区在验证途中出现并行 DWG 修改；已保留所有原改动，本任务使用独立分支/工作树复验和提交。原运行包/冻结上下文/独立工作树的 source-sha 均为 54c393b9c3bb525c7f77b870f3cfa9a366d263bbf2ac9036918ef39f1178bd9a。共享工作区首次 full 在部分 race 分片通过后主动停止，不作为完整通过证据。",
+  "out_of_scope_downloads": [
+    "BuildKit daemon image",
+    "Codex Bridge GitHub source",
+    "Windows SDK/WebView",
+    "optional sherpa source (existing pinned download path)"
+  ],
+  "delivery": {
+    "branch": "feat/build-cn-source-fallback-20261115",
+    "repository": "skyelan1999/aide",
+    "method": "commit scoped files; push feature branch; create draft PR against protected main",
+    "authorization": "继续完成完整构建验证，测试通过后提交并推送",
+    "post_push_evidence": "Issue #912 and associated PR/check runs; this pre-commit record binds the tested source fingerprint."
+  }
+}

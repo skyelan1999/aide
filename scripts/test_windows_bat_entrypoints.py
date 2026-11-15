@@ -20,7 +20,7 @@ def check(binary, folder, installation):
     def fixture(name, source=True, exe=binary):
         root=folder/('BAT '+name+' \u4e2d\u6587 space');root.mkdir();(root/'scripts').mkdir()
         for action in ACTIONS:shutil.copy2(ROOT/(action+'.bat'),root)
-        for script in ('windows-entrypoint.bat','windows-bootstrap.bat','windows-build-proxy.bat'):shutil.copy2(ROOT/'scripts'/script,root/'scripts')
+        for script in ('windows-entrypoint.bat','windows-bootstrap.bat','windows-build-proxy.bat','windows-build-source.ps1'):shutil.copy2(ROOT/'scripts'/script,root/'scripts')
         if source:
             (root/'go.mod').touch();(root/'Dockerfile').touch()
         if exe:shutil.copy2(exe,root/'aide-launcher.exe')
@@ -100,6 +100,28 @@ def check(binary, folder, installation):
             assert 'ownership receipt is invalid' in refused.stdout
             assert 'docker:buildx:build' not in calls.read_text()
         receipts[0].write_bytes(original)
+    # Execute the production first-build PowerShell wrapper through actual CMD.
+    # Only the Docker process is a fixture; source parsing/retry/exit propagation
+    # and all activation decisions are real entrypoint code.
+    for kind,disabled,expected,attempts in (
+        ('recover',False,0,2),('digest',False,0,2),('sequence',False,0,4),
+        ('permanent',False,1,2),('recover',True,1,1),('compile',False,1,1),('private',False,1,1)):
+        root=fixture('cn-source-'+kind+'-'+str(disabled),exe=folder/'old.exe');calls.write_text('')
+        ref='private.example/team/python:3.12' if kind=='private' else 'python:3.12-slim-bookworm'
+        if kind=='digest':ref+='@sha256:'+'a'*64
+        (root/'Dockerfile').write_text('ARG PYTHON_BASE='+ref+'\nARG NODE_BASE=node:24-bookworm-slim\nARG GO_BASE=golang:1.26-bookworm\n',encoding='utf-8')
+        environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY','AIDE_CN_SOURCE_FALLBACK')}
+        environment.update(FIXTURE_BASE_KIND=kind,AIDE_CN_SOURCE_FALLBACK='0' if disabled else '1')
+        result=run(root,'build',args='',env=environment,expected=expected)
+        log=calls.read_text()
+        assert log.count('docker:buildx:build')==attempts,(kind,log,result.stdout,result.stderr)
+        assert ('native:build' in log)==(expected==0),(kind,log)
+        if expected:
+            assert (root/'aide-launcher.exe').read_bytes()==(folder/'old.exe').read_bytes()
+        else:
+            assert 'docker:base:PYTHON_BASE:mapped' in log,(kind,log)
+        print('PASS actual CMD mainland source fallback '+kind+' disabled='+str(disabled))
+
     for pac in (False,True):
         root=fixture('proxy-refusal-'+str(pac),exe=folder/'old.exe');calls.write_text('')
         environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
