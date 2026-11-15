@@ -42,8 +42,8 @@
       "status": "pass",
       "summary": "All 348 full-profile commands pass (fingerprint bd730ebe7f27d65c38a24cd40ea85eda01f75978bdd9dbe199405ddc0fb60505); server race inventory 1781, 1689 pass and 92 conditional skips retained. Three real runtime opt-ins, 27 focused tests, 453 archive entries and source geometry/hash checks pass.",
       "evidence": [
-        ".agent-state/full.json",
-        ".agent-state/go-suite-d75ffb118373/report.json",
+        ".agent-state/cad-remaining-shx-20261116/full-repository-private.json",
+        ".agent-state/cad-remaining-shx-20261116/go-suite-private.json",
         ".agent-state/cad-remaining-shx-20261116/acceptance-private.json"
       ]
     },
@@ -60,9 +60,14 @@
       "evidence": []
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Full checks pass; preparing authorized main fast-forward and push, without tag/version change.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Source 2a3666d6 fast-forwarded and pushed to main; remote quick/go/gate pass in run 43741057593. Existing repository bypass notice retained in push log; no protection settings, version or binary Release changes. Documentation receipt final CI tracked privately.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/commit/2a3666d6d2740426dec1fb126753e3201e89023f",
+        "https://github.com/skyelan1999/aide/actions/runs/43741057593",
+        ".agent-state/cad-remaining-shx-20261116/source-integration-private.json",
+        ".agent-state/cad-remaining-shx-20261116/production-verification.json"
+      ]
     }
   },
   "release_authorization": "Existing user instruction: 做好后合并到main并推送; no binary release requested.",
