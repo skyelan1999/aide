@@ -28,7 +28,7 @@ def main():
             "@echo off\n"
             f'call "{installation}\\Common7\\Tools\\VsDevCmd.bat" -arch=x64\n'
             "if errorlevel 1 exit /b 1\n"
-            f'cl /nologo /utf-8 /std:c++17 /EHsc /DUNICODE /D_UNICODE "{ROOT / "scripts/ci/windows_computer_bridge.cpp"}" '
+            f'cl /nologo /utf-8 /std:c++17 /EHsc /DUNICODE /D_UNICODE "{ROOT / "native/windows-launcher/computer_bridge_test.cpp"}" '
             f'/Fe:"{executable}" /link bcrypt.lib ws2_32.lib crypt32.lib ole32.lib gdiplus.lib gdi32.lib user32.lib\n'
             "if errorlevel 1 exit /b 1\n"
             f'"{executable}"\n',
@@ -39,3 +39,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

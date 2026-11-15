@@ -15,7 +15,7 @@
   "scope": [
     "native/windows-launcher/computer_bridge.hpp",
     "scripts/test_windows_launcher_compile.py",
-    "scripts/ci/windows_computer_bridge.cpp",
+    "native/windows-launcher/computer_bridge_test.cpp",
     "scripts/ci/windows_computer_bridge.py",
     ".github/workflows/windows-desktop-check.yml",
     "docs/architecture/windows-desktop.md",
@@ -49,14 +49,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Local native launcher compile/link/self-test passes. The focused bridge fixture compiles, but this host has no interactive desktop, so runtime app/window cases are NOT_RUN. Full combined local script reached an unrelated CMD proxy fixture timeout. CI is pending the PR.",
+      "summary": "The first hosted Aide CI run exposed a packaging issue: placing a C++ fixture under scripts/ci made Go treat that directory as a package with unsupported C++ sources. The fixture was moved under native/windows-launcher for a clean rerun. Windows arm64/amd64 cross-builds passed; the focused Windows desktop job remains in progress.",
       "evidence": [
         "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only (Visual Studio 2022/MSVC, x64 native compile/link, launcher self-test and dry-run checks).",
         "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — fixture compiled, but bridge reports desktopAvailable=false on this host, so no app was focused or screen captured.",
         "FAIL: python -X utf8 scripts/test_windows_launcher_compile.py — after native compilation/self-test, existing scripts/test_windows_build_proxy.py CMD driver exceeded its 10-second timeout.",
         "NOT_RUN: go test ./internal/server -run 'TestComputer(Control|Snapshot|Image|Gesture)' -count=1 — Go is not installed on this Windows host.",
         "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON/runner syntax parsed and git diff --check passed.",
-        "NOT_RUN: GitHub Aide CI and Windows Desktop Check on this topic branch; awaiting PR branch CI."
+        "FAIL then fix pending rerun: hosted Aide CI initially failed because scripts/ci/windows_computer_bridge.cpp was discovered as an unsupported Go package source; moved to native/windows-launcher/computer_bridge_test.cpp to keep scripts/ci Go-only.",
+        "PASS: Windows Desktop Check arm64 and amd64 cross-builds on PR #933; native-ui integration job was still in progress at the time of this update."
       ]
     },
     "documentation": {
@@ -64,7 +65,8 @@
       "summary": "Capability matrix distinguishes implemented Windows bridge routes from UIA, OCR/GPU capture, background control, browser, drag/scroll, scheduling and pointer gaps.",
       "evidence": [
         "docs/architecture/windows-desktop.md links Issue #932 and related UIA Issue #924, and separates implemented routes from unimplemented parity.",
-        "python -X utf8 scripts/check_docs.py passed with 537 Markdown files and 2558 local links."
+        "python -X utf8 scripts/check_docs.py passed with 537 Markdown files and 2558 local links.",
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; intentionally unmerged."
       ]
     },
     "cleanup": {
@@ -84,3 +86,4 @@
   "rollback": "",
   "handoff": ""
 }
+

@@ -158,3 +158,4 @@ int wmain(int argc, wchar_t** argv) {
     if (argc > 1 && std::wstring(argv[1]) == L"--fixture") return fixture();
     try { run(); return 0; } catch (const std::exception& error) { std::cerr << "FAIL Windows bridge fixture: " << error.what() << std::endl; return 1; }
 }
+
