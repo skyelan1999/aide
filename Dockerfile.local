@@ -6,7 +6,9 @@ USER root
 COPY docker/libredwg /dwg-build/docker/libredwg
 COPY scripts/build-dwg-converter.sh /dwg-build/scripts/build-dwg-converter.sh
 WORKDIR /dwg-build
-RUN if ! command -v make >/dev/null 2>&1 || ! command -v xz >/dev/null 2>&1 || ! command -v pkg-config >/dev/null 2>&1; then apt-get update -qq && apt-get install -y --no-install-recommends make xz-utils pkg-config; fi
+COPY scripts/apt-install-retry.sh /usr/local/lib/aide/apt-install-retry.sh
+ARG AIDE_CN_SOURCE_FALLBACK=1
+RUN if ! command -v make >/dev/null 2>&1 || ! command -v xz >/dev/null 2>&1 || ! command -v pkg-config >/dev/null 2>&1; then sh /usr/local/lib/aide/apt-install-retry.sh make xz-utils pkg-config; fi
 RUN --mount=type=cache,target=/root/.cache/aide/libredwg \
     sh scripts/build-dwg-converter.sh /opt/aide/dwg docker/libredwg/source.json \
     && cp docker/libredwg/source.json docker/libredwg/README.md scripts/build-dwg-converter.sh /opt/aide/dwg/

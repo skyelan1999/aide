@@ -41,7 +41,7 @@ docker.exe image inspect "%AIDE_BOOT_IMAGE%" >nul 2>nul
 if not errorlevel 1 (echo Bootstrap image name already exists; retry. & exit /b 1)
 set "AIDE_BOOT_STAGE=native-build"
 echo [Aide] Compiling current native host in Docker...
-docker.exe buildx build --builder "%AIDE_BOOT_BUILDER%" --load --target native-launcher --file Dockerfile --build-arg "AIDE_LAUNCHER_ARCH=%AIDE_BOOT_ARCH%" --tag "%AIDE_BOOT_IMAGE%" .
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0windows-build-source.ps1"
 if errorlevel 1 goto bootstrap_failed
 set "AIDE_BOOT_STAGE=extract-container"
 docker.exe create --cidfile "%AIDE_BOOT_CIDFILE%" --network none --entrypoint /bin/true "%AIDE_BOOT_IMAGE%" >nul

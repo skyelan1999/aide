@@ -32,6 +32,27 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 每个安装目录拥有独立的 `aide-<目录摘要>` docker-container Buildx 构建器、`aide:source-<目录摘要>` 镜像和 `.aide-data/build/owner.json` 归属收据。已有同名构建器但无匹配收据时拒绝接管。构建器限制为 4 GiB / 2 核；增量层和 cache mount 留在该构建器中。冷启动需要获取 BuildKit、基础镜像、固定工具链及依赖；默认 Docker 引擎已有基础镜像 tag 不代表专用构建器已有离线缓存。无网络的机器优先使用完整 Release 包，或预先准备该专用构建环境。
 
+### 构建失败后的中国大陆源恢复
+
+`build.command` / `build.sh`、Windows 原生源码构建及首次 `build.bat` 引导默认启用 `AIDE_CN_SOURCE_FALLBACK=1`。先使用当前配置；识别到下载失败后，按依赖类型选择备用源，保留已指定版本、镜像摘要和构建平台：
+
+| 下载对象 | 自动恢复 | 次数上限 |
+| --- | --- | --- |
+| Docker Hub 官方 Python / Node / Go 基础镜像 | 从实际 Dockerfile 默认值或有效 build args 提取失败引用，改用 DaoCloud 对应 `library/` 路径 | 每个基础镜像一次，整个构建最多三次换源重试 |
+| 在线 PyPI 公共索引 | 当前索引失败后尝试清华 TUNA、华为云；不增加 extra-index | 含首次安装共三次 |
+| Debian APT | 容器内标准 Debian 源失败后尝试清华 TUNA、阿里云；兼容 `.list` 和 DEB822 `.sources`，保留 suites、组件及 Signed-By | 含首次安装共三次 |
+| GNU LibreDWG 源码归档 | GNU 官方下载发生连接/传输/HTTP 错误后，尝试清华 GNU 镜像的同一路径 | 一次换源；仍强制原 SHA256 校验 |
+
+Docker 映射只覆盖 `PYTHON_BASE`、`NODE_BASE`、`GO_BASE` 中的官方公共镜像。缺少本地 `aide:dependencies-*`、私有镜像或自定义仓库时，不替换成其他产品或版本。代码编译错误、磁盘错误不会触发基础镜像换源。PyPI 私有索引、extra-index 和 `--no-index` 离线安装保持原选择；APT 不改写其他域名的自定义源。所有请求继续使用 HTTPS 与既有包/镜像校验，不关闭证书或签名验证。
+
+POSIX 与原生 Windows 构建在镜像身份核验通过后才沿用既有启动流程；重试失败保留原 `.env` 镜像选择。不会修改宿主 Docker daemon、系统全局源、注册表或用户代理设置，也不会重启 Docker。POSIX 实时显示 BuildKit 输出，只保留有限大小的诊断尾部；取消或超时会终止其进程组。首次 Windows 引导复用其原有 Windows PowerShell 前提；已安装的原生构建器直接在 C++ 中匹配，不调用宿主 Python/PowerShell。
+
+需要禁用自动换源时，在执行构建的环境中设置 `AIDE_CN_SOURCE_FALLBACK=0`；标准 Compose 构建还可从 `.env` 读取此值。首次 Windows 引导发生在 Compose/native host 前，应使用当前 CMD 环境变量。直接 `docker build` 则传 `--build-arg AIDE_CN_SOURCE_FALLBACK=0`，仅控制容器内下载包装器；基础镜像恢复由 Aide 启动器负责。
+
+BuildKit 自身启动镜像、GitHub Codex Bridge 源码、WebView/Windows SDK 和可选 sherpa 下载沿用原有缓存、固定摘要和错误处理，本次没有把任意第三方代理加入其下载链。镜像服务可能受网络、同步延迟和限流影响；换源失败仍明确报错，不能保证任意网络均能构建。
+
+来源与路径按维护方文档核对：[DaoCloud](https://github.com/DaoCloud/public-image-mirror)、[TUNA PyPI](https://mirrors.tuna.tsinghua.edu.cn/help/pypi/)、[TUNA Debian](https://mirrors.tuna.tsinghua.edu.cn/help/debian/)、[华为 PyPI](https://support.huaweicloud.com/mirrors_faq/mirrors_faq_0010.html)、[阿里云 Debian](https://developer.aliyun.com/mirror/debian)。实际检查和未验证范围见[任务记录](../tasks/build-cn-source-fallback-20261115.json)。
+
 ### POSIX 构建自动回收（#745）
 
 macOS `build.command` 与 Linux `build.sh` 在镜像身份校验、应用及健康检查成功后（Docker 状态为 starting 时最多等候 30 秒），自动回收本安装不再被容器引用的过时 slim 运行镜像。归属标签逐项复核，移除过时 tag 后按完整 ID 处理遗留的无 tag 镜像，不使用强制镜像删除。保留当前运行镜像、任何运行中或已退出容器仍引用的镜像、其他安装镜像、构建参数指定的依赖镜像、`dependencies/dependency-seed/sdk-seed` 及 toolbox 编译/验收工具镜像；不停止容器、不删除数据卷或工作区。
@@ -78,7 +99,7 @@ Release A/B 更新通过 `AIDE_FORCE_IMAGE_ACTIVATION=1` 明确绕过健康旧�
 
 ## 干净环境验收（#654）
 
-POSIX 构建协调器把实际项目路径作为独立、带引号的参数传入磁盘检查子 shell，不依赖调用者导出 `PROJECT_DIR`。资源检查也支持显式路径和当前目录回退；低磁盘空间和无法识别的磁盘报告仍拒绝继续。在线 Python 依赖安装发生中途下载失败时，按原索引、原版本和原参数最多重试三次完整安装；离线安装不改为联网。
+POSIX 构建协调器把实际项目路径作为独立、带引号的参数传入磁盘检查子 shell，不依赖调用者导出 `PROJECT_DIR`。资源检查也支持显式路径和当前目录回退；低磁盘空间和无法识别的磁盘报告仍拒绝继续。在线 Python 依赖安装发生中途下载失败时，保留原版本与其余参数最多重试三次完整安装，并按上述公共索引规则选择备用源；离线安装不改为联网。
 
 `scripts/test_launcher_clean_environment.py` 是显式启用的真实 Docker 验收工具。它要求已提交、没有运行数据的独立源码 checkout，并为 HOME、Docker 客户端配置、工作区/资料/本地目录、应用数据、项目名、端口、镜像和 Buildx 缓存建立新状态。宿主 Docker 引擎和已安装 CLI 属于测试前提；工具不会清空共享引擎或复制原安装的数据、代理环境及模型凭据。
 

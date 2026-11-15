@@ -81,6 +81,9 @@ jobs:
         with:
           name: windows-desktop-amd64
           path: .agent-state/windows-desktop
+      - name: Actual Win32 compiler and CMD source-build recovery contracts
+        shell: cmd
+        run: python scripts/test_windows_launcher_compile.py
       - name: Actual Windows atomic state writes, process jobs and stop recovery
         shell: cmd
         run: python scripts/ci/windows_stop_recovery.py
