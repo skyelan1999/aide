@@ -54,7 +54,8 @@
         "NOT_RUN: `docker info` could not connect to Docker Desktop Linux engine npipe; Linux AMD64/ARM64 Zig cross-build deferred to Windows Desktop Check CI.",
         "NOT_RUN: Browser/real target app visual acceptance unavailable; synthetic Win32 app is a native control-provider smoke test, not proof for Edge/Office/custom app providers.",
         "Windows Desktop Check now runs the UIA control/password smoke fixture as a required workflow step.",
-        "After implementation and local verification, rebased topic commit onto latest fetched origin/main 4737cb97 (2026-11-16); no overlapping files."
+        "After implementation and local verification, rebased topic commit onto latest fetched origin/main 4737cb97 (2026-11-16); no overlapping files.",
+        "GitHub Windows Desktop Check run 60 is in_progress for PR head 774f8cf9063abeef8f8b436818498c1f63bb29d6; Aide CI run 595 is pending. No CI result is claimed yet."
       ]
     },
     "documentation": {
@@ -73,13 +74,14 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "User requires final merge to remain in an open PR; no merge, tag, Release, or deployment is authorized or planned.",
+      "summary": "Draft PR #926 is open at https://github.com/skyelan1999/aide/pull/926, base main 4737cb9780aa5983b4b3bc8b3dd54f449c7dc6af, current head 774f8cf9063abeef8f8b436818498c1f63bb29d6. PR is unmerged; no tag, Release, or deployment.",
       "evidence": [
-        "PR will be opened as a draft and left unmerged; wait for CI and remaining real-app acceptance."
+        "User requested the final merge stay in a PR; GitHub confirms #926 state=open, draft=true, merged=false.",
+        "Windows Desktop Check run 60 in_progress and Aide CI run 595 pending on current head; no result claimed."
       ]
     }
   },
   "release_authorization": "",
   "rollback": "Revert the topic commit or PR branch; Windows bridge inspect returns to HTTP 501; no stored data migration. Keep PR open unless explicitly closed later.",
-  "handoff": "Issue #924 remains open. First implementation slice adds bounded read-only Windows UIA inspection. CI amd64/arm64 cross-build, actual app/provider matrix, app-level visual acceptance, semantic UIA action parity and issue closure are still outstanding. Keep draft PR open and never merge."
+  "handoff": "Issue #924 remains open. Draft PR #926 contains the bounded read-only Windows UIA inspection first slice and must stay unmerged. Current head 774f8cf9063abeef8f8b436818498c1f63bb29d6. Local synthetic UIA and Windows launcher tests pass. Wait for CI; Linux amd64/arm64 compile is not locally verifiable because Docker is unavailable. Real app/provider matrix, semantic UIA actions, browser workflows, and visual acceptance remain."
 }
