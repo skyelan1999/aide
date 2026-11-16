@@ -86,7 +86,7 @@ async function main() {
         if (fs.existsSync(web + "/docx-style-bridge.js")) await page.addScriptTag({
             url: "/docx-style-bridge.js"
         });
-        const app = fs.readFileSync(web + "/app.js", "utf8"), start = app.indexOf("async function setupDocxPreview("), end = app.indexOf("window.AideMarkdownCode?.install", start);
+        const app = fs.readFileSync(web + "/app.js", "utf8"), start = app.indexOf("async function setupDocxNativePreview("), end = app.indexOf("window.AideMarkdownCode?.install", start);
         await page.evaluate((code => {
             window.isDocPath = () => false;
             window.isBackupPath = () => false;
@@ -104,7 +104,7 @@ async function main() {
             window.bindViewerTeardown = (c, fn) => c._aideViewerTeardown = fn;
             window.eval(code);
         }), app.slice(start, end));
-        await page.evaluate((() => setupDocxPreview(document.querySelector("#preview"), "owned.docx", "", "", {
+        await page.evaluate((() => setupDocxNativePreview(document.querySelector("#preview"), "owned.docx", "", "", {
             readOnly: true,
             origin: "owned"
         })));
@@ -168,7 +168,7 @@ async function main() {
                 const extra = document.createElement("main");
                 extra.id = "second";
                 document.body.appendChild(extra);
-                await setupDocxPreview(extra, "owned.docx", "", "", {
+                await setupDocxNativePreview(extra, "owned.docx", "", "", {
                     readOnly: true,
                     origin: "owned"
                 });
