@@ -5079,6 +5079,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	if a.toolDenied(call.Function.Name) || taskToolDenied(task, call.Function.Name) {
 		return failure("工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用")
 	}
+	if call.Function.Name == "docx_add_comment" || call.Function.Name == "docx_resolve_comment" || call.Function.Name == "office_comment_edit" || call.Function.Name == "write_file" {
+		if err := a.collaboraWriteError(str("path"), str("source")); err != nil {
+			return failure(err.Error())
+		}
+	}
 	if call.Function.Name != "run_plugin_plan" {
 		if err := a.recoveryOperationError(task, call.Function.Name, args, nil); err != nil {
 			return failure("错误：" + err.Error())
@@ -5132,7 +5137,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	sourceID := str("source")
 	var source Source
 	if sourceID != "" {
-		if call.Function.Name != "write_file" && call.Function.Name != "list_files" && call.Function.Name != "read_file" && call.Function.Name != "mcp_call" && call.Function.Name != "semantic_search" && call.Function.Name != "document_search" && call.Function.Name != "office_document_search" {
+		if call.Function.Name != "write_file" && call.Function.Name != "list_files" && call.Function.Name != "read_file" && call.Function.Name != "mcp_call" && call.Function.Name != "semantic_search" && call.Function.Name != "document_search" && call.Function.Name != "office_document_search" && call.Function.Name != "office_document_read" && call.Function.Name != "office_document_edit" {
 			return failure("Reference sources are read-only for AI tools")
 		}
 		a.mu.Lock()
@@ -5368,6 +5373,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			return "Office 插件未启用，无法生成文件"
 		}
 		return a.officeCreateTool(wsRoot, mode, remotePath, str("path"), str("format"), args["content"])
+	case "office_document_read", "office_document_edit":
+		if a.pluginOwnerOf(call.Function.Name) != "office" {
+			return "Office 插件未启用或需要升级"
+		}
+		return a.officeDocumentTool(ctx, task, args, call.Function.Name == "office_document_edit")
 	case "archive_compress", "archive_extract":
 		if a.pluginOwnerOf(call.Function.Name) != "archive-tools" {
 			return "压缩工具插件未启用"

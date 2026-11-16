@@ -342,6 +342,10 @@ func (a *App) officeXlsxEdit(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("缺少版本或修改单元格过多"))
 		return
 	}
+	if err := a.collaboraWriteError(in.Path, in.Source); err != nil {
+		fail(w, 409, err)
+		return
+	}
 	if in.Source == "" && in.WorkspaceID != a.wsID() {
 		fail(w, 409, errors.New("工作区已切换，请重新打开"))
 		return

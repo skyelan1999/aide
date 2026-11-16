@@ -529,6 +529,7 @@ type App struct {
 	workspaceConfigMu         sync.RWMutex  // serializes workspace defaults/commits with workspace-bound operations
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
+	collabora                 collaboraState
 	transferMu                sync.Mutex
 	transferManager           *transferManager
 	skillLibraryMu            sync.Mutex
@@ -1675,6 +1676,13 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
 	mux.HandleFunc("GET /api/office/preview", a.officePagePreview)
+	mux.HandleFunc("GET /api/office/collabora", a.collaboraStatus)
+	mux.HandleFunc("POST /api/office/collabora/sessions", a.collaboraOpen)
+	mux.HandleFunc("PUT /api/office/collabora/sessions/{id}", a.collaboraHeartbeat)
+	mux.HandleFunc("POST /api/office/document/read", a.officeDocumentRead)
+	mux.HandleFunc("POST /api/office/document/edit", a.officeDocumentEdit)
+	mux.HandleFunc("/wopi/files/{id}", a.collaboraWOPI)
+	mux.HandleFunc("/wopi/files/{id}/contents", a.collaboraWOPI)
 	mux.HandleFunc("GET /api/office/xlsx", a.officeXlsxView)
 	mux.HandleFunc("PUT /api/office/xlsx", a.officeXlsxEdit)
 	mux.HandleFunc("GET /api/office/docx/comments", a.officeDocxCommentsGet)
@@ -1855,6 +1863,10 @@ func (a *App) buildHandler() {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
+		if cfg, err := a.collaboraConfig(); err == nil {
+			origin := cfg.Public.Scheme + "://" + cfg.Public.Host
+			w.Header().Set("Content-Security-Policy", w.Header().Get("Content-Security-Policy")+"; frame-src 'self' "+origin+"; form-action 'self' "+origin)
+		}
 		// http://localhost 永久强制改写。max-age 取短值 300s，本地自签场景可快速回收。
 		if hsts := strictTransportSecurity(r); hsts != "" {
 			w.Header().Set("Strict-Transport-Security", hsts)

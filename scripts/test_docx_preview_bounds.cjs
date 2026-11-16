@@ -3,7 +3,10 @@ const assert = require('node:assert/strict'), fs = require('node:fs'), vm = requ
 const JSZip = require('../internal/server/web/vendor/jszip.min.js');
 function docxSource() {
   const app = fs.readFileSync('internal/server/web/app.js', 'utf8');
-  return app.slice(app.indexOf('async function setupDocxPreview('), app.indexOf('window.AideMarkdownCode?.install'));
+  const start = app.indexOf('async function setupDocxNativePreview(');
+  const end = app.indexOf('window.AideMarkdownCode?.install', start);
+  assert.ok(start >= 0 && end > start, 'native DOCX preview fixture must resolve its actual implementation');
+  return app.slice(start, end);
 }
 async function zip(files) {
   const archive = new JSZip();for (const [name, data] of Object.entries(files)) archive.file(name, data);
@@ -30,7 +33,7 @@ async function renderFixture(bytes, response, zipImpl = JSZip) {
     window: {AideDocxStyles: {apply:()=>()=>{}}, JSZip: zipImpl, docx: {async renderAsync() {rendered++;}}}};
   vm.createContext(context);vm.runInContext(fs.readFileSync('internal/server/web/preview-safety.js', 'utf8'), context);
   vm.runInContext(docxSource(), context);const container = new Element('div');context.ownedContainer = container;
-  await vm.runInContext('setupDocxPreview(ownedContainer,"owned.docx","workspace","",{readOnly:true,origin:"owned"})', context);
+  await vm.runInContext('setupDocxNativePreview(ownedContainer,"owned.docx","workspace","",{readOnly:true,origin:"owned"})', context);
   return {rendered, container};
 }
 async function main() {

@@ -1,3 +1,28 @@
+# Collabora Online 编辑与 Aide AI
+
+Office 1.2.0 提供 Collabora Online 网页编辑。需要更新 Aide 宿主与插件，宿主必须具备 `office-collabora-v1` 能力；仅有同一版本号不足以证明兼容。市场会拒绝缺少能力的旧宿主，1.1.x 包也不能单独给旧宿主添加 WOPI 接口。实现和验收范围见 [集成需求](../prd/2026-11-16-office-collabora.md)。
+
+在插件设置中启用 Collabora 并填写：
+
+| 参数 | 用途 |
+| --- | --- |
+| `collaboraUrl` | 浏览器可访问的 Collabora HTTPS 地址，例如 `https://office.example.com` |
+| `collaboraInternalUrl` | Aide 后端访问服务的地址；留空使用上一项，容器内可用内部 HTTP |
+| `collaboraCallbackUrl` | Collabora 可访问的 Aide 地址，例如 `https://aide.example.com`；不是浏览器专用的 localhost |
+
+更改地址后刷新 Aide。浏览器必须信任两个站点的 TLS；HTTPS 工作台不得嵌入普通 HTTP 生产站点。WOPI 回调同样必须通过可信 TLS 或受控内网，不能为外部生产站点关闭证书验证。反向代理需要允许 Collabora WebSocket 升级，并配置对应 Aide frame ancestor 和 callback allowlist。独立测试/部署示例在 `deploy/collabora/compose.yaml`；不修改原工作台 Compose，也不自动购买订阅。该示例为本机回环 HTTP 监听，生产须配置既有 HTTPS 代理，并使用自己的服务容量和维护策略。
+
+文件默认在预览模式打开，不占 AI 写租约；点击编辑才进入可写会话。Collabora 报告 30 秒未操作后，宿主先确认保存再释放活动状态。存在活跃编辑或待保存时，AI 写工具返回重试提示；断连 45 秒后活动租约到期，旧编辑器仍受版本冲突保护。已保存文档和选区可附加给 Aide AI，不自动发送付费模型请求。新工具：
+
+- `office_document_read(path, source?, offset?)`：最多 200 块/60000 字符，返回可定位段落、单元格、幻灯片文本、可编辑标记、hash 和 nextOffset。
+- `office_document_edit(path, source?, hash, changes)`：最多 100 个 `{id,expectedText,newText}`，整批验证后原子写回；只读来源、AI 不可见来源、旧任务、旧版本及 read-only 沙箱拒绝写入。
+
+结构化 AI 修改支持 DOCX/XLSX/PPTX；复杂字段、对象和修订不猜测写入，段落替换沿用首个文字运行的格式。旧二进制/ODF 的网页查看和编辑以服务 discovery 为准，直接 AI 读写前须先另存为 OOXML。没有连接服务时保留原离线预览。AI 写入后空闲编辑器重新打开新版本，旧编辑器保存不能覆盖新文件。
+
+`/wopi/files/{id}` 和 `/contents` 仅接受随机文件能力令牌，不接受 Aide 全局令牌，重查工作区、来源配置和锁屏代次；能力最多 8 小时。Aide 对 Collabora 不提供任意文件另存路径或远程命令权限。
+
+---
+
 # Office 工具集：生成、DOCX 批注与 XLSX 编辑
 
 Office 插件在“插件”面板中登记 `office_create`；实际执行由 aide 原生工作区后端负责，以便在 SSH/SFTP 工作区沿用已认证会话。插件关闭后，模型不再获得生成工具；XLSX 文件查看器仍作为文件面板基础能力可用。离线使用容器中固定版本的

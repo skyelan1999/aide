@@ -66,14 +66,14 @@ async function main() {
       assert.equal(await page.locator('#preview svg').count(), 0);assert.match(await page.locator('.dxf-error').textContent(), /循环|层级/);
       await page.evaluate(async () => {await setupDxfPreview(document.querySelector('#preview'),'textloop.dxf','workspace','');});
       assert.equal(await page.locator('#preview svg').count(),0);assert.match(await page.locator('.dxf-error').textContent(),/预览限制/);
-      await page.evaluate(async () => {await setupDocxPreview(document.querySelector('#preview'), 'normal.docx', 'workspace', '', {readOnly:true,origin:'owned'});});
+      await page.evaluate(async () => {await setupDocxNativePreview(document.querySelector('#preview'), 'normal.docx', 'workspace', '', {readOnly:true,origin:'owned'});});
       assert.equal(await page.locator('.docx-error').count(), 0, await page.locator('#preview').textContent());
       await page.getByText('Owned normal DOCX preview', {exact:true}).waitFor();
       const accepted = await page.evaluate(() => ownedRenderCalls);
       await page.screenshot({path: path.join(out, theme + '-docx.png')});
       const rejected = [];
       for (const name of ['declared.docx', 'lying.docx']) {
-        const elapsed = await page.evaluate(async name => {const start = performance.now();await setupDocxPreview(document.querySelector('#preview'),name,'workspace','',{readOnly:true,origin:'owned'});return performance.now()-start;}, name);
+        const elapsed = await page.evaluate(async name => {const start = performance.now();await setupDocxNativePreview(document.querySelector('#preview'),name,'workspace','',{readOnly:true,origin:'owned'});return performance.now()-start;}, name);
         assert.match(await page.locator('#preview').textContent(), /预览限制/);assert.equal(await page.locator('.docx-body').count(),0);
         assert.equal(await page.evaluate(() => ownedRenderCalls), accepted);rejected.push({name, elapsedMs: elapsed});
       }
