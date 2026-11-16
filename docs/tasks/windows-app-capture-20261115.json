@@ -1,0 +1,96 @@
+{
+  "id": "windows-app-capture-20261115",
+  "request": "为 Windows 桌面端实现与 macOS 相当的全局前台窗口截图到 Aide 草稿能力；配置全局快捷键、权限反馈、应用/窗口/时间上下文、会话隔离；不自动发送，独立 Issue/文档/测试/PR，不合并。",
+  "baseline": "ba46ce28e9502d697321667b24de8d27d2d6d426",
+  "initial_status": "Topic branch rebased onto main ba46ce28; pushed as PR #923 head 12d95a3b438037638a8e1411e88458edd6f55ae2.",
+  "issue": "https://github.com/skyelan1999/aide/issues/922",
+  "acceptance": [
+    "Windows Aide desktop exposes an opt-in configurable global modifier gesture with actionable permission/listening status.",
+    "A clean double modifier gesture captures only the current foreground application window and includes app name, window title and timestamp context.",
+    "Single/long press, intervening key or mouse, lock/hidden window and Aide itself do not trigger/attach.",
+    "One-time capture ticket binds image+context to the active unlocked Aide session and draft only; never sends automatically.",
+    "Windows CI and real Windows desktop acceptance pass; macOS/Linux behavior remains unchanged; topic docs and separate PR are ready; keep PR unmerged and close issue only after acceptance."
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "internal/server/web/desktop-capture.js shared contract only if required",
+    "scripts capture gesture/native UI tests",
+    "docs/architecture/windows-desktop.md",
+    "docs/user-guide.md",
+    "docs/tasks/windows-app-capture-20261115.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Mac global app capture is shipped and Windows launcher lacks AideNativeCapture.",
+      "evidence": [
+        "docs/tasks/global-app-capture-20261108.json",
+        "native/macos-desktop/app_capture.swift",
+        "native/macos-desktop/main.swift: injected AideNativeCapture and foreground capture",
+        "internal/server/web/desktop-capture.js: shared one-time ticket/draft flow",
+        "Issue #922 created and open"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Use a dedicated global low-level keyboard/mouse listener and the existing one-use ticket/draft contract. Windows has no macOS-style Accessibility/Screen Recording permission prompts for this unpackaged desktop bridge. The implementation now prefers Windows.Graphics.Capture HWND interop on supported Windows versions, with bounded PNG dimensions, a 1.8-second frame wait, and a legacy PrintWindow fallback. GPU capture quality remains unaccepted until the GPU pixel fixture and an interactive Windows foreground app pass.",
+      "evidence": [
+        "Microsoft Learn: IGraphicsCaptureItemInterop::CreateForWindow supports HWND capture from Windows 10 1903: https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow",
+        "Microsoft Learn: PrintWindow asks the target app to render synchronously and may block: https://learn.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-printwindow",
+        "Current Windows desktop's ComputerBridge uses PrintWindow, so hardware-accelerated-window quality remains an explicit acceptance risk; it is not accepted as the final screenshot path"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Added opt-in global low-level keyboard/mouse hooks, persistent Shift/Ctrl choice, Windows AideNativeCapture message channel, host foreground-HWND validation, background screenshot worker, and one-time ticket delivery through shared draft API. Reused existing English catalog keys for the browser-only fallback and Windows permission status; added user-guide setup steps. Current screenshot implementation still uses PrintWindow and is not accepted as parity quality.",
+      "evidence": [
+        "native/windows-launcher/desktop_capture.hpp",
+        "native/windows-launcher/desktop.hpp",
+        "native/windows-launcher/computer_bridge.hpp",
+        "internal/server/web/desktop-capture.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Existing gesture, draft-ticket, and localization checks passed before this WGC update. The updated launcher and GPU fixture compile/link on the local Windows host. GPU pixel acceptance FAILED in this automated session: initial WGC and PrintWindow reads were black; the latest WGC attempt returns Access denied because the synthetic HWND cannot become foreground. This is recorded as a local session failure/limitation; the hosted interactive Windows CI GPU pixel fixture subsequently passed. WGC update is pushed to PR #923 as commit be77a1ba9dd8f10ad8422e4dbbd90cd8957ae8ae. Windows Desktop Check #68 failed at the AMD64 link step because Zig could not find `windowsapp`; ARM64 was cancelled. Windows Desktop Check #69 then showed Zig lacks `runtimeobject` too. Windows Desktop Check #72 then showed the vendored C++/WinRT headers require coroutine support; launcher builds now use C++20 with char8_t disabled and the JSON header pinned to C++17 semantics to preserve existing UTF-8 string behavior; Windows Desktop Check #73 then failed on ARM64 because Clang could not constant-evaluate `__uuidof` for the two custom COM interfaces; explicit `winrt::guid_v` specializations have now been added. Aide CI #628 passed on the prior head. Windows Desktop Check #74 now passes AMD64/ARM64 cross-builds, gesture boundaries and all Windows native-ui steps; its GPU fixture captured the expected RGB 230,26,51 at 320x240. Aide CI #630 also passed; real global hook, visible WebView, unlocked-draft attachment, and real interactive foreground-app/global-hotkey/draft-flow acceptance remain NOT_RUN.",
+      "evidence": [
+        "python -X utf8 -c ... test_windows_launcher_compile.main() with only known test_windows_bat_entrypoints.check skipped — PASS main native compile/link and self-test",
+          "python -X utf8 -c ... test_windows_launcher_compile.main() with CMD/BAT suite bypassed — FAIL GPU pixel fixture (expected RGB 230,26,51, captured 0,0,0); synthetic HWND was not foreground and PrintWindow also returned black",
+          "python -X utf8 scripts/check_docs.py — PASS, 535 Markdown / 2557 local links",
+          "git -c core.whitespace=cr-at-eol diff --check — PASS",
+          "Windows Desktop Check #74 — PASS AMD64 and ARM64 cross-builds, gesture boundary smoke, Windows native-ui compile/CMD, state/process recovery and isolated WebView2 UI checks; GPU fixture returned expected RGB 230,26,51 at 320x240.",
+          "Aide CI #630 — PASS quick, Go and required gate on commit 4dc32310e2e7b920e3c49c1277c6090f875e4a56.",
+          "Windows Desktop Check #68 — FAIL AMD64 cross-link: Zig could not find static library `windowsapp`; ARM64 cancelled. A second attempt with `runtimeobject` also failed because Zig has no such system library; code now resolves WinRT functions from `combase.dll` at runtime. Run #72 then failed because C++17 lacked coroutine support; build mode is now C++20 with char8_t disabled and JSON kept in C++17 mode. Run #73 then failed ARM64 constexpr GUID evaluation; explicit GUID specializations are added and another CI run is pending.",
+          "Latest local MSVC launcher compile/link and launcher self-test — PASS with dynamic WinRT API resolution and C++20; local GPU fixture reports WGC `Access is denied` because this session cannot foreground the synthetic HWND (earlier attempt returned black pixels). Hosted Windows run #74 validates the GPU pixel path.",
+        "g++ -static -std=c++17 -O0 scripts/capture-gesture-smoke.cpp — PASS short double tap, long press, timeout, intervening input",
+        "node scripts/desktop-capture.test.cjs — PASS one-use ticket, draft attachment, session/lock/navigation rejection",
+        "node --check internal/server/web/desktop-capture.js — PASS",
+        "node scripts/test_i18n_coverage.cjs — PASS, 4020 UI translation sites after reusing existing English keys for native desktop requirement and Windows permission status",
+        "node scripts/test_i18n.cjs — PASS",
+        "python -X utf8 scripts/check_docs.py — PASS, 535 Markdown / 2556 local links after adding Windows capture user-guide instructions",
+        "git diff --check — PASS"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Windows desktop architecture and user guide document opt-in gestures and draft-only attachment. Architecture now documents WGC, its legacy fallback and limits, plus the failed local GPU pixel check and pending interactive acceptance.",
+      "evidence": [
+        "docs/architecture/windows-desktop.md",
+        "docs/user-guide.md",
+        "docs/tasks/windows-app-capture-20261115.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Not run.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Final result must be a separate open PR; do not merge.",
+      "evidence": []
+    }
+  },
+  "rollback": "Use a separate feature branch; close PR or revert its commit.",
+  "handoff": "Issue #922 remains open. PR #923 is Draft/open/unmerged at head 4dc32310e2e7b920e3c49c1277c6090f875e4a56. WGC HWND capture, D3D11 staging copy, WARP fallback, old-OS PrintWindow fallback, 16 MiB PNG cap, C++/WinRT runtime wrappers and portable GUIDs are implemented. Windows Desktop Check #74 passes AMD64/ARM64 builds and Windows native-ui checks; the GPU fixture captured expected RGB 230,26,51 at 320x240. Aide CI #630 passes. The local non-foreground session returns black/Access denied; this is documented. Do not close Issue until interactive global-hotkey capture and image/context attachment to an unlocked Aide draft are accepted. Discussion #916 write remains unavailable through the connected GitHub interface."
+}
