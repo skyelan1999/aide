@@ -20,6 +20,7 @@ type terminalWorkbenchContextKey struct{}
 func (a *App) terminalToolContext(ctx context.Context, tool string, args map[string]any) (map[string]any, error) {
 	a.mu.Lock()
 	config, revision, local := a.wsConfig.Workspace, a.wsRevision, a.pluginWorkspaceLocked()
+	stateConfig := a.wsConfig
 	var work, ref string
 	if a.workspace != nil {
 		work = a.workspace.Name()
@@ -35,21 +36,9 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 	a.mu.Unlock()
 	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1, "relayVersion": 1, "sessionCopyVersion": 1, "workbench": ctx.Value(terminalWorkbenchContextKey{}) == true}
 	// State and relay secrets must not be reachable through workspace file tools.
-	stateIdentity, _ := json.Marshal([]any{scope, config.Mode, config.Port, config.Username, local})
-	stateHash := sha256.Sum256(stateIdentity)
-	stateBase := filepath.Join(dataPath, "terminal-private")
-	stateRoot := filepath.Join(stateBase, hex.EncodeToString(stateHash[:]))
-	for _, directory := range []string{stateBase, stateRoot} {
-		if err := os.Mkdir(directory, 0700); err != nil && !os.IsExist(err) {
-			return nil, err
-		}
-		info, err := os.Lstat(directory)
-		if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-			return nil, errors.New("终端私有状态目录无效")
-		}
-		if err := os.Chmod(directory, 0700); err != nil {
-			return nil, err
-		}
+	stateRoot, err := terminalStateDirectory(dataPath, stateConfig, local)
+	if err != nil {
+		return nil, err
 	}
 	result["stateRoot"] = stateRoot
 	if config.Mode == "ssh" {
