@@ -78,14 +78,24 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User authorizes main merge/push only. All local verification and cleanup complete; preparing explicit23-path commit and fast-forward integration. No tag/Release/version change.",
+      "status": "pass",
+      "summary": "Verified23-path sourcecommit cc7faf8f12707947f2f4c928515db9bca12457d8 fast-forwarded to main and pushed; Aide CI43790986887 quick/go/gate all success. 28 unrelated local paths preserved byte-for-byte. Standard local image349ac2a2 installed and accepted; its dirty-source build identity is recorded separately. Existing direct-main bypass notice retained; no protection changes, version bump, tag or GitHub Release.",
       "evidence": [
+        "https://github.com/skyelan1999/aide/actions/runs/43790986887",
         "docs/reviews/2026-11-16-office-native-preview.md"
       ]
     }
   },
   "release_authorization": "Current explicit user instruction: 做完全面测一遍，合并到main并推送。",
   "rollback": "Logical runtime backup 20261116-office-native-preview and local aide-rollback:office-native-preview-20261116 retained; no rollback performed.",
-  "handoff": "Verified final local image349ac2a2; source/data/font profiles preserved. Merge/push and remote CI pending."
+  "handoff": "Complete: Office preview/save repair accepted; codecc7faf8f merged/pushed and remote CI passed. Private full per-file report in Downloads. User runtime/data/drafts and rollback retained. Static slides only; available/compatible fonts as documented.",
+  "delivery": {
+    "sourceCommit": "cc7faf8f12707947f2f4c928515db9bca12457d8",
+    "sourceCI": "https://github.com/skyelan1999/aide/actions/runs/43790986887",
+    "sourceCIStatus": "success",
+    "runtimeImage": "sha256:349ac2a2e24fcea5a32672b4bac7fe27fb0fca260b86fff048a88803d17dbeff",
+    "runtimeBuildIdentity": "f3cceb37-dirty.ca5a9984b039277b7e0fc303e0641a8c73a8c0f569f24fd3485c5cd6b26d49fb",
+    "preservedUnrelatedPaths": 28,
+    "tagOrReleaseCreated": false
+  }
 }

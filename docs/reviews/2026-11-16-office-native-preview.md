@@ -35,3 +35,7 @@ Production health/integrity are both `ok`. Preservation checks retain 86 session
 The viewer provides static slide/page previews; animations, videos and editable PowerPoint authoring are not included. Whole-sheet XLSX pages can require zooming and scrolling; canvas and file limits remain. Exact Office typography depends on locally available fonts, with bundled metric-compatible fonts used when an original face is unavailable. Explicit source row heights, narrow-column number overflow and intentional blank sheets are retained. Source documents are never rewritten during preview. Only an explicit version-guarded cell save changes a workbook.
 
 The requested delivery is merge/push to main. No tag, GitHub Release, release asset upload, version change or branch-protection change is requested or performed.
+
+## Delivery
+
+Verified source commit `cc7faf8f12707947f2f4c928515db9bca12457d8` was fast-forwarded from `f3cceb37` onto local main and pushed to origin/main. [Aide CI](https://github.com/skyelan1999/aide/actions/runs/43790986887) completed successfully: quick, go and gate. The remote accepted the authorized direct-main push using the account's existing bypass permissions and printed the PR/expected-gate notice; branch protection was not changed. All 28 unrelated local paths remain byte-identical. This documentation receipt records the completed code delivery; the final documentation-head/CI identity is retained with the local per-file report.
