@@ -26,7 +26,7 @@
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "User authorizes implementation and clarifies inactive human preview must not block AI; no purchase/publish authorization.",
+      "summary": "User authorized implementation, inactive preview must not block AI, and subsequently authorized source push plus plugin Release/market publication. No paid subscription or daily-runtime deployment.",
       "evidence": [
         "Current user messages"
       ]
@@ -49,11 +49,12 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Real Collabora and browser DOCX/XLSX/PPTX save/readback, active/idle/read-only flows, focused Go/race/Python/JS and actual candidate ZIP installation pass. Full release/capacity/platform validation not run.",
+      "summary": "Real isolated Collabora/browser DOCX/XLSX/PPTX edit/save/AI and active/idle/read-only cases passed. Final source full verification passed 349 commands; 24/24 Go race shards, remaining packages, platform contracts and vet passed (94 explicit conditional skips). Exact final ZIP install/upgrade and independent live market downloads passed. Enterprise capacity and Windows/macOS runtime acceptance remain not run.",
       "evidence": [
         "docs/reviews/2026-11-16-office-collabora.md",
         ".agent-state/office-collabora-20261116/verification.json",
-        ".agent-state/office-collabora-20261116/delivery.json"
+        ".agent-state/office-collabora-20261116/delivery.json",
+        "docs/reviews/2026-11-16-office-publication.md"
       ]
     },
     "documentation": {
@@ -62,7 +63,8 @@
       "evidence": [
         "docs/reviews/2026-11-16-office-collabora.md",
         ".agent-state/office-collabora-20261116/verification.json",
-        ".agent-state/office-collabora-20261116/delivery.json"
+        ".agent-state/office-collabora-20261116/delivery.json",
+        "docs/reviews/2026-11-16-office-publication.md"
       ]
     },
     "cleanup": {
@@ -75,21 +77,38 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User authorized host push and plugin Release/market publication. Work proceeds in isolated release worktrees; ordinary CI/full verification apply, no Aide version/tag/Delivery requested.",
+      "status": "pass",
+      "summary": "Host PR #934 and market PR #54 merged; Office v1.2.0 Release is public; Pages deployment succeeded and pinned/raw/live/browser ZIP downloads have identical SHA-256. No Aide app tag/Release or daily-runtime replacement.",
       "evidence": [
-        "Current user instruction: 推送发布市场"
+        "docs/reviews/2026-11-16-office-publication.md",
+        "https://github.com/skyelan1999/aide/issues/935",
+        "https://github.com/skyelan1999/aide/pull/934",
+        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.2.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/54",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/43825336992",
+        ".agent-state/office-publication/publication-final.json"
       ]
     }
   },
   "release_authorization": "用户明确指令：推送发布市场",
   "rollback": "Daily runtime and data unchanged. Local test containers disposable; candidate image retained. Disable Collabora in plugin settings to use the existing native fallback after any future deployment.",
-  "handoff": "Local implementation/package/image and isolated end-to-end acceptance complete. Daily runtime is still the previous build; enablement requires the normal host update plus plugin 1.2.0 install/configuration. No public delivery or enterprise capacity/SLA claim.",
+  "handoff": "Office 1.2.0 and the market are publicly published; host source is merged. Daily runtime is unchanged. To enable, update to a host containing office-collabora-v1, install/upgrade the plugin and configure a separate Collabora service. Existing candidate image/package metadata below is historical and not the final published ZIP. No enterprise capacity/SLA claim.",
   "delivery": {
     "sourceFingerprint": "dda878843c13be9d147a0ff684780d1f8ee8b037e94e635765677d10f7cb7729",
     "imageID": "sha256:0fd1da9cc15840ab7e8c24631a0253582931786c6e7385cb40e67124ea6014ee",
     "binarySHA256": "32b8ee8952b5a3d4ea2e90cd7d72768211e62e61c2f1c59d9b44c6036ac2df4e",
     "packageSHA256": "35bd20c0be79688ebec6dbbd6be23c74de2036ca67c1f82d5d5538e1403d98a8",
+    "productionReplaced": false
+  },
+  "publication": {
+    "status": "pass",
+    "testedHostCommit": "006d28479b0d71212ca23b54af1d23d066519b2f",
+    "hostMergeCommit": "d4c11b1836dae55e2bcf7e6adc135d65b865bdb4",
+    "pluginCommit": "fadcb8bc14b23f89daa53aa0d5987be2849a50d6",
+    "marketMergeCommit": "c94c14fc498c5a3824fc72772115a6cb80126a2d",
+    "packageSHA256": "66ad7f5726f5eea843d9954690764d0afffdb084ce638bf2fa9415aef5978595",
+    "packageBytes": 10586,
+    "pagesRun": 43825336992,
     "productionReplaced": false
   }
 }
