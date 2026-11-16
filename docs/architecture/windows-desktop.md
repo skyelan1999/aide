@@ -28,6 +28,23 @@ profile 位于当前用户 LocalAppData 的 `Aide/Desktop/<安装摘要>/`，与
 
 原生桥仅公开 status/create/get，接收有界 JSON，限制当前可见主工作台顶层文档；插件页、iframe、其他原点/端口不能调用身份验证。API 返回标准 WebAuthn 注册和签名响应，继续由服务端执行挑战、原点、公钥、UV、一次性、过期和锁代际检查，原生布尔值不能解锁。切换/隐藏/关闭窗口会取消进行中的系统认证，导航代际变化后不交付旧结果。Hello 不代替重启后用密码派生保险库主密钥的既有规则。
 
+## 独立工作台电脑控制
+
+Windows 桌面桥只在交互桌面运行：锁屏或安全桌面不可读写。应用身份以进程可执行文件名和 PID 表示，`/v1/foreground-app` 只报告当前前台应用；`/v1/resolve-app` 只按准确进程名查找唯一可见应用，不读取其它窗口文字。交互动作必须同时匹配逐次 Aide 审批、允许应用、审批时 PID 和进程规则；坐标点击限定在已审批前台窗口内。截图返回 HWND 与物理窗口矩形，让服务端把图像像素换算到桌面坐标，并在动作前核对窗口没有移动或变化。
+
+| macOS desktop route/capability | Windows implementation/status | Difference and acceptance |
+| --- | --- | --- |
+| foreground app / resolve app | Process name + PID; exact app resolution to one visible window | Windows executable identity replaces macOS bundle ID; duplicate matching processes are rejected. |
+| window snapshot | Current approved foreground HWND, PNG, HWND, physical bounds and pixel size | No OCR text locations or background capture yet; PrintWindow may omit GPU-only content. |
+| inspect controls | Tracked separately in [#924](https://github.com/skyelan1999/aide/issues/924) | UIA inspection/semantic actions require bounded-provider and real-app acceptance. |
+| click / type / key | Approved current foreground process | Click is window-bounded; stale PID/HWND/bounds are rejected. `CMD` maps to Windows `Ctrl` for common key chords. Background semantic focus is not yet equivalent. |
+| drag / scroll | Approved foreground-window drag with bounded duration and guaranteed mouse release; wheel input is constrained to the approved window and revalidates focus/geometry | Windows wheel messages approximate shared pixel deltas at 3 wheel units per pixel; no animated controller pointer yet. The isolated integration fixture checks successful input and invalid-target denial. |
+| open browser / browser page balance | Approved Chrome launch with an optional complete HTTP(S) URL; Safari is unavailable | Chrome must resolve to an existing executable through Windows App Paths or a standard installation folder. Credentials, whitespace/control characters, quotes and backslashes are rejected before process launch. Browser page balance is still unsupported; the macOS flow reads only an explicitly bound Safari accessibility tree and needs a separate Windows UIA design. |
+| system input / app / capture scheduling | Bridge currently serializes all requests | Safer than concurrent global input, but independent app/capture lanes are not yet equivalent. |
+| virtual controller pointer | Not yet implemented | The Windows design must remain non-activating, non-intercepting, DPI aware, high contrast and auto-dismissing. |
+
+The current implementation and evidence are tracked in [#932](https://github.com/skyelan1999/aide/issues/932) and [the task record](../tasks/windows-desktop-control-20261116.json). The table describes an incremental parity audit, not completion of all macOS workflows. Touch ID has a Windows Hello counterpart documented above. Local real-app interaction and visual overlay acceptance must be recorded separately from CI compilation.
+
 ## 验证范围
 
 ```text
@@ -40,3 +57,4 @@ python scripts/agent-route.py verify quick
 `Windows Desktop Check` 只做验证，不调用 Delivery 或发布 Release：Linux 分别交叉编译 AMD64/ARM64；Windows runner 用单独测试 EXE 和合成 localhost TLS 服务，实际检查 WebView2 窗口、应用内新标签、共享存储、沙箱 MessagePort、插件页原生桥隔离、未保存关闭取消及下载取消。测试 EXE 不编译进产品；测试不读真实账户、启动 Docker 或发起真实 Hello 注册/签名。合成界面不等于 Compare/ProfessionalProject 真正功能或用户设备验收。
 
 精确通过/未执行项、源码与构建证据见 [任务记录](../tasks/windows-desktop-20261103.json)。Windows Hello 硬件签名、用户环境完整 build/start 和实际插件操作仍须在对应 Windows 设备验证，不能用跨编译或隔离窗口测试替代。
+
