@@ -49,24 +49,24 @@
         "Extended isolated Windows fixture to verify drag and horizontal/vertical wheel delivery to the synthetic window plus out-of-window/out-of-range denials.",
         "PASS in hosted Windows Desktop Check #80: isolated target window received drag completion and both wheel axes; out-of-window drag and out-of-range scroll were denied without moving the cursor.",
         "Added approved Chrome launch using an exact resolved executable path and no-shell process launch; browser URLs are limited to complete credential-free HTTP(S) URLs and reject command-line delimiters.",
-        "The bridge fixture launches the test executable as a fake Chrome to verify the approved URL reaches the process without opening a real browser or making a network request."
+        "PASS in hosted Windows Desktop Check #82: the bridge fixture launched the test executable as fake Chrome and verified the approved URL reached its command line without opening a real browser or making a network request."
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Aide CI #645 and Windows Desktop Check #81 pass on the prior gesture head. The new Chrome route and fake-browser launch fixture compile locally; full hosted checks for this browser addition are pending. Launching the temporary integration binary on this host is blocked with Windows “Access is denied”. Actual user-facing app/visual acceptance remains NOT_RUN because this host has no interactive desktop.",
+      "summary": "Aide CI #649 and Windows Desktop Check #82 all pass on source head 85ab1428119e44495f67d7429d3671f468bdb78d. Windows CI exercised app discovery, snapshots, drag/scroll, denials, fake Chrome command-line launch, Windows recovery, and WebView2 isolation. Local native builds and fixture compilation pass; launching the temporary integration binary on this host is blocked with Windows “Access is denied”. Actual user-facing app/visual acceptance remains NOT_RUN because this host has no interactive desktop.",
       "evidence": [
-        "PASS: Aide CI #643 — Go, quick, and gate jobs completed successfully on 0c856e806373aeb71daa9b604e5c2e24bfabbc46.",
-        "PASS: Windows Desktop Check #80 — amd64 build, arm64 build, and native-ui job all completed successfully on 0c856e806373aeb71daa9b604e5c2e24bfabbc46.",
-        "PASS: hosted Windows native-ui integration — isolated bridge discovery and snapshot, successful drag and horizontal/vertical scroll delivery to the synthetic foreground window, invalid endpoint/delta rejection without cursor movement, Windows recovery contracts, and isolated WebView2 tabs/sandbox/dialog/auth checks.",
+        "PASS: Aide CI #649 — Go, quick, and gate jobs completed successfully on 85ab1428119e44495f67d7429d3671f468bdb78d.",
+        "PASS: Windows Desktop Check #82 — amd64 build, arm64 build, and native-ui job all completed successfully on 85ab1428119e44495f67d7429d3671f468bdb78d.",
+        "PASS: hosted Windows native-ui integration — isolated bridge discovery and snapshot, successful drag and horizontal/vertical scroll delivery, fake Chrome process launch with the approved URL, invalid URL/gesture denials, Windows recovery contracts, and isolated WebView2 tabs/sandbox/dialog/auth checks.",
         "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only — Visual Studio 2022/MSVC x64 compile/link, native self-test and dry-run.",
         "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only — isolated native bridge test fixture compiled with MSVC.",
-        "FAIL/NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — Windows returned “Access is denied” launching the temporary integration executable on this host; no local interactive app assertions ran. The full fixture passed on hosted Windows CI #80.",
+        "FAIL/NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — Windows returned “Access is denied” launching the temporary integration executable on this host; no local interactive app assertions ran. The full fixture passed on hosted Windows CI #82.",
         "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON parsed and git diff --check passed.",
-        "NOT_RUN: local Go tests because Go is not installed on this host; hosted Aide CI #643 completed the repository Go regression job successfully.",
+        "NOT_RUN: local Go tests because Go is not installed on this host; hosted Aide CI #649 completed the repository Go regression job successfully.",
         "NOT_RUN: actual user-facing application screenshot/interaction and visual UI review; this host has no interactive Windows desktop.",
         "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only after adding approved Chrome launch and its fake-process fixture.",
-        "PENDING: Windows hosted CI must execute the no-network fake Chrome launch, malformed URL denial, and existing desktop/gesture scenarios on the updated source."
+        "PASS: hosted Windows Desktop Check #82 executed the fake Chrome launch and malformed-URL denial on the updated source without network access or launching a real browser."
       ]
     },
     "documentation": {
@@ -90,13 +90,13 @@
       "status": "not_run",
       "summary": "User requested code stay in an open pull request. No merge, release, or main update was performed.",
       "evidence": [
-        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; CI source head 0c856e806373aeb71daa9b604e5c2e24bfabbc46 passed Aide CI #643 and Windows Desktop Check #80.",
-        "Issue #932 remains open because browser opening/page balance, UIA semantic actions, OCR/GPU capture, independent scheduling, visual pointer parity and actual interactive user-app acceptance remain incomplete; no merge or release performed."
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; source head 85ab1428119e44495f67d7429d3671f468bdb78d passed Aide CI #649 and Windows Desktop Check #82.",
+        "Issue #932 remains open because browser page balance, UIA semantic actions, OCR/GPU capture, independent scheduling, visual pointer parity and actual interactive user-app acceptance remain incomplete; no merge or release performed."
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Draft PR #933 now contains Windows app discovery/safety plus bounded foreground drag/scroll. Aide CI #643 and Windows Desktop Check #80 pass. Remaining: Windows browser workflow/page balance review, UIA parity tracked in #924, OCR/GPU capture strategy, background actions, independent scheduler lanes, visual controller pointer, real interactive app/screenshot acceptance, and Discussion #916 update (no discussion-write or browser automation tool available in this session). Keep Issue #932 open and PR unmerged."
+  "handoff": "Draft PR #933 now contains Windows app discovery/safety, bounded foreground drag/scroll, and approved Chrome opening. Aide CI #649 and Windows Desktop Check #82 pass. Remaining: browser page balance, UIA parity tracked in #924, OCR/GPU capture strategy, background actions, independent scheduler lanes, visual controller pointer, real interactive app/screenshot acceptance, and Discussion #916 update (no discussion-write or browser automation tool available in this session). Keep Issue #932 open and PR unmerged."
 }
 
