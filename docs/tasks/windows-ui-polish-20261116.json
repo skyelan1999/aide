@@ -25,7 +25,8 @@
       "summary": "Issue #925 asks for Windows-only visual refinement while preserving theme, focus, disabled, keyboard and DPI behavior; it explicitly requires screenshots and human visual acceptance at several dimensions.",
       "evidence": [
         "Issue #925 is open and states screenshot-based acceptance has not yet been performed.",
-        "Existing desktop_chrome.hpp already implements active/hover/pressed custom tabs, 32-DIP scaling and theme palette; smoke harness already captures light/dark and narrow layouts."
+        "Existing desktop_chrome.hpp already implements active/hover/pressed custom tabs, 32-DIP scaling and theme palette; smoke harness already captures light/dark and narrow layouts.",
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f merged into PR #927 without conflicts."
       ]
     },
     "design": {
@@ -47,8 +48,14 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Windows Desktop Check and Aide CI passed for implementation head 3a6d74c. The complete local launcher/entrypoint suite hit a 10-second timeout in its CMD proxy policy fixture; human screenshot review remains pending.",
+      "summary": "After main sync, Aide CI #665 and Windows Desktop Check #90 pass on source head 08c07f80ba4364b3f0c405caf50974c6709dcb32, including AMD64/ARM64 and native-ui. Synthetic Windows screenshots from prior native-ui artifact #65 were inspected: light/dark, narrow and 150/200% layouts show visible active-tab/focus states; narrow inactive tab labels truncate with ellipses as intended. The dark app content retained a light OS title bar on the runner, whose DWM appearance follows system color mode; human target-device review is still needed. Local launcher self-test's first phase passed, but a mistakenly supplied unsupported --native-only argument was ignored and the full CMD proxy fixture hung; only the test process was stopped. Real-app screenshot acceptance remains open.",
       "evidence": [
+        "PASS Aide CI #665 on synchronized source head 08c07f80ba4364b3f0c405caf50974c6709dcb32.",
+        "PASS Windows Desktop Check #90 on synchronized source head 08c07f80ba4364b3f0c405caf50974c6709dcb32; AMD64/ARM64 compile and native-ui job all passed.",
+        "PASS native-ui smoke screenshot artifact from prior same-source run #65 was visually inspected for compact dark/light, narrow, 150/200%, and High Contrast states; narrow labels show ellipsis and active/focus indicators remain visible. This is synthetic fixture review, not a human test on the target device.",
+        "PASS `python -X utf8 scripts/check_docs.py` after main sync — 538 Markdown files, 2557 local links; task JSON parsed and `git diff --check` passed.",
+        "PARTIAL/NOT_PASS local `python -X utf8 scripts/test_windows_launcher_compile.py --native-only`: this topic branch does not support that option, so the full fixture suite ran. Native launcher self-test passed, then CMD proxy-policy fixture did not finish; stopped only the process started by this run.",
+        "NOT_RUN: real Aide user-app screenshots at 100/150/200%, multiple app sizes, and human visual acceptance remain unavailable.",
         "python scripts/test_windows_launcher_compile.py: MSVC compilation/link and launcher self-test passed; later scripts/test_windows_build_proxy.py timed out in proxy-policy.cmd after 10 seconds, so the complete suite did not pass.",
         "git diff --check passed.",
         "Aide CI run 602 and Windows Desktop Check run 63 passed on PR #927 implementation head 3a6d74c481f156cafba28c84143a48eb4b2c251c; AMD64, ARM64, and native UI smoke all passed.",
@@ -59,26 +66,27 @@
       "status": "pass",
       "summary": "Documented Windows High Contrast behavior, state rendering, synthetic DPI captures, and the remaining human screenshot acceptance in the desktop architecture guide.",
       "evidence": [
-        "docs/architecture/windows-desktop.md updated."
+        "docs/architecture/windows-desktop.md updated.",
+        "PASS `python -X utf8 scripts/check_docs.py` after sync: 538 Markdown files, 2557 local links."
       ]
     },
     "cleanup": {
-      "status": "pass",
-      "summary": "Removed the confirmed temporary compiler probe object and verified the topic contains only intended source, documentation, and task evidence files.",
+      "status": "not_run",
+      "summary": "The stopped local launcher test left its 34 MB generated directory in the system TEMP folder. A targeted recursive deletion was rejected by automatic approval review; the directory is outside the repository. No repository files or user data were removed.",
       "evidence": [
-        "git status showed only the four intended implementation/documentation files and this task record before commit; no generated test executables or captures remain."
+        "Generated path was verified as C:\\Users\\La\\AppData\\Local\\Temp\\aide-native-syntax-4m0vifpc; no files were added to the repository."
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Draft PR #927 is open and linked to Issue #925. CI passed for the implementation commit; human screenshot acceptance and local timeout triage remain outstanding.",
+      "summary": "PR #927 is open and draft, synchronized with current main. Hosted CI passed; real-app screenshot/human review and the local proxy-fixture timeout remain open.",
       "evidence": [
-        "PR: https://github.com/skyelan1999/aide/pull/927 (draft, open, implementation head 3a6d74c481f156cafba28c84143a48eb4b2c251c; Aide CI #602 and Windows Desktop Check #63 passed).",
-        "Issue #925 has a progress comment linking the PR and accurately recording the failing timeout and pending acceptance."
+        "PR #927 remains open, draft, and unmerged.",
+        "Aide CI #665 and Windows Desktop Check #90 passed on synchronized source head 08c07f80ba4364b3f0c405caf50974c6709dcb32."
       ]
     }
   },
   "release_authorization": "User authorized push and PR creation, and explicitly requires all merges to remain in PRs; do not merge.",
   "rollback": "Revert the topic commit/PR branch; native chrome returns to current light/dark CSS palette, with no persistent data changes.",
-  "handoff": "PR #927 is a draft and must remain unmerged. Aide CI #602 and Windows Desktop Check #63 passed for implementation head 3a6d74c481f156cafba28c84143a48eb4b2c251c. The full local launcher/entrypoint suite did not pass because the CMD proxy policy fixture timed out after 10 seconds. Issue #925 must remain open until this timeout is resolved or accepted and screenshots are manually reviewed at the requested scale/theme/layout matrix. Discussion #916 was not updated: the available GitHub connector supports read-only discussion retrieval only, no browser/computer-use UI inspection tool is available in this session; gh is not installed."
+  "handoff": "PR #927 remains draft and unmerged. Main da8fdc95c7bb432c8a29aa45d13e55635e480b7f merged without conflicts; Aide CI #665 and Windows Desktop Check #90 pass on source head 08c07f80ba4364b3f0c405caf50974c6709dcb32. Screenshots from native-ui artifact #65 were inspected for synthetic dark/light, narrow, 150/200%, and High Contrast layouts; active/focus states remain visible and narrow tabs ellipsize. This does not replace human review on a real target device. Local launcher self-test passed, but an unsupported --native-only flag caused the full CMD proxy-policy fixture to run and hang; the test process was stopped. Its generated 34 MB TEMP directory remains because automatic approval review rejected recursive deletion. Issue #925 stays open pending real-app screenshots/human acceptance and local timeout triage. Discussion #916 has not been updated because no Discussion write/authenticated browser-control tool is available."
 }
