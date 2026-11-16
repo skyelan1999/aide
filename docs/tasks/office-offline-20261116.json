@@ -1,0 +1,91 @@
+{
+  "id": "office-offline-20261116",
+  "request": "我需要直接接入aide，纯离线使用，不需要额外的添加设置",
+  "baseline": "ef8f8bf050f237e03413c8021ed93b954eab9758",
+  "initial_status": "",
+  "acceptance": [
+    "Office editor engine is bundled in the Aide runtime for Linux arm64/amd64; no runtime download, external Office service, address entry or Office settings required.",
+    "Fresh Aide with no Office settings opens DOCX/XLSX/PPTX in the existing viewer; preview/edit/save survive a runtime with no external network.",
+    "Engine is lazy-started, health-checked, restarted after failure and stopped with Aide; backend/callback listen on random loopback ports and are never published.",
+    "Browser resources and WebSockets use the existing Aide origin through a capability-protected proxy; only editor endpoints are exposed, never admin/conversion or full Aide credentials.",
+    "Existing document tokens, read-only/workspace/lock/version guards and inactive-preview AI read/edit behavior remain verified.",
+    "Package includes pinned engine provenance/licenses and fails build on missing/corrupt engine; prior separately deployed service setup is replaced with the built-in default.",
+    "No externally exposed plugin service: public /wopi/ is 404; engine/proxy access without an Aide-issued document-session capability is refused; no admin or conversion service exposed."
+  ],
+  "scope": [
+    "internal/server/office_collabora*.go",
+    "internal/server/office_runtime*.go",
+    "internal/server/server.go",
+    "internal/server/web/office-collabora.js and locales/en.js",
+    "scripts/install-office-engine.py and focused runtime/browser tests",
+    "Dockerfile, Dockerfile.local and runtime build-input hashing",
+    "docker/office-engine/ pinned source manifest and legal notices",
+    "docs/prd, docs/plugins/office.md, docs/reviews and task record",
+    "aide-pkg-office manifest, README, package metadata/tests",
+    "internal/server/web/app.js",
+    "deploy/collabora/compose.yaml retirement",
+    "compose.yaml, docker/compose.offline.yaml shared Office/Go memory budget",
+    "docs/agent/router.json installer regression gate",
+    "legal/third_party/collabora and sources.json provenance",
+    "internal/server/office_document.go removal of unused HTTP wrappers",
+    "docs/reviews/2026-11-16-office-offline.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests directly integrated, fully offline Office use with no additional settings. Implement in an isolated worktree; preserve existing local data/runtime.",
+      "evidence": [
+        "Current user message"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bundle the unmodified upstream CODE AppImage in the existing Aide Linux runtime. Aide lazily manages a loopback child and private WOPI callback; same-origin authenticated proxy and no plugin service fields.",
+      "evidence": [
+        "docs/prd/2026-11-16-office-offline.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Built-in pinned engine, managed random loopback child/callback, document-session proxy, no Office settings, and no general document read/edit HTTP routes. AI uses the internal native dispatcher.",
+      "evidence": [
+        "docs/prd/2026-11-16-office-offline.md",
+        "internal/server/office_runtime.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual isolated offline DOCX/XLSX/PPTX edit/save/readback and engine crash recovery passed. Final source/full verification and final artifact acceptance pending.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-offline.md",
+        ".agent-state/office-offline/engine-recovery.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD, host/plugin documentation and provenance reflect built-in offline and Aide-only boundaries; distinguishes actual checks from pending release.",
+      "evidence": [
+        "docs/plugins/office.md",
+        "docs/reviews/2026-11-16-office-offline.md",
+        "docker/office-engine/source.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Previous explicit push/market authorization applies to this Office refinement. Complete final checks before host/Office 1.3.0/market updates; no daily-runtime deployment or Aide application version/tag/Release.",
+      "evidence": [
+        "Current thread user instruction: 推送发布市场",
+        "Current offline/Aide-only clarifications"
+      ]
+    }
+  },
+  "release_authorization": "Current thread prior explicit instruction: 推送发布市场; continued offline and Aide-only refinement of the same Office integration.",
+  "rollback": "Isolated candidate only until real offline browser acceptance; daily runtime and unrelated work untouched. Existing editor/version protections retained.",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/937"
+}

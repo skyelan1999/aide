@@ -65,3 +65,6 @@ docker-images/*.zip
 
 # Verified, pinned build input staged by the source launcher; not a Git artifact.
 /docker/host-sources/*.tar.gz
+
+# Optional pinned build inputs for offline Office-engine packaging.
+/docker/office-engine/*.tar.gz

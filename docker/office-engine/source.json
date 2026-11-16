@@ -1,0 +1,24 @@
+{
+  "version": "26.4.502",
+  "product": "Unmodified Collabora Online CODE AppImage",
+  "upstream": "https://github.com/CollaboraOnline/richdocumentscode/releases/tag/26.4.502",
+  "runtimeLicense": "MPL-2.0 and bundled third-party licenses",
+  "sources": {
+    "amd64": {
+      "url": "https://github.com/CollaboraOnline/richdocumentscode/releases/download/26.4.502/richdocumentscode.tar.gz",
+      "archiveSHA256": "2879240a8f2b07e629f82d2a322dd23755ff7d9afdefbd470a831e91a15df51c",
+      "member": "richdocumentscode/collabora/Collabora_Online.AppImage",
+      "appImageSHA256": "6ae1b080c65ad0a27a5d08fe2dfe95d12ab49dc15a12f4c5f49b906f7488e75b",
+      "appImageBytes": 284439744
+    },
+    "arm64": {
+      "url": "https://github.com/CollaboraOnline/richdocumentscode/releases/download/26.4.502/richdocumentscode_arm64.tar.gz",
+      "archiveSHA256": "c8ec8b906e35d7b4cbf1d4c77d3e840cb2b352a3bd5814810be440c7dc54e28b",
+      "member": "richdocumentscode_arm64/collabora/Collabora_Online.AppImage",
+      "appImageSHA256": "bcd376fc1cdded111b4fba3d75afd2af6222bfb1c59602c36d423f96e2ff1f67",
+      "appImageBytes": 260739456
+    }
+  },
+  "upstreamSourceRevision": "42745e44dd",
+  "upstreamSource": "https://gerrit.collaboraoffice.com/plugins/gitiles/online/+/42745e44dd/"
+}

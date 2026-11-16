@@ -1,25 +1,19 @@
-# Collabora Online 编辑与 Aide AI
+# Aide 内置离线 Office
 
-Office 1.2.0 提供 Collabora Online 网页编辑。需要更新 Aide 宿主与插件，宿主必须具备 `office-collabora-v1` 能力；仅有同一版本号不足以证明兼容。市场会拒绝缺少能力的旧宿主，1.1.x 包也不能单独给旧宿主添加 WOPI 接口。实现和验收范围见 [集成需求](../prd/2026-11-16-office-collabora.md)。
+Office 1.3.0 配合具备 `office-offline-v1` 的完整 Aide 安装包使用。编辑引擎随主程序打包，首次打开文档自动启动，无需部署额外服务、填写地址或添加插件设置。旧版本保存的 Collabora 服务设置不再使用；只更新 ZIP 不会为旧主程序补上引擎。
 
-在插件设置中启用 Collabora 并填写：
+在 Aide 原文件查看页面打开 Office 文档即可预览、编辑和保存。引擎、字体、脚本和文档读写均本地运行，运行时不下载组件，不需要互联网。云端 AI 推理仍需要供应商连接；完全离线的 AI 推理需使用已有本地模型。
 
-| 参数 | 用途 |
-| --- | --- |
-| `collaboraUrl` | 浏览器可访问的 Collabora HTTPS 地址，例如 `https://office.example.com` |
-| `collaboraInternalUrl` | Aide 后端访问服务的地址；留空使用上一项，容器内可用内部 HTTP |
-| `collaboraCallbackUrl` | Collabora 可访问的 Aide 地址，例如 `https://aide.example.com`；不是浏览器专用的 localhost |
-
-更改地址后刷新 Aide。浏览器必须信任两个站点的 TLS；HTTPS 工作台不得嵌入普通 HTTP 生产站点。WOPI 回调同样必须通过可信 TLS 或受控内网，不能为外部生产站点关闭证书验证。反向代理需要允许 Collabora WebSocket 升级，并配置对应 Aide frame ancestor 和 callback allowlist。独立测试/部署示例在 `deploy/collabora/compose.yaml`；不修改原工作台 Compose，也不自动购买订阅。该示例为本机回环 HTTP 监听，生产须配置既有 HTTPS 代理，并使用自己的服务容量和维护策略。
+仅限 Aide 内使用：没有独立的 Office 服务端口、外部 MCP 或通用插件接口。引擎与 WOPI 回调只使用随机回环端口，不发布到宿主机。Aide 对外端口的 `/wopi/` 路径一律拒绝。浏览器资源和 WebSocket 使用 Aide 原地址，需要已授权文档会话的短期 HttpOnly 能力；不向引擎传递 Aide 全局令牌或 Cookie。管理、通用转换等端点不通过代理提供。
 
 文件默认在预览模式打开，不占 AI 写租约；点击编辑才进入可写会话。Collabora 报告 30 秒未操作后，宿主先确认保存再释放活动状态。存在活跃编辑或待保存时，AI 写工具返回重试提示；断连 45 秒后活动租约到期，旧编辑器仍受版本冲突保护。已保存文档和选区可附加给 Aide AI，不自动发送付费模型请求。新工具：
 
 - `office_document_read(path, source?, offset?)`：最多 200 块/60000 字符，返回可定位段落、单元格、幻灯片文本、可编辑标记、hash 和 nextOffset。
 - `office_document_edit(path, source?, hash, changes)`：最多 100 个 `{id,expectedText,newText}`，整批验证后原子写回；只读来源、AI 不可见来源、旧任务、旧版本及 read-only 沙箱拒绝写入。
 
-结构化 AI 修改支持 DOCX/XLSX/PPTX；复杂字段、对象和修订不猜测写入，段落替换沿用首个文字运行的格式。旧二进制/ODF 的网页查看和编辑以服务 discovery 为准，直接 AI 读写前须先另存为 OOXML。没有连接服务时保留原离线预览。AI 写入后空闲编辑器重新打开新版本，旧编辑器保存不能覆盖新文件。
+结构化 AI 修改支持 DOCX/XLSX/PPTX；复杂字段、对象和修订不猜测写入，段落替换沿用首个文字运行的格式。旧二进制/ODF 的查看和编辑以内置引擎支持为准，直接 AI 读写前须先另存为 OOXML。保留原离线回退预览。AI 写入后空闲编辑器重新打开新版本，旧编辑器保存不能覆盖新文件。
 
-`/wopi/files/{id}` 和 `/contents` 仅接受随机文件能力令牌，不接受 Aide 全局令牌，重查工作区、来源配置和锁屏代次；能力最多 8 小时。Aide 对 Collabora 不提供任意文件另存路径或远程命令权限。
+私有回调仅接受随机文件能力令牌，不接受 Aide 全局令牌，重查工作区、来源配置和锁屏代次；能力最多 8 小时。引擎为未修改的官方 CODE AppImage，版本与双架构摘要在 `docker/office-engine/source.json`。适配层 MIT 与 Collabora/LibreOffice 及其第三方许可证分别保留，原始许可资源包含在引擎中；企业支持和 SLA 不随包提供。实现范围见 [离线需求](../prd/2026-11-16-office-offline.md)。
 
 ---
 

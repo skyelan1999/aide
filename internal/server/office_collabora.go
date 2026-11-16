@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"io"
@@ -31,11 +30,11 @@ type collaboraDocument struct {
 	LockUntil               time.Time
 }
 type collaboraSession struct {
-	ID, TokenHash, Config, ParentOrigin string
-	Doc                                 *collaboraDocument
-	Write, Dirty                        bool
-	Expires, ActiveUntil                time.Time
-	LockGen                             int64
+	ID, TokenHash, ProxyTokenHash, Config, ParentOrigin string
+	Doc                                                 *collaboraDocument
+	Write, Dirty                                        bool
+	Expires, ActiveUntil                                time.Time
+	LockGen                                             int64
 }
 type collaboraConfiguration struct {
 	Public, Internal, Callback *url.URL
@@ -50,40 +49,22 @@ func collaboraURL(raw string) (*url.URL, error) {
 	return u, nil
 }
 func (a *App) collaboraConfig() (collaboraConfiguration, error) {
-	var cfg collaboraConfiguration
-	a.mu.Lock()
-	var settings map[string]any
-	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == "office" && p.Enabled {
-			settings = p.Settings
-			break
+	if !a.officeViewerEnabled() {
+		return collaboraConfiguration{}, errors.New("Office 插件已停用")
+	}
+	a.officeRuntime.mu.Lock()
+	defer a.officeRuntime.mu.Unlock()
+	if a.officeRuntime.config == nil {
+		return collaboraConfiguration{}, errors.New("本地 Office 引擎尚未启动")
+	}
+	if a.officeRuntime.done != nil {
+		select {
+		case <-a.officeRuntime.done:
+			return collaboraConfiguration{}, errors.New("本地 Office 引擎已停止，请重新打开文档")
+		default:
 		}
 	}
-	// Copy while holding the registry lock; settings may be replaced concurrently.
-	enabled, _ := settings["collaboraEnabled"].(bool)
-	public, _ := settings["collaboraUrl"].(string)
-	internal, _ := settings["collaboraInternalUrl"].(string)
-	callback, _ := settings["collaboraCallbackUrl"].(string)
-	a.mu.Unlock()
-	if !enabled {
-		return cfg, errors.New("请在 Office 插件设置中启用并配置 Collabora Online")
-	}
-	var err error
-	if cfg.Public, err = collaboraURL(public); err != nil {
-		return cfg, err
-	}
-	if internal == "" {
-		internal = public
-	}
-	if cfg.Internal, err = collaboraURL(internal); err != nil {
-		return cfg, err
-	}
-	if cfg.Callback, err = collaboraURL(callback); err != nil {
-		return cfg, err
-	}
-	b, _ := json.Marshal([]string{cfg.Public.String(), cfg.Internal.String(), cfg.Callback.String()})
-	cfg.Fingerprint = hash(b)
-	return cfg, nil
+	return *a.officeRuntime.config, nil
 }
 func collaboraExtension(p string) bool {
 	switch strings.ToLower(path.Ext(p)) {
@@ -93,12 +74,12 @@ func collaboraExtension(p string) bool {
 	return false
 }
 func (a *App) collaboraStatus(w http.ResponseWriter, r *http.Request) {
-	cfg, err := a.collaboraConfig()
+	err := a.ensureOfficeEngine(r.Context())
 	if err != nil {
-		jsonOut(w, 200, map[string]any{"enabled": false, "message": err.Error()})
+		jsonOut(w, 200, map[string]any{"enabled": false, "builtin": true, "message": err.Error()})
 		return
 	}
-	jsonOut(w, 200, map[string]any{"enabled": true, "origin": cfg.Public.Scheme + "://" + cfg.Public.Host})
+	jsonOut(w, 200, map[string]any{"enabled": true, "builtin": true})
 }
 
 func collaboraDiscovery(ctx context.Context, cfg collaboraConfiguration, ext string, write bool) (string, error) {
@@ -106,12 +87,13 @@ func collaboraDiscovery(ctx context.Context, cfg collaboraConfiguration, ext str
 	if err != nil {
 		return "", err
 	}
-	client := http.Client{Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error {
+	client := http.Client{Timeout: 10 * time.Second, Transport: &http.Transport{Proxy: nil}, CheckRedirect: func(*http.Request, []*http.Request) error {
 		return errors.New("Collabora discovery redirects are disabled")
 	}}
+	defer client.CloseIdleConnections()
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", errors.New("无法连接 Collabora Online，请检查插件中的服务地址")
+		return "", errors.New("本地 Office 引擎连接中断，请重新打开文档")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -146,13 +128,22 @@ func collaboraDiscovery(ctx context.Context, cfg collaboraConfiguration, ext str
 					continue
 				}
 				u, e := url.Parse(action.URL)
-				if e != nil || u.User != nil || !strings.HasPrefix(u.Path, "/browser/") || !strings.HasSuffix(u.Path, "/cool.html") {
+				if e != nil {
+					continue
+				}
+				editorPath := u.Path
+				if cfg.Public.Path != "" {
+					editorPath = strings.TrimPrefix(editorPath, cfg.Public.Path)
+				}
+				if u.User != nil || !strings.HasPrefix(editorPath, "/browser/") || !strings.HasSuffix(u.Path, "/cool.html") {
 					continue
 				}
 				// Discovery may advertise an internal hostname. Only its editor path is
 				// used; navigation is pinned to the operator-configured public origin.
 				u.Scheme = cfg.Public.Scheme
 				u.Host = cfg.Public.Host
+				u.Path = cfg.Public.Path + editorPath
+				u.RawPath = ""
 				q := u.Query()
 				for k, values := range q {
 					if strings.ContainsAny(strings.Join(values, ""), "<>") {
@@ -224,6 +215,10 @@ func (a *App) collaboraOpen(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, e)
 		return
 	}
+	if e := a.ensureOfficeEngine(r.Context()); e != nil {
+		fail(w, 503, e)
+		return
+	}
 	cfg, e := a.collaboraConfig()
 	if e != nil {
 		fail(w, 503, e)
@@ -279,14 +274,17 @@ func (a *App) collaboraOpen(w http.ResponseWriter, r *http.Request) {
 	}
 	token := collaboraRandom()
 	s := &collaboraSession{ID: collaboraRandom(), TokenHash: hash([]byte(token)), Config: cfg.Fingerprint, ParentOrigin: parent, Doc: d, Write: write, Expires: time.Now().Add(8 * time.Hour), LockGen: lock.Gen}
+	proxyToken := collaboraRandom()
+	s.ProxyTokenHash = hash([]byte(proxyToken))
 	a.collabora.sessions[s.ID] = s
+	http.SetCookie(w, &http.Cookie{Name: officeEngineCookie, Value: s.ID + "." + proxyToken, Path: officeEnginePrefix + "/", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, Expires: s.Expires})
 	u, _ := url.Parse(action)
 	q := u.Query()
 	q.Set("WOPISrc", cfg.Callback.String()+"/wopi/files/"+d.ID)
 	q.Set("lang", "zh-CN")
 	q.Set("closebutton", "1")
 	u.RawQuery = q.Encode()
-	jsonOut(w, 200, map[string]any{"id": s.ID, "url": u.String(), "origin": cfg.Public.Scheme + "://" + cfg.Public.Host, "accessToken": token, "accessTokenTtl": s.Expires.UnixMilli(), "readOnly": !write, "canWrite": in.Origin == "" && collaboraAreaWritable(ar), "hash": d.Hash})
+	jsonOut(w, 200, map[string]any{"id": s.ID, "url": u.String(), "origin": parent, "accessToken": token, "accessTokenTtl": s.Expires.UnixMilli(), "readOnly": !write, "canWrite": in.Origin == "" && collaboraAreaWritable(ar), "hash": d.Hash})
 }
 func (a *App) collaboraSessionCurrent(s *collaboraSession) bool {
 	cfg, e := a.collaboraConfig()
@@ -344,6 +342,10 @@ func (a *App) collaboraWriteError(p, source string) error {
 	return nil
 }
 func (a *App) collaboraWOPI(w http.ResponseWriter, r *http.Request) {
+	if a.runtimeStopping.Load() {
+		fail(w, http.StatusServiceUnavailable, errors.New("Aide is stopping"))
+		return
+	}
 	a.collabora.mu.Lock()
 	defer a.collabora.mu.Unlock()
 	var s *collaboraSession

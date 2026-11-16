@@ -4882,4 +4882,7 @@ window.aideEnglish = {
   "请处理文档选区：": "Work with this document selection:",
   "此格式需要启用 Collabora Online 才能预览和编辑。": "Enable Collabora Online to preview and edit this format.",
   '请先安装 Office 插件': 'Install the Office plugin first',
+  '正在打开本地 Office 编辑器…': 'Opening local Office editor…',
+  '此格式的本地编辑器暂不可用，请更新完整 Aide 安装包。': 'The local editor is unavailable for this format. Update the complete Aide package.',
+  '正在启动本地 Office 编辑器…': 'Starting the local Office editor…',
 };

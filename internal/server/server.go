@@ -530,6 +530,7 @@ type App struct {
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
 	collabora                 collaboraState
+	officeRuntime             officeRuntime
 	transferMu                sync.Mutex
 	transferManager           *transferManager
 	skillLibraryMu            sync.Mutex
@@ -1226,6 +1227,7 @@ func (a *App) Close() {
 			a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
 		}
 		a.bgMu.Unlock()
+		a.stopOfficeEngine()
 		a.terminalPins.mu.Lock()
 		a.terminalPins.closed = true
 		a.terminalPins.mu.Unlock()
@@ -1679,10 +1681,6 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/office/collabora", a.collaboraStatus)
 	mux.HandleFunc("POST /api/office/collabora/sessions", a.collaboraOpen)
 	mux.HandleFunc("PUT /api/office/collabora/sessions/{id}", a.collaboraHeartbeat)
-	mux.HandleFunc("POST /api/office/document/read", a.officeDocumentRead)
-	mux.HandleFunc("POST /api/office/document/edit", a.officeDocumentEdit)
-	mux.HandleFunc("/wopi/files/{id}", a.collaboraWOPI)
-	mux.HandleFunc("/wopi/files/{id}/contents", a.collaboraWOPI)
 	mux.HandleFunc("GET /api/office/xlsx", a.officeXlsxView)
 	mux.HandleFunc("PUT /api/office/xlsx", a.officeXlsxEdit)
 	mux.HandleFunc("GET /api/office/docx/comments", a.officeDocxCommentsGet)
@@ -1863,7 +1861,7 @@ func (a *App) buildHandler() {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
-		if cfg, err := a.collaboraConfig(); err == nil {
+		if cfg, err := a.collaboraConfig(); err == nil && cfg.Public.IsAbs() {
 			origin := cfg.Public.Scheme + "://" + cfg.Public.Host
 			w.Header().Set("Content-Security-Policy", w.Header().Get("Content-Security-Policy")+"; frame-src 'self' "+origin+"; form-action 'self' "+origin)
 		}
@@ -1874,6 +1872,14 @@ func (a *App) buildHandler() {
 		w.Header().Set("Cache-Control", "no-store")
 		if a.runtimeStopping.Load() {
 			fail(w, http.StatusServiceUnavailable, errors.New("Aide is stopping"))
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/wopi/") {
+			http.NotFound(w, r)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, officeEnginePrefix+"/") {
+			a.serveOfficeEngine(w, r)
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/api/debug/") {

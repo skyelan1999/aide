@@ -37,7 +37,7 @@ services:
     environment:
       # Keep the Go heap below the cgroup cap so GC runs before the kernel OOM
       # killer takes the whole service down.
-      GOMEMLIMIT: 3600MiB
+      GOMEMLIMIT: 2600MiB
       AIDE_INSTALLATION_KIND: ${AIDE_INSTALLATION_KIND:-source}
       AIDE_LAN_ADDR: ":45842"
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge

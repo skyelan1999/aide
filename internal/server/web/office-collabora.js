@@ -1,19 +1,17 @@
 'use strict';
-// A document capability travels only in a POST form to the configured editor.
+// A document capability travels only in a POST form to the bundled local editor.
 // The editor never sees Aide credentials. Messages require origin AND window.
 window.AideOfficeCollabora = (() => {
   async function open(container, spec, services, fallback) {
-    const {api, el, t, teardown, bindTeardown, attach, selection, settings} = services;
+    const {api, el, t, teardown, bindTeardown, attach, selection} = services;
+    teardown(container);container.replaceChildren(el('p','office-collabora-note',t('正在启动本地 Office 编辑器…')));
     let pendingCancelled=false;bindTeardown(container,()=>{pendingCancelled=true;});
     let status;
     try { status = await api('/office/collabora'); } catch { if(pendingCancelled)return;teardown(container);return fallback(); }
     if (!container.isConnected||pendingCancelled) return;
     if (!status.enabled || !/\.(docx?|xlsx?|pptx?|odt|ods|odp)$/i.test(spec.path) || ['local'].includes(spec.root) || String(spec.root).startsWith('mount:') || /\.bak$/i.test(spec.path)) {
       teardown(container);await fallback();
-      if (container.isConnected) {
-        const note=el('div','office-collabora-note',t('Collabora Online 可提供完整 Office 编辑。'));
-        const config=el('button','quiet quiet-sm',t('Office 插件设置'));config.onclick=settings;note.append(config);container.prepend(note);
-      }
+      if (container.isConnected && status.message) { container.prepend(el('div','office-collabora-note',status.message)); }
       return;
     }
     teardown(container);container.replaceChildren();
@@ -35,7 +33,7 @@ window.AideOfficeCollabora = (() => {
     const settleSave=(success)=>{saving=false;for(const waiter of saveWaiters){clearTimeout(waiter.timer);success?waiter.resolve():waiter.reject(Error(t('保存失败，请保留编辑器并重试')));}saveWaiters=[];};
     async function start(readOnly) {
       if(session&&!session.readOnly){try{await saveDocument();}catch(error){message.textContent=error.message;return;}}
-      const gen=++opening;message.textContent=t('正在连接 Collabora Online…');
+      const gen=++opening;message.textContent=t('正在打开本地 Office 编辑器…');
       try {
         const next=await api('/office/collabora/sessions',{method:'POST',body:JSON.stringify({...spec,readOnly:forcedReadOnly||readOnly})});
         if(disposed||gen!==opening)return;

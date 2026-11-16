@@ -21,8 +21,12 @@ func collaboraFixture(t *testing.T) (*App, map[string]any) {
 	}))
 	t.Cleanup(discovery.Close)
 	a.mu.Lock()
-	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, PluginManifest{ID: "office", Enabled: true, Settings: map[string]any{"collaboraEnabled": true, "collaboraUrl": "http://editor.test:9980", "collaboraInternalUrl": discovery.URL, "collaboraCallbackUrl": "http://aide.test"}})
+	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, PluginManifest{ID: "office", Enabled: true})
 	a.mu.Unlock()
+	public, _ := url.Parse(officeEnginePrefix)
+	internal, _ := url.Parse(discovery.URL)
+	callback, _ := url.Parse("http://127.0.0.1:10001")
+	a.officeRuntime.config = &collaboraConfiguration{Public: public, Internal: internal, Callback: callback, Fingerprint: "fixture-engine"}
 	dwgWrite(t, a, "sample.docx", officePreviewTestInput(t))
 	w := request(a, "POST", "/api/office/collabora/sessions", map[string]any{"path": "sample.docx"})
 	requireStatus(t, w, 200)
@@ -40,13 +44,13 @@ func collaboraRequest(a *App, s map[string]any, method, tail string, b []byte, h
 		r.Header.Set(k, v)
 	}
 	w := httptest.NewRecorder()
-	a.Handler().ServeHTTP(w, r)
+	a.officeCallbackHandler().ServeHTTP(w, r)
 	return w
 }
 func TestCollaboraCapabilitiesAndVersionConflict(t *testing.T) {
 	a, s := collaboraFixture(t)
-	if strings.Contains(s["url"].(string), s["accessToken"].(string)) || !strings.HasPrefix(s["url"].(string), "http://editor.test:9980/browser/") {
-		t.Fatal("editor URL leaked token or escaped configured origin")
+	if strings.Contains(s["url"].(string), s["accessToken"].(string)) || !strings.HasPrefix(s["url"].(string), officeEnginePrefix+"/browser/") {
+		t.Fatal("editor URL leaked token or escaped the built-in Aide path")
 	}
 	w := collaboraRequest(a, s, "GET", "", nil, nil)
 	requireStatus(t, w, 200)
@@ -71,7 +75,7 @@ func TestCollaboraCapabilitiesAndVersionConflict(t *testing.T) {
 	callback, _ := url.Parse(u.Query().Get("WOPISrc"))
 	r := httptest.NewRequest("GET", callback.Path+"?access_token="+a.token, nil)
 	rec := httptest.NewRecorder()
-	a.Handler().ServeHTTP(rec, r)
+	a.officeCallbackHandler().ServeHTTP(rec, r)
 	requireStatus(t, rec, 401)
 	a.mu.Lock()
 	a.wsRevision++
@@ -140,8 +144,8 @@ func TestCollaboraConfigurationAndCSP(t *testing.T) {
 	a, s := collaboraFixture(t)
 	w := httptest.NewRecorder()
 	a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
-	if !strings.Contains(w.Header().Get("Content-Security-Policy"), "frame-src 'self' http://editor.test:9980") {
-		t.Fatal("editor blocked by CSP")
+	if strings.Contains(w.Header().Get("Content-Security-Policy"), "editor.test") || !strings.Contains(w.Header().Get("Content-Security-Policy"), "default-src 'self'") {
+		t.Fatal("built-in editor must use the Aide origin")
 	}
 	a.mu.Lock()
 	a.pluginRegistry.Plugins[len(a.pluginRegistry.Plugins)-1].Enabled = false

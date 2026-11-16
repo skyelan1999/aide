@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -52,7 +51,7 @@ func officeDocumentTransform(b []byte, p, operation string, spec any) ([]byte, e
 	return result, nil
 }
 
-// The same bounded native executor backs the manual API and plugin AI tools.
+// The bounded native executor is called inside Aide by its AI plugin tools.
 // AI additionally requires a current task and AI-visible source. It cannot use
 // a viewer token or a writable reference to bypass those checks.
 func (a *App) officeDocumentOperation(ctx context.Context, in officeDocumentRequest, write, ai bool, expectedWorkspace string) (map[string]any, error) {
@@ -151,25 +150,6 @@ func (a *App) officeDocumentOperation(ctx context.Context, in officeDocumentRequ
 	// Do not reset old editor versions. Their next save will conflict and ask
 	// for reload, preserving an idle viewer's stale in-memory document.
 	return map[string]any{"saved": true, "hash": hash(result), "path": in.Path, "reloadEditor": true}, nil
-}
-func (a *App) officeDocumentRead(w http.ResponseWriter, r *http.Request) {
-	a.officeDocumentAPI(w, r, false)
-}
-func (a *App) officeDocumentEdit(w http.ResponseWriter, r *http.Request) {
-	a.officeDocumentAPI(w, r, true)
-}
-func (a *App) officeDocumentAPI(w http.ResponseWriter, r *http.Request, write bool) {
-	var in officeDocumentRequest
-	if e := decode(w, r, &in); e != nil {
-		fail(w, 400, e)
-		return
-	}
-	out, e := a.officeDocumentOperation(r.Context(), in, write, false, "")
-	if e != nil {
-		fail(w, 409, e)
-		return
-	}
-	jsonOut(w, 200, out)
 }
 func (a *App) officeDocumentTool(ctx context.Context, task *Task, args map[string]any, write bool) string {
 	raw, e := json.Marshal(args)

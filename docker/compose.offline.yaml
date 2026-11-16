@@ -12,6 +12,8 @@ services:
       # Password-protected LAN workbench: host relay opens only with explicit consent.
       - "127.0.0.1::45842"
     environment:
+      # Reserve memory for the bundled local Office child.
+      GOMEMLIMIT: 2600MiB
       AIDE_LAN_ADDR: ":45842"
       AIDE_INSTALLATION_KIND: ${AIDE_INSTALLATION_KIND:-release}
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
@@ -58,5 +60,5 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     pids_limit: 256
-    mem_limit: 2g
+    mem_limit: 4g
     cpus: 2

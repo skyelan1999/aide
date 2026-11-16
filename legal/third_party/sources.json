@@ -168,5 +168,12 @@
     "package": "LibreCAD stroke fonts",
     "path": "legal/third_party/runtime/librecad-fonts/LICENSE",
     "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+  },
+  {
+    "package": "collabora-online",
+    "version": "26.04.5.2",
+    "source": "https://www.mozilla.org/MPL/2.0/index.txt",
+    "path": "legal/third_party/collabora/MPL-2.0.txt",
+    "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04"
   }
 ]
