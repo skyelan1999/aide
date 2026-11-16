@@ -1,0 +1,95 @@
+{
+  "id": "office-collabora-20261116",
+  "request": "Collabora Online，把这个集成到插件里，然后，使aide支持对office相关文件的编辑预览，以及针对aide ai功能开放等能力",
+  "baseline": "da8fdc95c7bb432c8a29aa45d13e55635e480b7f",
+  "initial_status": "M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/server/web/starmap.html\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Collabora in existing Office plugin settings and viewer surfaces; DOCX/XLSX/PPTX editing and saved-content preview, discovery-advertised legacy/ODF support.",
+    "Document-scoped WOPI tokens; source/workspace/lock generation and read-only checks; bounded atomic writes and stale-version conflicts.",
+    "AI can read addressable document blocks and perform hash/expected-text guarded edits through plugin tools; AI visibility and sandbox rules remain enforced.",
+    "Read-only preview does not block AI. Active editing is protected; after 30 seconds inactivity and confirmed save, AI may edit. Stale editors cannot overwrite external changes.",
+    "Real isolated browser DOCX/XLSX/PPTX open/edit/save, selection-to-AI, idle/active and read-only/conflict scenarios; focused Go, Python, JS and plugin package checks.",
+    "Push tested host integration and publish Office plugin 1.2.0 and marketplace entry, with explicit required host capability; preserve unrelated local work/data; no paid subscription or daily-runtime deployment."
+  ],
+  "scope": [
+    "internal/server/office_collabora.go and tests",
+    "internal/server/office_document.go and tests",
+    "internal/server/server.go, workflow.go, sandbox_policy.go, native_editor.go",
+    "internal/server/web/office-collabora.js, app.js, index.html, style.css, locales/en.js",
+    "scripts/office/office_document.py and focused tests",
+    "docs/plugins/office.md, docs/prd/2026-11-16-office-collabora.md, docs/reviews/2026-11-16-office-collabora.md",
+    "../aide-pkg-office: plugin settings schema, native tool registration, tests, README and package",
+    "internal/server/plugin_market.go and capability compatibility tests",
+    "../aide-pkg-office release/README/package metadata",
+    "../aide-pkg-shop Office listing, immutable ZIP, catalog and routing"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorizes implementation and clarifies inactive human preview must not block AI; no purchase/publish authorization.",
+      "evidence": [
+        "Current user messages"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "WOPI host with scoped tokens; Collabora discovery; existing viewer and plugin settings; atomic/versioned AI OOXML edits; recent editor activity/idle-save lease.",
+      "evidence": [
+        "docs/prd/2026-11-16-office-collabora.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "WOPI host, plugin settings and tools, existing viewer integration, exact AI read/edit and activity/idle-save protection implemented.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-collabora.md",
+        ".agent-state/office-collabora-20261116/verification.json",
+        ".agent-state/office-collabora-20261116/delivery.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Real Collabora and browser DOCX/XLSX/PPTX save/readback, active/idle/read-only flows, focused Go/race/Python/JS and actual candidate ZIP installation pass. Full release/capacity/platform validation not run.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-collabora.md",
+        ".agent-state/office-collabora-20261116/verification.json",
+        ".agent-state/office-collabora-20261116/delivery.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD, host/plugin configuration, deployment and candidate verification updated.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-collabora.md",
+        ".agent-state/office-collabora-20261116/verification.json",
+        ".agent-state/office-collabora-20261116/delivery.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned test browser closed; isolated named test containers stopped/removed. Existing runtime/data/local work and candidate images retained.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-collabora.md",
+        ".agent-state/office-collabora-20261116/verification.json",
+        ".agent-state/office-collabora-20261116/delivery.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User authorized host push and plugin Release/market publication. Work proceeds in isolated release worktrees; ordinary CI/full verification apply, no Aide version/tag/Delivery requested.",
+      "evidence": [
+        "Current user instruction: 推送发布市场"
+      ]
+    }
+  },
+  "release_authorization": "用户明确指令：推送发布市场",
+  "rollback": "Daily runtime and data unchanged. Local test containers disposable; candidate image retained. Disable Collabora in plugin settings to use the existing native fallback after any future deployment.",
+  "handoff": "Local implementation/package/image and isolated end-to-end acceptance complete. Daily runtime is still the previous build; enablement requires the normal host update plus plugin 1.2.0 install/configuration. No public delivery or enterprise capacity/SLA claim.",
+  "delivery": {
+    "sourceFingerprint": "dda878843c13be9d147a0ff684780d1f8ee8b037e94e635765677d10f7cb7729",
+    "imageID": "sha256:0fd1da9cc15840ab7e8c24631a0253582931786c6e7385cb40e67124ea6014ee",
+    "binarySHA256": "32b8ee8952b5a3d4ea2e90cd7d72768211e62e61c2f1c59d9b44c6036ac2df4e",
+    "packageSHA256": "35bd20c0be79688ebec6dbbd6be23c74de2036ca67c1f82d5d5538e1403d98a8",
+    "productionReplaced": false
+  }
+}

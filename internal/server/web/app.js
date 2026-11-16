@@ -3360,7 +3360,7 @@ function isPdfPath(path) { return /\.pdf$/i.test(effectiveFileTypePath(path)); }
 function isZipPath(path) { return /\.zip$/i.test(effectiveFileTypePath(path)); }
 function isSupportedArchivePath(path) { return /\.(zip|tar|tgz|tbz|tbz2|txz|gz|bz2|xz)$/i.test(effectiveFileTypePath(path)) || /\.tar\.(gz|bz2|xz)$/i.test(effectiveFileTypePath(path)); }
 function isDelimitedPath(path) { return /\.(csv|tsv)$/i.test(effectiveFileTypePath(path)); }
-function isXlsxPath(path) { return /\.xlsx$/i.test(effectiveFileTypePath(path)); }
+function isXlsxPath(path) { return /\.(xlsx?|ods)$/i.test(effectiveFileTypePath(path)); }
 function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(effectiveFileTypePath(path)); }
 const splitScrollLock = { editor: false, fileView: false };
 const splitScrollExpected = new WeakMap();
@@ -9022,8 +9022,8 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
 function isDwgPath(path) { return /\.dwg$/i.test(effectiveFileTypePath(path)); }
 function isDxfPath(path) { return /\.dxf$/i.test(effectiveFileTypePath(path)); }
 function isCadDrawingPath(path) { return isDxfPath(path) || isDwgPath(path); }
-function isPresentationPath(path) { return /\.pptx?$/i.test(effectiveFileTypePath(path)); }
-function isDocxPath(path) { return /\.docx$/i.test(effectiveFileTypePath(path)); }
+function isPresentationPath(path) { return /\.(pptx?|odp)$/i.test(effectiveFileTypePath(path)); }
+function isDocxPath(path) { return /\.(docx?|odt)$/i.test(effectiveFileTypePath(path)); }
 /* XLSX 查看和单元格修改走服务端 openpyxl：仅传可见页，保留原工作簿。 */
 function csvColumnLabel(index) {
   let label='';
@@ -9064,10 +9064,17 @@ function setupDelimitedPreview(host, editor, filePath) {
   table.append(body);grid.append(table);wrap.append(grid);host.append(wrap);
 }
 
+function setupCollaboraOffice(container,filePath,root,source,viewerSpec,fallback){
+  if(!window.AideOfficeCollabora)return fallback();
+  return window.AideOfficeCollabora.open(container,{path:filePath,root:root||'workspace',source:source||'',readOnly:viewerSpec?.readOnly===true,knowledgeOrigin:viewerSpec?.origin||'',knowledgeWorkspace:viewerSpec?.knowledgeWorkspace||''},{api,el,t,onMode:readOnly=>{const badge=container.id==='file-view-preview'?$('file-view-ro-badge'):$('editor-ro-badge');badge.classList.toggle('hidden',!readOnly);},teardown:teardownViewer,bindTeardown:bindViewerTeardown,attach:()=>attachFileEntry({path:filePath,root:root||'workspace',source:source||''}),selection:text=>{const prompt=$('prompt');prompt.value+=(prompt.value?'\n\n':'')+t('请处理文档选区：')+'\n'+filePath+'\n'+text;prompt.dispatchEvent(new Event('input',{bubbles:true}));prompt.focus();},settings:()=>{const plugin=state.plugins.find(p=>p.id==='office');if(plugin)openPluginSettings(plugin);else toast(t('请先安装 Office 插件'));}},fallback);
+}
+function setupDocxPreview(container,filePath,root,source,viewerSpec){return setupCollaboraOffice(container,filePath,root,source,viewerSpec,()=>/\.docx$/i.test(effectiveFileTypePath(filePath))?setupDocxNativePreview(container,filePath,root,source,viewerSpec):officeRequiresCollabora(container));}
+function setupOfficePreview(container,filePath,root,source,viewerSpec,workbook=false){return setupCollaboraOffice(container,filePath,root,source,viewerSpec,()=>/\.(xlsx|ppt|pptx)$/i.test(effectiveFileTypePath(filePath))?setupOfficeNativePreview(container,filePath,root,source,viewerSpec,workbook):officeRequiresCollabora(container));}
+function officeRequiresCollabora(container){container.replaceChildren(el('p','muted',t('此格式需要启用 Collabora Online 才能预览和编辑。')));}
 async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
   return setupOfficePreview(container, filePath, root, source, viewerSpec, true);
 }
-async function setupOfficePreview(container, filePath, root, source, viewerSpec, workbook = false) {
+async function setupOfficeNativePreview(container, filePath, root, source, viewerSpec, workbook = false) {
   container.replaceChildren();
   const wrap=el('div','office-viewer'), bar=el('div','office-view-modes');
   const layout=el('button','quiet quiet-sm',t('版式预览')), cells=el('button','quiet quiet-sm',t('单元格'));
@@ -9711,7 +9718,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
 }
 
 /* ── docx-preview 渲染器：保留标题/表格/图片/列表，支持批注 ── */
-async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
+async function setupDocxNativePreview(container, filePath, root, source, viewerSpec) {
   teardownViewer(container);
   let canceled = false, releaseStyles = () => {};
   bindViewerTeardown(container, () => { canceled = true; releaseStyles(); });
@@ -10246,7 +10253,7 @@ async function openFileViewMode(forceNative=false) {
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
-  const viewerFormats = ['.pdf','.docx','.xlsx','.ppt','.pptx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf', '.dwg','.zip','.drawio'];
+  const viewerFormats = ['.pdf','.doc','.docx','.xls','.xlsx','.odt','.ods','.odp','.ppt','.pptx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf', '.dwg','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
   $('file-view-export-pdf').classList.toggle('hidden', !md);
