@@ -1,6 +1,9 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  '版式预览': 'Layout preview',
+  '单元格': 'Cells',
+  '正在生成预览…': 'Generating preview…',
   "{0} 处仅显示轮廓": "{0} items shown as outlines only",
   "{0} 条绘制提示": "{0} drawing notices",
   "测量工具": "Measurement tool",

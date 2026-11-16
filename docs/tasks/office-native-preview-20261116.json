@@ -1,0 +1,91 @@
+{
+  "id": "office-native-preview-20261116",
+  "request": "继续把xlsx的合并单元格、样式、图片和多行排版修好，ppt和pptx也要能正常预览，做完全面测一遍，合并到main并推送。",
+  "baseline": "f3cceb37e4accfab2007e045687f8b9765d641e6",
+  "initial_status": "",
+  "acceptance": [
+    "XLSX layout preview retains source merged cells, fonts, fills, borders, images and multiline layout, including source workbook test coverage; cell editing remains version guarded.",
+    "PPT and PPTX open as static slide pages with content, images and navigation, in modal and standalone viewers.",
+    "Local conversion uses private source copies with cancellation, concurrency/output bounds, network isolation and disabled macros; read-only and source identity guards remain enforced.",
+    "Exercise original 8 XLSX/23 sheets and representative PPT/PPTX, large/empty/corrupt/read-only/stale-source cases, PDF/CAD/PNG regressions and full repository checks.",
+    "Preserve user source/data, build and accept the running runtime, merge tested source into main and push; no Release/tag/version bump."
+  ],
+  "scope": [
+    "internal/server/office_preview.go",
+    "internal/server/office_preview.py",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "Dockerfile",
+    "Dockerfile.local",
+    "scripts/install-office-preview.sh",
+    "scripts/aide.sh",
+    "relevant Office/runtime/browser tests and documentation",
+    "internal/server/office_artifact.go: selected-root read-only cell views",
+    "docs/agent/router.json: required offline Office runtime component check",
+    "docs/reviews/2026-11-16-office-native-preview.md",
+    "scripts/office/office_artifact.py: retain wrap alignment for newline cell edits",
+    "scripts/office/xlsx_patch.py and tests: preserve opaque drawing/media parts during cell edits",
+    "scripts/file-open-request-ownership.test.cjs and scripts/file-route-location.test.cjs: presentation type in route fixtures"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests full Office rendering implementation and testing, then main merge/push.",
+      "evidence": [
+        "Current user request, quoted in request and release_authorization"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Offline LibreOffice converts a private copy to bounded PDF. XLSX whole-sheet layout preserves all used cells regardless of print ranges, then removes hidden sheet pages; native cell editor stays available. Existing PDF viewer supplies lazy rendering, navigation and raster compatibility. Native static PPT/PPTX pages share the path.",
+      "evidence": [
+        "https://help.libreoffice.org/latest/en-US/text/shared/guide/pdf_params.html"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Office page endpoint and local conversion, XLSX layout/cell modes with multiline edits, PPT/PPTX modal/standalone routes, bounded lifecycle/cache, build-time engine and fonts implemented; focused and component tests pass. Actual layout found and fixed automatic merged-title row clipping using isolated UNO row measurement; explicit heights and original merge styles retained. Worksheet navigation fits each page width. Original workbook 05 exposes a direct-export text-layout failure; private ODS roundtrip restores all eight sheets. XML-only cell patches preserve 479 legacy media and ten drawing parts. Two route-test fixtures now include the new presentation type.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-native-preview.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final full349 commands pass, fingerprint76f80668db1b78cebdb6693dd197775283f9537115e62fd5ab9920cc3c4b1b99. Server race24shards:1784registered,1691passed,93explicit skips; otherGo/platform/vet pass. RealOffice/DWGconversion/DWGSVG/PDFfont4opt-ins pass. Actual8XLSX/23sheets/22518cells andPPT/PPTX pass; 425CAD/413uniqueSVG/28PDF40pages/1764391geometry records pass. Native/browser interactions, stale-error regression, source/preservation and479media/10drawing safe-save checks pass.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-native-preview.md",
+        ".agent-state/office-native-preview-20261116/full-final-receipt.json",
+        ".agent-state/office-native-preview-20261116/real-optins-final-284.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Implementation, tested scope, unchanged CAD/PDF source boundaries, runtime/commit identity, source preservation, static slide/font/resource limits and private per-file report documented.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-native-preview.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed23owned paths; removed two owned fixture containers, four hash-checked Downloads fixtures, two copied test executables and owned browser pages/processes. Retained user runtime/data, private evidence and rollback.",
+      "evidence": [
+        ".agent-state/office-native-preview-20261116/fixture-container-cleanup-private.json",
+        ".agent-state/office-native-preview-20261116/probe-binary-cleanup-private.json",
+        "docs/reviews/2026-11-16-office-native-preview.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User authorizes main merge/push only. All local verification and cleanup complete; preparing explicit23-path commit and fast-forward integration. No tag/Release/version change.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-native-preview.md"
+      ]
+    }
+  },
+  "release_authorization": "Current explicit user instruction: 做完全面测一遍，合并到main并推送。",
+  "rollback": "Logical runtime backup 20261116-office-native-preview and local aide-rollback:office-native-preview-20261116 retained; no rollback performed.",
+  "handoff": "Verified final local image349ac2a2; source/data/font profiles preserved. Merge/push and remote CI pending."
+}

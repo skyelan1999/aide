@@ -254,8 +254,12 @@ func (a *App) officeXlsxView(w http.ResponseWriter, r *http.Request) {
 	var b []byte
 	var src Source
 	var err error
+	rootedReadOnly := sourceID == "" && (r.URL.Query().Get("root") == "local" || strings.HasPrefix(r.URL.Query().Get("root"), "mount:"))
+	var current func() bool
 	if knowledgeReadOnly {
 		b, err = a.knowledgeReadViewer(r.Context(), r.URL.Query().Get("root"), sourceID, p, origin, workspace, 16<<20)
+	} else if rootedReadOnly {
+		b, current, err = a.readBoundedPreviewInput(r.Context(), r)
 	} else {
 		b, src, err = a.officeReadBytes(p, sourceID)
 	}
@@ -302,9 +306,13 @@ func (a *App) officeXlsxView(w http.ResponseWriter, r *http.Request) {
 	}
 	result["hash"] = hash(b)
 	result["workspaceId"] = a.wsID()
-	result["readOnly"] = knowledgeReadOnly || sourceID != "" && !src.RW
+	result["readOnly"] = knowledgeReadOnly || rootedReadOnly || sourceID != "" && !src.RW
 	if sourceID != "" {
 		result["workspaceId"] = "source:" + sourceID
+	}
+	if current != nil && !current() {
+		fail(w, 409, errors.New("文件来源已变化，请重新打开。"))
+		return
 	}
 	jsonOut(w, 200, result)
 }

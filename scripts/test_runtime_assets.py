@@ -56,6 +56,9 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
     assert all(hashlib.sha256((font_root/name).read_bytes()).hexdigest() == record['sha256'] for name,record in font_meta['files'].items())
 
     assert Path('/opt/aide/licenses/platform/wqy-zenhei-copyright').is_file(), 'CAD font notice missing'
+    assert shutil.which('soffice'), 'Office layout renderer missing'
+    subprocess.run(['/usr/bin/python3','-c','import uno'],check=True)
+    assert Path('/opt/aide/licenses/platform/libreoffice-common-copyright').is_file(), 'Office notice missing'
     assert shutil.which('pdftoppm'), 'PDF compatibility renderer missing'
     assert Path('/opt/aide/licenses/platform/poppler-copyright').is_file(), 'Poppler notice missing'
     import sys, ezdxf, openpyxl, pptx, pypdf, cryptography

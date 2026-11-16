@@ -1738,6 +1738,10 @@
       ],
       [
         "python3",
+        "scripts/test_office_preview.py"
+      ],
+      [
+        "python3",
         "scripts/test_go_snapshot.py"
       ],
       [

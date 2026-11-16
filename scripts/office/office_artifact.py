@@ -120,26 +120,8 @@ def view_xlsx(source, sheet_name, start_row, start_col):
 
 
 def edit_xlsx(source, spec, output):
-    wb = load_workbook(source, read_only=False, keep_links=True)
-    try:
-        changes = spec.get("changes", [])
-        if not isinstance(changes, list) or not changes or len(changes) > 500:
-            fail("changes must contain 1-500 cells")
-        for change in changes:
-            sheet = change.get("sheet")
-            ref = change.get("ref")
-            if sheet not in wb.sheetnames or not isinstance(ref, str) or not re.fullmatch(r"[A-Z]{1,3}[1-9][0-9]*", ref):
-                fail("invalid sheet or cell reference")
-            cell = wb[sheet][ref]
-            if cell.__class__.__name__ == "MergedCell":
-                fail("cannot edit merged-cell continuation")
-            value = change.get("value")
-            if value is not None and not isinstance(value, (str, int, float, bool)):
-                fail("unsupported cell value")
-            cell.value = value
-        wb.save(output)
-    finally:
-        wb.close()
+    from xlsx_patch import edit_workbook
+    edit_workbook(source, spec, output)
 
 
 def main(argv):

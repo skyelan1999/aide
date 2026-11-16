@@ -3331,7 +3331,7 @@ async function openFile(path, options={}) {
   if(!options.native&&globalThis.AidePluginFilePreview){const handled=await globalThis.AidePluginFilePreview.open({path,root,source}, {...pluginWorkbenchServices(),current,native:()=>openFile(path,{native:true})});if(handled){if(current())await persistWorkspaceScene({openFile:{root,source,path}});return;}if(!current())return;}
   if(!options.native&&/\.pp$/i.test(path)){if(await openProjectFileWorkbench(path,root,source,current))return;if(!current())return;}
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isCadDrawingPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isCadDrawingPath(path) || isDocxPath(path) || isPresentationPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root, source, content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     await persistWorkspaceScene({openFile:{root:state.file.root,source:state.file.source||'',path:state.file.path}});
@@ -3505,7 +3505,8 @@ function showEditor() {
   const isStl = isStlPath(state.file.path);
   const isStep = isStepPath(state.file.path);
   const isUrdf = isUrdfPath(state.file.path);
-  const isPdf = isPdfPath(state.file.path);
+  const isPresentation = isPresentationPath(state.file.path);
+  const isPdf = isPdfPath(state.file.path) || isPresentation;
   const isDxf = isCadDrawingPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
   const isXlsx = isXlsxPath(state.file.path);
@@ -3545,7 +3546,7 @@ function showEditor() {
   } else if (isPdf) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
-    setupPdfPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+    (isPresentation ? setupOfficePreview : setupPdfPreview)($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
   } else if (isDxf) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -8635,9 +8636,9 @@ function ensurePdfJs() {
   })();
   return _pdfjsPromise;
 }
-async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
+async function setupPdfPreview(container, filePath, root, source, viewerSpec, previewOptions) {
   container.innerHTML = '';
-  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
+  const rawUrl = previewOptions?.rawUrl || fileRawUrl(filePath, root, source, viewerSpec);
 
   const viewer = el('div', 'pdf-viewer');
   const toolbar = el('div', 'pdf-toolbar');
@@ -8655,6 +8656,12 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   btnPrev.title = t('上一页'); btnNext.title = t('下一页');
   btnZoomOut.title = t('缩小'); btnZoomIn.title = t('放大'); btnFit.title = t('适应宽度'); btnClose.title = t('关闭');
   toolbar.append(info, meta, btnPrev, pageInput, pageTotal, btnNext, btnZoomOut, btnZoomIn, btnFit, btnClose);
+  let sheetSelect = null;
+  if (previewOptions?.sheets?.length) {
+    sheetSelect = el('select', 'office-sheet-select'); sheetSelect.setAttribute('aria-label', t('工作表'));
+    previewOptions.sheets.forEach((sheet,i) => { const option=el('option','',sheet.name);option.value=String(i+1);sheetSelect.append(option); });
+    toolbar.insertBefore(sheetSelect, btnPrev);
+  }
   const scroll = el('div', 'pdf-scroll');
   /* 预留：后续批注覆盖层（本次不实现） */
   const overlay = el('div', 'pdf-annot-overlay'); overlay.hidden = true;
@@ -8703,7 +8710,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   try {
     const r = await fetch(rawUrl, { signal: abort.signal });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    buf = await r.arrayBuffer();
+    buf = previewOptions ? await window.AidePreviewSafety.readBytes(r, 16*1024*1024) : await r.arrayBuffer();
   } catch (e) { if (!cancelled) fail(t('无法读取 PDF：') + escapeHtml(e.message)); return; }
   if (cancelled) return;
 
@@ -8749,7 +8756,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   // Unembedded fonts can use a matching local original face. Embedded PDF
   // fonts stay in PDF.js and are never replaced by the local font profile.
   const fontURL = new URL(rawUrl, location.href);
-  if (fontURL.origin === location.origin && fontURL.pathname === '/api/file/raw') {
+  if (!previewOptions && fontURL.origin === location.origin && fontURL.pathname === '/api/file/raw') {
     const fontAbort = new AbortController(), stopFonts = () => fontAbort.abort();
     abort.signal.addEventListener('abort', stopFonts, {once:true});
     const timer = setTimeout(stopFonts, 5000);
@@ -8873,8 +8880,9 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   async function compatibilityPage(h, gen) {
     // Only the same authorized raw-file source may supply a raster page.
     const url = new URL(rawUrl, location.href);
-    if (url.origin !== location.origin || url.pathname !== '/api/file/raw') throw new Error('compatibility unavailable');
-    url.pathname = '/api/file/pdf-preview';
+    if (url.origin !== location.origin || url.pathname !== (previewOptions ? '/api/office/preview' : '/api/file/raw')) throw new Error('compatibility unavailable');
+    url.pathname = previewOptions ? '/api/office/preview' : '/api/file/pdf-preview';
+    if (previewOptions) url.searchParams.set('format', 'page');
     url.searchParams.set('page', String(h.page));
     url.searchParams.set('size', String(Math.max(256, Math.min(4096, Math.ceil(Math.max(h.metrics.width, h.metrics.height))))));
     const controller = new AbortController(); h.compatAbort = controller;
@@ -8981,15 +8989,27 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     }
   }
 
-  let scrollTimer = 0, _gotoLock = false;
+  let scrollTimer = 0, _gotoLock = false, gotoGeneration = 0;
   scroll.onscroll = () => { if (_gotoLock) return; clearTimeout(scrollTimer); scrollTimer = setTimeout(updateCurrentPage, 120); };
   function updateCurrentPage() {
     const top = scroll.scrollTop;
     let best = 1, dist = Infinity;
     for (let i = 1; i <= numPages; i++) { const d = Math.abs(holders[i].el.offsetTop - top); if (d < dist) { dist = d; best = i; } }
     pageInput.value = best;
+    if (sheetSelect) sheetSelect.value = String(best);
   }
-  function gotoPage(i) { i = Math.max(1, Math.min(numPages, i | 0)); _gotoLock = true; clearTimeout(scrollTimer); scroll.scrollTop = holders[i].el.offsetTop; pageInput.value = i; setTimeout(() => { _gotoLock = false; }, 200); }
+  async function gotoPage(i) {
+    const request=++gotoGeneration;
+    i = Math.max(1, Math.min(numPages, i | 0));
+    if (sheetSelect) {
+      try { const page=await getPage(i); if(cancelled||request!==gotoGeneration)return; baseWidth=pdfPageMetrics(page,1,1).baseWidth; scale=fitWidthScale(); await layoutPages(); }
+      catch(e){if(!cancelled)fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));return;}
+    }
+    if(cancelled||request!==gotoGeneration)return;
+    _gotoLock=true;clearTimeout(scrollTimer);scroll.scrollTop=holders[i].el.offsetTop;pageInput.value=i;
+    if(sheetSelect)sheetSelect.value=String(i);setTimeout(()=>{_gotoLock=false;},200);
+  }
+  if(sheetSelect)sheetSelect.onchange=()=>gotoPage(Number(sheetSelect.value));
   btnPrev.onclick = () => gotoPage((parseInt(pageInput.value, 10) || 1) - 1);
   btnNext.onclick = () => gotoPage((parseInt(pageInput.value, 10) || 1) + 1);
   pageInput.onchange = () => gotoPage(parseInt(pageInput.value, 10) || 1);
@@ -9002,6 +9022,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
 function isDwgPath(path) { return /\.dwg$/i.test(effectiveFileTypePath(path)); }
 function isDxfPath(path) { return /\.dxf$/i.test(effectiveFileTypePath(path)); }
 function isCadDrawingPath(path) { return isDxfPath(path) || isDwgPath(path); }
+function isPresentationPath(path) { return /\.pptx?$/i.test(effectiveFileTypePath(path)); }
 function isDocxPath(path) { return /\.docx$/i.test(effectiveFileTypePath(path)); }
 /* XLSX 查看和单元格修改走服务端 openpyxl：仅传可见页，保留原工作簿。 */
 function csvColumnLabel(index) {
@@ -9044,6 +9065,47 @@ function setupDelimitedPreview(host, editor, filePath) {
 }
 
 async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
+  return setupOfficePreview(container, filePath, root, source, viewerSpec, true);
+}
+async function setupOfficePreview(container, filePath, root, source, viewerSpec, workbook = false) {
+  container.replaceChildren();
+  const wrap=el('div','office-viewer'), bar=el('div','office-view-modes');
+  const layout=el('button','quiet quiet-sm',t('版式预览')), cells=el('button','quiet quiet-sm',t('单元格'));
+  const pageHost=el('div','office-page-host'), cellHost=el('div','office-cell-host hidden');
+  if(workbook){bar.append(layout,cells);wrap.append(bar);}
+  wrap.append(pageHost,cellHost);container.append(wrap);
+  let disposed=false, generation=0, gridStarted=false, layoutDirty=true, controller=null;
+  const stopPages=()=>{controller?.abort();teardownViewer(pageHost);pageHost.replaceChildren();};
+  bindViewerTeardown(container,()=>{disposed=true;generation++;stopPages();teardownViewer(cellHost);});
+  async function showLayout(){
+    pageHost.classList.remove('hidden');cellHost.classList.add('hidden');layout.setAttribute('aria-pressed','true');cells.setAttribute('aria-pressed','false');
+    if(!layoutDirty&&pageHost.childNodes.length)return;
+    stopPages();layoutDirty=false;const gen=++generation;controller=new AbortController();
+    pageHost.append(el('p','muted',t('正在生成预览…')));
+    const url=new URL(fileRawUrl(filePath,root,source,viewerSpec),location.href);url.pathname='/api/office/preview';url.searchParams.set('format','meta');
+    if(viewerSpec?.format)url.searchParams.set('officeFormat',viewerSpec.format);
+    try{
+      const response=await fetch(url,{signal:controller.signal});
+      if(!response.ok){let message='HTTP '+response.status;try{message=(await response.json()).error||message;}catch{}throw Error(message);}
+      const bytes=await window.AidePreviewSafety.readBytes(response,64*1024),meta=JSON.parse(new TextDecoder().decode(bytes));
+      if(disposed||gen!==generation)return;
+      url.searchParams.set('format','pdf');
+      await setupPdfPreview(pageHost,filePath,root,source,viewerSpec,{rawUrl:url.href,sheets:meta.sheets});
+    }catch(error){
+      if(disposed||gen!==generation||error.name==='AbortError')return;
+      layoutDirty=true;pageHost.replaceChildren(el('p','office-preview-error',error.message));
+      const retry=el('button','quiet quiet-sm',t('重试'));retry.onclick=showLayout;pageHost.append(retry);
+    }
+  }
+  layout.onclick=showLayout;
+  cells.onclick=()=>{
+    generation++;stopPages();layoutDirty=true;pageHost.classList.add('hidden');cellHost.classList.remove('hidden');layout.setAttribute('aria-pressed','false');cells.setAttribute('aria-pressed','true');
+    if(!gridStarted){gridStarted=true;setupXlsxGrid(cellHost,filePath,root,source,viewerSpec,()=>{layoutDirty=true;});}
+  };
+  await showLayout();
+}
+
+async function setupXlsxGrid(container, filePath, root, source, viewerSpec, onSave) {
   container.replaceChildren();
   const wrap = el('div', 'xlsx-viewer');
   const toolbar = el('div', 'xlsx-toolbar');
@@ -9057,12 +9119,14 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
   const grid = el('div', 'xlsx-grid');
   toolbar.append(sheetSelect, previous, next, previousCol, nextCol, position, save);
   wrap.append(toolbar, grid); container.append(wrap);
-  let current = null, startRow = 1, startCol = 1, changes = new Map(), loading = false, saveHash = '';
+  let disposed=false, requestGeneration=0;
+  const controller=new AbortController();
+  bindViewerTeardown(container,()=>{disposed=true;requestGeneration++;controller.abort();});
+  let current = null, startRow = 1, startCol = 1, changes = new Map(), saveHash = '';
   async function load(sheet) {
-    if (loading) return;
-    loading = true;
+    const gen=++requestGeneration;
     try {
-      const query = new URLSearchParams({path:filePath, row:String(startRow), col:String(startCol)});
+      const query = new URLSearchParams({path:filePath, root:root||'workspace', row:String(startRow), col:String(startCol)});
       if (source) query.set('source', source);
       const knowledgeReadOnly = addKnowledgeViewerIdentity(query, viewerSpec);
       if (knowledgeReadOnly) {
@@ -9070,12 +9134,14 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
         if (viewerSpec.format === '.xlsx') query.set('knowledgeFormat', '.xlsx');
       }
       if (sheet) query.set('sheet', sheet);
-      current = await api('/office/xlsx?' + query.toString());
+      const result = await api('/office/xlsx?' + query.toString(),{signal:controller.signal});
+      if(disposed||gen!==requestGeneration)return;
+      current=result;
       if (!saveHash) saveHash = current.hash;
       if (!sheetSelect.options.length) current.sheets.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; sheetSelect.append(opt); });
       sheetSelect.value = current.sheet;
       position.textContent = `${startRow}–${Math.min(startRow + 99, current.maxRow)} / ${current.maxRow} · ${startCol}–${Math.min(startCol + 25, current.maxCol)} / ${current.maxCol}`;
-      const readOnly = knowledgeReadOnly || !!current.readOnly || isBackupPath(filePath);
+      const readOnly = viewerSpec?.readOnly === true || knowledgeReadOnly || !!current.readOnly || isBackupPath(filePath);
       if (knowledgeReadOnly) current.readOnly = true;
       save.disabled = readOnly || !changes.size;
       save.classList.toggle('hidden', readOnly);
@@ -9093,11 +9159,13 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
         tr.append(el('th', '', String(rowNum)));
         for (const cell of row) {
           const td = document.createElement('td');
-          const input = document.createElement('input'); input.type = 'text';
+          const input = document.createElement('textarea'); input.rows = 1;
           const key = current.sheet + '!' + cell.ref;
           input.value = changes.has(key) ? changes.get(key).display : String(cell.value ?? '');
-          input.title = cell.ref; input.readOnly = readOnly;
+          input.title = cell.ref; input.setAttribute('aria-label', cell.ref); input.readOnly = readOnly;
+          input.rows = Math.min(12, Math.max(1,input.value.split('\n').length));
           input.addEventListener('input', () => {
+            input.rows = Math.min(12, Math.max(1,input.value.split('\n').length));
             changes.set(key, {sheet: current.sheet, ref: cell.ref, display: input.value});
             save.disabled = false;
           });
@@ -9106,8 +9174,7 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
         table.append(tr);
       }
       grid.replaceChildren(table);
-    } catch (err) { grid.textContent = err.message || String(err); }
-    finally { loading = false; }
+    } catch (err) { if(!disposed&&gen===requestGeneration)grid.textContent = err.message || String(err); }
   }
   sheetSelect.onchange = () => { startRow = 1; startCol = 1; load(sheetSelect.value); };
   previous.onclick = () => { startRow = Math.max(1, startRow - 100); load(sheetSelect.value); };
@@ -9124,7 +9191,7 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
     try {
       save.disabled = true;
       const result = await api('/office/xlsx', {method:'PUT', body:JSON.stringify({path:filePath, source, hash:saveHash, workspaceId:current.workspaceId, changes:parsed})});
-      saveHash = result.hash; changes = new Map(); toast(t('✓ 已保存'));
+      saveHash = result.hash; changes = new Map(); onSave?.(); toast(t('✓ 已保存'));
       await load(sheetSelect.value);
     } catch (err) { toast(err.message || String(err)); save.disabled = false; }
   };
@@ -10179,7 +10246,7 @@ async function openFileViewMode(forceNative=false) {
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
-  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf', '.dwg','.zip','.drawio'];
+  const viewerFormats = ['.pdf','.docx','.xlsx','.ppt','.pptx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf', '.dwg','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
   $('file-view-export-pdf').classList.toggle('hidden', !md);
@@ -10189,7 +10256,8 @@ async function openFileViewMode(forceNative=false) {
   const isStl = isStlPath(typePath);
   const isStep = isStepPath(typePath);
   const isUrdf = isUrdfPath(typePath);
-  const isPdf = isPdfPath(typePath);
+  const isPresentation = isPresentationPath(typePath);
+  const isPdf = isPdfPath(typePath) || isPresentation;
   const isDxf = isCadDrawingPath(typePath);
   const isDocx = isDocxPath(typePath);
   const isXlsx = isXlsxPath(typePath);
@@ -10245,7 +10313,7 @@ async function openFileViewMode(forceNative=false) {
   } else if (isPdf) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupPdfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
+    (isPresentation ? setupOfficePreview : setupPdfPreview)($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isDxf) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');

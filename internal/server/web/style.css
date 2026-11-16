@@ -1263,9 +1263,9 @@ body.sidebar-resizing,body.sidebar-resizing *{cursor:col-resize!important;user-s
 .xlsx-table th, .xlsx-table td { border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:0; min-width:112px; height:32px; }
 .xlsx-table th { position:sticky; top:0; z-index:2; background:var(--surface); color:var(--muted); text-align:center; min-width:48px; }
 .xlsx-table tr th:first-child { position:sticky; left:0; z-index:3; }
-.xlsx-table td input { width:100%; height:31px; border:0; background:transparent; color:var(--text); padding:4px 7px; font:inherit; box-sizing:border-box; }
-.xlsx-table td input:focus { outline:2px solid var(--brand); outline-offset:-2px; background:var(--surface); }
-.xlsx-table td input:read-only { cursor:default; }
+.xlsx-table td :is(input,textarea) { width:100%; height:31px; border:0; background:transparent; color:var(--text); padding:4px 7px; font:inherit; box-sizing:border-box; }
+.xlsx-table td :is(input,textarea):focus { outline:2px solid var(--brand); outline-offset:-2px; background:var(--surface); }
+.xlsx-table td :is(input,textarea):read-only { cursor:default; }
 
 /* ── RCA（问题解决）报告面板：左列表 + 右渲染视图 ── */
 .rca-dialog {
@@ -1870,3 +1870,13 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .cad-tool{white-space:nowrap;min-height:30px}
 .cad-tool.is-active{background:color-mix(in srgb,var(--accent) 16%,var(--surface));color:var(--text);border-color:var(--accent);box-shadow:inset 0 -2px var(--accent);font-weight:650}
 .cad-tool:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+
+/* Office pages retain document colors; surrounding controls follow the theme. */
+.office-viewer{display:flex;flex-direction:column;width:100%;height:100%;min-height:320px;overflow:hidden}
+.office-view-modes{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.office-view-modes [aria-pressed="true"]{background:var(--selected);color:var(--brand)}
+.office-page-host,.office-cell-host{flex:1;min-height:0;overflow:hidden}
+.office-page-host>.pdf-viewer{height:100%}
+.office-preview-error{padding:16px;color:var(--text)}
+.office-sheet-select{min-width:100px;max-width:220px}
+.xlsx-table td textarea{height:auto;min-height:31px;resize:vertical;white-space:pre-wrap;overflow:auto;display:block}

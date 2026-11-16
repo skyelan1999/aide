@@ -20,6 +20,8 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # Source-development runtime: keep Python tooling aligned with the release
 # runtime while retaining Go and Node for `go run` and plugin hosting.
 FROM toolchain AS dev
+COPY scripts/install-office-preview.sh /usr/local/lib/aide/install-office-preview.sh
+RUN sh /usr/local/lib/aide/install-office-preview.sh
 ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 RUN sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
       python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0 \
@@ -228,6 +230,8 @@ RUN sh /usr/local/lib/aide/apt-install-retry.sh fonts-wqy-zenhei=0.9.45-8 popple
     && cp /usr/share/doc/poppler-utils/copyright /opt/aide/licenses/platform/poppler-copyright \
     && chmod a+r /opt/aide/licenses/platform/*copyright \
     && rm -rf /var/lib/apt/lists/*
+COPY scripts/install-office-preview.sh /usr/local/lib/aide/install-office-preview.sh
+RUN sh /usr/local/lib/aide/install-office-preview.sh
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 # Root-managed build identity; runtime upgrades may accept it only after readiness.
 RUN sha256sum /usr/local/bin/aide > /usr/local/bin/aide.sha256 && chmod 0444 /usr/local/bin/aide.sha256

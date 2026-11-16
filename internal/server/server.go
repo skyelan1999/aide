@@ -1674,6 +1674,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
+	mux.HandleFunc("GET /api/office/preview", a.officePagePreview)
 	mux.HandleFunc("GET /api/office/xlsx", a.officeXlsxView)
 	mux.HandleFunc("PUT /api/office/xlsx", a.officeXlsxEdit)
 	mux.HandleFunc("GET /api/office/docx/comments", a.officeDocxCommentsGet)
@@ -1881,7 +1882,7 @@ func (a *App) buildHandler() {
 			}
 			// EventSource / img 标签无法设置 Authorization 头，events 和 file/raw 路由允许 ?access_token=；
 			// 其余 API 不收 URL 中的凭据，避免令牌进入日志/代理记录。
-			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/dwg-preview") || strings.HasSuffix(r.URL.Path, "/api/file/pdf-preview") || strings.HasSuffix(r.URL.Path, "/api/file/download") || strings.HasSuffix(r.URL.Path, "/api/file/stream")) {
+			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/dwg-preview") || strings.HasSuffix(r.URL.Path, "/api/file/pdf-preview") || strings.HasSuffix(r.URL.Path, "/api/office/preview") || strings.HasSuffix(r.URL.Path, "/api/file/download") || strings.HasSuffix(r.URL.Path, "/api/file/stream")) {
 				token = r.URL.Query().Get("access_token")
 			}
 			if !lanAuthorized(r) && subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
