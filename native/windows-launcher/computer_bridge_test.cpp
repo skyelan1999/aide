@@ -28,6 +28,7 @@ std::string utf8(const std::wstring& value) {
     WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(), int(value.size()), result.data(), count, nullptr, nullptr);
     return result;
 }
+#define AIDE_COMPUTER_BRIDGE_TEST
 #include "../../native/windows-launcher/computer_bridge.hpp"
 
 namespace {
@@ -102,6 +103,7 @@ int fixture() {
 void run() {
     WSADATA winsock{}; require(WSAStartup(MAKEWORD(2, 2), &winsock) == 0, "test Winsock startup failed");
     auto executable = std::wstring(32768, L'\0'); DWORD chars = GetModuleFileNameW(nullptr, executable.data(), DWORD(executable.size())); require(chars > 0, "cannot get fixture executable path"); executable.resize(chars);
+    aide_desktop::ComputerBridge::setTestChromeExecutable(executable);
     aide_desktop::ComputerBridge bridge(kToken); bridge.start();
     ChildProcess child; STARTUPINFOW startup{}; startup.cb = sizeof(startup);
     auto health = request("GET", "/healthz"); require(health.first == 200 && health.second.value("platform", "") == "windows", "Windows health route failed");
@@ -125,6 +127,17 @@ void run() {
     require(resolved.first == 200 && resolved.second.value("pid", DWORD(0)) == child.info.dwProcessId, "exact app resolution failed");
     std::string rule = resolved.second.value("rule", "");
     require(rule.rfind("exe:", 0) == 0, "resolved identity omitted executable rule");
+    auto deniedBrowser = request("POST", "/v1/open-browser", {{"browser", "Chrome"}, {"url", "https://example.com/"}});
+    require(deniedBrowser.first == 502, "browser launch without approval was not rejected");
+    auto unsupportedBrowser = request("POST", "/v1/open-browser", {{"browser", "Safari"}, {"approved", true}});
+    require(unsupportedBrowser.first == 502, "unsupported Safari launch was not rejected on Windows");
+    auto credentialURL = request("POST", "/v1/open-browser", {{"browser", "Chrome"}, {"approved", true}, {"url", "https://user:secret@example.com/"}});
+    require(credentialURL.first == 502, "credential-bearing browser URL was not rejected");
+    auto quotedURL = request("POST", "/v1/open-browser", {{"browser", "Chrome"}, {"approved", true}, {"url", "https://example.com/\" --switch"}});
+    require(quotedURL.first == 502, "quoted browser URL argument was not rejected");
+    const auto browserURL = std::string("https://example.com/aide-isolated-test");
+    auto openedBrowser = request("POST", "/v1/open-browser", {{"browser", "Chrome"}, {"approved", true}, {"url", browserURL}});
+    require(openedBrowser.first == 200 && openedBrowser.second.value("opened", false) && openedBrowser.second.value("url", std::string{}) == browserURL, "approved Chrome launch did not pass its URL to the isolated executable");
     auto appsAfterLaunch = request("GET", "/healthz");
     require(appsAfterLaunch.first == 200, "Windows app list health route failed");
     bool listed = false; for (const auto& item : appsAfterLaunch.second.value("applications", json::array())) if (item.value("pid", DWORD(0)) == child.info.dwProcessId) listed = true;
@@ -178,6 +191,8 @@ void run() {
 
 int wmain(int argc, wchar_t** argv) {
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    if (argc > 1 && std::wstring(argv[1]) == L"--new-window")
+        return argc == 3 && std::wstring(argv[2]) == L"https://example.com/aide-isolated-test" ? 0 : 1;
     if (argc > 1 && std::wstring(argv[1]) == L"--fixture") return fixture();
     try { run(); return 0; } catch (const std::exception& error) { std::cerr << "FAIL Windows bridge fixture: " << error.what() << std::endl; return 1; }
 }

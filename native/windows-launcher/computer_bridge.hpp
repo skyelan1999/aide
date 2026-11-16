@@ -6,6 +6,8 @@
 #include <gdiplus.h>
 #include <bcrypt.h>
 #include <wincrypt.h>
+#include <winhttp.h>
+#include <shellapi.h>
 #include <objidl.h>
 #include <ws2tcpip.h>
 #include <atomic>
@@ -23,6 +25,9 @@
 #include <sstream>
 
 namespace aide_desktop {
+#ifdef AIDE_COMPUTER_BRIDGE_TEST
+inline std::wstring computerBridgeTestChromeExecutable;
+#endif
 class ComputerBridge {
  SOCKET listener=INVALID_SOCKET;
  std::string token;
@@ -95,6 +100,58 @@ class ComputerBridge {
   std::vector<INPUT> events;events.reserve(unique.size()*2+2);auto add=[&](WORD code,bool up){INPUT event{};event.type=INPUT_KEYBOARD;event.ki.wVk=code;if(up)event.ki.dwFlags=KEYEVENTF_KEYUP;events.push_back(event);};
   for(auto code:unique)add(code,false);add(key,false);add(key,true);for(auto it=unique.rbegin();it!=unique.rend();++it)add(*it,true);return events;
  }
+ static std::wstring environment(const wchar_t* name){DWORD size=GetEnvironmentVariableW(name,nullptr,0);if(!size)return {};std::wstring value(size,L'\0');DWORD written=GetEnvironmentVariableW(name,value.data(),size);if(!written||written>=size)return {};value.resize(written);return value;}
+ static bool regularFile(const std::wstring& path){DWORD attributes=GetFileAttributesW(path.c_str());return attributes!=INVALID_FILE_ATTRIBUTES&&!(attributes&FILE_ATTRIBUTE_DIRECTORY);}
+ static std::wstring registeredChrome(HKEY root,DWORD view){
+  constexpr wchar_t key[]=L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe";
+  DWORD bytes=0,flags=RRF_RT_REG_SZ|view;
+  if(RegGetValueW(root,key,nullptr,flags,nullptr,nullptr,&bytes)!=ERROR_SUCCESS||bytes<sizeof(wchar_t)||bytes>32768*sizeof(wchar_t))return {};
+  std::wstring path(bytes/sizeof(wchar_t),L'\0');
+  if(RegGetValueW(root,key,nullptr,flags,nullptr,path.data(),&bytes)!=ERROR_SUCCESS)return {};
+  auto end=path.find(L'\0');if(end!=path.npos)path.resize(end);
+  if(path.size()>1&&path.front()==L'"'&&path.back()==L'"')path=path.substr(1,path.size()-2);
+  auto slash=path.find_last_of(L"\\/");
+  if(slash==path.npos||_wcsicmp(path.substr(slash+1).c_str(),L"chrome.exe")!=0||!regularFile(path))return {};
+  return path;
+ }
+ static std::wstring chromeExecutable(){
+#ifdef AIDE_COMPUTER_BRIDGE_TEST
+  if(!computerBridgeTestChromeExecutable.empty()&&regularFile(computerBridgeTestChromeExecutable))return computerBridgeTestChromeExecutable;
+#endif
+  const DWORD views[]={RRF_SUBKEY_WOW6464KEY,RRF_SUBKEY_WOW6432KEY,0};
+  const HKEY roots[]={HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE};
+  for(HKEY root:roots)for(DWORD view:views){auto path=registeredChrome(root,view);if(!path.empty())return path;}
+  const wchar_t* variables[]={L"LOCALAPPDATA",L"ProgramFiles",L"ProgramFiles(x86)"};
+  for(const wchar_t* variable:variables){auto base=environment(variable);if(base.empty())continue;auto path=base+L"\\Google\\Chrome\\Application\\chrome.exe";if(regularFile(path))return path;}
+  throw std::runtime_error("Google Chrome is not installed in a supported Windows location");
+ }
+ static std::wstring browserURL(const std::string& raw){
+  if(raw.empty())return {};
+  if(raw.size()>1024||raw.find_first_of(" \t\r\n\v\f\"\\")!=raw.npos)throw std::runtime_error("Browser URL is invalid or exceeds 1024 bytes");
+  auto value=wide(raw);URL_COMPONENTS parts{};parts.dwStructSize=sizeof(parts);
+  std::wstring scheme(16,L'\0'),host(value.size()+1,L'\0'),user(value.size()+1,L'\0'),password(value.size()+1,L'\0');
+  parts.lpszScheme=scheme.data();parts.dwSchemeLength=DWORD(scheme.size());parts.lpszHostName=host.data();parts.dwHostNameLength=DWORD(host.size());parts.lpszUserName=user.data();parts.dwUserNameLength=DWORD(user.size());parts.lpszPassword=password.data();parts.dwPasswordLength=DWORD(password.size());
+  if(!WinHttpCrackUrl(value.c_str(),0,0,&parts)||(parts.nScheme!=INTERNET_SCHEME_HTTP&&parts.nScheme!=INTERNET_SCHEME_HTTPS)||!parts.dwHostNameLength||parts.dwUserNameLength||parts.dwPasswordLength)throw std::runtime_error("Browser URL must be a complete http(s) URL without credentials");
+  return value;
+ }
+ static json openBrowser(const json& input){
+  if(!input.value("approved",false))throw std::runtime_error("Opening a browser requires explicit Aide approval");
+  if(!interactiveDesktop())throw std::runtime_error("Windows desktop is locked or unavailable; browser was not opened");
+  const auto browser=input.value("browser",std::string{});
+  if(browser!="Chrome")throw std::runtime_error("Safari is unavailable on Windows; choose Chrome");
+  const auto raw=input.value("url",std::string{});const auto url=browserURL(raw);const auto executable=chromeExecutable();
+  std::wstring parameters=L"--new-window";if(!url.empty())parameters+=L" \""+url+L"\"";
+  SHELLEXECUTEINFOW launch{};launch.cbSize=sizeof(launch);launch.fMask=SEE_MASK_NOASYNC|SEE_MASK_NOCLOSEPROCESS;launch.lpVerb=L"open";launch.lpFile=executable.c_str();launch.lpParameters=parameters.c_str();launch.nShow=SW_SHOWNORMAL;
+  if(!ShellExecuteExW(&launch))throw std::runtime_error("Windows could not start Google Chrome");
+#ifdef AIDE_COMPUTER_BRIDGE_TEST
+  if(!launch.hProcess)throw std::runtime_error("Isolated browser launcher returned no process handle");
+  if(WaitForSingleObject(launch.hProcess,2000)!=WAIT_OBJECT_0){CloseHandle(launch.hProcess);throw std::runtime_error("Isolated browser executable did not exit");}
+  DWORD exitCode=1;GetExitCodeProcess(launch.hProcess,&exitCode);CloseHandle(launch.hProcess);if(exitCode!=0)throw std::runtime_error("Isolated browser did not receive a valid command line");
+#else
+  if(launch.hProcess)CloseHandle(launch.hProcess);
+#endif
+  json result={{"ok",true},{"app","Chrome"},{"rule","exe:chrome.exe"},{"opened",true}};if(!raw.empty())result["url"]=raw;return result;
+ }
  void serve(SOCKET client){
   DWORD timeout=5000;setsockopt(client,SOL_SOCKET,SO_RCVTIMEO,reinterpret_cast<const char*>(&timeout),sizeof(timeout));setsockopt(client,SOL_SOCKET,SO_SNDTIMEO,reinterpret_cast<const char*>(&timeout),sizeof(timeout));
   try{
@@ -109,6 +166,7 @@ class ComputerBridge {
    if(method!="POST"){response(client,404,{{"ok",false},{"error","Unsupported operation"}});closesocket(client);return;}
    json input=json::parse(data.substr(split+4,contentLength),nullptr,false);if(!input.is_object()){response(client,400,{{"ok",false},{"error","Invalid JSON"}});closesocket(client);return;}
    if(route=="/v1/resolve-app"){response(client,200,identity(resolve(input)));closesocket(client);return;}
+   if(route=="/v1/open-browser"){response(client,200,openBrowser(input));closesocket(client);return;}
    if(route=="/v1/inspect"){response(client,501,{{"ok",false},{"error","Windows accessibility inspection is not available in this bridge; use computer_snapshot."}});closesocket(client);return;}
    if(route!="/v1/snapshot"&&route!="/v1/click"&&route!="/v1/type"&&route!="/v1/key"&&route!="/v1/drag"&&route!="/v1/scroll"){response(client,404,{{"ok",false},{"error","Unsupported computer operation"}});closesocket(client);return;}
    auto target=authorized(input);
@@ -158,6 +216,9 @@ class ComputerBridge {
  }
  void loop(){while(!stopping){sockaddr_in peer{};int size=sizeof(peer);SOCKET client=accept(listener,reinterpret_cast<sockaddr*>(&peer),&size);if(client==INVALID_SOCKET){if(stopping)break;Sleep(40);continue;}std::lock_guard<std::mutex> lock(clientsMutex);clients.emplace_back([this,client]{serve(client);});}}
 public:
+#ifdef AIDE_COMPUTER_BRIDGE_TEST
+ static void setTestChromeExecutable(std::wstring path){computerBridgeTestChromeExecutable=std::move(path);}
+#endif
  explicit ComputerBridge(std::string secret):token(std::move(secret)){}
  ~ComputerBridge(){stop();}
  void start(){if(token.size()<32)return;WSADATA wsa{};if(WSAStartup(MAKEWORD(2,2),&wsa)!=0)throw std::runtime_error("Computer bridge network startup failed");winsockStarted=true;Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)throw std::runtime_error("Screenshot encoder startup failed");listener=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(listener==INVALID_SOCKET)throw std::runtime_error("Computer bridge socket unavailable");BOOL exclusive=TRUE;setsockopt(listener,SOL_SOCKET,SO_EXCLUSIVEADDRUSE,reinterpret_cast<const char*>(&exclusive),sizeof(exclusive));sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_ANY);address.sin_port=htons(port);if(bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address))!=0||listen(listener,16)!=0){closesocket(listener);listener=INVALID_SOCKET;throw std::runtime_error("Computer bridge port 17778 is unavailable");}stopping=false;acceptThread=std::thread([this]{loop();});}

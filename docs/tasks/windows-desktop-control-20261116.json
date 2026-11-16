@@ -41,18 +41,20 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "Windows bridge provides foreground/explicit process discovery, bounded app listing, PID/process-rule pinning, secure desktop denial, screenshot HWND/bounds metadata, stale-window rejection, window-bounded click/drag/scroll, UTF-16 typing limit and CMD-to-Ctrl key chords. Browser workflows, UIA actions, OCR/GPU capture, independent scheduler lanes and virtual pointer remain tracked follow-ups.",
+      "summary": "Windows bridge provides foreground/explicit process discovery, bounded app listing, PID/process-rule pinning, secure desktop denial, screenshot HWND/bounds metadata, stale-window rejection, window-bounded click/drag/scroll, validated approved Chrome launch, UTF-16 typing limit and CMD-to-Ctrl key chords. Browser page balance, UIA actions, OCR/GPU capture, independent scheduler lanes and virtual pointer remain tracked follow-ups.",
       "evidence": [
         "Only native/windows-launcher code changed; macOS Swift and shared Go/web behavior remain unchanged.",
         "Added a Windows-only isolated bridge fixture and workflow step to exercise discovery, snapshot metadata, key chords, and safe denial paths where an interactive desktop is available.",
         "Implemented /v1/drag and /v1/scroll against the approved foreground HWND, with bounded coordinates/duration/deltas, target/geometry revalidation, cleanup of held mouse state, and no cursor movement for invalid requests.",
         "Extended isolated Windows fixture to verify drag and horizontal/vertical wheel delivery to the synthetic window plus out-of-window/out-of-range denials.",
-        "PASS in hosted Windows Desktop Check #80: isolated target window received drag completion and both wheel axes; out-of-window drag and out-of-range scroll were denied without moving the cursor."
+        "PASS in hosted Windows Desktop Check #80: isolated target window received drag completion and both wheel axes; out-of-window drag and out-of-range scroll were denied without moving the cursor.",
+        "Added approved Chrome launch using an exact resolved executable path and no-shell process launch; browser URLs are limited to complete credential-free HTTP(S) URLs and reject command-line delimiters.",
+        "The bridge fixture launches the test executable as a fake Chrome to verify the approved URL reaches the process without opening a real browser or making a network request."
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Aide CI #643 and Windows Desktop Check #80 all pass on the gesture implementation. Windows CI exercised discovery, snapshot coordinates, drag, vertical/horizontal wheel delivery, invalid-target denials, Windows recovery and WebView2 isolation. Local native builds and fixture compilation pass; launching the temporary integration binary on this host is blocked with Windows “Access is denied”. Actual user-facing app/visual acceptance remains NOT_RUN because this host has no interactive desktop.",
+      "summary": "Aide CI #645 and Windows Desktop Check #81 pass on the prior gesture head. The new Chrome route and fake-browser launch fixture compile locally; full hosted checks for this browser addition are pending. Launching the temporary integration binary on this host is blocked with Windows “Access is denied”. Actual user-facing app/visual acceptance remains NOT_RUN because this host has no interactive desktop.",
       "evidence": [
         "PASS: Aide CI #643 — Go, quick, and gate jobs completed successfully on 0c856e806373aeb71daa9b604e5c2e24bfabbc46.",
         "PASS: Windows Desktop Check #80 — amd64 build, arm64 build, and native-ui job all completed successfully on 0c856e806373aeb71daa9b604e5c2e24bfabbc46.",
@@ -62,12 +64,14 @@
         "FAIL/NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — Windows returned “Access is denied” launching the temporary integration executable on this host; no local interactive app assertions ran. The full fixture passed on hosted Windows CI #80.",
         "PASS: python -X utf8 scripts/check_docs.py — 537 Markdown files, 2558 local links; task JSON parsed and git diff --check passed.",
         "NOT_RUN: local Go tests because Go is not installed on this host; hosted Aide CI #643 completed the repository Go regression job successfully.",
-        "NOT_RUN: actual user-facing application screenshot/interaction and visual UI review; this host has no interactive Windows desktop."
+        "NOT_RUN: actual user-facing application screenshot/interaction and visual UI review; this host has no interactive Windows desktop.",
+        "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only after adding approved Chrome launch and its fake-process fixture.",
+        "PENDING: Windows hosted CI must execute the no-network fake Chrome launch, malformed URL denial, and existing desktop/gesture scenarios on the updated source."
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Capability matrix identifies implemented Windows routes, the Windows wheel-delta mapping and outstanding UIA, browser, OCR/GPU, background control, scheduler and visual pointer gaps.",
+      "summary": "Capability matrix records Windows Chrome launch and wheel-delta mapping, and distinguishes browser page balance, UIA, OCR/GPU, background control, scheduler and visual pointer gaps.",
       "evidence": [
         "python -X utf8 scripts/check_docs.py passed with 537 Markdown files and 2558 local links.",
         "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; intentionally unmerged.",
