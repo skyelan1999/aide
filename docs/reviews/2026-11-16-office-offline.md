@@ -42,27 +42,77 @@ its original viewer layout and plugin enablement rules.
   capabilities dropped, ran on an internal Docker network with no gateway.
   An external TCP connection returned ENETUNREACH (101). A test-only TCP relay
   provided browser access; it was not an Office service or product dependency.
-- No Office settings were entered. Actual headed Chromium opened DOCX/XLSX/PPTX,
-  switched to edit and saved user input. Independent file-library readback found
-  `Offline Word baseline Offline local save`, `Offline Calc saved` and
-  `Offline Slides baseline Offline saved`. Browser external requests were blocked;
-  none were attempted during these document flows.
-- The exact candidate ZIP uploaded successfully and registered the six existing
-  Office tools. Native document transformations/readback and stale-hash rejection
-  passed for all three formats; PPTX preview remained open during the write.
-  Actual AI model inference was not invoked. After retiring the unused HTTP
-  wrappers, internal tool dispatch and final public-route rejection are checked
-  separately; earlier HTTP transformation checks do not claim a public API.
+- Final source `4ae9b7d8` was built statically (`CGO_ENABLED=0`). Its accepted
+  ARM64 image is `sha256:2c66af4c6e4bc223ff228dc241c65c09e5bb0bda555a94ea2d49baf041ef50f9`.
+  A fresh nonroot runtime reported integrity=ok and ENETUNREACH for an external
+  connection. Before installing any Office plugin or entering Office settings,
+  headed Chromium opened DOCX/XLSX/PPTX, switched to edit and saved input.
+  Independent library readback found the saved Word suffix `Accepted source save`
+  with retained Chinese text, cell A1 `Accepted source Calc saved`, and slide title
+  `Accepted offline Slides baseline Source saved`. No external browser requests
+  were attempted. First engine startup took 22.758 seconds in this test.
+- The exact final ZIP passed fresh installation and public 1.2.0 upgrade. Wrong
+  digest was refused; disabled state, settings, installedAt, sentinel user data
+  and all three document hashes survived upgrade. Historical service settings
+  were ignored, no service schema properties were required, and all six tools
+  registered as executable. The generic plugin manager still has its normal
+  settings editor; no Office service setup is needed.
+- The final-source race test binary ran inside the actual packaged runtime,
+  exercising native dispatch/sandbox and six Aide-only boundary/lifecycle cases.
+  Live public WOPI/admin/conversion and document read/edit requests returned 404;
+  editor resources without a document-session capability returned 401. Earlier
+  source-parent transformations while preview remained open are separate evidence;
+  their retired HTTP wrappers are not a supported public API. The actual
+  document-to-AI button attached the DOCX to Aide's task input. Paid model
+  inference was not invoked.
 - Crash/recovery: killing only the owned editor revoked the old proxy capability.
   Aide restarted it automatically in 18.38 seconds, allowed a new session and
   continued to reject the old capability.
+- Final-source real shutdown exited 0 in 1.168 seconds and removed owned engine
+  temporary directories. The copied native acceptance fixture was separately
+  retained until the disposable container was removed.
 - Desktop and 900 px viewer controls were inspected. At 390 px the Aide toolbar
   wraps without horizontal page overflow; the engine's desktop slide navigator
   may need collapsing. Full mobile Office usability is not claimed. Upstream
   welcome/tour overlays were dismissed through their normal controls.
 
-Final source/full verification and exact final-image acceptance are in progress.
-Receipts/screenshots are under `.agent-state/office-offline/`. This review will be
-updated only with observed final results. Native Windows/macOS execution,
-enterprise capacity/SLA, remote SSH and paid model/service calls are not claimed.
-The daily runtime has not been rebuilt, restarted or replaced.
+## Full verification and publication
+
+`AIDE_TEST_IMAGE=aide-office-offline:candidate-20261116
+AIDE_TEST_TOOLCHAIN_IMAGE=aide:cn-sdk-verify-20261115 AIDE_TEST_WORKERS=1
+python3 scripts/agent-route.py verify full` passed on exact source
+`4ae9b7d8135b80974ee7f813320dd7a1bdec3d7e`, fingerprint
+`7ba74f492e96b6e13a54a7cbfc6cfe3998f9db444600c1b0174b38bd231885e3`.
+All 350 commands succeeded: 24 server race shards selected all 1,798 registered
+items (1,704 passed, 94 environment/opt-in skips, none missing), other Go race
+packages, 11 platform contracts, vet and runtime/optional STEP checks. Skipped
+live tests are not claimed as passed. Raw evidence remains local under
+`.agent-state/office-offline/`; the durable summary is
+[verification JSON](2026-11-16-office-offline-verification.json).
+
+[Host PR #938](https://github.com/skyelan1999/aide/pull/938) merged as
+`16ce28313792022e98ceec5eed0b190a7ac61e94`, preserving intervening terminal PR #939.
+Office/build files were compared with the accepted source and unchanged;
+[merged-main CI](https://github.com/skyelan1999/aide/actions/runs/43853371710)
+passed quick/go/gate separately. The full receipt belongs to source `4ae9b7d8`,
+not an unrun full profile on the merge commit.
+
+[Office 1.3.0](https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.3.0)
+is public from plugin merge `5dd1a71fb81eba82e5258ddffece8805be750bb1`.
+The ZIP is 12,831 bytes, SHA-256
+`a1f8e9e505af3c80855f7d070cdce7c093fd70547f97af58a56166b157a82a89`.
+[Market PR #55](https://github.com/skyelan1999/aide-pkg-shop/pull/55) merged as
+`9e01d59ad4019456fc079420dce1054adbc86b04`; its Pages deployment passed.
+Anonymous Release, pinned-raw, Pages and actual public-browser downloads matched
+the exact ZIP. Public search/details showed 1.3.0 and `office-offline-v1`.
+An initial check before Pages deployment completed saw the previous catalog;
+the subsequent completed-deployment checks passed.
+
+Complete Aide host builds must include `office-offline-v1`; installing this ZIP
+alone does not update an older host's engine. No Aide application version/tag,
+Release, public default runtime-image update or daily deployment was performed.
+The application Delivery/release-check gate is not claimed. Native Windows/macOS,
+AMD64 engine execution, enterprise capacity/SLA, remote SSH, full mobile usability
+and paid model calls were not accepted. The owned test browser and services are
+closed; the SDK is stopped with its cache retained. Original local work and the
+healthy daily runtime are preserved.

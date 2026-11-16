@@ -54,11 +54,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual isolated offline DOCX/XLSX/PPTX edit/save/readback and engine crash recovery passed. Final source/full verification and final artifact acceptance pending.",
+      "status": "pass",
+      "summary": "Exact final-source full profile passed (350 commands; 24 server shards, 1704 pass/94 opt-in skips), actual offline three-format UI/native/boundary checks and exact ZIP fresh/upgrade acceptance passed. Merged-main CI passed separately.",
       "evidence": [
-        "docs/reviews/2026-11-16-office-offline.md",
-        ".agent-state/office-offline/engine-recovery.json"
+        "docs/reviews/2026-11-16-office-offline-verification.json",
+        "https://github.com/skyelan1999/aide/actions/runs/43853371710"
       ]
     },
     "documentation": {
@@ -71,21 +71,29 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned runtime/relay/network/local market server removed or stopped, browser closed; SDK stopped with cache retained. Evidence/candidate image retained. Original tracked modifications and unrelated untracked work preserved; daily runtime untouched.",
+      "evidence": [
+        "docs/reviews/2026-11-16-office-offline-verification.json"
+      ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Previous explicit push/market authorization applies to this Office refinement. Complete final checks before host/Office 1.3.0/market updates; no daily-runtime deployment or Aide application version/tag/Release.",
+      "status": "pass",
+      "summary": "Host PR #938 and plugin PR #2 merged; Office v1.3.0 Release and market PR #55 public. Release, pinned raw and Pages/browser downloads matched exact ZIP SHA-256. No Aide app version/tag/Release, public runtime image publication or daily deployment.",
       "evidence": [
-        "Current thread user instruction: 推送发布市场",
-        "Current offline/Aide-only clarifications"
+        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.3.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/55",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/43853976377",
+        "docs/reviews/2026-11-16-office-offline-verification.json"
       ]
     }
   },
   "release_authorization": "Current thread prior explicit instruction: 推送发布市场; continued offline and Aide-only refinement of the same Office integration.",
-  "rollback": "Isolated candidate only until real offline browser acceptance; daily runtime and unrelated work untouched. Existing editor/version protections retained.",
-  "handoff": "",
-  "issue": "https://github.com/skyelan1999/aide/issues/937"
+  "rollback": "Revert only the Office host PR #938 if source rollback is needed, preserving intervening terminal PR #939. Prior Office 1.2.0 Release and market package remain immutable. Preserve plugin/user data and use installer upgrade backups before any runtime/package rollback. Daily runtime was never replaced.",
+  "handoff": "Office 1.3.0 published and market live. Complete host must provide office-offline-v1; older same-version hosts cannot gain the bundled engine by installing the ZIP. Local source updated with original work preserved; running daily instance remains unchanged. Source/full, merged CI, exact artifact, public publication and deployment are recorded separately.",
+  "issue": "https://github.com/skyelan1999/aide/issues/937",
+  "request_clarifications": [
+    "还有就是这个插件不对外暴露接口，只允许在aide中使用",
+    "Prior explicit publication authorization: 推送发布市场"
+  ]
 }
