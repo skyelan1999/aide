@@ -175,3 +175,12 @@ func TestOfficeBuiltinChildDoesNotInheritProviderCredentials(t *testing.T) {
 		t.Fatal("Aide credentials/proxy environment leaked to editor child")
 	}
 }
+
+func TestOfficeBuiltinPrivateCallbackStopsWithAide(t *testing.T) {
+	a, session := collaboraFixture(t)
+	requireStatus(t, collaboraRequest(a, session, "GET", "", nil, nil), 200)
+	a.beginRuntimeShutdown()
+	requireStatus(t, collaboraRequest(a, session, "GET", "", nil, nil), 503)
+	requireStatus(t, collaboraRequest(a, session, "GET", "/contents", nil, nil), 503)
+	requireStatus(t, collaboraRequest(a, session, "POST", "", nil, map[string]string{"X-WOPI-Override": "LOCK", "X-WOPI-Lock": "shutdown"}), 503)
+}

@@ -342,6 +342,10 @@ func (a *App) collaboraWriteError(p, source string) error {
 	return nil
 }
 func (a *App) collaboraWOPI(w http.ResponseWriter, r *http.Request) {
+	if a.runtimeStopping.Load() {
+		fail(w, http.StatusServiceUnavailable, errors.New("Aide is stopping"))
+		return
+	}
 	a.collabora.mu.Lock()
 	defer a.collabora.mu.Unlock()
 	var s *collaboraSession
