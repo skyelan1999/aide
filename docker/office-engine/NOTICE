@@ -1,0 +1,22 @@
+Aide built-in Office engine
+
+Unmodified Collabora Online CODE AppImage, 26.4.502, from Collabora Productivity.
+This component is not covered by the Aide Office adapter MIT license.
+Collabora Online is principally licensed under Mozilla Public License 2.0;
+LibreOffice and other included components retain their respective licenses.
+The original license notices are contained inside the AppImage, including
+usr/share/coolwsd and opt/collaboraoffice license/notice resources.
+
+Upstream binary release and source provenance:
+https://github.com/CollaboraOnline/richdocumentscode/releases/tag/26.4.502
+https://github.com/CollaboraOnline/online
+https://gerrit.collaboraoffice.com/
+https://www.collaboraoffice.com/code/
+https://www.mozilla.org/MPL/2.0/
+
+source.json pins the exact archive and unchanged executable SHA-256 for each
+architecture. No Nextcloud PHP code is used or included. No runtime updates,
+remote fonts or Collabora cloud storage are enabled by Aide.
+
+CODE is the development/community distribution. This bundle does not imply
+Collabora enterprise support, trademark endorsement or an enterprise SLA.
