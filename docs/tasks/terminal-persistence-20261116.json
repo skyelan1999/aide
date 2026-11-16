@@ -1,0 +1,85 @@
+{
+  "id": "terminal-persistence-20261116",
+  "request": "Aide terminal插件会话历史在重新编译之后老没，还有已经设置的会话，你修一下",
+  "baseline": "ef8f8bf050f237e03413c8021ed93b954eab9758",
+  "initial_status": "main at ef8f8bf0; unrelated tracked edits in docs/tasks/build-cn-source-fallback-20261115.json and internal/server/web/starmap.html, plus unrelated untracked files; all preserved and excluded from this change.",
+  "acceptance": [
+    "同一本地工作区重建/容器映射变化后复用持久会话目录，保留记录、设置和日志",
+    "按已知路径兼容旧存储，原地复用，不移动/复制用户记录，不混合不同工作区",
+    "远程主机、用户、端口隔离不变；拒绝非法索引和符号链接",
+    "真实 PTY 输出与已保存未连接配置在新 daemon 中恢复，不自动重连或执行命令"
+  ],
+  "scope": [
+    "internal/server/plugin_terminal_context.go",
+    "internal/server/terminal_state.go",
+    "internal/server/terminal_state_test.go",
+    "docs/tasks/terminal-persistence-20261116.json",
+    "docs/reviews/2026-11-16-terminal-persistence.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求修复重新编译后的 Terminal 历史与配置保留；保持现有工作区隔离",
+      "evidence": [
+        "current runtime: aide-aide-1; /data persisted in bind mount; Terminal 1.8.1",
+        "Read-only inventory: existing records belong to two distinct configured workspaces; persistent /data bind mount confirmed."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "持久化稳定工作区身份到原私有目录的定位索引；与临时容器路径解耦，已知旧路径原地接管",
+      "evidence": [
+        "terminal_state.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "稳定工作区定位索引，兼容原私有目录并保持远程账户隔离，无用户数据迁移或删除",
+      "evidence": [
+        "internal/server/terminal_state.go",
+        "internal/server/plugin_terminal_context.go",
+        "internal/server/terminal_state_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离 Linux/arm64 Docker 宿主测试 11 项通过（含真实 PTY 和新 daemon 恢复）；macOS 插件测试 8 项通过。无真实实例重建/重启验收",
+      "evidence": [
+        "GOTOOLCHAIN=local AIDE_PLUGIN_TEST_ROOT=/src/plugins go test -mod=vendor ./internal/server -run \"^TestTerminal(State|Context|RelayContext|CopyContext)\" -count=1 -v",
+        "image: aide:cn-sdk-verify-20261115; go1.26.11 linux/arm64",
+        ".agent-state/terminal-persistence-20261116/go-tests.log",
+        "node --test test/sessions.test.js test/reconnect.test.js (aide-pkg-terminal): pass 8, fail 0, skip 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录已确认的存储身份问题、现存数据与工作区对应关系、验证和当前未应用状态",
+      "evidence": [
+        "docs/reviews/2026-11-16-terminal-persistence.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅修改任务范围内源码/测试/文档，保留原有工作；隔离测试容器自动移除，无用户数据修改",
+      "evidence": [
+        "git diff --check -- internal/server/plugin_terminal_context.go",
+        "live aide-aide-1 not restarted; current tasks preserved"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本任务范围为源码合入，进度及远端结果见关联 PR。未发行或替换当前运行二进制；下次构建启动加载宿主修复。",
+      "evidence": [
+        "User source-merge authorization recorded; runtime replacement and release are separate gates."
+      ]
+    }
+  },
+  "release_authorization": "用户：合进去吧先。授权本次持久化修复合入 Aide 主干；不包含发行、重建或重启当前实例。",
+  "rollback": "撤回本任务的宿主源码并重建；原数据目录原地保留；旧版忽略 .root.json 索引。不清理私有目录。",
+  "handoff": "源码修复与针对性测试通过；源码集成状态以关联 PR 为准。当前服务运行原二进制，未完成当前实例重建/重启验收；重编译启动后生效。现存不同工作区记录未修改。",
+  "content_sha256": {
+    "internal/server/plugin_terminal_context.go": "616caaa270444beb6857583c9d1a448b76e738ac80723d49fca6ddc7becb2974",
+    "internal/server/terminal_state.go": "31070cc92c5760da7a64d529c66ab5288175435fac7f975b319e9a679b05f87e",
+    "internal/server/terminal_state_test.go": "e82d8a9286274b95630cee25c2669d31c4cfe35d91805b6222ddedb01496f92a"
+  }
+}
