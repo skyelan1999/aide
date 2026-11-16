@@ -140,6 +140,8 @@ struct Desktop {
    case WM_PAINT:{PAINTSTRUCT paint{};auto dc=BeginPaint(hwnd,&paint);Chrome::fill(dc,paint.rcPaint,self->chrome.background);EndPaint(hwnd,&paint);return 0;}
    case WM_ERASEBKGND:{RECT area{};GetClientRect(hwnd,&area);Chrome::fill(reinterpret_cast<HDC>(w),area,self->chrome.background);return 1;}
    case WM_DRAWITEM:{auto item=reinterpret_cast<DRAWITEMSTRUCT*>(l);if(item->CtlType==ODT_BUTTON){self->chrome.button(*item);return TRUE;}break;}
+   case WM_THEMECHANGED:self->chrome.refresh(hwnd,self->bar);break;
+   case WM_SETTINGCHANGE:if(w==SPI_SETHIGHCONTRAST)self->chrome.refresh(hwnd,self->bar);break;
    case WM_DPICHANGED:{self->chrome.setDpi(HIWORD(w));self->icons();auto bounds=reinterpret_cast<RECT*>(l);SetWindowPos(hwnd,nullptr,bounds->left,bounds->top,bounds->right-bounds->left,bounds->bottom-bounds->top,SWP_NOZORDER|SWP_NOACTIVATE);self->resize();return 0;}
    case WM_SIZE:self->resize();if(w==SIZE_MINIMIZED){self->pause(self->active());self->hello.cancel(self->ceremony);}return 0;
    case WM_SHOWWINDOW:if(!w){self->pause(self->active());self->hello.cancel(self->ceremony);}break;

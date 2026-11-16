@@ -1,0 +1,84 @@
+{
+  "id": "windows-ui-polish-20261116",
+  "request": "Issue #925: improve Windows native Aide desktop visual appearance while preserving macOS/Linux, keyboard access, light/dark, and per-monitor DPI; document, run native tests/CI, open a separate unmerged PR.",
+  "baseline": "4737cb9780aa5983b4b3bc8b3dd54f449c7dc6af",
+  "initial_status": "Issue #925 open; clean worktree based on latest origin/main 4737cb97. Existing UI already has custom tabs, active/hover states, dark/light palettes, DPI scaling and synthetic screenshot capture; no human screenshot review has occurred.",
+  "acceptance": [
+    "Improve native Windows visual states without changing macOS/Linux or web appearance: system High Contrast colors and live settings refresh; clear disabled controls and keyboard focus affordance.",
+    "Keep existing light/dark palette synchronization, touch-sized tab interactions, keyboard navigation and per-monitor DPI behavior.",
+    "Windows smoke artifact captures one/multiple tabs, wide/narrow, 100/150/200% synthetic DPI and light/dark layouts for review.",
+    "Windows launcher compile/native UI CI pass; record real Windows screenshot review separately, and leave issue open if desktop visual review is unavailable.",
+    "Open a separate draft PR linked to #925 and never merge."
+  ],
+  "scope": [
+    "native/windows-launcher/desktop_chrome.hpp",
+    "native/windows-launcher/desktop.hpp",
+    "scripts/windows_desktop_smoke.cpp",
+    "scripts/ci/windows_desktop_ui.py",
+    ".github/workflows/windows-desktop-check.yml",
+    "docs/architecture/windows-desktop.md",
+    "docs/tasks/windows-ui-polish-20261116.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Issue #925 asks for Windows-only visual refinement while preserving theme, focus, disabled, keyboard and DPI behavior; it explicitly requires screenshots and human visual acceptance at several dimensions.",
+      "evidence": [
+        "Issue #925 is open and states screenshot-based acceptance has not yet been performed.",
+        "Existing desktop_chrome.hpp already implements active/hover/pressed custom tabs, 32-DIP scaling and theme palette; smoke harness already captures light/dark and narrow layouts."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Added system High Contrast-aware native colors with runtime refresh, strengthened keyboard focus affordance and disabled button visuals, and expanded synthetic capture to 200% DPI. Preserved CSS-driven light/dark theme when High Contrast is off.",
+      "evidence": [
+        "Chrome::apply currently always consumes CSS colors and sets DWM immersive dark mode; Desktop WndProc already handles WM_THEMECHANGED/WM_SETTINGCHANGE opportunities.",
+        "Native smoke captures 96/144 DPI but not 192; scripted multi-tab narrow layouts and one-tab wide states already exist."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Windows-only desktop chrome and smoke harness changes are implemented; docs updated. No macOS/Linux or web UI source changed.",
+      "evidence": [
+        "native/windows-launcher/desktop_chrome.hpp applies Windows system colors under High Contrast and presents disabled/pressed/hover/focus states.",
+        "native/windows-launcher/desktop.hpp reapplies chrome after Windows theme and High Contrast setting changes.",
+        "scripts/windows_desktop_smoke.cpp adds High Contrast palette and synthetic 200% DPI captures; docs/architecture/windows-desktop.md records coverage and limits."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Windows Desktop Check and Aide CI passed for implementation head 3a6d74c. The complete local launcher/entrypoint suite hit a 10-second timeout in its CMD proxy policy fixture; human screenshot review remains pending.",
+      "evidence": [
+        "python scripts/test_windows_launcher_compile.py: MSVC compilation/link and launcher self-test passed; later scripts/test_windows_build_proxy.py timed out in proxy-policy.cmd after 10 seconds, so the complete suite did not pass.",
+        "git diff --check passed.",
+        "Aide CI run 602 and Windows Desktop Check run 63 passed on PR #927 implementation head 3a6d74c481f156cafba28c84143a48eb4b2c251c; AMD64, ARM64, and native UI smoke all passed.",
+        "Human screenshot inspection: NOT_RUN; no in-session browser/computer-use UI inspection tool is available."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented Windows High Contrast behavior, state rendering, synthetic DPI captures, and the remaining human screenshot acceptance in the desktop architecture guide.",
+      "evidence": [
+        "docs/architecture/windows-desktop.md updated."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed the confirmed temporary compiler probe object and verified the topic contains only intended source, documentation, and task evidence files.",
+      "evidence": [
+        "git status showed only the four intended implementation/documentation files and this task record before commit; no generated test executables or captures remain."
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Draft PR #927 is open and linked to Issue #925. CI passed for the implementation commit; human screenshot acceptance and local timeout triage remain outstanding.",
+      "evidence": [
+        "PR: https://github.com/skyelan1999/aide/pull/927 (draft, open, implementation head 3a6d74c481f156cafba28c84143a48eb4b2c251c; Aide CI #602 and Windows Desktop Check #63 passed).",
+        "Issue #925 has a progress comment linking the PR and accurately recording the failing timeout and pending acceptance."
+      ]
+    }
+  },
+  "release_authorization": "User authorized push and PR creation, and explicitly requires all merges to remain in PRs; do not merge.",
+  "rollback": "Revert the topic commit/PR branch; native chrome returns to current light/dark CSS palette, with no persistent data changes.",
+  "handoff": "PR #927 is a draft and must remain unmerged. Aide CI #602 and Windows Desktop Check #63 passed for implementation head 3a6d74c481f156cafba28c84143a48eb4b2c251c. The full local launcher/entrypoint suite did not pass because the CMD proxy policy fixture timed out after 10 seconds. Issue #925 must remain open until this timeout is resolved or accepted and screenshots are manually reviewed at the requested scale/theme/layout matrix. Discussion #916 was not updated: the available GitHub connector supports read-only discussion retrieval only, no browser/computer-use UI inspection tool is available in this session; gh is not installed."
+}
