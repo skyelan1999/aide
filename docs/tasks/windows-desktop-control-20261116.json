@@ -27,7 +27,7 @@
       "status": "pass",
       "summary": "Audit is separated from #924 UIA parity; #932 tracks remaining desktop route, scheduler and visual controller differences.",
       "evidence": [
-        "Latest upstream main: da8fdc95c7bb432c8a29aa45d13e55635e480b7f; merged into PR #933 without conflicts at head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c (2026-11-16).",
+        "Latest upstream main: 409644a7038a7ce80056a5ea75fd1d0ab359b755; merged into PR #933 without conflicts at source head a40658e0df4efe3f47dca11de908d500e0606706 (2026-11-17).",
         "GitHub Issue #932 opened with the observed macOS/Windows capability gaps.",
         "Windows source currently handles snapshot/click/type/key only; core Go caller also requests /v1/foreground-app and /v1/resolve-app."
       ]
@@ -54,7 +54,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Synchronized main 409644a7038a7ce80056a5ea75fd1d0ab359b755 into the Windows control topic without conflicts. On the latest-main local tree, native-only launcher compile/self-test and isolated bridge fixture compile pass; the integration binary still cannot launch locally (Windows “Access is denied”). Fresh CI for the synchronized source commit is pending. Hosted integration on the prior source confirmed app discovery, snapshots, drag/scroll, denials, fake Chrome launch, Windows recovery, and WebView2 isolation. No Aide process or listeners on ports 17778/8080/8081 were found, and no interactive desktop is available for live app/visual acceptance.",
+      "summary": "Synchronized main 409644a7038a7ce80056a5ea75fd1d0ab359b755 into the Windows control topic without conflicts. On PR source head a40658e0df4efe3f47dca11de908d500e0606706, Aide CI run 44005643646 and Windows Desktop Check run 44005643639 pass, including both architecture builds and the hosted native integration. Local native-only launcher compile/self-test, isolated bridge fixture compile, task JSON, docs, and diff checks pass; the integration binary still cannot launch locally (Windows “Access is denied”). Hosted integration confirms app discovery, snapshots, drag/scroll, denials, fake Chrome launch, Windows recovery, and WebView2 isolation. No Aide process or listeners on ports 17778/8080/8081 were found, and no interactive desktop is available for live app/visual acceptance.",
       "evidence": [
         "PASS: Aide CI #657 — Go, quick, and gate jobs completed successfully on synchronized head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c.",
         "PASS: Windows Desktop Check #86 — AMD64 build, ARM64 build, and native-ui job all completed successfully on synchronized head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c.",
@@ -62,7 +62,8 @@
         "PASS: after syncing latest main, `python -X utf8 scripts/test_windows_launcher_compile.py --native-only` — MSVC compile/link and native self-test; proxy-policy fixtures intentionally skipped.",
         "PASS: after syncing latest main, `python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only` — isolated bridge fixture compiles; execution skipped by request.",
         "PASS: `python -X utf8 scripts/check_docs.py` on latest-main local tree — 544 Markdown files and 2562 local links; task JSON parse and `git diff --check` pass.",
-        "NOT_RUN: latest-main source CI is pending; prior CI #657/#86 evidence is on the previous source head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c.",
+        "PASS: Aide CI run 44005643646 on source head a40658e0df4efe3f47dca11de908d500e0606706 — Go, quick and gate jobs succeeded.",
+        "PASS: Windows Desktop Check run 44005643639 on source head a40658e0df4efe3f47dca11de908d500e0606706 — AMD64/ARM64 compile and native-ui all succeeded; hosted isolated bridge discovery, snapshot and denial checks passed.",
         "PASS: python -X utf8 scripts/check_docs.py after earlier main sync — 538 Markdown files, 2558 local links; task JSON parsed and git diff --check passed.",
         "PASS: Aide CI #653 — Go, quick, and gate jobs completed successfully on e84d03c7a48ee62f57e0f704e5214879e3632bf9.",
         "PASS: Windows Desktop Check #84 — amd64 build, arm64 build, and native-ui job all completed successfully on e84d03c7a48ee62f57e0f704e5214879e3632bf9.",
@@ -96,15 +97,15 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "User requested the feature remain in an open pull request. Main 409644a7038a7ce80056a5ea75fd1d0ab359b755 was merged into the PR branch; the feature has not been merged into main and no release was performed. Fresh CI on the latest source head is pending.",
+      "summary": "User requested the feature remain in an open pull request. Main 409644a7038a7ce80056a5ea75fd1d0ab359b755 is in the PR branch; Aide CI and Windows Desktop Check pass on source head a40658e0df4efe3f47dca11de908d500e0606706. The feature has not been merged into main and no release was performed.",
       "evidence": [
-        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; synchronized head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c passed Aide CI #657 and Windows Desktop Check #86.",
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; source head a40658e0df4efe3f47dca11de908d500e0606706 passed Aide CI run 44005643646 and Windows Desktop Check run 44005643639.",
         "Issue #932 remains open because browser page balance, UIA semantic actions, OCR/GPU capture, independent scheduling, visual pointer parity and actual interactive user-app acceptance remain incomplete; no merge or release performed."
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Draft PR #933 contains Windows app discovery/safety, bounded foreground drag/scroll, and approved Chrome opening. It is synchronized with main at da8fdc95c7bb432c8a29aa45d13e55635e480b7f; Aide CI #657 and Windows Desktop Check #86 pass on source head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c. Remaining: browser page balance, UIA parity tracked in #924, OCR/GPU capture strategy, background actions, independent scheduler lanes, visual controller pointer, live user-app/screenshot acceptance (no Aide process or interactive desktop was available on this host), and Discussion #916 update (discussion-write/browser-control tools are unavailable in this session). Keep Issue #932 open and PR unmerged."
+  "handoff": "Draft PR #933 contains Windows app discovery/safety, bounded foreground drag/scroll, and approved Chrome opening. It is synchronized with main at 409644a7038a7ce80056a5ea75fd1d0ab359b755; Aide CI run 44005643646 and Windows Desktop Check run 44005643639 pass on source head a40658e0df4efe3f47dca11de908d500e0606706. Local native-only launcher and bridge fixture compile pass; runtime invocation on this host returns Windows Access is denied. Hosted Windows native-ui bridge integration passes. Remaining: browser page balance, UIA parity tracked in #924, OCR/GPU capture strategy, background actions, independent scheduler lanes, visual controller pointer, live user-app/screenshot acceptance (no Aide process or interactive desktop was available on this host), and Discussion #916 update (discussion-write/browser-control tools are unavailable in this session). Keep Issue #932 open and PR unmerged."
 }
 
