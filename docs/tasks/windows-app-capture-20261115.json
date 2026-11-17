@@ -29,7 +29,8 @@
         "native/macos-desktop/main.swift: injected AideNativeCapture and foreground capture",
         "internal/server/web/desktop-capture.js: shared one-time ticket/draft flow",
         "Issue #922 created and open",
-        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged into PR #923 without conflicts; synchronized source head is 8ddde9d084a7124ea3e411b1526e8b72d2f6a529."
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged into PR #923 without conflicts; synchronized source head is 8ddde9d084a7124ea3e411b1526e8b72d2f6a529.",
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged at head 24c92a8101ade2de020239c64e2365b393933932; main subsequently advanced to 409644a7038a7ce80056a5ea75fd1d0ab359b755 and is now included without conflicts."
       ]
     },
     "design": {
@@ -53,17 +54,17 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "After syncing main, Aide CI #669 and Windows Desktop Check #92 pass on source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529. Hosted Windows native-ui passed the GPU HWND pixel fixture (320x240, expected center RGB 230,26,51), gesture and launcher recovery contracts, and isolated WebView2 checks; AMD64/ARM64 cross-builds pass. Local WGC smoke compiled but returned black pixels because this agent session could not foreground the fixture (GetForegroundWindow mismatch; PrintWindow also black). Shared draft/ticket and i18n regression tests pass locally. Real interactive global-hotkey use and attachment into a live unlocked Aide draft remain NOT_RUN.",
+      "summary": "The PR is synchronized with current main 409644a7038a7ce80056a5ea75fd1d0ab359b755. Aide CI #694 and Windows Desktop Check #94 pass on source head 24c92a8101ade2de020239c64e2365b393933932. The native-ui job log confirms WGC captured a 320x240 HWND and exact center RGB 230,26,51; AMD64/ARM64 builds, gesture, recovery and WebView2 checks pass. Local draft/ticket, i18n and docs checks pass. A local WGC smoke on the previous source tree still returned black because this agent session cannot foreground its synthetic HWND; interactive user-app/global-hotkey and live-draft attachment acceptance remains NOT_RUN.",
       "evidence": [
-        "PASS Aide CI #669 on synchronized source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529.",
-        "PASS Windows Desktop Check #92 on synchronized source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529: AMD64/ARM64 build, gesture smoke, Windows native-ui and hosted GPU pixel fixture.",
-        "PASS hosted GPU HWND fixture: 320x240 capture center pixel matched RGB 230,26,51.",
-        "PASS local `node --check internal/server/web/desktop-capture.js`.",
-        "PASS local `node scripts/desktop-capture.test.cjs`: draft PNG/context attachment, one-use ticket, lock/navigation rejection, invalid data and upload scope.",
-        "PASS local `node scripts/test_i18n_coverage.cjs` and `node scripts/test_i18n.cjs`.",
-        "PASS local `python -X utf8 scripts/check_docs.py` after main sync: 538 Markdown files and 2558 local links; task JSON parsed and `git diff --cached --check` passed.",
-        "PARTIAL/FAIL local GPU pixel acceptance: the isolated fixture compiled and ran, but this session could not foreground its synthetic HWND; WGC and PrintWindow returned black. The temporary test directory was automatically removed.",
-        "NOT_RUN: real interactive global hook, foreground capture from a user app, visible WebView and attachment into an unlocked live Aide draft."
+        "PASS Aide CI #694 on synchronized source head 24c92a8101ade2de020239c64e2365b393933932.",
+        "PASS Windows Desktop Check #94 on synchronized source head 24c92a8101ade2de020239c64e2365b393933932.",
+        "PASS native-ui job log: `Captured 320x240 center RGB 230,26,51 expected 230,26,51`; `Pixel check PASS`; WGC returned expected GPU-rendered HWND pixels.",
+        "PASS AMD64 and ARM64 cross-builds, global gesture boundaries, Windows native-ui recovery and WebView2 checks in run #94.",
+        "PASS local `python -X utf8 scripts/check_docs.py` after current main sync: 544 Markdown files, 2562 local links; task JSON parsed and `git diff --check` passed.",
+        "PASS local `node --check internal/server/web/desktop-capture.js` and `node scripts/desktop-capture.test.cjs`.",
+        "PASS local `node scripts/test_i18n_coverage.cjs` (4047 translation sites) and `node scripts/test_i18n.cjs`.",
+        "PARTIAL/FAIL local WGC pixel smoke on prior code-equivalent source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529: fixture compiled, but session could not foreground synthetic HWND; WGC and PrintWindow returned black. Temporary directory was automatically removed.",
+        "NOT_RUN: real interactive global hook, user-app foreground capture, visible WebView and attachment into a live unlocked Aide draft."
       ]
     },
     "documentation": {
@@ -82,14 +83,14 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "PR #923 remains open, draft, and unmerged; its synchronized source head passed current Aide and Windows CI. Issue #922 remains open for real interactive hotkey/capture-to-draft acceptance.",
+      "summary": "PR #923 remains open, draft, and unmerged. It is synchronized with current main and current Aide/Windows CI passes; Issue #922 remains open for real interactive hotkey and capture-to-draft acceptance.",
       "evidence": [
-        "PR #923 head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529 is open, draft, mergeable and unmerged.",
-        "Aide CI #669 and Windows Desktop Check #92 passed on the synchronized source head.",
-        "Issue #922 remains open because interactive global-hook, real app capture, and unlocked draft attachment have not been accepted."
+        "PR #923 source head 24c92a8101ade2de020239c64e2365b393933932 is open, draft, mergeable and unmerged.",
+        "Current main is 409644a7038a7ce80056a5ea75fd1d0ab359b755; branch comparison shows no commits behind.",
+        "Aide CI #694 and Windows Desktop Check #94 pass on the synchronized source head."
       ]
     }
   },
   "rollback": "Use a separate feature branch; close PR or revert its commit.",
-  "handoff": "Issue #922 remains open. PR #923 is draft/open/unmerged at synchronized source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529, with current main da8fdc95c7bb432c8a29aa45d13e55635e480b7f included without conflict. Aide CI #669 and Windows Desktop Check #92 pass; hosted WGC fixture captured 320x240 and expected center RGB 230,26,51. Local WGC smoke compiled but returned black because this session cannot foreground the fixture; WebView draft-ticket, localization, and docs checks pass. Real global hook, user-app foreground capture, visible WebView and attachment to a live unlocked draft remain NOT_RUN; keep Issue #922 open. Discussion #916 update remains pending because this session has no Discussion write or authenticated browser-control tool."
+  "handoff": "Issue #922 remains open. PR #923 is draft/open/unmerged at source head 24c92a8101ade2de020239c64e2365b393933932 and includes main 409644a7038a7ce80056a5ea75fd1d0ab359b755 without conflict. Aide CI #694 and Windows Desktop Check #94 pass; native-ui log confirms WGC 320x240 and exact expected center RGB 230,26,51. Local draft-ticket, i18n, docs and shared-capture checks pass. The local WGC fixture on the previous code-equivalent head returned black because this agent session could not foreground the synthetic window. Real global-hook, user-app capture, visible WebView and live unlocked-draft attachment remain NOT_RUN. Keep Issue #922 open. Discussion #916 update remains pending because no Discussion-write or authenticated browser-control tool is available."
 }
