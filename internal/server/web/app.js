@@ -4925,7 +4925,7 @@ function renderComputerControlSettings() {
   const permissionNames={screenRecording:t('屏幕录制'),accessibility:t('辅助功能')};
   let permissionBusy=false;
   const showPermissions=status=>{
-    executionHint.textContent=status.virtualPointers===true&&status.backgroundControl===true?t('每个会话显示独立颜色的虚拟光标。支持后台操作的软件可同时工作，需要系统鼠标或键盘的操作会排队。'):t('当前控制服务未提供虚拟光标或后台操作能力。');
+    executionHint.textContent=status.virtualPointers===true?(status.backgroundControl===true?t('每个会话显示独立颜色的虚拟光标。支持后台操作的软件可同时工作，需要系统鼠标或键盘的操作会排队。'):t('Windows 会在每次已批准的鼠标或键盘操作后显示短暂的虚拟光标；后台操作尚不可用。')):t('当前控制服务未提供虚拟光标或后台操作能力。');
     permissionList.replaceChildren();
     const platform=status.platform||'';
     const items=status.permissions||(platform==='macos'?{screenRecording:{required:true,granted:status.screenRecording===true,supported:true},accessibility:{required:true,granted:status.accessibility===true,supported:true}}:platform==='windows'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:platform==='linux-x11'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:{});

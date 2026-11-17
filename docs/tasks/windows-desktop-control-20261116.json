@@ -1,0 +1,129 @@
+{
+  "id": "windows-desktop-control-20261116",
+  "request": "核对 macOS 独立工作台电脑控制功能在 Windows 的缺口；完成安全有限的 Windows 对等能力，更新架构/任务文档，关联 Issue #932，提供独立草稿 PR 和真实 CI/用户场景验收，不合入 main。",
+  "baseline": "f3cceb37e4accfab2007e045687f8b9765d641e6",
+  "initial_status": "New isolated worktree from origin/main f3cceb37e4accfab2007e045687f8b9765d641e6; task opened with scripts/agent-route.py. Root workspace untouched.",
+  "acceptance": [
+    "Document Windows/macOS desktop computer-control capability differences, including known platform-specific limits; link Issue #932 and related #924.",
+    "Make Windows foreground/explicit app discovery compatible with the core computer-control contract, with process identity and ambiguity checks.",
+    "Pin every approved Windows action to the discovered PID/process rule and current HWND; deny unavailable/secure desktop access, stale screenshot windows, and out-of-window clicks.",
+    "Return bounded screenshot window geometry/identity metadata required for image-coordinate conversion without claiming OCR or GPU capture parity.",
+    "Map the shared CMD modifier to Windows Ctrl and support the core approved key-chord grammar without changing macOS/Linux code.",
+    "Run focused Windows compile/runtime checks and supported CI; record actual interactive target-app and screenshot evidence or mark NOT_RUN.",
+    "Link a separate draft PR to Issue #932; leave all issues open until full parity scenarios are accepted; do not merge."
+  ],
+  "scope": [
+    "native/windows-launcher/computer_bridge.hpp",
+    "scripts/test_windows_launcher_compile.py",
+    "native/windows-launcher/computer_bridge_test.cpp",
+    "scripts/ci/windows_computer_bridge.py",
+    ".github/workflows/windows-desktop-check.yml",
+    "docs/architecture/windows-desktop.md",
+    "docs/tasks/windows-desktop-control-20261116.json",
+    "focused computer bridge tests and Windows Desktop Check",
+    "native/windows-launcher/computer_virtual_pointer.hpp",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Audit is separated from #924 UIA parity; #932 tracks remaining desktop route, scheduler and visual controller differences.",
+      "evidence": [
+        "Latest upstream main: 409644a7038a7ce80056a5ea75fd1d0ab359b755; merged into PR #933 without conflicts at source head a40658e0df4efe3f47dca11de908d500e0606706 (2026-11-17).",
+        "GitHub Issue #932 opened with the observed macOS/Windows capability gaps.",
+        "Windows source currently handles snapshot/click/type/key only; core Go caller also requests /v1/foreground-app and /v1/resolve-app."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Implement the least risky user-visible foundation first: metadata-only app discovery, strict identity pinning, stale-window rejection, and screenshot coordinate metadata.",
+      "evidence": [
+        "Windows implementation remains under native/windows-launcher; no macOS/Linux source changes are in scope."
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Windows bridge provides foreground/explicit process discovery, bounded app listing, PID/process-rule pinning, secure desktop denial, screenshot HWND/bounds metadata, stale-window rejection, window-bounded click/drag/scroll, validated approved Chrome launch, UTF-16 typing limit and CMD-to-Ctrl key chords. Added a native click-through, non-activating, DPI-aware, high-contrast-aware virtual feedback pointer for approved foreground actions; it follows the serialized Windows controller and auto-dismisses after four seconds. Browser page balance, UIA actions, OCR/GPU capture, background operation and independent scheduler lanes remain tracked follow-ups.",
+      "evidence": [
+        "Only native/windows-launcher code changed; macOS Swift and shared Go/web behavior remain unchanged.",
+        "Added a Windows-only isolated bridge fixture and workflow step to exercise discovery, snapshot metadata, key chords, and safe denial paths where an interactive desktop is available.",
+        "Implemented /v1/drag and /v1/scroll against the approved foreground HWND, with bounded coordinates/duration/deltas, target/geometry revalidation, cleanup of held mouse state, and no cursor movement for invalid requests.",
+        "Extended isolated Windows fixture to verify drag and horizontal/vertical wheel delivery to the synthetic window plus out-of-window/out-of-range denials.",
+        "PASS in hosted Windows Desktop Check #80: isolated target window received drag completion and both wheel axes; out-of-window drag and out-of-range scroll were denied without moving the cursor.",
+        "Added approved Chrome launch using an exact resolved executable path and no-shell process launch; browser URLs are limited to complete credential-free HTTP(S) URLs and reject command-line delimiters.",
+        "PASS in hosted Windows Desktop Check #82: the bridge fixture launched the test executable as fake Chrome and verified the approved URL reached its command line without opening a real browser or making a network request.",
+        "Added native Windows virtual pointer feedback for approved click/type/key/drag/scroll operations. It is a topmost layered window that does not activate or intercept pointer events, adapts to High Contrast and the app light/dark preference, clamps to the active monitor work area, and exposes the visible controller label through bridge health.",
+        "Updated Windows settings guidance to describe short-lived pointer feedback while preserving the foreground-only and serialized operation limits.",
+        "Repaired two existing CI test harnesses to select production callbacks by Acorn AST, avoiding unrelated source-slice extraction failures without changing application behavior."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Windows Desktop Check #104 passes on source commit 4e8acc16007c6e7fae024822ff07d02ccb2945da, including AMD64/ARM64 builds and hosted virtual-pointer click-through/non-activation/auto-dismiss assertions. Aide CI #714 Go passes, but quick/gate exposed two pre-existing test extraction failures; both were reproduced on main 409644a7038a7ce80056a5ea75fd1d0ab359b755 and corrected in test-only AST extraction. Focused local tests now pass; CI for the test harness repair is pending. The virtual-pointer fixture runtime remains NOT_RUN locally because no interactive Windows desktop is available.",
+      "evidence": [
+        "PASS: Aide CI #657 — Go, quick, and gate jobs completed successfully on synchronized head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c.",
+        "PASS: Windows Desktop Check #86 — AMD64 build, ARM64 build, and native-ui job all completed successfully on synchronized head a2291e7cc6b7832e6cdecaba9b3b2b7fd0972a2c.",
+        "PASS: hosted Windows native-ui integration — bridge discovery/snapshot, drag and horizontal/vertical scroll delivery, fake Chrome launch, malformed URL/gesture denials, Windows recovery, and WebView2 checks.",
+        "PASS: after syncing latest main, `python -X utf8 scripts/test_windows_launcher_compile.py --native-only` — MSVC compile/link and native self-test; proxy-policy fixtures intentionally skipped.",
+        "PASS: after syncing latest main, `python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only` — isolated bridge fixture compiles; execution skipped by request.",
+        "PASS: `python -X utf8 scripts/check_docs.py` on latest-main local tree — 544 Markdown files and 2562 local links; task JSON parse and `git diff --check` pass.",
+        "PASS: Aide CI run 44005643646 on source head a40658e0df4efe3f47dca11de908d500e0606706 — Go, quick and gate jobs succeeded.",
+        "PASS: Windows Desktop Check run 44005643639 on source head a40658e0df4efe3f47dca11de908d500e0606706 — AMD64/ARM64 compile and native-ui all succeeded; hosted isolated bridge discovery, snapshot and denial checks passed.",
+        "PASS: python -X utf8 scripts/check_docs.py after earlier main sync — 538 Markdown files, 2558 local links; task JSON parsed and git diff --check passed.",
+        "PASS: Aide CI #653 — Go, quick, and gate jobs completed successfully on e84d03c7a48ee62f57e0f704e5214879e3632bf9.",
+        "PASS: Windows Desktop Check #84 — amd64 build, arm64 build, and native-ui job all completed successfully on e84d03c7a48ee62f57e0f704e5214879e3632bf9.",
+        "PASS: hosted Windows native-ui integration — isolated bridge discovery and snapshot, successful drag and horizontal/vertical scroll delivery, fake Chrome process launch with the approved URL, invalid URL/gesture denials, Windows recovery contracts, and isolated WebView2 tabs/sandbox/dialog/auth checks.",
+        "PASS: python -X utf8 scripts/test_windows_launcher_compile.py --native-only — Visual Studio 2022/MSVC x64 compile/link, native self-test and dry-run.",
+        "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only — isolated native bridge test fixture compiled with MSVC.",
+        "FAIL/NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py — Windows returned “Access is denied” launching the temporary integration executable on this host; no local interactive app assertions ran. The full fixture passed on hosted Windows CI #82.",
+        "NOT_RUN: local Go tests because Go is not installed on this host; hosted Aide CI #649 completed the repository Go regression job successfully.",
+        "NOT_RUN: actual user-facing application screenshot/interaction and visual UI review; this host has no interactive Windows desktop.",
+        "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only after adding approved Chrome launch and its fake-process fixture.",
+        "PASS: hosted Windows Desktop Check #84 executed the fake Chrome launch and malformed-URL denial on the updated source without network access or launching a real browser.",
+        "PASS: read-only host inspection found no Aide-named process or listeners on ports 17778, 8080, or 8081; live Aide UI behavior could not be reproduced on this host.",
+        "PASS: python -X utf8 scripts/ci/windows_computer_bridge.py --compile-only after virtual-pointer changes; isolated bridge fixture compiled with MSVC.",
+        "NOT_RUN: python -X utf8 scripts/ci/windows_computer_bridge.py reports no interactive Windows desktop is available, so native click-through, non-activation and auto-dismiss assertions did not execute locally.",
+        "PASS: node --check internal/server/web/app.js.",
+        "PASS: node scripts/test_i18n_coverage.cjs — 4048 explicit UI translation sites, settings schema and placeholder sets.",
+        "PASS: node scripts/test_i18n.cjs — localization, placeholder integrity, schema ownership, locale fallback/path mapping, workflow action/status localization.",
+        "NOT_RUN: live Aide UI screenshot/interaction review; no interactive Windows desktop is available. Hosted Windows CI for the virtual-pointer update has not completed yet.",
+        "PASS: Windows Desktop Check #104 on source commit 4e8acc16007c6e7fae024822ff07d02ccb2945da — AMD64 and ARM64 compile, native-ui integration and WebView2 isolation passed.",
+        "PASS: hosted native bridge fixture asserted virtual pointer click-through, non-activation and four-second auto-dismiss on Windows Desktop Check #104.",
+        "FAIL: Aide CI #714 on source commit 4e8acc16007c6e7fae024822ff07d02ccb2945da — Go passed; quick/gate failed in scripts/markdown-image-path.test.js and scripts/runtime-lifecycle.test.cjs. Both failures reproduce on main 409644a7038a7ce80056a5ea75fd1d0ab359b755 and came from brittle source-slicing in the tests, not Windows implementation code.",
+        "PASS: after replacing test source slicing with Acorn AST node selection, node scripts/markdown-image-path.test.js and node scripts/runtime-lifecycle.test.cjs both pass locally.",
+        "NOT_RUN: CI for the test-only AST extraction repair is pending; do not treat Aide CI #714 as passing.",
+        "NOT_RUN: local hosted-style bridge runtime assertions and live Aide visual review; host has no interactive Windows desktop."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Capability matrix now records the Windows native virtual feedback pointer and documents serialized foreground-only behavior and outstanding live visual acceptance.",
+      "evidence": [
+        "python -X utf8 scripts/check_docs.py passed with 544 Markdown files and 2562 local links after syncing latest main.",
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; intentionally unmerged.",
+        "Updated docs/architecture/windows-desktop.md with Windows drag/scroll behavior and platform-specific wheel-delta scaling.",
+        "Capability matrix distinguishes Windows wheel-unit scaling from macOS pixel scrolling and records the current controller-pointer gap.",
+        "Updated docs/architecture/windows-desktop.md with pointer visibility, DPI, High Contrast/light-dark behavior, auto-dismiss timing and the single-visible-controller Windows limitation."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Temporary test executables were created in temporary folders and removed by the fixture runners; no workspace cleanup or untracked-file deletion was performed.",
+      "evidence": [
+        "The native fixture runners use temporary directories and clean up their generated binaries."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requested the feature remain in an open pull request. Main 409644a7038a7ce80056a5ea75fd1d0ab359b755 is in the PR branch; Aide CI and Windows Desktop Check pass on source head a40658e0df4efe3f47dca11de908d500e0606706. The feature has not been merged into main and no release was performed.",
+      "evidence": [
+        "Draft PR #933: https://github.com/skyelan1999/aide/pull/933; source head a40658e0df4efe3f47dca11de908d500e0606706 passed Aide CI run 44005643646 and Windows Desktop Check run 44005643639.",
+        "Issue #932 remains open because browser page balance, UIA semantic actions, OCR/GPU capture, independent scheduling, visual pointer parity and actual interactive user-app acceptance remain incomplete; no merge or release performed."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Draft PR #933 contains Windows app discovery/safety, bounded foreground drag/scroll, approved Chrome opening, and a native virtual feedback pointer for approved foreground actions. Windows Desktop Check #104 passes on source commit 4e8acc16007c6e7fae024822ff07d02ccb2945da, including the virtual-pointer click-through/non-activation/auto-dismiss fixture. Aide CI #714 Go passed but quick/gate failed in two brittle test harnesses; both were reproduced on main 409644a7038a7ce80056a5ea75fd1d0ab359b755 and fixed using AST-based extraction. Focused local tests pass; CI for the test-only repair is pending. Local bridge runtime fixture and actual Aide screenshot/UI review are NOT_RUN because no interactive Windows desktop is available. Remaining: browser page balance, UIA parity tracked in #924, OCR/GPU capture strategy, background actions, independent scheduler lanes, live user-app acceptance and Discussion #916 update (discussion-write/browser-control tools unavailable). Keep Issue #932 open and PR unmerged."
+}
