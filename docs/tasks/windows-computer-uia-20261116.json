@@ -1,0 +1,96 @@
+{
+  "id": "windows-computer-uia-20261116",
+  "request": "Issue #924: implement Windows Computer Bridge UI Automation inspection and safe semantic interaction parity, isolated from other platforms; document, test locally and in CI, issue/PR audit, never merge.",
+  "baseline": "ba46ce28e9502d697321667b24de8d27d2d6d426",
+  "initial_status": "Clean isolated worktree at ba46ce28; Issue #924 open. Local Windows host and SDK available; bridge UIA behavior has not been implemented or tested yet.",
+  "acceptance": [
+    "Windows /v1/inspect reads only the explicitly authorized, currently foreground top-level app window; app identity and HWND/PID are revalidated before returning data.",
+    "Traversal is bounded to depth 10 and 160 controls; strings are capped; password controls and password values are never returned; response preserves macOS-compatible role/label/value/focused/rect/control-list shape consumed by Aide approvals.",
+    "Health reports Windows accessibility support accurately; failures return bounded actionable errors without crashing bridge or impacting screenshot/click/type/key routes.",
+    "Windows native MSVC compile/self-test and Linux amd64+arm64 cross-build CI pass; macOS/Linux source paths remain unchanged.",
+    "Actual representative Windows UIA application inspection, resource impact, and visual acceptance are recorded separately; issue remains open until all acceptance including safe semantic action parity is validated.",
+    "Push a reviewable draft PR linked to #924; never merge."
+  ],
+  "scope": [
+    "native/windows-launcher/computer_bridge.hpp",
+    "scripts/test_windows_launcher_compile.py",
+    "docs/architecture/windows-desktop.md",
+    "docs/tasks/windows-computer-uia-20261116.json",
+    "scripts/fixtures/windows_computer_uia.cpp",
+    "scripts/test_windows_computer_uia.py",
+    ".github/workflows/windows-desktop-check.yml"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "�����޶�Ϊ Windows ԭ�� Computer Bridge ��ֻ���ؼ�����׽׶Σ�Issue #924 �����԰����������������ʵ�����գ���˲��ڱ��׶ιرա�",
+      "evidence": [
+        "Issue #924 open; user requires topic issue/docs, CI and actual testing, no merge.",
+        "Existing Aide server calls authenticated POST /v1/inspect; macOS response and approval consumer require roles/labels/value/focus/rect; native Windows currently returns 501.",
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged into PR #926 without conflicts at head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "CUIAutomation8 / UIA2 timeouts with target-window Control View traversal; bound at 8s, 320 visited nodes, depth 10 and 160 output controls. Passwords excluded; only Edit/ComboBox values are read.",
+      "evidence": [
+        "Windows SDK declarations for CUIAutomation8 and IUIAutomation2 compiled and ran on local Windows host.",
+        "Native bridge remains Windows-only; Aide server and macOS/Linux source paths untouched."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Restored authenticated Windows /v1/inspect response, accurate accessibility health status, explicit UIA system timeout configuration, bounded traversal, and test-only Win32 smoke fixture. Added UIA linker dependencies for MSVC and Zig builds.",
+      "evidence": [
+        "native/windows-launcher/computer_bridge.hpp: authorized() checks allowed foreground app; /v1/inspect now returns native UIA inspect result and revalidates foreground before returning.",
+        "scripts/build-windows-launcher.py links oleaut32 and uiautomationcore for AMD64/ARM64; scripts/test_windows_launcher_compile.py links matching MSVC libraries."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "After syncing latest main, Aide CI #661 and Windows Desktop Check #88 pass on PR head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8, including AMD64/ARM64 builds and the hosted UIA/password fixture. Local Windows UIA smoke also passed on the synchronized tree. Real app/provider acceptance, semantic actions, browser workflows, and visual acceptance remain open.",
+      "evidence": [
+        "PASS Aide CI #661 on synchronized head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8.",
+        "PASS Windows Desktop Check #88 on synchronized head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8; AMD64/ARM64 cross-build and native-ui job all succeeded.",
+        "PASS `python -X utf8 scripts/test_windows_computer_uia.py` on the synchronized Windows worktree: editable value and button metadata returned; password value excluded.",
+        "PASS `python -X utf8 scripts/check_docs.py` after main sync: 538 Markdown files, 2558 local links; task JSON parsed and `git diff --check` passed.",
+        "PASS `python scripts/test_windows_computer_uia.py` on Windows: real UIA provider returned editable value and button metadata, password value excluded; executed after final traversal bound change.",
+        "PASS `$env:PYTHONUTF8=1; python scripts/test_windows_launcher_compile.py`: MSVC compile/link, native self-test, actual BAT/CMD fixtures including proxy/fallback and data preservation. Existing fixture emits C4244 conversion warnings from scripts/fixtures/windows-entrypoint.cpp.",
+        "NOT_RUN: `docker info` could not connect to Docker Desktop Linux engine npipe; Linux AMD64/ARM64 Zig cross-build deferred to Windows Desktop Check CI.",
+        "NOT_RUN: Browser/real target app visual acceptance unavailable; synthetic Win32 app is a native control-provider smoke test, not proof for Edge/Office/custom app providers.",
+        "Windows Desktop Check now runs the UIA control/password smoke fixture as a required workflow step.",
+        "Historical sync before current main update: topic branch was based on 4737cb97 (2026-11-16).",
+        "Windows Desktop Check run 61 failed on AMD64 at computer_bridge.hpp:10 with fatal error UIAutomation.h file not found; ARM64 was cancelled. Aide CI run 597 succeeded.",
+        "Changed the include to lowercase uiautomation.h for case-sensitive Linux cross-compilation; `python scripts/test_windows_computer_uia.py` passes locally after this change.",
+        "Aide CI run 604 and Windows Desktop Check run 64 passed for PR head 93af41fce12a931985a1eeb72ca924a016e5078b; both architecture cross-builds and the hosted native UIA/password fixture passed.",
+        "Docker Desktop Linux engine is unavailable locally; cross-build evidence comes from CI. Real app/provider matrix, semantic actions, browser workflows, and visual acceptance are still NOT_RUN."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Windows desktop architecture with endpoint behavior, limits, OS parity matrix and known gaps.",
+      "evidence": [
+        "docs/architecture/windows-desktop.md documents Windows-only UIA, no UIA semantic actions, and issue #924 remaining scope.",
+        "PASS `python -X utf8 scripts/check_docs.py` after main sync: 538 Markdown files, 2558 local links."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed staged diff, removed extra EOF blank lines, and confirmed only the declared native, test, workflow, architecture and task artifacts are included.",
+      "evidence": [
+        "git diff --cached --check passed; .agent-state smoke executable removed by TemporaryDirectory."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Draft PR #926 remains open and unmerged; its branch is synchronized with current main. Real app/provider, semantic-action, and visual acceptance remain outstanding.",
+      "evidence": [
+        "User requested the final merge stay in a PR; GitHub confirms #926 state=open, draft=true, merged=false.",
+        "Aide CI #661 and Windows Desktop Check #88 passed on synchronized source head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8."
+      ]
+    }
+  },
+  "release_authorization": "User authorized push and PR creation; the PR must remain unmerged.",
+  "rollback": "Revert the topic commit or PR branch; Windows bridge inspect returns to HTTP 501; no stored data migration. Keep PR open unless explicitly closed later.",
+  "handoff": "Issue #924 remains open. Draft PR #926 contains the bounded read-only Windows UIA inspection first slice and must stay unmerged. Main at da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged without conflicts. Aide CI #661 and Windows Desktop Check #88 pass on head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8. Local Windows UIA smoke passes: editable text/button metadata returned, password value excluded. Remaining: representative real app/provider matrix, UIA Invoke/SetValue/focus actions, browser workflows, and visual acceptance; these remain open, so Issue #924 stays open."
+}
