@@ -1,0 +1,95 @@
+{
+  "id": "windows-app-capture-20261115",
+  "request": "为 Windows 桌面端实现与 macOS 相当的全局前台窗口截图到 Aide 草稿能力；配置全局快捷键、权限反馈、应用/窗口/时间上下文、会话隔离；不自动发送，独立 Issue/文档/测试/PR，不合并。",
+  "baseline": "ba46ce28e9502d697321667b24de8d27d2d6d426",
+  "initial_status": "Topic branch rebased onto main ba46ce28; pushed as PR #923 head 12d95a3b438037638a8e1411e88458edd6f55ae2.",
+  "issue": "https://github.com/skyelan1999/aide/issues/922",
+  "acceptance": [
+    "Windows Aide desktop exposes an opt-in configurable global modifier gesture with actionable permission/listening status.",
+    "A clean double modifier gesture captures only the current foreground application window and includes app name, window title and timestamp context.",
+    "Single/long press, intervening key or mouse, lock/hidden window and Aide itself do not trigger/attach.",
+    "One-time capture ticket binds image+context to the active unlocked Aide session and draft only; never sends automatically.",
+    "Windows CI and real Windows desktop acceptance pass; macOS/Linux behavior remains unchanged; topic docs and separate PR are ready; keep PR unmerged and close issue only after acceptance."
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "internal/server/web/desktop-capture.js shared contract only if required",
+    "scripts capture gesture/native UI tests",
+    "docs/architecture/windows-desktop.md",
+    "docs/user-guide.md",
+    "docs/tasks/windows-app-capture-20261115.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Mac global app capture is shipped and Windows launcher lacks AideNativeCapture.",
+      "evidence": [
+        "docs/tasks/global-app-capture-20261108.json",
+        "native/macos-desktop/app_capture.swift",
+        "native/macos-desktop/main.swift: injected AideNativeCapture and foreground capture",
+        "internal/server/web/desktop-capture.js: shared one-time ticket/draft flow",
+        "Issue #922 created and open",
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged into PR #923 without conflicts; synchronized source head is 8ddde9d084a7124ea3e411b1526e8b72d2f6a529."
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Use a dedicated global low-level keyboard/mouse listener and the existing one-use ticket/draft contract. Windows has no macOS-style Accessibility/Screen Recording permission prompts for this unpackaged desktop bridge. The implementation now prefers Windows.Graphics.Capture HWND interop on supported Windows versions, with bounded PNG dimensions, a 1.8-second frame wait, and a legacy PrintWindow fallback. GPU capture quality remains unaccepted until the GPU pixel fixture and an interactive Windows foreground app pass.",
+      "evidence": [
+        "Microsoft Learn: IGraphicsCaptureItemInterop::CreateForWindow supports HWND capture from Windows 10 1903: https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow",
+        "Microsoft Learn: PrintWindow asks the target app to render synchronously and may block: https://learn.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-printwindow",
+        "Current Windows desktop's ComputerBridge uses PrintWindow, so hardware-accelerated-window quality remains an explicit acceptance risk; it is not accepted as the final screenshot path"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Added opt-in global low-level keyboard/mouse hooks, persistent Shift/Ctrl choice, Windows AideNativeCapture message channel, host foreground-HWND validation, background screenshot worker, and one-time ticket delivery through shared draft API. Reused existing English catalog keys for the browser-only fallback and Windows permission status; added user-guide setup steps. Current screenshot implementation still uses PrintWindow and is not accepted as parity quality.",
+      "evidence": [
+        "native/windows-launcher/desktop_capture.hpp",
+        "native/windows-launcher/desktop.hpp",
+        "native/windows-launcher/computer_bridge.hpp",
+        "internal/server/web/desktop-capture.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "After syncing main, Aide CI #669 and Windows Desktop Check #92 pass on source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529. Hosted Windows native-ui passed the GPU HWND pixel fixture (320x240, expected center RGB 230,26,51), gesture and launcher recovery contracts, and isolated WebView2 checks; AMD64/ARM64 cross-builds pass. Local WGC smoke compiled but returned black pixels because this agent session could not foreground the fixture (GetForegroundWindow mismatch; PrintWindow also black). Shared draft/ticket and i18n regression tests pass locally. Real interactive global-hotkey use and attachment into a live unlocked Aide draft remain NOT_RUN.",
+      "evidence": [
+        "PASS Aide CI #669 on synchronized source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529.",
+        "PASS Windows Desktop Check #92 on synchronized source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529: AMD64/ARM64 build, gesture smoke, Windows native-ui and hosted GPU pixel fixture.",
+        "PASS hosted GPU HWND fixture: 320x240 capture center pixel matched RGB 230,26,51.",
+        "PASS local `node --check internal/server/web/desktop-capture.js`.",
+        "PASS local `node scripts/desktop-capture.test.cjs`: draft PNG/context attachment, one-use ticket, lock/navigation rejection, invalid data and upload scope.",
+        "PASS local `node scripts/test_i18n_coverage.cjs` and `node scripts/test_i18n.cjs`.",
+        "PASS local `python -X utf8 scripts/check_docs.py` after main sync: 538 Markdown files and 2558 local links; task JSON parsed and `git diff --cached --check` passed.",
+        "PARTIAL/FAIL local GPU pixel acceptance: the isolated fixture compiled and ran, but this session could not foreground its synthetic HWND; WGC and PrintWindow returned black. The temporary test directory was automatically removed.",
+        "NOT_RUN: real interactive global hook, foreground capture from a user app, visible WebView and attachment into an unlocked live Aide draft."
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Windows desktop architecture and user guide document opt-in gestures and draft-only attachment. Architecture now documents WGC, its legacy fallback and limits, plus the failed local GPU pixel check and pending interactive acceptance.",
+      "evidence": [
+        "docs/architecture/windows-desktop.md",
+        "docs/user-guide.md",
+        "docs/tasks/windows-app-capture-20261115.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Not run.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "PR #923 remains open, draft, and unmerged; its synchronized source head passed current Aide and Windows CI. Issue #922 remains open for real interactive hotkey/capture-to-draft acceptance.",
+      "evidence": [
+        "PR #923 head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529 is open, draft, mergeable and unmerged.",
+        "Aide CI #669 and Windows Desktop Check #92 passed on the synchronized source head.",
+        "Issue #922 remains open because interactive global-hook, real app capture, and unlocked draft attachment have not been accepted."
+      ]
+    }
+  },
+  "rollback": "Use a separate feature branch; close PR or revert its commit.",
+  "handoff": "Issue #922 remains open. PR #923 is draft/open/unmerged at synchronized source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529, with current main da8fdc95c7bb432c8a29aa45d13e55635e480b7f included without conflict. Aide CI #669 and Windows Desktop Check #92 pass; hosted WGC fixture captured 320x240 and expected center RGB 230,26,51. Local WGC smoke compiled but returned black because this session cannot foreground the fixture; WebView draft-ticket, localization, and docs checks pass. Real global hook, user-app foreground capture, visible WebView and attachment to a live unlocked draft remain NOT_RUN; keep Issue #922 open. Discussion #916 update remains pending because this session has no Discussion write or authenticated browser-control tool."
+}
