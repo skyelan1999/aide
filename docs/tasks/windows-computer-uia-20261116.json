@@ -48,12 +48,14 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "After syncing latest main, Aide CI #661 and Windows Desktop Check #88 pass on PR head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8, including AMD64/ARM64 builds and the hosted UIA/password fixture. Local Windows UIA smoke also passed on the synchronized tree. Real app/provider acceptance, semantic actions, browser workflows, and visual acceptance remain open.",
+      "summary": "After syncing latest main 409644a7038a7ce80056a5ea75fd1d0ab359b755, Aide CI #698 and Windows Desktop Check #96 pass on PR source head 2fe36e07c6c52e2c5f3aa2b8db9f1301d77e5a77, including AMD64/ARM64 builds and the hosted UIA/password fixture. Local Windows UIA smoke and docs checks pass on this source. Real app/provider acceptance, semantic actions, browser workflows, and visual acceptance remain open.",
       "evidence": [
-        "PASS Aide CI #661 on synchronized head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8.",
-        "PASS Windows Desktop Check #88 on synchronized head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8; AMD64/ARM64 cross-build and native-ui job all succeeded.",
+        "PASS Aide CI run 44002374774 (#698) on synchronized PR source head 2fe36e07c6c52e2c5f3aa2b8db9f1301d77e5a77 (quick, Go, and gate jobs succeeded).",
+        "PASS Windows Desktop Check run 44002374768 (#96) on synchronized PR source head 2fe36e07c6c52e2c5f3aa2b8db9f1301d77e5a77; AMD64/ARM64 compile and native-ui job all succeeded.",
+        "PASS `python -X utf8 scripts/test_windows_computer_uia.py` on the synchronized Windows worktree at source-equivalent tree: editable value and button metadata returned; password value excluded.",
+        "PASS `python -X utf8 scripts/check_docs.py` on latest-main synchronized worktree: 544 Markdown files and 2562 links; task JSON parsed and diff check passed.",
         "PASS `python -X utf8 scripts/test_windows_computer_uia.py` on the synchronized Windows worktree: editable value and button metadata returned; password value excluded.",
-        "PASS `python -X utf8 scripts/check_docs.py` after main sync: 538 Markdown files, 2558 local links; task JSON parsed and `git diff --check` passed.",
+        "PASS `python -X utf8 scripts/check_docs.py` after earlier main sync: 538 Markdown files, 2558 local links; task JSON parsed and `git diff --check` passed.",
         "PASS `python scripts/test_windows_computer_uia.py` on Windows: real UIA provider returned editable value and button metadata, password value excluded; executed after final traversal bound change.",
         "PASS `$env:PYTHONUTF8=1; python scripts/test_windows_launcher_compile.py`: MSVC compile/link, native self-test, actual BAT/CMD fixtures including proxy/fallback and data preservation. Existing fixture emits C4244 conversion warnings from scripts/fixtures/windows-entrypoint.cpp.",
         "NOT_RUN: `docker info` could not connect to Docker Desktop Linux engine npipe; Linux AMD64/ARM64 Zig cross-build deferred to Windows Desktop Check CI.",
@@ -71,7 +73,7 @@
       "summary": "Updated Windows desktop architecture with endpoint behavior, limits, OS parity matrix and known gaps.",
       "evidence": [
         "docs/architecture/windows-desktop.md documents Windows-only UIA, no UIA semantic actions, and issue #924 remaining scope.",
-        "PASS `python -X utf8 scripts/check_docs.py` after main sync: 538 Markdown files, 2558 local links."
+        "PASS `python -X utf8 scripts/check_docs.py` on latest-main synchronized worktree: 544 Markdown files and 2562 links."
       ]
     },
     "cleanup": {
@@ -83,14 +85,15 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "Draft PR #926 remains open and unmerged; its branch is synchronized with current main. Real app/provider, semantic-action, and visual acceptance remain outstanding.",
+      "summary": "Draft PR #926 remains open and unmerged; its branch is synchronized with main 409644a7038a7ce80056a5ea75fd1d0ab359b755. CI and synthetic UIA smoke pass. Real app/provider, semantic-action, browser, and visual acceptance remain outstanding.",
       "evidence": [
         "User requested the final merge stay in a PR; GitHub confirms #926 state=open, draft=true, merged=false.",
-        "Aide CI #661 and Windows Desktop Check #88 passed on synchronized source head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8."
+        "Aide CI run 44002374774 and Windows Desktop Check run 44002374768 passed on source head 2fe36e07c6c52e2c5f3aa2b8db9f1301d77e5a77; PR remains draft/open/unmerged."
       ]
     }
   },
   "release_authorization": "User authorized push and PR creation; the PR must remain unmerged.",
   "rollback": "Revert the topic commit or PR branch; Windows bridge inspect returns to HTTP 501; no stored data migration. Keep PR open unless explicitly closed later.",
-  "handoff": "Issue #924 remains open. Draft PR #926 contains the bounded read-only Windows UIA inspection first slice and must stay unmerged. Main at da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged without conflicts. Aide CI #661 and Windows Desktop Check #88 pass on head 6f8832d8c4437bc8c75d6fd9e8228eea516eb5e8. Local Windows UIA smoke passes: editable text/button metadata returned, password value excluded. Remaining: representative real app/provider matrix, UIA Invoke/SetValue/focus actions, browser workflows, and visual acceptance; these remain open, so Issue #924 stays open."
+  "handoff": "Issue #924 remains open. Draft PR #926 contains the bounded read-only Windows UIA inspection first slice and must stay unmerged. Main at 409644a7038a7ce80056a5ea75fd1d0ab359b755 was merged without conflicts; PR source head is 2fe36e07c6c52e2c5f3aa2b8db9f1301d77e5a77. Aide CI run 44002374774 and Windows Desktop Check run 44002374768 pass. Local Windows UIA smoke passes: editable text/button metadata returned, password value excluded. Remaining: representative real app/provider matrix, UIA Invoke/SetValue/focus actions, browser workflows, and visual acceptance; these remain open, so Issue #924 stays open."
 }
+
