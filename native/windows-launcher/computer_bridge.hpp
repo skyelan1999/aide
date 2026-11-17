@@ -1,6 +1,9 @@
 #pragma once
 // Private Windows host bridge for Aide computer control. Only loopback and
 // Docker private-network peers with the per-install token can reach it.
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <winsock2.h>
 #include <windows.h>
 #include <gdiplus.h>
@@ -23,6 +26,7 @@
 #include <mutex>
 #include <vector>
 #include <sstream>
+#include "computer_virtual_pointer.hpp"
 
 namespace aide_desktop {
 #ifdef AIDE_COMPUTER_BRIDGE_TEST
@@ -37,6 +41,7 @@ class ComputerBridge {
  std::vector<std::thread> clients;
  ULONG_PTR gdiplusToken=0;
  bool winsockStarted=false;
+ ComputerVirtualPointer virtualPointer;
  static constexpr USHORT port=17778;
  struct Target { HWND window=nullptr; DWORD pid=0; std::wstring process,title; };
  static std::wstring lower(std::wstring s){std::transform(s.begin(),s.end(),s.begin(),[](wchar_t c){return std::towlower(c);});return s;}
@@ -152,6 +157,10 @@ class ComputerBridge {
 #endif
   json result={{"ok",true},{"app","Chrome"},{"rule","exe:chrome.exe"},{"opened",true}};if(!raw.empty())result["url"]=raw;return result;
  }
+ void showPointer(const json& input,const Target& target,POINT point){
+  auto field=[&](const char* key,const std::string& fallback){auto it=input.find(key);return it!=input.end()&&it->is_string()?it->get<std::string>():fallback;};
+  virtualPointer.show(wide(field("controllerId","legacy")),wide(field("controllerLabel","Aide")),processName(target),point);
+ }
  void serve(SOCKET client){
   DWORD timeout=5000;setsockopt(client,SOL_SOCKET,SO_RCVTIMEO,reinterpret_cast<const char*>(&timeout),sizeof(timeout));setsockopt(client,SOL_SOCKET,SO_SNDTIMEO,reinterpret_cast<const char*>(&timeout),sizeof(timeout));
   try{
@@ -161,7 +170,11 @@ class ComputerBridge {
    if(auth!="Bearer "+token){response(client,401,{{"ok",false},{"error","Unauthorized"}});closesocket(client);return;}
    std::lock_guard<std::mutex> operation(operationMutex);
    auto route=path;auto query=route.find('?');if(query!=route.npos)route.resize(query);
-   if(method=="GET"&&route=="/healthz"){bool available=interactiveDesktop();response(client,200,{{"ok",true},{"service","aide-windows-computer-bridge"},{"platform","windows"},{"desktopAvailable",available},{"applications",runningApps()},{"targetedApps",true},{"backgroundRead",false},{"backgroundControl",false},{"foregroundInputPolicy","serialized"},{"permissions",{{"screenRecording",{{"required",false},{"granted",true},{"supported",true}}},{"accessibility",{{"required",true},{"granted",false},{"supported",false}}}}}});closesocket(client);return;}
+   if(method=="GET"&&route=="/healthz"){
+    bool available=interactiveDesktop();auto pointer=virtualPointer.status();json controllers=json::array();
+    if(pointer.visible)controllers.push_back({{"controllerId",utf8(pointer.controllerId)},{"title",utf8(pointer.title)},{"visible",true}});
+    response(client,200,{{"ok",true},{"service","aide-windows-computer-bridge"},{"platform","windows"},{"desktopAvailable",available},{"applications",runningApps()},{"targetedApps",true},{"backgroundRead",false},{"backgroundControl",false},{"virtualPointers",pointer.available},{"controllers",controllers},{"foregroundInputPolicy","serialized"},{"permissions",{{"screenRecording",{{"required",false},{"granted",true},{"supported",true}}},{"accessibility",{{"required",true},{"granted",false},{"supported",false}}}}}});closesocket(client);return;
+   }
    if(method=="GET"&&route=="/v1/foreground-app"){response(client,200,identity(frontmost()));closesocket(client);return;}
    if(method!="POST"){response(client,404,{{"ok",false},{"error","Unsupported operation"}});closesocket(client);return;}
    json input=json::parse(data.substr(split+4,contentLength),nullptr,false);if(!input.is_object()){response(client,400,{{"ok",false},{"error","Invalid JSON"}});closesocket(client);return;}
@@ -188,7 +201,7 @@ class ComputerBridge {
      if(!SetCursorPos(x,y))throw std::runtime_error("Windows refused pointer positioning");
      stable();
      if(SendInput(count,events,sizeof(INPUT))!=count)throw std::runtime_error("Windows refused scroll input");
-     response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"scrolled",true},{"deltaX",dx},{"deltaY",dy}});closesocket(client);return;
+     showPointer(input,target,POINT{x,y});response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"scrolled",true},{"deltaX",dx},{"deltaY",dy}});closesocket(client);return;
     }
     const int toX=input.value("toX",-1),toY=input.value("toY",-1),duration=input.value("durationMs",900);
     if(!inside(toX,toY)||duration<100||duration>2500)throw std::runtime_error("Drag endpoint or duration is invalid");
@@ -207,11 +220,11 @@ class ComputerBridge {
      stable();
     }
     stable();
-    response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"dragged",true},{"durationMs",duration}});closesocket(client);return;
+    showPointer(input,target,POINT{toX,toY});response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"dragged",true},{"durationMs",duration}});closesocket(client);return;
    }
-   if(route=="/v1/click"){int x=input.value("x",-1),y=input.value("y",-1);RECT rect=windowBounds(target);if(x<rect.left||x>=rect.right||y<rect.top||y>=rect.bottom||std::abs(x)>20000||std::abs(y)>20000||!same(target)||!SetCursorPos(x,y)||!same(target))throw std::runtime_error("Click coordinates must be inside the approved foreground window");INPUT click[2]{};click[0].type=click[1].type=INPUT_MOUSE;click[0].mi.dwFlags=MOUSEEVENTF_LEFTDOWN;click[1].mi.dwFlags=MOUSEEVENTF_LEFTUP;if(SendInput(2,click,sizeof(INPUT))!=2){INPUT release{};release.type=INPUT_MOUSE;release.mi.dwFlags=MOUSEEVENTF_LEFTUP;SendInput(1,&release,sizeof(INPUT));throw std::runtime_error("Windows refused click input");}response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"clicked",true}});closesocket(client);return;}
-   if(route=="/v1/type"){auto text=input.value("text",std::string{});auto wideText=wide(text);if(wideText.size()>2000)throw std::runtime_error("Input exceeds 2000 UTF-16 code units");std::vector<INPUT> events;events.reserve(wideText.size()*2);for(wchar_t c:wideText){INPUT down{};down.type=INPUT_KEYBOARD;down.ki.wScan=WORD(c);down.ki.dwFlags=KEYEVENTF_UNICODE;events.push_back(down);INPUT up=down;up.ki.dwFlags|=KEYEVENTF_KEYUP;events.push_back(up);}if(!same(target))throw std::runtime_error("Foreground app changed; text was not sent");if(!events.empty()&&SendInput(UINT(events.size()),events.data(),sizeof(INPUT))!=events.size()){std::vector<INPUT> releases;releases.reserve(wideText.size());for(wchar_t c:wideText){INPUT up{};up.type=INPUT_KEYBOARD;up.ki.wScan=WORD(c);up.ki.dwFlags=KEYEVENTF_UNICODE|KEYEVENTF_KEYUP;releases.push_back(up);}SendInput(UINT(releases.size()),releases.data(),sizeof(INPUT));throw std::runtime_error("Windows refused the complete Unicode text input");}response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"typed",true}});closesocket(client);return;}
-   auto key=input.value("key",std::string{});auto events=keyboardChord(key);if(!same(target))throw std::runtime_error("Foreground app changed; key was not sent");if(SendInput(UINT(events.size()),events.data(),sizeof(INPUT))!=events.size()){std::vector<INPUT> releases;for(const auto& event:events)if(event.type==INPUT_KEYBOARD&&!(event.ki.dwFlags&KEYEVENTF_KEYUP)){INPUT up=event;up.ki.dwFlags=KEYEVENTF_KEYUP;releases.push_back(up);}if(!releases.empty())SendInput(UINT(releases.size()),releases.data(),sizeof(INPUT));throw std::runtime_error("Windows refused the complete key chord");}response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"key",key}});closesocket(client);return;
+   if(route=="/v1/click"){int x=input.value("x",-1),y=input.value("y",-1);RECT rect=windowBounds(target);if(x<rect.left||x>=rect.right||y<rect.top||y>=rect.bottom||std::abs(x)>20000||std::abs(y)>20000||!same(target)||!SetCursorPos(x,y)||!same(target))throw std::runtime_error("Click coordinates must be inside the approved foreground window");INPUT click[2]{};click[0].type=click[1].type=INPUT_MOUSE;click[0].mi.dwFlags=MOUSEEVENTF_LEFTDOWN;click[1].mi.dwFlags=MOUSEEVENTF_LEFTUP;if(SendInput(2,click,sizeof(INPUT))!=2){INPUT release{};release.type=INPUT_MOUSE;release.mi.dwFlags=MOUSEEVENTF_LEFTUP;SendInput(1,&release,sizeof(INPUT));throw std::runtime_error("Windows refused click input");}showPointer(input,target,POINT{x,y});response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"clicked",true}});closesocket(client);return;}
+   if(route=="/v1/type"){auto text=input.value("text",std::string{});auto wideText=wide(text);if(wideText.size()>2000)throw std::runtime_error("Input exceeds 2000 UTF-16 code units");std::vector<INPUT> events;events.reserve(wideText.size()*2);for(wchar_t c:wideText){INPUT down{};down.type=INPUT_KEYBOARD;down.ki.wScan=WORD(c);down.ki.dwFlags=KEYEVENTF_UNICODE;events.push_back(down);INPUT up=down;up.ki.dwFlags|=KEYEVENTF_KEYUP;events.push_back(up);}if(!same(target))throw std::runtime_error("Foreground app changed; text was not sent");if(!events.empty()&&SendInput(UINT(events.size()),events.data(),sizeof(INPUT))!=events.size()){std::vector<INPUT> releases;releases.reserve(wideText.size());for(wchar_t c:wideText){INPUT up{};up.type=INPUT_KEYBOARD;up.ki.wScan=WORD(c);up.ki.dwFlags=KEYEVENTF_UNICODE|KEYEVENTF_KEYUP;releases.push_back(up);}SendInput(UINT(releases.size()),releases.data(),sizeof(INPUT));throw std::runtime_error("Windows refused the complete Unicode text input");}POINT point{};GetCursorPos(&point);showPointer(input,target,point);response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"typed",true}});closesocket(client);return;}
+   auto key=input.value("key",std::string{});auto events=keyboardChord(key);if(!same(target))throw std::runtime_error("Foreground app changed; key was not sent");if(SendInput(UINT(events.size()),events.data(),sizeof(INPUT))!=events.size()){std::vector<INPUT> releases;for(const auto& event:events)if(event.type==INPUT_KEYBOARD&&!(event.ki.dwFlags&KEYEVENTF_KEYUP)){INPUT up=event;up.ki.dwFlags=KEYEVENTF_KEYUP;releases.push_back(up);}if(!releases.empty())SendInput(UINT(releases.size()),releases.data(),sizeof(INPUT));throw std::runtime_error("Windows refused the complete key chord");}POINT point{};GetCursorPos(&point);showPointer(input,target,point);response(client,200,{{"ok",true},{"app",utf8(processName(target))},{"key",key}});closesocket(client);return;
   }catch(const std::exception& error){response(client,502,{{"ok",false},{"error",std::string(error.what()).substr(0,500)}});closesocket(client);}
  }
  void loop(){while(!stopping){sockaddr_in peer{};int size=sizeof(peer);SOCKET client=accept(listener,reinterpret_cast<sockaddr*>(&peer),&size);if(client==INVALID_SOCKET){if(stopping)break;Sleep(40);continue;}std::lock_guard<std::mutex> lock(clientsMutex);clients.emplace_back([this,client]{serve(client);});}}
@@ -221,8 +234,8 @@ public:
 #endif
  explicit ComputerBridge(std::string secret):token(std::move(secret)){}
  ~ComputerBridge(){stop();}
- void start(){if(token.size()<32)return;WSADATA wsa{};if(WSAStartup(MAKEWORD(2,2),&wsa)!=0)throw std::runtime_error("Computer bridge network startup failed");winsockStarted=true;Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)throw std::runtime_error("Screenshot encoder startup failed");listener=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(listener==INVALID_SOCKET)throw std::runtime_error("Computer bridge socket unavailable");BOOL exclusive=TRUE;setsockopt(listener,SOL_SOCKET,SO_EXCLUSIVEADDRUSE,reinterpret_cast<const char*>(&exclusive),sizeof(exclusive));sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_ANY);address.sin_port=htons(port);if(bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address))!=0||listen(listener,16)!=0){closesocket(listener);listener=INVALID_SOCKET;throw std::runtime_error("Computer bridge port 17778 is unavailable");}stopping=false;acceptThread=std::thread([this]{loop();});}
- void stop(){stopping=true;if(listener!=INVALID_SOCKET){shutdown(listener,SD_BOTH);closesocket(listener);listener=INVALID_SOCKET;}if(acceptThread.joinable())acceptThread.join();{std::lock_guard<std::mutex> lock(clientsMutex);for(auto& client:clients)if(client.joinable())client.join();clients.clear();}if(gdiplusToken){Gdiplus::GdiplusShutdown(gdiplusToken);gdiplusToken=0;}if(winsockStarted){WSACleanup();winsockStarted=false;}}
+ void start(){if(token.size()<32)return;WSADATA wsa{};if(WSAStartup(MAKEWORD(2,2),&wsa)!=0)throw std::runtime_error("Computer bridge network startup failed");winsockStarted=true;virtualPointer.start();Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)throw std::runtime_error("Screenshot encoder startup failed");listener=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(listener==INVALID_SOCKET)throw std::runtime_error("Computer bridge socket unavailable");BOOL exclusive=TRUE;setsockopt(listener,SOL_SOCKET,SO_EXCLUSIVEADDRUSE,reinterpret_cast<const char*>(&exclusive),sizeof(exclusive));sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_ANY);address.sin_port=htons(port);if(bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address))!=0||listen(listener,16)!=0){closesocket(listener);listener=INVALID_SOCKET;throw std::runtime_error("Computer bridge port 17778 is unavailable");}stopping=false;acceptThread=std::thread([this]{loop();});}
+ void stop(){stopping=true;if(listener!=INVALID_SOCKET){shutdown(listener,SD_BOTH);closesocket(listener);listener=INVALID_SOCKET;}if(acceptThread.joinable())acceptThread.join();{std::lock_guard<std::mutex> lock(clientsMutex);for(auto& client:clients)if(client.joinable())client.join();clients.clear();}virtualPointer.stop();if(gdiplusToken){Gdiplus::GdiplusShutdown(gdiplusToken);gdiplusToken=0;}if(winsockStarted){WSACleanup();winsockStarted=false;}}
 };
 }
 

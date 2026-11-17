@@ -153,11 +153,16 @@ void run() {
     auto snapshot = request("POST", "/v1/snapshot", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}});
     require(snapshot.first == 200 && snapshot.second.contains("windowId") && snapshot.second.contains("window") && snapshot.second.contains("pixelWidth") && snapshot.second.value("imageBase64", std::string{}).size() > 100, "snapshot omitted bounded window-coordinate evidence");
     require(snapshot.second["pixelWidth"].get<int>() == snapshot.second["window"]["width"].get<int>() && snapshot.second["pixelHeight"].get<int>() == snapshot.second["window"]["height"].get<int>(), "snapshot image pixels and desktop bounds do not map one-to-one");
-    auto chord = request("POST", "/v1/key", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"key", "CMD+A"}});
-    require(chord.first == 200, "Windows CMD-to-Control key chord failed");
-
     RECT rect{}; GetWindowRect(window, &rect);
     POINT dragStart{rect.left + 80, rect.top + 100}, dragEnd{rect.left + 240, rect.top + 180};
+    require(SetCursorPos(dragStart.x, dragStart.y) != FALSE, "cannot position isolated pointer fixture");
+    auto chord = request("POST", "/v1/key", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"controllerId", "isolated-session"}, {"controllerLabel", "Test session"}, {"key", "CMD+A"}});
+    require(chord.first == 200, "Windows CMD-to-Control key chord failed");
+    auto pointerHealth = request("GET", "/healthz");
+    auto controllers = pointerHealth.second.value("controllers", json::array());
+    require(pointerHealth.second.value("virtualPointers", false) && controllers.size() == 1 && controllers[0].value("visible", false), "approved action did not show the Windows virtual pointer");
+    require(controllers[0].value("title", std::string{}).find("Test session") != std::string::npos, "virtual pointer omitted its controller label");
+    require(GetForegroundWindow() == window, "virtual pointer activated itself over the approved app");
     auto drag = request("POST", "/v1/drag", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"expectedWindowId", snapshot.second.value("windowId", uint64_t(0))}, {"approved", true}, {"x", dragStart.x}, {"y", dragStart.y}, {"toX", dragEnd.x}, {"toY", dragEnd.y}, {"durationMs", 120}});
     require(drag.first == 200 && drag.second.value("dragged", false), "approved Windows drag route failed");
     POINT afterDrag{}; GetCursorPos(&afterDrag); require(afterDrag.x == dragEnd.x && afterDrag.y == dragEnd.y, "drag did not finish at its approved endpoint");
@@ -182,10 +187,13 @@ void run() {
     auto outside = request("POST", "/v1/click", {{"allowedApps", json::array({app})}, {"expectedPid", child.info.dwProcessId}, {"expectedAppRule", rule}, {"approved", true}, {"x", rect.right + 30}, {"y", rect.bottom + 30}});
     require(outside.first == 502, "out-of-window click was not rejected");
     POINT after{}; GetCursorPos(&after); require(after.x == beforeDenied.x && after.y == beforeDenied.y, "denied actions moved the user's cursor");
+    Sleep(4200);
+    auto expiredPointer = request("GET", "/healthz");
+    require(expiredPointer.second.value("virtualPointers", false) && expiredPointer.second.value("controllers", json::array()).empty(), "Windows virtual pointer did not auto-dismiss");
 
     child.window = nullptr; PostMessageW(window, WM_CLOSE, 0, 0); WaitForSingleObject(child.info.hProcess, 2000);
     bridge.stop(); WSACleanup();
-    std::cout << "PASS isolated Windows bridge discovery, snapshot coordinates, stale-target and out-of-window denial" << std::endl;
+    std::cout << "PASS isolated Windows bridge discovery, snapshot coordinates, virtual pointer click-through/non-activation/auto-dismiss, stale-target and out-of-window denial" << std::endl;
 }
 }
 

@@ -1356,6 +1356,7 @@ window.aideEnglish = {
   "允许 Aide 读取指定应用的界面；辅助审批可处理常规操作，手动模式下仍逐次确认。": "Allow Aide to read approved apps. Assisted approval can handle routine actions; manual mode still asks each time.",
   "允许控制的应用": "Allowed apps",
   "每个会话显示独立颜色的虚拟光标。支持后台操作的软件可同时工作，需要系统鼠标或键盘的操作会排队。": "Each session has a colored virtual pointer. Supported background app actions can run concurrently; operations requiring the system mouse or keyboard are queued.",
+  "Windows 会在每次已批准的鼠标或键盘操作后显示短暂的虚拟光标；后台操作尚不可用。": "Windows shows a brief virtual pointer after each approved mouse or keyboard action. Background actions are not available.",
   "当前控制服务未提供虚拟光标或后台操作能力。": "This control service does not provide virtual pointers or background actions.",
   "已记住的应用": "Remembered apps",
   "Aide 会在首次访问目标应用时请求授权。这里列出已记住的应用，也可手动添加或移除；截图仅覆盖授权应用的窗口。": "Aide asks before first accessing a target app. Manage remembered apps here; screenshots cover only approved app windows.",
