@@ -29,9 +29,11 @@ for (const helperFailure of [false, true]) {
     aideAssistantCall:{end(){called.push('call');}},aideAssistantLive:{stop(){called.push('live');}}};
   const storage = new Map([['aide-token','synthetic'],['draft','preserved']]);
   const source = fs.readFileSync('internal/server/web/app.js','utf8');
-  const start = source.indexOf('function setupGlobalEvents() {');
-  const end = source.indexOf('\n\n/*',start);
-  vm.runInNewContext('let sessionsEv=null;'+source.slice(start,end)+'\nsetupGlobalEvents();', {
+  const acorn = require('../internal/server/code_analysis/acorn.cjs');
+  const ast = acorn.parse(source,{ecmaVersion:'latest'});
+  const setup = ast.body.find(node=>node.type==='FunctionDeclaration'&&node.id.name==='setupGlobalEvents');
+  assert.ok(setup,'production setupGlobalEvents declaration must exist');
+  vm.runInNewContext('let sessionsEv=null;'+source.slice(setup.start,setup.end)+'\nsetupGlobalEvents();', {
     state,window,localStorage:{removeItem(key){storage.delete(key);}},
     voiceHardStop(){called.push('voice');},
     EventSource:class {constructor(url){assert.match(url,/access_token=synthetic$/);}addEventListener(name,fn){listeners[name]=fn;}close(){called.push('events');}},

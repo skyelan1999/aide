@@ -24,8 +24,12 @@ vm.createContext(mediaContext);vm.runInContext(helpers,mediaContext);
 const before=mediaContext.fileRawUrl('image.png','context','owned-source',spec);
 assert.equal(before,mediaContext.fileRawUrl('image.png','context','owned-source',spec));
 for(const name of ['editorHistory','fileViewHistory']) {
- const line=source.split('\n').find(line=>line.startsWith('const '+name+' ='));
- const callback=vm.runInContext('('+line.split('onRestored:')[1].slice(0,-3)+')',mediaContext);
+ const declaration=ast.body.find(node=>node.type==='VariableDeclaration'&&node.declarations.some(item=>item.id.name===name))?.declarations.find(item=>item.id.name===name);
+ const historyCall=declaration?.init;
+ const options=historyCall?.type==='CallExpression'?historyCall.arguments[0]:null;
+ const restore=options?.properties.find(item=>item.key?.name==='onRestored')?.value;
+ assert(restore,'history restore callback must be present');
+ const callback=vm.runInContext('('+source.slice(restore.start,restore.end)+')',mediaContext);
  callback({journal:'restore-journal',hash:'new-hash',content:'restored'});
 }
 const after=mediaContext.fileRawUrl('image.png','context','owned-source',spec);
