@@ -248,12 +248,18 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 				fail(w, 429, errors.New("too many workbench instances"))
 				return
 			}
-			a.pluginWorkbenchBridges[ticket] = &pluginWorkbenchBridge{Document: document, Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
+			bridge := &pluginWorkbenchBridge{Document: document, Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
+			if id == "terminal" && p.Workbench.Viewer != nil {
+				if page, err := a.readTerminalViewerWindow(); err == nil {
+					bridge.ViewerWindow = sha256.Sum256(page)
+				}
+			}
+			a.pluginWorkbenchBridges[ticket] = bridge
 			t := a.pluginWorkbenchTickets[ticket]
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
 			break
 		}
 	}

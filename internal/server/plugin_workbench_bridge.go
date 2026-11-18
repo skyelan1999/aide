@@ -22,6 +22,7 @@ type pluginWorkbenchBridge struct {
 	Ticket       pluginWorkbenchTicket
 	Revision     uint64
 	Package      string
+	ViewerWindow [32]byte
 	Expires      time.Time
 	Ready, Busy  bool
 	Seen         map[string]bool
@@ -375,5 +376,13 @@ func (a *App) renewWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	b.Seen = map[string]bool{}
 	b.Expires = time.Now().Add(30 * time.Minute)
 	a.pluginWorkbenchBridges[key] = b
+	// The same workbench scope survives routine replay-key rotation. Keep
+	// detached channels bound to it until the original viewer ticket expires.
+	for viewerKey, viewer := range a.pluginViewerTickets {
+		if viewer.Window && viewer.Bridge == old {
+			viewer.Bridge = key
+			a.pluginViewerTickets[viewerKey] = viewer
+		}
+	}
 	jsonOut(w, 200, map[string]any{"protocol": 1, "instanceId": key})
 }
