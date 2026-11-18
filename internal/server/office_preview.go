@@ -151,7 +151,7 @@ func (r officeCopyReader) Read(p []byte) (int, error) {
 }
 
 type officeSnapshotWriter struct {
-	target    *os.File
+	target    io.Writer
 	space     *transferFS
 	remaining int64
 }
@@ -168,49 +168,65 @@ func (w *officeSnapshotWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// Capture a private disk snapshot using the ordinary source credentials and
-// identity checks. Office source bytes are streamed without a file-size cutoff.
+func captureOfficeSnapshot(ctx context.Context, dest string, checksum io.Writer, capture func(*officeSnapshotWriter) error) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(dest, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	tempRoot, err := os.OpenRoot(filepath.Dir(dest))
+	if err != nil {
+		return err
+	}
+	defer tempRoot.Close()
+	var target io.Writer = file
+	if checksum != nil {
+		target = io.MultiWriter(file, checksum)
+	}
+	if err := capture(&officeSnapshotWriter{target: target, space: &transferFS{root: tempRoot}}); err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return file.Close()
+}
+
+func (w *officeSnapshotWriter) copyFile(ctx context.Context, f io.Reader, stat func() (os.FileInfo, error)) error {
+	before, err := stat()
+	if err != nil || !before.Mode().IsRegular() {
+		return errors.New("Office 读取仅支持普通文件")
+	}
+	if err := w.space.CheckSpace(before.Size()); err != nil {
+		return dwgError(507, "Office 暂存空间不足，请释放磁盘空间后重试。")
+	}
+	n, err := io.Copy(w, officeCopyReader{Context: ctx, Reader: f})
+	if err != nil {
+		return err
+	}
+	after, err := stat()
+	if err != nil || after.Size() != n || before.Size() != n || before.ModTime() != after.ModTime() {
+		return dwgError(409, "Office 文件已变化，请重新打开。")
+	}
+	return nil
+}
+
+func (w *officeSnapshotWriter) copyLocal(ctx context.Context, root *os.Root, p string) error {
+	file, err := openPreviewLocal(root, p)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return w.copyFile(ctx, file, file.Stat)
+}
+
+// Office preview and structured reads use the same source admission and disk staging.
 func (a *App) captureOfficeSource(ctx context.Context, r *http.Request, dest string) (func() bool, error) {
 	q := r.URL.Query()
 	p, rootName := q.Get("path"), q.Get("root")
-	target, err := os.OpenFile(dest, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
-	if err != nil {
-		return nil, err
-	}
-	defer target.Close()
-	tempRoot, err := os.OpenRoot(filepath.Dir(dest))
-	if err != nil {
-		return nil, err
-	}
-	defer tempRoot.Close()
-	space := &transferFS{root: tempRoot}
-	writer := &officeSnapshotWriter{target: target, space: space}
-	copyFile := func(f io.Reader, stat func() (os.FileInfo, error)) error {
-		before, err := stat()
-		if err != nil || !before.Mode().IsRegular() {
-			return errors.New("预览仅支持普通文件")
-		}
-		if err := space.CheckSpace(before.Size()); err != nil {
-			return dwgError(507, "Office 预览暂存空间不足，请释放磁盘空间后重试。")
-		}
-		n, err := io.Copy(writer, officeCopyReader{Context: ctx, Reader: f})
-		if err != nil {
-			return err
-		}
-		after, err := stat()
-		if err != nil || after.Size() != n || before.Size() != n || before.ModTime() != after.ModTime() {
-			return dwgError(409, "Office 文件已变化，请重新打开预览。")
-		}
-		return nil
-	}
-	copyLocal := func(root *os.Root) error {
-		file, err := openPreviewLocal(root, p)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		return copyFile(file, file.Stat)
-	}
 	if (rootName == "local" || strings.HasPrefix(rootName, "mount:")) && q.Get("source") == "" && q.Get("knowledgeOrigin") == "" && q.Get("knowledgeWorkspace") == "" {
 		a.mu.Lock()
 		root, err := a.root(rootName)
@@ -224,51 +240,62 @@ func (a *App) captureOfficeSource(ctx context.Context, r *http.Request, dest str
 			active, err := a.root(rootName)
 			return err == nil && root == active
 		}
-		return current, copyLocal(root)
+		return current, captureOfficeSnapshot(ctx, dest, nil, func(writer *officeSnapshotWriter) error {
+			return writer.copyLocal(ctx, root, p)
+		})
 	}
 	ar, err := a.knowledgeViewerArea(rootName, q.Get("source"), q.Get("knowledgeOrigin"), q.Get("knowledgeWorkspace"))
 	if err != nil {
 		return nil, err
 	}
-	current := func() bool { return a.knowledgeAreaCurrent(ar) }
-	if ar.unavailableReason != "" || !current() {
-		return nil, dwgError(409, "文件来源已变化，请重新打开。")
+	return func() bool { return a.knowledgeAreaCurrent(ar) }, a.captureOfficeArea(ctx, ar, p, dest, nil)
+}
+
+func (a *App) captureOfficeArea(ctx context.Context, ar knowledgeArea, p, dest string, checksum io.Writer) error {
+	if ar.unavailableReason != "" || !knowledgeSafePath(p) || !a.knowledgeAreaCurrent(ar) {
+		return dwgError(409, "文件来源已变化，请重新打开。")
 	}
+	return captureOfficeSnapshot(ctx, dest, checksum, func(writer *officeSnapshotWriter) error {
+		return a.copyOfficeArea(ctx, ar, p, writer)
+	})
+}
+
+func (a *App) copyOfficeArea(ctx context.Context, ar knowledgeArea, p string, writer *officeSnapshotWriter) error {
 	switch ar.kind {
 	case "local", "skill":
 		root, err := a.openLocalSourceRoot(ctx, ar.location)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer root.Close()
-		return current, copyLocal(root)
+		return writer.copyLocal(ctx, root, p)
 	case "ssh", "workspace-sftp", "sftp", "relay":
 		fs, err := a.streamTransferFS(ctx, checkoutSource(ar), false)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer fs.Close()
-		if !current() {
-			return nil, dwgError(409, "文件来源已变化，请重新打开。")
+		if !a.knowledgeAreaCurrent(ar) {
+			return dwgError(409, "文件来源已变化，请重新打开。")
 		}
 		file, err := fs.Open(p, os.O_RDONLY)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer file.Close()
-		return current, copyFile(file, file.Stat)
+		return writer.copyFile(ctx, file, file.Stat)
 	case "link", "smb", "ftp", "ftps":
 		if (ar.kind == "link" || ar.kind == "smb") && p != "resource.txt" {
-			return nil, errors.New("未知单资源路径")
+			return errors.New("未知单资源路径")
 		}
 		cmd, err := a.knowledgeCurlCommand(ctx, ar, p, false, nil)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		cmd.Stdout, cmd.Stderr = writer, io.Discard
-		return current, cmd.Run()
+		return cmd.Run()
 	default:
-		return nil, errors.New("不支持的引用来源类型")
+		return errors.New("不支持的引用来源类型")
 	}
 }
 

@@ -17,6 +17,8 @@ A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 S = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
 R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 XMLSPACE = '{http://www.w3.org/XML/1998/namespace}space'
+READ_XML_BUDGET = 128 << 20
+READ_RESULT_BUDGET = 64 << 20
 
 
 def parse(data):
@@ -25,18 +27,39 @@ def parse(data):
     return ET.fromstring(data, PARSER)
 
 
-def blocks(archive, kind):
+class OfficeReadParts:
+    def __init__(self, archive):
+        if len(archive.infolist()) > 10000:
+            raise ValueError('Office 文件包含过多条目')
+        self.archive = archive
+        self.remaining = READ_XML_BUDGET
+
+    def read(self, name):
+        # Count only XML used by the current read. Unrelated media stays compressed.
+        part = self.archive.getinfo(name)
+        if part.file_size > self.remaining:
+            raise ValueError('本次读取所需的 Office XML 超过 128 MiB')
+        with self.archive.open(part) as stream:
+            # Reading to EOF also checks the CRC of every consumed part.
+            data = stream.read(part.file_size + 1)
+        if len(data) != part.file_size:
+            raise ValueError('Office XML 展开大小无效')
+        self.remaining -= len(data)
+        return data
+
+
+def blocks(archive, kind, read_part):
     if kind == 'xlsx':
         shared = []
         if 'xl/sharedStrings.xml' in archive.namelist():
-            for item in parse(archive.read('xl/sharedStrings.xml')):
+            for item in parse(read_part('xl/sharedStrings.xml')):
                 shared.append(''.join(item.itertext()))
         rels = {item.get('Id'): relative_part(item.get('Target'))
-                for item in parse(archive.read('xl/_rels/workbook.xml.rels'))}
-        workbook = parse(archive.read('xl/workbook.xml'))
+                for item in parse(read_part('xl/_rels/workbook.xml.rels'))}
+        workbook = parse(read_part('xl/workbook.xml'))
         for sheet in workbook.findall('.//{%s}sheet' % S):
             part = rels[sheet.get('{%s}id' % R)]
-            for cell in parse(archive.read(part)).iter('{%s}c' % S):
+            for cell in parse(read_part(part)).iter('{%s}c' % S):
                 ref = cell.get('r')
                 formula = cell.find('{%s}f' % S)
                 value = cell.find('{%s}v' % S)
@@ -55,7 +78,7 @@ def blocks(archive, kind):
         (p for p in archive.namelist() if re.fullmatch(r'ppt/slides/slide\d+\.xml', p)),
         key=lambda p: int(re.search(r'(\d+)\.xml', p).group(1)))
     for part in parts:
-        tree = parse(archive.read(part))
+        tree = parse(read_part(part))
         for index, paragraph in enumerate(tree.iter('{%s}p' % ns)):
             texts = list(paragraph.iter('{%s}t' % ns))
             text = ''.join(t.text or '' for t in texts)
@@ -88,7 +111,8 @@ def execute(operation, source, kind, spec, output):
             result = []
             total_chars = 0
             more = False
-            for number, (block, _, _) in enumerate(blocks(archive, kind)):
+            parts = OfficeReadParts(archive)
+            for number, (block, _, _) in enumerate(blocks(archive, kind, parts.read)):
                 if number < offset:
                     continue
                 if len(block['text']) > 60000 and not result:
@@ -100,10 +124,13 @@ def execute(operation, source, kind, spec, output):
                     break
                 result.append(block)
                 total_chars += len(block['text'])
-            with open(output, 'w', encoding='utf-8') as f:
-                json.dump({'format': kind, 'blocks': result, 'offset': offset,
-                           'nextOffset': offset + len(result) if more else None,
-                           'truncated': more}, f, ensure_ascii=False)
+            data = json.dumps({'format': kind, 'blocks': result, 'offset': offset,
+                               'nextOffset': offset + len(result) if more else None,
+                               'truncated': more}, ensure_ascii=False).encode('utf-8')
+            if len(data) > READ_RESULT_BUDGET:
+                raise ValueError('Office 输出超过结果大小限制')
+            with open(output, 'wb') as f:
+                f.write(data)
             return
         changes = spec.get('changes')
         if not isinstance(changes, list) or not 1 <= len(changes) <= 100:
@@ -119,7 +146,7 @@ def execute(operation, source, kind, spec, output):
         replacements = {}
         cells = []
         found = set()
-        for block, tree, element in blocks(archive, kind):
+        for block, tree, element in blocks(archive, kind, archive.read):
             change = wanted.get(block['id'])
             if change is None:
                 continue

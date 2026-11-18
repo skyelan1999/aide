@@ -182,6 +182,10 @@ func knowledgeIndexAreas(areas []knowledgeArea) []knowledgeArea {
 func (a *App) knowledgeAreaCurrent(ar knowledgeArea) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	return a.knowledgeAreaCurrentLocked(ar)
+}
+
+func (a *App) knowledgeAreaCurrentLocked(ar knowledgeArea) bool {
 	var work, ref string
 	if a.workspace != nil {
 		work = a.workspace.Name()

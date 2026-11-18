@@ -127,16 +127,23 @@ func (w *limitedBytesWriter) String() string { return w.buf.String() }
 // 返回 stdout；失败时把 stderr 带进错误信息，便于 aide 排障。
 // 带 officeScriptTimeout 超时；超时后 kill 整个进程组（python 可能 fork soffice），避免子进程泄漏。
 func runOfficeScript(workdir, script string, args ...string) (string, error) {
+	return runOfficeScriptContext(context.Background(), workdir, script, args...)
+}
+
+func runOfficeScriptContext(ctx context.Context, workdir, script string, args ...string) (string, error) {
 	bin, err := exec.LookPath("python3")
 	if err != nil {
 		return "", errors.New("容器内无 python3")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), officeScriptTimeout)
+	ctx, cancel := context.WithTimeout(ctx, officeScriptTimeout)
 	defer cancel()
 	select {
 	case officeParserSlots <- struct{}{}:
 		defer func() { <-officeParserSlots }()
 	case <-ctx.Done():
+		if ctx.Err() == context.Canceled {
+			return "", ctx.Err()
+		}
 		return "", errors.New("Office 解析等待超时，请稍后重试")
 	}
 	cmd := exec.CommandContext(ctx, bin, append([]string{"-c", officeParserBootstrap, script}, args...)...)
@@ -175,6 +182,9 @@ func runOfficeScript(workdir, script string, args ...string) (string, error) {
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return "", fmt.Errorf("office 脚本超时（%s），已终止进程组", officeScriptTimeout)
+	}
+	if ctx.Err() != nil {
+		return "", ctx.Err()
 	}
 	if waitErr != nil {
 		stderrText := strings.TrimSpace(stderrBuf.String())
