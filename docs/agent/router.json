@@ -1729,10 +1729,6 @@
         "node",
         "--check",
         "scripts/browser-usability-audit.cjs"
-      ],
-      [
-        "python3",
-        "scripts/test_office_engine_install.py"
       ]
     ],
     "full": [

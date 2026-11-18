@@ -195,7 +195,7 @@ func renderDWGSVG(ctx context.Context, dxf []byte) ([]byte, error) {
 }
 
 // O_NONBLOCK prevents a replaced FIFO from blocking between Lstat and Open.
-func readDWGLocal(root *os.Root, p string) ([]byte, error) {
+func openPreviewLocal(root *os.Root, p string) (*os.File, error) {
 	if root == nil || !knowledgeSafePath(p) {
 		return nil, fmt.Errorf("文件路径无效或目录不可用")
 	}
@@ -206,24 +206,37 @@ func readDWGLocal(root *os.Root, p string) ([]byte, error) {
 			return nil, err
 		}
 		if info.Mode()&os.ModeSymlink != 0 || (i == len(parts)-1 && !info.Mode().IsRegular()) {
-			return nil, fmt.Errorf("DWG 预览仅支持普通文件，不读取符号链接")
+			return nil, fmt.Errorf("预览仅支持普通文件，不读取符号链接")
 		}
 	}
 	f, err := root.OpenFile(p, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 	info, err := f.Stat()
 	if err != nil || !info.Mode().IsRegular() {
+		f.Close()
 		return nil, fmt.Errorf("文件状态已变化，请重新打开")
 	}
-	if info.Size() > dwgInputLimit {
-		return nil, dwgError(413, "DWG 文件超过 16 MiB 预览上限，请下载原文件用 CAD 打开。")
+	return f, nil
+}
+
+func readPreviewLocal(root *os.Root, p string, limit int64) ([]byte, error) {
+	f, err := openPreviewLocal(root, p)
+	if err != nil {
+		return nil, err
 	}
-	b, err := io.ReadAll(io.LimitReader(f, dwgInputLimit+1))
-	if len(b) > dwgInputLimit {
-		return nil, dwgError(413, "DWG 文件超过 16 MiB 预览上限，请下载原文件用 CAD 打开。")
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if info.Size() > limit {
+		return nil, dwgError(413, fmt.Sprintf("文件超过 %d MiB 预览上限。", limit>>20))
+	}
+	b, err := io.ReadAll(io.LimitReader(f, limit+1))
+	if int64(len(b)) > limit {
+		return nil, dwgError(413, fmt.Sprintf("文件超过 %d MiB 预览上限。", limit>>20))
 	}
 	return b, err
 }
@@ -246,7 +259,7 @@ func (a *App) readDWGPreview(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	input, current, err := a.readBoundedPreviewInput(ctx, r)
+	input, current, err := a.readBoundedPreviewInput(ctx, r, dwgInputLimit)
 	if err == nil && !current() {
 		err = dwgError(409, "文件来源已变化，请从当前目录重新打开图纸。")
 	}
@@ -278,7 +291,7 @@ func (a *App) readDWGPreview(w http.ResponseWriter, r *http.Request) {
 }
 
 // Shared source authorization and identity checks for bounded local previews.
-func (a *App) readBoundedPreviewInput(ctx context.Context, r *http.Request) ([]byte, func() bool, error) {
+func (a *App) readBoundedPreviewInput(ctx context.Context, r *http.Request, limit int64) ([]byte, func() bool, error) {
 	q := r.URL.Query()
 	p := q.Get("path")
 	var input []byte
@@ -291,7 +304,7 @@ func (a *App) readBoundedPreviewInput(ctx context.Context, r *http.Request) ([]b
 		if rootErr != nil {
 			err = rootErr
 		} else {
-			input, err = readDWGLocal(root, p)
+			input, err = readPreviewLocal(root, p, limit)
 		}
 		current = func() bool {
 			a.mu.Lock()
@@ -310,11 +323,11 @@ func (a *App) readBoundedPreviewInput(ctx context.Context, r *http.Request) ([]b
 				var root *os.Root
 				root, err = a.openLocalSourceRoot(ctx, ar.location)
 				if err == nil {
-					input, err = readDWGLocal(root, p)
+					input, err = readPreviewLocal(root, p, limit)
 					root.Close()
 				}
 			} else {
-				input, err = a.knowledgeAreaRead(ctx, ar, p, dwgInputLimit)
+				input, err = a.knowledgeAreaRead(ctx, ar, p, limit)
 			}
 		}
 		current = func() bool { return a.knowledgeAreaCurrent(ar) }

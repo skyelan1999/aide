@@ -91,6 +91,10 @@ type pluginRegistry struct {
 	RemovedBuiltins []string         `json:"removedBuiltins,omitempty"`
 }
 
+const retiredOfficePluginID = "office"
+
+var errRetiredOfficePlugin = errors.New("Office 插件已退役，请使用 Aide 内置的 Office 文档功能")
+
 // loadPlugins reads only explicitly installed workspace plugins. The host does
 // not seed source checkouts or install plugins from its image/environment.
 func (a *App) loadPlugins() error {
@@ -106,7 +110,15 @@ func (a *App) loadPlugins() error {
 	if err := json.Unmarshal(b, &a.pluginRegistry); err != nil {
 		return fmt.Errorf("解析 plugins/registry.json: %w", err)
 	}
-	return a.recoverPluginUpgrades()
+	if err := a.recoverPluginUpgrades(); err != nil {
+		return err
+	}
+	for i := range a.pluginRegistry.Plugins {
+		if a.pluginRegistry.Plugins[i].ID == retiredOfficePluginID {
+			a.pluginRegistry.Plugins[i].Enabled = false
+		}
+	}
+	return nil
 }
 
 func (a *App) savePluginRegistry() error {
@@ -155,7 +167,9 @@ func (a *App) runPluginHost(ctx context.Context) {
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	if err := cmd.Run(); err != nil {
 		a.recordIncident(ctx, incident{Module: "plugins", Phase: "load-host"}, err, time.Time{})
-	} // Preserve existing surface on failure.
+		// Keep the in-memory surface. A persisted result may predate retirement.
+		return
+	}
 	if b, err := os.ReadFile(surfacePath); err == nil && len(b) <= 2<<20 {
 		a.mu.Lock()
 		a.pluginSurface = b
@@ -229,7 +243,7 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 	defer a.mu.Unlock()
 	items := make([]map[string]any, 0, len(a.pluginRegistry.Plugins))
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == "computer-control" {
+		if p.ID == "computer-control" || p.ID == retiredOfficePluginID {
 			continue
 		}
 		items = append(items, map[string]any{
@@ -292,6 +306,11 @@ func pluginSettingsOrEmpty(settings map[string]any) map[string]any {
 func (a *App) updatePluginSettings(w http.ResponseWriter, r *http.Request) {
 	a.pluginLifecycle.Lock()
 	defer a.pluginLifecycle.Unlock()
+	id := r.PathValue("id")
+	if id == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
+		return
+	}
 	var in struct {
 		Settings map[string]any `json:"settings"`
 	}
@@ -308,7 +327,6 @@ func (a *App) updatePluginSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("插件设置不能超过 32 KiB"))
 		return
 	}
-	id := r.PathValue("id")
 	if id == "computer-control" {
 		fail(w, http.StatusGone, errors.New("电脑控制设置已迁移到 Aide 设置"))
 		return
@@ -400,6 +418,10 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 	}
 	if !pluginIDPattern.MatchString(in.ID) {
 		fail(w, 400, errors.New("插件 id 只能含字母、数字、-、_，长度 1–64"))
+		return
+	}
+	if in.ID == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
 		return
 	}
 	if in.ID == "computer-control" {
@@ -611,6 +633,10 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	if manifest.ID == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
+		return
+	}
 	main := manifest.Main
 	if a.pluginsPath == "" {
 		a.pluginsPath = filepath.Join(a.workPath, pluginsDirName)
@@ -740,6 +766,10 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
+	if id == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
+		return
+	}
 	if id == "computer-control" {
 		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再作为独立插件管理"))
 		return
@@ -851,6 +881,9 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 }
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (value any, callErr error) {
+	if pluginID == retiredOfficePluginID {
+		return nil, errRetiredOfficePlugin
+	}
 	if pluginID == "computer-control" {
 		return nil, errors.New("电脑控制已迁移为 Aide 内置能力")
 	}

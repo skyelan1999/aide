@@ -1,5 +1,7 @@
 # Office 文档内联查看方案（docx / xlsx / pptx）
 
+> 当前 Aide 使用内置 LibreOffice 统一渲染版式。支持的格式、大文件行为和内置工具见 [Aide Office 文档](../plugins/office.md)。以下内容记录早期设计和历史演进。
+
 > 更新：结构化 Office 生成与 XLSX 工作目录/引用编辑已按
 > [Office 工具集](../plugins/office.md) 实现。下文早期「本期不实施」
 > 是历史方案记录，不代表当前 XLSX 状态；PPTX 仍仅支持生成和文本提取，

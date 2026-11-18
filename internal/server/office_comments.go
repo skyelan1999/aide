@@ -121,10 +121,6 @@ func (a *App) officeDocxCommentsWrite(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("文档版本或工作区已变化，请重新打开"))
 		return
 	}
-	if err := a.collaboraWriteError(in.Path, in.Source); err != nil {
-		fail(w, 409, err)
-		return
-	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
 	b, src, err := a.officeReadBytes(in.Path, in.Source)

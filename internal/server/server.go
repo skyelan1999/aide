@@ -518,7 +518,8 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 const assistantSessionKind = "assistant"
 
 type App struct {
-	lan lanAccess
+	officePreviews officePreviewCache
+	lan            lanAccess
 
 	incidents                 incidentJournal
 	executionEnvironment      *executionEnvironment
@@ -529,8 +530,6 @@ type App struct {
 	workspaceConfigMu         sync.RWMutex  // serializes workspace defaults/commits with workspace-bound operations
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
-	collabora                 collaboraState
-	officeRuntime             officeRuntime
 	transferMu                sync.Mutex
 	transferManager           *transferManager
 	skillLibraryMu            sync.Mutex
@@ -1221,13 +1220,13 @@ func New(work, reference, data string) (*App, error) {
 func (a *App) Close() {
 	a.closeOnce.Do(func() {
 		a.beginRuntimeShutdown()
+		a.officePreviews.close()
 		a.bgMu.Lock()
 		a.bgClosing = true
 		if a.bgCancel != nil {
 			a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
 		}
 		a.bgMu.Unlock()
-		a.stopOfficeEngine()
 		a.terminalPins.mu.Lock()
 		a.terminalPins.closed = true
 		a.terminalPins.mu.Unlock()
@@ -1678,9 +1677,6 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
 	mux.HandleFunc("GET /api/office/preview", a.officePagePreview)
-	mux.HandleFunc("GET /api/office/collabora", a.collaboraStatus)
-	mux.HandleFunc("POST /api/office/collabora/sessions", a.collaboraOpen)
-	mux.HandleFunc("PUT /api/office/collabora/sessions/{id}", a.collaboraHeartbeat)
 	mux.HandleFunc("GET /api/office/xlsx", a.officeXlsxView)
 	mux.HandleFunc("PUT /api/office/xlsx", a.officeXlsxEdit)
 	mux.HandleFunc("GET /api/office/docx/comments", a.officeDocxCommentsGet)
@@ -1861,10 +1857,6 @@ func (a *App) buildHandler() {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
-		if cfg, err := a.collaboraConfig(); err == nil && cfg.Public.IsAbs() {
-			origin := cfg.Public.Scheme + "://" + cfg.Public.Host
-			w.Header().Set("Content-Security-Policy", w.Header().Get("Content-Security-Policy")+"; frame-src 'self' "+origin+"; form-action 'self' "+origin)
-		}
 		// http://localhost 永久强制改写。max-age 取短值 300s，本地自签场景可快速回收。
 		if hsts := strictTransportSecurity(r); hsts != "" {
 			w.Header().Set("Strict-Transport-Security", hsts)
@@ -1876,10 +1868,6 @@ func (a *App) buildHandler() {
 		}
 		if strings.HasPrefix(r.URL.Path, "/wopi/") {
 			http.NotFound(w, r)
-			return
-		}
-		if strings.HasPrefix(r.URL.Path, officeEnginePrefix+"/") {
-			a.serveOfficeEngine(w, r)
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/api/debug/") {

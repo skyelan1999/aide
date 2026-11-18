@@ -5413,6 +5413,12 @@ function renderPermissionManager() {
     ['read_memory', t('读记忆'), t('读取持久化记忆文件')],
     ['write_memory', t('写记忆'), t('追加持久化记忆')],
     ['create_diagram', t('建图表'), t('创建 draw.io 图表文件')],
+    ['office_create', t('生成 Office 文档'), t('生成 DOCX、XLSX 或 PPTX 文件')],
+    ['office_document_search', t('检索 Office 文档'), t('检索已授权文档的原文或片段')],
+    ['office_document_read', t('读取 Office 文档'), t('分页读取段落、单元格或幻灯片文本')],
+    ['office_document_edit', t('修改 Office 文档'), t('按文件版本和原文校验后保存修改')],
+    ['office_comments', t('读取 DOCX 批注'), t('读取内嵌批注及其锚定原文')],
+    ['office_comment_edit', t('按批注修改 DOCX'), t('匹配批注锚点和原文后保存修改')],
   ];
   const disabled = new Set(state.config && state.config.disabledTools ? state.config.disabledTools : []);
   for (const [tool, label, desc] of tools) {
@@ -8739,13 +8745,25 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
   };
   bindViewerTeardown(container, teardown);
 
-  // 1) 取字节（复用图片/STL 的 raw 端点，带 access_token 查询参数）
-  let buf;
-  try {
-    const r = await fetch(rawUrl, { signal: abort.signal });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    buf = previewOptions ? await window.AidePreviewSafety.readBytes(r, 16*1024*1024) : await r.arrayBuffer();
-  } catch (e) { if (!cancelled) fail(t('无法读取 PDF：') + escapeHtml(e.message)); return; }
+  const failPage = message => {
+    if (cancelled) return;
+    teardown();
+    if (previewOptions?.onFailure) previewOptions.onFailure(message);
+    else fail(message);
+  };
+
+  // Office PDFs use range requests against the authorized render snapshot.
+  let pdfSource = {url: rawUrl, disableStream: true, disableAutoFetch: true};
+  if (!previewOptions?.office) {
+    try {
+      const response = await fetch(rawUrl, {signal: abort.signal});
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      pdfSource = {data: await response.arrayBuffer()};
+    } catch (error) {
+      if (!cancelled) fail(t('无法读取 PDF：') + escapeHtml(error.message));
+      return;
+    }
+  }
   if (cancelled) return;
 
   // 2) 加载本地 pdf.js 模块
@@ -8756,7 +8774,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
 
   // 3) 打开文档（加密 PDF 走 onPassword 回调）
   // Apply the worker's image guard before any full-resolution decode/resize.
-  const task = loadingTask = pdfjs.getDocument({ data: buf, disableEmbeddedFiles: true, useSystemFonts: false, cMapUrl: '/vendor/pdfjs/cmaps/', cMapPacked: true, standardFontDataUrl: '/vendor/pdfjs/standard_fonts/', maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
+  const task = loadingTask = pdfjs.getDocument({ ...pdfSource, disableEmbeddedFiles: true, useSystemFonts: false, cMapUrl: '/vendor/pdfjs/cmaps/', cMapPacked: true, standardFontDataUrl: '/vendor/pdfjs/standard_fonts/', maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
   task.onPassword = (updatePassword, reason) => {
     if (cancelled) return;
     // reason: 0 = NEED_PASSWORD，1 = INCORRECT_PASSWORD
@@ -8774,6 +8792,10 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
   }
   catch (e) {
     if (cancelled) return;
+    if (previewOptions?.office) {
+      teardown();
+      throw e;
+    }
     teardown();
     if (e && e.name === 'PasswordException') return; // 取消/错误已由 onPassword 给出提示
     fail(t('PDF 已损坏或无法解析：') + escapeHtml(e.message)); return;
@@ -8894,7 +8916,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
         limited ||= metrics.limited;
       }
     } catch (e) {
-      if (!cancelled && gen === renderGeneration) { teardown(); fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。')); }
+      if (!cancelled && gen === renderGeneration) failPage(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));
       return;
     }
     sizeLimited = limited;
@@ -8965,12 +8987,13 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
   // Keep synchronous allocation/render errors inside the same lifecycle as asynchronous rendering.
   async function renderPage(h, gen) {
     if (gen !== renderGeneration || cancelled) return;
-    const p = await getPage(h.page);
-    if (gen !== renderGeneration || cancelled || h.renderedScale === scale) return;
-    cancelHolderRender(h);
-    const metrics = h.metrics, c = h.canvas, renderScale = scale;
     let task = null, timer = 0;
+    const renderScale = scale;
     try {
+      const p = await getPage(h.page);
+      if (gen !== renderGeneration || cancelled || h.renderedScale === scale) return;
+      cancelHolderRender(h);
+      const metrics = h.metrics, c = h.canvas;
       // Reset both dimensions first: the previous height must not multiply a new width.
       c.width = c.height = 0;
       c.width = metrics.width; c.height = metrics.height;
@@ -9006,7 +9029,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
       if ((e && e.name === 'RenderingCancelledException') || (e && e.message === 'render-timeout')) {
         if (h.renderTask === task && h.renderedScale === renderScale) h.renderedScale = 0;
       } else {
-        teardown(); fail(t('PDF 页面渲染失败，请下载原文件查看。'));
+        failPage(t('PDF 页面渲染失败，请下载原文件查看。'));
       }
     } finally {
       clearTimeout(timer);
@@ -9037,7 +9060,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
     i = Math.max(1, Math.min(numPages, i | 0));
     if (sheetSelect) {
       try { const page=await getPage(i); if(cancelled||request!==gotoGeneration)return; baseWidth=pdfPageMetrics(page,1,1).baseWidth; scale=fitWidthScale(); await layoutPages(); }
-      catch(e){if(!cancelled)fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));return;}
+      catch(e){if(!cancelled)failPage(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));return;}
     }
     if(cancelled||request!==gotoGeneration)return;
     _gotoLock=true;clearTimeout(scrollTimer);scroll.scrollTop=holders[i].el.offsetTop;pageInput.value=i;
@@ -9098,26 +9121,37 @@ function setupDelimitedPreview(host, editor, filePath) {
   table.append(body);grid.append(table);wrap.append(grid);host.append(wrap);
 }
 
-function setupCollaboraOffice(container,filePath,root,source,viewerSpec,fallback){
-  if(!window.AideOfficeCollabora)return fallback();
-  return window.AideOfficeCollabora.open(container,{path:filePath,root:root||'workspace',source:source||'',readOnly:viewerSpec?.readOnly===true,knowledgeOrigin:viewerSpec?.origin||'',knowledgeWorkspace:viewerSpec?.knowledgeWorkspace||''},{api,el,t,onMode:readOnly=>{const badge=container.id==='file-view-preview'?$('file-view-ro-badge'):$('editor-ro-badge');badge.classList.toggle('hidden',!readOnly);},teardown:teardownViewer,bindTeardown:bindViewerTeardown,attach:()=>attachFileEntry({path:filePath,root:root||'workspace',source:source||''}),selection:text=>{const prompt=$('prompt');prompt.value+=(prompt.value?'\n\n':'')+t('请处理文档选区：')+'\n'+filePath+'\n'+text;prompt.dispatchEvent(new Event('input',{bubbles:true}));prompt.focus();}},fallback);
+function setupDocxPreview(container, filePath, root, source, viewerSpec) {
+  return setupOfficeNativePreview(container, filePath, root, source, viewerSpec);
 }
-function setupDocxPreview(container,filePath,root,source,viewerSpec){return setupCollaboraOffice(container,filePath,root,source,viewerSpec,()=>/\.docx$/i.test(effectiveFileTypePath(filePath))?setupDocxNativePreview(container,filePath,root,source,viewerSpec):officeRequiresCollabora(container));}
-function setupOfficePreview(container,filePath,root,source,viewerSpec,workbook=false){return setupCollaboraOffice(container,filePath,root,source,viewerSpec,()=>/\.(xlsx|ppt|pptx)$/i.test(effectiveFileTypePath(filePath))?setupOfficeNativePreview(container,filePath,root,source,viewerSpec,workbook):officeRequiresCollabora(container));}
-function officeRequiresCollabora(container){container.replaceChildren(el('p','muted',t('此格式的本地编辑器暂不可用，请更新完整 Aide 安装包。')));}
-async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
-  return setupOfficePreview(container, filePath, root, source, viewerSpec, true);
+function setupOfficePreview(container, filePath, root, source, viewerSpec) {
+  return setupOfficeNativePreview(container, filePath, root, source, viewerSpec);
 }
-async function setupOfficeNativePreview(container, filePath, root, source, viewerSpec, workbook = false) {
+function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
+  return setupOfficeNativePreview(container, filePath, root, source, viewerSpec);
+}
+async function setupOfficeNativePreview(container, filePath, root, source, viewerSpec) {
+  const typePath = viewerSpec?.format || effectiveFileTypePath(filePath);
+  const workbook = /\.xlsx$/i.test(typePath);
+  const word = /\.docx$/i.test(typePath);
+  const hasSecondaryMode = workbook || word;
   container.replaceChildren();
   const wrap=el('div','office-viewer'), bar=el('div','office-view-modes');
-  const layout=el('button','quiet quiet-sm',t('版式预览')), cells=el('button','quiet quiet-sm',t('单元格'));
+  const layout=el('button','quiet quiet-sm',t('版式预览')), cells=el('button','quiet quiet-sm',word?t('正文与批注'):t('单元格'));
   const pageHost=el('div','office-page-host'), cellHost=el('div','office-cell-host hidden');
-  if(workbook){bar.append(layout,cells);wrap.append(bar);}
+  if(hasSecondaryMode){bar.append(layout,cells);wrap.append(bar);}
   wrap.append(pageHost,cellHost);container.append(wrap);
   let disposed=false, generation=0, gridStarted=false, layoutDirty=true, controller=null;
   const stopPages=()=>{controller?.abort();teardownViewer(pageHost);pageHost.replaceChildren();};
   bindViewerTeardown(container,()=>{disposed=true;generation++;stopPages();teardownViewer(cellHost);});
+  function layoutFailure(message, requestGeneration) {
+    if (disposed || requestGeneration !== generation) return;
+    layoutDirty = true;
+    stopPages();
+    const retry = el('button', 'quiet quiet-sm', t('重试'));
+    retry.onclick = showLayout;
+    pageHost.append(el('p', 'office-preview-error', message), retry);
+  }
   async function showLayout(){
     pageHost.classList.remove('hidden');cellHost.classList.add('hidden');layout.setAttribute('aria-pressed','true');cells.setAttribute('aria-pressed','false');
     if(!layoutDirty&&pageHost.childNodes.length)return;
@@ -9130,18 +9164,26 @@ async function setupOfficeNativePreview(container, filePath, root, source, viewe
       if(!response.ok){let message='HTTP '+response.status;try{message=(await response.json()).error||message;}catch{}throw Error(message);}
       const bytes=await window.AidePreviewSafety.readBytes(response,64*1024),meta=JSON.parse(new TextDecoder().decode(bytes));
       if(disposed||gen!==generation)return;
+      const version = response.headers.get('X-Aide-Office-Version');
+      if (version) url.searchParams.set('version', version);
       url.searchParams.set('format','pdf');
-      await setupPdfPreview(pageHost,filePath,root,source,viewerSpec,{rawUrl:url.href,sheets:meta.sheets});
+      await setupPdfPreview(pageHost,filePath,root,source,viewerSpec,{
+        rawUrl: url.href, sheets: meta.sheets, office: true,
+        onFailure: message => layoutFailure(message, gen),
+      });
     }catch(error){
       if(disposed||gen!==generation||error.name==='AbortError')return;
-      layoutDirty=true;pageHost.replaceChildren(el('p','office-preview-error',error.message));
-      const retry=el('button','quiet quiet-sm',t('重试'));retry.onclick=showLayout;pageHost.append(retry);
+      layoutFailure(error.message, gen);
     }
   }
   layout.onclick=showLayout;
   cells.onclick=()=>{
     generation++;stopPages();layoutDirty=true;pageHost.classList.add('hidden');cellHost.classList.remove('hidden');layout.setAttribute('aria-pressed','false');cells.setAttribute('aria-pressed','true');
-    if(!gridStarted){gridStarted=true;setupXlsxGrid(cellHost,filePath,root,source,viewerSpec,()=>{layoutDirty=true;});}
+    if (!gridStarted) {
+      gridStarted = true;
+      if (word) setupDocxNativePreview(cellHost, filePath, root, source, viewerSpec);
+      else setupXlsxGrid(cellHost, filePath, root, source, viewerSpec, () => { layoutDirty = true; });
+    }
   };
   await showLayout();
 }
@@ -10336,7 +10378,7 @@ async function openFileViewMode(forceNative=false) {
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
   $("file-view-save").classList.toggle("hidden", isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isZip);
   $("file-view-save").disabled = readOnly;
-  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isStep || isPdf || isDxf || isDocx || isZip));
+  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isStep || isPdf || isPresentation || isDxf || isDocx || (isXlsx && !/\.xlsx$/i.test(typePath)) || isZip));
   if (isZip) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');

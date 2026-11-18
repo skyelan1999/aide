@@ -1881,13 +1881,9 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .office-view-modes [aria-pressed="true"]{background:var(--selected);color:var(--brand)}
 .office-page-host,.office-cell-host{flex:1;min-height:0;overflow:hidden}
 .office-page-host>.pdf-viewer{height:100%}
+.office-cell-host>.docx-wrap{min-height:0}
 .office-preview-error{padding:16px;color:var(--text)}
 .office-sheet-select{min-width:100px;max-width:220px}
 .xlsx-table td textarea{height:auto;min-height:31px;resize:vertical;white-space:pre-wrap;overflow:auto;display:block}
 
 /* Office editor keeps the existing viewer surface and surrounding Aide layout. */
-.office-collabora{display:flex;flex-direction:column;height:100%;min-height:360px;width:100%;min-width:0}
-.office-collabora-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px;border-bottom:1px solid var(--border)}
-.office-collabora-stage{flex:1;min-height:300px;position:relative;overflow:hidden}
-.office-collabora-frame{border:0;width:100%;height:100%;position:absolute;inset:0;background:var(--bg)}
-.office-collabora-note{display:flex;gap:8px;align-items:center;padding:6px 10px;flex-wrap:wrap;font-size:12px}

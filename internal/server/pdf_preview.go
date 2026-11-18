@@ -25,6 +25,19 @@ func rasterPDFPage(ctx context.Context, input []byte, page, size int) ([]byte, e
 	if len(input) > dwgInputLimit || !bytes.HasPrefix(input, []byte("%PDF-")) || page < 1 || page > 2000 || size < 256 || size > 4096 {
 		return nil, dwgError(400, "PDF 兼容预览参数无效或文件超过 16 MiB。")
 	}
+	dir, err := os.MkdirTemp("", "aide-pdf-preview-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(dir)
+	inPath := filepath.Join(dir, "input.pdf")
+	if err = os.WriteFile(inPath, input, 0600); err != nil {
+		return nil, err
+	}
+	return rasterPDFFile(ctx, inPath, page, size)
+}
+
+func rasterPDFFile(ctx context.Context, inPath string, page, size int) ([]byte, error) {
 	converter, err := exec.LookPath("pdftoppm")
 	if err != nil {
 		return nil, dwgError(503, "PDF 兼容预览组件未安装，请更新标准 Aide 构建。")
@@ -33,15 +46,12 @@ func rasterPDFPage(ctx context.Context, input []byte, page, size int) ([]byte, e
 	if err != nil {
 		return nil, dwgError(503, "PDF 兼容预览组件不可用。")
 	}
-	dir, err := os.MkdirTemp("", "aide-pdf-preview-*")
+	dir, err := os.MkdirTemp("", "aide-pdf-raster-*")
 	if err != nil {
 		return nil, err
 	}
 	defer os.RemoveAll(dir)
-	inPath, outPath := filepath.Join(dir, "input.pdf"), filepath.Join(dir, "page")
-	if err = os.WriteFile(inPath, input, 0600); err != nil {
-		return nil, err
-	}
+	outPath := filepath.Join(dir, "page")
 	ctx, cancel := context.WithTimeout(ctx, dwgPreviewTimeout)
 	defer cancel()
 	n := strconv.Itoa(page)
@@ -106,7 +116,7 @@ func (a *App) readPDFPreview(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	input, current, err := a.readBoundedPreviewInput(ctx, r)
+	input, current, err := a.readBoundedPreviewInput(ctx, r, dwgInputLimit)
 	if err == nil && !current() {
 		err = dwgError(409, "文件来源已变化，请重新打开。")
 	}

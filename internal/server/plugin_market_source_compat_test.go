@@ -10,10 +10,9 @@ import (
 	"time"
 )
 
-func TestMarketOfficeCollaboraRequiresHostCapabilityAndVersion(t *testing.T) {
-	p := marketPlugin{MinAideVersion: "0.1.19.0 RC2", Features: []string{"office-collabora-v1"}}
-	// Older shipped hosts reject this unknown feature before installation;
-	// this host recognizes it because it implements WOPI and native AI tools.
+func TestMarketRequiresHostCapabilityAndVersion(t *testing.T) {
+	p := marketPlugin{MinAideVersion: "0.1.19.0 RC2", Features: []string{"skill-library-v1"}}
+	// A supported feature still requires the listed host version.
 	for _, mode := range []string{"source", "release-image"} {
 		if ok, why := marketCompatibleForRuntime(p, "0.1.19.0 RC2", mode); !ok {
 			t.Fatal("current capable host refused", mode, why)
@@ -22,7 +21,7 @@ func TestMarketOfficeCollaboraRequiresHostCapabilityAndVersion(t *testing.T) {
 			t.Fatal("older version floor bypassed", mode)
 		}
 	}
-	p.Features = append(p.Features, "unknown-office-capability")
+	p.Features = append(p.Features, "unknown-test-capability")
 	if ok, _ := marketCompatibleForRuntime(p, "0.1.19.0 RC2", "source"); ok {
 		t.Fatal("unknown feature bypassed")
 	}

@@ -1,30 +1,16 @@
-# Aide 内置离线 Office
+# Aide 内置 Office 文档
 
-Office 1.3.0 配合具备 `office-offline-v1` 的完整 Aide 安装包使用。编辑引擎随主程序打包，首次打开文档自动启动，无需部署额外服务、填写地址或添加插件设置。旧版本保存的 Collabora 服务设置不再使用；只更新 ZIP 不会为旧主程序补上引擎。
+在文件面板直接打开 DOC、DOCX、ODT、XLS、XLSX、ODS、PPT、PPTX 或 ODP。Aide 使用内置 LibreOffice Writer、Calc 和 Impress 生成版式预览，首次打开时无需安装插件或填写服务地址。表格预览按工作表切换，保留可见空白表和合并单元格。演示文稿预览按页显示，文档字体使用本机可用字体。
 
-在 Aide 原文件查看页面打开 Office 文档即可预览、编辑和保存。引擎、字体、脚本和文档读写均本地运行，运行时不下载组件，不需要互联网。云端 AI 推理仍需要供应商连接；完全离线的 AI 推理需使用已有本地模型。
+版式预览将原件分块读取到临时文件。生成的 PDF 按浏览器需要的范围传输，原件和预览 PDF 都没有固定字节上限。LibreOffice 处理的是临时副本，宏和外部网络访问关闭。特别复杂的文件仍可能受磁盘空间、可用内存、转换时长和单页渲染资源影响。
 
-仅限 Aide 内使用：没有独立的 Office 服务端口、外部 MCP 或通用插件接口。引擎与 WOPI 回调只使用随机回环端口，不发布到宿主机。Aide 对外端口的 `/wopi/` 路径一律拒绝。浏览器资源和 WebSocket 使用 Aide 原地址，需要已授权文档会话的短期 HttpOnly 能力；不向引擎传递 Aide 全局令牌或 Cookie。管理、通用转换等端点不通过代理提供。
+DOCX 的「正文与批注」提供原文选区和批注操作。XLSX 的「单元格」支持保存指定单元格，检查文件版本和来源写权限。版式预览支持静态页面，浏览器内完整排版编辑随独立 Office 插件退役。AI 的结构化生成、读取、精确修改、检索和批注由 Aide 内置工具提供，可在工具权限中逐项管理。使用云端 AI 仍依赖所配置的模型服务。
 
-文件默认在预览模式打开，不占 AI 写租约；点击编辑才进入可写会话。Collabora 报告 30 秒未操作后，宿主先确认保存再释放活动状态。存在活跃编辑或待保存时，AI 写工具返回重试提示；断连 45 秒后活动租约到期，旧编辑器仍受版本冲突保护。已保存文档和选区可附加给 Aide AI，不自动发送付费模型请求。新工具：
-
-- `office_document_read(path, source?, offset?)`：最多 200 块/60000 字符，返回可定位段落、单元格、幻灯片文本、可编辑标记、hash 和 nextOffset。
-- `office_document_edit(path, source?, hash, changes)`：最多 100 个 `{id,expectedText,newText}`，整批验证后原子写回；只读来源、AI 不可见来源、旧任务、旧版本及 read-only 沙箱拒绝写入。
-
-结构化 AI 修改支持 DOCX/XLSX/PPTX；复杂字段、对象和修订不猜测写入，段落替换沿用首个文字运行的格式。旧二进制/ODF 的查看和编辑以内置引擎支持为准，直接 AI 读写前须先另存为 OOXML。保留原离线回退预览。AI 写入后空闲编辑器重新打开新版本，旧编辑器保存不能覆盖新文件。
-
-私有回调仅接受随机文件能力令牌，不接受 Aide 全局令牌，重查工作区、来源配置和锁屏代次；能力最多 8 小时。引擎为未修改的官方 CODE AppImage，版本与双架构摘要在 `docker/office-engine/source.json`。适配层 MIT 与 Collabora/LibreOffice 及其第三方许可证分别保留，原始许可资源包含在引擎中；企业支持和 SLA 不随包提供。实现范围见 [离线需求](../prd/2026-11-16-office-offline.md)。
-
----
-
-# Office 工具集：生成、DOCX 批注与 XLSX 编辑
-
-Office 插件在“插件”面板中登记 `office_create`；实际执行由 aide 原生工作区后端负责，以便在 SSH/SFTP 工作区沿用已认证会话。插件关闭后，模型不再获得生成工具；XLSX 文件查看器仍作为文件面板基础能力可用。离线使用容器中固定版本的
-`python-docx`、`openpyxl`、`python-pptx`，不依赖外部 Office 服务。
+现有独立 Office 插件设置和文件保留在工作区历史数据中。新版宿主直接提供文档能力并拒绝安装、启动或升级旧插件。之前的 Collabora 集成见[历史验收记录](../reviews/2026-11-16-office-offline.md)。
 
 ## 生成
 
-源码候选（2026-10-09）：模型工具 `office_create` 优先写当前工作空间绑定的自动系统文档目录（本地或工作空间 SFTP），`path` 相对该目录；未绑定非空路径时维持写当前工作区。配置失败时返回错误，不静默回落。此修订尚未做真实创建验收或部署，见[路径说明](../workspace-paths.md)。
+模型工具 `office_create` 优先写当前工作空间绑定的自动系统文档目录（本地或工作空间 SFTP），`path` 相对该目录；未绑定非空路径时维持写当前工作区。配置失败时返回错误，不静默回落。参见[路径说明](../workspace-paths.md)。
 
 | format | path 后缀 | content 结构 |
 | --- | --- | --- |
@@ -56,7 +42,7 @@ Office Python解析最多同时运行两个；Linux在导入解析库前设置51
 
 在工作目录或引用的 DOCX 预览器中选中文字并输入批注，会直接修改该 DOCX：批注正文保存在 `word/comments.xml`，选中原文在 `word/document.xml` 中有 `commentRangeStart` / `commentRangeEnd` / `commentReference`。再次从文件面板下载的是同一份带批注的文件。只读引用不能添加批注；保存时比较文件 SHA-256 与工作区身份，冲突返回 409，需重新打开。旧版侧车批注仍显示为“旧批注：未写入文件”，用户可逐条点“写入 DOCX”；复制成功后原侧车记录保留并标为“已写入文档”，避免破坏历史数据。锚点找不到时不会猜测写入，须重新选中原文添加。
 
-Office 插件提供 `office_comments(path)`，返回批注 ID、作者、正文、`anchorQuote` 与 `anchorValid`；`office_comment_edit(path,id,expectedText,newText)` 依据批注指示修改**该批注锚定的原文**。aide 应先读取批注并理解指示，再提供替换文本。只有锚点仍有效、`expectedText` 与当前原文逐字一致且没有嵌套/复杂对象时才写入；修改后批注保留，供用户复核。两个工具支持本地和 SSH 工作区。原有 `docx_list_comments`/`docx_add_comment` 也改用相同通道。
+Aide 内置工具提供 `office_comments(path)`，返回批注 ID、作者、正文、`anchorQuote` 与 `anchorValid`；`office_comment_edit(path,id,expectedText,newText)` 依据批注指示修改**该批注锚定的原文**。aide 应先读取批注并理解指示，再提供替换文本。只有锚点仍有效、`expectedText` 与当前原文逐字一致且没有嵌套/复杂对象时才写入；修改后批注保留，供用户复核。两个工具支持本地和 SSH 工作区。原有 `docx_list_comments`/`docx_add_comment` 也改用相同通道。
 
 API：`GET /api/office/docx/comments?path=...&source=...` 返回 `comments,hash,workspaceId,readOnly`；`POST` 以 `{path,source?,hash,workspaceId,quote,anchorIndex?,text,author?}` 新增；`PUT` 以 `{path,source?,hash,workspaceId,id,expectedText,newText}` 精确替换。预览器仅支持同一段落内的普通文本选区。修改使用 `python-docx` 保存原文件，复杂 Word 扩展、修订、宏不承诺完整往返；重要文件建议先备份。OOXML 结构已通过自动测试，WPS 桌面实际打开仍需单独验收。
 

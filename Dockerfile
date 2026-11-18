@@ -7,20 +7,6 @@ ARG NODE_BASE=node:24-bookworm-slim
 ARG GO_BASE=golang:1.26-bookworm
 FROM ${NODE_BASE} AS node
 FROM ${PYTHON_BASE} AS python
-# Office is bundled at build time; file-open never fetches packages or images.
-FROM python AS office-engine
-USER root
-WORKDIR /office-build
-COPY docker/office-engine ./docker/office-engine
-COPY scripts/install-office-engine.py ./scripts/install-office-engine.py
-ARG AIDE_OFFICE_ENGINE_OFFLINE=0
-RUN --mount=type=cache,target=/root/.cache/aide/office-engine \
-    python3 scripts/install-office-engine.py --output /opt/aide/office-engine \
-    $(if [ "$AIDE_OFFICE_ENGINE_OFFLINE" = 1 ]; then printf %s --offline; fi)
-COPY docker/office-engine/NOTICE /opt/aide/office-engine/NOTICE
-COPY scripts/run-office-engine.sh /opt/aide/office-engine/run
-RUN chmod 0755 /opt/aide/office-engine/run
-
 FROM ${GO_BASE} AS toolchain
 COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/
 ARG AIDE_CN_SOURCE_FALLBACK=1
@@ -34,7 +20,6 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # Source-development runtime: keep Python tooling aligned with the release
 # runtime while retaining Go and Node for `go run` and plugin hosting.
 FROM toolchain AS dev
-COPY --from=office-engine /opt/aide/office-engine /opt/aide/office-engine
 COPY scripts/install-office-preview.sh /usr/local/lib/aide/install-office-preview.sh
 RUN sh /usr/local/lib/aide/install-office-preview.sh
 ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
@@ -140,7 +125,6 @@ RUN --mount=type=cache,target=/toolchain \
 # 把随每次代码/前端改动而变的 COPY 二进制放到最后。这样改 Go/前端只失效最末 COPY 层，
 # pip 层稳定 CACHED、不重复联网下载；运行期镜像自包含、绝不联网 pip。
 FROM ${PYTHON_BASE} AS runtime
-COPY --from=office-engine /opt/aide/office-engine /opt/aide/office-engine
 ARG TARGETOS
 ARG TARGETARCH
 COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/

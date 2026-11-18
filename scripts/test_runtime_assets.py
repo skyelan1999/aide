@@ -57,6 +57,7 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
 
     assert Path('/opt/aide/licenses/platform/wqy-zenhei-copyright').is_file(), 'CAD font notice missing'
     assert shutil.which('soffice'), 'Office layout renderer missing'
+    assert Path('/opt/aide/licenses/platform/libreoffice-writer-copyright').is_file(), 'Writer runtime notice missing'
     subprocess.run(['/usr/bin/python3','-c','import uno'],check=True)
     assert Path('/opt/aide/licenses/platform/libreoffice-common-copyright').is_file(), 'Office notice missing'
     assert shutil.which('pdftoppm'), 'PDF compatibility renderer missing'

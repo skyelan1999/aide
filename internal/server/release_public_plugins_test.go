@@ -1,7 +1,6 @@
 package server
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -12,7 +11,6 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"io"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -290,31 +288,6 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 			t.Fatal("actual plugin authoring guide missing", got)
 		}
 		return []string{"installed authoring tool dispatches native protocol guide without changing registry"}
-	case "office":
-		useSourceOfficeScripts(t)
-		got := releasePublicNative(t, a, "office_create", map[string]any{"path": "public-release.docx", "format": "docx", "content": map[string]any{"blocks": []any{map[string]any{"type": "paragraph", "text": "published plugin office verification"}}}})
-		if !strings.Contains(got, "已生成") {
-			t.Fatal(got)
-		}
-		raw, err := a.workspace.ReadFile("public-release.docx")
-		if err != nil || len(raw) < 4 || string(raw[:2]) != "PK" {
-			t.Fatal("real DOCX artifact not written", err)
-		}
-		bundle, err := zip.NewReader(bytes.NewReader(raw), int64(len(raw)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		document, err := bundle.Open("word/document.xml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		xml, err := io.ReadAll(document)
-		document.Close()
-		if err != nil || !strings.Contains(string(xml), "published plugin office verification") {
-			t.Fatal("DOCX content did not match requested paragraph", err)
-		}
-		return []string{"actual installed native Office creates a real DOCX in the isolated workspace"}
-
 	case "archive-tools":
 		if err := a.workspace.WriteFile("fixture.txt", []byte("public archive round trip"), 0600); err != nil {
 			t.Fatal(err)
