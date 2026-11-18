@@ -20,9 +20,28 @@ import zipfile
 OFFICE_WORKER = r'''
 import json, pathlib, subprocess, sys, time, uuid
 import uno
+from com.sun.star.awt import Point, Size
 from com.sun.star.beans import PropertyValue
+from com.sun.star.drawing.FillStyle import NONE as NO_FILL
+from com.sun.star.drawing.LineStyle import NONE as NO_LINE
+from com.sun.star.table.CellContentType import EMPTY
 def props(**values):
     return tuple(PropertyValue(Name=k, Value=v) for k,v in values.items())
+def keep_merged_print_width(doc, sheet, area):
+    # SinglePageSheets uses Calc's used print extent, which can end before the
+    # empty continuation cells of a populated merge. Include its outermost
+    # column with an invisible drawing in the private preview document.
+    position, size = area.Position, area.Size
+    inset = 10  # 1/10 mm, just inside the edge to avoid including the next cell.
+    if size.Width <= inset or size.Height <= inset:
+        return
+    x = position.X + (inset if sheet.TableLayout else size.Width - inset)
+    shape = doc.createInstance('com.sun.star.drawing.RectangleShape')
+    shape.setPosition(Point(x, position.Y + inset))
+    shape.setSize(Size(1, 1))
+    sheet.DrawPage.add(shape)
+    shape.FillStyle = NO_FILL
+    shape.LineStyle = NO_LINE
 converter, source, profile, output, spec_path, metadata = sys.argv[1:]
 spec = json.loads(pathlib.Path(spec_path).read_text())
 name='aide_'+uuid.uuid4().hex
@@ -70,11 +89,20 @@ try:
         for sheet_name, layout in spec['rows'].items():
             sheet=doc.Sheets.getByName(sheet_name)
             auto_rows = set(layout['rows'])
+            outer_merge = None
+            outer_column = -1
+            visible_sheet = sheet.IsVisible
             for index in layout['rows']:
                 sheet.Rows.getByIndex(index).OptimalHeight=True
             for reference in layout['merges']:
                 area=sheet.getCellRangeByName(reference)
                 address=area.RangeAddress
+                if visible_sheet and address.EndColumn > max(address.StartColumn, outer_column) and area.getIsMerged():
+                    anchor=sheet.getCellByPosition(address.StartColumn,address.StartRow)
+                    if (anchor.Type != EMPTY and sheet.Rows.getByIndex(address.StartRow).IsVisible
+                            and sheet.Columns.getByIndex(address.StartColumn).IsVisible):
+                        outer_merge = area
+                        outer_column = address.EndColumn
                 if address.StartRow!=address.EndRow or address.StartRow not in auto_rows:continue
                 row=sheet.Rows.getByIndex(address.StartRow)
                 anchor=sheet.getCellByPosition(address.StartColumn,address.StartRow)
@@ -89,6 +117,8 @@ try:
                 minimum=int((max(anchor.CharHeight,anchor.CharHeightAsian)*1.25+2)*35.2778*(anchor.String.count('\n')+1))
                 height=max(row.Height,scratch.Rows.getByIndex(0).Height,minimum)
                 row.OptimalHeight=False;row.Height=height
+            if outer_merge is not None:
+                keep_merged_print_width(doc, sheet, outer_merge)
         measurement_doc.close(True);measurement_doc=None
     pdf_options = {'UseLosslessCompression': True, 'ExportBookmarks': True}
     if kind == 'calc':
