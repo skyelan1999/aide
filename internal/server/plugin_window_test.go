@@ -83,10 +83,14 @@ func TestPluginWorkbenchStaticWindowIsScopedAndSingleUse(t *testing.T) {
 	if !strings.Contains(page.Body.String(), `sandbox="allow-scripts" srcdoc="`+html.EscapeString(report)+`"`) || strings.Contains(page.Body.String(), a.token) {
 		t.Fatal("static window must contain the isolated package asset only")
 	}
-	for _, want := range []string{"connect-src 'none'", "frame-ancestors 'none'", "frame-src 'none'", "sandbox allow-scripts"} {
-		if !strings.Contains(page.Header().Get("Content-Security-Policy"), want) {
+	policy := page.Header().Get("Content-Security-Policy")
+	for _, want := range []string{"connect-src 'none'", "frame-ancestors 'none'", "frame-src 'none'"} {
+		if !strings.Contains(policy, want) {
 			t.Fatalf("missing safe policy: %s", want)
 		}
+	}
+	if strings.Contains(policy, "sandbox") {
+		t.Fatal("trusted window shell must stay same-origin so its owner can close it")
 	}
 	requireStatus(t, workbenchRequest(a, "GET", first.URL, false), 403)
 

@@ -35,7 +35,7 @@ type pluginWindowTicket struct {
 	Expires              time.Time
 }
 
-const pluginWindowCSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; form-action 'none'; base-uri 'none'; sandbox allow-scripts"
+const pluginWindowCSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; form-action 'none'; base-uri 'none'"
 
 func validatePluginWorkbenchWindows(windows map[string]PluginWorkbenchWindow) error {
 	if len(windows) > 8 {
@@ -201,7 +201,8 @@ func (a *App) servePluginWindow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Referrer-Policy", "no-referrer")
-	// Keep the plugin in a nested sandbox so its own navigation cannot replace
-	// the trusted window. frame-src prevents navigating that nested frame out.
+	// The trusted shell stays same-origin so the owning workbench can close it.
+	// Only its nested, opaque frame runs plugin code; frame-src blocks navigation
+	// from that frame to another document.
 	_, _ = fmt.Fprintf(w, `<!doctype html><meta charset="utf-8"><title>Aide</title><style>iframe{position:fixed;inset:0;width:100%%;height:100%%;border:0}</style><iframe title="Workbench view" sandbox="allow-scripts" srcdoc="%s"></iframe>`, html.EscapeString(string(page)))
 }
