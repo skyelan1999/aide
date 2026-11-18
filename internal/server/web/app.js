@@ -2140,10 +2140,31 @@ function shellApprovalExecutionIntentForUI(run, question) {
     impact: '命令可能修改文件、访问网络或改变外部状态；实际影响与可逆性无法仅由摘要确认。',
   };
 }
+function renderApprovalPurpose(container, purpose, showMissing = false) {
+  const goal = typeof purpose?.goal === 'string' ? purpose.goal.trim() : '';
+  const reason = typeof purpose?.reason === 'string' ? purpose.reason.trim() : '';
+  if (!goal || !reason) {
+    if (showMissing) container.append(el('p', 'muted approval-purpose-missing', t('模型未提供这一步的目的说明')));
+    return;
+  }
+  const panel = el('section', 'approval-intent approval-purpose');
+  panel.append(
+    el('strong', '', t('模型说明的操作目的')),
+    el('p', '', t('要完成的结果：{0}', goal)),
+    el('p', '', t('与当前任务的关系：{0}', reason)),
+  );
+  container.append(panel);
+}
+function renderFileApprovalPurpose(container, path, purpose, showMissing = false) {
+  const item = el('div', 'approval-file-purpose');
+  item.append(el('code', '', path));
+  renderApprovalPurpose(item, purpose, showMissing);
+  container.append(item);
+}
 function renderApprovalIntent(container, intent) {
   if (!intent) return;
   const panel = el('section', 'approval-intent');
-  panel.append(el('strong', '', t('批准后执行意图')));
+  panel.append(el('strong', '', t('批准后的实际操作')));
   if (intent.action) panel.append(el('p', '', t('操作：{0}', t(intent.action))));
   if (intent.workingDirectory) panel.append(el('p', '', t('工作目录：{0}', intent.workingDirectory)));
   for (const target of intent.targets || []) panel.append(el('p', '', t('目标：{0} · {1}', t(target.action), target.path)));
@@ -2173,6 +2194,8 @@ function renderApprovalReviews(run, box) {
     const item = el('div', 'approval-review');
     item.append(el('strong', '', t(labels[r.status] || '需手动确认')), el('p', '', r.reason), el('small','muted',r.at?new Date(r.at).toLocaleString():''), el('pre', '', r.command));
     const sources={assistant:'助理代审',model:'模型独立审核',human:'人工确认',remembered:'授权规则匹配'};item.append(el('small','muted',t(sources[r.source]||'历史来源未记录')));if(r.workspace)item.append(el('p','muted',r.workspace+' · '+(r.root?.displayHost||r.root?.containerAbs||'—')));if(r.ruleId)item.append(el('code','outcome-digest',r.ruleId),el('p','muted',r.expiresAt?new Date(r.expiresAt).toLocaleString():t('永久')));
+    renderApprovalPurpose(item, r.approvalPurpose);
+    for (const file of r.filePurposes || []) renderFileApprovalPurpose(item, file.path, file.purpose);
     details.append(item);
   });
   box.append(details);
@@ -2204,6 +2227,7 @@ function renderClarification(run, box, inTaskHub = false) {
     const status = el('div', 'approval-review');
     status.setAttribute('role', 'status');
     status.append(el('p', '', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作')));
+    renderApprovalPurpose(status, q.approvalPurpose, true);
     if (q.approvalKind === 'shell') renderApprovalIntent(status, shellApprovalExecutionIntentForUI(run, q));
     status.append(el('pre', 'approval-command', q.approvalKind === 'shell' ? q.command : q.question));
     box.append(status); return;
@@ -2212,15 +2236,20 @@ function renderClarification(run, box, inTaskHub = false) {
   if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
   if (q.approvalKind === 'shell') {
     card.append(el('div', 'clarify-question', t('执行命令前确认')));
+    renderApprovalPurpose(card, q.approvalPurpose, true);
     renderApprovalIntent(card, shellApprovalExecutionIntentForUI(run, q));
     const command = el('details', 'task-command-detail');
     command.append(el('summary', '', t('查看完整命令 · {0} 行', String(q.command || '').split('\n').length)), el('pre', 'approval-command', q.command));
     card.append(el('div', 'task-command-preview', String(q.command || '').split('\n').find(line => line.trim())?.slice(0,240) || ''), command);
   } else if (q.approvalKind === 'browser-site') {
     card.append(el('div', 'clarify-question', t('允许读取新网站？')));
+    renderApprovalPurpose(card, q.approvalPurpose, true);
     card.append(el('p', 'approval-help', t('请求域名：{0}', q.host || '')));
     card.append(el('pre', 'approval-command', q.url || ''));
-  } else card.append(el('div', 'clarify-question', q.question));
+  } else {
+    if (q.approvalKind) renderApprovalPurpose(card, q.approvalPurpose, true);
+    card.append(el('div', 'clarify-question', q.question));
+  }
   const key = `${sessionId}/${run.id}/${q.questionId || q.approvalRound || JSON.stringify(q)}`;
   const disable = value => card.querySelectorAll('button,input,select').forEach(x => x.disabled = value);
   // The approval decision is already persisted by the answer endpoint. Let the
@@ -2593,7 +2622,12 @@ function renderSession() {
     });
     if (run.files?.length) {
       const proposal = el('div', 'proposal'); proposal.append(el('h4', '', t("文件修改 · {0} 个文件", run.files.length)));
-      if (run.status === 'awaiting_approval') renderApprovalIntent(proposal, fileApprovalExecutionIntent(run.files));
+      if (run.status === 'awaiting_approval') {
+        for (const file of run.files) {
+          if (!file.applied) renderFileApprovalPurpose(proposal, proposalFileLabel(file), file.approvalPurpose, true);
+        }
+        renderApprovalIntent(proposal, fileApprovalExecutionIntent(run.files));
+      }
       for (const file of run.files) {
         const details = el('details'); details.dataset.key = run.id + ':' + (file.source || '') + ':' + file.path; details.open = openDetails.has(details.dataset.key);
         details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + proposalFileLabel(file)));

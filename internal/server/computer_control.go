@@ -108,6 +108,9 @@ func computerControlToolSchemas() []any {
 			properties["coordinateSpace"] = map[string]any{"type": "string", "enum": []string{"desktop", "image"}, "description": "默认 desktop 使用 inspect/OCR 返回的桌面坐标。按图片像素定位时必须选 image，并传 screenshotId，由服务端换算；不要自行缩放。"}
 			properties["screenshotId"] = map[string]any{"type": "string", "description": "coordinateSpace=image 时须传本会话最近 computer_snapshot 返回的 source.screenshotId"}
 		}
+		if toolAcceptsApprovalPurpose(name) {
+			properties[approvalPurposeField] = approvalPurposeSchema()
+		}
 		return map[string]any{"type": "function", "function": map[string]any{"name": name, "description": description, "parameters": map[string]any{"type": "object", "properties": properties, "required": requiredFields}}}
 	}
 	return []any{

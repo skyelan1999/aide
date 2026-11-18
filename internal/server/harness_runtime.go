@@ -132,7 +132,8 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 		return err.Error(), false
 	}
 	mode := a.settings.SandboxMode
-	remote := a.workspaceMode() == "ssh"
+	workspaceMode := a.workspaceMode()
+	remote := workspaceMode == "ssh"
 	cwd := task.AgentRoot.ContainerAbs
 	if cwd == "" {
 		cwd = a.containerAbs
@@ -144,13 +145,13 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 	remembered := false
 	if !readOnlyAllowed(command) {
 		var err error
-		remembered, err = a.approveRememberedShell(task, command)
+		remembered, err = a.approveRememberedShell(task, command, approvalPurposeFromContext(ctx))
 		if err != nil {
 			return "审批记录保存失败，命令未运行: " + err.Error(), false
 		}
 	}
 	if !readOnlyAllowed(command) && !remembered {
-		q, _ := json.Marshal(map[string]any{"question": "即将执行可能修改文件、改变外部状态或访问网络的命令。请检查完整命令后决定是否继续：\n\n" + command, "type": "confirm", "approvalKind": "shell", "command": command, "executionIntent": shellApprovalExecutionIntent(cwd)})
+		q, _ := json.Marshal(map[string]any{"question": "即将执行可能修改文件、改变外部状态或访问网络的命令。请检查完整命令后决定是否继续：\n\n" + command, "type": "confirm", "approvalKind": "shell", "command": command, "executionIntent": shellApprovalExecutionIntentForCommand(command, cwd, sandboxMode(mode), workspaceMode)})
 		if a.awaitUserAnswer(ctx, task, q) != "确认" {
 			return "用户未批准执行该命令；命令没有运行。", false
 		}

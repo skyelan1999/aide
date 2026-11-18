@@ -18,7 +18,7 @@ func TestRememberedApprovalReceiptAndOutcome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	matched, err := a.approveRememberedShell(task, "mkdir reports")
+	matched, err := a.approveRememberedShell(task, "mkdir reports", nil)
 	if err != nil || !matched || len(task.ApprovalReviews) != 1 {
 		t.Fatalf("match %v %v", matched, err)
 	}
@@ -46,7 +46,7 @@ func TestRememberedApprovalReceiptAndOutcome(t *testing.T) {
 	if snapshot.ApprovalReviews[0].Reason == "changed" {
 		t.Fatal("approval snapshot aliases live task")
 	}
-	matched, err = a.approveRememberedShell(task, "mkdir different")
+	matched, err = a.approveRememberedShell(task, "mkdir different", nil)
 	if err != nil || matched || len(task.ApprovalReviews) != 1 {
 		t.Fatal("nonmatching payload recorded")
 	}
@@ -56,14 +56,14 @@ func TestRememberedApprovalReceiptAndOutcome(t *testing.T) {
 		t.Fatal(err)
 	}
 	a.dataPath = badPath
-	matched, err = a.approveRememberedShell(task, "mkdir reports")
+	matched, err = a.approveRememberedShell(task, "mkdir reports", nil)
 	if err == nil || matched || len(task.ApprovalReviews) != 1 {
 		t.Fatal("failed persistence released command or changed history")
 	}
 	a.dataPath = oldData
 	// A valid rule without a durable session receipt must not release an operation.
 	delete(a.sessions, session.ID)
-	matched, err = a.approveRememberedShell(task, "mkdir reports")
+	matched, err = a.approveRememberedShell(task, "mkdir reports", nil)
 	if err == nil || matched {
 		t.Fatal("missing session granted approval")
 	}

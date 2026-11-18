@@ -13,9 +13,11 @@ import (
 func TestRunShellRequiresExactConfirmationForWrites(t *testing.T) {
 	for _, tc := range []struct {
 		name, answer string
+		withPurpose  bool
 		wantFile     bool
 	}{
-		{name: "confirmed", answer: "确认", wantFile: true},
+		{name: "confirmed", answer: "确认", withPurpose: true, wantFile: true},
+		{name: "declined_with_purpose", answer: "拒绝", withPurpose: true},
 		{name: "declined", answer: "拒绝", wantFile: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -29,8 +31,15 @@ func TestRunShellRequiresExactConfirmationForWrites(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			result := make(chan string, 1)
+			const command = "echo approved > shell-approval.txt"
+			args := map[string]any{"command": command}
+			wantPurpose := &approvalPurpose{Goal: "写一份审批回执", Reason: "验证已确认的操作才会落盘"}
+			if tc.withPurpose {
+				args[approvalPurposeField] = wantPurpose
+			}
+			argJSON, _ := json.Marshal(args)
 			go func() {
-				call := readCall("run_shell", `{"command":"echo approved > shell-approval.txt"}`)
+				call := readCall("run_shell", string(argJSON))
 				result <- a.executeToolCall(ctx, call, task, nil)
 			}()
 
@@ -42,14 +51,19 @@ func TestRunShellRequiresExactConfirmationForWrites(t *testing.T) {
 				a.mu.Unlock()
 				if status == "awaiting_clarification" {
 					var prompt struct {
-						Question string `json:"question"`
-						Type     string `json:"type"`
+						Question string           `json:"question"`
+						Type     string           `json:"type"`
+						Command  string           `json:"command"`
+						Purpose  *approvalPurpose `json:"approvalPurpose"`
 					}
 					if err := json.Unmarshal(question, &prompt); err != nil {
 						t.Fatal(err)
 					}
-					if prompt.Type != "confirm" || prompt.Question == "" || !strings.Contains(prompt.Question, "echo approved > shell-approval.txt") {
+					if prompt.Type != "confirm" || prompt.Command != command || !strings.Contains(prompt.Question, command) {
 						t.Fatalf("confirmation prompt must show exact command: %+v", prompt)
+					}
+					if tc.withPurpose && (prompt.Purpose == nil || *prompt.Purpose != *wantPurpose) || !tc.withPurpose && prompt.Purpose != nil {
+						t.Fatalf("unexpected pending purpose: %+v", prompt.Purpose)
 					}
 					break
 				}
@@ -73,6 +87,15 @@ func TestRunShellRequiresExactConfirmationForWrites(t *testing.T) {
 				}
 			case <-time.After(3 * time.Second):
 				t.Fatal("shell tool did not resume after answer")
+			}
+			a.mu.Lock()
+			receipt := task.ApprovalReviews[len(task.ApprovalReviews)-1]
+			a.mu.Unlock()
+			if receipt.Command != command || receipt.Fingerprint != approvalFingerprint(command) {
+				t.Fatalf("purpose changed the approved operation: %+v", receipt)
+			}
+			if tc.withPurpose && (receipt.Purpose == nil || *receipt.Purpose != *wantPurpose) || !tc.withPurpose && receipt.Purpose != nil {
+				t.Fatalf("unexpected durable purpose: %+v", receipt.Purpose)
 			}
 			_, err := os.Stat(filepath.Join(a.workPath, "shell-approval.txt"))
 			if tc.wantFile && err != nil {

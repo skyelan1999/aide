@@ -1,0 +1,77 @@
+{
+  "id": "approval-purpose-20261118",
+  "request": "审批意图需要写做这一段内容是为了干什么而不是机械性的调用工具，方便审批，把真实意图传出来",
+  "baseline": "409644a7038a7ce80056a5ea75fd1d0ab359b755",
+  "initial_status": "",
+  "acceptance": [
+    "Shell, file, browser and computer control approvals can state the intended result and relationship to the user task.",
+    "Commands, target paths, file contents, version evidence and applied effects retain their existing approval identities and checks.",
+    "Model explanation is bounded plain text, has no authority, and is unavailable to automatic adjudication. Old pending and historical records remain readable.",
+    "Separate build/test receipts cover real approval responses, persisted file and command receipts, and visible approval cards."
+  ],
+  "scope": [
+    "Aide native shell and file proposal flow",
+    "Aide browser-site, browser action and computer control questions",
+    "Approval questions and decision receipts",
+    "Workbench approval cards and history"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Record and display the purpose of the actual step so the user can judge why it is needed.",
+      "evidence": [
+        "Direct user request stored in request field"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use optional typed calling-model goal and reason, kept distinct from original action/effect and independently evaluated permission. Do not invent explanations for older data.",
+      "evidence": [
+        "internal/server/approval_purpose.go",
+        "internal/server/approval_intent.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Propagate the explanation through approval cards, file proposals and historical receipts without changing approval fingerprints or automatically granting permission.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted Go checks including both 16k context regressions pass. Real Chromium workbench showed goal, task relationship and exact command, preserved a rejected receipt, applied expected file bytes and displayed a legacy fallback without horizontal overflow at 390px. The browser fixture normalizes missing synthetic steps/files arrays to the regular API shape.",
+      "evidence": [
+        ".agent-state/approval-purpose/go-targeted-final.log",
+        ".agent-state/approval-purpose/approval-history.png",
+        ".agent-state/approval-purpose/file-approval.png",
+        ".agent-state/approval-purpose/legacy-approval-mobile.png",
+        "scripts/test_approval_persistence.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Task ledger identifies purpose as model-provided explanation and retains exact effect and authorization semantics. Source/schema descriptions and Chinese/English UI labels are aligned.",
+      "evidence": [
+        "docs/tasks/approval-purpose-20261118.json",
+        "internal/server/approval_purpose.go"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned browser and test application closed after collection. Synthetic fixtures and screenshots remain in the ignored evidence directory.",
+      "evidence": [
+        ".agent-state/approval-purpose/browser.log"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source branch ready for ordinary PR checks and merge. No app release or deployment.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorizes verified changes to merge and push incrementally. Aide application release and deployment are out of scope.",
+  "rollback": "Reverting the scoped source change retains old approvals, proposal contents and user decisions. Legacy clients ignore absent or additional display-only fields.",
+  "handoff": "Isolated worktree; no current-instance mutation. Existing effect evidence stays distinct from requested purpose."
+}

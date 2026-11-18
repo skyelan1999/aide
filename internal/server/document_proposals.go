@@ -168,7 +168,7 @@ func proposalVersion(b []byte, err error, f Change) error {
 	return fmt.Errorf("无法确认文件版本: %w", err)
 }
 
-func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, source, p, content string) (string, error) {
+func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, source, p, content string, purpose *approvalPurpose) (string, error) {
 	if err := safePath(p); err != nil {
 		return "", err
 	}
@@ -187,7 +187,7 @@ func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, sou
 	if err != nil {
 		return "", err
 	}
-	f := Change{Path: p, Source: source, Binding: binding, TargetPath: sourceProposalPath(src, p), Content: content}
+	f := Change{Path: p, Source: source, Binding: binding, TargetPath: sourceProposalPath(src, p), Content: content, ApprovalPurpose: purpose}
 	if v, ok := versions[sourceVersionKey(source, p)]; ok {
 		f.BaseHash = v.BaseHash
 		f.Before = v.Before
