@@ -29,18 +29,25 @@
 
   const item={host,frame,abort,focus,timer:null,services,plugin,port:null,bridge:null,listener:null,download:null,toolReady:null};active=item;item.reviewBack=reviewBack;const resumeReview=()=>{if(invalid())return;item.reviewing=false;host.hidden=false;reviewBack.hidden=true;};reviewBack.onclick=resumeReview;if(services.document)item.startupTimer=setTimeout(()=>{if(active===item&&!item.port)close(true,'error');},15000);button.focus();
   const invalid=()=>active!==item||services.blocked()||services.scope()!==scope||!services.enabled(plugin.id);
-  let terminalOutput=null;
+  let terminalOutput=null, terminalOutputPaused=false;
   item.stopTerminalOutput=(announce=false)=>{
    const stream=terminalOutput;if(!stream)return;
-   terminalOutput=null;stream.controller.abort();
+   terminalOutput=null;stream.controller?.abort();
    if(announce&&!invalid())item.port?.postMessage({protocol:1,event:'terminal.output.end',subscription:stream.subscription});
   };
-  async function forwardTerminalOutput(instance,stream){
-   const current=()=>terminalOutput===stream&&!invalid();
+  function startTerminalOutput(instance){
+   const stream=terminalOutput;
+   if(!stream||stream.controller||terminalOutputPaused||invalid())return;
+   const controller=new AbortController();
+   stream.controller=controller;
+   void forwardTerminalOutput(instance,stream,controller);
+  }
+  async function forwardTerminalOutput(instance,stream,controller){
+   const current=()=>terminalOutput===stream&&stream.controller===controller&&!invalid();
    let reader;
    try{
     const path='/plugins/terminal/workbench/'+instance+'/terminal-output?session='+stream.id+'&offset='+stream.offset;
-    const response=await services.api(path,{raw:true,redirect:'error',signal:stream.controller.signal});
+    const response=await services.api(path,{raw:true,redirect:'error',signal:controller.signal});
     if(!current()||!response.headers.get('Content-Type')?.startsWith('application/x-ndjson')||!response.body)throw Error('Terminal output unavailable');
     const decoder=new TextDecoder();reader=response.body.getReader();let pending='';
     while(current()){
@@ -59,7 +66,7 @@
     }
    }catch(_){/* The existing polling path takes over after the stream ends. */}
    finally{
-    if(terminalOutput===stream)item.stopTerminalOutput(true);
+    if(terminalOutput===stream&&stream.controller===controller)item.stopTerminalOutput(true);
     if(reader)void reader.cancel().catch(()=>{});
    }
   }
@@ -144,9 +151,9 @@
        }
        if(start){
         item.stopTerminalOutput();
-        const stream={id,offset,subscription,controller:new AbortController()};terminalOutput=stream;
+        terminalOutput={id,offset,subscription,controller:null};
         send({requestId:m.requestId,status:'result',result:{}});
-        void forwardTerminalOutput(b.instanceId,stream);
+        startTerminalOutput(b.instanceId);
        }else{
         if(terminalOutput?.subscription===subscription)item.stopTerminalOutput();
         send({requestId:m.requestId,status:'result',result:{}});
@@ -178,15 +185,26 @@
        if(m.method==='document.dirty'){item.documentDirty=m.arguments?.dirty===true;send({requestId:m.requestId,status:'result',result:{dirty:item.documentDirty}});return;}
        if(m.method==='document.error'){send({requestId:m.requestId,status:'result',result:{fallback:true}});setTimeout(()=>{if(active===item)close(true,'error');},0);return;}
        if(sequenced&&(requests>=100||Date.now()-renewed>20*60*1000)){
-        item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/renew',{method:'POST',body:'{}',signal:abort.signal});
-        const next=await item.inflight;
-        if(next.protocol!==1||!(/^[a-f0-9]{64}$/.test(next.instanceId)))throw Error('Invalid renewed bridge');
-        const previousStream=terminalOutput;item.stopTerminalOutput();b.instanceId=next.instanceId;requests=0;renewed=Date.now();
-        if(invalid()){services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId,{method:'DELETE'}).catch(()=>{});return;}
-        if(previousStream){
-         const stream={...previousStream,controller:new AbortController()};terminalOutput=stream;
-         void forwardTerminalOutput(b.instanceId,stream);
+        terminalOutputPaused=true;
+        // Renewal revokes the previous reader. Keep the subscription and offset until the new instance is known.
+        if(terminalOutput?.controller){
+         const controller=terminalOutput.controller;
+         terminalOutput.controller=null;
+         controller.abort();
         }
+        try{
+         item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/renew',{method:'POST',body:'{}',signal:abort.signal});
+         const next=await item.inflight;
+         if(next.protocol!==1||!(/^[a-f0-9]{64}$/.test(next.instanceId)))throw Error('Invalid renewed bridge');
+         b.instanceId=next.instanceId;requests=0;renewed=Date.now();
+        }catch(error){
+         item.stopTerminalOutput(true);
+         throw error;
+        }finally{
+         terminalOutputPaused=false;
+        }
+        if(invalid()){services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId,{method:'DELETE'}).catch(()=>{});return;}
+        startTerminalOutput(b.instanceId);
        }
        requests++;
        item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/call',{method:'POST',body,signal:abort.signal});

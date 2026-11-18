@@ -217,3 +217,41 @@ test('Terminal output reaches the frame while the regular input call is pending'
  finishInput({requestId:'r_1',status:'result',result:{}});await pending;
  f.controller.close();
 });
+
+test('Terminal output resumes at the forwarded offset when the previous reader ends during renewal',async()=>{
+ const first='a'.repeat(64),second='b'.repeat(64),session='d'.repeat(24);
+ const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,instanceId:first,terminalOutput:true}});
+ await f.controller.open({...bridgePlugin,id:'terminal'},f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');
+ f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1,requestIds:'monotonic'}});
+ const port=frame.contentWindow.messages[0].ports[0],streams=[];
+ let finishRenewal;
+ f.services.api=(url,options)=>{
+  if(url.endsWith('/renew'))return new Promise(resolve=>finishRenewal=resolve);
+  if(url.endsWith('/call'))return Promise.resolve({requestId:JSON.parse(options.body).requestId,status:'result',result:{}});
+  if(options.method==='DELETE')return Promise.resolve();
+  streams.push({url,signal:options.signal});
+  const start=streams.length===1?0:1;
+  const line={output:{id:session,start,data:start?'Yg==':'YQ==',offset:start+1,reset:false,more:false}};
+  let chunk=new TextEncoder().encode(JSON.stringify(line)+'\n');
+  return Promise.resolve({headers:{get:()=> 'application/x-ndjson'},body:{getReader:()=>({
+   read(){if(chunk){const value=chunk;chunk=null;return Promise.resolve({value});}return new Promise(resolve=>options.signal.addEventListener('abort',()=>resolve({done:true}),{once:true}));},
+   cancel:()=>Promise.resolve(),
+  })}});
+ };
+ await port.postMessage({protocol:1,requestId:'r_1',method:'terminal.output.start',arguments:{id:session,offset:0,subscription:3}});
+ for(let i=2;i<102;i++)await port.postMessage({protocol:1,requestId:'r_'+i,method:'tool.call',tool:'own_tool'});
+ const pending=port.postMessage({protocol:1,requestId:'r_102',method:'tool.call',tool:'own_tool'});
+ assert(streams[0].signal.aborted);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert(!port.received.some(value=>value.event==='terminal.output.end'));
+ finishRenewal({protocol:1,instanceId:second});await pending;
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(streams.map(stream=>stream.url),[
+  '/plugins/terminal/workbench/'+first+'/terminal-output?session='+session+'&offset=0',
+  '/plugins/terminal/workbench/'+second+'/terminal-output?session='+session+'&offset=1',
+ ]);
+ assert.deepEqual(port.received.filter(value=>value.event==='terminal.output').map(value=>[value.subscription,value.output.data]),[[3,'YQ=='],[3,'Yg==']]);
+ assert(!port.received.some(value=>value.event==='terminal.output.end'));
+ f.controller.close();
+});
