@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"net/http/httptest"
@@ -53,6 +55,60 @@ func TestWorkbenchReadRetryOnlyForIOErrors(t *testing.T) {
 		t.Fatalf("non-I/O read: reads=%d err=%v", reads, err)
 	}
 }
+
+func TestTerminalWorkbenchDigestChecksCurrentBytesAndFilePolicy(t *testing.T) {
+	a := &App{pluginsPath: t.TempDir()}
+	a.pluginRegistry.Plugins = []PluginManifest{{
+		ID: "terminal", Enabled: true,
+		Workbench: &PluginWorkbench{Protocol: 1, Title: "Terminal", Entry: "ui/workbench.html"},
+	}}
+	entry := filepath.Join(a.pluginsPath, "terminal", "ui", "workbench.html")
+	if err := os.MkdirAll(filepath.Dir(entry), 0755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(body []byte) {
+		t.Helper()
+		if err := os.WriteFile(entry, body, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	check := func(body []byte) {
+		t.Helper()
+		if digest, err := a.workbenchDigestLocked("terminal"); err != nil || digest != sha256.Sum256(body) {
+			t.Fatalf("digest mismatch for %d bytes: %v", len(body), err)
+		}
+	}
+	page := bytes.Repeat([]byte{'a'}, maxWorkbenchHTML)
+	write(page)
+	check(page)
+	stats, err := os.Stat(entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page[len(page)/2] = 'b'
+	write(page)
+	if err := os.Chtimes(entry, stats.ModTime(), stats.ModTime()); err != nil {
+		t.Fatal(err)
+	}
+	check(page)
+	for _, size := range []int{0, maxWorkbenchHTML + 1} {
+		write(bytes.Repeat([]byte{'a'}, size))
+		if _, err := a.workbenchDigestLocked("terminal"); err == nil {
+			t.Fatalf("accepted invalid workbench size %d", size)
+		}
+	}
+	write([]byte("fixture"))
+	if err := os.Rename(entry, entry+".real"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Base(entry)+".real", entry); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.workbenchDigestLocked("terminal"); err == nil {
+		t.Fatal("accepted a symlinked workbench entry")
+	}
+}
+
 func workbenchRequest(a *App, method, url string, auth bool) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(method, url, nil)
 	if auth {

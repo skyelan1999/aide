@@ -116,6 +116,13 @@ func VerifyIntegrity(data string) IntegrityReport {
 }
 
 func verifyIntegrity(data string, readFile func(string) ([]byte, error)) IntegrityReport {
+	return verifyIntegrityWithSessionDigests(data, readFile, nil)
+}
+
+// Cache only successful typed validation by exact content. Every scan still
+// reads all bytes of an unchanged session, without allocating or decoding it.
+// A nil cache retains the independent full validation used by other callers.
+func verifyIntegrityWithSessionDigests(data string, readFile func(string) ([]byte, error), known map[string]string) IntegrityReport {
 	rep := IntegrityReport{CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 
 	// ① 程序层哈希比对
@@ -166,9 +173,24 @@ func verifyIntegrity(data string, readFile func(string) ([]byte, error)) Integri
 		markUnreadable(SettingsPath(data))
 	}
 	// 会话文件可逐条解析（坏文件只记录，不阻断）
+	var verified map[string]string
+	if known != nil {
+		verified = make(map[string]string, len(known))
+	}
 	for _, dir := range sessionBucketDirs(data) {
 		ents, _ := filepath.Glob(filepath.Join(dir, "session-*.json"))
 		for _, f := range ents {
+			if previous := known[f]; previous != "" {
+				digest, err := binarySHA256(f)
+				if err != nil {
+					markUnreadable(f)
+					continue
+				}
+				if digest == previous {
+					verified[f] = digest
+					continue
+				}
+			}
 			b, err := readFile(f)
 			if err != nil {
 				markUnreadable(f)
@@ -177,7 +199,17 @@ func verifyIntegrity(data string, readFile func(string) ([]byte, error)) Integri
 			var s Session
 			if json.Unmarshal(b, &s) != nil {
 				markInvalid(f, b)
+			} else if verified != nil {
+				// Hash the exact bytes that passed parsing, even if the file changed
+				// between the streaming check and this fresh read.
+				verified[f] = hash(b)
 			}
+		}
+	}
+	if known != nil {
+		clear(known)
+		for file, digest := range verified {
+			known[file] = digest
 		}
 	}
 	rep.Checks = append(rep.Checks, IntegrityCheck{Name: "keyfiles", OK: len(corrupt) == 0, Detail: joinMissing(corrupt)})

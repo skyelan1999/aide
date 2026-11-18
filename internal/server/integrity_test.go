@@ -33,6 +33,48 @@ func TestIntegrityBaseline(t *testing.T) {
 	}
 }
 
+func TestIntegritySessionDigestReusesOnlyExactValidatedBytes(t *testing.T) {
+	data := t.TempDir()
+	if err := BuildBaseline(data); err != nil {
+		t.Fatal(err)
+	}
+	file := SessionPath(data, "exact-digest", "active")
+	good, malformed := []byte(`{"id":"x"}`), []byte(`{"id":123}`)
+	if err := os.WriteFile(file, good, 0600); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	typedReads := 0
+	read := func(path string) ([]byte, error) {
+		if path == file {
+			typedReads++
+		}
+		return os.ReadFile(path)
+	}
+	known := make(map[string]string)
+	if rep := verifyIntegrityWithSessionDigests(data, read, known); rep.Status != IntegrityOK || known[file] != hash(good) {
+		t.Fatalf("initial typed validation failed: %+v", rep)
+	}
+	if rep := verifyIntegrityWithSessionDigests(data, read, known); rep.Status != IntegrityOK || typedReads != 1 {
+		t.Fatalf("identical bytes should only need streaming verification: %+v, typed reads %d", rep, typedReads)
+	}
+	if len(good) != len(malformed) {
+		t.Fatal("fixture must preserve file size")
+	}
+	if err := os.WriteFile(file, malformed, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(file, info.ModTime(), info.ModTime()); err != nil {
+		t.Fatal(err)
+	}
+	if rep := verifyIntegrityWithSessionDigests(data, read, known); rep.invalidFiles[file] != hash(malformed) || typedReads != 2 || known[file] != "" {
+		t.Fatalf("same-size replacement must undergo typed validation again: %+v, typed reads %d", rep, typedReads)
+	}
+}
+
 // TestIntegrityMissingDir 缺失目录 → 自愈重建。
 func TestIntegrityMissingDir(t *testing.T) {
 	data := t.TempDir()

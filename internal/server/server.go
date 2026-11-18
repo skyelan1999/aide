@@ -662,9 +662,10 @@ type App struct {
 	assistantUnlocked       map[string]bool
 	masterPasswordAttempts  masterPasswordAttempts
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
-	integrityMu      sync.Mutex
-	integrityRep     IntegrityReport
-	integrityUpgrade *integrityUpgrade
+	integrityMu             sync.Mutex
+	integrityRep            IntegrityReport
+	integritySessionDigests map[string]string // protected by integrityMu after startup
+	integrityUpgrade        *integrityUpgrade
 }
 
 // setIntegrity 记录最近一次完整性校验/自愈报告（healthz 与 /api/debug 读取）。
@@ -928,7 +929,8 @@ func New(work, reference, data string) (*App, error) {
 	a.assistantResultsWake = make(chan struct{}, 1)
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
 	_ = BuildBaseline(data)
-	a.setIntegrity(SelfHeal(data, VerifyIntegrity(data)))
+	a.integritySessionDigests = make(map[string]string)
+	a.setIntegrity(SelfHeal(data, verifyIntegrityWithSessionDigests(data, os.ReadFile, a.integritySessionDigests)))
 	a.prepareImageIntegrityUpgrade()
 	a.background(a.runIntegrityChecks)
 	b, err := os.ReadFile(AccessTokenPath(data))

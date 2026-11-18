@@ -4,7 +4,6 @@ import (
 	"aide/internal/messaging"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -50,8 +49,8 @@ func (a *App) workbenchBridgeLocked(id, key string, full bool) (*pluginWorkbench
 		return nil, errors.New("plugin disabled")
 	}
 	if full {
-		page, err := a.workbenchPageLocked(id)
-		if err != nil || sha256.Sum256(page) != b.Ticket.Digest || a.pluginPackageDigestLocked(id) != b.Package {
+		digest, err := a.workbenchDigestLocked(id)
+		if err != nil || digest != b.Ticket.Digest || a.pluginPackageDigestLocked(id) != b.Package {
 			return nil, errors.New("plugin changed; reopen workbench")
 		}
 	}
