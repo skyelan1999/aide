@@ -1,0 +1,72 @@
+{
+  "id": "office-xlsx-cells-20261118",
+  "request": "Aide XLSX 预览单元格按钮显示 Office script failed",
+  "baseline": "4d77643dff6adc5f0afd620e3824d658159a5a31",
+  "initial_status": "Clean isolated worktree at the recorded main revision.",
+  "acceptance": [
+    "Open XLSX Cells when the first tab is an Excel chart sheet.",
+    "Show the regular worksheets in workbook order and allow existing authorized cell edits to save and read back.",
+    "Explain how to preview a chart sheet when specifically requested in Cells."
+  ],
+  "scope": [
+    "Built-in XLSX cell view and its HTTP regression tests. Preserve LibreOffice layout, workbook access checks and current parser limits."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "The user reported an Office script failure when clicking XLSX Cells. A synthetic workbook with a chart sheet first reproduces the error through the same handler. The exact workbook and detailed error from the reported instance were unavailable.",
+      "evidence": [
+        ".agent-state/office-xlsx-cells/baseline-go.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "The Cells selector and default use worksheets that provide a cell grid. Explicit chart-sheet requests direct the user to the existing layout preview.",
+      "evidence": [
+        "scripts/office/office_artifact.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Filtered the XLSX cell-view sheet list while retaining the existing workbook order and write API.",
+      "evidence": [
+        "scripts/office/office_artifact.py",
+        "internal/server/office_artifact_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "The new chart-first fixture failed before the adjustment with HTTP 400 and Chartsheet.max_row missing. Five focused Go tests passed after the adjustment using a network-disabled Linux ARM64 container, Go 1.26.11 and openpyxl 3.1.5. The regression covers default and alternate worksheets, edit and readback, and the explicit chart-sheet response. Existing client file request ownership tests passed. Browser acceptance is separate from this source handoff.",
+      "evidence": [
+        ".agent-state/office-xlsx-cells/baseline-go.log",
+        ".agent-state/office-xlsx-cells/candidate-go.log",
+        ".agent-state/office-xlsx-cells/fixture/chart-first.xlsx",
+        "scripts/file-open-request-ownership.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded the reproduction, artifact, verification and scope of the fix in this task file.",
+      "evidence": [
+        "docs/tasks/office-xlsx-cells-20261118.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed the disposable test containers and dedicated Go cache. Kept the synthetic workbook and focused test logs with the isolated worktree.",
+      "evidence": [
+        ".agent-state/office-xlsx-cells/cleanup.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source handoff. The daily Aide image and workbook data were untouched.",
+      "evidence": [
+        "docs/tasks/office-xlsx-cells-20261118.json"
+      ]
+    }
+  },
+  "release_authorization": "Local isolated implementation and verification only.",
+  "rollback": "Revert the source change. This fix requires no data migration.",
+  "handoff": "The confirmed chart-first fault is covered by an HTTP regression. No private workbook contents were inspected. Verify the reported workbook separately if the detailed error differs."
+}
