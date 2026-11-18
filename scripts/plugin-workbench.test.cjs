@@ -8,7 +8,7 @@ function fixture(response={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64)}){
  class MessageChannel{constructor(){const make=()=>({received:[],closed:false,start(){},close(){this.closed=true;},postMessage(value){this.other.received.push(value);return this.other.onmessage?.({data:value});}});this.port1=make();this.port2=make();this.port1.other=this.port2;this.port2.other=this.port1;}}
  const urls=new Set();const urlAPI={createObjectURL(){const u='blob:test-'+urls.size;urls.add(u);return u;},revokeObjectURL(u){urls.delete(u);}};
  class MutationObserver{constructor(fn){themeChange=fn;}observe(){}disconnect(){themeChange=null;}}
- const window={confirm:()=>confirmResult,open:(...args)=>opened.push(args),addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,URLSearchParams,encodeURIComponent,URL:urlAPI,crypto:{randomUUID:()=>"speech-session"},setTimeout:()=>1,clearTimeout:()=>{},setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
+ const window={confirm:()=>confirmResult,open:(...args)=>opened.push(args),addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,TextDecoder,URLSearchParams,encodeURIComponent,URL:urlAPI,crypto:{randomUUID:()=>"speech-session"},setTimeout:()=>1,clearTimeout:()=>{},setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
  return{modal:value=>modal=value,confirm:value=>confirmResult=value,opened,window,root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
 }
 const plugin={id:'test',enabled:true,workbench:{protocol:1,title:'Test'}};
@@ -182,4 +182,38 @@ test('manual source selection requires the host grant and keeps commit on truste
   if(grant){await port.postMessage({protocol:1,requestId:'stage',method:'document.save.request',arguments:{}});const save=f.nodes.find(n=>n.textContent==='保存到所选文件');assert(save&&!save.hidden);const count=calls.length;await port.postMessage({protocol:1,requestId:'forged',method:'document.save.commit',arguments:{}});assert.equal(calls.length,count);await save.onclick({isTrusted:false});assert.equal(calls.length,count);await save.onclick({isTrusted:true});assert.equal(calls.at(-1).method,'document.save.commit');assert.equal(port.received.at(-1).event,'document.saved');}
   f.controller.close(true);
  }
+});
+
+test('Terminal output reaches the frame while the regular input call is pending',async()=>{
+ const response={...bridgeResponse,bridge:{...bridgeResponse.bridge,terminalOutput:true}};
+ const f=fixture(response),terminal={...bridgePlugin,id:'terminal'};
+ await f.controller.open(terminal,f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');
+ f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1,requestIds:'monotonic'}});
+ const handshake=frame.contentWindow.messages[0],port=handshake.ports[0],session='a'.repeat(24);
+ assert(handshake.data.capabilities.includes('terminal.output'));
+ assert(!JSON.stringify(handshake.data).includes(response.bridge.instanceId));
+ let streamOptions,finishInput;
+ const wire=new TextEncoder().encode(JSON.stringify({output:{id:session,start:1,data:'YQ==',offset:2,reset:false,more:false}})+'\n');
+ const chunks=[wire.slice(0,19),wire.slice(19)];
+ f.services.api=(url,options)=>{
+  if(url.endsWith('/call'))return new Promise(resolve=>finishInput=resolve);
+  if(options.method==='DELETE')return Promise.resolve();
+  assert.equal(url,'/plugins/terminal/workbench/'+response.bridge.instanceId+'/terminal-output?session='+session+'&offset=1');
+  assert.equal(options.raw,true);assert.equal(options.redirect,'error');streamOptions=options;
+  return Promise.resolve({headers:{get:()=> 'application/x-ndjson; charset=utf-8'},body:{getReader:()=>({
+   read:()=>chunks.length?Promise.resolve({value:chunks.shift()}):new Promise(resolve=>options.signal.addEventListener('abort',()=>resolve({done:true}),{once:true})),
+   cancel:()=>Promise.resolve(),
+  })}});
+ };
+ const pending=port.postMessage({protocol:1,requestId:'r_1',method:'tool.call',tool:'own_tool'});
+ await port.postMessage({protocol:1,requestId:'r_2',method:'terminal.output.start',arguments:{id:session,offset:1,subscription:5}});
+ await new Promise(resolve=>setImmediate(resolve));
+ const output=port.received.find(value=>value.event==='terminal.output');
+ assert.equal(output.subscription,5);assert.equal(output.output.data,'YQ==');
+ assert(!port.received.some(value=>value.requestId==='r_1'));
+ await port.postMessage({protocol:1,requestId:'r_3',method:'terminal.output.stop',arguments:{subscription:5}});
+ assert(streamOptions.signal.aborted);assert(!port.received.some(value=>value.event==='terminal.output.end'));
+ finishInput({requestId:'r_1',status:'result',result:{}});await pending;
+ f.controller.close();
 });

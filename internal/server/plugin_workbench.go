@@ -45,6 +45,9 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 	if w.Viewer != nil && w.Viewer.Protocol != 1 {
 		return errors.New("unsupported workbench viewer protocol")
 	}
+	if w.TerminalOutput != 0 && w.TerminalOutput != 1 {
+		return errors.New("unsupported Terminal output protocol")
+	}
 	if err := validateWorkbenchFileAccess(w.FileAccess); err != nil {
 		return err
 	}
@@ -301,6 +304,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			bridge := &pluginWorkbenchBridge{Document: document, Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
+			bridge.TerminalOutput = id == "terminal" && a.terminalOutputEnabledLocked(bridge.Package)
 			if id == "terminal" && p.Workbench.Viewer != nil {
 				if page, err := a.readTerminalViewerWindow(); err == nil {
 					bridge.ViewerWindow = sha256.Sum256(page)
@@ -311,7 +315,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "terminalOutput": bridge.TerminalOutput, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
 			break
 		}
 	}

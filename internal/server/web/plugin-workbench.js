@@ -8,7 +8,7 @@
    out[side]={path:v.path,source:v.source,directory:v.directory===true};
   }return out.left?out:undefined;
  }
- function close(force=false,reason='close'){if(!active)return;const item=active;if(item.documentDirty&&!force&&!window.confirm(item.services.t('插件中有未保存修改，仍要离开吗？')))return false;active=null;item.pendingViewerPopup?.close();item.stopSpeech?.();clearInterval(item.timer);if(item.startupTimer)clearTimeout(item.startupTimer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.reviewBack?.remove();item.focus?.focus();item.services.onClose?.(reason,!!item.documentDirty);return true;}
+ function close(force=false,reason='close'){if(!active)return;const item=active;if(item.documentDirty&&!force&&!window.confirm(item.services.t('插件中有未保存修改，仍要离开吗？')))return false;active=null;item.stopTerminalOutput?.();item.pendingViewerPopup?.close();item.stopSpeech?.();clearInterval(item.timer);if(item.startupTimer)clearTimeout(item.startupTimer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.reviewBack?.remove();item.focus?.focus();item.services.onClose?.(reason,!!item.documentDirty);return true;}
  async function open(plugin,services){
   if(!services.document&&!services.inPage&&services.openPage)return services.openPage(plugin,services.selection);
   if(close(false,'replace')===false)return false;if(services.blocked()||!plugin.enabled)return false;
@@ -29,6 +29,40 @@
 
   const item={host,frame,abort,focus,timer:null,services,plugin,port:null,bridge:null,listener:null,download:null,toolReady:null};active=item;item.reviewBack=reviewBack;const resumeReview=()=>{if(invalid())return;item.reviewing=false;host.hidden=false;reviewBack.hidden=true;};reviewBack.onclick=resumeReview;if(services.document)item.startupTimer=setTimeout(()=>{if(active===item&&!item.port)close(true,'error');},15000);button.focus();
   const invalid=()=>active!==item||services.blocked()||services.scope()!==scope||!services.enabled(plugin.id);
+  let terminalOutput=null;
+  item.stopTerminalOutput=(announce=false)=>{
+   const stream=terminalOutput;if(!stream)return;
+   terminalOutput=null;stream.controller.abort();
+   if(announce&&!invalid())item.port?.postMessage({protocol:1,event:'terminal.output.end',subscription:stream.subscription});
+  };
+  async function forwardTerminalOutput(instance,stream){
+   const current=()=>terminalOutput===stream&&!invalid();
+   let reader;
+   try{
+    const path='/plugins/terminal/workbench/'+instance+'/terminal-output?session='+stream.id+'&offset='+stream.offset;
+    const response=await services.api(path,{raw:true,redirect:'error',signal:stream.controller.signal});
+    if(!current()||!response.headers.get('Content-Type')?.startsWith('application/x-ndjson')||!response.body)throw Error('Terminal output unavailable');
+    const decoder=new TextDecoder();reader=response.body.getReader();let pending='';
+    while(current()){
+     const {value,done}=await reader.read();if(done||!current())break;
+     pending+=decoder.decode(value,{stream:true});
+     let end;
+     while((end=pending.indexOf('\n'))>=0){
+      if(end>90*1024)throw Error('Terminal output line too large');
+      const line=JSON.parse(pending.slice(0,end));pending=pending.slice(end+1);
+      if(line.output&&current()){
+       stream.offset=line.output.offset;
+       item.port?.postMessage({protocol:1,event:'terminal.output',subscription:stream.subscription,output:line.output});
+      }
+     }
+     if(pending.length>90*1024)throw Error('Terminal output line too large');
+    }
+   }catch(_){/* The existing polling path takes over after the stream ends. */}
+   finally{
+    if(terminalOutput===stream)item.stopTerminalOutput(true);
+    if(reader)void reader.cancel().catch(()=>{});
+   }
+  }
   let speechSession='',speechRecognition=null,speechPoll=null,speechTimer=null;
   const speechEvent=(state,message,text)=>{if(!invalid())item.port?.postMessage({protocol:1,event:'speech.local',result:{state,message,...(typeof text==='string'?{text:text.slice(0,60000)}:{})}});};
   const nativeSpeech=()=>window.AideNativeSpeech;
@@ -97,9 +131,28 @@
      const channel=new MessageChannel();item.port=channel.port1;const seen=new Set(),sequenced=e.data.requestIds==='monotonic';let highest=0,busy=false,requests=0,renewed=Date.now();
      item.port.onmessage=async event=>{const m=event.data;if(invalid()){close(true);return;}if(!m||m.protocol!==1||typeof m.requestId!=='string'||!(/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(m.requestId||'')))return;
       const send=value=>{if(!invalid())item.port?.postMessage(value);};
-      if(busy){send({requestId:m.requestId,status:'error',error:'A call is already pending'});return;}
+      const terminalStreamMethod=m.method==='terminal.output.start'||m.method==='terminal.output.stop';
+      if(busy&&!terminalStreamMethod){send({requestId:m.requestId,status:'error',error:'A call is already pending'});return;}
       if(sequenced){const match=/^r_([1-9][0-9]{0,14})$/.exec(m.requestId),number=match?Number(match[1]):0;if(!Number.isSafeInteger(number)||number<=highest){send({requestId:m.requestId,status:'error',error:'Invalid or replayed sequence'});return;}highest=number;}
       else{if(seen.has(m.requestId)||seen.size>=128){send({requestId:m.requestId,status:'error',error:'Duplicate or exhausted request'});return;}seen.add(m.requestId);}
+      if(terminalStreamMethod){
+       const {id,offset,subscription}=m.arguments||{};
+       const start=m.method==='terminal.output.start';
+       if(plugin.id!=='terminal'||b.terminalOutput!==true||!Number.isSafeInteger(subscription)||subscription<1||
+          (start&&(typeof id!=='string'||!/^[a-f0-9]{24}$/.test(id)||!Number.isSafeInteger(offset)||offset<0))){
+        send({requestId:m.requestId,status:'error',error:'Terminal output request not permitted'});return;
+       }
+       if(start){
+        item.stopTerminalOutput();
+        const stream={id,offset,subscription,controller:new AbortController()};terminalOutput=stream;
+        send({requestId:m.requestId,status:'result',result:{}});
+        void forwardTerminalOutput(b.instanceId,stream);
+       }else{
+        if(terminalOutput?.subscription===subscription)item.stopTerminalOutput();
+        send({requestId:m.requestId,status:'result',result:{}});
+       }
+       return;
+      }
       if(m.method==='speech.local'){
        if(plugin.workbench.microphone!==true||plugin.workbench.onDeviceSpeech!==true){send({requestId:m.requestId,status:'error',error:'Speech capability not declared'});return;}
        if(m.arguments?.action==='stop'){void item.stopSpeech();send({requestId:m.requestId,status:'result',result:{stopped:true}});return;}
@@ -128,8 +181,12 @@
         item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/renew',{method:'POST',body:'{}',signal:abort.signal});
         const next=await item.inflight;
         if(next.protocol!==1||!(/^[a-f0-9]{64}$/.test(next.instanceId)))throw Error('Invalid renewed bridge');
-        b.instanceId=next.instanceId;requests=0;renewed=Date.now();
+        const previousStream=terminalOutput;item.stopTerminalOutput();b.instanceId=next.instanceId;requests=0;renewed=Date.now();
         if(invalid()){services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId,{method:'DELETE'}).catch(()=>{});return;}
+        if(previousStream){
+         const stream={...previousStream,controller:new AbortController()};terminalOutput=stream;
+         void forwardTerminalOutput(b.instanceId,stream);
+        }
        }
        requests++;
        item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/call',{method:'POST',body,signal:abort.signal});
@@ -164,7 +221,7 @@
       if(saved.result.warning)services.toast(saved.result.warning);
      }catch(error){if(!invalid())services.toast(error.message);}finally{item.inflight=null;busy=false;documentSave.disabled=false;}};
      const sendDocumentEvent=result=>{if(!invalid())item.port?.postMessage({protocol:1,event:'document.saved',result});};
-     item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:[...(plugin.workbench.microphone===true&&plugin.workbench.onDeviceSpeech===true?['speech.local']:[]),...(b.hostComponent===true&&plugin.id==='codex-bridge'?['host.component.codex-bridge']:[]),...(b.viewer===true&&b.viewerWindow===true&&plugin.id==='terminal'?['viewer.window']:[]),'bridge.renew','daemon.detach','file.manual-save',...(b.fileAccess?['files.select']:[]),...(b.projectMessages?['project.messages']:[]),...(b.mobileCapture?['capture.auto-network']:[]),...(b.mobileCapture?['capture',...(b.mobileCaptureVersion>=2?['capture.locations','capture.unclassified',...(b.mobileCaptureVersion>=3?['capture.person-binding']:[])]:[])]:[]),...(b.document?['document.read','document.save']:[])],selection:selection(services.selection)},'*',[channel.port2]);
+     item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:[...(plugin.workbench.microphone===true&&plugin.workbench.onDeviceSpeech===true?['speech.local']:[]),...(b.hostComponent===true&&plugin.id==='codex-bridge'?['host.component.codex-bridge']:[]),...(b.viewer===true&&b.viewerWindow===true&&plugin.id==='terminal'?['viewer.window']:[]),...(b.terminalOutput===true&&plugin.id==='terminal'?['terminal.output']:[]),'bridge.renew','daemon.detach','file.manual-save',...(b.fileAccess?['files.select']:[]),...(b.projectMessages?['project.messages']:[]),...(b.mobileCapture?['capture.auto-network']:[]),...(b.mobileCapture?['capture',...(b.mobileCaptureVersion>=2?['capture.locations','capture.unclassified',...(b.mobileCaptureVersion>=3?['capture.person-binding']:[])]:[])]:[]),...(b.document?['document.read','document.save']:[])],selection:selection(services.selection)},'*',[channel.port2]);
     };
    }
    frame.src=result.url;return true;

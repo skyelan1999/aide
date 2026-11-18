@@ -333,6 +333,7 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
   });
 }
 async function api(path, options = {}) {
+  const {raw = false, ...requestOptions} = options;
   const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = { 'Authorization': 'Bearer ' + state.token, ...(isForm ? {} : { 'Content-Type': 'application/json' }), ...options.headers };
   const method = String(options.method || 'GET').toUpperCase();
@@ -343,7 +344,7 @@ async function api(path, options = {}) {
   // retried: a replay could duplicate a run or a file change.
   for (let attempt = 0; ; attempt++) {
     try {
-      response = await fetch('/api' + path, { ...options, headers });
+      response = await fetch('/api' + path, { ...requestOptions, headers });
       break;
     } catch (cause) {
       if (cause?.name === 'AbortError' || cause?.name === 'TimeoutError') throw cause;
@@ -357,6 +358,7 @@ async function api(path, options = {}) {
       throw error;
     }
   }
+  if (raw && response.ok) return response;
   let data;
   try {
     data = await response.json();

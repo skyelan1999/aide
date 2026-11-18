@@ -52,6 +52,7 @@ type PluginWorkbench struct {
 	ProjectMessages bool                       `json:"projectMessages,omitempty"`
 	MobileCapture   bool                       `json:"mobileCapture,omitempty"`
 	Viewer          *PluginWorkbenchViewer     `json:"viewer,omitempty"`
+	TerminalOutput  int                        `json:"terminalOutput,omitempty"`
 	FileHandler     *PluginFileHandler         `json:"fileHandler,omitempty"`
 	FileAccess      *PluginWorkbenchFileAccess `json:"fileAccess,omitempty"`
 	FileExtensions  []string                   `json:"fileExtensions,omitempty"`
