@@ -3,7 +3,7 @@
     "type": "function",
     "function": {
       "name": "office_document_search",
-      "description": "原文搜索或RAG片段检索，复用星图文档服务。original逐字匹配提取原文，rag本地TF-IDF片段排序（非向量）。返回文件指纹、片段编号及页/段落/工作表/幻灯片定位；只读，无OCR，不代表全文已读。支持本地/SSH工作区及已启用的文件来源；MCP仅检索已发现工具说明，不自动调用工具。",
+      "description": "Search extracted document text or retrieve source excerpts. Reuse the same query, mode, source and path with nextCursor. Cite returned locators; no OCR.",
       "parameters": {
         "type": "object",
         "required": [
@@ -28,8 +28,7 @@
             "type": "string"
           },
           "cursor": {
-            "type": "string",
-            "description": "上一结果的 nextCursor；保持 query、mode、source、path 不变，继续检查下一批"
+            "type": "string"
           }
         }
       }
@@ -39,7 +38,7 @@
     "type": "function",
     "function": {
       "name": "office_document_read",
-      "description": "分页读取 DOCX/XLSX/PPTX 的可定位文本块、段落、工作表单元格、幻灯片及文件 hash。支持本地/SSH工作区及 AI 可见来源；nextOffset 非空时继续读取，不声称全文已读。仅返回已保存内容。",
+      "description": "Read saved DOCX, XLSX or PPTX blocks with IDs and file hash. Use nextOffset for later blocks. The source must be visible to AI.",
       "parameters": {
         "type": "object",
         "required": [
@@ -64,7 +63,7 @@
     "type": "function",
     "function": {
       "name": "office_document_edit",
-      "description": "按最新 office_document_read 返回的 hash、文本块 id 和 expectedText 精确修改 DOCX/XLSX/PPTX。每批最多 100 项，全部校验后原子保存。复杂字段和对象不修改。文件变化后须重新读取。",
+      "description": "Replace matching DOCX, XLSX or PPTX blocks using their latest IDs, exact expectedText and file hash. Writes are atomic and reject stale versions.",
       "parameters": {
         "type": "object",
         "required": [
@@ -114,7 +113,7 @@
     "type": "function",
     "function": {
       "name": "office_create",
-      "description": "直接生成 DOCX/XLSX/PPTX 并优先写入当前工作空间绑定的自动系统文档目录（本地或工作空间 SFTP）；未绑定时写入工作区，不覆盖同名文件。docx content={title,blocks:[{type:\"heading\"|\"paragraph\",text,level?}|{type:\"table\",rows:[[...]]}]}；xlsx content={sheets:[{name,rows:[[...]]}]}；pptx content={slides:[{title,body}]}。",
+      "description": "Create a DOCX, XLSX or PPTX without overwriting. Use system-docs if bound, otherwise the workspace. DOCX uses title/blocks, XLSX sheets, PPTX slides. Read back the saved file.",
       "parameters": {
         "type": "object",
         "required": [
@@ -124,8 +123,7 @@
         ],
         "properties": {
           "path": {
-            "type": "string",
-            "description": "自动系统文档目录的相对路径；未绑定时相对工作区，后缀与格式一致"
+            "type": "string"
           },
           "format": {
             "type": "string",
@@ -138,15 +136,12 @@
           "content": {
             "type": "object",
             "additionalProperties": false,
-            "description": "只填写当前 format 对应的字段：docx 用 title/blocks，xlsx 用 sheets，pptx 用 slides。不要用 paragraphs、data 或 content 替代正文键；生成后用 read_file 从来源 system-docs 读回核对。",
             "properties": {
               "title": {
-                "type": "string",
-                "description": "DOCX 主标题"
+                "type": "string"
               },
               "blocks": {
                 "type": "array",
-                "description": "DOCX 正文区块，例如 [{type:\"paragraph\",text:\"正文\"}]",
                 "items": {
                   "type": "object",
                   "properties": {
@@ -187,7 +182,6 @@
               "sheets": {
                 "type": "array",
                 "minItems": 1,
-                "description": "XLSX 工作表，例如 [{name:\"数据\",rows:[[\"名称\",\"数量\"],[\"样品\",2]]}]",
                 "items": {
                   "type": "object",
                   "properties": {
@@ -215,7 +209,6 @@
               "slides": {
                 "type": "array",
                 "minItems": 1,
-                "description": "PPTX 幻灯片，例如 [{title:\"标题\",body:\"正文\"}]",
                 "items": {
                   "type": "object",
                   "properties": {
@@ -239,7 +232,7 @@
     "type": "function",
     "function": {
       "name": "office_comments",
-      "description": "读取 DOCX 内嵌批注及其精确锚定原文。处理修改要求时先调用此工具；anchorValid=false 时不可猜测位置。支持本地和 SSH 工作区。",
+      "description": "Read embedded DOCX comments and their exact anchored text. Require anchorValid before using the anchor.",
       "parameters": {
         "type": "object",
         "required": [
@@ -247,8 +240,7 @@
         ],
         "properties": {
           "path": {
-            "type": "string",
-            "description": "工作区相对 DOCX 路径"
+            "type": "string"
           }
         }
       }
@@ -258,7 +250,7 @@
     "type": "function",
     "function": {
       "name": "office_comment_edit",
-      "description": "按照一条 DOCX 内嵌批注修改其精确锚定的原文。先用 office_comments 看批注，理解指示并形成 newText；只有 expectedText 与当前锚点逐字一致时写入。保留批注供人工复核，不自动标记已解决。",
+      "description": "Replace the exact text anchored by a DOCX comment, preserving the comment for review.",
       "parameters": {
         "type": "object",
         "required": [
