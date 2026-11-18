@@ -114,7 +114,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		}
 		paths = append(paths, proposalDisplayPath(files[i]))
 	}
-	record := ApprovalReview{Command: "write_file: " + strings.Join(paths, ", "), Status: "reviewing", Reason: "正在独立审核文件提案及目标版本", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "files", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(approvalFilesFingerprint(files))}
+	record := ApprovalReview{Command: "write_file: " + strings.Join(paths, ", "), Status: "reviewing", Reason: "正在独立审核文件提案及目标版本", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "files", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(approvalFilesFingerprint(files)), FilePurposes: proposedFilePurposes(files)}
 	if task.AssistantManaged && a.settings.AssistantAutoReview {
 		record.Source = "assistant"
 	}
@@ -142,7 +142,13 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		approved = true
 		reason = "已启用辅助审批；仅创建绑定的本地读写目录中的新 Markdown 文档，目标与版本在应用时再次校验"
 	} else if eligible && keyErr == nil {
-		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "apply exact local workspace file proposals; configured document sources may create new files only", "executionIntent": fileApprovalExecutionIntent(files), "sandboxMode": sandbox, "workspaceMode": workspaceMode, "files": files, "documentDestination": "仅认可已记录的本地目标；已有工作区文件修改必须是用户明确要求，且 Before 与 BaseHash 对应将再次校验的原文"})
+		// Keep calling-model explanations outside the independent reviewer's
+		// exact-action evidence and authorization.
+		reviewerFiles := append([]Change(nil), files...)
+		for i := range reviewerFiles {
+			reviewerFiles[i].ApprovalPurpose = nil
+		}
+		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "apply exact local workspace file proposals; configured document sources may create new files only", "executionIntent": fileApprovalExecutionIntent(files), "sandboxMode": sandbox, "workspaceMode": workspaceMode, "files": reviewerFiles, "documentDestination": "仅认可已记录的本地目标；已有工作区文件修改必须是用户明确要求，且 Before 与 BaseHash 对应将再次校验的原文"})
 		if len(payload) <= 64000 {
 			out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy + "\n本次待审对象是 files 提案，不是 shell command。逐项判断路径、原文、完整新内容及用户授权。只有低/中风险且目标精确时才批准。"}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
 			usage = u

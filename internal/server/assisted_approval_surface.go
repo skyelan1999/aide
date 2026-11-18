@@ -116,7 +116,11 @@ func (a *App) reviewPendingSurfaceAction(task *Task) {
 	input := task.surfaceApprovalInput
 	inputJSON, _ := json.Marshal(input)
 	action, _ := json.Marshal(q)
-	record := ApprovalReview{Command: string(action), Status: "reviewing", Reason: "正在独立审核单次界面操作", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: q.Kind, Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(string(action) + string(inputJSON))}
+	var explanation struct {
+		Purpose *approvalPurpose `json:"approvalPurpose,omitempty"`
+	}
+	_ = json.Unmarshal(task.PendingQuestion, &explanation)
+	record := ApprovalReview{Command: string(action), Status: "reviewing", Reason: "正在独立审核单次界面操作", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: q.Kind, Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(string(action) + string(inputJSON)), Purpose: cleanApprovalPurpose(explanation.Purpose)}
 	if len(task.ApprovalReviews) >= 50 {
 		task.ApprovalReviews = task.ApprovalReviews[len(task.ApprovalReviews)-49:]
 	}
