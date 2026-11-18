@@ -20,7 +20,7 @@ sys.path.insert(0,"/probe")
 
 def check_render(source, pages):
     before=hashlib.sha256(source.read_bytes()).hexdigest()
-    directory=source.parent/source.stem
+    directory=source.parent/('preview-'+source.name)
     directory.mkdir();target=directory/('input'+source.suffix);shutil.copy2(source,target)
     subprocess.run(['python3','/probe/office_preview.py','/usr/bin/soffice',str(target),str(directory)],check=True,timeout=75)
     assert hashlib.sha256(source.read_bytes()).hexdigest()==before
@@ -88,6 +88,41 @@ with tempfile.TemporaryDirectory() as temporary:
     legacy=root/'legacy';legacy.mkdir()
     subprocess.run(['/usr/bin/soffice','-env:UserInstallation='+(root/'legacy-profile').as_uri(),'--headless','--convert-to','ppt:MS PowerPoint 97','--outdir',str(legacy),str(deck)],check=True,capture_output=True,timeout=30)
     results.append(check_render(legacy/'deck.ppt',2)[0])
+    from docx import Document
+    doc=Document()
+    doc.add_heading('PREVIEW TITLE',0)
+    doc.add_paragraph('LINE ONE')
+    doc.add_paragraph('LINE TWO')
+    doc.add_paragraph('中文排版测试')
+    doc.add_picture(str(image))
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+    cell=doc.add_table(rows=1,cols=1).cell(0,0)
+    cell.text='VISIBLE WORD TABLE'
+    cell._tc.get_or_add_tcPr().append(parse_xml('<w:shd '+nsdecls('w')+' w:fill="FFFF00"/>'))
+    doc.add_page_break()
+    doc.add_paragraph('SECOND WORD PAGE')
+    word=root/'word.docx';doc.save(word)
+    rendered,text=check_render(word,2)
+    assert all(token in text for token in ['VISIBLE WORD TABLE','SECOND WORD PAGE','中文排版测试']),text
+    results.append(rendered)
+
+    def save_as(source, extension, filter_name):
+        out=root/extension;out.mkdir()
+        subprocess.run(['/usr/bin/soffice','-env:UserInstallation='+(root/'fixture-profile').as_uri(),
+                        '--headless','--convert-to',extension+':'+filter_name,
+                        '--outdir',str(out),str(source)],check=True,capture_output=True,timeout=30)
+        return out/(source.stem+'.'+extension)
+
+    for ext,source,filter_name,pages in [
+        ('doc',word,'MS Word 97',2), ('odt',word,'writer8',2),
+        ('xls',book,'MS Excel 97',2), ('ods',book,'calc8',2),
+        ('odp',deck,'impress8',2),
+    ]:
+        rendered,text=check_render(save_as(source,ext,filter_name),pages)
+        if ext in ('xls','ods'):assert 'SHOULD STAY HIDDEN' not in text
+        if ext in ('doc','odt'):assert 'SECOND WORD PAGE' in text and '中文排版测试' in text,text
+        results.append(rendered)
     # A renamed or damaged file must fail without leaving a usable preview.
     bad=root/'bad';bad.mkdir();(bad/'input.pptx').write_bytes(b'not a presentation')
     assert subprocess.run(['python3','/probe/office_preview.py','/usr/bin/soffice',str(bad/'input.pptx'),str(bad)]).returncode!=0

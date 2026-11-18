@@ -259,7 +259,7 @@ func (a *App) officeXlsxView(w http.ResponseWriter, r *http.Request) {
 	if knowledgeReadOnly {
 		b, err = a.knowledgeReadViewer(r.Context(), r.URL.Query().Get("root"), sourceID, p, origin, workspace, 16<<20)
 	} else if rootedReadOnly {
-		b, current, err = a.readBoundedPreviewInput(r.Context(), r)
+		b, current, err = a.readBoundedPreviewInput(r.Context(), r, dwgInputLimit)
 	} else {
 		b, src, err = a.officeReadBytes(p, sourceID)
 	}
@@ -340,10 +340,6 @@ func (a *App) officeXlsxEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Hash == "" || len(in.Changes) == 0 || len(in.Changes) > 500 {
 		fail(w, 400, errors.New("缺少版本或修改单元格过多"))
-		return
-	}
-	if err := a.collaboraWriteError(in.Path, in.Source); err != nil {
-		fail(w, 409, err)
 		return
 	}
 	if in.Source == "" && in.WorkspaceID != a.wsID() {

@@ -218,6 +218,9 @@ func (a *App) routeMatchesWithSchemasLocked(query string, surface pluginRoutingS
 	a.ensurePluginRoutingCatalogLocked()
 	catalog := a.pluginRoutingCatalog.Catalog.entries()
 	for _, p := range catalog {
+		if p.ID == retiredOfficePluginID {
+			continue
+		}
 		if validatePluginRouting(p.Routing) != nil {
 			continue
 		}
@@ -236,6 +239,9 @@ func (a *App) routeMatchesWithSchemasLocked(query string, surface pluginRoutingS
 		items[p.ID] = pluginRouteMatch{ID: p.ID, Name: p.Name, Summary: summary, Score: score, Reasons: reasons, AutoInstallable: ok && p.Distribution != "private" && p.Commerce == nil}
 	}
 	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == retiredOfficePluginID {
+			continue
+		}
 		m := items[p.ID]
 		score, reasons := routeScore(query, p.ID, p.Name, nil)
 		// Exact tool names are a discovery path even for non-market custom plugins.

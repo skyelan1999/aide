@@ -15,7 +15,7 @@ class PublicPluginGateTests(unittest.TestCase):
         lock = qa.load_lock()
         shipped = json.loads((qa.ROOT / 'internal/server/plugin-market/catalog.json').read_text())
         self.assertEqual(shipped['revision'], lock['marketRevision'])
-        rows = shipped['catalog']['plugins']
+        rows = [row for row in shipped['catalog']['plugins'] if row['id'] not in lock.get('retiredPluginIds', [])]
         expected = {item['id']: item for item in lock['plugins']}
         self.assertEqual({row['id'] for row in rows}, set(expected))
         for row in rows:

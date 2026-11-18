@@ -1,0 +1,70 @@
+{
+  "id": "office-native-retirement-20261118",
+  "request": "我决定office插件后面永久弃用，强力把aide的libreoffice的功能做好；优先 LibreOffice 版式预览与兼容性",
+  "baseline": "409644a7038a7ce80056a5ea75fd1d0ab359b755",
+  "initial_status": "",
+  "acceptance": [
+    "Open Office and ODF layout previews offline with no plugin or service address",
+    "Copy and deliver Office preview files as streams without fixed byte limits",
+    "Prevent legacy plugin execution and installation while preserving persisted settings/files",
+    "Retain XLSX cell edits, DOCX comments and six built-in AI tool contracts with existing permission/version controls"
+  ],
+  "scope": [
+    "Aide native Office viewer, LibreOffice runtime, private preview staging and HTTP range delivery",
+    "Retire legacy Office plugin activation/installation and internalize its six AI tools",
+    "Stage marketplace delisting and standalone archive notice while preserving old releases"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Retire Office plugin permanently and prioritize LibreOffice layout compatibility. User explicitly removes fixed Office read cap.",
+      "evidence": [
+        "User messages 2026-11-18"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Private LibreOffice document snapshot with no fixed byte limit. Authorized PDF Range reads share the rendered snapshot. Keep content editing controls and preserve existing state.",
+      "evidence": [
+        "docs/plugins/office.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Writer/Calc/Impress, nine format routes, private disk staging, streamed PDFs, retired plugin intake, and native tools implemented.",
+      "evidence": [
+        "internal/server/office_preview.go",
+        "internal/server/office_tools.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Nine format offline renderer and actual Chromium preview with 81 MiB DOCX passed. Targeted Go, source and permission cases passed. Final repository profile pending.",
+      "evidence": [
+        ".agent-state/native-office/render-nine-final.log",
+        ".agent-state/native-office/browser-receipt.json",
+        ".agent-state/native-office/go-stream.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current Office instructions describe component and page preview, limits and retirement.",
+      "evidence": [
+        "docs/plugins/office.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Legacy plugins and release assets retained. Existing daily image and workspace data separate. Source rollback uses the isolated feature branch and current main baseline.",
+  "handoff": "Host changes are isolated. Marketplace delist and legacy repo documentation commits prepared separately. Historical release ZIPs retained."
+}

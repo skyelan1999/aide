@@ -110,7 +110,7 @@ func (a *App) browsePluginMarket(ctx context.Context, raw string) string {
 	}
 	matches := []match{}
 	for _, p := range snapshot.Catalog.entries() {
-		if p.ID == "computer-control" {
+		if p.ID == "computer-control" || p.ID == retiredOfficePluginID {
 			continue
 		}
 		if in.Action == "detail" && p.ID != in.ID {

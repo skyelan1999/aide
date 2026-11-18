@@ -2,6 +2,9 @@
   "schemaVersion": 1,
   "marketRepository": "skyelan1999/aide-pkg-shop",
   "marketRevision": "7a7aa3d8912471ee53391d307b8c88ac74146726",
+  "retiredPluginIds": [
+    "office"
+  ],
   "plugins": [
     {
       "id": "ali-bailian-supporter",
@@ -200,23 +203,6 @@
       "packageSourceCommit": "251a214346c08ee7e80e64f37bc93d08b40786fd",
       "latestPublicTag": "v1.0.0",
       "latestPublicCommit": "251a214346c08ee7e80e64f37bc93d08b40786fd",
-      "checks": {
-        "package": "required",
-        "hostInstallAndDisclosure": "required",
-        "function": "required"
-      },
-      "public": true
-    },
-    {
-      "id": "office",
-      "marketVersion": "1.1.0",
-      "package": "packages/office/1.1.0-34b4d01a5714.zip",
-      "bytes": 4287,
-      "sha256": "34b4d01a5714cad3530471b3de86c4d81eee6ca0452b85ba149b31b8ad94553f",
-      "repository": "skyelan1999/aide-pkg-office",
-      "packageSourceCommit": "1d56ad23c7d028afe65882a534b44a9270ff406f",
-      "latestPublicTag": "v1.1.0",
-      "latestPublicCommit": "1d56ad23c7d028afe65882a534b44a9270ff406f",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",

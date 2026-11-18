@@ -31,6 +31,8 @@ def load_lock():
     data = json.loads(LOCK.read_text())
     require(re.fullmatch(r'[0-9a-f]{40}', data.get('marketRevision', '')), 'Invalid frozen market revision')
     plugins = data['plugins']
+    require(not set(data.get('retiredPluginIds', [])) & {p['id'] for p in plugins},
+            'Retired plugin included in required install inventory')
     require(plugins and len({p['id'] for p in plugins}) == len(plugins), 'Empty/duplicate public inventory')
     for item in plugins:
         require(item.get('public') is True, 'Private package in public validation')
@@ -61,7 +63,7 @@ def verify_report(report, lock, commit=None, arch=None):
 
 def inspect_packages(market, lock):
     catalog = json.loads((market / 'catalog.json').read_text())
-    rows = catalog['plugins']
+    rows = [row for row in catalog['plugins'] if row['id'] not in lock.get('retiredPluginIds', [])]
     current = {p['id']: p for p in rows}
     require(len(current) == len(rows), 'Duplicate market plugin ID')
     require(set(current) == {p['id'] for p in lock['plugins']}, 'Market inventory changed; freeze and review again')

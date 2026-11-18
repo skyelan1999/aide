@@ -17,13 +17,14 @@ import zipfile
 
 # Use the distribution's Python/UNO ABI, separately from the pinned application
 # Python. Only automatic row heights are recalculated; explicit heights stay put.
-CALC_WORKER = r'''
+OFFICE_WORKER = r'''
 import json, pathlib, subprocess, sys, time, uuid
 import uno
 from com.sun.star.beans import PropertyValue
 def props(**values):
     return tuple(PropertyValue(Name=k, Value=v) for k,v in values.items())
-converter, source, profile, output, rows = sys.argv[1:]
+converter, source, profile, output, spec_path, metadata = sys.argv[1:]
+spec = json.loads(pathlib.Path(spec_path).read_text())
 name='aide_'+uuid.uuid4().hex
 process=subprocess.Popen([converter,'-env:UserInstallation='+profile,'--headless','--nologo','--nodefault','--nofirststartwizard','--norestore','--accept=pipe,name='+name+';urp;StarOffice.ComponentContext'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 doc=None;measurement_doc=None
@@ -37,43 +38,66 @@ try:
             if process.poll() is not None or time.monotonic()>deadline:raise
             time.sleep(.05)
     desktop=context.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop',context)
-    doc=desktop.loadComponentFromURL(source,'_blank',0,props(Hidden=True,ReadOnly=False,UpdateDocMode=0,MacroExecutionMode=0))
-    if doc is None:raise ValueError('workbook could not be loaded')
-    # Some older OOXML workbooks import string cells but export blank text.
-    # A private native-format roundtrip materializes the complete layout,
-    # preserving drawings (including WMF) instead of rebuilding the workbook.
-    native=pathlib.Path(rows).parent/'layout.ods'
-    doc.storeToURL(native.as_uri(),props(FilterName='calc8',Overwrite=True))
-    doc.close(True)
-    doc=desktop.loadComponentFromURL(native.as_uri(),'_blank',0,props(Hidden=True,ReadOnly=False,UpdateDocMode=0,MacroExecutionMode=0))
-    if doc is None:raise ValueError('native workbook layout could not be loaded')
-    measurement_doc=desktop.loadComponentFromURL('private:factory/scalc','_blank',0,props(Hidden=True,MacroExecutionMode=0))
-    scratch=measurement_doc.Sheets.getByIndex(0)
-    measurement=scratch.getCellByPosition(0,0)
-    font_properties=('CharFontName','CharHeight','CharWeight','CharPosture','CharFontNameAsian','CharHeightAsian','CharWeightAsian','CharPostureAsian','IsTextWrapped','ShrinkToFit','RotateAngle','HoriJustify','VertJustify')
-    for sheet_name, spec in json.loads(pathlib.Path(rows).read_text()).items():
-        sheet=doc.Sheets.getByName(sheet_name)
-        for index in spec['rows']:
-            sheet.Rows.getByIndex(index).OptimalHeight=True
-        for reference in spec['merges']:
-            area=sheet.getCellRangeByName(reference)
-            address=area.RangeAddress
-            if address.StartRow!=address.EndRow or address.StartRow not in spec['rows']:continue
-            row=sheet.Rows.getByIndex(address.StartRow)
-            anchor=sheet.getCellByPosition(address.StartColumn,address.StartRow)
-            # Measure in a disposable sheet. Unmerging the original range would
-            # alter continuation fills/borders in LibreOffice's model.
-            measurement.String=anchor.String
-            for key in font_properties:
-                measurement.setPropertyValue(key,anchor.getPropertyValue(key))
-            scratch.Columns.getByIndex(0).Width=area.Size.Width
-            scratch.Rows.getByIndex(0).Height=500
-            scratch.Rows.getByIndex(0).OptimalHeight=True
-            minimum=int((max(anchor.CharHeight,anchor.CharHeightAsian)*1.25+2)*35.2778*(anchor.String.count('\n')+1))
-            height=max(row.Height,scratch.Rows.getByIndex(0).Height,minimum)
-            row.OptimalHeight=False;row.Height=height
-    measurement_doc.close(True);measurement_doc=None
-    doc.storeToURL(output,props(FilterName='calc_pdf_Export',Overwrite=True,FilterData=uno.Any('[]com.sun.star.beans.PropertyValue',props(SinglePageSheets=True,UseLosslessCompression=True,ExportBookmarks=True))))
+    kind = spec['kind']
+    doc = desktop.loadComponentFromURL(source, '_blank', 0, props(
+        Hidden=True, ReadOnly=kind != 'calc' or not spec['repairXlsx'],
+        UpdateDocMode=0, MacroExecutionMode=0))
+    services = {'writer': 'com.sun.star.text.TextDocument',
+                'calc': 'com.sun.star.sheet.SpreadsheetDocument',
+                'impress': 'com.sun.star.presentation.PresentationDocument'}
+    if doc is None or not doc.supportsService(services[kind]):
+        raise ValueError('document does not match the selected Office format')
+    sheets = []
+    if kind == 'calc':
+        if not 1 <= doc.Sheets.Count <= 500:
+            raise ValueError('worksheet count limit')
+        for i in range(doc.Sheets.Count):
+            sheet = doc.Sheets.getByIndex(i)
+            sheets.append({'name': sheet.Name, 'hidden': not sheet.IsVisible})
+    if spec['repairXlsx']:
+        # Some older OOXML workbooks import string cells but export blank text.
+        # A private native-format roundtrip materializes the complete layout,
+        # preserving drawings (including WMF) instead of rebuilding the workbook.
+        native=pathlib.Path(spec_path).parent/'layout.ods'
+        doc.storeToURL(native.as_uri(),props(FilterName='calc8',Overwrite=True))
+        doc.close(True)
+        doc=desktop.loadComponentFromURL(native.as_uri(),'_blank',0,props(Hidden=True,ReadOnly=False,UpdateDocMode=0,MacroExecutionMode=0))
+        if doc is None:raise ValueError('native workbook layout could not be loaded')
+        measurement_doc=desktop.loadComponentFromURL('private:factory/scalc','_blank',0,props(Hidden=True,MacroExecutionMode=0))
+        scratch=measurement_doc.Sheets.getByIndex(0)
+        measurement=scratch.getCellByPosition(0,0)
+        font_properties=('CharFontName','CharHeight','CharWeight','CharPosture','CharFontNameAsian','CharHeightAsian','CharWeightAsian','CharPostureAsian','IsTextWrapped','ShrinkToFit','RotateAngle','HoriJustify','VertJustify')
+        for sheet_name, layout in spec['rows'].items():
+            sheet=doc.Sheets.getByName(sheet_name)
+            auto_rows = set(layout['rows'])
+            for index in layout['rows']:
+                sheet.Rows.getByIndex(index).OptimalHeight=True
+            for reference in layout['merges']:
+                area=sheet.getCellRangeByName(reference)
+                address=area.RangeAddress
+                if address.StartRow!=address.EndRow or address.StartRow not in auto_rows:continue
+                row=sheet.Rows.getByIndex(address.StartRow)
+                anchor=sheet.getCellByPosition(address.StartColumn,address.StartRow)
+                # Measure in a disposable sheet. Unmerging the original range would
+                # alter continuation fills/borders in LibreOffice's model.
+                measurement.String=anchor.String
+                for key in font_properties:
+                    measurement.setPropertyValue(key,anchor.getPropertyValue(key))
+                scratch.Columns.getByIndex(0).Width=area.Size.Width
+                scratch.Rows.getByIndex(0).Height=500
+                scratch.Rows.getByIndex(0).OptimalHeight=True
+                minimum=int((max(anchor.CharHeight,anchor.CharHeightAsian)*1.25+2)*35.2778*(anchor.String.count('\n')+1))
+                height=max(row.Height,scratch.Rows.getByIndex(0).Height,minimum)
+                row.OptimalHeight=False;row.Height=height
+        measurement_doc.close(True);measurement_doc=None
+    pdf_options = {'UseLosslessCompression': True, 'ExportBookmarks': True}
+    if kind == 'calc':
+        pdf_options['SinglePageSheets'] = True
+    if kind == 'impress':
+        pdf_options['ExportHiddenSlides'] = True
+    doc.storeToURL(output, props(FilterName=kind+'_pdf_Export', Overwrite=True,
+        FilterData=uno.Any('[]com.sun.star.beans.PropertyValue', props(**pdf_options))))
+    pathlib.Path(metadata).write_text(json.dumps(sheets))
     doc.close(True);doc=None;desktop.terminate()
 finally:
     if measurement_doc is not None:measurement_doc.dispose()
@@ -101,8 +125,10 @@ def automatic_rows(archive, workbook):
         indices = [int(row.attrib['r']) - 1 for row in tree.findall('{*}sheetData/{*}row')
                    if (not fixed_default or row.attrib.get('customHeight') in ('0','false')) and row.attrib.get('customHeight') not in ('1', 'true') and row.attrib.get('hidden') not in ('1', 'true')]
         count += len(indices)
-        if count > 20000 or any(index < 0 or index >= 1048576 for index in indices):
-            raise ValueError('automatic row layout limit')
+        if any(index < 0 or index >= 1048576 for index in indices):
+            raise ValueError('invalid worksheet row')
+        if count > 20000:
+            return {}  # Preserve imported row geometry when repair is too expensive.
         rows[sheet.attrib['name']] = {'rows': indices, 'merges': [item.attrib['ref'] for item in tree.findall('{*}mergeCells/{*}mergeCell')]}
     return rows
 
@@ -111,8 +137,7 @@ def restrict_process():
     # Legacy vector-image imports reserve more virtual address space than their
     # resident memory. Keep a bounded 3 GiB address space for the native roundtrip.
     resource.setrlimit(resource.RLIMIT_AS, (3072 << 20, 3072 << 20))
-    resource.setrlimit(resource.RLIMIT_CPU, (60, 60))
-    resource.setrlimit(resource.RLIMIT_FSIZE, (32 << 20, 32 << 20))
+    resource.setrlimit(resource.RLIMIT_CPU, (240, 240))
     resource.setrlimit(resource.RLIMIT_NOFILE, (256, 256))
     # LibreOffice uses local Unix sockets. Deny all other socket families,
     # including DNS/HTTP external links, in this process and its descendants.
@@ -149,39 +174,23 @@ def render(converter, source, directory):
 <item oor:path="/org.openoffice.Office.Calc/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item>
 </oor:items>''')
     ext = source.suffix
-    sheets = []
+    kind = {'.doc': 'writer', '.docx': 'writer', '.odt': 'writer',
+            '.xls': 'calc', '.xlsx': 'calc', '.ods': 'calc',
+            '.ppt': 'impress', '.pptx': 'impress', '.odp': 'impress'}[ext]
     rows = {}
-    if ext in ('.xlsx', '.pptx'):
+    if ext == '.xlsx':
         with zipfile.ZipFile(source) as archive:
-            part = 'xl/workbook.xml' if ext == '.xlsx' else 'ppt/presentation.xml'
-            tree = ET.fromstring(archive.read(part))
-            if ext == '.xlsx':
-                rows = automatic_rows(archive, tree)
-                sheets = [{'name': e.attrib['name'], 'hidden': e.attrib.get('state', 'visible') != 'visible'}
-                          for e in tree.findall('{*}sheets/{*}sheet')]
-                if not 1 <= len(sheets) <= 500:
-                    raise ValueError('worksheet count limit')
-    options = {'UseLosslessCompression': {'type': 'boolean', 'value': 'true'},
-               'ExportBookmarks': {'type': 'boolean', 'value': 'true'},
-               'ExportHiddenSlides': {'type': 'boolean', 'value': 'true'}}
-    if ext == '.xlsx':
-        options['SinglePageSheets'] = {'type': 'boolean', 'value': 'true'}
-    export = 'pdf:' + ('calc_pdf_Export' if ext == '.xlsx' else 'impress_pdf_Export') + ':' + json.dumps(options)
-    if ext == '.xlsx':
-        rows_path = directory / 'rows.json'
-        rows_path.write_text(json.dumps(rows))
-        subprocess.run(['/usr/bin/python3', '-c', CALC_WORKER, converter, source.as_uri(),
-                        profile.as_uri(), (directory / 'input.pdf').as_uri(), str(rows_path)],
-                       check=True, timeout=65)
-    else:
-        subprocess.run([converter, '-env:UserInstallation=' + profile.as_uri(), '--headless',
-                    '--nologo', '--nodefault', '--nofirststartwizard', '--norestore',
-                    '--convert-to', export, '--outdir', str(directory), str(source)],
-                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       check=True, timeout=65)
+            rows = automatic_rows(archive, ET.fromstring(archive.read('xl/workbook.xml')))
+    spec_path = directory / 'render.json'
+    spec_path.write_text(json.dumps({'kind': kind, 'repairXlsx': ext == '.xlsx', 'rows': rows}))
+    sheets_path = directory / 'sheets.json'
+    subprocess.run(['/usr/bin/python3', '-c', OFFICE_WORKER, converter, source.as_uri(),
+                    profile.as_uri(), (directory / 'input.pdf').as_uri(),
+                    str(spec_path), str(sheets_path)], check=True, timeout=270)
+    sheets = json.loads(sheets_path.read_text())
     output = directory / 'input.pdf'
-    if not output.is_file() or not 0 < output.stat().st_size <= 16 << 20:
-        raise ValueError('Office PDF output missing or over limit')
+    if not output.is_file() or output.stat().st_size == 0:
+        raise ValueError('Office PDF output missing')
     from pypdf import PdfReader
     reader = PdfReader(output)
     pages = len(reader.pages)

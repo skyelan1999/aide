@@ -896,6 +896,18 @@ func (a *App) knowledgeSFTP(ctx context.Context, ar knowledgeArea, batch string,
 }
 
 func (a *App) knowledgeCurl(ctx context.Context, ar knowledgeArea, p string, listing bool, max int64) ([]byte, error) {
+	cmd, err := a.knowledgeCurlCommand(ctx, ar, p, listing, []string{"--max-time", "15", "--max-filesize", strconv.FormatInt(max, 10)})
+	if err != nil {
+		return nil, err
+	}
+	out, err := knowledgeRun(ctx, cmd, max)
+	if err == nil && !a.knowledgeAreaCurrent(ar) {
+		return nil, fmt.Errorf("引用来源已变化")
+	}
+	return out, err
+}
+
+func (a *App) knowledgeCurlCommand(ctx context.Context, ar knowledgeArea, p string, listing bool, transferOptions []string) (*exec.Cmd, error) {
 	// Snapshot the credential together with the exact URL/configuration. Never
 	// pair a newly saved password with an old endpoint from a stale graph.
 	a.mu.Lock()
@@ -920,7 +932,7 @@ func (a *App) knowledgeCurl(ctx context.Context, ar knowledgeArea, p string, lis
 		u.Path, u.RawPath = strings.TrimRight(u.Path, "/")+"/"+p, ""
 		target = u.String()
 	}
-	args := []string{"-sS", "--fail", "--max-time", "15", "-L", "--proto", "=http,https,ftp,ftps,smb,smbs", "--proto-redir", "=http,https,ftp,ftps,smb,smbs"}
+	args := []string{"-sS", "--fail", "-L", "--proto", "=http,https,ftp,ftps,smb,smbs", "--proto-redir", "=http,https,ftp,ftps,smb,smbs"}
 	if ar.kind == "ftps" {
 		// Curl's default 200ms connection pacing can also stall an FTPS data
 		// connection, exhausting most of a progressive batch before one read.
@@ -934,12 +946,7 @@ func (a *App) knowledgeCurl(ctx context.Context, ar knowledgeArea, p string, lis
 	if listing {
 		args[len(args)-1] = strings.TrimRight(args[len(args)-1], "/") + "/"
 	}
-	args = append([]string{"--max-filesize", strconv.FormatInt(max, 10)}, args...)
-	out, err := knowledgeRun(ctx, exec.CommandContext(ctx, a.curlBin, args...), max)
-	if err == nil && !a.knowledgeAreaCurrent(ar) {
-		return nil, fmt.Errorf("引用来源已变化")
-	}
-	return out, err
+	return exec.CommandContext(ctx, a.curlBin, append(transferOptions, args...)...), nil
 }
 
 func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string, maxBytes int64) ([]byte, error) {

@@ -234,6 +234,9 @@ func (m *DaemonManager) StartWithPath(id, pluginMain string) error {
 
 // StartWithSettings starts a daemon with its workspace-local non-secret settings snapshot.
 func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[string]any) error {
+	if id == retiredOfficePluginID {
+		return errRetiredOfficePlugin
+	}
 	version := ""
 	// Read the package being started, not the old registry entry during upgrade.
 	if file, openErr := os.Open(filepath.Join(filepath.Dir(pluginMain), "manifest.json")); openErr == nil {

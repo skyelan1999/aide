@@ -427,6 +427,10 @@ func pluginVersionDowngrade(oldVersion, newVersion string) bool {
 }
 
 func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
+	if r.PathValue("id") == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
+		return
+	}
 	if !a.pluginUpgradeMu.TryLock() {
 		fail(w, 409, errors.New("已有插件正在升级，请稍后重试"))
 		return

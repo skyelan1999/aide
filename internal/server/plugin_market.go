@@ -363,7 +363,7 @@ func marketCompare(a, b string) (int, bool) {
 func marketVersionOlder(a, b string) bool { n, ok := marketCompare(a, b); return ok && n < 0 }
 func marketCompatible(p marketPlugin, version string) (bool, string) {
 	for _, f := range p.Features {
-		if f != "office-offline-v1" && f != "office-collabora-v1" && f != "provider-browser-balance-v1" && f != "map-image-document-v1" && f != "provider-account-quota-v1" && f != "plugin-tool-images-v1" && f != "skill-library-v1" && f != "plugin-authoring-v1" && f != "private-plugin-v1" && f != "terminal-workbench-v1" && f != "terminal-ssh-workspace-v1" && f != "terminal-communications-v1" && f != "terminal-relay-v1" {
+		if f != "provider-browser-balance-v1" && f != "map-image-document-v1" && f != "provider-account-quota-v1" && f != "plugin-tool-images-v1" && f != "skill-library-v1" && f != "plugin-authoring-v1" && f != "private-plugin-v1" && f != "terminal-workbench-v1" && f != "terminal-ssh-workspace-v1" && f != "terminal-communications-v1" && f != "terminal-relay-v1" {
 			return false, "当前 Aide 不支持此插件所需能力"
 		}
 	}
@@ -393,7 +393,7 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	entries := []map[string]any{}
 	for _, p := range snapshot.Catalog.entries() {
-		if p.ID == "computer-control" {
+		if p.ID == "computer-control" || p.ID == retiredOfficePluginID {
 			continue
 		}
 		compatible, reason := marketCompatibleForRuntime(p, version, a.buildRuntimeMode)
@@ -502,13 +502,17 @@ func (a *App) marketSelected(ctx context.Context, id, revision string) (marketSn
 		return s, marketPlugin{}, errors.New("市场目录已更新，请刷新并重新确认")
 	}
 	for _, p := range s.Catalog.entries() {
-		if p.ID == id {
+		if p.ID == id && p.ID != retiredOfficePluginID {
 			return s, p, nil
 		}
 	}
 	return s, marketPlugin{}, errors.New("官方目录中没有此插件")
 }
 func (a *App) marketDownload(w http.ResponseWriter, r *http.Request) {
+	if r.PathValue("id") == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
+		return
+	}
 	if r.PathValue("id") == "computer-control" {
 		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再单独分发"))
 		return
@@ -535,6 +539,10 @@ func (a *App) marketDownload(w http.ResponseWriter, r *http.Request) {
 	w.Write(raw)
 }
 func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
+	if r.PathValue("id") == retiredOfficePluginID {
+		fail(w, http.StatusGone, errRetiredOfficePlugin)
+		return
+	}
 	if r.PathValue("id") == "computer-control" {
 		fail(w, http.StatusGone, errors.New("电脑控制已整合到 Aide，不再通过插件市场单独安装"))
 		return
