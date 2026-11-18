@@ -1,0 +1,66 @@
+{
+  "id": "markdown-pdf-invalid-20261118",
+  "request": "Fix Invalid image errors when exporting Markdown to PDF.",
+  "baseline": "5f5e37304343921bb0f0711d5bdf1a5310c4df3e",
+  "initial_status": "Clean isolated Aide checkout.",
+  "acceptance": [
+    "Export mixed browser-supported image formats from the normal Aide Markdown menu.",
+    "Preserve selectable text, visual image transparency and embedded attachments.",
+    "Recover the export controls after an image conversion error."
+  ],
+  "scope": [
+    "Built-in Markdown PDF export, the vendored PDFMake PNG decoder adapter, and browser validation."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "GIF, WebP and linked or data URL SVG reproduced the Invalid image message. Transparent PNG could additionally stall under the current workbench CSP.",
+      "evidence": [
+        ".agent-state/markdown-pdf-invalid/actual-baseline-with-csp.jsonl"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Normalize unsupported browser-decoded images to PNG for PDF. Use the bundled synchronous inflater for PNG decoding and preserve the application CSP.",
+      "evidence": [
+        "internal/server/web/vendor/markdown-export/README.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Preserve supported source image bytes, inline vectors, printable geometry, limits, attachments and normal export error cleanup.",
+      "evidence": [
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Chromium and WebKit passed the authenticated export workflow with exact locally served candidate assets. Poppler confirmed six images, searchable Chinese and English, alpha, and a matching embedded attachment. Broken images and a simulated canvas access error recovered the UI.",
+      "evidence": [
+        ".agent-state/markdown-pdf-invalid/actual-chromium-candidate.jsonl",
+        ".agent-state/markdown-pdf-invalid/actual-webkit-candidate.jsonl",
+        ".agent-state/markdown-pdf-invalid/poppler-qa.txt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded reproducible dependency change and validation coverage.",
+      "evidence": [
+        "internal/server/web/vendor/markdown-export/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Disposable verification service is removed after embedded-asset checks.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Push and merge source after integration checks. No application binary publication is included.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "The user requested the Aide implementation and source push.",
+  "rollback": "Revert the Markdown PDF change and its asset revisions together.",
+  "handoff": "Validated synthetic documents through the real Aide app. The user-reported original document was unavailable."
+}
