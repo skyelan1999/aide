@@ -296,7 +296,9 @@ func (a *App) applyRememberedFiles(task *Task) bool {
 			return errors.New("审批记忆或提案环境已变化")
 		}
 		rule, _ := a.matchApprovalRuleLocked(t, "files", payload)
-		return a.persistApprovalReceiptLocked(t, rememberedApprovalReceipt(rule, "write_file: remembered exact proposal"))
+		receipt := rememberedApprovalReceipt(rule, "write_file: remembered exact proposal")
+		receipt.FilePurposes = proposedFilePurposes(t.Files)
+		return a.persistApprovalReceiptLocked(t, receipt)
 	})
 	if w.status != http.StatusOK {
 		a.mu.Lock()

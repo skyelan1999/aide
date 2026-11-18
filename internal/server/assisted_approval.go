@@ -11,20 +11,22 @@ import (
 
 // ApprovalReview records a decision for one exact command, never a reusable grant.
 type ApprovalReview struct {
-	Command        string    `json:"command"`
-	Status         string    `json:"status"`
-	Recommendation string    `json:"recommendation,omitempty"` // approve | reject
-	Risk           string    `json:"risk,omitempty"`
-	Deadline       string    `json:"deadline,omitempty"` // 推荐方案的自动执行时限
-	Reason         string    `json:"reason"`
-	At             string    `json:"at"`
-	Source         string    `json:"source,omitempty"`
-	Kind           string    `json:"kind,omitempty"`
-	Workspace      string    `json:"workspace,omitempty"`
-	Root           AgentRoot `json:"root,omitempty"`
-	Fingerprint    string    `json:"fingerprint,omitempty"`
-	RuleID         string    `json:"ruleId,omitempty"`
-	ExpiresAt      string    `json:"expiresAt,omitempty"`
+	Purpose        *approvalPurpose      `json:"approvalPurpose,omitempty"`
+	FilePurposes   []approvalFilePurpose `json:"filePurposes,omitempty"`
+	Command        string                `json:"command"`
+	Status         string                `json:"status"`
+	Recommendation string                `json:"recommendation,omitempty"` // approve | reject
+	Risk           string                `json:"risk,omitempty"`
+	Deadline       string                `json:"deadline,omitempty"` // 推荐方案的自动执行时限
+	Reason         string                `json:"reason"`
+	At             string                `json:"at"`
+	Source         string                `json:"source,omitempty"`
+	Kind           string                `json:"kind,omitempty"`
+	Workspace      string                `json:"workspace,omitempty"`
+	Root           AgentRoot             `json:"root,omitempty"`
+	Fingerprint    string                `json:"fingerprint,omitempty"`
+	RuleID         string                `json:"ruleId,omitempty"`
+	ExpiresAt      string                `json:"expiresAt,omitempty"`
 }
 
 func (a *App) approvalSessionLocked(task *Task) *Session {
@@ -93,8 +95,9 @@ const assistedApprovalPolicy = `你是独立的操作审批员。仅判断 JSON 
 func (a *App) reviewPendingCommand(task *Task) {
 	a.mu.Lock()
 	var q struct {
-		Kind    string `json:"approvalKind"`
-		Command string `json:"command"`
+		Kind    string           `json:"approvalKind"`
+		Command string           `json:"command"`
+		Purpose *approvalPurpose `json:"approvalPurpose,omitempty"`
 	}
 	_ = json.Unmarshal(task.PendingQuestion, &q)
 	if !task.AutoReview || task.Status != "awaiting_clarification" || task.AnswerCh == nil || task.approvalAnswered || q.Kind != "shell" || task.approvalCtx == nil {
@@ -125,7 +128,7 @@ func (a *App) reviewPendingCommand(task *Task) {
 	}
 	sandbox, workspaceMode := sandboxMode(a.settings.SandboxMode), a.workspaceMode()
 	workspaceID, workspaceRevision := a.wsID(), a.wsRevision
-	record := ApprovalReview{Command: q.Command, Status: "reviewing", Reason: "正在独立审核具体命令", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "shell", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(q.Command)}
+	record := ApprovalReview{Command: q.Command, Status: "reviewing", Reason: "正在独立审核具体命令", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "shell", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(q.Command), Purpose: cleanApprovalPurpose(q.Purpose)}
 	if task.AssistantManaged && a.settings.AssistantAutoReview {
 		record.Source = "assistant"
 	}

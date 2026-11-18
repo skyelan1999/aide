@@ -27,7 +27,7 @@ func (a *App) persistApprovalReceiptLocked(task *Task, record ApprovalReview) er
 	}
 	return nil
 }
-func (a *App) approveRememberedShell(task *Task, command string) (bool, error) {
+func (a *App) approveRememberedShell(task *Task, command string, purpose *approvalPurpose) (bool, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if approvalCommandProtected(command) {
@@ -37,7 +37,9 @@ func (a *App) approveRememberedShell(task *Task, command string) (bool, error) {
 	if !matched {
 		return false, nil
 	}
-	if err := a.persistApprovalReceiptLocked(task, rememberedApprovalReceipt(rule, command)); err != nil {
+	receipt := rememberedApprovalReceipt(rule, command)
+	receipt.Purpose = purpose
+	if err := a.persistApprovalReceiptLocked(task, receipt); err != nil {
 		return false, err
 	}
 	return true, nil
