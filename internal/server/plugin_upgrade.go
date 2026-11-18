@@ -153,6 +153,7 @@ func pluginFetch(ctx context.Context, client *http.Client, raw string, limit int
 func copyPluginForUpgrade(source, dest string) error {
 	var count int
 	var size int64
+	var buffer [32 << 10]byte
 	rooted, err := os.OpenRoot(source)
 	if err != nil {
 		return err
@@ -210,7 +211,7 @@ func copyPluginForUpgrade(source, dest string) error {
 			input.Close()
 			return err
 		}
-		_, err = io.CopyN(out, input, info.Size())
+		err = copyPluginUpgradeFile(out, input, info.Size(), buffer[:])
 		_ = input.Close()
 		closeErr := out.Close()
 		if err != nil {
@@ -219,6 +220,17 @@ func copyPluginForUpgrade(source, dest string) error {
 		return closeErr
 	})
 }
+
+func copyPluginUpgradeFile(dst io.Writer, src io.Reader, size int64, buffer []byte) error {
+	// File.ReadFrom can use copy_file_range, which can fail on shared mounts
+	// even when ordinary reads and writes work. Keep the copy length bounded.
+	written, err := io.CopyBuffer(struct{ io.Writer }{dst}, io.LimitReader(src, size), buffer)
+	if err == nil && written != size {
+		return io.EOF
+	}
+	return err
+}
+
 func writePluginCandidate(root string, files map[string][]byte) error {
 	for rel, contents := range files {
 		if rel == "manifest.json" {

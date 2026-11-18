@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -16,8 +17,31 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/iotest"
 	"time"
 )
+
+type pluginUpgradeCopyDestination struct{ bytes.Buffer }
+
+func (*pluginUpgradeCopyDestination) ReadFrom(io.Reader) (int64, error) {
+	return 0, errors.New("copy_file_range: resource deadlock avoided")
+}
+
+func TestPluginUpgradeFileCopyIsBufferedAndBounded(t *testing.T) {
+	var dst pluginUpgradeCopyDestination
+	buffer := make([]byte, 3)
+	if err := copyPluginUpgradeFile(&dst, strings.NewReader("contents beyond the size"), 8, buffer); err != nil || dst.String() != "contents" {
+		t.Fatalf("buffered copy = %q, %v", dst.String(), err)
+	}
+	dst.Reset()
+	if err := copyPluginUpgradeFile(&dst, strings.NewReader("short"), 6, buffer); err != io.EOF {
+		t.Fatalf("short copy must fail, got %v", err)
+	}
+	readErr := errors.New("source I/O failure")
+	if err := copyPluginUpgradeFile(&dst, iotest.ErrReader(readErr), 1, buffer); !errors.Is(err, readErr) {
+		t.Fatalf("source failure must be preserved, got %v", err)
+	}
+}
 
 type pluginUpgradeTransport func(*http.Request) (*http.Response, error)
 
