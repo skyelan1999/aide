@@ -563,6 +563,7 @@ type App struct {
 	pluginWorkbenchTickets    map[string]pluginWorkbenchTicket
 	pluginWorkbenchBridges    map[string]*pluginWorkbenchBridge
 	pluginViewerTickets       map[string]pluginViewerTicket
+	pluginWindowTickets       map[string]pluginWindowTicket
 	pluginLifecycle           sync.Mutex
 	pluginUpgradeMu           sync.Mutex
 	pluginUpdateClient        *http.Client
@@ -1619,6 +1620,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/renew", a.renewWorkbenchBridge)
 	mux.HandleFunc("DELETE /api/plugins/{id}/workbench/{instance}", a.closeWorkbenchBridge)
 	mux.HandleFunc("GET /plugin-workbench/{ticket}", a.servePluginWorkbench)
+	mux.HandleFunc("GET /plugin-window/{ticket}", a.servePluginWindow)
 	mux.HandleFunc("GET /plugin-viewer/{ticket}/websockify", a.servePluginViewer)
 	mux.HandleFunc("GET /plugin-viewer/{ticket}/window", a.servePluginViewerWindow)
 	mux.HandleFunc("POST /api/plugins/{id}/editor/open", a.openNativeEditor)

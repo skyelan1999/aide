@@ -22,6 +22,7 @@ import (
 
 type pluginViewerTicket struct {
 	ID, Bridge, Base string
+	View             string
 	Port             int
 	Window           bool
 	Connected        bool
@@ -53,6 +54,10 @@ func (a *App) openWorkbenchViewer(w http.ResponseWriter, r *http.Request, req wo
 		fail(w, 403, errors.New("viewer requires an open workbench"))
 		return
 	}
+	a.openWorkbenchViewerLocked(w, id, key, b, req, "")
+}
+
+func (a *App) openWorkbenchViewerLocked(w http.ResponseWriter, id, key string, b *pluginWorkbenchBridge, req workbenchBridgeRequest, view string) {
 	if !a.workbenchViewerLocked(id) {
 		fail(w, 403, errors.New("viewer capability not declared"))
 		return
@@ -115,8 +120,14 @@ func (a *App) openWorkbenchViewer(w http.ResponseWriter, r *http.Request, req wo
 		return
 	}
 	ticket := hex.EncodeToString(secret)
-	a.pluginViewerTickets[ticket] = pluginViewerTicket{ID: id, Bridge: key, Base: a.managementBaseLocked("plugins", id), Port: port, Window: window, Gen: lock.Gen, Expires: now.Add(30 * time.Minute)}
-	jsonOut(w, 200, map[string]any{"requestId": req.RequestID, "status": "result", "result": map[string]any{"protocol": 1, "url": "/plugin-viewer/" + ticket + "/websockify", "expiresIn": 1800}})
+	a.pluginViewerTickets[ticket] = pluginViewerTicket{ID: id, Bridge: key, Base: a.managementBaseLocked("plugins", id), View: view, Port: port, Window: window, Gen: lock.Gen, Expires: now.Add(30 * time.Minute)}
+	base := "/plugin-viewer/" + ticket
+	result := map[string]any{"protocol": 1, "url": base + "/websockify", "expiresIn": 1800}
+	if view != "" {
+		result["url"] = base + "/window"
+		result["fallbackUrl"] = base + "/websockify"
+	}
+	jsonOut(w, 200, map[string]any{"requestId": req.RequestID, "status": "result", "result": result})
 }
 
 func (a *App) servePluginViewerWindow(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +139,7 @@ func (a *App) servePluginViewerWindow(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	t, ok := a.pluginViewerTickets[key]
 	var page []byte
-	if ok && t.Window && t.ID == "terminal" && time.Now().Before(t.Expires) && a.workbenchViewerLocked(t.ID) {
+	if ok && t.Window && t.ID == "terminal" && time.Now().Before(t.Expires) && a.workbenchViewerLocked(t.ID) && (t.View == "" || a.pluginViewerCurrentLocked(t)) {
 		if b, err := a.workbenchBridgeLocked(t.ID, t.Bridge, true); err == nil && b.ViewerWindow != [32]byte{} {
 			if body, err := a.readTerminalViewerWindow(); err == nil && sha256.Sum256(body) == b.ViewerWindow {
 				page = body
@@ -155,7 +166,14 @@ func (a *App) pluginViewerCurrentLocked(t pluginViewerTicket) bool {
 	}
 	if t.Window {
 		b, err := a.workbenchBridgeLocked(t.ID, t.Bridge, false)
-		return err == nil && b.Ticket.Gen == t.Gen && b.Ticket.Base == t.Base
+		if err != nil || b.Ticket.Gen != t.Gen || b.Ticket.Base != t.Base {
+			return false
+		}
+		if t.View != "" {
+			grant, valid := a.workbenchWindowGrantLocked(t.ID, t.View, b)
+			return valid && grant.Spec.Kind == "viewer" && b.Package == a.pluginPackageDigestLocked(t.ID)
+		}
+		return true
 	}
 	lock := a.loadLockStateLocked()
 	return !lock.Locked && lock.Gen == t.Gen && a.managementBaseLocked("plugins", t.ID) == t.Base && a.pluginWorkbenchBridges[t.Bridge] != nil

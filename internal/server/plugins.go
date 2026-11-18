@@ -48,20 +48,21 @@ type PluginWorkbench struct {
 	Microphone           bool `json:"microphone,omitempty"`
 	OnDeviceSpeech       bool `json:"onDeviceSpeech,omitempty"`
 
-	HostComponent   string                     `json:"hostComponent,omitempty"`
-	ProjectMessages bool                       `json:"projectMessages,omitempty"`
-	MobileCapture   bool                       `json:"mobileCapture,omitempty"`
-	Viewer          *PluginWorkbenchViewer     `json:"viewer,omitempty"`
-	TerminalOutput  int                        `json:"terminalOutput,omitempty"`
-	FileHandler     *PluginFileHandler         `json:"fileHandler,omitempty"`
-	FileAccess      *PluginWorkbenchFileAccess `json:"fileAccess,omitempty"`
-	FileExtensions  []string                   `json:"fileExtensions,omitempty"`
-	CloseBehavior   string                     `json:"closeBehavior,omitempty"`
-	Tools           []string                   `json:"tools,omitempty"`
-	Protocol        int                        `json:"protocol"`
-	Entry           string                     `json:"entry"`
-	Title           string                     `json:"title"`
-	Standalone      *bool                      `json:"standalone,omitempty"`
+	HostComponent   string                           `json:"hostComponent,omitempty"`
+	ProjectMessages bool                             `json:"projectMessages,omitempty"`
+	MobileCapture   bool                             `json:"mobileCapture,omitempty"`
+	Viewer          *PluginWorkbenchViewer           `json:"viewer,omitempty"`
+	Windows         map[string]PluginWorkbenchWindow `json:"windows,omitempty"`
+	TerminalOutput  int                              `json:"terminalOutput,omitempty"`
+	FileHandler     *PluginFileHandler               `json:"fileHandler,omitempty"`
+	FileAccess      *PluginWorkbenchFileAccess       `json:"fileAccess,omitempty"`
+	FileExtensions  []string                         `json:"fileExtensions,omitempty"`
+	CloseBehavior   string                           `json:"closeBehavior,omitempty"`
+	Tools           []string                         `json:"tools,omitempty"`
+	Protocol        int                              `json:"protocol"`
+	Entry           string                           `json:"entry"`
+	Title           string                           `json:"title"`
+	Standalone      *bool                            `json:"standalone,omitempty"`
 }
 
 type PluginManifest struct {
@@ -586,6 +587,14 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 		page := packageFiles[manifest.Workbench.Entry]
 		if len(page) == 0 || len(page) > maxWorkbenchHTML {
 			return PluginManifest{}, nil, errors.New("插件工作台 HTML 缺失或超过 2 MiB")
+		}
+		for _, window := range manifest.Workbench.Windows {
+			if window.Kind == "viewer" && (manifest.ID != "terminal" || manifest.Workbench.Viewer == nil) {
+				return PluginManifest{}, nil, errors.New("viewer window is reserved for Terminal with a viewer grant")
+			}
+			if page := packageFiles[window.Entry]; len(page) == 0 || len(page) > maxWorkbenchHTML {
+				return PluginManifest{}, nil, errors.New("workbench window HTML is missing or exceeds 2 MiB")
+			}
 		}
 	}
 	if err := validatePluginModelRouter(manifest.ModelRouter, packageFiles); err != nil {
