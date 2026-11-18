@@ -2712,6 +2712,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 					At:        time.Now().UTC().Format(time.RFC3339Nano),
 				})
 				snapshotIndex = len(task.RequestSnapshots) - 1
+				task.RequestSnapshots[snapshotIndex].compactBody()
 			} else {
 				task.SnapshotsTruncated = true
 			}

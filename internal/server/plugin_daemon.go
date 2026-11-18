@@ -88,12 +88,13 @@ type daemonProc struct {
 	cmd          *exec.Cmd
 	stdin        io.WriteCloser
 
-	mu      sync.Mutex // 保护 cmd/stdin/pending/nextID
-	nextID  int64
-	pending map[int64]chan rpcResp
-	readyCh chan struct{}
-	doneCh  chan struct{}
-	stopCh  chan struct{}
+	mu            sync.Mutex // 保护 cmd/stdin/pending/nextID
+	nextID        int64
+	pending       map[int64]chan rpcResp
+	terminalReads map[int64]struct{} // kept until response or replacement process, even if browser disconnects
+	readyCh       chan struct{}
+	doneCh        chan struct{}
+	stopCh        chan struct{}
 
 	statusMu   sync.RWMutex
 	status     daemonStatus
@@ -380,6 +381,7 @@ func (p *daemonProc) spawn() {
 		// 测试替身：不拉起真实 node；由钩子模拟慢启动（就绪后 close readyCh）与退出（close doneCh）。
 		doneCh := make(chan struct{})
 		p.pending = map[int64]chan rpcResp{}
+		p.terminalReads = nil
 		p.doneCh = doneCh
 		readyCh := p.readyCh
 		p.mu.Unlock()
@@ -429,6 +431,7 @@ func (p *daemonProc) spawn() {
 	doneCh := make(chan struct{})
 	p.stdin = stdin
 	p.pending = map[int64]chan rpcResp{}
+	p.terminalReads = nil
 	p.doneCh = doneCh
 	p.mu.Unlock()
 
@@ -494,6 +497,7 @@ func (p *daemonProc) readLoop(stdout io.ReadCloser, doneCh chan struct{}, cmd *e
 			ch, ok := p.pending[*msg.ID]
 			if ok {
 				delete(p.pending, *msg.ID)
+				delete(p.terminalReads, *msg.ID)
 			}
 			p.mu.Unlock()
 			if ok {

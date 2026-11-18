@@ -156,6 +156,7 @@ func (a *App) imageChat(ctx context.Context, cfg Settings, input []Message, task
 			defer a.mu.Unlock()
 			task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{Purpose: "image#1", Model: cfg.Model, Messages: []Message{{Role: "user", Content: prompt}}, Body: append(json.RawMessage{}, body...), SHA256: hex.EncodeToString(sum[:]), At: time.Now().UTC().Format(time.RFC3339Nano)})
 			snapshotIndex = len(task.RequestSnapshots) - 1
+			task.RequestSnapshots[snapshotIndex].compactBody()
 		})
 		completed := time.Now()
 		a.mu.Lock()

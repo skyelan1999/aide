@@ -162,7 +162,7 @@ func (a *App) confirmImageIntegrityUpgrade() {
 	} else {
 		log.Printf("integrity: verified ready build baseline updated (%s, %s)", u.next.Version, u.next.Commit)
 	}
-	a.integrityRep = VerifyIntegrity(a.dataPath)
+	a.integrityRep = verifyIntegrityWithSessionDigests(a.dataPath, os.ReadFile, a.integritySessionDigests)
 }
 
 // Serialize periodic reads with the readiness transition, so an older report
@@ -176,7 +176,7 @@ func (a *App) runIntegrityChecks() {
 			return
 		case <-ticker.C:
 			a.integrityMu.Lock()
-			a.integrityRep = SelfHeal(a.dataPath, VerifyIntegrity(a.dataPath))
+			a.integrityRep = SelfHeal(a.dataPath, verifyIntegrityWithSessionDigests(a.dataPath, os.ReadFile, a.integritySessionDigests))
 			a.integrityMu.Unlock()
 		}
 	}

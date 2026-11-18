@@ -309,7 +309,7 @@ func (a *App) debugSessionDataflowDump(w http.ResponseWriter, r *http.Request) {
 		entry := debugDataflowProvider{
 			Index: i + 1, Purpose: "call-" + strconv.Itoa(i+1), Step: stepLabel, Round: round, Model: debugDataflowLabel(snapshot.Model),
 			StartedAt: snapshot.At, CompletedAt: snapshot.CompletedAt, ElapsedMillis: snapshot.ElapsedMillis,
-			MessageCount: len(snapshot.Messages), ToolCount: len(snapshot.Tools), BodyBytes: len(snapshot.Body),
+			MessageCount: len(snapshot.Messages), ToolCount: len(snapshot.Tools), BodyBytes: snapshot.bodyLength(),
 			Status:      "returned_legacy",
 			FailureCode: debugDataflowFailureCode(snapshot.FailureCode),
 		}

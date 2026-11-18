@@ -13,6 +13,11 @@ import (
 )
 
 func workbenchToolArgumentsAllowed(id, tool string, args map[string]any) bool {
+	if id == "terminal" && tool == terminalOutputTool {
+		if _, private := args["outputWatch"]; private {
+			return false
+		}
+	}
 	if pluginPlanArgumentsAllowed(args) {
 		return true
 	}

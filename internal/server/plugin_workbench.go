@@ -45,6 +45,9 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 	if w.Viewer != nil && w.Viewer.Protocol != 1 {
 		return errors.New("unsupported workbench viewer protocol")
 	}
+	if w.TerminalOutput != 0 && w.TerminalOutput != 1 {
+		return errors.New("unsupported Terminal output protocol")
+	}
 	if err := validateWorkbenchFileAccess(w.FileAccess); err != nil {
 		return err
 	}
@@ -83,9 +86,9 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 }
 
 // Caller holds a.mu. The plugin must remain registered and enabled. No arbitrary asset routes.
-func (a *App) workbenchPageLocked(id string) ([]byte, error) {
+func (a *App) workbenchEntryLocked(id string) (dir string, entry string, err error) {
 	if !pluginIDPattern.MatchString(id) {
-		return nil, errors.New("插件标识无效")
+		return "", "", errors.New("插件标识无效")
 	}
 	var spec *PluginWorkbench
 	for _, p := range a.pluginRegistry.Plugins {
@@ -95,11 +98,18 @@ func (a *App) workbenchPageLocked(id string) ([]byte, error) {
 		}
 	}
 	if validatePluginWorkbench(spec) != nil {
-		return nil, errors.New("插件未启用或未声明工作台")
+		return "", "", errors.New("插件未启用或未声明工作台")
 	}
-	dir := filepath.Join(a.pluginsPath, id)
+	return filepath.Join(a.pluginsPath, id), spec.Entry, nil
+}
+
+func (a *App) workbenchPageLocked(id string) ([]byte, error) {
+	dir, entry, err := a.workbenchEntryLocked(id)
+	if err != nil {
+		return nil, err
+	}
 	b, e := retryWorkbenchPageRead(func() ([]byte, error) {
-		return readPluginWorkbenchPage(dir, spec.Entry)
+		return readPluginWorkbenchPage(dir, entry)
 	})
 	if e != nil {
 		return nil, e
@@ -115,24 +125,59 @@ func (a *App) workbenchPageLocked(id string) ([]byte, error) {
 	return b, nil
 }
 
-func retryWorkbenchPageRead(read func() ([]byte, error)) ([]byte, error) {
+func (a *App) workbenchDigestLocked(id string) ([sha256.Size]byte, error) {
+	if id != "terminal" {
+		page, err := a.workbenchPageLocked(id)
+		if err != nil {
+			return [sha256.Size]byte{}, err
+		}
+		return sha256.Sum256(page), nil
+	}
+	dir, entry, err := a.workbenchEntryLocked(id)
+	if err != nil {
+		return [sha256.Size]byte{}, err
+	}
+	// Keep checking the current bytes on each call without materializing the HTML.
+	return retryWorkbenchPageRead(func() ([sha256.Size]byte, error) {
+		file, err := openPluginWorkbenchPage(dir, entry)
+		if err != nil {
+			return [sha256.Size]byte{}, err
+		}
+		defer file.Close()
+		hash := sha256.New()
+		var buffer [32 << 10]byte
+		n, err := io.CopyBuffer(hash, io.LimitReader(file, maxWorkbenchHTML+1), buffer[:])
+		if err != nil {
+			return [sha256.Size]byte{}, err
+		}
+		if n == 0 || n > maxWorkbenchHTML {
+			return [sha256.Size]byte{}, errors.New("工作台 HTML 无效或过大")
+		}
+		var digest [sha256.Size]byte
+		hash.Sum(digest[:0])
+		return digest, nil
+	})
+}
+
+func retryWorkbenchPageRead[T any](read func() (T, error)) (T, error) {
+	var zero T
 	for attempt := 0; attempt < 3; attempt++ {
 		page, err := read()
 		if err == nil {
 			return page, nil
 		}
 		if !errors.Is(err, syscall.EIO) {
-			return nil, err
+			return zero, err
 		}
 		if attempt == 2 {
-			return nil, fmt.Errorf("工作台文件读取发生 I/O 错误，请稍后重试: %w", err)
+			return zero, fmt.Errorf("工作台文件读取发生 I/O 错误，请稍后重试: %w", err)
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
 	panic("unreachable")
 }
 
-func readPluginWorkbenchPage(dir, entry string) ([]byte, error) {
+func openPluginWorkbenchPage(dir, entry string) (*os.File, error) {
 	info, e := os.Lstat(dir)
 	if e != nil {
 		return nil, e
@@ -160,14 +205,24 @@ func readPluginWorkbenchPage(dir, entry string) ([]byte, error) {
 	if e != nil {
 		return nil, e
 	}
-	defer f.Close()
 	st, e := f.Stat()
 	if e != nil {
+		f.Close()
 		return nil, e
 	}
 	if !st.Mode().IsRegular() || st.Size() > maxWorkbenchHTML {
+		f.Close()
 		return nil, errors.New("工作台 HTML 无效或过大")
 	}
+	return f, nil
+}
+
+func readPluginWorkbenchPage(dir, entry string) ([]byte, error) {
+	f, e := openPluginWorkbenchPage(dir, entry)
+	if e != nil {
+		return nil, e
+	}
+	defer f.Close()
 	b, e := io.ReadAll(io.LimitReader(f, maxWorkbenchHTML+1))
 	if e != nil {
 		return nil, e
@@ -249,6 +304,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			bridge := &pluginWorkbenchBridge{Document: document, Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
+			bridge.TerminalOutput = id == "terminal" && a.terminalOutputEnabledLocked(bridge.Package)
 			if id == "terminal" && p.Workbench.Viewer != nil {
 				if page, err := a.readTerminalViewerWindow(); err == nil {
 					bridge.ViewerWindow = sha256.Sum256(page)
@@ -259,7 +315,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "terminalOutput": bridge.TerminalOutput, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
 			break
 		}
 	}

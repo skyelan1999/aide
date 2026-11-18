@@ -452,7 +452,6 @@ func sessionRebalanceStatePath(data string) string {
 type sessionCand struct {
 	abs  string // 绝对路径
 	rel  string // 相对 data 根的路径（备份/隔离/回滚都以此为准）
-	raw  []byte // 文件字节
 	sess *Session
 	hash string
 }
@@ -542,11 +541,15 @@ func rebalanceSessionBuckets(data string) (returnErr error) {
 
 		// 1) 备份该组所有候选（保留原始相对路径）。
 		for _, m := range pl.members {
+			raw, err := readSessionCandidate(m)
+			if err != nil {
+				return err
+			}
 			dst := filepath.Join(backupDir, filepath.FromSlash(filepath.ToSlash(m.rel)))
 			if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 				return err
 			}
-			if err := os.WriteFile(dst, m.raw, 0600); err != nil {
+			if err := os.WriteFile(dst, raw, 0600); err != nil {
 				return err
 			}
 		}
@@ -560,10 +563,14 @@ func rebalanceSessionBuckets(data string) (returnErr error) {
 			canonicalOK = hex.EncodeToString(sum[:]) == pl.winner.hash
 		}
 		if !canonicalOK {
+			raw, err := readSessionCandidate(pl.winner)
+			if err != nil {
+				return err
+			}
 			if err := os.MkdirAll(filepath.Dir(canonicalAbs), 0700); err != nil {
 				return err
 			}
-			if err := os.WriteFile(canonicalAbs, pl.winner.raw, 0600); err != nil {
+			if err := os.WriteFile(canonicalAbs, raw, 0600); err != nil {
 				return err
 			}
 			// 校验落盘哈希
@@ -626,7 +633,11 @@ func scanSessionCandidates(data string) ([]sessionCand, error) {
 		if err != nil {
 			return
 		}
-		out = append(out, sessionCand{abs: abs, rel: rel, raw: b, sess: &s, hash: hex.EncodeToString(sum[:])})
+		// Validate the complete typed session, then retain only the fields used
+		// for bucket selection and winner ordering. Canonical startup must not
+		// keep the entire corpus twice as raw JSON plus decoded request bodies.
+		meta := &Session{ID: s.ID, Kind: s.Kind, Archived: s.Archived, Created: s.Created, Updated: s.Updated}
+		out = append(out, sessionCand{abs: abs, rel: rel, sess: meta, hash: hex.EncodeToString(sum[:])})
 	}
 	for _, d := range sessionBucketDirs(data) {
 		ents, err := filepath.Glob(filepath.Join(d, "session-*.json"))
@@ -644,6 +655,20 @@ func scanSessionCandidates(data string) ([]sessionCand, error) {
 		}
 	}
 	return out, nil
+}
+
+// Bytes are needed only for candidates that actually move. Verify the planned
+// identity again before backup/copy rather than silently using changed data.
+func readSessionCandidate(c sessionCand) ([]byte, error) {
+	b, err := os.ReadFile(c.abs)
+	if err != nil {
+		return nil, err
+	}
+	sum := sha256.Sum256(b)
+	if hex.EncodeToString(sum[:]) != c.hash {
+		return nil, fmt.Errorf("session migration candidate changed: %s", c.rel)
+	}
+	return b, nil
 }
 
 // pickSessionWinner 同 id 多副本时，取 Updated 最新者（回退 Created，再回退路径字典序）。
