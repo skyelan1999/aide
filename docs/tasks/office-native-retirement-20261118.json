@@ -38,12 +38,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Nine format offline renderer and actual Chromium preview with 81 MiB DOCX passed. Targeted Go, source and permission cases passed. Final repository profile pending.",
+      "status": "pass",
+      "summary": "Offline LibreOffice covered nine formats and Chromium rendered an 81 MiB DOCX with authorized PDF ranges. The merged-cell fixture verified that the full XLSX title and text were visible. The 68f711f9 Go race and vet run completed with 1,701 cases passed and 94 recorded skips. Runtime assets and renderer checks passed separately with the LibreOffice runtime image. Structured reading of a 128.9 MiB DOCX and lock, visibility and cancellation cases passed on c2549c6a.",
       "evidence": [
-        ".agent-state/native-office/render-nine-final.log",
-        ".agent-state/native-office/browser-receipt.json",
-        ".agent-state/native-office/go-stream.log"
+        ".agent-state/native-office/joint-browser-receipt.json",
+        ".agent-state/native-office/xlsx-layout/receipt.json",
+        ".agent-state/go-suite-4b3926f95442/report.json",
+        ".agent-state/office-market-renderer-final.log",
+        "https://github.com/skyelan1999/aide/actions/runs/44226834525"
       ]
     },
     "documentation": {
@@ -54,17 +56,24 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "The isolated Office verification containers were removed after evidence capture. The original workspace, plugin files and historical release assets were preserved.",
+      "evidence": [
+        ".agent-state/native-office/joint-browser-receipt.json",
+        "https://github.com/skyelan1999/aide-pkg-office/pull/3"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "The independent Office plugin is retired and absent from the live market. Historical downloads remain available. A new Aide application build and delivery were outside the plugin release request.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/942",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/57",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/44226953341"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "User authorized incremental merge and plugin publication, and explicitly retired the stand-alone Office plugin on 2026-11-18.",
   "rollback": "Legacy plugins and release assets retained. Existing daily image and workspace data separate. Source rollback uses the isolated feature branch and current main baseline.",
-  "handoff": "Host changes are isolated. Marketplace delist and legacy repo documentation commits prepared separately. Historical release ZIPs retained."
+  "handoff": "Built-in source is on Aide main. Layout preview and office_document_read stream source files without a fixed byte cutoff. Some legacy reads and writes still use their original guards. Daily Aide remains on its previous application image."
 }
