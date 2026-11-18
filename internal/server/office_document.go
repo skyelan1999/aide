@@ -2,16 +2,23 @@ package server
 
 import (
 	"context"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
 //go:embed office_tools.json
 var officeToolsJSON []byte
+
+var officeDocumentReadSlots = make(chan struct{}, 2)
 
 func builtinOfficeTools() []any {
 	var tools []any
@@ -63,6 +70,10 @@ func officeDocumentTransform(b []byte, p, operation string, spec any) ([]byte, e
 		return nil, e
 	}
 	defer clean()
+	return officeDocumentTransformPath(context.Background(), input, ext, operation, spec)
+}
+
+func officeDocumentTransformPath(ctx context.Context, input, ext, operation string, spec any) ([]byte, error) {
 	output, cleanOutput, e := officeTemp(".office", nil)
 	if e != nil {
 		return nil, e
@@ -76,10 +87,15 @@ func officeDocumentTransform(b []byte, p, operation string, spec any) ([]byte, e
 	if e != nil || len(raw) > 1<<20 {
 		return nil, errors.New("Office 参数无效或过大")
 	}
-	if _, e = runOfficeScript(os.TempDir(), script, operation, input, strings.TrimPrefix(ext, "."), string(raw), output); e != nil {
+	if _, e = runOfficeScriptContext(ctx, os.TempDir(), script, operation, input, strings.TrimPrefix(ext, "."), string(raw), output); e != nil {
 		return nil, e
 	}
-	result, e := os.ReadFile(output)
+	file, e := os.Open(output)
+	if e != nil {
+		return nil, e
+	}
+	defer file.Close()
+	result, e := io.ReadAll(io.LimitReader(file, maxRawFile+1))
 	if e != nil || len(result) > maxRawFile {
 		return nil, errors.New("Office 输出无效或过大")
 	}
@@ -91,7 +107,85 @@ func officeDocumentTransform(b []byte, p, operation string, spec any) ([]byte, e
 	return result, nil
 }
 
-// The bounded native executor is called inside Aide by its built-in AI tools.
+func (a *App) officeDocumentAIAllowedLocked(source, expectedWorkspace string) bool {
+	current := a.wsID()
+	if expectedWorkspace != "" && current != expectedWorkspace {
+		return false
+	}
+	if source == "" {
+		return true
+	}
+	src, ok := a.findSource(source)
+	return ok && sourceAIVisible(src, current)
+}
+
+func (a *App) checkOfficeDocumentRead(ctx context.Context, ar knowledgeArea, ai bool, expectedWorkspace string, generation int64) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !a.knowledgeAreaCurrentLocked(ar) {
+		return errors.New("Office 来源已变化")
+	}
+	lock := a.loadLockStateLocked()
+	if lock.Locked || lock.Gen != generation {
+		return errors.New("Office 读取期间锁屏状态已变化")
+	}
+	if ai && !a.officeDocumentAIAllowedLocked(ar.source, expectedWorkspace) {
+		return errors.New("工作区已变化或来源对 AI 不可见")
+	}
+	return nil
+}
+
+func (a *App) officeDocumentRead(ctx context.Context, ar knowledgeArea, in officeDocumentRequest, ai bool, expectedWorkspace string, generation int64) (map[string]any, error) {
+	if in.Offset < 0 || in.Offset > 100000 {
+		return nil, errors.New("Office 分页偏移量无效")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	select {
+	case officeDocumentReadSlots <- struct{}{}:
+		defer func() { <-officeDocumentReadSlots }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	dir, err := os.MkdirTemp("", "aide-office-read-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(dir)
+	ext := strings.ToLower(path.Ext(in.Path))
+	input := filepath.Join(dir, "input"+ext)
+	checksum := sha256.New()
+	if err = a.captureOfficeArea(ctx, ar, in.Path, input, checksum); err != nil {
+		return nil, err
+	}
+	if err := a.checkOfficeDocumentRead(ctx, ar, ai, expectedWorkspace, generation); err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(input)
+	if err != nil {
+		return nil, err
+	}
+	result, err := officeDocumentTransformPath(ctx, input, ext, "read", map[string]int{"offset": in.Offset})
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if json.Unmarshal(result, &out) != nil || out == nil {
+		return nil, errors.New("Office 解析结果无效")
+	}
+	out["hash"] = hex.EncodeToString(checksum.Sum(nil))
+	out["readOnly"] = in.ReadOnly || in.Origin != "" || !officeAreaWritable(ar) || info.Size() > maxRawFile
+	out["path"] = in.Path
+	if err := a.checkOfficeDocumentRead(ctx, ar, ai, expectedWorkspace, generation); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// The native executor is called inside Aide by its built-in AI tools.
 // AI additionally requires a current task and AI-visible source. It cannot use
 // a viewer token or a writable reference to bypass those checks.
 func (a *App) officeDocumentOperation(ctx context.Context, in officeDocumentRequest, write, ai bool, expectedWorkspace string) (map[string]any, error) {
@@ -99,55 +193,37 @@ func (a *App) officeDocumentOperation(ctx context.Context, in officeDocumentRequ
 	if e != nil {
 		return nil, e
 	}
-	if ai {
-		a.mu.Lock()
-		allowed := expectedWorkspace == "" || a.wsID() == expectedWorkspace
-		if ar.source != "" {
-			allowed = allowed && sourceAIVisible(ar.src, a.wsID())
-		}
-		a.mu.Unlock()
-		if !allowed {
-			return nil, errors.New("工作区已变化或来源对 AI 不可见")
-		}
+	a.mu.Lock()
+	allowed := !ai || a.officeDocumentAIAllowedLocked(ar.source, expectedWorkspace)
+	lock := a.loadLockStateLocked()
+	a.mu.Unlock()
+	if !allowed {
+		return nil, errors.New("工作区已变化或来源对 AI 不可见")
 	}
-	lock := a.readLockState()
 	if lock.Locked {
 		return nil, errors.New("工作台已锁定")
 	}
-	if write && (in.ReadOnly || in.Origin != "" || !officeAreaWritable(ar) || in.Hash == "") {
+	if !write {
+		return a.officeDocumentRead(ctx, ar, in, ai, expectedWorkspace, lock.Gen)
+	}
+	if in.ReadOnly || in.Origin != "" || !officeAreaWritable(ar) || in.Hash == "" {
 		return nil, errors.New("来源只读或缺少文件版本")
 	}
-	if write {
-		a.filesMu.Lock()
-		defer a.filesMu.Unlock()
-	}
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
 	b, e := a.knowledgeAreaRead(ctx, ar, in.Path, maxRawFile)
 	if e != nil {
 		return nil, e
 	}
-	if write && hash(b) != in.Hash {
+	if hash(b) != in.Hash {
 		return nil, errors.New("Office 文件版本冲突，请重新读取")
 	}
-	op := "read"
-	if write {
-		op = "edit"
-	}
-	result, e := officeDocumentTransform(b, in.Path, op, map[string]any{"offset": in.Offset, "changes": in.Changes})
+	result, e := officeDocumentTransform(b, in.Path, "edit", map[string]any{"offset": in.Offset, "changes": in.Changes})
 	if e != nil {
 		return nil, e
 	}
 	if !a.knowledgeAreaCurrent(ar) {
 		return nil, errors.New("Office 来源已变化")
-	}
-	if !write {
-		var out map[string]any
-		if json.Unmarshal(result, &out) != nil {
-			return nil, errors.New("Office 解析结果无效")
-		}
-		out["hash"] = hash(b)
-		out["readOnly"] = !officeAreaWritable(ar)
-		out["path"] = in.Path
-		return out, nil
 	}
 	mutation, finish, e := a.beginMessageMutation(ctx, lock.Gen)
 	if e != nil {
