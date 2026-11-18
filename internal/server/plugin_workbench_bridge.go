@@ -22,6 +22,7 @@ type pluginWorkbenchBridge struct {
 	Revision       uint64
 	Package        string
 	ViewerWindow   [32]byte
+	Windows        map[string]workbenchWindowGrant
 	TerminalOutput bool
 	OutputReader   *terminalOutputReader
 	Expires        time.Time
@@ -122,6 +123,11 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	if req.Method == "viewer.open" {
 		a.mu.Unlock()
 		a.openWorkbenchViewer(w, r, req)
+		return
+	}
+	if req.Method == "window.open" {
+		a.openWorkbenchWindowLocked(w, id, key, b, req)
+		a.mu.Unlock()
 		return
 	}
 	if req.Method == "project.messages" {

@@ -367,6 +367,20 @@ if (reply.status === 'proposal_pending') {
 父页面“查看待审批提案”会关闭工作台并打开已有会话审批UI；批准后可重新打开插件，读取自己的原生桥回执。新实例不能通过旧proposalId查询旧实例提案。此候选没有桌面流、原生实时选择、任意WebSocket，也不放宽全局CSP。源代码/模型测试不等于已部署或真实浏览器/原生工程验收。
 
 
+### 独立工作台窗口
+
+插件可在 `workbench.windows` 声明包内的自包含 HTML 视图。下例将报表注册为 `report`。
+
+```json
+{"workbench":{"protocol":1,"entry":"workbench.html","title":"工程工作台","windows":{"report":{"entry":"report.html"}}}}
+```
+
+工作台桥接握手返回 `window.open` 能力时，插件可在用户点击的事件中调用 `client.openWindow({view:'report'})`。宿主验证当前工作台、已声明视图和安装包内容。浏览器返回 `result.windowOpened`，macOS 桌面宿主使用独立的 WebView 窗口。调用方可在浏览器拦截时显示工作台内视图。
+
+独立页面在窗口内隔离运行。它使用包内内联脚本和资源，继承宿主的窗口生命周期，工作台关闭、锁屏或工作区切换时回收。页面没有主工作台的 MessagePort、访问令牌或模型权限。
+
+Terminal 的 `graphics` 使用宿主识别的 `kind:"viewer"` 适配器。它沿用已授权的图形连接和关闭行为。当浏览器拦截弹窗时，适配器返回同一会话的 `fallbackUrl` 供工作台内显示。通用 HTML 视图只接收已声明的 `view` ID。
+
 ### 当前项目目录与插件安装目录
 
 handler第二参提供只读值api.workspaceRoot，由宿主捕获当前授权工作区，并随call/daemon请求传递；不是模型arguments可覆盖的参数。readFile/listFiles和runPython使用此根。普通短命Node进程CWD也绑定当前本地项目。常驻进程不全局chdir，避免多调用串区；daemon需要使用本次api.workspaceRoot或helper，不能把启动时process.cwd当作当前项目。插件包脚本仍从安装目录解析，插件设置/缓存不因切换工作目录搬迁。

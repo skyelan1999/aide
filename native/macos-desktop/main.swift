@@ -152,6 +152,11 @@ enum DesktopPolicy {
         local(url, origin: origin) && url.path.range(of: "^/plugin-workbench/[a-f0-9]{64}$", options: .regularExpression) != nil
     }
 
+    static func detachedWindowURL(_ url: URL, origin: URL) -> Bool {
+        local(url, origin: origin) && url.scheme == "https" && url.query == nil && url.fragment == nil
+            && url.path.range(of: "^/(plugin-window/[a-f0-9]{64}|plugin-viewer/[a-f0-9]{64}/window)$", options: .regularExpression) != nil
+    }
+
     static func uiFrame(_ frame: WKFrameInfo, expected: URL) -> Bool {
         media(frame.securityOrigin, expected: expected)
             || frame.request.url.map { pluginURL($0, origin: expected) } == true
@@ -197,6 +202,8 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var configuredControllers = Set<ObjectIdentifier>()
     var titleObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
     var approvedCloses = Set<ObjectIdentifier>()
+    private var detachedWindows: [String: (window: NSWindow, owner: NSWindow, web: WKWebView, url: URL)] = [:]
+    private var detachedLayouts: [NSWindow: (original: NSRect, fitted: NSRect)] = [:]
     lazy var biometrics = DesktopBiometrics(namespace: Bundle.main.bundleIdentifier ?? "local.aide.desktop.invalid")
 
     init(root: URL, smokeOutput: URL?) {
@@ -395,6 +402,13 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideBiometrics")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideLocalSpeech")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideAppCapture")
+            controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideWorkbenchWindow")
+            controller.addUserScript(WKUserScript(source: """
+            if (window === top) Object.defineProperty(window, "AideNativeWorkbenchWindow", {value:Object.freeze({
+              open: path => window.webkit.messageHandlers.aideWorkbenchWindow.postMessage({action:"open",path}),
+              close: id => window.webkit.messageHandlers.aideWorkbenchWindow.postMessage({action:"close",id})
+            })});
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window,'AideNativeCapture',{value:args=>window.webkit.messageHandlers.aideAppCapture.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window, 'AideNativeSpeech', {value:args=>window.webkit.messageHandlers.aideLocalSpeech.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: """
@@ -427,6 +441,55 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     var activeWeb: WKWebView? { views[NSApp.keyWindow ?? mainWindow] ?? views[mainWindow] }
 
+    private func createDetachedWorkbenchWindow(_ url: URL, beside owner: NSWindow) -> String? {
+        guard let screen = owner.screen, detachedWindows.count < 16 else { return nil }
+        let available = screen.visibleFrame
+        let gap: CGFloat = 12
+        let ownerWidth = max(owner.minSize.width, (available.width * 0.60).rounded(.down))
+        let viewWidth = available.width - ownerWidth - gap
+        guard viewWidth >= 320, available.height >= owner.minSize.height else { return nil }
+        let original = detachedLayouts[owner]?.original ?? owner.frame
+        let fitted = NSRect(x: available.minX, y: available.minY, width: ownerWidth, height: available.height)
+        let viewFrame = NSRect(x: fitted.maxX + gap, y: fitted.minY, width: viewWidth, height: fitted.height)
+        owner.setFrame(fitted, display: true)
+        detachedLayouts[owner] = (original, owner.frame)
+        let window = makeWindow()
+        window.tabbingMode = .disallowed
+        window.minSize = NSSize(width: 320, height: 240)
+        window.setFrame(viewFrame, display: false)
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        if url.path.hasPrefix("/plugin-viewer/") {
+            let controller = configuration.userContentController
+            controller.addScriptMessageHandler(self, contentWorld: .defaultClient, name: "aideDetachedWindowClose")
+            controller.addUserScript(WKUserScript(source: """
+            addEventListener('click', event => {
+              if (event.isTrusted && event.target instanceof Element && event.target.closest('#viewer-close')) {
+                event.stopImmediatePropagation();
+                void window.webkit.messageHandlers.aideDetachedWindowClose.postMessage('close');
+              }
+            }, true);
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: .defaultClient))
+        }
+        let web = WKWebView(frame: .zero, configuration: configuration)
+        web.navigationDelegate = self
+        window.contentView = web
+        window.makeFirstResponder(web)
+        let id = UUID().uuidString.lowercased()
+        detachedWindows[id] = (window, owner, web, url)
+        titleObservers[ObjectIdentifier(web)] = web.observe(\.title, options: [.new]) { [weak window] view, _ in
+            window?.title = String((view.title?.isEmpty == false ? view.title! : "Aide").prefix(120))
+        }
+        web.load(URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData))
+        window.makeKeyAndOrderFront(nil)
+        return id
+    }
+
+    private func closeDetachedWindows(ownedBy owner: NSWindow) {
+        let windows = detachedWindows.values.filter { $0.owner === owner }.map { $0.window }
+        for window in windows { window.performClose(nil) }
+    }
+
     @objc func newTab() {
         guard let origin = origin else { return }
         let child = makeWindow()
@@ -454,6 +517,13 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let detached = detachedWindows.values.first(where: { $0.web === webView }) {
+            let mainView = navigationAction.targetFrame?.isMainFrame == true && navigationAction.request.url == detached.url
+            let packagedFrame = detached.url.path.hasPrefix("/plugin-window/") &&
+                navigationAction.targetFrame?.isMainFrame == false && navigationAction.request.url?.absoluteString == "about:srcdoc"
+            decisionHandler((mainView || packagedFrame) && !navigationAction.shouldPerformDownload ? .allow : .cancel)
+            return
+        }
         guard let origin = origin, let url = navigationAction.request.url else {
             decisionHandler(.cancel); return
         }
@@ -479,6 +549,10 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        if detachedWindows.values.contains(where: { $0.web === webView }) {
+            decisionHandler(navigationResponse.canShowMIMEType ? .allow : .cancel)
+            return
+        }
         decisionHandler(navigationResponse.canShowMIMEType ? .allow : .download)
     }
 
@@ -626,8 +700,35 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage,
                                replyHandler: @escaping (Any?, String?) -> Void) {
+        if message.name == "aideDetachedWindowClose" {
+            if message.frameInfo.isMainFrame, message.body as? String == "close",
+               let detached = detachedWindows.values.first(where: { $0.web === message.webView }),
+               detached.url.path.hasPrefix("/plugin-viewer/"), message.frameInfo.request.url == detached.url {
+                detached.window.performClose(nil)
+            }
+            replyHandler(nil, nil)
+            return
+        }
         func reject(_ error: BiometricFailure, name: String = "NotAllowedError") {
             replyHandler(["error": ["name": name, "message": error.message]], nil)
+        }
+        if message.name == "aideWorkbenchWindow" {
+            guard let origin = origin, message.frameInfo.isMainFrame,
+                  DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin),
+                  let web = message.webView, let source = web.url, let owner = web.window,
+                  views[owner] === web, DesktopPolicy.local(source, origin: origin), source.path == "/",
+                  let body = message.body as? [String: Any], body.count == 2, let action = body["action"] as? String else {
+                replyHandler([String: String](), nil); return
+            }
+            if action == "close", let id = body["id"] as? String, let detached = detachedWindows[id], detached.owner === owner {
+                detached.window.performClose(nil)
+            } else if action == "open", owner.isVisible, let path = body["path"] as? String,
+                      let url = URL(string: path, relativeTo: origin)?.absoluteURL,
+                      DesktopPolicy.detachedWindowURL(url, origin: origin),
+                      let id = createDetachedWorkbenchWindow(url, beside: owner) {
+                replyHandler(["id": id], nil); return
+            }
+            replyHandler([String: String](), nil); return
         }
         if message.name == "aideAppCapture" {
             guard let origin = origin, message.frameInfo.isMainFrame,
@@ -877,13 +978,25 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func webViewDidClose(_ webView: WKWebView) { webView.window?.performClose(nil) }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if let id = detachedWindows.first(where: { $0.value.window === sender })?.key,
+           let detached = detachedWindows.removeValue(forKey: id) {
+            detached.web.stopLoading()
+            titleObservers.removeValue(forKey: ObjectIdentifier(detached.web))
+            if !detachedWindows.values.contains(where: { $0.owner === detached.owner }),
+               let layout = detachedLayouts.removeValue(forKey: detached.owner), detached.owner.frame == layout.fitted {
+                detached.owner.setFrame(layout.original, display: true)
+            }
+            return true
+        }
         if sender == mainWindow {
+            closeDetachedWindows(ownedBy: sender)
             if let web = views[sender] { stopMedia(web) }
             sender.orderOut(nil)
             return false
         }
         let identity = ObjectIdentifier(sender)
         if approvedCloses.remove(identity) != nil {
+            closeDetachedWindows(ownedBy: sender)
             if let web = views[sender] {
                 stopMedia(web)
                 titleObservers.removeValue(forKey: ObjectIdentifier(web))
@@ -1048,6 +1161,13 @@ func policyTests() {
     precondition(!DesktopPolicy.external(URL(string: "file:///etc/passwd")!))
     precondition(!DesktopPolicy.external(URL(string: "ssh://host")!))
     precondition(DesktopPolicy.pluginURL(URL(string: "https://localhost:9999/plugin-workbench/" + String(repeating: "a", count: 64))!, origin: origin))
+    let ticket = String(repeating: "a", count: 64)
+    for path in ["/plugin-window/" + ticket, "/plugin-viewer/" + ticket + "/window"] {
+        precondition(DesktopPolicy.detachedWindowURL(URL(string: "https://localhost:9999" + path)!, origin: origin))
+        precondition(!DesktopPolicy.detachedWindowURL(URL(string: "https://localhost:9999" + path + "?data=1")!, origin: origin))
+        precondition(!DesktopPolicy.detachedWindowURL(URL(string: "https://example.org" + path)!, origin: origin))
+    }
+    precondition(!DesktopPolicy.detachedWindowURL(URL(string: "https://localhost:9999/plugin-viewer/" + ticket + "/websockify")!, origin: origin))
     for path in ["/api/config", "/plugin-workbench/short", "/plugin-workbench/" + String(repeating: "a", count: 64) + "/extra"] {
         precondition(!DesktopPolicy.pluginURL(URL(string: "https://localhost:9999" + path)!, origin: origin))
     }

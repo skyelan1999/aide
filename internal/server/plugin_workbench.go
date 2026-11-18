@@ -33,8 +33,11 @@ var workbenchExtensionPattern = regexp.MustCompile(`^\.[a-z][a-z0-9]{0,11}$`)
 var workbenchNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
 
 func validatePluginWorkbench(w *PluginWorkbench) error {
-	if w == nil || w.Protocol != 1 || len([]rune(w.Title)) < 1 || len([]rune(w.Title)) > 64 || len(w.Entry) > 160 || path.Clean(w.Entry) != w.Entry || !strings.HasSuffix(w.Entry, ".html") || strings.ContainsAny(w.Entry, "\\:") || strings.HasPrefix(w.Entry, "/") {
+	if w == nil || w.Protocol != 1 || len([]rune(w.Title)) < 1 || len([]rune(w.Title)) > 64 || !validWorkbenchHTMLPath(w.Entry) {
 		return errors.New("插件工作台声明无效")
+	}
+	if err := validatePluginWorkbenchWindows(w.Windows); err != nil {
+		return err
 	}
 	if w.OnDeviceSpeech && !w.Microphone {
 		return errors.New("on-device speech requires the explicit microphone capability")
@@ -77,12 +80,19 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 		}
 		seen[tool] = true
 	}
-	for _, part := range strings.Split(w.Entry, "/") {
+	return nil
+}
+
+func validWorkbenchHTMLPath(entry string) bool {
+	if len(entry) > 160 || path.Clean(entry) != entry || !strings.HasSuffix(entry, ".html") || strings.ContainsAny(entry, "\\:\x00") {
+		return false
+	}
+	for _, part := range strings.Split(entry, "/") {
 		if part == "" || strings.HasPrefix(part, ".") {
-			return errors.New("插件工作台路径无效")
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
 // Caller holds a.mu. The plugin must remain registered and enabled. No arbitrary asset routes.
@@ -285,7 +295,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	a.pluginWorkbenchTickets[ticket] = pluginWorkbenchTicket{ID: id, Base: a.managementBaseLocked("plugins", id), Digest: sha256.Sum256(page), Gen: lock.Gen, Expires: now.Add(time.Minute)}
 	response := map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == id && p.Workbench != nil && ((p.ID == "codex-bridge" && p.Workbench.HostComponent == "codex-bridge") || len(p.Workbench.Tools) > 0 || p.Workbench.FileAccess != nil || document != nil || p.Workbench.ProjectMessages || p.Workbench.MobileCapture || p.Workbench.Viewer != nil || (p.Workbench.Microphone && p.Workbench.OnDeviceSpeech) || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
+		if p.ID == id && p.Workbench != nil && ((p.ID == "codex-bridge" && p.Workbench.HostComponent == "codex-bridge") || len(p.Workbench.Tools) > 0 || p.Workbench.FileAccess != nil || document != nil || p.Workbench.ProjectMessages || p.Workbench.MobileCapture || p.Workbench.Viewer != nil || len(p.Workbench.Windows) > 0 || (p.Workbench.Microphone && p.Workbench.OnDeviceSpeech) || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
 			if a.pluginWorkbenchBridges == nil {
 				a.pluginWorkbenchBridges = map[string]*pluginWorkbenchBridge{}
 			}
@@ -310,12 +320,17 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 					bridge.ViewerWindow = sha256.Sum256(page)
 				}
 			}
+			windows := a.workbenchWindowGrantsLocked(p, bridge)
 			a.pluginWorkbenchBridges[ticket] = bridge
 			t := a.pluginWorkbenchTickets[ticket]
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "terminalOutput": bridge.TerminalOutput, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			bridgeResponse := map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "fileAccess": p.Workbench.FileAccess != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "hostComponent": p.Workbench.HostComponent == "codex-bridge" && p.ID == "codex-bridge", "projectMessages": p.Workbench.ProjectMessages, "viewer": p.Workbench.Viewer != nil, "viewerWindow": bridge.ViewerWindow != [32]byte{}, "terminalOutput": bridge.TerminalOutput, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			if len(windows) != 0 {
+				bridgeResponse["windows"] = windows
+			}
+			response["bridge"] = bridgeResponse
 			break
 		}
 	}
