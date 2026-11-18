@@ -16,7 +16,7 @@ def check_build_inputs():
         copies = {tuple(line.split()[1:]) for line in runtime.splitlines() if line.startswith('COPY ')}
         assert 'builtin-plugins' not in runtime, name
         assert 'bundled-plugins' not in (root/name).read_text(), name
-        assert ('--from=build', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
+        assert ('--from=host-helpers', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
 
 PROGRAM = r'''
 import hashlib, json, os, shutil, subprocess, tempfile

@@ -103,8 +103,11 @@ else:raise SystemExit(87)
     def test_both_images_and_all_launch_modes_ship_bridge(self):
         for name in ('Dockerfile','Dockerfile.local'):
             source=(ROOT/name).read_text()
-            self.assertIn('sh scripts/build-message-lan.sh /opt/aide-message-lan',source)
-            self.assertIn('COPY --from=build /opt/aide-message-lan /opt/aide/message-lan',source)
+            helpers=source.split(' AS host-helpers\n',1)[1].split('\nFROM ',1)[0]
+            self.assertIn('sh scripts/build-message-lan.sh /opt/aide-message-lan',helpers)
+            self.assertNotIn('COPY internal ./internal',helpers)
+            self.assertNotIn('COPY cmd ./cmd',helpers)
+            self.assertIn('COPY --from=host-helpers /opt/aide-message-lan /opt/aide/message-lan',source)
         for name in ('compose.yaml','docker/compose.offline.yaml'):
             source=(ROOT/name).read_text();self.assertIn('"127.0.0.1::45840"',source);self.assertIn('AIDE_MESSAGE_LAN_BRIDGE:',source)
         self.assertIn('scripts/message-lan-control.sh start',(ROOT/'scripts/aide.sh').read_text())
