@@ -129,7 +129,11 @@ func TestTerminalWorkbenchWindowUsesExistingViewerAdapter(t *testing.T) {
 	a.mu.Unlock()
 	requireStatus(t, workbenchRequest(a, "GET", out.URL, false), 403)
 	requireStatus(t, workbenchRequest(a, "GET", out.FallbackURL, false), 403)
-	legacy := request(a, "POST", bridge+"/call", map[string]any{"protocol": 1, "requestId": "legacy", "method": "viewer.open", "arguments": map[string]any{"openInWindow": true, "port": 5901}})
+	legacyBridge, remaining := openPluginWindowFixture(t, a, "terminal")
+	if len(remaining) != 0 {
+		t.Fatalf("removed viewer adapter still advertised: %#v", remaining)
+	}
+	legacy := request(a, "POST", legacyBridge+"/call", map[string]any{"protocol": 1, "requestId": "legacy", "method": "viewer.open", "arguments": map[string]any{"openInWindow": true, "port": 5901}})
 	requireStatus(t, legacy, 200)
 	if strings.Contains(legacy.Body.String(), "fallbackUrl") {
 		t.Fatal("legacy viewer response changed")
