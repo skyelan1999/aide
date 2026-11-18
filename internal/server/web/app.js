@@ -8753,7 +8753,12 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
   };
 
   // Office PDFs use range requests against the authorized render snapshot.
-  let pdfSource = {url: rawUrl, disableStream: true, disableAutoFetch: true};
+  let pdfSource = {
+    url: rawUrl,
+    httpHeaders: previewOptions?.httpHeaders,
+    disableStream: true,
+    disableAutoFetch: true,
+  };
   if (!previewOptions?.office) {
     try {
       const response = await fetch(rawUrl, {signal: abort.signal});
@@ -8794,7 +8799,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
     if (cancelled) return;
     if (previewOptions?.office) {
       teardown();
-      throw e;
+      throw new Error(t("无法加载 Office 预览，请重试。"));
     }
     teardown();
     if (e && e.name === 'PasswordException') return; // 取消/错误已由 onPassword 给出提示
@@ -9159,8 +9164,11 @@ async function setupOfficeNativePreview(container, filePath, root, source, viewe
     pageHost.append(el('p','muted',t('正在生成预览…')));
     const url=new URL(fileRawUrl(filePath,root,source,viewerSpec),location.href);url.pathname='/api/office/preview';url.searchParams.set('format','meta');
     if(viewerSpec?.format)url.searchParams.set('officeFormat',viewerSpec.format);
+    const token = url.searchParams.get('access_token');
+    url.searchParams.delete('access_token');
+    const httpHeaders = token ? {Authorization: 'Bearer ' + token} : undefined;
     try{
-      const response=await fetch(url,{signal:controller.signal});
+      const response=await fetch(url,{signal:controller.signal,headers:httpHeaders});
       if(!response.ok){let message='HTTP '+response.status;try{message=(await response.json()).error||message;}catch{}throw Error(message);}
       const bytes=await window.AidePreviewSafety.readBytes(response,64*1024),meta=JSON.parse(new TextDecoder().decode(bytes));
       if(disposed||gen!==generation)return;
@@ -9168,7 +9176,7 @@ async function setupOfficeNativePreview(container, filePath, root, source, viewe
       if (version) url.searchParams.set('version', version);
       url.searchParams.set('format','pdf');
       await setupPdfPreview(pageHost,filePath,root,source,viewerSpec,{
-        rawUrl: url.href, sheets: meta.sheets, office: true,
+        rawUrl: url.href, sheets: meta.sheets, office: true, httpHeaders,
         onFailure: message => layoutFailure(message, gen),
       });
     }catch(error){
