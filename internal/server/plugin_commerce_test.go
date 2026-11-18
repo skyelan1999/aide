@@ -166,7 +166,8 @@ func TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl(t *
 		t.Fatal(err)
 	}
 	var frozen struct {
-		Plugins []struct {
+		RetiredPluginIDs []string `json:"retiredPluginIds"`
+		Plugins          []struct {
 			ID string `json:"id"`
 		} `json:"plugins"`
 	}
@@ -177,11 +178,18 @@ func TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl(t *
 	for _, p := range frozen.Plugins {
 		expected[p.ID] = true
 	}
-	if len(shipped.Catalog.Plugins) != len(expected) || len(shipped.Catalog.PrivateListings) != 3 {
+	retired := map[string]bool{}
+	for _, id := range frozen.RetiredPluginIDs {
+		if expected[id] {
+			t.Fatal("retired package still required for release verification", id)
+		}
+		retired[id] = true
+	}
+	if len(shipped.Catalog.PrivateListings) != 3 {
 		t.Fatal("public/private catalog differs from the reviewed release inventory")
 	}
 	for _, p := range shipped.Catalog.Plugins {
-		if !expected[p.ID] {
+		if !expected[p.ID] && !retired[p.ID] {
 			t.Fatal("unexpected public package", p.ID)
 		}
 		delete(expected, p.ID)
@@ -205,8 +213,8 @@ func TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl(t *
 	if len(privateIDs) != 0 {
 		t.Fatal("private listings omitted", privateIDs)
 	}
-	// The exact frozen source retains the historical package for provenance;
-	// the real public API must hide it and refuse download/install.
+	// The frozen source retains historical packages. The public API must
+	// hide them and refuse download/install.
 	uiApp := testApp(t)
 	shipped.Fetched = time.Now().Unix()
 	cacheMarket(t, uiApp, shipped)
@@ -224,12 +232,15 @@ func TestPluginCommerceCatalogKeepsPublicEntriesAndIntegratesComputerControl(t *
 		t.Fatal("visible catalog lost entries")
 	}
 	for _, p := range visible.Plugins {
-		if p.ID == "computer-control" {
-			t.Fatal("retired package exposed for installation")
+		if p.ID == "computer-control" || retired[p.ID] {
+			t.Fatal("retired package exposed for installation", p.ID)
 		}
 	}
-	requireStatus(t, request(uiApp, "GET", "/api/plugin-market/computer-control/download?revision="+shipped.Revision, nil), http.StatusGone)
-	requireStatus(t, request(uiApp, "POST", "/api/plugin-market/computer-control/install", map[string]any{}), http.StatusGone)
+	retired["computer-control"] = true
+	for id := range retired {
+		requireStatus(t, request(uiApp, "GET", "/api/plugin-market/"+id+"/download?revision="+shipped.Revision, nil), http.StatusGone)
+		requireStatus(t, request(uiApp, "POST", "/api/plugin-market/"+id+"/install", map[string]any{}), http.StatusGone)
+	}
 	a, s, _, _ := privateFixture(t)
 	s.Catalog.PrivateListings = s.Catalog.Plugins
 	s.Catalog.Plugins = nil
