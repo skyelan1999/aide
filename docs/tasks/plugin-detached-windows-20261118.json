@@ -1,0 +1,68 @@
+{
+  "id": "plugin-detached-windows-20261118",
+  "request": "Aide 公共工作台独立 WebView 窗口，接入 Terminal，然后推送",
+  "baseline": "5f5e37304343921bb0f0711d5bdf1a5310c4df3e",
+  "initial_status": "Clean isolated Aide and Terminal source worktrees.",
+  "acceptance": [
+    "Open a package-declared view in an independent window from its workbench.",
+    "Render ROS 2 Humble RViz through a real managed TLS-relay session and continue the session after closing graphics.",
+    "Retain the existing graphics path on earlier hosts."
+  ],
+  "scope": [
+    "Aide host capability, browser and macOS presentation, Terminal adapter, and source and Terminal package publication."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Confirmed the user wants a standalone WebView without covering the central workbench.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use package-declared named views and an owner-scoped short-lived ticket. The Terminal adapter keeps its existing approved viewer transport.",
+      "evidence": [
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented the scoped API, browser window and macOS WebView. Terminal 1.8.8 consumes the shared capability where available.",
+      "evidence": [
+        "internal/server/plugin_window.go",
+        "internal/server/web/plugin-workbench.js",
+        "native/macos-desktop/main.swift"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "23 relevant Go tests and 36 focused JS tests passed. Chromium and WebKit validated the isolated frame and owner-driven close of a static view. The real Aide Chromium flow opened the installer through the normal UI, displayed RViz point cloud from ROS 2 Humble over SSH/TLS relay and received remote output after closing graphics. The signed macOS QA app displayed the same point cloud in an independent WebView. Its Close Window button returned to the existing online Terminal workbench. Verified post-close remote input on the browser path.",
+      "evidence": [
+        "internal/server/plugin_window_test.go",
+        "scripts/plugin-workbench.test.cjs",
+        ".agent-state/plugin-detached-windows/static-window-e2e-v2.log",
+        ".agent-state/plugin-detached-windows/terminal-humble-e2e-v2.log",
+        ".agent-state/detached-window-backend-v2/image-receipt.txt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented the manifest, SDK call, permissions and fallback.",
+      "evidence": [
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Isolated fixture cleanup follows final runtime and release verification.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Source is submitted for review and CI. The Aide app release is independent. Terminal package publication follows the paired acceptance and source merge.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "The user requested implementation and push and previously authorized phased source merges, plugin Releases and marketplace publication.",
+  "rollback": "Revert the scoped source changes and restore the earlier Terminal marketplace listing. The preceding Terminal archive remains available.",
+  "handoff": "The native test used an installation-pinned short-lived certificate on the isolated QA host. Daily Aide data and runtime were outside this test."
+}

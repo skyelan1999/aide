@@ -459,6 +459,18 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         window.setFrame(viewFrame, display: false)
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
+        if url.path.hasPrefix("/plugin-viewer/") {
+            let controller = configuration.userContentController
+            controller.addScriptMessageHandler(self, contentWorld: .defaultClient, name: "aideDetachedWindowClose")
+            controller.addUserScript(WKUserScript(source: """
+            addEventListener('click', event => {
+              if (event.isTrusted && event.target instanceof Element && event.target.closest('#viewer-close')) {
+                event.stopImmediatePropagation();
+                void window.webkit.messageHandlers.aideDetachedWindowClose.postMessage('close');
+              }
+            }, true);
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: .defaultClient))
+        }
         let web = WKWebView(frame: .zero, configuration: configuration)
         web.navigationDelegate = self
         window.contentView = web
@@ -688,6 +700,15 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage,
                                replyHandler: @escaping (Any?, String?) -> Void) {
+        if message.name == "aideDetachedWindowClose" {
+            if message.frameInfo.isMainFrame, message.body as? String == "close",
+               let detached = detachedWindows.values.first(where: { $0.web === message.webView }),
+               detached.url.path.hasPrefix("/plugin-viewer/"), message.frameInfo.request.url == detached.url {
+                detached.window.performClose(nil)
+            }
+            replyHandler(nil, nil)
+            return
+        }
         func reject(_ error: BiometricFailure, name: String = "NotAllowedError") {
             replyHandler(["error": ["name": name, "message": error.message]], nil)
         }
