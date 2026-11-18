@@ -18,3 +18,15 @@ test('throwing event listeners cannot prevent scope revocation',async()=>{const 
 
 test('capture SDK uses the existing authenticated MessagePort without credentials or a new HTTP client',async()=>{const f=fixture(),ready=f.client.connect();f.connect();await ready;const p=f.client.capture({action:'status',id:'fixture'});await Promise.resolve();await Promise.resolve();const m=f.port.messages.at(-1);assert.equal(m.method,'capture.control');assert.deepEqual(JSON.parse(JSON.stringify(m.arguments)),{action:'status',id:'fixture'});assert(!JSON.stringify(m).includes('token'));f.port.onmessage({data:{requestId:m.requestId,status:'result',result:{id:'fixture'}}});assert.equal((await p).result.id,'fixture');f.client.close();});
 test('manual file selector uses the same bounded port and exposes no commit or credentials',async()=>{const f=fixture(),ready=f.client.connect();f.connect();await ready;const p=f.client.files({action:'target',source:'source:fixture',path:'career.pr',mode:'save'});await Promise.resolve();await Promise.resolve();const m=f.port.messages.at(-1);assert.equal(m.method,'files.select');assert.equal(m.arguments.source,'source:fixture');assert(!('instanceId'in m));assert.equal(f.client.commitDocumentSave,undefined);f.port.onmessage({data:{requestId:m.requestId,status:'result',result:{version:'',exists:false}}});assert.equal((await p).result.exists,false);f.client.close();});
+
+test('window SDK asks the host to open a declared view over the existing port',async()=>{
+ const f=fixture(),ready=f.client.connect();f.connect();await ready;
+ const pending=f.client.openWindow({view:'report'});
+ await Promise.resolve();await Promise.resolve();
+ const request=f.port.messages.at(-1);
+ assert.equal(request.method,'window.open');
+ assert.deepEqual(JSON.parse(JSON.stringify(request.arguments)),{view:'report'});
+ f.port.onmessage({data:{requestId:request.requestId,status:'result',result:{protocol:1,windowOpened:true}}});
+ assert.equal((await pending).result.windowOpened,true);
+ f.client.close();
+});

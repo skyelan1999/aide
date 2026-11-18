@@ -8,14 +8,71 @@ function fixture(response={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64)}){
  class MessageChannel{constructor(){const make=()=>({received:[],closed:false,start(){},close(){this.closed=true;},postMessage(value){this.other.received.push(value);return this.other.onmessage?.({data:value});}});this.port1=make();this.port2=make();this.port1.other=this.port2;this.port2.other=this.port1;}}
  const urls=new Set();const urlAPI={createObjectURL(){const u='blob:test-'+urls.size;urls.add(u);return u;},revokeObjectURL(u){urls.delete(u);}};
  class MutationObserver{constructor(fn){themeChange=fn;}observe(){}disconnect(){themeChange=null;}}
- const window={confirm:()=>confirmResult,open:(...args)=>opened.push(args),addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,TextDecoder,URLSearchParams,encodeURIComponent,URL:urlAPI,crypto:{randomUUID:()=>"speech-session"},setTimeout:()=>1,clearTimeout:()=>{},setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
- return{modal:value=>modal=value,confirm:value=>confirmResult=value,opened,window,root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
+ const window={confirm:()=>confirmResult,open:(...args)=>opened.push(args),addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},navigator={userActivation:{isActive:false}},ctx={window,navigator,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,TextDecoder,URLSearchParams,encodeURIComponent,URL:urlAPI,crypto:{randomUUID:()=>"speech-session"},setTimeout:()=>1,clearTimeout:()=>{},setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
+ return{activate:()=>navigator.userActivation.isActive=true,modal:value=>modal=value,confirm:value=>confirmResult=value,opened,window,root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
 }
 const plugin={id:'test',enabled:true,workbench:{protocol:1,title:'Test'}};
 test('workbench uses sandbox without same-origin or credentials and close unloads the frame',async()=>{const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');assert.equal(frame.attributes.sandbox,'allow-scripts allow-downloads');assert.equal(frame.attributes.allow,'fullscreen *');assert.equal(frame.attributes.allowfullscreen,'');assert.equal(frame.src,'/plugin-workbench/'+'a'.repeat(64));f.controller.close();assert.equal(frame.src,'about:blank');assert.equal(f.focus.count,1);});
 test('lock, scope changes, disabled plugins and Escape close the active workbench',async()=>{for(const action of ['block','changeScope','disable']){const f=fixture();await f.controller.open(plugin,f.services);f[action]();f.tick();assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');}const f=fixture();await f.controller.open(plugin,f.services);f.events.keydown({key:'Escape',preventDefault(){}});assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');});
 test('Escape dismissing a native help dialog cannot unload its workbench',async()=>{const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe'),src=frame.src;f.modal(true);f.events.keydown({key:'Escape',preventDefault(){}});assert.equal(frame.src,src);f.modal(false);f.events.keydown({key:'Escape',preventDefault(){}});assert.equal(frame.src,'about:blank');});
 test('workbench refuses arbitrary routes returned by a broken API',async()=>{for(const url of ['https://evil.invalid/','/api/config','/plugin-workbench/short']){const f=fixture({protocol:1,url});await f.controller.open(plugin,f.services);assert.equal(f.errors.length,1);assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');}});
+
+test('declared static views open in an owned browser popup only after user activation',async()=>{
+ const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,windows:[{id:'report',kind:'static'}]}});
+ await f.controller.open(bridgePlugin,f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');
+ f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+ const handshake=frame.contentWindow.messages[0],port=handshake.ports[0];
+ assert(handshake.data.capabilities.includes('window.open'));
+ const route='/plugin-window/'+'c'.repeat(64);
+ let requested=0,popup=null;
+ f.services.api=async(url,options)=>{
+  if(options.method==='DELETE')return {};
+  requested++;
+  const req=JSON.parse(options.body);assert.equal(req.arguments.view,'report');
+  return {requestId:req.requestId,status:'result',result:{protocol:1,url:route}};
+ };
+ f.window.open=()=>popup={opener:f.window,closed:false,location:{replace(value){popup.route=value;}},close(){this.closed=true;}};
+ const send=(id,args)=>port.postMessage({protocol:1,requestId:id,method:'window.open',arguments:args});
+ await send('no_gesture',{view:'report'});
+ assert.equal(port.received.at(-1).result.windowOpened,false);assert.equal(requested,0);
+ f.activate();
+ await send('unknown',{view:'unregistered'});
+ await send('port',{view:'report',viewerPort:5700});
+ assert.equal(requested,0);assert(!popup);
+ await send('allowed',{view:'report'});
+ assert.equal(requested,1);assert.equal(popup.opener,null);assert.equal(popup.route,route);
+ assert.equal(port.received.at(-1).result.windowOpened,true);
+ assert(!JSON.stringify(port.received.at(-1)).includes(route));
+ f.changeScope();f.tick();
+ assert(popup.closed);
+});
+
+test('native detached viewer accepts only the scoped route and closes with the workbench',async()=>{
+ const response={...bridgeResponse,bridge:{...bridgeResponse.bridge,windows:[{id:'graphics',kind:'viewer'}]}};
+ const f=fixture(response);f.activate();
+ const handles=[],closed=[];
+ f.window.AideNativeWorkbenchWindow={async open(url){handles.push(url);return {id:'native-handle'};},async close(id){closed.push(id);}};
+ await f.controller.open({...bridgePlugin,id:'terminal'},f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');
+ f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+ const port=frame.contentWindow.messages[0].ports[0];
+ const prefix='/plugin-viewer/'+'c'.repeat(64);
+ let valid=false;
+ f.services.api=async(url,options)=>{
+  if(options.method==='DELETE')return {};
+  const req=JSON.parse(options.body);
+  return {requestId:req.requestId,status:'result',result:{protocol:1,url:prefix+'/window',fallbackUrl:valid?prefix+'/websockify':'/api/config'}};
+ };
+ const send=id=>port.postMessage({protocol:1,requestId:id,method:'window.open',arguments:{view:'graphics',viewerPort:5700}});
+ await send('invalid');
+ assert.deepEqual(handles,[]);
+ valid=true;await send('valid');
+ assert.deepEqual(handles,[prefix+'/window']);
+ assert.equal(port.received.at(-1).result.windowOpened,true);
+ assert.equal(port.received.at(-1).result.fallbackUrl,undefined);
+ f.controller.close();assert.deepEqual(closed,['native-handle']);
+});
 
 const bridgePlugin={...plugin,workbench:{...plugin.workbench,tools:['own_tool']}};
 const bridgeResponse={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64),bridge:{protocol:1,instanceId:'a'.repeat(64),tools:['own_tool']}};
