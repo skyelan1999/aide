@@ -36,12 +36,15 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "The new chart-first fixture failed before the adjustment with HTTP 400 and Chartsheet.max_row missing. Five focused Go tests passed after the adjustment using a network-disabled Linux ARM64 container, Go 1.26.11 and openpyxl 3.1.5. The regression covers default and alternate worksheets, edit and readback, and the explicit chart-sheet response. Existing client file request ownership tests passed. Browser acceptance is separate from this source handoff.",
+      "summary": "The new chart-first fixture failed before the adjustment with HTTP 400 and Chartsheet.max_row missing. Five focused Go tests passed after the adjustment using a network-disabled Linux ARM64 container, Go 1.26.11 and openpyxl 3.1.5. The regression covers default and alternate worksheets, edit and readback, and the explicit chart-sheet response. Existing client file request ownership tests passed. In the isolated browser, the normal Cells button reproduced HTTP 400 before the change. After the change the same UI defaulted to Data and saved and reopened B2. The daily browser opened and switched the same synthetic chart-first workbook. The separate daily edit test wrote the fixture, then returned a history archive I/O error in the shared data mount.",
       "evidence": [
         ".agent-state/office-xlsx-cells/baseline-go.log",
         ".agent-state/office-xlsx-cells/candidate-go.log",
         ".agent-state/office-xlsx-cells/fixture/chart-first.xlsx",
-        "scripts/file-open-request-ownership.test.cjs"
+        "scripts/file-open-request-ownership.test.cjs",
+        ".agent-state/office-xlsx-cells/office-ui-before-path",
+        ".agent-state/office-xlsx-cells/office-ui-after-path",
+        ".agent-state/office-xlsx-cells/daily-office-browser.json"
       ]
     },
     "documentation": {
@@ -53,20 +56,22 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Removed the disposable test containers and dedicated Go cache. Kept the synthetic workbook and focused test logs with the isolated worktree.",
+      "summary": "Removed the disposable test containers and dedicated Go cache. Kept the synthetic workbook and focused test logs with the isolated worktree. Removed the three temporary daily workspace workbooks after checking the fixture path.",
       "evidence": [
         ".agent-state/office-xlsx-cells/cleanup.log"
       ]
     },
     "release": {
       "status": "not_run",
-      "summary": "Local source handoff. The daily Aide image and workbook data were untouched.",
+      "summary": "Local deployment completed on the running daily Aide by replacing the verified built-in Python asset atomically. The browser test and health/integrity passed on the same container. Its local source copy and next-start image contain the same script. A public Aide release was out of scope.",
       "evidence": [
-        "docs/tasks/office-xlsx-cells-20261118.json"
+        ".agent-state/office-xlsx-cells/daily-office-script-update.log",
+        ".agent-state/office-xlsx-cells/daily-office-health.json",
+        ".agent-state/office-xlsx-cells/local-image-script-proof.txt"
       ]
     }
   },
-  "release_authorization": "Local isolated implementation and verification only.",
-  "rollback": "Revert the source change. This fix requires no data migration.",
-  "handoff": "The confirmed chart-first fault is covered by an HTTP regression. No private workbook contents were inspected. Verify the reported workbook separately if the detailed error differs."
+  "release_authorization": "User-reported local product bug. Source and daily configuration verification are local.",
+  "rollback": "Restore the previously verified bundled Python script if needed. The previous image is retained under aide:daily-before-xlsx-cells-20261118.",
+  "handoff": "The chart-first fault is covered by HTTP and browser regression evidence. The exact reported workbook requires its detailed error or a separate verified reproduction."
 }
