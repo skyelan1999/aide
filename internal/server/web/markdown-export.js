@@ -131,7 +131,29 @@
    signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel();else try{reader.readAsDataURL(blob);}catch(error){finish(error);}
   });
  }
- async function snapshot(o,job,html=o.html){
+ async function pdfImageBlob(blob,img,job){
+  const signature=new Uint8Array(await job.wait(blob.slice(0,8).arrayBuffer()));
+  if(signature[0]===255&&signature[1]===216)return blob;
+  const pngSignature=[137,80,78,71,13,10,26,10];
+  if(pngSignature.every((byte,index)=>signature[index]===byte))return blob;
+
+  // PDFMake only accepts PNG and JPEG for image nodes. Use the browser's
+  // decoded image at up to twice its print size, keeping alpha and aspect ratio.
+  const canvas=img.ownerDocument.createElement('canvas');
+  const {width,height}=img.getBoundingClientRect();
+  const scale=width&&height?Math.min(1,2*width/img.naturalWidth,2*height/img.naturalHeight):1;
+  canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+  canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+  try{
+   canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+   const converted=await job.wait(new Promise(resolve=>canvas.toBlob(resolve,'image/png')));
+   if(converted)return converted;
+  }catch(error){
+   if(error?.name==='AbortError')throw error;
+  }finally{canvas.width=canvas.height=0;}
+  throw Error(uiTextMarkdownExport('图片渲染失败'));
+ }
+ async function snapshot(o,job,html=o.html,pdfImages=null){
   if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');
   const frame=document.createElement('iframe');frame.className='markdown-print-frame';frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;document.body.append(frame);job.frame=frame;
   const doc=frame.contentDocument;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');doc.close();
@@ -150,23 +172,28 @@
   // Diagrams should stay together on a page when their natural portrait size
   // is larger than the printable area. Preserve their viewBox aspect ratio.
   for(const svg of body.querySelectorAll('svg')){svg.style.setProperty('width','auto','important');svg.style.setProperty('height','auto','important');svg.style.setProperty('max-width','100%','important');svg.style.setProperty('max-height','560px','important');svg.style.setProperty('object-fit','contain','important');}
-  const budget=o.imageBudget||{total:0};
+  const budget=o.imageBudget||{total:0,pdfTotal:0};
   for(const img of body.querySelectorAll('img')){
    const url=img.getAttribute('src');if(!url)throw Error(uiTextMarkdownExport('图片地址为空'));
    const signal=job.controller.signal;if(signal.aborted)throw new DOMException('Cancelled','AbortError');
    const parsed=new URL(url,location.href),blob=parsed.protocol==='data:'?inlineImageBlob(parsed,LIMIT-budget.total):await readBounded(await fetch(url,{signal,credentials:parsed.origin===location.origin?'same-origin':'omit'}),signal);budget.total+=blob.size;if(budget.total>LIMIT)throw Error(uiTextMarkdownExport('图片资源总量超过 32 MiB'));
    const data=await imageDataURL(blob,signal);
    await new Promise((resolve,reject)=>{const signal=job.controller.signal;const finish=(err)=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);img.onload=img.onerror=null;err?reject(err):resolve();};const cancel=()=>finish(new DOMException('Cancelled','AbortError')),timer=setTimeout(()=>finish(Error(uiTextMarkdownExport('图片渲染超时'))),15000);signal.addEventListener('abort',cancel,{once:true});img.onload=()=>finish();img.onerror=()=>finish(Error(uiTextMarkdownExport('图片渲染失败')));if(signal.aborted)cancel();else img.src=data;});
+   if(img.naturalWidth*img.naturalHeight>24000000)throw Error(uiTextMarkdownExport('图片像素过大，请缩小后导出'));
+   if(pdfImages){
+    const pdfBlob=await pdfImageBlob(blob,img,job);budget.pdfTotal+=pdfBlob.size;
+    if(budget.pdfTotal>LIMIT)throw Error(uiTextMarkdownExport('图片资源总量超过 32 MiB'));
+    if(pdfBlob!==blob)pdfImages.set(img,await imageDataURL(pdfBlob,signal));
+   }
   }
   await job.wait(doc.fonts?.ready);
-  for(const img of body.querySelectorAll('img'))if(img.naturalWidth*img.naturalHeight>24000000)throw Error(uiTextMarkdownExport('图片像素过大，请缩小后导出'));
   return doc.body;
  }
  let vectorPdfReady=null;
  function base64FromBytes(bytes){let out='';for(let i=0;i<bytes.length;i+=0x6000)out+=String.fromCharCode(...bytes.subarray(i,Math.min(i+0x6000,bytes.length)));return btoa(out);}
  async function loadVectorPdf(job,o){
   if(!vectorPdfReady)vectorPdfReady=(async()=>{
-   await job.wait(o.load('/vendor/markdown-export/pdfmake.min.js',()=>!!window.pdfMake?.createPdf));
+   await job.wait(o.load('/vendor/markdown-export/pdfmake.min.js?v=2',()=>!!window.pdfMake?.createPdf));
    await job.wait(o.load('/vendor/markdown-export/html-to-pdfmake.js',()=>!!window.htmlToPdfmake));
    await job.wait(o.load('/vendor/markdown-export/pdf-lib.min.js',()=>!!window.PDFLib?.PDFDocument));
    const response=await job.wait(fetch('/vendor/markdown-export/NotoSansSC-VF.ttf',{signal:job.controller.signal}));if(!response.ok)throw Error('中文字库加载失败');
@@ -177,8 +204,13 @@
   await job.wait(vectorPdfReady);
  }
  function compactPdfCssColors(value){return value.replace(/\b(rgba?)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/gi,(_,fn,r,g,b,a)=>fn.toLowerCase()==='rgba'&&a!==undefined?`rgba(${r},${g},${b},${a})`:`rgb(${r},${g},${b})`);}
- function vectorPdfDefinition(body,attachments=[]){
-  for(const element of body.querySelectorAll('img,svg')){const box=element.getBoundingClientRect();if(box.width&&box.height){element.style.setProperty('width',box.width+'px','important');element.style.setProperty('height',box.height+'px','important');}}
+ function vectorPdfDefinition(body,attachments=[],pdfImages){
+  for(const element of body.querySelectorAll('img,svg')){
+   const box=element.getBoundingClientRect();
+   if(box.width&&box.height){element.style.setProperty('width',box.width+'px','important');element.style.setProperty('height',box.height+'px','important');}
+   const data=pdfImages?.get(element);
+   if(data)element.src=data;
+  }
   for(const element of body.querySelectorAll('*')){const style=element.ownerDocument.defaultView.getComputedStyle(element);for(const [source,target] of [['color','color'],['backgroundColor','background-color'],['fontSize','font-size'],['fontWeight','font-weight'],['fontStyle','font-style'],['textAlign','text-align'],['textDecoration','text-decoration'],['verticalAlign','vertical-align'],['whiteSpace','white-space'],['border','border'],['borderTop','border-top'],['borderRight','border-right'],['borderBottom','border-bottom'],['borderLeft','border-left'],['padding','padding']]){const value=style[source];if(value&&value!=='none'&&value!=='normal'&&value!=='rgba(0, 0, 0, 0)')element.style.setProperty(target,compactPdfCssColors(value));}}
   const converted=window.htmlToPdfmake(compactPdfCssColors(body.innerHTML),{window:body.ownerDocument.defaultView,tableAutoSize:true,defaultStyles:{h1:{fontSize:24,bold:true,margin:[0,18,0,10]},h2:{fontSize:20,bold:true,margin:[0,16,0,8]},h3:{fontSize:16,bold:true,margin:[0,12,0,6]},h4:{fontSize:13,bold:true,margin:[0,10,0,5]},h5:{fontSize:11,bold:true,margin:[0,8,0,4]},h6:{fontSize:10,bold:true,margin:[0,8,0,4]},p:{margin:[0,0,0,8]},pre:{fontSize:8,margin:[0,6,0,10],fillColor:'#f3f5f7',border:[true,true,true,true],borderColor:'#718096',padding:8},blockquote:{color:'#46505e',margin:[12,0,12,0],italics:true},th:{bold:true,fillColor:'#edf1f5',margin:[5,4,5,4]},td:{margin:[5,4,5,4]},table:{margin:[0,8,0,10]},a:{color:'#355f86',decoration:'underline'}}});
   const content=Array.isArray(converted)?converted:converted?.content||[converted];
@@ -187,7 +219,10 @@
   const landscape=[...body.querySelectorAll('table')].some(table=>[...table.rows].some(row=>[...row.cells].reduce((sum,cell)=>sum+(cell.colSpan||1),0)>5));
   return{pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',pageMargins:[42,42,42,42],defaultStyle:{font:'NotoSansSC',fontSize:10,lineHeight:1.25,color:'#202630'},styles:{'html-h1':{fontSize:24,bold:true},'html-h2':{fontSize:20,bold:true},'html-h3':{fontSize:16,bold:true},'html-pre':{fontSize:8},'html-th':{bold:true}},content};
  }
- async function renderVectorChunk(html,o,job,attachments=[]){const body=await snapshot(o,job,html);return job.wait(window.pdfMake.createPdf(vectorPdfDefinition(body,attachments)).getBlob());}
+ async function renderVectorChunk(html,o,job,attachments=[]){
+  const pdfImages=new Map(),body=await snapshot(o,job,html,pdfImages);
+  return job.wait(window.pdfMake.createPdf(vectorPdfDefinition(body,attachments,pdfImages)).getBlob());
+ }
  async function mergeVectorPdf(parts,last,stem,job){
   const {PDFDocument}=window.PDFLib,target=await job.wait(PDFDocument.load(await job.wait(last.arrayBuffer())));let index=0;
   for(const bytes of parts){if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');const source=await job.wait(PDFDocument.load(bytes)),pages=await job.wait(target.copyPages(source,source.getPageIndices()));for(const page of pages)target.insertPage(index++,page);}
@@ -203,7 +238,7 @@
     await loadVectorPdf(job,o);
     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},6*60*60*1000);
     const attachments=await preparePdfAttachments(String(o.markdown),o,job);for(const item of attachments){item.dataUrl=await imageDataURL(item.blob,job.controller.signal);item.blob=null;}
-    const prior=[],imageBudget={total:0};let pending=null,chunk=0,last=null;
+    const prior=[],imageBudget={total:0,pdfTotal:0};let pending=null,chunk=0,last=null;
     const emit=async(fragment,isLast)=>{if(!alive())throw new DOMException('Cancelled','AbortError');const html=o.renderMarkdown?o.renderMarkdown(fragment):o.html;last=await renderVectorChunk(html,{...o,markdown:fragment,renderMarkdown:null,imageBudget},job,isLast?attachments:[]);chunk++;progress(chunk,chunk,chunk);};
     for(const fragment of markdownFragments(String(o.markdown),PDF_CHUNK_CHARS)){if(pending!==null){await emit(pending,false);prior.push(new Uint8Array(await job.wait(last.arrayBuffer())));}pending=fragment;}
     if(pending!==null)await emit(pending,true);else await emit('',true);
