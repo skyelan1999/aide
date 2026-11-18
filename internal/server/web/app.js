@@ -8711,6 +8711,13 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
   };
   bindViewerTeardown(container, teardown);
 
+  const failPage = message => {
+    if (cancelled) return;
+    teardown();
+    if (previewOptions?.onFailure) previewOptions.onFailure(message);
+    else fail(message);
+  };
+
   // Office PDFs use range requests against the authorized render snapshot.
   let pdfSource = {url: rawUrl, disableStream: true, disableAutoFetch: true};
   if (!previewOptions?.office) {
@@ -8875,7 +8882,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
         limited ||= metrics.limited;
       }
     } catch (e) {
-      if (!cancelled && gen === renderGeneration) { teardown(); fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。')); }
+      if (!cancelled && gen === renderGeneration) failPage(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));
       return;
     }
     sizeLimited = limited;
@@ -8946,12 +8953,13 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
   // Keep synchronous allocation/render errors inside the same lifecycle as asynchronous rendering.
   async function renderPage(h, gen) {
     if (gen !== renderGeneration || cancelled) return;
-    const p = await getPage(h.page);
-    if (gen !== renderGeneration || cancelled || h.renderedScale === scale) return;
-    cancelHolderRender(h);
-    const metrics = h.metrics, c = h.canvas, renderScale = scale;
     let task = null, timer = 0;
+    const renderScale = scale;
     try {
+      const p = await getPage(h.page);
+      if (gen !== renderGeneration || cancelled || h.renderedScale === scale) return;
+      cancelHolderRender(h);
+      const metrics = h.metrics, c = h.canvas;
       // Reset both dimensions first: the previous height must not multiply a new width.
       c.width = c.height = 0;
       c.width = metrics.width; c.height = metrics.height;
@@ -8987,7 +8995,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
       if ((e && e.name === 'RenderingCancelledException') || (e && e.message === 'render-timeout')) {
         if (h.renderTask === task && h.renderedScale === renderScale) h.renderedScale = 0;
       } else {
-        teardown(); fail(t('PDF 页面渲染失败，请下载原文件查看。'));
+        failPage(t('PDF 页面渲染失败，请下载原文件查看。'));
       }
     } finally {
       clearTimeout(timer);
@@ -9018,7 +9026,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
     i = Math.max(1, Math.min(numPages, i | 0));
     if (sheetSelect) {
       try { const page=await getPage(i); if(cancelled||request!==gotoGeneration)return; baseWidth=pdfPageMetrics(page,1,1).baseWidth; scale=fitWidthScale(); await layoutPages(); }
-      catch(e){if(!cancelled)fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));return;}
+      catch(e){if(!cancelled)failPage(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。'));return;}
     }
     if(cancelled||request!==gotoGeneration)return;
     _gotoLock=true;clearTimeout(scrollTimer);scroll.scrollTop=holders[i].el.offsetTop;pageInput.value=i;
@@ -9102,6 +9110,14 @@ async function setupOfficeNativePreview(container, filePath, root, source, viewe
   let disposed=false, generation=0, gridStarted=false, layoutDirty=true, controller=null;
   const stopPages=()=>{controller?.abort();teardownViewer(pageHost);pageHost.replaceChildren();};
   bindViewerTeardown(container,()=>{disposed=true;generation++;stopPages();teardownViewer(cellHost);});
+  function layoutFailure(message, requestGeneration) {
+    if (disposed || requestGeneration !== generation) return;
+    layoutDirty = true;
+    stopPages();
+    const retry = el('button', 'quiet quiet-sm', t('重试'));
+    retry.onclick = showLayout;
+    pageHost.append(el('p', 'office-preview-error', message), retry);
+  }
   async function showLayout(){
     pageHost.classList.remove('hidden');cellHost.classList.add('hidden');layout.setAttribute('aria-pressed','true');cells.setAttribute('aria-pressed','false');
     if(!layoutDirty&&pageHost.childNodes.length)return;
@@ -9117,11 +9133,13 @@ async function setupOfficeNativePreview(container, filePath, root, source, viewe
       const version = response.headers.get('X-Aide-Office-Version');
       if (version) url.searchParams.set('version', version);
       url.searchParams.set('format','pdf');
-      await setupPdfPreview(pageHost,filePath,root,source,viewerSpec,{rawUrl:url.href,sheets:meta.sheets,office:true});
+      await setupPdfPreview(pageHost,filePath,root,source,viewerSpec,{
+        rawUrl: url.href, sheets: meta.sheets, office: true,
+        onFailure: message => layoutFailure(message, gen),
+      });
     }catch(error){
       if(disposed||gen!==generation||error.name==='AbortError')return;
-      layoutDirty=true;pageHost.replaceChildren(el('p','office-preview-error',error.message));
-      const retry=el('button','quiet quiet-sm',t('重试'));retry.onclick=showLayout;pageHost.append(retry);
+      layoutFailure(error.message, gen);
     }
   }
   layout.onclick=showLayout;

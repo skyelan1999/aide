@@ -113,7 +113,7 @@
     "type": "function",
     "function": {
       "name": "office_create",
-      "description": "Create a DOCX, XLSX or PPTX without overwriting. Use system-docs if bound, otherwise the workspace. DOCX uses title/blocks, XLSX sheets, PPTX slides. Read back the saved file.",
+      "description": "Create DOCX/XLSX/PPTX in bound system-docs or workspace without overwriting. DOCX blocks use {type:heading|paragraph|table,text,level?,rows?}; XLSX sheets use {name,rows}; PPTX slides use {title,body}. Read back the result.",
       "parameters": {
         "type": "object",
         "required": [
@@ -143,83 +143,19 @@
               "blocks": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "heading",
-                        "paragraph",
-                        "table"
-                      ]
-                    },
-                    "text": {
-                      "type": "string"
-                    },
-                    "level": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9
-                    },
-                    "rows": {
-                      "type": "array",
-                      "items": {
-                        "type": "array",
-                        "items": {
-                          "type": [
-                            "string",
-                            "number",
-                            "boolean",
-                            "null"
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "additionalProperties": false
+                  "type": "object"
                 }
               },
               "sheets": {
                 "type": "array",
-                "minItems": 1,
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "rows": {
-                      "type": "array",
-                      "items": {
-                        "type": "array",
-                        "items": {
-                          "type": [
-                            "string",
-                            "number",
-                            "boolean",
-                            "null"
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "additionalProperties": false
+                  "type": "object"
                 }
               },
               "slides": {
                 "type": "array",
-                "minItems": 1,
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "title": {
-                      "type": "string"
-                    },
-                    "body": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
+                  "type": "object"
                 }
               }
             }

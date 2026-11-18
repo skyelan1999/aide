@@ -32,6 +32,7 @@ type officePreview struct {
 	meta         []byte
 	current      func() bool
 	expires      time.Time
+	expiration   *time.Timer
 	users        int
 	evicted      bool
 }
@@ -46,6 +47,7 @@ type officePreviewCache struct {
 
 func (c *officePreviewCache) discard(p *officePreview) {
 	p.evicted = true
+	p.expiration.Stop()
 	if p.users == 0 {
 		_ = os.RemoveAll(p.dir)
 	}
@@ -70,6 +72,25 @@ func (c *officePreviewCache) release(p *officePreview) {
 	}
 }
 
+func (c *officePreviewCache) expire(p *officePreview) {
+	c.Lock()
+	defer c.Unlock()
+	if p.evicted {
+		return
+	}
+	if remaining := time.Until(p.expires); remaining > 0 {
+		p.expiration.Reset(remaining)
+		return
+	}
+	for i, entry := range c.entries {
+		if entry == p {
+			c.discard(p)
+			c.entries = append(c.entries[:i], c.entries[i+1:]...)
+			return
+		}
+	}
+}
+
 func (c *officePreviewCache) add(p *officePreview) bool {
 	c.Lock()
 	defer c.Unlock()
@@ -81,6 +102,7 @@ func (c *officePreviewCache) add(p *officePreview) bool {
 		c.entries = c.entries[1:]
 	}
 	p.users = 1
+	p.expiration = time.AfterFunc(officePreviewLifetime, func() { c.expire(p) })
 	c.entries = append(c.entries, p)
 	return true
 }
@@ -99,6 +121,8 @@ func (c *officePreviewCache) acquire(request [6]string, version string) *officeP
 		kept = append(kept, p)
 		if p.version == version && p.request == request {
 			p.users++
+			p.expires = now.Add(officePreviewLifetime)
+			p.expiration.Reset(officePreviewLifetime)
 			match = p
 		}
 	}
@@ -126,6 +150,24 @@ func (r officeCopyReader) Read(p []byte) (int, error) {
 	return r.Reader.Read(p)
 }
 
+type officeSnapshotWriter struct {
+	target    *os.File
+	space     *transferFS
+	remaining int64
+}
+
+func (w *officeSnapshotWriter) Write(p []byte) (int, error) {
+	if w.remaining < int64(len(p)) {
+		if err := w.space.CheckSpace(int64(len(p))); err != nil {
+			return 0, dwgError(507, "Office 预览暂存空间不足，请释放磁盘空间后重试。")
+		}
+		w.remaining = 4 << 20
+	}
+	n, err := w.target.Write(p)
+	w.remaining -= int64(n)
+	return n, err
+}
+
 // Capture a private disk snapshot using the ordinary source credentials and
 // identity checks. Office source bytes are streamed without a file-size cutoff.
 func (a *App) captureOfficeSource(ctx context.Context, r *http.Request, dest string) (func() bool, error) {
@@ -136,12 +178,22 @@ func (a *App) captureOfficeSource(ctx context.Context, r *http.Request, dest str
 		return nil, err
 	}
 	defer target.Close()
+	tempRoot, err := os.OpenRoot(filepath.Dir(dest))
+	if err != nil {
+		return nil, err
+	}
+	defer tempRoot.Close()
+	space := &transferFS{root: tempRoot}
+	writer := &officeSnapshotWriter{target: target, space: space}
 	copyFile := func(f io.Reader, stat func() (os.FileInfo, error)) error {
 		before, err := stat()
 		if err != nil || !before.Mode().IsRegular() {
 			return errors.New("预览仅支持普通文件")
 		}
-		n, err := io.Copy(target, officeCopyReader{Context: ctx, Reader: f})
+		if err := space.CheckSpace(before.Size()); err != nil {
+			return dwgError(507, "Office 预览暂存空间不足，请释放磁盘空间后重试。")
+		}
+		n, err := io.Copy(writer, officeCopyReader{Context: ctx, Reader: f})
 		if err != nil {
 			return err
 		}
@@ -213,7 +265,7 @@ func (a *App) captureOfficeSource(ctx context.Context, r *http.Request, dest str
 		if err != nil {
 			return nil, err
 		}
-		cmd.Stdout, cmd.Stderr = target, io.Discard
+		cmd.Stdout, cmd.Stderr = writer, io.Discard
 		return current, cmd.Run()
 	default:
 		return nil, errors.New("不支持的引用来源类型")
