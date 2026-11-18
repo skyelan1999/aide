@@ -100,9 +100,15 @@ def create(kind, spec, output):
 def view_xlsx(source, sheet_name, start_row, start_col):
     wb = load_workbook(source, read_only=True, data_only=False)
     try:
-        if sheet_name and sheet_name not in wb.sheetnames:
+        # Chart sheets appear in sheetnames but expose no cell grid.
+        worksheets = {sheet.title: sheet for sheet in wb.worksheets}
+        if not worksheets:
+            fail("此工作簿没有包含单元格的工作表，请使用版式预览。")
+        if sheet_name and sheet_name not in worksheets:
+            if sheet_name in wb.sheetnames:
+                fail("图表工作表没有可查看的单元格，请使用版式预览。")
             fail("sheet not found")
-        ws = wb[sheet_name or wb.sheetnames[0]]
+        ws = worksheets[sheet_name or next(iter(worksheets))]
         max_row = ws.max_row or 1
         max_col = ws.max_column or 1
         rows = []
@@ -112,7 +118,7 @@ def view_xlsx(source, sheet_name, start_row, start_col):
             rows.append([{"ref": f"{get_column_letter(start_col + col_offset)}{row_number}",
                           "value": cell.value if cell.value is not None else ""}
                          for col_offset, cell in enumerate(row)])
-        return {"sheets": wb.sheetnames, "sheet": ws.title, "rows": rows,
+        return {"sheets": list(worksheets), "sheet": ws.title, "rows": rows,
                 "maxRow": max_row, "maxCol": max_col,
                 "startRow": start_row, "startCol": start_col}
     finally:

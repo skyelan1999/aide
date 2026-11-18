@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -195,5 +196,69 @@ func TestOfficeXlsxViewSparseSecondSheet(t *testing.T) {
 	}
 	if grid.Rows[0][0].Value != "left" || grid.Rows[0][1].Value != "" || grid.Rows[0][2].Value != "right" {
 		t.Errorf("unexpected cell values: %#v", grid.Rows[0])
+	}
+}
+
+func TestOfficeXlsxViewSkipsChartSheets(t *testing.T) {
+	a := testApp(t)
+	const fixture = `
+import sys
+from openpyxl import Workbook
+from openpyxl.chart import BarChart, Reference
+
+workbook = Workbook()
+data = workbook.active
+data.title = "Data"
+data.append(["value"])
+data.append([17])
+chart = BarChart()
+chart.add_data(Reference(data, min_col=1, min_row=1, max_row=2), titles_from_data=True)
+workbook.create_chartsheet("Chart", 0).add_chart(chart)
+workbook.create_sheet("Notes")["A1"] = "notes"
+workbook.save(sys.argv[1])
+`
+	output, err := exec.Command("python3", "-c", fixture, filepath.Join(a.workPath, "chart-first.xlsx")).CombinedOutput()
+	if err != nil {
+		t.Fatalf("create chart-sheet workbook: %v: %s", err, output)
+	}
+
+	const endpoint = "/api/office/xlsx?path=chart-first.xlsx"
+	view := request(a, "GET", endpoint, nil)
+	requireStatus(t, view, 200)
+	var grid struct {
+		Sheets      []string `json:"sheets"`
+		Sheet       string   `json:"sheet"`
+		Hash        string   `json:"hash"`
+		WorkspaceID string   `json:"workspaceId"`
+		Rows        [][]struct {
+			Value any `json:"value"`
+		} `json:"rows"`
+	}
+	if err := json.Unmarshal(view.Body.Bytes(), &grid); err != nil {
+		t.Fatal(err)
+	}
+	if len(grid.Sheets) != 2 || grid.Sheets[0] != "Data" || grid.Sheets[1] != "Notes" ||
+		grid.Sheet != "Data" || len(grid.Rows) != 2 || len(grid.Rows[1]) != 1 || grid.Rows[1][0].Value != float64(17) {
+		t.Fatalf("unexpected default cell grid: %#v", grid)
+	}
+	notes := request(a, "GET", endpoint+"&sheet=Notes", nil)
+	requireStatus(t, notes, 200)
+	if !strings.Contains(notes.Body.String(), `"value":"notes"`) {
+		t.Fatalf("unexpected alternate worksheet: %s", notes.Body.String())
+	}
+	edit := request(a, "PUT", "/api/office/xlsx", map[string]any{
+		"path": "chart-first.xlsx", "hash": grid.Hash, "workspaceId": grid.WorkspaceID,
+		"changes": []map[string]any{{"sheet": "Data", "ref": "A2", "value": 27}},
+	})
+	requireStatus(t, edit, 200)
+	updated := request(a, "GET", endpoint, nil)
+	requireStatus(t, updated, 200)
+	if !strings.Contains(updated.Body.String(), `"value":27`) {
+		t.Fatalf("data sheet edit not persisted: %s", updated.Body.String())
+	}
+	chart := request(a, "GET", endpoint+"&sheet=Chart", nil)
+	requireStatus(t, chart, 400)
+	if !strings.Contains(chart.Body.String(), "图表工作表没有可查看的单元格") {
+		t.Fatalf("missing chart sheet explanation: %s", chart.Body.String())
 	}
 }

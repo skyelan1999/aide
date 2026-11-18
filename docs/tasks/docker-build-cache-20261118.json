@@ -1,0 +1,84 @@
+{
+  "id": "docker-build-cache-20261118",
+  "request": "能修改一下把docker编译的速度提高一下吗，现在太慢了",
+  "baseline": "4d77643dff6adc5f0afd620e3824d658159a5a31",
+  "initial_status": "The isolated worktree started clean at the recorded main revision. The active checkout had pre-existing local changes in the Docker build path.",
+  "acceptance": [
+    "Compare warm incremental Docker builds on the same BuildKit builder after an Office Python source edit and after changing only build identity metadata.",
+    "Reuse the runtime system-package and host-helper layers across application edits. Reuse verification and host-helper layers when only the build identity changes.",
+    "Preserve the release test gate, runtime assets, non-root permissions and startup behavior."
+  ],
+  "scope": [
+    "Main and local Dockerfiles, with matching runtime asset and LAN launcher checks.",
+    "Isolated build timing and smoke validation. Keep the running Aide image and persistent data in place."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "The user requested faster Docker builds. This change targets warm rebuilds during normal source development.",
+      "evidence": [
+        "User request on 2026-11-18",
+        ".agent-state/docker-build-cache/baseline-office.log",
+        ".agent-state/docker-build-cache/baseline-metadata.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep the system package steps before frequently changing application assets. Build the cross-platform LAN and local-mount helpers from their own Go inputs. Apply version and commit metadata after source validation so the linker can update the binary without rerunning validation.",
+      "evidence": [
+        "Dockerfile",
+        "Dockerfile.local"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Both Dockerfiles use the isolated host-helper stage and keep the AIDE_RUN_TESTS=1 release gate. Runtime asset checks now follow the new stage. The active-checkout variant preserves pre-existing local edits.",
+      "evidence": [
+        "scripts/test_message_lan_launcher.py",
+        "scripts/test_runtime_assets.py",
+        ".agent-state/docker-build-cache/active-checkout/"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "On the same desktop-linux BuildKit builder, warm cache-only runs took 47.12 s before and 3.78 s after an Office Python source edit, and 6.59 s before and 5.40 s after a metadata-only edit. The candidate reused the LibreOffice and host-helper layers, and also reused Go validation for the metadata-only change. BuildKit accepted the local Dockerfile. The loaded ARM64 candidate passed isolated health and offline runtime assets as UID 1000, including 153 readable files and a DOCX round trip. The LAN launcher suite passed 10 tests and the runtime asset build-input check passed. Timings cover warm cache-only builds and exclude image export. Full Go release tests, a loaded local-Dockerfile image, and a new AMD64 image were outside this verification.",
+      "evidence": [
+        ".agent-state/docker-build-cache/baseline-office.log",
+        ".agent-state/docker-build-cache/candidate-office.log",
+        ".agent-state/docker-build-cache/baseline-metadata.log",
+        ".agent-state/docker-build-cache/candidate-metadata.log",
+        ".agent-state/docker-build-cache/local-dockerfile-check.log",
+        ".agent-state/docker-build-cache/candidate-image.log",
+        ".agent-state/docker-build-cache/image-id.txt",
+        ".agent-state/docker-build-cache/isolated-health.json",
+        ".agent-state/docker-build-cache/runtime-assets.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "This record documents the cache layout, the benchmark conditions, the exact smoke-tested image and the release scope.",
+      "evidence": [
+        "docs/tasks/docker-build-cache-20261118.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "The isolated smoke image and 57 benchmark cache entries were removed. The raw logs and active-checkout comparison are retained locally. Daily Aide remained healthy on its existing image throughout the isolated work.",
+      "evidence": [
+        ".agent-state/docker-build-cache/temporary-image-cleanup.log",
+        ".agent-state/docker-build-cache/benchmark-cache-cleanup.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source handoff only. The isolated smoke image was sha256:a25a99115135eccf2d9da273d41034282997c992dd4c3917dbb9dfe478842ef4.",
+      "evidence": [
+        ".agent-state/docker-build-cache/image-id.txt",
+        ".agent-state/docker-build-cache/temporary-image-cleanup.log"
+      ]
+    }
+  },
+  "release_authorization": "The current request covers source changes and isolated verification. This handoff is limited to a local commit.",
+  "rollback": "Revert this source commit if needed. Keep the active checkout's pre-existing edits when undoing its equivalent patch. Daily Aide kept its original running image and persistent data.",
+  "handoff": "Use the local branch for source review. The timing comparison is for the main Dockerfile on one warm ARM64 builder. The raw evidence is in .agent-state/docker-build-cache/."
+}
