@@ -207,6 +207,8 @@ type RequestSnapshot struct {
 	At            string          `json:"at"`
 	CompletedAt   string          `json:"completedAt,omitempty"`
 	ElapsedMillis int64           `json:"elapsedMillis,omitempty"`
+	bodyChunks    []*snapshotBodyChunk
+	bodySize      int
 }
 
 // contextTools 任务可用工具（与 toolLoop 使用的完全一致）；按设置过滤被禁用的工具。
