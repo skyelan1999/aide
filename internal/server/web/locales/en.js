@@ -3,6 +3,7 @@
 window.aideEnglish = {
   '版式预览': 'Layout preview',
   "正文与批注": "Text and comments",
+  "无法加载 Office 预览，请重试。": "Could not load the Office preview. Try again.",
   "生成 Office 文档": "Create Office documents",
   "生成 DOCX、XLSX 或 PPTX 文件": "Create a DOCX, XLSX, or PPTX file",
   "检索 Office 文档": "Search Office documents",
