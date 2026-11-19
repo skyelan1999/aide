@@ -357,6 +357,10 @@
       ],
       [
         "node",
+        "scripts/composer-attachment.test.cjs"
+      ],
+      [
+        "node",
         "scripts/markdown-history-writable.test.cjs"
       ],
       [

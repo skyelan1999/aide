@@ -4684,6 +4684,7 @@ window.aideEnglish = {
   "请先解锁并连接工作区，再添加附件": "Unlock and connect the workspace before adding attachments",
   "附件上传失败": "Attachment upload failed",
   "添加附件失败：{0}": "Failed to add attachment: {0}",
+  "未能读取附件，请重新选择文件。": "Could not read the attachment. Select the file again.",
   "释放文件即可添加为附件": "Drop files to add them as attachments",
   "OpenAI 语音": "OpenAI speech",
   "OpenAI 语音接口": "OpenAI speech API",
