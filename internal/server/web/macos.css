@@ -1167,3 +1167,12 @@ button:has(> .icon) {
 .md-preview-deferred { display:block; }
 .md-preview-deferred-card { display:flex; flex-direction:column; align-items:flex-start; gap:8px; max-width:440px; margin:32px auto; padding:20px 22px; border:1px solid var(--line); border-radius:14px; background:var(--panel,var(--bg)); }
 .md-preview-deferred-card p { margin:0; }
+
+.markdown-pdf-style-settings,.markdown-pdf-style-fields { display: grid; gap: 10px; min-width: 0; }
+.markdown-pdf-style-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.markdown-pdf-style-fields input[type="color"] { width: 100%; min-width: 0; height: 36px; }
+.markdown-pdf-style-fields .markdown-pdf-toc-setting { grid-column: 1/-1; }
+.markdown-pdf-header-preview[data-section="style"] { max-height: 490px; }
+.markdown-pdf-style-sample { padding: 18px; color: #243448; overflow-wrap: anywhere; }
+.markdown-pdf-style-sample table { width: 100%; border-collapse: collapse; }
+.markdown-pdf-style-sample :is(th,td) { text-align: left; vertical-align: top; }

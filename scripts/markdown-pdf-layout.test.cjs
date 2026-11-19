@@ -99,4 +99,18 @@ const empty=appearance.layout({},portrait,0);
 assert.equal(empty.topMargin,48);
 assert.equal(empty.logo,null);
 assert.equal(empty.html,null);
+vm.runInContext(fs.readFileSync('internal/server/web/markdown-pdf-style.js','utf8'),appearanceContext);
+const styling=appearanceContext.window.AideMarkdownPdfStyle;
+const typography=styling.normalize({fonts:{han:'NotoSerifSC',latin:'Times',digits:'Courier'},size:999,headings:[{size:24,before:7}],table:{mode:'grid',border:0.6,repeat:false}});
+assert.equal(typography.size,36);
+assert.equal(typography.headings[0].size,24);
+const fontText=[{text:'中文 Alpha 128',headlineLevel:2,id:'title'}];
+styling.applyPdfFonts(fontText,typography);
+assert.deepEqual(JSON.parse(JSON.stringify(fontText[0].text)),[
+ {text:'中文 ',font:'NotoSerifSC'},{text:'Alpha ',font:'Times'},{text:'128',font:'Courier'}
+]);
+assert.equal(fontText[0].id,'title');
+const grid=vm.runInContext("customPdfTableLayout({mode:'grid',border:.75,borderColor:'#000000',padding:7},1)",context);
+assert.equal(grid.vLineWidth(),0.75);
+assert.equal(grid.paddingLeft(),7);
 console.log('PASS: layered PDF header geometry, legacy preferences and heading metadata');

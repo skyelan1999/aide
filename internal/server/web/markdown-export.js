@@ -236,24 +236,37 @@
   await job.wait(doc.fonts?.ready);
   return doc.body;
  }
- let vectorPdfReady=null;
+ let vectorPdfReady=null,serifPdfReady=null;
  function base64FromBytes(bytes){let out='';for(let i=0;i<bytes.length;i+=0x6000)out+=String.fromCharCode(...bytes.subarray(i,Math.min(i+0x6000,bytes.length)));return btoa(out);}
- async function loadVectorPdf(job,o){
+ async function loadPdfFont(family,regular,bold,job){
+  const files=await Promise.all([regular,bold].map(async name=>{
+   const response=await job.wait(fetch('/vendor/markdown-export/'+name,{signal:job.controller.signal}));
+   if(!response.ok)throw Error(uiTextMarkdownExport('中文字库加载失败'));
+   return [name,base64FromBytes(new Uint8Array(await job.wait(response.arrayBuffer())))];
+  }));
+  window.pdfMake.addVirtualFileSystem(Object.fromEntries(files));
+  window.pdfMake.addFonts({[family]:{normal:regular,bold,italics:regular,bolditalics:bold}});
+ }
+ async function loadVectorPdf(job,o,appearance){
   if(!vectorPdfReady)vectorPdfReady=(async()=>{
    await job.wait(o.load('/vendor/markdown-export/pdfmake.min.js?v=2',()=>!!window.pdfMake?.createPdf));
    await job.wait(o.load('/vendor/markdown-export/html-to-pdfmake.js',()=>!!window.htmlToPdfmake));
    await job.wait(o.load('/vendor/markdown-export/pdf-lib.min.js',()=>!!window.PDFLib?.PDFDocument));
-   const regular='NotoSansSC-Regular.ttf',semibold='NotoSansSC-SemiBold.ttf';
-   const files=await Promise.all([regular,semibold].map(async name=>{
-    const response=await job.wait(fetch('/vendor/markdown-export/'+name,{signal:job.controller.signal}));
-    if(!response.ok)throw Error('中文字库加载失败');
-    const bytes=new Uint8Array(await job.wait(response.arrayBuffer()));
-    return [name,base64FromBytes(bytes)];
-   }));
-   window.pdfMake.addVirtualFileSystem(Object.fromEntries(files));
-   window.pdfMake.addFonts({NotoSansSC:{normal:regular,bold:semibold,italics:regular,bolditalics:semibold}});
+   await loadPdfFont('NotoSansSC','NotoSansSC-Regular.ttf','NotoSansSC-SemiBold.ttf',job);
   })().catch(error=>{vectorPdfReady=null;throw error;});
   await job.wait(vectorPdfReady);
+  const fonts=appearance.typography?.fonts;
+  if(fonts){
+   const families=new Set([fonts.latin,fonts.digits].filter(Boolean));
+   await job.wait(Promise.all([...families].map(family=>
+    o.load('/vendor/markdown-export/'+family+'.js?v=1',()=>!!window.pdfMake.fonts?.[family])
+   )));
+  }
+  if(appearance.typography?.fonts.han==='NotoSerifSC'){
+   if(!serifPdfReady)serifPdfReady=loadPdfFont('NotoSerifSC','NotoSerifSC-Regular.woff','NotoSerifSC-Bold.woff',job)
+    .catch(error=>{serifPdfReady=null;throw error;});
+   await job.wait(serifPdfReady);
+  }
  }
  function compactPdfCssColors(value){return value.replace(/\b(rgba?)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/gi,(_,fn,r,g,b,a)=>fn.toLowerCase()==='rgba'&&a!==undefined?`rgba(${r},${g},${b},${a})`:`rgb(${r},${g},${b})`);}
  const PDF_MARGIN = 48;
@@ -265,6 +278,15 @@
   vLineWidth:()=>0,
   paddingLeft:()=>6,paddingRight:()=>6,paddingTop:()=>5,paddingBottom:()=>5
  };
+ function customPdfTableLayout(table,headers){
+  const {mode,border,borderColor,padding}=table;
+  return {
+   hLineWidth:row=>mode!=='minimal'||(headers>0&&row===headers)?border:0,
+   vLineWidth:()=>mode==='grid'?border:0,
+   hLineColor:()=>borderColor,vLineColor:()=>borderColor,
+   paddingLeft:()=>padding,paddingRight:()=>padding,paddingTop:()=>padding,paddingBottom:()=>padding
+  };
+ }
  function pdfTableColumns(table){
   return Array.from(table.rows).reduce((max,row)=>Math.max(max,Array.from(row.cells).reduce((total,cell)=>total+cell.colSpan,0)),0);
  }
@@ -320,7 +342,7 @@
    printStyle.disabled=true;
    const style=doc.createElement('link');
    style.rel='stylesheet';
-   style.href='/markdown-pdf-header.css?v=3';
+   style.href='/markdown-pdf-header.css?v=4';
    await job.wait(new Promise((resolve,reject)=>{
     style.onload=resolve;
     style.onerror=()=>reject(Error(uiTextMarkdownExport('无法加载导出样式')));
@@ -336,7 +358,10 @@
     html.style.position='absolute';
     html.style.inset='0 auto auto 0';
     doc.body.append(html);
-    result[region].values=pageTemplateValues(html,preferences);
+   }
+   await job.wait(doc.fonts?.ready);
+   for(const [region,html] of surfaces){
+    if(html)result[region].values=pageTemplateValues(html,preferences);
    }
    if(result.header.values?.length||result.footer.values?.length)result.placement='off';
    for(const [region,html] of surfaces){
@@ -423,6 +448,7 @@
   const tables=[...body.querySelectorAll('table')];
   const {landscape,width,height}=pdfPage(tables);
   const themeText=appearance.color?readablePdfColor(appearance.color):'';
+  const typography=appearance.typography,styling=window.AideMarkdownPdfStyle;
   const printable={width:width-2*PDF_MARGIN,height:height-topMargin-bottomMargin};
   const tableLayout=themeText?{
    ...PDF_TABLE_LAYOUT,hLineColor:(row,node)=>row===node.table.headerRows?
@@ -432,10 +458,26 @@
    body.style.width=width/PDF_PT_PER_PX+'px';
    body.style.maxWidth='none';
    body.style.paddingInline=PDF_MARGIN/PDF_PT_PER_PX+'px';
+   if(typography){
+    body.style.fontSize=typography.size+'pt';
+    body.style.lineHeight=String(typography.lineHeight);
+    if(typography.fonts.latin)body.style.fontFamily=styling.CSS_FONTS[typography.fonts.latin];
+   }
   }
   for(const heading of body.querySelectorAll('h1,h2,h3,h4,h5,h6')){
    const level=Number(heading.tagName.slice(1));
    const properties={headlineLevel:level};
+   const format=typography?.headings[level-1];
+   if(themeText)heading.style.color=themeText;
+   if(format){
+    styling.headingPaint(heading,format);
+    properties.fontSize=format.size;
+    properties.bold=format.style==='bold'||format.style==='boldItalic';
+    properties.italics=format.style==='italic'||format.style==='boldItalic';
+    properties.alignment=format.align;
+    properties.margin=[0,format.before,0,format.after];
+    if(format.color)properties.color=format.color;
+   }
    const title=(heading.textContent||'').trim().replace(/\s+/g,' ');
    if(headings&&title){
     properties.id='aide-heading-'+headings.length;
@@ -444,9 +486,10 @@
    heading.dataset.pdfmake=JSON.stringify(properties);
   }
   if(themeText){
-   for(const element of body.querySelectorAll('h1,h2,h3,h4,h5,h6,a,th'))element.style.color=themeText;
+   for(const element of body.querySelectorAll('a,th'))element.style.color=themeText;
    for(const cell of body.querySelectorAll('th'))cell.style.backgroundColor=blendPdfColor(appearance.color,'#ffffff',0.12);
   }
+  if(typography)for(const table of tables)styling.tablePaint(table,typography.table);
   for(const rule of body.querySelectorAll('hr')){
    rule.dataset.pdfmake=JSON.stringify({width:pdfElementWidth(rule,printable.width),color:themeText?blendPdfColor(themeText,'#ffffff',0.25):'#c4ced9',thickness:0.6});
   }
@@ -454,7 +497,10 @@
   for(const element of body.querySelectorAll('*')){
    const style=element.ownerDocument.defaultView.getComputedStyle(element);
    for(const [source,target] of [['color','color'],['backgroundColor','background-color'],['fontSize','font-size'],['fontWeight','font-weight'],['fontStyle','font-style'],['textAlign','text-align'],['textDecoration','text-decoration'],['verticalAlign','vertical-align'],['whiteSpace','white-space']]){
-    const value=style[source];
+    let value=style[source];
+    // The converter rounds CSS pixel sizes to integers. Configured Word-style
+    // sizes such as 10.5 pt must reach the PDF as points.
+    if(typography&&source==='fontSize'&&value?.endsWith('px'))value=(parseFloat(value)*PDF_PT_PER_PX).toFixed(2)+'pt';
     if(value&&value!=='none'&&value!=='normal'&&value!=='rgba(0, 0, 0, 0)')element.style.setProperty(target,compactPdfCssColors(value));
    }
   }
@@ -467,7 +513,7 @@
     h5:{fontSize:11,bold:true,margin:[0,8,0,4]},h6:{fontSize:10,bold:true,margin:[0,8,0,4]},
     p:{margin:[0,0,0,8]},pre:{fontSize:8,margin:[0,6,0,10],wordBreak:'break-all',fillColor:'#f2f5f8'},
     blockquote:{color:'#4e6073',margin:[14,7,12,10],italics:true},
-    th:{bold:true,fillColor:'#eaf0f6'},td:{margin:0},table:{margin:[0,9,0,13]},
+    th:typography?{bold:typography.table.headerBold}:{bold:true,fillColor:'#eaf0f6'},td:{margin:0},table:{margin:[0,9,0,13]},
     a:{color:'#24598a',decoration:'underline'}
    }
   });
@@ -492,19 +538,19 @@
      value.table.widths=widths.map(width=>(width/total*100).toFixed(3)+'%');
     }
     const headerRows=source?.querySelectorAll('thead tr').length||0;
-    if(headerRows)value.table.headerRows=headerRows;
+    if(headerRows&&typography?.table.repeat!==false)value.table.headerRows=headerRows;
     if(source?.rows[0]?.getBoundingClientRect){
      const headerHeight=source.tHead?.getBoundingClientRect().height||0;
      value.table.dontBreakRows=Array.from(source.rows).every(row=>
       (row.getBoundingClientRect().height+headerHeight)*PDF_PT_PER_PX < printable.height*0.76);
     }
-    value.layout=tableLayout;
+    value.layout=typography?customPdfTableLayout(typography.table,headerRows):tableLayout;
     for(const [rowIndex,row] of value.table.body.entries()){
      const sourceCells=source?.rows[rowIndex]?.cells;
      for(const [index,cell] of row.entries()){
       const original=sourceCells?.[index];
       if(!original||!cell||typeof cell!=='object')continue;
-      const width=original.getBoundingClientRect().width*PDF_PT_PER_PX-14;
+      const width=original.getBoundingClientRect().width*PDF_PT_PER_PX-(typography?2*typography.table.padding+2:14);
       const maxWord=Math.max(5,Math.floor(width/7));
       // CJK already has natural breaks. Let ordinary words wrap between words
       // and allow a break inside longer IDs, URLs, and other unspaced runs.
@@ -521,9 +567,10 @@
    content.push({text:'附件',fontSize:17,bold:true,margin:[0,18,0,9]});
    for(const item of attachments)content.push({columns:[{text:item.name,width:'*',fontSize:10,id:'aide-attachment-'+item.index},{attachment:{src:item.dataUrl,name:item.name,description:item.name,hidden:false,relationship:'Data'},icon:'Paperclip',width:24}],columnGap:8,margin:[0,0,0,6]});
   }
+  styling?.applyPdfFonts(content,typography);
   return {
    pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',pageMargins:[PDF_MARGIN,topMargin,PDF_MARGIN,bottomMargin],
-   defaultStyle:{font:'NotoSansSC',fontSize:10.5,lineHeight:1.24,color:'#243448'},
+   defaultStyle:{font:typography?.fonts.han||'NotoSansSC',fontSize:typography?.size||10.5,lineHeight:typography?.lineHeight||1.24,color:'#243448'},
    pageBreakBefore:(heading,context)=>!!heading.headlineLevel&&heading.pageNumbers?.length===1&&!context.getFollowingNodesOnPage().length&&context.getNodesOnNextPage().length>0,
    content
   };
@@ -590,16 +637,18 @@
    if(banded&&chapter)return {table:{widths:['*'],body:[[{...row,fillColor:tint,margin:[6,4,6,4]}]]},layout:'noBorders',margin:[0,5,0,7]};
    return {...row,margin:[(entry.level-level)*(technical?10:15),chapter?4:0,0,classic?6:8]};
   });
-  return {
+  const definition={
    pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',
    pageMargins:[PDF_MARGIN,bands.header.layout.topMargin,PDF_MARGIN,bands.footer.layout.bottomMargin],
-   defaultStyle:{font:'NotoSansSC',fontSize:10.5,lineHeight:1.24,color},
+   defaultStyle:{font:appearance.typography?.fonts.han||'NotoSansSC',fontSize:10.5,lineHeight:appearance.typography?.lineHeight||1.24,color},
    content:[
     {text:uiTextMarkdownExport('目录'),fontSize:classic?25:30,bold:true,alignment:classic?'center':'left',margin:[0,0,0,8]},
     {canvas:[{type:'line',x1:0,y1:0,x2:width,y2:0,lineWidth:technical?1.25:0.65,lineColor:technical?color:rule}],margin:[0,0,0,14]},
     ...content
    ]
   };
+  window.AideMarkdownPdfStyle?.applyPdfFonts(definition.content,appearance.typography);
+  return definition;
  }
  async function renderPdfContents(entries,landscape,bands,appearance,job,indexOf){
   const ids=new Set(entries.map((_,index)=>'aide-contents-'+index));
@@ -672,13 +721,15 @@
    linkPdfContents(target,contents,entries,appearance,insertAt,indexOf);
    directory={start:insertAt,end:insertAt+pages.length,bands};
   }
-  const pages=target.getPages(),font=await job.wait(target.embedFont(StandardFonts.Helvetica));
+  const fonts=appearance.typography?.fonts;
+  const numberFont=window.AideMarkdownPdfStyle?.STANDARDS[fonts?.digits||fonts?.latin];
+  const pages=target.getPages(),font=await job.wait(target.embedFont(numberFont?.normal||StandardFonts.Helvetica));
   const allBands=[...bandsByOrientation.values()];
   if(cover)allBands.push(cover.bands);
   const layers=bands=>[bands.header,bands.footer,...(bands.cover?[bands.cover]:[])];
   const logo=allBands.some(bands=>bands.header.layout.logo)?await job.wait(target.embedPng(appearance.logo)):null;
   const bold=allBands.some(bands=>layers(bands).some(band=>band.values?.some(value=>value.bold)))
-   ?await job.wait(target.embedFont(StandardFonts.HelveticaBold)):font;
+   ?await job.wait(target.embedFont(numberFont?.bold||StandardFonts.HelveticaBold)):font;
   const artwork=new Map();
   for(const bands of allBands){
    for(const band of layers(bands)){
@@ -736,7 +787,7 @@
     const coverTitle=firstTitle?.title||stem;
     const state={coverEnabled:appearance.coverEnabled,coverKey:appearance.coverEnabled?firstTitle?.key:null,
      tocAfter:appearance.toc?appearance.tocAfter:'',counts:new Map()};
-    await loadVectorPdf(job,o);
+    await loadVectorPdf(job,o,appearance);
     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},6*60*60*1000);
     const attachments=await preparePdfAttachments(String(o.markdown),o,job);for(const item of attachments){item.dataUrl=await imageDataURL(item.blob,job.controller.signal);item.blob=null;}
     const parts=[],bands=new Map(),imageBudget={total:0,pdfTotal:0};

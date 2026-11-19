@@ -108,7 +108,7 @@ ${cell('参考','{{reference}}')}
     header:htmlValue(saved.header),footer:htmlValue(saved.footer),cover:htmlValue(saved.cover),
     coverEnabled:saved.coverEnabled===true,coverInToc:saved.coverInToc===true,
     tocAfter:typeof saved.tocAfter==='string'&&saved.tocAfter.length<=4096?saved.tocAfter:'',
-    values:fieldValues(saved.values),
+    values:fieldValues(saved.values),typography:window.AideMarkdownPdfStyle?.normalize(saved.typography)||null,
     pageNumbers:pageNumberPosition(saved.pageNumbers),tocStyle:contentsStyle(saved.tocStyle),
     logo:typeof saved.logo==='string'&&saved.logo.length<=MAX_LOGO&&/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(saved.logo)?saved.logo:'',
     toc:saved.toc===true,logoSide:logoSide(saved.logoSide),logoX:coordinate(saved.logoX,17),logoY:coordinate(saved.logoY,6.35)
@@ -192,6 +192,7 @@ ${cell('参考','{{reference}}')}
    }
    for(let i=node.childNodes.length-1;i>=0;i--)pending.push({node:node.childNodes[i],parent:target});
   }
+  window.AideMarkdownPdfStyle?.applyHtmlFonts(surface,profile.typography);
   return surface.textContent.trim()||surface.children.length?surface:null;
  }
  function logoSize(logo){
@@ -315,7 +316,7 @@ ${cell('参考','{{reference}}')}
   const navigation=make('div',null,'markdown-pdf-layout-navigation');
   navigation.setAttribute('role','group');
   navigation.setAttribute('aria-label',t('PDF 设置分区'));
-  const tabs=[['header','页眉'],['cover','首页'],['footer','页脚'],['contents','目录']].map(([key,name])=>[key,action(name)]);
+  const tabs=[['header','页眉'],['cover','首页'],['footer','页脚'],['contents','目录'],['style','正文样式']].map(([key,name])=>[key,action(name)]);
   for(const [,tab] of tabs)navigation.append(tab);
   let section='header';
   const columns=make('div',null,'markdown-pdf-appearance-columns');
@@ -377,6 +378,10 @@ ${cell('参考','{{reference}}')}
   const contentsHelp=make('p','目录独立成页。选择标题时，目录插在该标题之后。','muted');
   editor.append(colorField,headerTools,coverTools,fields.header,fields.cover,fields.footer,variables,help,numberSetting,tocField,contentsField,tocPosition,coverEntry,contentsHelp);
 
+  const styleFields=make('section',null,'markdown-pdf-style-settings');
+  const styleUI=window.AideMarkdownPdfStyle.controls(styleFields,{initial:saved.typography,t,change:refresh});
+  editor.append(styleFields);
+
   const file=make('input');file.type='file';file.accept='image/png,image/jpeg,image/webp';
   file.hidden=true;file.setAttribute('aria-label',t('页眉 Logo'));
   const choose=action('选择 Logo');
@@ -422,7 +427,7 @@ ${cell('参考','{{reference}}')}
 
   const current=()=>({
    header:editors.header.value,footer:editors.footer.value,cover:editors.cover.value,color:colorValue(color.value),
-   coverEnabled:coverEnabled.checked,coverInToc:includeCover.checked,tocAfter:tocAfter.value,values,
+   coverEnabled:coverEnabled.checked,coverInToc:includeCover.checked,tocAfter:tocAfter.value,values,typography:styleUI.read(),
    logo,logoSide:position.value,logoX:x.value,logoY:y.value,
    pageNumbers:numberPlacement.value,toc:toc.checked,tocStyle:tocPreset.value
   });
@@ -478,6 +483,7 @@ ${cell('参考','{{reference}}')}
     row.append(order,make('span',name),leader,number);
     sample.append(row);
    }
+   window.AideMarkdownPdfStyle.applyHtmlFonts(sample,profile.typography);
    paper.replaceChildren(sample);
    paper.style.width='100%';
    paper.style.height='auto';
@@ -485,10 +491,11 @@ ${cell('参考','{{reference}}')}
   function paint(){
    if(!dialog.open)return;
    const profile=current();
-   const isHeader=section==='header',isCover=section==='cover',isContents=section==='contents';
+   const isHeader=section==='header',isCover=section==='cover',isContents=section==='contents',isStyle=section==='style';
    for(const [name,tab] of tabs)tab.setAttribute('aria-pressed',String(section===name));
-   copy.hidden=colorField.hidden=variables.hidden=help.hidden=isContents;
-   numberSetting.hidden=isContents||isCover;
+   copy.hidden=colorField.hidden=variables.hidden=help.hidden=isContents||isStyle;
+   numberSetting.hidden=isContents||isCover||isStyle;
+   styleFields.hidden=!isStyle;
    headerTools.hidden=fields.header.hidden=logoField.hidden=positionField.hidden=!isHeader;
    fields.footer.hidden=section!=='footer';
    coverTools.hidden=fields.cover.hidden=!isCover;
@@ -496,9 +503,9 @@ ${cell('参考','{{reference}}')}
    coverEntry.hidden=!isContents||!profile.coverEnabled;
    tocAfter.disabled=!profile.toc||!headings.length;
    tocPreset.disabled=includeCover.disabled=!profile.toc;
-   previewOrientation.hidden=isContents||isCover;
+   previewOrientation.hidden=isContents||isCover||isStyle;
    preview.dataset.section=section;
-   previewLabel.textContent=t(isContents?'目录预览':isCover?'首页预览':isHeader?'页眉预览':'页脚预览');
+   previewLabel.textContent=t(isStyle?'正文样式预览':isContents?'目录预览':isCover?'首页预览':isHeader?'页眉预览':'页脚预览');
    if(profile.color)picker.value=profile.color;
    position.disabled=!logo;remove.hidden=!logo;
    choose.textContent=t(logo?'更换 Logo':'选择 Logo');
@@ -507,6 +514,11 @@ ${cell('参考','{{reference}}')}
    x.disabled=y.disabled=!custom;
    paper.style.zoom='1';
    if(isContents){paintContents(profile);return;}
+   if(isStyle){
+    paper.style.width='100%';paper.style.height='auto';
+    window.AideMarkdownPdfStyle.preview(paper,profile.typography,styleUI.section(),t);
+    return;
+   }
 
    const page=pageGeometry(!isCover&&previewOrientation.value==='landscape');
    paper.style.width=page.width/PT_PER_PX+'px';
@@ -622,7 +634,7 @@ ${cell('参考','{{reference}}')}
    profile.logoY=coordinate(profile.logoY,6.35);
    if(color.value.trim()&&!profile.color){section='header';paint();error.textContent=t('请输入有效的十六进制主题色。');color.focus();return;}
    try{
-    if(profile.color||profile.header||profile.footer||profile.cover||profile.coverEnabled||Object.keys(profile.values).length||profile.logo||profile.toc||profile.tocAfter||profile.coverInToc||profile.pageNumbers!=='footer'||profile.tocStyle!=='editorial')localStorage.setItem(PREFIX+key,JSON.stringify(profile));
+    if(profile.typography||profile.color||profile.header||profile.footer||profile.cover||profile.coverEnabled||Object.keys(profile.values).length||profile.logo||profile.toc||profile.tocAfter||profile.coverInToc||profile.pageNumbers!=='footer'||profile.tocStyle!=='editorial')localStorage.setItem(PREFIX+key,JSON.stringify(profile));
     else localStorage.removeItem(PREFIX+key);
    }catch{error.textContent=t('无法保存 PDF 版式设置，请检查浏览器存储空间。');return;}
    dialog.close();
