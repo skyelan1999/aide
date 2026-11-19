@@ -331,6 +331,9 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		}
 	}
 	if resp.StatusCode != 200 {
+		if err := mimoAuthenticationError(cfg.BaseURL, resp.StatusCode); err != nil {
+			return "", nil, TokenUsage{}, err
+		}
 		// Keep a short provider message in the error for the caller's redacted diagnostic
 		// log. Do not include response headers or the request body (which may contain secrets).
 		var providerErr struct {
@@ -494,6 +497,9 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		}
 	}
 	if resp.StatusCode != 200 {
+		if err := mimoAuthenticationError(cfg.BaseURL, resp.StatusCode); err != nil {
+			return "", nil, TokenUsage{}, "", err
+		}
 		rb, _ := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 		detail := strings.TrimSpace(string(rb))
 		if len(detail) > 300 {
@@ -668,6 +674,25 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	return text, calls, tu, finishReason, nil
 }
 
+// Xiaomi uses different credentials and endpoints for metered and subscription usage.
+func mimoAuthenticationError(baseURL string, status int) error {
+	if status != http.StatusUnauthorized {
+		return nil
+	}
+	u, err := url.Parse(baseURL)
+	if err != nil || u.Scheme != "https" {
+		return nil
+	}
+	switch strings.ToLower(u.Hostname()) {
+	case "api.xiaomimimo.com":
+		return errors.New("小米 MiMo 认证失败（HTTP 401）。请在模型设置中确认当前密钥。此地址使用按量计费的 sk- 密钥。tp- 或 ttp- 密钥需填写小米 Token Plan 控制台显示的 OpenAI 兼容地址")
+	case "token-plan-cn.xiaomimimo.com", "token-plan-sgp.xiaomimimo.com", "token-plan-ams.xiaomimimo.com":
+		return errors.New("小米 MiMo Token Plan 认证失败（HTTP 401）。请在模型设置中确认当前密钥为有效套餐的 tp- 或 ttp- 密钥，并核对小米 Token Plan 控制台显示的 OpenAI 兼容地址与集群")
+	default:
+		return nil
+	}
+}
+
 // listModels 代理 GET {baseURL}/models 拉取可用模型 id 列表（FR-68 / LIM-25）。
 // 返回 OpenAI 兼容格式 {models:[id,…]}；上游失败或格式不符时给出友好错误。
 func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
@@ -755,6 +780,10 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
+		if err := mimoAuthenticationError(baseURL, resp.StatusCode); err != nil {
+			fail(w, 400, err)
+			return
+		}
 		fail(w, 400, fmt.Errorf("模型列表接口返回 HTTP %d（该服务可能不支持模型列表）", resp.StatusCode))
 		return
 	}

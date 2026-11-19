@@ -1615,6 +1615,8 @@ window.aideEnglish = {
   "添加不同厂商的兼容端点，分别维护模型与多个本地加密密钥。": "Add compatible endpoints from different providers, with separate models and multiple locally encrypted keys.",
   "选择模型提供商": "Choose a model provider",
   "＋ 添加提供商": "＋ Add provider",
+  "小米 MiMo（按量计费）": "Xiaomi MiMo (pay as you go)",
+  "小米 MiMo Token Plan（中国集群）": "Xiaomi MiMo Token Plan (China cluster)",
   "当前使用 OpenAI Chat Completions 兼容协议；本机 Ollama 等服务也可使用自定义地址。密钥保存在本机加密保险库，仅用于对应提供商认证，不随聊天内容发送。": "Uses the OpenAI Chat Completions-compatible protocol. Local services such as Ollama can use a custom endpoint. Keys stay in the local encrypted vault and are used only to authenticate with their provider; they are not included in chat content.",
   "展开提供商设置": "Expand provider settings",
   "提供商名称": "Provider name",

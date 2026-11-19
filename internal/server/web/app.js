@@ -4396,7 +4396,8 @@ const MODEL_PROVIDER_PRESETS = [
   { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com' },
   { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com/v1' },
   { id: 'qwen', name: '通义千问 / DashScope', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
-  { id: 'xiaomi-mimo', name: '小米 MiMo', baseURL: 'https://api.xiaomimimo.com/v1' },
+  { id: 'xiaomi-mimo', name: '小米 MiMo（按量计费）', baseURL: 'https://api.xiaomimimo.com/v1' },
+  { id: 'xiaomi-mimo-token-plan', name: '小米 MiMo Token Plan（中国集群）', baseURL: 'https://token-plan-cn.xiaomimimo.com/v1' },
   { id: 'moonshot', name: 'Moonshot / Kimi', baseURL: 'https://api.moonshot.cn/v1' },
   { id: 'zhipu', name: '智谱 GLM', baseURL: 'https://open.bigmodel.cn/api/paas/v4' },
   { id: 'siliconflow', name: '硅基流动', baseURL: 'https://api.siliconflow.cn/v1' },
@@ -4417,7 +4418,7 @@ function openSettings() {
   models.forEach(model => { if (!model.providerId) model.providerId = 'default'; });
   state.modelDraft = { providers, models, activeModel: config.activeModel || config.model || models[0]?.id || '', expandedProviders: new Set(), providerSecrets: new Map() };
   const select = $('provider-preset'); select.replaceChildren();
-  for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(preset.name, preset.id));
+  for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(t(preset.name), preset.id));
   renderModelList();
   $('settings-dialog').showModal();
 }
