@@ -175,6 +175,13 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 	}
 	return &c, nil
 }
+
+const bailianWorkspaceSuffix = ".cn-beijing.maas.aliyuncs.com"
+
+func isBailianPlanHost(host string) bool {
+	return host == "coding.dashscope.aliyuncs.com" || host == "token-plan"+bailianWorkspaceSuffix
+}
+
 func supportMatches(c *supportCatalog, base string) bool {
 	u, e := url.Parse(base)
 	if e != nil || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
@@ -187,9 +194,8 @@ func supportMatches(c *supportCatalog, base string) bool {
 		matched := strings.EqualFold(u.Hostname(), p.Host)
 		if p.WorkspaceRegion == "cn-beijing" {
 			host := strings.ToLower(u.Hostname())
-			suffix := ".cn-beijing.maas.aliyuncs.com"
-			label := strings.TrimSuffix(host, suffix)
-			matched = strings.HasSuffix(host, suffix) && label != "" && !strings.ContainsAny(label, ".:")
+			label := strings.TrimSuffix(host, bailianWorkspaceSuffix)
+			matched = !isBailianPlanHost(host) && strings.HasSuffix(host, bailianWorkspaceSuffix) && label != "" && !strings.ContainsAny(label, ".:")
 		}
 		if !matched {
 			continue

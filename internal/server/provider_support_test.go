@@ -83,6 +83,17 @@ func supporterLast(a *App) TokenCallRec {
 	defer a.tokenStatsMu.Unlock()
 	return a.tokenCalls[len(a.tokenCalls)-1]
 }
+
+func TestProviderSupportBailianWorkspaceExcludesPlanEndpoint(t *testing.T) {
+	catalog := &supportCatalog{Providers: []supportProvider{{WorkspaceRegion: "cn-beijing", Paths: []string{"/compatible-mode/v1"}}}}
+	if !supportMatches(catalog, "https://workspace.cn-beijing.maas.aliyuncs.com/compatible-mode/v1") {
+		t.Fatal("Beijing workspace endpoint did not match")
+	}
+	if supportMatches(catalog, "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1") {
+		t.Fatal("Token Plan endpoint matched the workspace billing catalog")
+	}
+}
+
 func TestProviderSupportActualPackagesEnabledDisabledRemoved(t *testing.T) {
 	a := testApp(t)
 	d := supporterInstall(t, a, "deepseek")

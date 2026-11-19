@@ -51,6 +51,49 @@ func pageResponse(r *http.Request, account string, amount float64, available boo
 	data, _ := json.Marshal(map[string]any{"ok": true, "available": available, "amount": amount, "currency": "USD", "accountLabel": account, "accountIdentity": in["identityLinkPrefix"].(string) + pageHash(account)[:16], "sourceURL": in["url"], "checkedAt": time.Now().UTC().Format(time.RFC3339), "state": "source_closed", "cookie": "PRIVATE"})
 	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(string(data))), Header: make(http.Header)}
 }
+
+func TestPageBalanceOpensOnlyPreparedSourceInSafari(t *testing.T) {
+	a := testApp(t)
+	pageFixture(t, a)
+	calls := 0
+	var declaredURL string
+	bridgeStatus := http.StatusOK
+	a.pageBalanceClient = &http.Client{Transport: supportRoundTrip(func(r *http.Request) (*http.Response, error) {
+		calls++
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/open-browser" || r.Header.Get("Authorization") != "Bearer "+strings.Repeat("t", 64) {
+			t.Error("unexpected Safari bridge request")
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		if len(body) != 3 || body["browser"] != "Safari" || body["url"] != declaredURL || body["approved"] != true {
+			t.Error("bridge did not receive only the approved browser and catalog source")
+		}
+		return &http.Response{StatusCode: bridgeStatus, Body: io.NopCloser(strings.NewReader(`{"ok":true,"opened":true}`))}, nil
+	})}
+	open := map[string]any{"providerId": "official", "keyId": "first", "action": "open", "url": "https://unrelated.example.com"}
+	requireStatus(t, request(a, "POST", "/api/provider-page-balance", open), http.StatusConflict)
+	declaredURL = pageAction(t, a, "prepare", "")["openURL"].(string)
+	if calls != 0 || !strings.HasPrefix(declaredURL, "https://billing.example.com/home#aide-balance-") {
+		t.Fatal("preparing must only establish the declared source")
+	}
+	if pageAction(t, a, "open", "")["opened"] != true {
+		t.Fatal("successful bridge opening not acknowledged")
+	}
+	requireStatus(t, request(a, "POST", "/api/provider-page-balance", open), http.StatusOK)
+	bridgeStatus = http.StatusServiceUnavailable
+	requireStatus(t, request(a, "POST", "/api/provider-page-balance", open), http.StatusBadGateway)
+	if calls != 3 {
+		t.Fatalf("expected three attempts to open Safari, got %d", calls)
+	}
+	balance := request(a, "GET", "/api/balance?providerId=official&keyId=first", nil)
+	requireStatus(t, balance, http.StatusOK)
+	if !strings.Contains(balance.Body.String(), `"state":"setup"`) || !strings.Contains(balance.Body.String(), `"enabled":false`) {
+		t.Fatal("opening the browser must leave balance sync unconfirmed")
+	}
+}
+
 func TestPageBalanceConfirmationIsolationPersistenceAndExpiry(t *testing.T) {
 	a := testApp(t)
 	p, kid := pageFixture(t, a)

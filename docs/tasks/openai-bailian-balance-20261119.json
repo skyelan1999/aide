@@ -1,0 +1,81 @@
+{
+  "id": "openai-bailian-balance-20261119",
+  "request": "修复 OpenAI 官网余额无法打开浏览器和通义千问插件余额匹配提示",
+  "baseline": "a752be491767c4582e593fe0f5b7c3c76dc3298e",
+  "initial_status": "独立工作树基于 origin/main。日用 macOS Aide 中点击 OpenAI 关联官网余额时复现弹窗拦截。该实例的百炼 0.1.2 已正常匹配北京工作空间。",
+  "acceptance": [
+    "从消耗统计中的 OpenAI 卡片打开官方 Safari 页面，并提供桥接不可用时的手动入口。",
+    "读取格式兼容 OpenAI 官网显示的 US$，仍需先核对账户和项目。",
+    "百炼北京按量地址继续匹配。国际地址和套餐地址显示具体原因。"
+  ],
+  "scope": [
+    "Aide 消耗统计 UI、余额查询 API、百炼支持目录匹配、macOS 桥接余额解析和相关回归。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确指出 OpenAI 官网余额打不开，通义千问插件安装后显示无支持插件。",
+      "evidence": [
+        "日用 Aide 原生窗口点击复现",
+        "日用 Aide 以已启用的百炼 0.1.2 成功查询北京账户"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用已存在的 macOS Safari 桥接接口打开已验证的官网来源。保留原有的窗口绑定和账户确认流程。",
+      "evidence": [
+        "provider-page-balance 实现",
+        "macOS /v1/open-browser 已在运行"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增 Safari 打开和手动链接回退。解析 OpenAI 本地化美元符号。区分未匹配的百炼地址和套餐。",
+      "evidence": [
+        "internal/server/provider_page_balance.go",
+        "internal/server/provider_balance.go",
+        "native/macos-desktop/computer_control.swift"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "真实设置页能通过日用原生桥接打开 Safari 官网。最新版隔离构建通过百炼三种地址、手动回退和窗口提示验收。新原生宿主已编译签名。账户绑定和新宿主的实时同步尚未在日用实例验收。",
+      "evidence": [
+        "真实 Safari 已加载带专用标识的 OpenAI 官网",
+        "Safari 独立宽窗口显示项目标识，旧宿主对 US$ 格式返回不可用",
+        "Go 余额与供应商目录定向测试通过",
+        "Node 账户余额回归 17 项通过",
+        "两个 Swift 余额解析器各 14 项通过",
+        "macOS 桌面宿主测试 14 项通过",
+        "python3 scripts/build-macos-desktop.py 通过",
+        "最终候选的实际设置页与插件安装验收通过"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新消耗统计的 OpenAI 官网余额与百炼余额使用说明。",
+      "evidence": [
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "关闭验收用 Safari 窗口并停止独立候选服务。保留可重建的本地证据。",
+      "evidence": [
+        "候选容器 aide-balance-qa 已停止",
+        "验收用 Safari 窗口已关闭",
+        "源码保存在独立工作树"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未构建完整发行包或替换日用 Aide。",
+      "evidence": [
+        "候选为本地独立编译"
+      ]
+    }
+  },
+  "release_authorization": "当前问题要求诊断和修复。此任务未触发正式 Release。",
+  "rollback": "此次改动无需迁移数据。发布后可基于当前分支的单次修复提交回退主程序和原生宿主。",
+  "handoff": "日用 Aide 继续使用验收前的服务与原生宿主。确认过官网打开和窗口布局。发布后需复测新宿主实时余额以及关联后的自动同步。"
+}

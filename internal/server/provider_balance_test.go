@@ -104,6 +104,50 @@ func TestProviderBillingCredentialsSeparateVaultAndClear(t *testing.T) {
 	}
 }
 
+func TestProviderBalanceExplainsUnmatchedBailianEndpoints(t *testing.T) {
+	a := testApp(t)
+	plugin := supporterInstall(t, a, "ali")
+	a.settings = Settings{ModelProviders: []ModelProvider{{ID: "qwen", ActiveKeyID: "key", Keys: []ModelProviderKey{{ID: "key"}}}}}
+	for _, tc := range []struct {
+		name   string
+		base   string
+		reason string
+	}{
+		{"mainland", "https://dashscope.aliyuncs.com/compatible-mode/v1", ""},
+		{"international", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", "bailian-endpoint"},
+		{"coding", "https://coding.dashscope.aliyuncs.com/v1", "bailian-plan"},
+		{"token plan", "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1", "bailian-plan"},
+		{"unrelated", "https://example.com/compatible-mode/v1", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a.settings.ModelProviders[0].BaseURL = tc.base
+			w := request(a, "GET", "/api/balance?providerId=qwen&keyId=key", nil)
+			requireStatus(t, w, http.StatusOK)
+			var got struct {
+				Supported         bool   `json:"supported"`
+				UnsupportedReason string `json:"unsupportedReason"`
+			}
+			if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+				t.Fatal(err)
+			}
+			if got.Supported != (tc.name == "mainland") || got.UnsupportedReason != tc.reason {
+				t.Fatalf("unexpected balance support: %+v", got)
+			}
+		})
+	}
+	for i := range a.pluginRegistry.Plugins {
+		if a.pluginRegistry.Plugins[i].ID == plugin.ID {
+			a.pluginRegistry.Plugins[i].Enabled = false
+		}
+	}
+	a.settings.ModelProviders[0].BaseURL = "https://coding.dashscope.aliyuncs.com/v1"
+	w := request(a, "GET", "/api/balance?providerId=qwen&keyId=key", nil)
+	requireStatus(t, w, http.StatusOK)
+	if strings.Contains(w.Body.String(), "unsupportedReason") {
+		t.Fatal("disabled plugin was reported as enabled")
+	}
+}
+
 func TestProviderBillingKeySnapshotSurvivesGlobalSelectionChange(t *testing.T) {
 	a := testApp(t)
 	cfg := Settings{Model: "model-a", BaseURL: "https://first.example", Models: []ModelRef{{ID: "model-a", ProviderID: "first"}, {ID: "model-b", ProviderID: "second"}}, ModelProviders: []ModelProvider{{ID: "first", BaseURL: "https://first.example", ActiveKeyID: "k1", Keys: []ModelProviderKey{{ID: "k1", Label: "first-key"}}}, {ID: "second", BaseURL: "https://second.example", ActiveKeyID: "k2", Keys: []ModelProviderKey{{ID: "k2", Label: "second-key"}}}}}
