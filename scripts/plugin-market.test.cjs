@@ -21,9 +21,9 @@ async function fixture(privateStatus){
  if(privateStatus){plugin.distribution='private';plugin.commerce={status:privateStatus,priceLabel:'价格待公布',publicKeys:{}};plugin.sha256='';plugin.bytes=0;}
  const snapshot=()=>({plugins:[{...plugin,installedVersion:flags.version}],workspace:'ws-a',workspaceRevision:7,revision:flags.revision,stale:flags.stale,fetched:flags.fetched,refreshError:flags.refreshError,retryAfter:flags.retryAfter});
  const api=async(path,o={})=>{calls.push({path,...o});if(path==='/plugin-routing'){if(o.method==='PUT'){const data=JSON.parse(o.body);flags.autoInstall=data.autoInstall;}return {autoInstall:!!flags.autoInstall,generation:1};}if(path.startsWith('/plugin-routing/search?'))return {matches:[{id:'fixture',name:'Fixture',reasons:['test'],installed:false,autoInstallable:true}],autoInstall:!!flags.autoInstall};if(path.startsWith('/plugin-market?')||path==='/plugin-market'){if(flags.failRefresh&&path.includes('refresh=1'))throw Error('Offline fixture');return snapshot();}if(path.endsWith('/install')){if(flags.failInstall)throw Error('Rejected fixture');flags.version='2.0.0';return {ok:true};}throw Error(path);};
- const context={window,document:{getElementById:id=>ids[id],body,activeElement:new Element('button'),addEventListener:(name,fn)=>{events[name]=fn;}},setInterval:(fn,ms)=>{const timer={fn,ms};intervals.push(timer);return timer;},clearInterval:()=>{},setTimeout,AbortController,Blob,URL,crypto:require('node:crypto').webcrypto,console};
+ const context={window,document:{getElementById:id=>ids[id],body,activeElement:new Element('button'),addEventListener:(name,fn)=>{events[name]=fn;}},setInterval:(fn,ms)=>{const timer={fn,ms};intervals.push(timer);return timer;},clearInterval:()=>{},setTimeout,AbortController,Blob,URL,URLSearchParams,crypto:require('node:crypto').webcrypto,console};
  vm.runInNewContext(fs.readFileSync('internal/server/web/plugin-market.js','utf8'),context);
- window.AidePluginMarket.mount({api,raw:()=>{},t:s=>s,el:(...args)=>new Element(...args),refreshInstalled:async()=>{},paintInstalled:()=>{},blocked:()=>flags.locked});
+ window.AidePluginMarket.mount({api,raw:async path=>{calls.push({path});return {ok:false,json:async()=>({error:'Download fixture'})};},t:s=>s,el:(...args)=>new Element(...args),refreshInstalled:async()=>{},paintInstalled:()=>{},blocked:()=>flags.locked});
  ids['plugin-mode-market'].onclick();await flush();return {window,ids,body,flags,calls,plugin,intervals,events};
 }
 const walk=e=>[e,...e.children.flatMap(walk)];
@@ -51,7 +51,15 @@ const walk=e=>[e,...e.children.flatMap(walk)];
  category.value='all';category.onchange();assert.equal(cards(),1);
 
  walk(f.ids['plugin-market']).find(n=>n.textContent==='查看详情').onclick();let modal=f.body.children.at(-1);assert(modal.open);assert(walk(modal).some(n=>n.tag==='pre'&&n.textContent==='<iframe src=x>'));
- f.flags.revision='c'.repeat(40);await market.refresh();f.flags.failInstall=true;await walk(modal).find(n=>n.className==='primary').onclick();
+ f.flags.revision='c'.repeat(40);await market.refresh();
+ await walk(modal).find(n=>n.textContent==='下载 ZIP').onclick();
+ const download=f.calls.find(n=>n.path.includes('/download?'));
+ const downloadQuery=new URL(download.path,'https://localhost').searchParams;
+ assert.equal(downloadQuery.get('revision'),'a'.repeat(40),'download preserves reviewed revision');
+ assert.equal(downloadQuery.get('version'),f.plugin.version);
+ assert.equal(downloadQuery.get('sha256'),f.plugin.sha256);
+ assert(walk(modal).some(n=>n.textContent==='Download fixture'));
+ f.flags.failInstall=true;await walk(modal).find(n=>n.className==='primary').onclick();
  const sent=f.calls.find(n=>n.path.endsWith('/install'));assert.equal(JSON.parse(sent.body).revision,'a'.repeat(40),'install must keep reviewed catalog snapshot');assert(walk(modal).some(n=>n.textContent==='Rejected fixture'));assert(!walk(modal).find(n=>n.className==='primary').disabled);
  f.flags.failInstall=false;await walk(modal).find(n=>n.className==='primary').onclick();assert.equal(modal.open,false);assert.equal(f.flags.version,'2.0.0');
  f.ids['plugin-mode-installed'].onclick();assert.equal(f.ids['plugin-market'].hidden,true);

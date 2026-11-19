@@ -1,0 +1,74 @@
+{
+  "id": "terminal-market-download-20261119",
+  "request": "最新 Terminal 无法从官方市场下载",
+  "baseline": "6a1ca33177ac03fa03c030e9cd414ffd0b94f226",
+  "initial_status": "独立工作树从上游 6a1ca33177ac03fa03c030e9cd414ffd0b94f226 开始。",
+  "acceptance": [
+    "市场目录刷新后，只有 ID、版本和摘要完全相同的原选包可继续下载。",
+    "64 个 ZIP 或 256 MiB 的市场缓存已满时仍可下载，已缓存文件保留。",
+    "保留目录、长度、摘要、ZIP 身份和安装审批校验。"
+  ],
+  "scope": [
+    "Aide 官方市场 ZIP 下载和缓存，无需重新发布 Terminal 安装包。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告市场 Terminal 下载失败，远端包可用，复现了宿主的两个失败路径。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/959",
+        "隔离 Linux Aide 使用上次目录修订 16412eb 发起下载，当前目录为 af0a49c，返回 HTTP 409 市场目录已更新。",
+        "隔离实例预填 64 个合成 ZIP 文件后，用当前目录下载 Terminal，返回 HTTP 502 插件下载缓存已满。",
+        "GitHub Pages、固定目录提交 af0a49c 与 GitHub Release 下载均为 1322231 字节且 SHA-256 相同。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "下载沿用经校验的当前官方目录和原包身份。安装继续使用用户确认时的目录修订。",
+      "evidence": [
+        "比较 ID、版本与 SHA-256，缓存容量只决定是否写入本地副本。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "支持同包跨目录修订下载及缓存满时直接返回校验过的包。",
+      "evidence": [
+        "internal/server/plugin_market.go",
+        "internal/server/web/plugin-market.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "完成可复现的服务端和前端回归。",
+      "evidence": [
+        "Docker Go 1.26.11：go test -mod=vendor ./internal/server -run \"^TestPluginMarket\" -count=1 -v 通过。三个可选外部验收用例未启用。",
+        "node scripts/plugin-market.test.cjs 与 node --check internal/server/web/plugin-market.js 通过。",
+        "真实上报设备未复测，现有证据覆盖隔离环境复现的两个宿主问题。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新下载接口和缓存说明。",
+      "evidence": [
+        "docs/architecture/plugin-market.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "源码变更限定在独立工作树，隔离测试未改动日用 Aide。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "等待独立主程序合并及后续发行。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.8.10"
+      ]
+    }
+  },
+  "release_authorization": "按原要求修复市场下载。宿主合并和发布由主执行者处理。",
+  "rollback": "撤销宿主修复提交。现有市场条目、Release ZIP 和用户插件数据保留。",
+  "handoff": "Terminal 1.8.10 发行包摘要 b115651663265b530b3956441a184f69b8bf8087d531a4577380a20a22d5c575。"
+}
