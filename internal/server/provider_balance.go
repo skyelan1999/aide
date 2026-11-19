@@ -101,6 +101,31 @@ func signBalanceRPC(ak, secret string, at time.Time, nonce string) url.Values {
 	q.Set("Signature", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
 	return q
 }
+
+// Explain a known Alibaba endpoint mismatch without applying rates or sending a
+// configured credential to a different billing service.
+func (a *App) bailianBalanceReasonLocked(base string) string {
+	u, err := url.Parse(base)
+	if err != nil {
+		return ""
+	}
+	host := strings.ToLower(u.Hostname())
+	if !strings.HasSuffix(host, ".maas.aliyuncs.com") && host != "dashscope.aliyuncs.com" &&
+		host != "dashscope-intl.aliyuncs.com" && host != "dashscope-us.aliyuncs.com" && !isBailianPlanHost(host) {
+		return ""
+	}
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID != "ali-bailian-supporter" || !p.Enabled || a.pluginError(p.ID) != "" {
+			continue
+		}
+		if isBailianPlanHost(host) {
+			return "bailian-plan"
+		}
+		return "bailian-endpoint"
+	}
+	return ""
+}
+
 func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	p, kid, e := a.billingTargetLocked(r.URL.Query().Get("providerId"), r.URL.Query().Get("keyId"), "")
@@ -112,6 +137,9 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	c, owner := a.providerSupportLocked(p.BaseURL)
 	if c == nil || c.Balance == nil {
 		out := map[string]any{"supported": false, "balance_infos": []any{}}
+		if reason := a.bailianBalanceReasonLocked(p.BaseURL); c == nil && reason != "" {
+			out["unsupportedReason"] = reason
+		}
 		if c != nil {
 			out["pricingSupported"] = len(c.Models) > 0
 			out["supporter"] = c.Name

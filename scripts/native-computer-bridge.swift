@@ -28,7 +28,7 @@ func axAttribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
 // PAGE_BALANCE_PARSER_BEGIN: shared with the synthetic macOS parser test.
 func parsePageBalance(_ texts: [String], label: String, currency: String, accountMarker: String) -> (Double, String)? {
     let text = texts.joined(separator: "\n")
-    let symbol = currency == "USD" ? "\\$" : "[¥￥]"
+    let symbol = currency == "USD" ? "(?:US)?\\$" : "[¥￥]"
     let pattern = NSRegularExpression.escapedPattern(for: label) + "\\s*" + symbol + "\\s*(-?[0-9]{1,9}(?:,[0-9]{3})*(?:\\.[0-9]{1,4})?)(?=\\s|$)"
     guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
           let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),

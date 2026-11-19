@@ -225,6 +225,22 @@ func (a *App) providerPageBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch in.Action {
+	case "open":
+		nonce := record.Nonce
+		openURL := c.Balance.PageURL + "#aide-balance-" + nonce
+		client := a.pageBalanceClient
+		a.mu.Unlock()
+		var opened struct {
+			OK     bool `json:"ok"`
+			Opened bool `json:"opened"`
+		}
+		payload := map[string]any{"browser": "Safari", "url": openURL, "approved": true}
+		if len(nonce) != 32 || !postPageBalanceBridge(r.Context(), client, "/v1/open-browser", payload, &opened) || !opened.OK || !opened.Opened {
+			fail(w, http.StatusBadGateway, errors.New("could not open the balance page in Safari"))
+			return
+		}
+		jsonOut(w, 200, map[string]bool{"opened": true})
+		return
 	case "confirm":
 		if record.PendingID == "" || record.PendingID != in.PendingID || time.Now().Unix()-record.Checked > 120 || record.Busy {
 			a.mu.Unlock()
@@ -288,6 +304,45 @@ func (a *App) providerPageBalance(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, out)
 }
 
+// Balance handlers call fixed operations on the local authenticated bridge.
+func postPageBalanceBridge(ctx context.Context, client *http.Client, route string, payload, result any) bool {
+	token := os.Getenv("AIDE_COMPUTER_BRIDGE_TOKEN")
+	if len(token) < 32 {
+		return false
+	}
+	base := computerControlBridgeURL()
+	if os.Getenv("AIDE_COMPUTER_BRIDGE_URL") == "" {
+		if _, err := os.Stat("/.dockerenv"); os.IsNotExist(err) {
+			base = "http://127.0.0.1:17778"
+		}
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return false
+	}
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, base+route, bytes.NewReader(body))
+	if err != nil {
+		return false
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	request.Header.Set("Content-Type", "application/json")
+	if client == nil {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.Proxy = nil
+		defer transport.CloseIdleConnections()
+		client = &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(response.Body, 8193))
+	return response.StatusCode == http.StatusOK && err == nil && len(raw) <= 8192 && json.Unmarshal(raw, result) == nil
+}
+
 func (a *App) readPageBalance(ctx context.Context, p ModelProvider, kid string, refresh bool) {
 	a.mu.Lock()
 	c, owner := a.providerSupportLocked(p.BaseURL)
@@ -324,39 +379,18 @@ func (a *App) readPageBalance(ctx context.Context, p ModelProvider, kid string, 
 		CheckedAt       string  `json:"checkedAt"`
 		State           string  `json:"state"`
 	}
-	token := os.Getenv("AIDE_COMPUTER_BRIDGE_TOKEN")
-	if len(token) >= 32 {
-		base := "http://host.docker.internal:17778"
-		if _, e := os.Stat("/.dockerenv"); os.IsNotExist(e) {
-			base = "http://127.0.0.1:17778"
-		}
-		body, _ := json.Marshal(map[string]any{"url": declaration.PageURL + "#aide-balance-" + nonce, "label": declaration.Label, "currency": currency, "accountMarker": declaration.AccountMarker, "identityLinkPrefix": declaration.IdentityLinkPrefix, "refresh": refresh})
-		callCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
-		defer cancel()
-		request, _ := http.NewRequestWithContext(callCtx, http.MethodPost, base+"/v1/browser-page-balance", bytes.NewReader(body))
-		request.Header.Set("Authorization", "Bearer "+token)
-		request.Header.Set("Content-Type", "application/json")
-		if client == nil {
-			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.Proxy = nil
-			defer transport.CloseIdleConnections()
-			client = &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-		}
-		if response, e := client.Do(request); e == nil {
-			raw, err := io.ReadAll(io.LimitReader(response.Body, 8193))
-			response.Body.Close()
-			if response.StatusCode == 200 && err == nil && len(raw) <= 8192 && json.Unmarshal(raw, &value) == nil && value.OK {
-				if !value.Available {
-					state = "source_unavailable"
-					switch value.State {
-					case "browser_closed", "source_closed", "ambiguous_source", "refresh_unavailable", "login_or_page_changed":
-						state = value.State
-					}
-				}
-				if at, e := time.Parse(time.RFC3339, value.CheckedAt); value.Available && e == nil && math.Abs(time.Since(at).Seconds()) <= 120 && value.SourceURL == declaration.PageURL+"#aide-balance-"+nonce && validPageIdentity(value.AccountIdentity, declaration.IdentityLinkPrefix) && value.Currency == currency && !math.IsNaN(value.Amount) && !math.IsInf(value.Amount, 0) && math.Abs(value.Amount) <= 1e9 && strings.TrimSpace(value.AccountLabel) != "" && len(value.AccountLabel) <= 160 && !strings.ContainsFunc(value.AccountLabel, unicode.IsControl) {
-					state = "ready"
-				}
+	sourceURL := declaration.PageURL + "#aide-balance-" + nonce
+	payload := map[string]any{"url": sourceURL, "label": declaration.Label, "currency": currency, "accountMarker": declaration.AccountMarker, "identityLinkPrefix": declaration.IdentityLinkPrefix, "refresh": refresh}
+	if postPageBalanceBridge(ctx, client, "/v1/browser-page-balance", payload, &value) && value.OK {
+		if !value.Available {
+			state = "source_unavailable"
+			switch value.State {
+			case "browser_closed", "source_closed", "ambiguous_source", "refresh_unavailable", "login_or_page_changed":
+				state = value.State
 			}
+		}
+		if at, e := time.Parse(time.RFC3339, value.CheckedAt); value.Available && e == nil && math.Abs(time.Since(at).Seconds()) <= 120 && value.SourceURL == sourceURL && validPageIdentity(value.AccountIdentity, declaration.IdentityLinkPrefix) && value.Currency == currency && !math.IsNaN(value.Amount) && !math.IsInf(value.Amount, 0) && math.Abs(value.Amount) <= 1e9 && strings.TrimSpace(value.AccountLabel) != "" && len(value.AccountLabel) <= 160 && !strings.ContainsFunc(value.AccountLabel, unicode.IsControl) {
+			state = "ready"
 		}
 	}
 	a.mu.Lock()

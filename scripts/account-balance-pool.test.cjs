@@ -44,12 +44,44 @@ test('website preview stays separate until explicit per-key confirmation and pau
  paused=true;await f.all('button')[0].onclick();assert(!f.all('div').some(e=>e.className==='balance-amount'));assert(JSON.stringify(f.pool).includes('待恢复同步'));
 });
 test('website association opens only the declared source and performs no model call',async()=>{
- const requests=[],popup={opener:{},location:{href:''}};let windowFeatures='';
+ const requests=[];
  const f=fixture(async(path,options)=>{
-  if(path==='/provider-page-balance'){const body=JSON.parse(options.body);requests.push(body);return body.action==='prepare'?{openURL:'https://billing.example.com/home#aide-balance-'+ 'a'.repeat(32)}:{};}
+  if(path==='/provider-page-balance'){const body=JSON.parse(options.body);requests.push(body);return body.action==='prepare'?{openURL:'https://billing.example.com/home#aide-balance-'+ 'a'.repeat(32)}:{opened:true};}
   return{supported:true,providerId:'provider',keyId:'0',balance_infos:[],pageBalance:{url:'https://billing.example.com/home',state:'setup',enabled:false}};
- },{count:1});f.window.open=(_url,_name,features)=>{windowFeatures=features;return popup;};await f.start();await f.all('button').find(e=>e.textContent==='关联官网余额').onclick();
- assert(!windowFeatures.split(',').some(x=>/^popup(?:=|$)/.test(x)));assert(windowFeatures.includes('toolbar=yes'));assert.equal(popup.opener,null);assert.equal(popup.location.href,'https://billing.example.com/home#aide-balance-'+'a'.repeat(32));assert.deepEqual(requests.map(x=>x.action),['prepare','read']);
+ },{count:1});
+ let popupAttempts=0;f.window.open=()=>{popupAttempts++;};
+ await f.start();await f.all('button').find(e=>e.textContent==='关联官网余额').onclick();
+ assert.equal(popupAttempts,0);
+ assert.deepEqual(requests,['prepare','open','read'].map(action=>({providerId:'provider',keyId:'0',action})));
+});
+test('a failed website launch allows manual navigation only to the prepared source',async()=>{
+ const requests=[];const declared='https://billing.example.com/home';
+ const url=declared+'#aide-balance-'+'a'.repeat(32);
+ let prepared=url;
+ const f=fixture(async(path,options)=>{
+  if(path==='/provider-page-balance'){
+   const {action}=JSON.parse(options.body);requests.push(action);
+   if(action==='prepare')return{openURL:prepared};
+   throw Error('bridge unavailable');
+  }
+  return{supported:true,providerId:'provider',keyId:'0',balance_infos:[],pageBalance:{url:declared,state:'setup',enabled:false}};
+ },{count:1});await f.start();
+ const launch=f.all('button').find(e=>e.textContent==='关联官网余额');
+ const link=f.all('a').find(e=>e.textContent==='手动打开官网 ↗');
+ await launch.onclick();
+ assert.deepEqual(requests,['prepare','open']);
+ assert.equal(link.hidden,false);assert.equal(link.href,url);assert.equal(link.target,'_blank');
+ prepared=url.replace('billing.example.com','other.example.com');
+ await launch.onclick();
+ assert.deepEqual(requests,['prepare','open','prepare']);assert.equal(link.hidden,true);
+});
+test('the installed Bailian supporter distinguishes address and plan support from missing plugins',async()=>{
+ const labels=['百炼地址未匹配','套餐余额不可查','无支持插件'];
+ const reasons=['bailian-endpoint','bailian-plan',undefined];
+ const f=fixture(async path=>({supported:false,unsupportedReason:reasons[Number(new URLSearchParams(path.split('?')[1]).get('keyId'))]}),{count:3});await f.start();
+ for(const [index,card] of f.cards().entries()){
+  assert(card.querySelectorAll('span').some(e=>e.textContent===labels[index]));
+ }
 });
 test('all keys have separate cards and alarms; failures retain stale data without reflecting errors',async()=>{
  let fail=false;const queries=[];

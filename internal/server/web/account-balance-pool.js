@@ -88,7 +88,7 @@
       const help=node('details',''),summary=node('summary','',t('官网同步说明'));help.open=!!account.pageExpanded;
       help.ontoggle=()=>{if(help.isConnected)account.pageExpanded=help.open;};help.append(summary);
       help.append(node('p','balance-pool-caption',t('复用 Safari 登录；首次确认后每 5 分钟自动查询。请保持专用官网窗口打开。')));
-      help.append(node('p','balance-pool-caption',t('Safari 若打开为标签页，请先用“窗口 → 将标签页移到新窗口”分离官网，再回到 Aide 重试读取。只需首次设置一次。')));
+      help.append(node('p','balance-pool-caption',t('Safari 若打开为标签页，请用“窗口 → 将标签页移到新窗口”分离官网。如页面隐藏了项目设置，请放大窗口，然后重试读取。')));
       const identityHost=page.state==='confirm'?account.pagePanel:help;
       if(page.accountLabel)identityHost.append(node('p','balance-pool-caption',t('官网账户：{0}',page.accountLabel)));
       if(page.accountIdentity)identityHost.append(node('p','balance-pool-caption',t('官网项目：{0}',page.accountIdentity.split('/').pop())));
@@ -97,20 +97,30 @@
         account.pagePanel.append(node('p','balance-pool-caption',t('官网余额快照：{0}',Number(page.previewAmount).toFixed(2)+' '+page.currency)));
         account.pagePanel.append(button(t('确认此官网账户对应此 Key，并开启自动查询'),()=>perform('confirm',{pendingId:page.pendingId})));
       }
+      const manual=node('a','balance-pool-action',t('手动打开官网 ↗'));
+      manual.target='_blank';manual.rel='noopener noreferrer';manual.hidden=true;
       const open=button(t(page.enabled?'恢复官网窗口':'关联官网余额'),async()=>{
-        const popup=root.open?.('','aide-account-balance-'+account.provider.id+'-'+account.key.id,'width=1000,height=760,toolbar=yes,location=yes,menubar=yes,resizable=yes,scrollbars=yes,status=yes');
-        if(!popup){account.error.textContent=t('请允许弹出专用官网窗口');return;}
+        if(!live())return;
+        open.disabled=true;manual.hidden=true;account.error.textContent='';
         try{
-          popup.opener=null;open.disabled=true;
           const prepared=await post('prepare');if(!live())return;
           const target=new URL(prepared.openURL),declared=new URL(page.url);
-          if(target.protocol!=='https:'||target.origin!==declared.origin||target.pathname!==declared.pathname||target.search||!/^#aide-balance-[a-f0-9]{32}$/.test(target.hash))throw Error('unexpected source');
-          popup.location.href=target.href;
+          if(target.protocol!=='https:'||target.username||target.password||target.origin!==declared.origin||target.pathname!==declared.pathname||target.search||!/^#aide-balance-[a-f0-9]{32}$/.test(target.hash))throw Error('unexpected source');
+          try{
+            const launch=await post('open');if(!live())return;
+            if(launch.opened!==true)throw Error('browser did not open');
+          }catch{
+            if(live()){
+              manual.href=target.href;manual.hidden=false;
+              account.error.textContent=t('未能自动打开 Safari。可手动打开官网并使用 Safari 独立窗口，然后重试读取。');
+            }
+            return;
+          }
           await post('read');if(live())await load(account);
         }catch{if(live())account.error.textContent=t('尚未读取官网余额。请在专用窗口登录后重试读取。');}
         finally{open.disabled=false;}
       });
-      const controls=node('div','balance-alarm-controls');controls.append(open,button(t('重试读取'),()=>perform('read')));
+      const controls=node('div','balance-alarm-controls');controls.append(open,manual,button(t('重试读取'),()=>perform('read')));
       if(page.enabled||page.pendingId)controls.append(button(t('停止自动查询'),()=>perform('disable')));
       account.pagePanel.append(controls);
     }
@@ -183,6 +193,11 @@
           account.last=null;account.gauges=[];account.card.dataset.state='pending';account.badge.textContent=result.supported===false?t(result.pricingSupported?'仅支持计价':'无支持插件'):result.upgradeRequired?t('待更新宿主'):result.billingCredentialsRequired?t('待配置 RAM'):t(result.kind==='quota'?'额度不可查':'余额不可查');
           account.body.replaceChildren(node('p','balance-pool-caption',result.pageBalance?t(pageMessage(result.pageBalance.state)):result.upgradeRequired?t('额度接口不可用，请更新对应插件的宿主组件。'):result.pricingSupported?t('插件已提供计价，此账户没有余额查询能力。'):result.billingCredentialsRequired?t('展开下方配置，绑定此 Key 的 RAM 费用凭证。'):t('此账户暂时无法返回余额或额度，不计作零值。')));
           if(result.pageBalance)account.badge.textContent=t(result.pageBalance.state==='confirm'?'待确认账户':result.pageBalance.state==='setup'?'待关联官网':'待恢复同步');
+          if(result.unsupportedReason==='bailian-plan'||result.unsupportedReason==='bailian-endpoint'){
+            const plan=result.unsupportedReason==='bailian-plan';
+            account.badge.textContent=t(plan?'套餐余额不可查':'百炼地址未匹配');
+            account.body.replaceChildren(node('p','balance-pool-caption',t(plan?'百炼支持插件已启用。此地址使用套餐，请在阿里云百炼控制台查看额度。':'百炼支持插件已启用。当前 API 地址不在插件支持范围，请核对地区和模型设置中的 Base URL。')));
+          }
         } else {account.last=result;render(account);}
         const pageChecked=Number(result.pageBalance?.checkedAt);
         account.footer.textContent=result.pageBalance&&!(pageChecked>0)?t('尚未同步'):t('更新于 {0}',new Date(result.pageBalance?pageChecked*1000:account.updated).toLocaleTimeString());
