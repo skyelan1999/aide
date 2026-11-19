@@ -34,7 +34,7 @@ async function verifyVectorPdf(){
  vm.createContext(testContext);vm.runInContext(source,testContext);
  testWindow.htmlToPdfmake=()=>[{text:'vector content'}];
  testWindow.pdfMake={addVirtualFileSystem(){},addFonts(){},createPdf(definition){definitions.push(definition);renderCount++;return{getBlob(){if(stall){renderStarted();return new Promise(()=>{});}return Promise.resolve(new Blob(['%PDF-vector-'+renderCount]));}};}};
- const pdfPage={getWidth:()=>595.28,drawLine(){},drawText(text){footers.push(text);}};
+ const pdfPage={getWidth:()=>595.28,getHeight:()=>841.89,drawLine(){},drawText(text){footers.push(text);}};
  testWindow.PDFLib={
   StandardFonts:{Helvetica:'Helvetica'},rgb:()=>null,
   PDFDocument:{async load(){return{
