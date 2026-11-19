@@ -54,16 +54,17 @@ type supportBalance struct {
 	RefreshSeconds     int    `json:"refreshSeconds,omitempty"`
 }
 type supportCatalog struct {
-	Protocol  int               `json:"protocol"`
-	ID        string            `json:"id"`
-	Name      string            `json:"name"`
-	Revision  string            `json:"revision"`
-	Currency  string            `json:"currency"`
-	Sources   []string          `json:"sources"`
-	Providers []supportProvider `json:"providers"`
-	Models    []supportModel    `json:"models"`
-	Peak      *supportPeak      `json:"peak,omitempty"`
-	Balance   *supportBalance   `json:"balance,omitempty"`
+	Protocol       int               `json:"protocol"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Revision       string            `json:"revision"`
+	Currency       string            `json:"currency"`
+	Sources        []string          `json:"sources"`
+	Providers      []supportProvider `json:"providers"`
+	Models         []supportModel    `json:"models"`
+	Peak           *supportPeak      `json:"peak,omitempty"`
+	Balance        *supportBalance   `json:"balance,omitempty"`
+	AccountBalance string            `json:"accountBalance,omitempty"`
 }
 type supportQuote struct {
 	Tier      supportTier
@@ -130,6 +131,11 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 			if _, err := time.Parse("2006-01-02", d); err != nil {
 				return nil, err
 			}
+		}
+	}
+	if c.AccountBalance != "" {
+		if err := validatePlatformAccount(&c); err != nil {
+			return nil, err
 		}
 	}
 	if b := c.Balance; b != nil {
@@ -277,7 +283,11 @@ func (a *App) providerSupportLocked(base string) (*supportCatalog, *PluginManife
 			continue
 		}
 		c, e := validateSupportCatalog(raw)
-		if e != nil || !supportMatches(c, base) {
+		if e != nil {
+			continue
+		}
+		c = platformSupportForBase(c, base)
+		if c == nil {
 			continue
 		}
 		if owner != nil {

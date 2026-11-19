@@ -488,6 +488,8 @@ A no-tool plugin can declare `providerSupport: {"protocol":1,"catalog":"provider
 
 The host keeps per-call rate and key-identity snapshots. Manual provider/key/model overrides take priority, with provider/model inheritance, then plugin pricing, legacy model pricing and the global estimate. Balances are account values, not key-specific wallets. The balance adapters support same-host model Bearer queries and the fixed read-only China-site Alibaba QueryAccountBalance RPC with separately encrypted RAM credentials. Full boundaries, migration and API details: [provider supporter design](prd/2026-10-22-provider-supporter.md).
 
+A pricing catalog may also declare the optional `accountBalance` adapter `xiaomi-mimo` or `moonshot`. Aide accepts each adapter only for its official HTTPS `/v1` provider and queries a fixed, read-only endpoint using the selected key. MiMo personal Token Plan support matches the official regional endpoints and reports credits without metered pricing. Older hosts can keep using the pricing catalog.
+
 ### TTS Tools 原生桥接（2026-10-23）
 
 独立安装的 `tts-tools` 插件可以声明 `tts_voices`、`tts_generate`，由宿主固定桥接实现。仅工具归属为该启用插件时允许调用。插件不读取或设置密钥；宿主使用所选语音生成模型的提供商保险库凭证。此桥接与助理的默认朗读提供商、音色、API Key 完全独立。`tts_generate` 接收 `text`（1–600 字）、可选 `model`、`voice`、`format`（mp3/wav），当前仅非实时 Qwen-Audio-TTS 3.0/3.1 flash/plus。省略模型时需要支持 speech 评分的 Auto 路由档案。

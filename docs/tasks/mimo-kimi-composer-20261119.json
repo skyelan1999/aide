@@ -1,0 +1,77 @@
+{
+  "id": "mimo-kimi-composer-20261119",
+  "request": "继续修复 MiMo 鉴权和对话框文件粘贴、拖放，并发布 MiMoSupporter 和 KimiSupporter",
+  "baseline": "c61c41e3d3c33c1efb0cbecdcbd17da66a32fd1d",
+  "initial_status": "M internal/server/provider_balance.go\n M internal/server/provider_support.go\n M internal/server/web/account-balance-pool.js\n M internal/server/web/locales/en.js\n M scripts/account-balance-pool.test.cjs\n?? internal/server/provider_platform_accounts.go\n?? internal/server/provider_platform_accounts_test.go",
+  "acceptance": [
+    "文件粘贴和拖放使用同一队列。测试普通文件、PNG、空文件、长文本和会话隔离。",
+    "模型设置区分 MiMo 按量和 Token Plan。官方接口的 401 提示可定位到凭据、集群与配置。",
+    "MiMoSupporter 和 KimiSupporter 的 MIT 安装包通过宿主安装、Release 和市场分发校验。宿主固定端点查询余额与个人套餐余量。"
+  ],
+  "scope": [
+    "聊天输入区和临时附件队列。",
+    "MiMo 提供商预设与鉴权提示。",
+    "小米与 Kimi 官方账户的只读适配和统计显示，以及两个独立 MIT 发布包。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求继续修复，允许用子智能体并行，要求两个 MIT 插件上架。",
+      "evidence": [
+        "MiMo 的真实验证仅使用用户指定密钥。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用附件上传、密钥保险库、提供商费率和账户水位。",
+      "evidence": [
+        "账户适配由宿主拥有固定只读地址。早期宿主可读取费率。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "添加文件粘贴、绑定上传目标、区分 MiMo 接入方式，并解析 MiMo/Kimi 的官方账户数据。",
+      "evidence": [
+        "三个能力由独立提交审阅。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "合成浏览器文件事件实发上传，两份 ZIP 安装测试通过；真实 MiMo 凭据未通过上游鉴权。",
+      "evidence": [
+        "Chromium 和 WebKit 收到 HTTP 201，附件名称与落盘字节匹配。",
+        "Docker SDK TestPlatformAccount 三个顶层及十个子用例通过。",
+        "Node 共 22 个前端检查通过。",
+        "两个 ZIP 在有无新增账户适配的隔离 Aide 实例均安装成功。",
+        "隔离 Aide 请求三个 MiMo Token Plan 官方集群均收到 HTTP 401；测试环境销毁。",
+        "Windows 原生剪贴板和真实 Kimi 余额未验证。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已记录公开声明档案格式和账户适配边界。",
+      "evidence": [
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "在独立工作树检查变更，测试使用独立实例。",
+      "evidence": [
+        "git diff --check 通过。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本任务合并宿主源码。两份独立插件已发 Release 并提交市场。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-MiMoSupporter/releases/tag/v0.1.0",
+        "https://github.com/skyelan1999/aide-pkg-KimiSupporter/releases/tag/v0.1.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/66"
+      ]
+    }
+  },
+  "release_authorization": "用户此前指定 main，并明确要求两个插件发布到市场。",
+  "rollback": "分别撤销宿主变更及市场条目，保留已发布版本和现有工作区数据。",
+  "handoff": "安装插件即可使用对应离线费率。余额或套餐余量需要具备账户适配的宿主。真实 MiMo 测试停在小米侧凭据认证。"
+}

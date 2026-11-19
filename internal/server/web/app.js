@@ -3883,47 +3883,70 @@ function composerUploadName(file) {
   const base = String(file.name || 'attachment').replace(/\\/g, '/').split('/').pop().replace(/[\x00-\x1f]/g, '_').trim();
   return base || 'attachment';
 }
-function queueComposerFiles(files, {active=()=>true, workspaceId=state.workspaceId}={}) {
+function composerTransferFiles(transfer) {
+  const files = Array.from(transfer?.files || []);
+  if (files.length) return files;
+  return Array.from(transfer?.items || [])
+    .filter(item => item.kind === 'file')
+    .map(item => item.getAsFile())
+    .filter(Boolean);
+}
+function composerUploadTarget() {
+  const workspaceId = recoveryScope(), sessionId = state.session?.id, token = state.token;
+  const current = () => !lockScreen.locked && recoveryScope() === workspaceId &&
+    state.token === token && state.session?.id === sessionId &&
+    (!state.pendingSessionId || state.pendingSessionId === sessionId);
+  return {workspaceId, token, current};
+}
+function queueComposerFiles(files, {active=()=>true, target=composerUploadTarget()}={}) {
   const incoming = Array.from(files || []).filter(file => file && typeof file.size === 'number');
-  if (!incoming.length) return Promise.resolve();
+  if (!incoming.length) return Promise.resolve({added: 0, failed: 0});
+  const {workspaceId, token, current} = target;
+  const canAttach = () => current() && active();
   composerFileQueue = composerFileQueue.catch(() => {}).then(async () => {
-    if (lockScreen.locked || !state.token) { toast(t('请先解锁并连接工作区，再添加附件')); return; }
-    let added=0;
+    if (lockScreen.locked || !token || !workspaceId) {
+      toast(t('请先解锁并连接工作区，再添加附件'));
+      return {added: 0, failed: incoming.length};
+    }
+    let added = 0;
     for (const file of incoming) {
-      if(!active())return {added,failed:incoming.length-added};
+      if (!canAttach()) break;
       try {
         const name = composerUploadName(file);
         const path = COMPOSER_ATTACHMENT_DIR + '/chat-' + crypto.randomUUID() + '-' + name;
-        const query = new URLSearchParams({path});
-        if (workspaceId) query.set('workspaceId', workspaceId);
+        const query = new URLSearchParams({path, workspaceId});
         const response = await fetch('/api/file/upload?' + query, {
           method: 'POST',
-          headers: {Authorization: 'Bearer ' + state.token, 'Content-Type': file.type || 'application/octet-stream'},
+          headers: {Authorization: 'Bearer ' + token, 'Content-Type': file.type || 'application/octet-stream'},
           body: file
         });
         let result = {};
         try { result = await response.json(); } catch (_) {}
         if (!response.ok) throw new Error(result.error || t('附件上传失败'));
-        if(!active())return {added,failed:incoming.length-added};
-        attachFileEntry({path}, {root: 'workspace'});added++;
+        if (!canAttach()) break;
+        attachFileEntry({path}, {root: 'workspace'});
+        added++;
       } catch (error) {
         toast(t('添加附件失败：{0}', error.message || String(error)));
       }
     }
-    return {added,failed:incoming.length-added};
+    return {added, failed: incoming.length - added};
   });
   return composerFileQueue;
 }
 const taskForm = $('task-form');
 taskForm.dataset.dropLabel = t('释放文件即可添加为附件');
-function hasDraggedFiles(event) { return Array.from(event.dataTransfer?.types || []).includes('Files'); }
+function composerTransferHasFiles(transfer) {
+  return Array.from(transfer?.types || []).includes('Files') ||
+    Array.from(transfer?.items || []).some(item => item.kind === 'file');
+}
 taskForm.addEventListener('dragenter', event => {
-  if (!hasDraggedFiles(event)) return;
+  if (!composerTransferHasFiles(event.dataTransfer)) return;
   event.preventDefault();
   taskForm.classList.add('drag-over');
 });
 taskForm.addEventListener('dragover', event => {
-  if (!hasDraggedFiles(event)) return;
+  if (!composerTransferHasFiles(event.dataTransfer)) return;
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
   taskForm.classList.add('drag-over');
@@ -3932,10 +3955,12 @@ taskForm.addEventListener('dragleave', event => {
   if (!taskForm.contains(event.relatedTarget)) taskForm.classList.remove('drag-over');
 });
 taskForm.addEventListener('drop', action(async event => {
-  if (!hasDraggedFiles(event)) return;
+  const files = composerTransferFiles(event.dataTransfer);
+  if (!files.length && !composerTransferHasFiles(event.dataTransfer)) return;
   event.preventDefault();
   taskForm.classList.remove('drag-over');
-  await queueComposerFiles(event.dataTransfer.files);
+  if (!files.length) { toast(t('未能读取附件，请重新选择文件。')); return; }
+  await queueComposerFiles(files);
 }));
 // 单条任务上限 20000 字节（internal/server/workflow.go）；超出时把粘贴内容落成
 // 工作区临时 Markdown 附件，输入框只保留一句可编辑的引用，避免直接 400。
@@ -3943,23 +3968,24 @@ const PROMPT_MAX_BYTES = 20000;
 function composerByteLength(text) { return new TextEncoder().encode(text).length; }
 function queuePastedText(text, start, end, name, replaceAll) {
   const prompt = $('prompt');
+  const target = composerUploadTarget();
   const restore = value => {
     if (replaceAll) prompt.value = value;
     else prompt.setRangeText(value, start, end, 'end');
     prompt.dispatchEvent(new Event('input', { bubbles: true }));
   };
-  return queueComposerFiles([new File([text], name, {type: 'text/markdown'})]).then(result => {
+  return queueComposerFiles([new File([text], name, {type: 'text/markdown'})], {target}).then(result => {
+    if (!target.current()) return;
     if (!result?.added) { restore(text); return; } // 附件失败时保留原文，不能让粘贴内容丢失
     restore(t('（长文本已转为附件：{0}）', name));
     toast(t('粘贴内容已转为附件：{0}（{1} 字符）', name, Array.from(text).length));
   });
 }
 $('prompt').addEventListener('paste', event => {
-  const images = Array.from(event.clipboardData?.items || [])
-    .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
-    .map(item => item.getAsFile()).filter(Boolean);
-  if (!images.length) {
-    const text = event.clipboardData?.getData('text/plain') || '';
+  const clipboard = event.clipboardData;
+  const files = composerTransferFiles(clipboard);
+  if (!files.length) {
+    const text = clipboard?.getData('text/plain') || '';
     if (text) {
       const prompt = $('prompt');
       const start = prompt.selectionStart ?? prompt.value.length;
@@ -3975,17 +4001,20 @@ $('prompt').addEventListener('paste', event => {
         void queuePastedText(keepDraft ? text : projected, start, end, name, !keepDraft);
         return;
       }
+    } else if (composerTransferHasFiles(clipboard)) {
+      event.preventDefault();
+      toast(t('未能读取附件，请重新选择文件。'));
     }
     return;
   }
   event.preventDefault();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const files = images.map((blob, index) => {
-    if (blob.name) return blob;
+  const attachments = files.map((blob, index) => {
+    if (blob.name || !blob.type.startsWith('image/')) return blob;
     const ext = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','image/svg+xml':'svg','image/bmp':'bmp'})[blob.type] || 'png';
     return new File([blob], `pasted-image-${stamp}-${index + 1}.${ext}`, {type: blob.type || 'image/png', lastModified: Date.now()});
   });
-  void queueComposerFiles(files);
+  void queueComposerFiles(attachments);
 });
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
@@ -4396,7 +4425,8 @@ const MODEL_PROVIDER_PRESETS = [
   { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com' },
   { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com/v1' },
   { id: 'qwen', name: '通义千问 / DashScope', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
-  { id: 'xiaomi-mimo', name: '小米 MiMo', baseURL: 'https://api.xiaomimimo.com/v1' },
+  { id: 'xiaomi-mimo', name: '小米 MiMo（按量计费）', baseURL: 'https://api.xiaomimimo.com/v1' },
+  { id: 'xiaomi-mimo-token-plan', name: '小米 MiMo Token Plan（中国集群）', baseURL: 'https://token-plan-cn.xiaomimimo.com/v1' },
   { id: 'moonshot', name: 'Moonshot / Kimi', baseURL: 'https://api.moonshot.cn/v1' },
   { id: 'zhipu', name: '智谱 GLM', baseURL: 'https://open.bigmodel.cn/api/paas/v4' },
   { id: 'siliconflow', name: '硅基流动', baseURL: 'https://api.siliconflow.cn/v1' },
@@ -4417,7 +4447,7 @@ function openSettings() {
   models.forEach(model => { if (!model.providerId) model.providerId = 'default'; });
   state.modelDraft = { providers, models, activeModel: config.activeModel || config.model || models[0]?.id || '', expandedProviders: new Set(), providerSecrets: new Map() };
   const select = $('provider-preset'); select.replaceChildren();
-  for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(preset.name, preset.id));
+  for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(t(preset.name), preset.id));
   renderModelList();
   $('settings-dialog').showModal();
 }
@@ -13799,6 +13829,6 @@ window.aideUI?.subscribe(syncKeybindingHints);window.addEventListener('aide:lang
 window.AideDesktopCapture.install({t,
  available:()=>!lockScreen.locked&&!!state.token&&!state.submitting&&!state.pendingSessionId&&!document.querySelector('dialog[open],.settings-sheet.open,.workspace-sheet.open,.trajectory-sheet.open'),
  scope:()=>JSON.stringify([recoveryScope(),state.session?.id||'',sessionSeq.value]),
- attach:(files,options)=>queueComposerFiles(files,{...options,workspaceId:recoveryScope()}),
+ attach:queueComposerFiles,
  focus:()=>$('prompt').focus(),notify:message=>toast(message)
 });

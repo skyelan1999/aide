@@ -5,7 +5,15 @@
     return (response?.balance_infos || []).flatMap(info => {
       const raw=info.total_balance;
       const value=typeof raw==='number'?raw:typeof raw==='string'&&raw.trim()!==''?Number(raw):NaN;
-      return Number.isFinite(value)&&['CNY','USD'].includes(info.currency)?[{currency:info.currency,value}]:[];
+      if (!Number.isFinite(value) || !['CNY','USD'].includes(info.currency)) return [];
+      const details = [];
+      for (const [field, label] of [['available_cash_balance','现金余额'],['granted_balance','赠送额度']]) {
+        const candidate = info[field];
+        if (typeof candidate === 'string' && candidate.trim() && Number.isFinite(Number(candidate))) {
+          details.push({label, value:Number(candidate)});
+        }
+      }
+      return [{currency:info.currency,value,...(details.length?{details}:{})}];
     });
   }
   function gauge(value, threshold, ceiling) {
@@ -122,6 +130,9 @@
         const alarm=node('div','balance-alarm-line');alarm.style.bottom=g.line+'%';alarm.title=t('报警线 {0}',prefs.threshold.toFixed(2)+' '+amount.currency);
         tank.append(water,alarm);const detail=node('div','balance-water-detail');
         detail.append(node('div','balance-amount',amount.value.toFixed(2)),node('span','balance-currency',amount.currency+' · '+t('账户可用额度')));
+        for (const item of amount.details || []) {
+          detail.append(node('p','balance-pool-caption',t('{0} {1}',t(item.label),item.value.toFixed(2)+' '+amount.currency)));
+        }
         const controls=node('div','balance-alarm-controls');
         for(const [field,label] of [['threshold',t('报警线')],['ceiling',t('水位刻度')]]) {
           const lab=node('label','',label),input=node('input','');input.type='number';input.min=field==='ceiling'?'0.01':'0';input.max='1000000000';input.step='0.01';input.value=String(prefs[field]);input.setAttribute('aria-label',(account.provider.name||account.provider.id)+' / '+(account.key.label||account.key.id)+' / '+amount.currency+' / '+label);
@@ -143,7 +154,11 @@
         const water=node('div','balance-water');water.style.height=q.remainingPercent+'%';water.hidden=q.remainingPercent===0;tank.append(water);
         const detail=node('div','balance-water-detail');
         detail.append(node('strong','',String(q.label||q.id)),node('div','balance-amount',q.remainingPercent.toFixed(1)+'%'),node('span','balance-currency',t('账户共享额度 · 剩余百分比')));
-        detail.append(node('p','balance-pool-caption',q.windowDurationMins?t('窗口 {0} 分钟',q.windowDurationMins):t(q.window==='secondary'?'次要窗口':'主要窗口')));
+        if (Number.isSafeInteger(q.remainingCredits) && Number.isSafeInteger(q.totalCredits) && q.remainingCredits >= 0 && q.totalCredits >= q.remainingCredits) {
+          detail.append(node('p','balance-pool-caption',t('剩余积分 {0} / {1}',q.remainingCredits.toLocaleString(),q.totalCredits.toLocaleString())));
+        } else {
+          detail.append(node('p','balance-pool-caption',q.windowDurationMins?t('窗口 {0} 分钟',q.windowDurationMins):t(q.window==='secondary'?'次要窗口':'主要窗口')));
+        }
         if(q.resetsAt)detail.append(node('p','balance-pool-caption',t('重置于 {0}',new Date(q.resetsAt*1000).toLocaleString())));
         row.append(tank,detail);account.body.append(row);account.gauges.push(gauge(q.remainingPercent,10,100));
       }
