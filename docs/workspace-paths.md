@@ -36,7 +36,7 @@ The working directory is separate from Docker's accessible mount boundary. The c
 
 ## 自动生成文档跟随绑定路径（源码候选，2026-10-09）
 
-工作空间设置中的“自动系统文档”路径是自动建档的目标根目录。绑定非空路径后，需求、设计、实现记录、验证记录及问题报告分别写入该根下的 `requirements/`、`designs/`、`implementations/`、`verifications/`、`problem-reports/`，索引与文档存放在同一子目录。Office 插件创建 DOCX/XLSX/PPTX 时，`path` 也相对该绑定根。读取产物可用 `read_file(source="system-docs", path="相对路径")`。
+工作空间设置中的“自动系统文档”路径是自动建档的目标根目录。绑定非空路径后，需求、设计、实现记录、验证记录及问题报告分别写入该根下的 `requirements/`、`designs/`、`implementations/`、`verifications/`、`problem-reports/`，索引与文档存放在同一子目录。Office 插件创建 DOCX/XLSX/PPTX 时，`path` 也相对该绑定根。读取产物可用 `read_file(source="system-docs", path="相对路径")`。 更新已有 Markdown 时，在同一任务用相同的 `source` 和相对路径完整读取后再生成写入提案。较大的文件从工具返回的 `byteEnd` 继续读取，所有分段须来自同一版本。应用仍需审批，并按最新文件的 SHA-256 校验，防止覆盖其他修改。
 
 本地绑定使用本地来源根；SSH 工作空间选择“工作空间 (SFTP)”时沿用该工作空间连接写入远端文档路径。绑定不可访问时返回错误，不静默写入其他位置。绑定为空时维持既有行为：阶段文档使用项目缓存，Office 文件使用工作目录。问题报告列表根据绑定选择来源。
 

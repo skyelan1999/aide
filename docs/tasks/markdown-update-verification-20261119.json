@@ -1,0 +1,75 @@
+{
+  "id": "markdown-update-verification-20261119",
+  "request": "修复从文档来源读取现有 Markdown 后生成更新提案时的版本校验失败",
+  "baseline": "aff159ea98600591fd5a6f0e398d9c3a54eccc18",
+  "initial_status": "基线 aff159ea，独立工作树干净。",
+  "acceptance": [
+    "读取可写文档来源中的完整 Markdown 后，能为同一来源和相对路径生成更新提案。",
+    "大 Markdown 须完整覆盖同一版本的所有字节，原文变化或来源绑定改变时拒绝应用旧提案。",
+    "审批通过后更新原文件，启用 Markdown History 时，原文和新版本均归档。"
+  ],
+  "scope": [
+    "Markdown 读取基线、来源绑定与现有文件提案、回归测试和使用说明"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "近期真实工具结果显示 5 次自动系统文档 Markdown 更新缺少可用版本基线。",
+      "evidence": [
+        "日用 Aide 近七日会话的 Markdown write_file 失败类型汇总，无原文和路径输出。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用应用提案的同一来源目标固定读取范围，完整读取时记录 SHA-256。",
+      "evidence": [
+        "internal/server/document_proposals.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "生成提案优先使用完整读取快照，兼容附件基线，继续校验来源和目标版本。",
+      "evidence": [
+        "internal/server/document_proposals.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "复现基线失败，最终服务器回归及编译通过。",
+      "evidence": [
+        "将旧版 Go 实现通过 overlay 注入同一新测试，完整读取后错误拒绝，大文件缺少继续读取提示。",
+        "隔离 SDK 中针对文档提案、来源权限、Markdown History、分段读取与并行编辑回归的 go test 通过。",
+        "审批写入更新原文件，历史保留更新前和更新后版本；跨版本读取、来源切换和真实外部更改均被拒绝。",
+        "go build -mod=vendor -o /out/aide ./cmd/aide 和 python3 scripts/check_docs.py 通过。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "说明完整读取及大文件递进方式。",
+      "evidence": [
+        "docs/workspace-paths.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "清理本次临时编译文件，保留任务记录和回归用例。",
+      "evidence": [
+        "git diff --check",
+        "python3 scripts/agent-route.py audit"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮本地交付。",
+      "evidence": [
+        "修复范围为 Aide 服务端工具和审批链路。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次源码提交即可恢复原有提案行为，无历史存储迁移。",
+  "handoff": "诊断仅汇总原有会话的错误类型。源码在独立工作树修改和验证，未改日用实例配置或会话。"
+}

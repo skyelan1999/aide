@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -138,6 +139,38 @@ func (a *App) readProposalTarget(t proposalTarget, p string) ([]byte, error) {
 	}
 	return a.sftpReadAtGeneration(pathJoinRemote(t.remote, p), t.generation)
 }
+
+// A writable source can supply a Markdown proposal baseline only through the
+// same pinned target that approval and application use. Read-only sources
+// continue through the ordinary reference reader.
+func (a *App) readMarkdownProposalWindow(task *Task, source, p string, offset, limit int64) (streamedTextWindow, string, error) {
+	if err := safePath(p); err != nil {
+		return streamedTextWindow{}, "", err
+	}
+	a.mu.Lock()
+	src, binding, err := a.proposalSourceLocked(source)
+	if err != nil || task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
+		a.mu.Unlock()
+		return streamedTextWindow{}, "", nil
+	}
+	target, err := a.proposalTargetLocked(Change{Path: p, Source: source, Binding: binding, TargetPath: sourceProposalPath(src, p)})
+	a.mu.Unlock()
+	if err != nil {
+		return streamedTextWindow{}, "", err
+	}
+	defer target.close()
+	if target.root != nil {
+		window, err := readTextWindowWithOpener(p, target.root.Open, 0, 0, true, offset, limit)
+		return window, binding, err
+	}
+	raw, err := a.readProposalTarget(target, p)
+	if err != nil {
+		return streamedTextWindow{}, "", err
+	}
+	window, err := streamTextWindow(p, bytes.NewReader(raw), 0, 0, true, offset, limit)
+	return window, binding, err
+}
+
 func (a *App) writeProposalTarget(t proposalTarget, f Change) error {
 	return a.withMarkdownHistory(t.identity, f.Path, []byte(f.Content), func(p string) ([]byte, error) { return a.readProposalTarget(t, p) }, func() error {
 		if t.root != nil {
@@ -188,10 +221,12 @@ func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, sou
 		return "", err
 	}
 	f := Change{Path: p, Source: source, Binding: binding, TargetPath: sourceProposalPath(src, p), Content: content, ApprovalPurpose: purpose}
-	if v, ok := versions[sourceVersionKey(source, p)]; ok {
-		f.BaseHash = v.BaseHash
-		f.Before = v.Before
+	v, found := task.readSnapshots[sourceVersionKey(binding, p)]
+	if !found {
+		v = versions[sourceVersionKey(source, p)]
 	}
+	f.BaseHash = v.BaseHash
+	f.Before = v.Before
 	target, err := a.proposalTargetLocked(f)
 	if err != nil {
 		return "", err
@@ -205,8 +240,14 @@ func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, sou
 	if revision != a.wsRevision || bindingErr != nil || currentBinding != binding {
 		return "", errors.New("工作空间配置已变化，请重新生成提案")
 	}
+	if readErr == nil && f.BaseHash == "" {
+		if markdownAttachmentPath(p) {
+			return "", fmt.Errorf("%s：请先用同一来源的 read_file 完整读取现有 Markdown（大文件请继续读取剩余字节），或附加现有文档后再生成修改", p)
+		}
+		return "", fmt.Errorf("%s：请先附加现有文档后再生成修改", p)
+	}
 	if err = proposalVersion(b, readErr, f); err != nil {
-		return "", fmt.Errorf("%s：请先附加现有文档后生成修改，或检查原文件版本: %w", p, err)
+		return "", fmt.Errorf("%s: %w", p, err)
 	}
 	index := -1
 	for i, old := range task.Files {
