@@ -1,0 +1,79 @@
+{
+  "id": "markdown-pdf-page-furniture-20261119",
+  "request": "按 Teams 示意图渲染文控表格，增加动态页码、HTML 页脚和目录预设",
+  "baseline": "4151da02df63cb47a9dded4eb7b94968accb9b4b",
+  "initial_status": "承接本地提交 4151da02，工作区干净。",
+  "acceptance": [
+    "页眉可直接套用三行文控表，首行显示上传 Logo、文档名称和页码；编制、编号和审批字段支持跨列、样式和编辑。",
+    "自定义页眉与页脚能读取当前页和总页数，页码对应合并后的 PDF。自动页码可放在页眉或页脚。",
+    "四个目录预设均独立分页，采用实际页码，条目跳转至正文对应标题。",
+    "实际 Aide 导出覆盖目录、正文、横竖混排，并在浏览器预览及 PDF 中核对位置。"
+  ],
+  "scope": [
+    "Aide 内置 Markdown PDF 版式设置、页眉页脚和目录渲染、国际化和相关验证"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认 Teams 中 15:35 的参考图和文控表的三行布局，按其结构新增可编辑模板。",
+      "evidence": [
+        "用户 Teams 自聊最新页眉示意图",
+        "用户要求页眉或页脚的可调用页码、页脚设置和多种目录预设。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按方向复用页眉页脚静态层，合并后绘制模板页码。目录保留源标题位置与跳转。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成页眉、页脚、目录分区、文控模板、页码位置及四种目录预设。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/markdown-pdf-header.css",
+        "internal/server/web/macos.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离构建、实际 Aide 浏览器导出、PDF 独立检查及全仓快速检查通过。",
+      "evidence": [
+        "隔离 SDK 构建当前源码，运行 go build -mod=vendor -o /out/aide.checked ./cmd/aide。",
+        "node --test scripts/markdown-pdf-layout.test.cjs scripts/markdown-download-export.test.js 通过。",
+        "Chromium 实测四种目录样式，WebKit 实测技术编号。逐一核对每种样稿 75 个条目、跳转目标、目录和正文分页以及每页动态页码。",
+        "Poppler 渲染验证三行表、Logo、真实页码、经典点引导线和 HTML 页脚。Chromium 检查桌面和 390 px 窄屏，确认自动页码位置切换与复制提示词。",
+        "python3 scripts/agent-route.py verify quick 的 346 项检查全部通过。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录模板字段、页码行为、样式和保存范围。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "停止隔离验收容器并删除临时二进制，保留合成样稿、截图与验证日志。",
+      "evidence": [
+        "docker stop aide-pdf-page-settings-qa",
+        "git diff --cached --check",
+        "python3 scripts/agent-route.py audit"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮本地交付。",
+      "evidence": [
+        "当前需求为 Aide 内置 PDF 导出功能改进。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次提交即可恢复上一版 PDF 导出。浏览器沿用原按文件保存键，原主题色、页眉、Logo 和目录开关继续可读。",
+  "handoff": "使用隔离 Aide 从实际导出入口验证。样稿、截图和日志保存在 .agent-state/pdf-page-settings。源码本地交付，未推送或安装至日用实例。"
+}

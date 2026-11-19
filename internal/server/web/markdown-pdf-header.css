@@ -20,3 +20,6 @@
 .markdown-pdf-rich-html th { background-color: #eaf0f6; }
 .markdown-pdf-rich-html caption { padding: 4px; font-weight: 600; }
 .markdown-pdf-rich-html :is(p,ul,ol,dl,pre,blockquote):last-child { margin-bottom: 0; }
+.markdown-pdf-rich-html .markdown-pdf-logo-slot { display: inline-block; width: min(150px,100%); height: 22px; vertical-align: middle; }
+.markdown-pdf-rich-html .markdown-pdf-page-value { display: inline-block; white-space: nowrap; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.markdown-pdf-measuring .markdown-pdf-page-value { visibility: hidden; }
