@@ -1,0 +1,68 @@
+{
+  "id": "xiaomi-mimo-provider-20261119",
+  "request": "在 Aide 模型设置的添加供应商里加小米 MiMo，并推送到 main",
+  "baseline": "b290197a6e6a084cc5194b28d924d61c813edb55",
+  "initial_status": "",
+  "acceptance": [
+    "在模型设置的添加提供商列表中可选择小米 MiMo，并预填官方 OpenAI 兼容 API 地址。",
+    "远端 main 包含本次预设变更。"
+  ],
+  "scope": [
+    "模型设置的提供商预设列表。模型和密钥沿用现有配置流程。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确指定添加提供商入口和 main 分支。",
+      "evidence": [
+        "用户消息「添加提供商」及「到main」。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用提供商预设、草稿和保存流程。",
+      "evidence": [
+        "internal/server/web/app.js 的 MODEL_PROVIDER_PRESETS。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增小米 MiMo 预设。",
+      "evidence": [
+        "官方地址 https://mimo.mi.com/docs/zh-CN/quick-start/summary/first-api-call。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Chrome 组件验收使用真实对话框 HTML 和新增提供商事件，验证选项、地址及原默认模型。",
+      "evidence": [
+        "Chrome 无头组件检查通过。",
+        "node --check internal/server/web/app.js 与 node scripts/reasoning-settings.test.cjs 通过。"
+      ]
+    },
+    "documentation": {
+      "status": "not_run",
+      "summary": "现有模型设置操作说明适用于该预设。",
+      "evidence": [
+        "添加提供商和保存方式沿用现行界面。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "独立工作树只提交预设与任务记录。",
+      "evidence": [
+        "git diff --check 通过。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本任务交付源码到 main，发布版本由独立流程管理。",
+      "evidence": [
+        "用户授权为推送到 main。"
+      ]
+    }
+  },
+  "release_authorization": "推送一下呢 / 到main",
+  "rollback": "撤销预设提交或合并提交。",
+  "handoff": "在模型设置的添加提供商列表中选择小米 MiMo；使用现有界面录入该提供商的模型和 API Key。"
+}

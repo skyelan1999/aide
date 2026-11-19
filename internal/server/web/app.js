@@ -4396,6 +4396,7 @@ const MODEL_PROVIDER_PRESETS = [
   { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com' },
   { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com/v1' },
   { id: 'qwen', name: '通义千问 / DashScope', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  { id: 'xiaomi-mimo', name: '小米 MiMo', baseURL: 'https://api.xiaomimimo.com/v1' },
   { id: 'moonshot', name: 'Moonshot / Kimi', baseURL: 'https://api.moonshot.cn/v1' },
   { id: 'zhipu', name: '智谱 GLM', baseURL: 'https://open.bigmodel.cn/api/paas/v4' },
   { id: 'siliconflow', name: '硅基流动', baseURL: 'https://api.siliconflow.cn/v1' },
