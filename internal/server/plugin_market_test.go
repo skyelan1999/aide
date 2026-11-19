@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -57,8 +58,23 @@ func marketInput(a *App, s marketSnapshot) map[string]any {
 func TestPluginMarketInstallUpdateAndDownload(t *testing.T) {
 	a, s, raw := marketFixture(t, "2.0.0")
 	id := s.Catalog.Plugins[0].ID
-	requireStatus(t, request(a, "GET", "/api/plugin-market", nil), 200)
-	result := request(a, "GET", "/api/plugin-market/"+id+"/download?revision="+s.Revision, nil)
+	catalog := request(a, "GET", "/api/plugin-market", nil)
+	requireStatus(t, catalog, 200)
+	var listed struct {
+		Plugins []struct {
+			ID          string `json:"id"`
+			DownloadURL string `json:"downloadURL"`
+		} `json:"plugins"`
+	}
+	if err := json.Unmarshal(catalog.Body.Bytes(), &listed); err != nil || len(listed.Plugins) != 1 || listed.Plugins[0].ID != id {
+		t.Fatalf("unexpected market catalog: %q (%v)", catalog.Body.String(), err)
+	}
+	p := s.Catalog.Plugins[0]
+	query := url.Values{"revision": {s.Revision}, "version": {p.Version}, "sha256": {p.SHA256}}
+	if listed.Plugins[0].DownloadURL != "/api/plugin-market/"+id+"/download?"+query.Encode() {
+		t.Fatalf("download URL missing review: %s", listed.Plugins[0].DownloadURL)
+	}
+	result := request(a, "GET", listed.Plugins[0].DownloadURL, nil)
 	requireStatus(t, result, 200)
 	if string(result.Body.Bytes()) != string(raw) {
 		t.Fatal("download content")
@@ -236,7 +252,7 @@ func TestPluginMarketNumericVersionCompatibility(t *testing.T) {
 	}
 }
 
-func TestPluginMarketRefreshPinsCatalogAndBoundsCache(t *testing.T) {
+func TestPluginMarketRefreshKeepsReviewedDownloadWhenPackageUnchanged(t *testing.T) {
 	a, s, raw := marketFixture(t, "2.0.0")
 	newRevision := strings.Repeat("b", 40)
 	catalog, _ := json.Marshal(s.Catalog)
@@ -258,11 +274,23 @@ func TestPluginMarketRefreshPinsCatalogAndBoundsCache(t *testing.T) {
 	if e != nil || stale || got.Revision != newRevision {
 		t.Fatalf("refresh %v %v", stale, e)
 	}
-	if _, _, e = a.marketSelected(context.Background(), s.Catalog.Plugins[0].ID, s.Revision); e == nil {
-		t.Fatal("old review accepted")
+	p := got.Catalog.Plugins[0]
+	download := "/api/plugin-market/" + p.ID + "/download?"
+	for _, query := range []url.Values{
+		{"revision": {s.Revision}}, // Old client keeps the strict revision contract.
+		{"revision": {s.Revision}, "version": {p.Version}},
+		{"revision": {s.Revision}, "version": {p.Version}, "sha256": {strings.Repeat("c", 64)}},
+		{"revision": {s.Revision}, "version": {"3.0.0"}, "sha256": {p.SHA256}},
+		{"revision": {"invalid"}, "version": {p.Version}, "sha256": {p.SHA256}},
+	} {
+		requireStatus(t, request(a, "GET", download+query.Encode(), nil), 409)
 	}
-	if _, e = a.marketPackage(context.Background(), got, got.Catalog.Plugins[0]); e != nil {
-		t.Fatal(e)
+	requireStatus(t, request(a, "POST", "/api/plugin-market/"+p.ID+"/install", marketInput(a, s)), 409)
+	review := url.Values{"revision": {s.Revision}, "version": {p.Version}, "sha256": {p.SHA256}}
+	result := request(a, "GET", download+review.Encode(), nil)
+	requireStatus(t, result, 200)
+	if string(result.Body.Bytes()) != string(raw) || result.Header().Get("X-Content-SHA256") != p.SHA256 {
+		t.Fatal("download no longer matches the reviewed package")
 	}
 	if len(seen) != 3 {
 		t.Fatalf("network calls %v", seen)
@@ -280,13 +308,50 @@ func TestPluginMarketRefreshPinsCatalogAndBoundsCache(t *testing.T) {
 	if _, e = a.marketPackage(context.Background(), got, got.Catalog.Plugins[0]); e == nil {
 		t.Fatal("tampered cached package reused")
 	}
-	for i := 0; i < 64; i++ {
-		if e = skillCacheWrite(root, fmt.Sprintf("full-%02d.zip", i), []byte("x")); e != nil {
-			t.Fatal(e)
-		}
-	}
-	if _, e = a.marketPackage(context.Background(), got, got.Catalog.Plugins[0]); e == nil || !strings.Contains(e.Error(), "缓存已满") {
-		t.Fatal("cache bound", e)
+}
+
+func TestPluginMarketFullCacheStillDownloadsWithoutRetainingPackage(t *testing.T) {
+	for _, scenario := range []struct {
+		name  string
+		count int
+		size  int64
+	}{
+		{name: "file limit", count: 64, size: 1},
+		{name: "byte limit", count: 1, size: 256 << 20},
+	} {
+		t.Run(scenario.name, func(t *testing.T) {
+			a, s, raw := marketFixture(t, "2.0.0")
+			p := s.Catalog.Plugins[0]
+			root, err := a.marketRoot()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+			for i := 0; i < scenario.count; i++ {
+				f, err := root.Create(fmt.Sprintf("full-%02d.zip", i))
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = f.Truncate(scenario.size)
+				f.Close()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			download := "/api/plugin-market/" + p.ID + "/download?revision=" + s.Revision
+			result := request(a, "GET", download, nil)
+			requireStatus(t, result, 200)
+			if string(result.Body.Bytes()) != string(raw) {
+				t.Fatal("full cache changed downloaded bytes")
+			}
+			if _, err := root.Stat(p.SHA256 + ".zip"); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("cache boundary violated: %v", err)
+			}
+			a.pluginUpdateClient.Transport = pluginUpgradeTransport(func(*http.Request) (*http.Response, error) {
+				return upgradeResponse([]byte("tampered")), nil
+			})
+			requireStatus(t, request(a, "GET", download, nil), 502)
+		})
 	}
 }
 

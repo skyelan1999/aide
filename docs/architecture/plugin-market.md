@@ -39,14 +39,14 @@ Aide「插件」侧栏增加「已安装 / 市场」。保留上传、设置、�
 ## 服务端流程
 
 - `GET /api/plugin-market[?refresh=1]`：获取目录、已安装状态、兼容性、目录修订号和工作空间修订号。10分钟目录缓存；首次/过期浏览先返回已验证缓存或随宿主打包的固定目录，显式 `stale=true`，客户端在卡片展示后再请求刷新；远端失败时仍可浏览。
-- `GET /api/plugin-market/{id}/download?revision=<sha>`：下载被审阅的目录版本中的包，返回 ZIP 与 `X-Content-SHA256`。
+- `GET /api/plugin-market/{id}/download?revision=<sha>&version=<version>&sha256=<digest>` 下载时返回 ZIP 与 `X-Content-SHA256`。目录刷新后，当前官方目录的插件 ID、版本和包摘要均与已核对的包一致时，仍可下载。仅提供目录修订号的客户端沿用原有的严格修订号匹配。
 - `POST /api/plugin-market/{id}/install`：请求包含 `revision/version/sha256/workspace/workspaceRevision`，不接受外部下载 URL。服务端重新匹配目录及工作空间，执行下载、校验与安装/更新。
 
 目录来源固定为 `skyelan1999/aide-pkg-shop`。服务端先取得 main 的提交 SHA，再从同一 SHA 读取目录和包；不会逐文件跟随移动的 main。目录最多200项/2MiB；包最多24MiB，继续沿用现有 ZIP 路径、文件数、展开大小、manifest/入口校验。
 
 首次市场安装在临时目录运行宿主加载探测，检查新增能力与现有插件的兼容；确认通过才登记到现有安装流程。安装收据记住包摘要及市场升级来源。更新复用 `upgradePlugin` 的候选目录、依赖探测、设置/启用/数据保留、备份和恢复日志；市场来源的已安装插件也可从原「升级」按钮检查目录。
 
-`AIDE_DATA/cache/plugin-market/` 保存目录和已核对 ZIP；默认 Docker 对应持久数据卷。每次重用 ZIP 仍核对摘要和大小。缓存最多64包/256MiB，满后明确报错，不自动删除已存在文件。`os.Root` 限定缓存写入范围。
+`AIDE_DATA/cache/plugin-market/` 保存目录和已核对 ZIP；默认 Docker 对应持久数据卷。每次重用 ZIP 仍核对摘要和大小。缓存最多64包/256MiB。已满时直接返回核对通过的包并保留现有缓存。`os.Root` 限定缓存写入范围。
 
 ## 权限与边界
 

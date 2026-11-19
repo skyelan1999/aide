@@ -407,7 +407,8 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		item["incompatibility"] = reason
 		if p.Distribution != "private" {
-			item["downloadURL"] = "/api/plugin-market/" + p.ID + "/download?revision=" + snapshot.Revision
+			query := url.Values{"revision": {snapshot.Revision}, "version": {p.Version}, "sha256": {p.SHA256}}
+			item["downloadURL"] = "/api/plugin-market/" + p.ID + "/download?" + query.Encode()
 		}
 		if local, ok := installed[p.ID]; ok {
 			item["installedVersion"] = local.Version
@@ -446,7 +447,7 @@ func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugi
 		}
 		return b, nil
 	}
-	// Bound reusable public package cache without deleting any existing files.
+	// The cache boundary limits retained ZIPs; a verified download can still be served.
 	directory, e := root.Open(".")
 	if e != nil {
 		return nil, e
@@ -464,9 +465,7 @@ func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugi
 			used += i.Size()
 		}
 	}
-	if count >= 64 || used+p.Bytes > 256<<20 {
-		return nil, errors.New("插件下载缓存已满，请先清理不再需要的下载缓存")
-	}
+	cacheHasRoom := count < 64 && used+p.Bytes <= 256<<20
 	b, err := pluginFetch(ctx, a.marketClient(), marketRaw+s.Revision+"/"+p.Package, maxPluginBundle)
 	if err != nil {
 		return nil, err
@@ -477,8 +476,10 @@ func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugi
 	if err := validateMarketPackage(b, p); err != nil {
 		return nil, err
 	}
-	if err = skillCacheWrite(root, name, b); err != nil {
-		return nil, err
+	if cacheHasRoom {
+		if err = skillCacheWrite(root, name, b); err != nil {
+			return nil, err
+		}
 	}
 	return b, nil
 }
@@ -493,16 +494,27 @@ func validateMarketPackage(b []byte, p marketPlugin) error {
 	}
 	return nil
 }
-func (a *App) marketSelected(ctx context.Context, id, revision string) (marketSnapshot, marketPlugin, error) {
+
+type marketDownloadIdentity struct {
+	Version string
+	SHA256  string
+}
+
+func (a *App) marketSelected(ctx context.Context, id, revision string, download *marketDownloadIdentity) (marketSnapshot, marketPlugin, error) {
 	s, _, err := a.loadMarket(ctx, false)
 	if err != nil {
 		return s, marketPlugin{}, err
 	}
-	if s.Revision != revision {
+	// Installation remains pinned to the reviewed snapshot. A read-only download
+	// may use the current official snapshot if the reviewed bytes are unchanged.
+	if s.Revision != revision && (download == nil || !marketRevision.MatchString(revision)) {
 		return s, marketPlugin{}, errors.New("市场目录已更新，请刷新并重新确认")
 	}
 	for _, p := range s.Catalog.entries() {
 		if p.ID == id && p.ID != retiredOfficePluginID {
+			if download != nil && (p.Version != download.Version || p.SHA256 != download.SHA256) {
+				return s, marketPlugin{}, errors.New("插件版本或摘要已变化，请重新确认")
+			}
 			return s, p, nil
 		}
 	}
@@ -519,7 +531,13 @@ func (a *App) marketDownload(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
 	defer cancel()
-	s, p, err := a.marketSelected(ctx, r.PathValue("id"), r.URL.Query().Get("revision"))
+	query := r.URL.Query()
+	version, digest := query.Get("version"), query.Get("sha256")
+	var reviewed *marketDownloadIdentity
+	if version != "" || digest != "" {
+		reviewed = &marketDownloadIdentity{Version: version, SHA256: digest}
+	}
+	s, p, err := a.marketSelected(ctx, r.PathValue("id"), query.Get("revision"), reviewed)
 	if err != nil {
 		fail(w, 409, err)
 		return
@@ -608,7 +626,7 @@ func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, p, err := a.marketSelected(ctx, r.PathValue("id"), in.Revision)
+	s, p, err := a.marketSelected(ctx, r.PathValue("id"), in.Revision, nil)
 	if err != nil {
 		fail(w, 409, err)
 		return
