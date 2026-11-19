@@ -21,7 +21,7 @@ async function configure(page,out,large=false,root=process.cwd()){
   if(u.pathname==='/image.svg')return route.fulfill({contentType:'image/svg+xml',body:svg});
   if(u.pathname.startsWith('/assets/'))return route.fulfill({contentType:'application/octet-stream',body:inputs.get(u.pathname.slice(8))});
   const file=path.resolve(web,'.'+u.pathname);if(!file.startsWith(web+path.sep)||!fs.existsSync(file))return route.fulfill({status:404,body:''});
-  return route.fulfill({contentType:file.endsWith('.ttf')?'font/ttf':'application/javascript',body:fs.readFileSync(file)});
+  return route.fulfill({contentType:file.endsWith('.ttf')?'font/ttf':file.endsWith('.css')?'text/css':'application/javascript',body:fs.readFileSync(file)});
  });
  await page.goto('https://aide-vector-pdf.test/');await page.addScriptTag({url:'/vendor/marked.min.js'});await page.addScriptTag({url:'/markdown-export.js'});
  await page.evaluate(names=>{

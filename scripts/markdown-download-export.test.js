@@ -22,25 +22,38 @@ function fakeElement(tagName,ownerDocument){
 function fakeDocument(isSnapshot=false){
  const doc={isSnapshot,defaultView:{scrollY:0,getComputedStyle:()=>({display:'block'})},fonts:{ready:Promise.resolve()},createTreeWalker:()=>({nextNode:()=>false}),open(){},write(){},close(){}};
  doc.head=fakeElement('head',doc);doc.body=fakeElement('body',doc);doc.createElement=tag=>{if(tag==='iframe'){const frame=fakeElement(tag,doc);frame.contentDocument=fakeDocument();return frame;}return fakeElement(tag,doc);};
+ const append=doc.head.append.bind(doc.head);
+ doc.head.append=child=>{append(child);if(child.tagName==='LINK')child.onload?.();};
  if(isSnapshot)doc.body.rect={top:0,bottom:1200,left:0,right:794,width:794,height:1200};return doc;
 }
 function within(promise,label){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' timed out')),5000);})]).finally(()=>clearTimeout(timer));}
 async function verifyVectorPdf(){
- const definitions=[],progress=[],inserted=[];let downloaded='',downloadedBlob=null,renderCount=0,stall=false,renderStarted;
+ const definitions=[],progress=[],inserted=[],footers=[];let downloaded='',downloadedBlob=null,renderCount=0,stall=false,renderStarted;
  const hostDocument=fakeDocument(),testWindow={addEventListener(){}};
  const testContext={window:testWindow,document:hostDocument,URL:{createObjectURL:blob=>{downloadedBlob=blob;return 'blob:fixture';},revokeObjectURL(){}},Blob,AbortController,DOMException,btoa,fetch:async()=>({ok:true,arrayBuffer:async()=>new Uint8Array([1,2,3]).buffer}),setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){}};
  vm.createContext(testContext);vm.runInContext(source,testContext);
  testWindow.htmlToPdfmake=()=>[{text:'vector content'}];
  testWindow.pdfMake={addVirtualFileSystem(){},addFonts(){},createPdf(definition){definitions.push(definition);renderCount++;return{getBlob(){if(stall){renderStarted();return new Promise(()=>{});}return Promise.resolve(new Blob(['%PDF-vector-'+renderCount]));}};}};
- testWindow.PDFLib={PDFDocument:{async load(){return{getPageIndices(){return[0];},async copyPages(){return[{id:'prior'}];},insertPage(index,page){inserted.push([index,page.id]);},setTitle(value){this.title=value;},setCreator(value){this.creator=value;},async save(){return new Uint8Array([37,80,68,70]);}};}}};
+ const pdfPage={getWidth:()=>595.28,drawLine(){},drawText(text){footers.push(text);}};
+ testWindow.PDFLib={
+  StandardFonts:{Helvetica:'Helvetica'},rgb:()=>null,
+  PDFDocument:{async load(){return{
+   getPageIndices(){return[0];},async copyPages(){return[{id:'prior'}];},insertPage(index,page){inserted.push([index,page.id]);},
+   getPages(){return Array(inserted.length+1).fill(pdfPage);},
+   async embedFont(){return{widthOfTextAtSize:()=>20};},
+   setTitle(value){this.title=value;},setCreator(value){this.creator=value;},
+   async save(){return new Uint8Array([37,80,68,70]);}
+  };}}
+ };
  hostDocument.createElement=tag=>{if(tag==='iframe'){const frame=fakeElement(tag,hostDocument);frame.contentDocument=fakeDocument();return frame;}const e=fakeElement(tag,hostDocument);if(tag==='a')e.click=()=>{downloaded=e.download;};return e;};
  const fixture='x'.repeat(400*1024);
  await testWindow.AideMarkdownExport.run('pdf',{markdown:fixture,html:'<p>fixture</p>',title:'long.md',valid:()=>true,load:async()=>{},renderMarkdown:()=>'<p>fixture</p>',resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))},(...args)=>progress.push(args));
  assert.equal(downloaded,'long.pdf');assert.equal(definitions.length,3,'large Markdown is converted in bounded vector chunks');
  assert.equal(inserted.length,2,'earlier chunks are merged into the final PDF');
+ assert.deepEqual(footers,['1 / 3','2 / 3','3 / 3'],'page numbers count across every chunk');
  assert.equal(progress.length,3);assert.deepEqual(Array.from(progress,p=>p[0]),[1,2,3]);
  assert(downloadedBlob instanceof Blob);assert.equal(downloadedBlob.type,'application/pdf');
- for(const definition of definitions){assert.equal(definition.defaultStyle.font,'NotoSansSC');assert.equal(definition.pageSize,'A4');assert.deepEqual(Array.from(definition.pageMargins),[42,42,42,42]);}
+ for(const definition of definitions){assert.equal(definition.defaultStyle.font,'NotoSansSC');assert.equal(definition.pageSize,'A4');assert.deepEqual(Array.from(definition.pageMargins),[48,48,48,48]);}
  stall=true;const started=new Promise(resolve=>{renderStarted=resolve;});
  const pending=testWindow.AideMarkdownExport.run('pdf',{markdown:'fixture',html:'<p>fixture</p>',title:'stalled.md',valid:()=>true,load:async()=>{},resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))});
  try{await within(started,'vector render start');testWindow.AideMarkdownExport.close();await within(assert.rejects(pending,e=>e.name==='AbortError'),'cancelled vector render');}finally{testWindow.AideMarkdownExport.close();}

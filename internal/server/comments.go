@@ -36,7 +36,7 @@ import (
 	"time"
 )
 
-// commentUpdateMu 串行化同一进程内的批注 update 读-改-写，避免并发 PUT 丢更新。
+// commentUpdateMu 串行化同一进程内的批注和索引读-改-写。
 // commentStore 每次请求新建，无法在实例上加锁；单用户本机争用极小，用包级互斥即可。
 var commentUpdateMu sync.Mutex
 
@@ -215,7 +215,6 @@ type createInput struct {
 }
 
 func (cs *commentStore) create(in createInput) (*Comment, error) {
-	in.DocPath = strings.TrimSpace(in.DocPath)
 	in.Text = strings.TrimSpace(in.Text)
 	if in.DocPath == "" {
 		return nil, errors.New("缺少 path")
@@ -252,6 +251,8 @@ func (cs *commentStore) create(in createInput) (*Comment, error) {
 		Status:      "open",
 		Replies:     []CommentReply{},
 	}
+	commentUpdateMu.Lock()
+	defer commentUpdateMu.Unlock()
 	if err := cs.writeComment(c); err != nil {
 		return nil, err
 	}
@@ -337,6 +338,8 @@ func (cs *commentStore) update(id string, in updateInput) (*Comment, error) {
 
 // remove 删除批注与索引项。文件不存在视为已删（幂等）。
 func (cs *commentStore) remove(id string) error {
+	commentUpdateMu.Lock()
+	defer commentUpdateMu.Unlock()
 	c, err := cs.get(id)
 	if err != nil {
 		return err
@@ -416,6 +419,7 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 	if err := decode(w, r, &in); err != nil {
 		return
 	}
+	in.DocPath = strings.TrimSpace(in.DocPath)
 	cs := a.commentStore()
 	c, err := cs.create(in)
 	if err != nil {

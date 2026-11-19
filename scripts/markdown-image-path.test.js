@@ -16,9 +16,10 @@ console.log('PASS: Markdown image normalization and viewer source routing');
 // Restoring the same asset paths must change the decoded-image cache key.
 // Ordinary re-renders keep a stable URL; root, source and authority remain intact.
 const helpers=source.slice(source.indexOf('function addKnowledgeViewerIdentity('),source.indexOf('function downloadFileEntry('));
-const nodes=new Map(),spec={root:'context',source:'owned-source',path:'doc.md'},single={root:'workspace',path:'doc.md'};
+const nodes=new Map(),reviewVersions=new Map(),spec={root:'context',source:'owned-source',path:'doc.md'},single={root:'workspace',path:'doc.md'};
 const mediaContext={URLSearchParams,crypto:{randomUUID:()=> 'fresh-resource-revision'},state:{token:'fixture-token',file:spec},fileView:{spec:single},
- $:id=>{if(!nodes.has(id))nodes.set(id,{dispatchEvent(){assert.equal((id==='editor'?spec:single).resourceRevision,'restore-journal');}});return nodes.get(id);},
+ rememberMarkdownReviewVersion:(target,text,hash)=>reviewVersions.set(target,{text,hash}),
+ $:id=>{if(!nodes.has(id))nodes.set(id,{dispatchEvent(){const target=id==='editor'?spec:single;assert.equal(target.resourceRevision,'restore-journal');assert.deepEqual(reviewVersions.get(target),{text:'restored',hash:'new-hash'});}});return nodes.get(id);},
  Event:class{},editorAutoSave:{activate(){}},fileViewAutoSave:{activate(){}},loadFiles:()=>Promise.resolve(),toast(){},t:x=>x};
 vm.createContext(mediaContext);vm.runInContext(helpers,mediaContext);
 const before=mediaContext.fileRawUrl('image.png','context','owned-source',spec);

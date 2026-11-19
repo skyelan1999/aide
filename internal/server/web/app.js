@@ -3507,6 +3507,7 @@ bindSplitScrollLock('editor', 'editor', 'editor-preview', 'editor-scroll-lock');
 bindSplitScrollLock('fileView', 'file-view-editor', 'file-view-preview', 'file-view-scroll-lock');
 function setEditorMode(mode, allowLargePreview = false) {
   window.AideMarkdownOutline?.dispose($('editor-preview'));
+  window.AideMarkdownReader?.dispose($('editor-preview'));
   const preview = mode === 'preview';
   const split = !preview && isMarkdownPath(state.file?.path) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
   $('editor-dialog').classList.toggle('md-split', split);
@@ -3532,6 +3533,7 @@ function setEditorMode(mode, allowLargePreview = false) {
 function showEditor() {
   window.AideMarkdownMedia?.dispose($("editor"));
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
+  rememberMarkdownReviewVersion(state.file, state.file.content, state.file.hash);
   const readOnly = isBackupPath(state.file.path) || (state.file.root === 'context' && !sourceIsRW());
   const md = isMarkdownPath(state.file.path);
   $('editor-export-pdf').classList.toggle('hidden', !md);
@@ -8488,6 +8490,7 @@ function detectWebGLContext() {
 /* STL 3D 模型预览器：Three.js + STLLoader + OrbitControls */
 /* ── 查看器资源回收：切换文件/关闭页签/卸载页面时，统一释放 WebGL/Observer/全局监听 ── */
 function teardownViewer(container) {
+  window.AideMarkdownReader?.dispose(container);
   try { if (container && container._aideViewerTeardown) container._aideViewerTeardown(); } catch (_) {}
   try { if (container) container._aideViewerTeardown = null; } catch (_) {}
 }
@@ -10157,8 +10160,15 @@ function setupMarkdownMedia(editor, spec, currentSpec, edit) {
   if (fileRenderEnabled('fileMarkdownMedia')) window.AideMarkdownMedia?.mount(editor, {spec,currentSpec,edit,t,error:toast,upload:uploadMarkdownAsset});
 }
 const MARKDOWN_LIVE_PREVIEW_LIMIT = 512 * 1024;
+const markdownReviewVersions = new WeakMap();
+function rememberMarkdownReviewVersion(spec, content, hash) {
+  if (spec && isMarkdownPath(spec.path) && typeof content === 'string' && hash) {
+    markdownReviewVersions.set(spec, { text: content.replace(/\r\n?/g, '\n'), hash });
+  }
+}
 function deferLargeMarkdownPreview(host, text, render) {
   window.AideMarkdownOutline?.dispose(host);
+  window.AideMarkdownReader?.dispose(host);
   host.classList.add('md-preview-deferred');
   host._markdownDeferredRender = render;
   const panel=el('section','md-preview-deferred-card');
@@ -10179,6 +10189,7 @@ function setupMarkdownPreview(host, text, path, spec, allowLarge = false) {
     deferLargeMarkdownPreview(host,text,()=>setupMarkdownPreview(host,text,path,spec,true));
     return;
   }
+  window.AideMarkdownReader?.dispose(host);
   host.classList.remove('md-preview-deferred');host._markdownDeferredRender=null;
   host.innerHTML = renderMarkdown(text, false, path, spec);
   host._markdownSourceAnchors = text.length<=MARKDOWN_LIVE_PREVIEW_LIMIT?markdownSourceAnchors(text, host):[];
@@ -10215,11 +10226,22 @@ function setupMarkdownPreview(host, text, path, spec, allowLarge = false) {
     button.onclick=open;img.ondblclick=open;wrap.append(button);
   });
   if (fileRenderEnabled('fileMarkdownOutline')) window.AideMarkdownOutline?.mount(host, { title: t('标题目录') });
+  const inline = host.id === 'editor-preview';
+  const scope = recoveryScope(), token = state.token;
+  const review = spec && !spec.origin && isMarkdownPath(path) ? {
+    spec, workspaceId: inline ? spec.wsId : fileView.wsId, api, t,
+    version: () => {
+      const saved = markdownReviewVersions.get(spec);
+      return saved?.text === text ? saved.hash : '';
+    },
+    current: () => spec === (inline ? state.file : fileView.spec) && scope === recoveryScope() &&
+      token === state.token && !lockScreen.locked && !$('login-dialog').open
+  } : null;
   window.AideMarkdownReader?.mount(host, {
-    table: t('表格'), zoom: t('缩放'), zoomOut: t('缩小'), zoomIn: t('放大'),
+    zoom: t('缩放'), zoomOut: t('缩小'), zoomIn: t('放大'),
     actualSize: t('原始大小'), zoomImage: t('放大图片'),
     imagePreview: t('图片预览'), closePreview: t('关闭预览')
-  });
+  }, review);
 }
 function decorateGeneratedMedia(body, viewerSpec) {
   const shown = new Set();
@@ -10321,6 +10343,7 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
 const fileView = { spec: null, hash: '' };
 function setFileViewMode(mode, allowLargePreview = false) {
   window.AideMarkdownOutline?.dispose($('file-view-preview'));
+  window.AideMarkdownReader?.dispose($('file-view-preview'));
   const preview = mode === 'preview';
   const split = !preview && (isMarkdownPath(fileView.spec?.path) || ['.md','.markdown'].includes(fileView.spec?.format)) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
   $('file-view').classList.toggle('md-split', split);
@@ -10405,6 +10428,7 @@ async function openFileViewMode(forceNative=false) {
   const locationMatches=!locationRequested||await window.AideFileRoute.matchesSourceLocation(spec,data);
   if(!fileViewRouteCurrent(spec,openToken,openScope,openEpoch))return;
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
+  rememberMarkdownReviewVersion(spec, data.content, data.hash);
   $('file-view-mode-switch').classList.toggle('hidden', !md && !isUrdf && !isDelimitedPath(typePath));
   const readOnly = spec.readOnly === true || isBackupPath(spec.path) || (spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true));
   $('file-view-editor').value = data.content;
@@ -10545,8 +10569,8 @@ for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','e
 $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview',true);
 function isDrawioPathForSave(path){return /\.drawio$/i.test(path||'');}
-const editorHistory = window.AideMarkdownHistory.bind({button:$('editor-history'),editor:$('editor'),getContext:()=>state.file,api,t,error:e=>toast(e.message),isDirty:()=>editorAutoSave.dirty()||editorAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(state.file,result.journal);state.file.hash=result.hash;state.file.content=result.content;$('editor').value=result.content;$('editor').dispatchEvent(new Event('input'));editorAutoSave.activate();loadFiles().catch(()=>{});toast(t('✓ 历史版本已恢复'));}});
-const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-history'),editor:$('file-view-editor'),getContext:()=>({...fileView.spec,wsId:fileView.wsId}),api,t,error:e=>toast(e.message),isDirty:()=>fileViewAutoSave.dirty()||fileViewAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(fileView.spec,result.journal);fileView.hash=result.hash;$('file-view-editor').value=result.content;$('file-view-editor').dispatchEvent(new Event('input'));fileViewAutoSave.activate();toast(t('✓ 历史版本已恢复'));}});
+const editorHistory = window.AideMarkdownHistory.bind({button:$('editor-history'),editor:$('editor'),getContext:()=>state.file,api,t,error:e=>toast(e.message),isDirty:()=>editorAutoSave.dirty()||editorAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(state.file,result.journal);state.file.hash=result.hash;state.file.content=result.content;rememberMarkdownReviewVersion(state.file,result.content,result.hash);$('editor').value=result.content;$('editor').dispatchEvent(new Event('input'));editorAutoSave.activate();loadFiles().catch(()=>{});toast(t('✓ 历史版本已恢复'));}});
+const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-history'),editor:$('file-view-editor'),getContext:()=>({...fileView.spec,wsId:fileView.wsId}),api,t,error:e=>toast(e.message),isDirty:()=>fileViewAutoSave.dirty()||fileViewAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(fileView.spec,result.journal);fileView.hash=result.hash;rememberMarkdownReviewVersion(fileView.spec,result.content,result.hash);$('file-view-editor').value=result.content;$('file-view-editor').dispatchEvent(new Event('input'));fileViewAutoSave.activate();toast(t('✓ 历史版本已恢复'));}});
 function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
   return window.AideFileAutoSave.bind({editor:$(editorId),button:$(buttonId),manual:$(manualId),getContext,t,error:toast,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open,
@@ -10557,9 +10581,14 @@ function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
 }
 const editorAutoSave=bindFileAutoSave('editor','editor-autosave','save-file',()=>({...state.file,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(state.file?.path)}), (spec,content,result,manual)=>{
   state.file.hash=result.hash;state.file.content=content;state.file.fresh=false;$('attach-file').disabled=false;
+  rememberMarkdownReviewVersion(state.file, content, result.hash);
   if(manual&&result.historySaved!==false)toast(t('✓ 已保存'));loadFiles().catch(()=>{});
 });
-const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{fileView.hash=result.hash;if(manual&&result.historySaved!==false)toast(t('✓ 已保存'));});
+const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{
+  fileView.hash=result.hash;
+  rememberMarkdownReviewVersion(fileView.spec, content, result.hash);
+  if(manual&&result.historySaved!==false)toast(t('✓ 已保存'));
+});
 // Anchor navigation must not replace the standalone file locator.
 window.addEventListener('hashchange',()=>{
   if(fileView.spec && !new URLSearchParams(location.hash.slice(1)).has('file'))window.AideFileRoute?.pin(fileView.spec);
@@ -12973,6 +13002,8 @@ function refreshLockAvatar(status, running) {
 }
 // Locking suspends reconciliation reads, not the backend task or its delta buffer.
 function suspendLockedReads() {
+  window.AideMarkdownReview?.suspend($('editor-preview'));
+  window.AideMarkdownReview?.suspend($('file-view-preview'));
   lockScreen.resume={scope:recoveryScope(),token:state.token,file:state.file,fileSpec:fileView.spec};
   if(state.pendingSessionId){++sessionSeq.value;state.pendingSessionId='';}
   clearTimeout(state.poll);state.poll=null;clearTimeout(refreshSoonTimer);

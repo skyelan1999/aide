@@ -10,6 +10,7 @@ const {chromium}=require('./browser-runtime/node_modules/playwright');
   await page.route('**/*',route=>{
    const u=new URL(route.request().url());if(u.origin!=='https://aide-export-cancel-owned.test')return route.abort();
    if(u.pathname==='/')return route.fulfill({contentType:'text/html',headers:{'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; object-src 'none'"},body:'<!doctype html><meta charset="utf-8"><title>Owned export cancellation</title><main>Actual local Markdown export regression</main>'});
+   if(u.pathname==='/markdown-print.css')return route.fulfill({contentType:'text/css',body:fs.readFileSync('internal/server/web/markdown-print.css')});
    if(u.pathname==='/owned-red.png')return route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
    const file=u.pathname==='/canvas.js'?(process.env.AIDE_CANVAS_BASELINE||'internal/server/web/vendor/markdown-export/html2canvas.min.js'):u.pathname==='/export.js'?(process.env.AIDE_EXPORT_BASELINE||'internal/server/web/markdown-export.js'):u.pathname==='/pdf.js'?'internal/server/web/vendor/markdown-export/jspdf.umd.min.js':null;
    return file?route.fulfill({contentType:'application/javascript',body:fs.readFileSync(file)}):route.fulfill({status:404,body:''});

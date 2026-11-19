@@ -39,7 +39,7 @@ const web = path.resolve("internal/server/web");
                 body: ""
             });
             return route.fulfill({
-                contentType: p.endsWith(".js") ? "application/javascript; charset=utf-8" : "application/octet-stream",
+                contentType: p.endsWith(".css") ? "text/css" : p.endsWith(".js") ? "application/javascript; charset=utf-8" : "application/octet-stream",
                 body: fs.readFileSync(p)
             });
         }));
