@@ -1,6 +1,23 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "PDF 版式设置": "PDF layout settings",
+  "主题色、HTML 页眉与 Logo": "Theme color, HTML header, and logo",
+  "文档主题色": "Document theme color",
+  "选择主题色": "Choose a theme color",
+  "HTML 页眉": "HTML header",
+  "可用段落、换行、加粗、下划线、删除线和文字颜色。内容留空时不生成页眉。": "Use paragraphs, line breaks, bold text, underlining, strikethrough, and text colors. Leave empty for no header.",
+  "页眉 Logo": "Header logo",
+  "移除 Logo": "Remove logo",
+  "页眉预览": "Header preview",
+  "页眉为空": "No header",
+  "请选择 8 MiB 以内的 PNG、JPEG 或 WebP 图片。": "Choose a PNG, JPEG, or WebP image up to 8 MiB.",
+  "无法读取 Logo 图片。": "Could not read the logo image.",
+  "Logo 图片尺寸过大。": "The logo dimensions are too large.",
+  "Logo 文件过大，请选用较小的图片。": "The logo is too large. Choose a smaller image.",
+  "请输入有效的十六进制主题色。": "Enter a valid hexadecimal theme color.",
+  "页眉超过 4 行，请缩短内容。": "The header is longer than four lines. Shorten it and try again.",
+  "无法保存 PDF 版式设置，请检查浏览器存储空间。": "Could not save PDF layout settings. Check browser storage.",
   "Markdown 批注": "Markdown comments",
   "关闭批注": "Close comments",
   "添加批注": "Add comment",

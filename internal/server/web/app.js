@@ -10558,7 +10558,9 @@ for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','e
  const exportButton=$(editorId==='editor'?'editor-export-pdf':'file-view-export-pdf');
  window.AideMarkdownExport.bind({button:exportButton,t,error:e=>toast(e.message),options:()=>{
   const spec=getSpec();if(!spec)return null;
-  return {title:spec.path,markdown:$(editorId).value,renderMarkdown:markdown=>renderMarkdown(markdown,false,spec.path,spec),valid:()=>getSpec()===spec&&(panelId==='editor-dialog'?$(panelId).open:!$(panelId).classList.contains('hidden'))&&!lockScreen.locked&&!!state.token,
+  const scope=recoveryScope(),token=state.token;
+  const appearanceKey=JSON.stringify([scope,spec.root||'workspace',spec.source||'',spec.path,spec.origin||'',spec.knowledgeWorkspace||'']);
+  return {title:spec.path,appearanceKey,markdown:$(editorId).value,renderMarkdown:markdown=>renderMarkdown(markdown,false,spec.path,spec),valid:()=>getSpec()===spec&&(panelId==='editor-dialog'?$(panelId).open:!$(panelId).classList.contains('hidden'))&&!lockScreen.locked&&!!token&&token===state.token&&scope===recoveryScope(),
    load:ensureVendorScript,resolve:ref=>resolveMarkdownImagePath(spec.path,ref),fetchResource:(path,signal)=>fetch(fileRawUrl(path,spec.root,spec.source,spec),{signal}),
    renderDiagrams:host=>window.AideMarkdownDiagrams.render(host,{load:ensureVendorScript,dark:false,errorText:t('流程图渲染失败'),strict:true})
   };

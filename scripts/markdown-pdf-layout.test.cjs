@@ -16,6 +16,7 @@ context.body=body;
 const result=vm.runInContext('vectorPdfDefinition(body)',context);
 assert.equal(result.pageSize,'A4');assert.equal(result.pageOrientation,'portrait');
 assert.deepEqual(Array.from(result.pageMargins),[48,48,48,48]);
+assert.equal(result.header,undefined,'empty preferences add no running header');
 assert.deepEqual(Array.from(result.content[0].table.widths),['75.000%','25.000%'],'table columns retain measured proportions');
 assert.equal(result.content[0].table.headerRows,1,'header repeats across pages');
 assert.equal(result.defaultStyle.font,'NotoSansSC','Chinese glyphs use the bundled font');
@@ -25,6 +26,14 @@ assert.equal(result.content[0].layout.vLineWidth(),0,'table grid uses light hori
 body.querySelectorAll=selector=>selector==='table'?[{...table,rows:[row([100,100,100,100,100,100])],querySelectorAll:()=>[]}]:[];
 const wide=vm.runInContext('vectorPdfDefinition(body)',context);
 assert.equal(wide.pageOrientation,'landscape','wide tables use landscape pages');
+const branded=vm.runInContext("vectorPdfDefinition(body, [], null, {color:'#1264a3',logo:'fixture',rows:[[{text:'Company',bold:true}],[{text:'Internal'}]],lineCount:2})",context);
+assert.equal(branded.pageOrientation,'landscape','appearance does not change automatic orientation');
+assert.deepEqual(Array.from(branded.pageMargins),[48,66,48,48],'reserve room for the logo and text');
+assert.deepEqual(Array.from(branded.header().margin),[48,18,136,0]);
+assert.equal(branded.header().stack[0].text[0].bold,true,'HTML formatting is retained in the running header');
+const logoOnly=vm.runInContext("vectorPdfDefinition(body, [], null, {logo:'fixture'})",context);
+assert.equal(logoOnly.header,undefined,'a logo does not insert a text header');
+assert.equal(logoOnly.pageMargins[1],66,'logo-only layouts also reserve space');
 const tall=vm.runInContext('fitPdfMedia(800,9000,499,700)',context);
 assert.equal(tall.height,700);
 assert.ok(Math.abs(tall.width/tall.height-800/9000)<1e-10,'portrait image keeps aspect ratio');
@@ -36,3 +45,25 @@ console.log('PASS: vector PDF table proportions, repeat headers, wide-table layo
 const attached=vm.runInContext("vectorPdfDefinition(body,[{name:'sample.bin',dataUrl:'data:application/octet-stream;base64,AA==',index:0}])",context);
 assert.equal(attached.content.at(-1).columns[1].attachment.hidden,false,'embedded files must be discoverable in reader attachment panels');
 assert.equal(attached.content.at(-1).columns[1].attachment.relationship,'Data');
+
+const node=(tagName,childNodes=[],style='')=>({
+ nodeType:1,tagName,childNodes,getAttribute:name=>name==='style'?style:null
+});
+const literal=data=>({nodeType:3,data});
+const host={createElement:name=>{
+ assert.equal(name,'template','HTML is parsed away from the live document');
+ return{content:{childNodes:[
+  node('P',[node('STRONG',[literal('Company')]),node('BR'),node('SPAN',[literal('Internal')],'color:#812852')]),
+  node('SCRIPT',[literal('active script')]),
+  node('svg',[node('script',[literal('foreign script')])]),
+  node('IMG')
+ ]}};
+}};
+const appearanceContext={window:{},document:host,localStorage:{getItem:()=>null}};
+vm.createContext(appearanceContext);
+vm.runInContext(fs.readFileSync('internal/server/web/markdown-pdf-appearance.js','utf8'),appearanceContext);
+const appearance=appearanceContext.window.AideMarkdownPdfAppearance;
+assert.equal(appearance.read('document').header,'','new document profiles have no default header');
+const compiled=appearance.compile({header:'test markup'});
+assert.deepEqual(JSON.parse(JSON.stringify(compiled.rows)),[[{text:'Company',bold:true}],[{text:'Internal',color:'#812852'}]]);
+assert.equal(compiled.lineCount,2);
