@@ -1719,6 +1719,10 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/comments", a.createComment)
 	mux.HandleFunc("PUT /api/comments/{id}", a.updateComment)
 	mux.HandleFunc("DELETE /api/comments/{id}", a.deleteComment)
+	mux.HandleFunc("GET /api/file/markdown-comments", a.markdownComments)
+	mux.HandleFunc("POST /api/file/markdown-comments", a.markdownComments)
+	mux.HandleFunc("PUT /api/file/markdown-comments/{id}", a.markdownComments)
+	mux.HandleFunc("DELETE /api/file/markdown-comments/{id}", a.markdownComments)
 	mux.HandleFunc("GET /api/events", a.globalEvents) // #60 全局 SSE：会话列表变更广播
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)

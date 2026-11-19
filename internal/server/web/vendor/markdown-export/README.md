@@ -1,12 +1,14 @@
 # Markdown export browser dependencies
 
-Vendored browser dependencies loaded locally on demand. PDF output uses pdfmake 0.3.13, html-to-pdfmake 2.5.29, pdf-lib 1.17.1, and Noto Sans SC Variable. Their upstream licenses are included beside each asset.
+Vendored browser dependencies loaded locally on demand. PDF output uses pdfmake 0.3.13, html-to-pdfmake 2.5.29, pdf-lib 1.17.1, and two static Noto Sans SC weights. Their upstream licenses are included beside each asset.
 
 - Upstream `pdfmake.min.js` 0.3.13 SHA-256 `cd2b315d9453352486f47a7ecb91f23de53d4c701275f59c31b6c0e7e971979d`
 - Aide `pdfmake.min.js` SHA-256 `27817155017babbe5c7e797d0fc505c3153772bc861d8afc75dfa3eef9625c97`
 - `html-to-pdfmake.js` 2.5.29 SHA-256 `cc684d09112f99741173b8942e0eff26ced6ee8c22f4cfbb8770dd2c390502e0`
 - `pdf-lib.min.js` 1.17.1 SHA-256 `278627f3a5e3efa95e77ab565f10831d3cdb9cbb617ef8388d6ff4bf962d4887`
-- `NotoSansSC-VF.ttf` SHA-256 `a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da`
+- `NotoSansSC-Regular.ttf` SHA-256 `a45e7485c3df0b90cb0b753e5a81291c1d53aa0a55dfc4ef22a1337a0762cd55`
+- `NotoSansSC-SemiBold.ttf` SHA-256 `085597b66a9c249102e2662609d9a80d2f9e8909aa896fca1497f6ebd1f5b267`
+- Source Noto Sans SC variable TTF SHA-256 `a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da`
 - Noto Sans SC Variable font source: https://github.com/google/fonts/tree/main/ofl/notosanssc (SIL Open Font License 1.1).
 - pdfmake source: https://registry.npmjs.org/pdfmake/-/pdfmake-0.3.13.tgz
 - html-to-pdfmake source: https://registry.npmjs.org/html-to-pdfmake/-/html-to-pdfmake-2.5.29.tgz
@@ -27,6 +29,15 @@ const co = (bytes, done) => {
   return done(null, decoded);
 };
 ```
+
+The static TrueType fonts retain the full source character map. They were generated
+with fontTools 4.60.1 and Brotli 1.1.0. For each of Regular (400) and SemiBold (600),
+load the source using `TTFont(source, recalcTimestamp=False)`, instantiate with
+`instantiateVariableFont(font, {"wght": weight}, inplace=True, updateFontNames=True)`,
+save an intermediate with `font.flavor = "woff2"`, then reopen it with
+`recalcTimestamp=False` and save the final TTF with `font.flavor = None`.
+The font license remains in
+`NotoSansSC-OFL.txt`.
 
 - Upstream html2canvas 1.4.1 original SHA-256 `e87e550794322e574a1fda0c1549a3c70dae5a93d9113417a429016838eab8cb`
 - `jspdf.umd.min.js` SHA-256 `e6551fcdc32f09d6853b2c5126d18d01d9447e0da618a41a11ebeee0f6c20d54`

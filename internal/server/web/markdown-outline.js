@@ -117,9 +117,10 @@
   function dispose(host) {
     if (!host) return;
     mounted.get(host)?.(); mounted.delete(host);
+    window.AideMarkdownReview?.dispose(host);
     host.style.removeProperty('--md-reader-toolbar-height');
   }
-  function mount(host, labels = {}) {
+  function mount(host, labels = {}, review = null) {
     dispose(host);
     let reader = host.querySelector(':scope > .md-reader');
     let article = reader?.querySelector(':scope > .md-reader-content');
@@ -129,12 +130,13 @@
       while (host.firstChild) article.append(host.firstChild);
       reader.append(article); host.append(reader);
     }
-    article.querySelectorAll('table').forEach(table => {
-      const scroll = document.createElement('div'); scroll.className = 'md-table-scroll';
-      scroll.setAttribute('role', 'region'); scroll.setAttribute('aria-label', labels.table || '表格');
-      scroll.tabIndex = 0;
-      table.replaceWith(scroll); scroll.append(table);
-    });
+    for (const table of article.querySelectorAll('table')) {
+      let columns = 1;
+      for (const row of table.rows) {
+        columns = Math.max(columns, Array.from(row.cells).reduce((sum, cell) => sum + cell.colSpan, 0));
+      }
+      table.style.setProperty('--md-column-count', columns);
+    }
     const toolbar = document.createElement('div'); toolbar.className = 'md-reader-controls';
     toolbar.setAttribute('role', 'group'); toolbar.setAttribute('aria-label', labels.zoom || '缩放');
     const control = (value, label) => {
@@ -155,6 +157,7 @@
       toolbar.classList.add('md-reader-controls-header');
       header.insertBefore(toolbar, header.querySelector('.editor-mode-switch'));
     } else reader.prepend(toolbar);
+    if (review) window.AideMarkdownReview?.mount(host, article, toolbar, review);
     let level = levels.indexOf(zoomByHost.get(host) || 1);
     if (level < 0) level = 3;
     const paint = () => {

@@ -1,0 +1,82 @@
+{
+  "id": "markdown-layout-review-20261119",
+  "request": "Markdown 表格自动换行、批注模式和 PDF 大图与排版",
+  "baseline": "011e6fae3148fd790404b0f6718f328c27f8f135",
+  "initial_status": "独立工作树从远端 main 的 011e6fae 创建。Markdown 阅读器用独立的横向滚动容器，PDF 图形尺寸没有按最终页面几何重新约束。",
+  "acceptance": [
+    "长 Markdown 单元格在桌面和窄屏换行，表格宽度不超过文章。",
+    "Markdown 批注可添加、定位、解决、重新打开和删除。重复原文正确区分，刷新后可读取，外部修改后提示原文版本变化。",
+    "竖版、横版 PDF 以等比方式放置纵长图、全景图和表格内图片，正文保持可搜索，大图在版心内完整显示。",
+    "输出具备清楚的标题层级、正式文档色彩、表头和连续页码。逐页查看打印效果。"
+  ],
+  "scope": [
+    "Markdown 预览与导出、源文件范围内的 Aide 批注存储、相关用户说明和回归。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确表格换行、批注模式、大图适配和出版式 PDF 的目标。",
+      "evidence": [
+        "用户请求"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用持久化批注记录。PDF 采用来自同源的打印样式和实际 A4 版心尺寸。",
+      "evidence": [
+        "internal/server/comments.go",
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "预览表格换行。预览工具栏添加批注模式。按工作区、来源和版本绑定批注。PDF 按横竖页适配媒体并使用一致的版式。",
+      "evidence": [
+        "internal/server/markdown_comments.go",
+        "internal/server/web/markdown-review.js",
+        "internal/server/web/markdown-print.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "实际 Aide 候选在 Chromium 和 WebKit 的长表格、批注和 PDF 验收通过。逐页渲染确认常规和半粗字形完整。",
+      "evidence": [
+        "Go 批注、历史回归和运行二进制构建通过",
+        "Node PDF 版式、合并、内容历史和锁屏回归通过",
+        "实际独立文件页在 1440px 与 390px 显示长表格，单元格无横向溢出",
+        "批注可新增，定位到第二处同句且跨粗体，刷新后仍存在，可解决和重新打开，版本更新后标记过期",
+        "工作台文件弹窗批注可打开，关闭弹窗即释放",
+        "Chromium 和 WebKit 各导出三页 A4 横版和竖版文件。纵长图 1140×8200、全景图 7200×480 和表格内图片均在页面版心内",
+        "PDF 文本和页码可提取，内嵌常规和半粗中英文字体，Poppler 验收实际字形",
+        "真实矢量导出另验证了 PNG、GIF、SVG 和内嵌附件",
+        "WebKit 切换页面时取消了三个独立的后台轮询，Markdown 交互和导出通过",
+        "全仓 quick 通过，源码指纹 2aae05e1b380a8770cf5ddf23fba5884a5b4d8d323d1f73e0a162064c0af5414"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "使用说明覆盖表格换行、批注和 PDF 可打印布局。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "停止隔离验收容器并回收本轮中间构建，保留验收证据与最终候选。日用服务健康。",
+      "evidence": [
+        "独立工作树无用户原始改动",
+        "候选容器 aide-markdown-qa 已停止"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "源码实现和本地候选验收。",
+      "evidence": [
+        "本轮无发布指令"
+      ]
+    }
+  },
+  "release_authorization": "本轮未要求推送、合并或发布。",
+  "rollback": "源码可按提交回退。批注文件位于 Aide 数据目录的 markdown 批注子目录，保留已有记录。",
+  "handoff": "日用 Aide 无变更。"
+}

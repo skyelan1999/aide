@@ -1,0 +1,41 @@
+/* Local stylesheet for the export iframe. The workbench does not allow inline stylesheets. */
+* { box-sizing: border-box; max-width: 100%; }
+body {
+  width: 794px;
+  margin: 0;
+  padding: 48px 60px;
+  background: #fff;
+  color: #263548;
+  font: 14px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+main { min-width: 0; overflow-wrap: anywhere; }
+h1, h2, h3, h4, h5, h6 { color: #142b45; line-height: 1.24; }
+h1 { font-size: 38px; }
+h2 { font-size: 28px; }
+h3 { font-size: 21px; }
+h4 { font-size: 17px; }
+h5 { font-size: 15px; }
+h6 { font-size: 14px; }
+img, svg { max-width: 100%; height: auto; object-fit: contain; }
+pre {
+  padding: 12px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font: 12px/1.5 ui-monospace, Consolas, monospace;
+  background: #f2f5f8;
+  border: 1px solid #c4ced9;
+  border-radius: 6px;
+}
+table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+th, td {
+  border: 1px solid #c4ced9;
+  padding: 7px 8px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+th { background: #eaf0f6; color: #142b45; }
+blockquote { margin: 16px 0; padding-left: 16px; border-left: 3px solid #a2b3c6; color: #4e6073; }
+a { color: #24598a; text-decoration: underline; }
+hr { border: 0; border-top: 1px solid #c4ced9; }
+button, nav, .md-outline { display: none !important; }
