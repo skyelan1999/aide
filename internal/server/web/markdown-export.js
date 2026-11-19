@@ -38,6 +38,53 @@
   }
   if(parts.length){const ready=flush();if(ready)yield definitionPrefix+ready;}
  }
+ const PDF_HEADINGS='h1,h2,h3,h4,h5,h6';
+ function documentHeadings(root,counts){
+  return Array.from(root.querySelectorAll(PDF_HEADINGS)).flatMap(element=>{
+   const title=(element.textContent||'').trim().replace(/\s+/g,' ');
+   if(!title)return [];
+   const level=Number(element.tagName.slice(1));
+   const stem=JSON.stringify([level,title.slice(0,512)]);
+   const occurrence=(counts.get(stem)||0)+1;
+   counts.set(stem,occurrence);
+   return [{element,title,level,key:stem+':'+occurrence}];
+  });
+ }
+ function outlineForPdf(o,firstTitleOnly=false){
+  const template=document.createElement('template'),counts=new Map(),headings=[];
+  const fragments=o.renderMarkdown?markdownFragments(String(o.markdown),PDF_CHUNK_CHARS):[o.html];
+  for(const fragment of fragments){
+   template.innerHTML=o.renderMarkdown?o.renderMarkdown(fragment):fragment;
+   for(const {title,level,key} of documentHeadings(template.content,counts)){
+    if(firstTitleOnly){if(level===1)return [{title,level,key}];}
+    else headings.push({title,level,key});
+   }
+  }
+  return headings;
+ }
+ function splitPdfSections(html,state){
+  if(!state.coverEnabled&&!state.tocAfter)return [{html}];
+  const template=document.createElement('template');
+  template.innerHTML=html;
+  const headings=documentHeadings(template.content,state.counts);
+  headings.find(heading=>heading.key===state.coverKey)?.element.remove();
+  const anchor=state.tocAfter!==state.coverKey&&headings.find(heading=>heading.key===state.tocAfter)?.element;
+  const sections=[template];
+  if(anchor){
+   // Split the rendered tree at the selected heading, preserving any
+   // ancestor wrappers on either side of the new page boundary.
+   const range=document.createRange();
+   range.setStartAfter(anchor);range.setEnd(template.content,template.content.childNodes.length);
+   const after=document.createElement('template');
+   after.content.append(range.extractContents());
+   sections.push(after);
+  }
+  return sections.flatMap((section,index)=>{
+   const root=section.content;
+   if(!root.textContent.trim()&&!root.querySelector('img,svg,hr,table'))return [];
+   return [{html:section.innerHTML,tocAfter:!!anchor&&index===0}];
+  });
+ }
  async function readBounded(response,signal,limit=LIMIT){
   if(!response.ok)throw Error('资源读取失败（'+response.status+'）');if(Number(response.headers.get('content-length'))>limit)throw Error(uiTextMarkdownExport('单个资源超过 {0} MiB',Math.floor(limit/1048576)));
   const reader=response.body?.getReader();if(!reader){const b=await response.blob();if(b.size>limit)throw Error(uiTextMarkdownExport('单个资源超过 {0} MiB',Math.floor(limit/1048576)));return b;}
@@ -248,17 +295,23 @@
     bold:parseInt(style.fontWeight,10)>=600,align,color:channels||[0.14,0.20,0.28]}];
   });
  }
- async function renderPdfBands(body,o,job,page){
+ async function renderPdfBands(body,o,job,page,includeCover=false){
   const preferences=window.AideMarkdownPdfAppearance;
   const appearance=o.appearance;
   const doc=body.ownerDocument;
-  const context={title:nameOf(o.title).replace(/\.(md|markdown)$/i,''),measuring:true};
+  const context={title:nameOf(o.title).replace(/\.(md|markdown)$/i,''),coverTitle:o.coverTitle,measuring:true};
   const header=preferences?.buildHtml(doc,appearance,'header',context);
   const footer=preferences?.buildHtml(doc,appearance,'footer',context);
+  const cover=includeCover?preferences.buildHtml(doc,{...appearance,cover:appearance.cover||preferences.COVER_TEMPLATE},'cover',context):null;
   const placement=appearance.pageNumbers||'footer';
   const result={header:{layout:{topMargin:PDF_MARGIN}},footer:{layout:{bottomMargin:PDF_MARGIN}},placement};
+  if(includeCover){
+   result.cover={layout:{}};
+   const title=cover?.querySelector('h1')||cover?.querySelector('[data-field="coverTitle"],[data-field="title"]');
+   result.coverTitle=title?title.textContent.trim():preferences.templateValue('coverTitle',{...context,values:appearance.values});
+  }
   if(!preferences)return result;
-  if(!header&&!footer){
+  if(!header&&!footer&&!cover){
    result.header.layout=preferences.layout(appearance,page,0,undefined,{automatic:placement==='header'});
    return result;
   }
@@ -267,7 +320,7 @@
    printStyle.disabled=true;
    const style=doc.createElement('link');
    style.rel='stylesheet';
-   style.href='/markdown-pdf-header.css?v=2';
+   style.href='/markdown-pdf-header.css?v=3';
    await job.wait(new Promise((resolve,reject)=>{
     style.onload=resolve;
     style.onerror=()=>reject(Error(uiTextMarkdownExport('无法加载导出样式')));
@@ -276,6 +329,7 @@
    const viewportWidth=Math.ceil(page.width/PDF_PT_PER_PX);
    job.frame.style.width=viewportWidth+'px';
    const surfaces=[['header',header],['footer',footer]];
+   if(includeCover)surfaces.push(['cover',cover]);
    for(const [region,html] of surfaces){
     if(!html)continue;
     html.style.width=(page.width-2*PDF_MARGIN)/PDF_PT_PER_PX+'px';
@@ -290,7 +344,9 @@
     const height=html?Math.max(html.offsetHeight,html.scrollHeight):0;
     const slot=preferences.relativeBox(html?.querySelector('.markdown-pdf-logo-slot'),html);
     const band=result[region];
-    band.layout=preferences.layout(appearance,page,height,width,{region,slot,automatic:result.placement===region});
+    band.layout=region==='cover'
+     ?{html:preferences.coverLayout(page,result.header.layout.topMargin,result.footer.layout.bottomMargin,height,width)}
+     :preferences.layout(appearance,page,height,width,{region,slot,automatic:result.placement===region});
     if(!band.layout.html)continue;
     html.classList.add('markdown-pdf-measuring');
     await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js?v=2',()=>!!window.html2canvas));
@@ -312,6 +368,7 @@
   }finally{
    header?.remove();
    footer?.remove();
+   cover?.remove();
    printStyle.disabled=false;
   }
  }
@@ -501,13 +558,13 @@
     const positions=await pdfLinePositions(output,job,new Set(headings.map(heading=>heading.id)));
     for(const heading of headings)Object.assign(heading,positions.get(heading.id));
    }
-   return {blob:await job.wait(output.getBlob()),headings};
+   return {blob:await job.wait(output.getBlob()),headings,tocAfter:o.tocAfter};
   }finally{
    job.frame?.remove();
    job.frame=null;
   }
  }
- function pdfContentsDefinition(entries,landscape,bands,appearance,offset){
+ function pdfContentsDefinition(entries,landscape,bands,appearance,pageNumber){
   const color=appearance.color?readablePdfColor(appearance.color):'#243448';
   const width=(landscape?PDF_A4.height:PDF_A4.width)-2*PDF_MARGIN;
   const level=entries.reduce((min,entry)=>Math.min(min,entry.level),6);
@@ -528,7 +585,7 @@
     parents.push({level:entry.level,number,children:0});
     columns.unshift({text:number,width:52,bold:chapter,color});
    }
-   columns.push({text:String(entry.pageIndex+offset+1),width:38,alignment:'right',bold:banded&&chapter});
+   columns.push({text:String(pageNumber(entry)),width:38,alignment:'right',bold:banded&&chapter});
    const row={columns,columnGap:12,fontSize};
    if(banded&&chapter)return {table:{widths:['*'],body:[[{...row,fillColor:tint,margin:[6,4,6,4]}]]},layout:'noBorders',margin:[0,5,0,7]};
    return {...row,margin:[(entry.level-level)*(technical?10:15),chapter?4:0,0,classic?6:8]};
@@ -544,10 +601,10 @@
    ]
   };
  }
- async function renderPdfContents(entries,landscape,bands,appearance,job){
+ async function renderPdfContents(entries,landscape,bands,appearance,job,indexOf){
   const ids=new Set(entries.map((_,index)=>'aide-contents-'+index));
   const render=async offset=>{
-   const output=window.pdfMake.createPdf(pdfContentsDefinition(entries,landscape,bands,appearance,offset));
+   const output=window.pdfMake.createPdf(pdfContentsDefinition(entries,landscape,bands,appearance,entry=>indexOf(entry,offset)+1));
    const positions=await pdfLinePositions(output,job,ids);
    const doc=await job.wait(window.PDFLib.PDFDocument.load(await job.wait(output.getBuffer())));
    return {doc,positions};
@@ -555,15 +612,15 @@
   const draft=await render(1);
   return draft.doc.getPageCount()===1?draft:render(draft.doc.getPageCount());
  }
- function linkPdfContents(target,contents,entries,appearance){
+ function linkPdfContents(target,contents,entries,appearance,insertAt,indexOf){
   const pages=target.getPages();
-  const offset=contents.doc.getPageCount();
+  const count=contents.doc.getPageCount();
   const {PDFNull,rgb}=window.PDFLib;
   const leaders=appearance.tocStyle==='classic'?rgb(0.49,0.56,0.64):null;
   for(const [index,entry] of entries.entries()){
    const line=contents.positions.get('aide-contents-'+index);
    if(!line)continue;
-   const page=pages[line.pageIndex],destination=pages[offset+entry.pageIndex];
+   const page=pages[insertAt+line.pageIndex],destination=pages[indexOf(entry,count)];
    const top=page.getHeight()-line.y;
    if(leaders){
     const start=line.right+8,end=page.getWidth()-PDF_MARGIN-23,y=top-line.height*0.63;
@@ -577,35 +634,54 @@
    page.node.addAnnot(target.context.register(link));
   }
  }
- async function mergeVectorPdf(parts,stem,job,appearance,bandsByOrientation){
+ async function mergeVectorPdf(parts,stem,job,appearance,bandsByOrientation,cover){
   const {PDFDocument,StandardFonts,rgb}=window.PDFLib;
   const readPart=async part=>job.wait(PDFDocument.load(await job.wait(part.blob.arrayBuffer())));
-  const target=await readPart(parts.at(-1)),entries=[];
-  let index=0;
+  const target=parts.length?await readPart(parts.at(-1)):await job.wait(PDFDocument.create());
+  const entries=[];
+  let pageOffset=0,breakAt=0;
   for(const [partIndex,part] of parts.entries()){
    for(const heading of part.headings||[]){
-    if(Number.isInteger(heading.pageIndex))entries.push({...heading,pageIndex:index+heading.pageIndex});
+    if(Number.isInteger(heading.pageIndex))entries.push({...heading,pageIndex:pageOffset+heading.pageIndex});
    }
-   if(partIndex===parts.length-1)break;
+   const last=partIndex===parts.length-1;
+   if(last){
+    if(part.tocAfter)breakAt=target.getPageCount();
+    break;
+   }
    const source=await readPart(part);
    const pages=await job.wait(target.copyPages(source,source.getPageIndices()));
-   for(const page of pages)target.insertPage(index++,page);
+   for(const page of pages)target.insertPage(pageOffset++,page);
+   if(part.tocAfter)breakAt=pageOffset;
+  }
+  const coverPages=cover?1:0;
+  let directory;
+  if(cover){
+   target.insertPage(0,[PDF_A4.width,PDF_A4.height]);
+   if(appearance.toc&&appearance.coverInToc&&cover.title)entries.unshift({isCover:true,level:1,title:cover.title,y:0});
   }
   if(entries.length){
-   const first=target.getPage(0),landscape=first.getWidth()>first.getHeight();
-   const contents=await renderPdfContents(entries,landscape,bandsByOrientation.get(landscape),appearance,job);
+   const insertAt=coverPages+breakAt;
+   const adjacent=target.getPage(insertAt>0?insertAt-1:0);
+   const landscape=adjacent.getWidth()>adjacent.getHeight();
+   const bands=!landscape&&cover&&insertAt===1?cover.bands:bandsByOrientation.get(landscape);
+   const indexOf=(entry,count)=>entry.isCover?0:coverPages+entry.pageIndex+(entry.pageIndex>=breakAt?count:0);
+   const contents=await renderPdfContents(entries,landscape,bands,appearance,job,indexOf);
    const pages=await job.wait(target.copyPages(contents.doc,contents.doc.getPageIndices()));
-   for(const [i,page] of pages.entries())target.insertPage(i,page);
-   linkPdfContents(target,contents,entries,appearance);
+   for(const [i,page] of pages.entries())target.insertPage(insertAt+i,page);
+   linkPdfContents(target,contents,entries,appearance,insertAt,indexOf);
+   directory={start:insertAt,end:insertAt+pages.length,bands};
   }
   const pages=target.getPages(),font=await job.wait(target.embedFont(StandardFonts.Helvetica));
   const allBands=[...bandsByOrientation.values()];
+  if(cover)allBands.push(cover.bands);
+  const layers=bands=>[bands.header,bands.footer,...(bands.cover?[bands.cover]:[])];
   const logo=allBands.some(bands=>bands.header.layout.logo)?await job.wait(target.embedPng(appearance.logo)):null;
-  const bold=allBands.some(bands=>[bands.header,bands.footer].some(band=>band.values?.some(value=>value.bold)))
+  const bold=allBands.some(bands=>layers(bands).some(band=>band.values?.some(value=>value.bold)))
    ?await job.wait(target.embedFont(StandardFonts.HelveticaBold)):font;
   const artwork=new Map();
   for(const bands of allBands){
-   for(const band of [bands.header,bands.footer]){
+   for(const band of layers(bands)){
     if(band.artwork)artwork.set(band,await job.wait(target.embedPng(band.artwork)));
    }
   }
@@ -613,11 +689,14 @@
   const footerRule=ruleColor?rgb(...[1,3,5].map(i=>parseInt(ruleColor.slice(i,i+2),16)/255)):rgb(0.81,0.85,0.89);
   for(const [index,page] of pages.entries()){
    const height=page.getHeight(),right=page.getWidth()-PDF_MARGIN;
-   const bands=bandsByOrientation.get(page.getWidth()>height);
+   const isCover=index===0&&!!cover;
+   const isDirectory=directory&&index>=directory.start&&index<directory.end;
+   const bands=isCover?cover.bands:isDirectory?directory.bands:bandsByOrientation.get(page.getWidth()>height);
+   const placement=isCover&&bands.cover.values?.length?'off':bands.placement;
    const drawImage=(image,box)=>{
     if(image&&box)page.drawImage(image,{x:box.x,y:height-box.y-box.height,width:box.width,height:box.height});
    };
-   for(const band of [bands.header,bands.footer]){
+   for(const band of isCover?layers(bands):[bands.header,bands.footer]){
     const box=band.layout.html;
     drawImage(artwork.get(band),box);
     if(!box)continue;
@@ -632,12 +711,12 @@
     }
    }
    drawImage(logo,bands.header.layout.logo);
-   if(bands.placement==='footer'&&!bands.footer.layout.html){
+   if(placement==='footer'&&!bands.footer.layout.html){
     page.drawLine({start:{x:PDF_MARGIN,y:34},end:{x:right,y:34},thickness:0.45,color:footerRule});
    }
-   if(bands.placement!=='off'){
+   if(placement!=='off'){
     const label=(index+1)+' / '+pages.length,size=8;
-    const y=bands.placement==='header'?height-bands.header.layout.numberTop:20;
+    const y=placement==='header'?height-bands.header.layout.numberTop:20;
     page.drawText(label,{x:right-font.widthOfTextAtSize(label,size),y,size,font,color:rgb(0.32,0.38,0.46)});
    }
   }
@@ -652,6 +731,11 @@
    if(format==='pdf'&&!shared){
     const preferences=window.AideMarkdownPdfAppearance;
     const appearance=preferences?.read(o.appearanceKey)||{};
+    const needsFirstTitle=appearance.coverEnabled||[appearance.header,appearance.footer].some(html=>/\{\{\s*coverTitle\s*\}\}/.test(html||''));
+    const firstTitle=needsFirstTitle?outlineForPdf(o,true)[0]:null;
+    const coverTitle=firstTitle?.title||stem;
+    const state={coverEnabled:appearance.coverEnabled,coverKey:appearance.coverEnabled?firstTitle?.key:null,
+     tocAfter:appearance.toc?appearance.tocAfter:'',counts:new Map()};
     await loadVectorPdf(job,o);
     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},6*60*60*1000);
     const attachments=await preparePdfAttachments(String(o.markdown),o,job);for(const item of attachments){item.dataUrl=await imageDataURL(item.blob,job.controller.signal);item.blob=null;}
@@ -660,15 +744,28 @@
     const emit=async(fragment,isLast)=>{
      if(!alive())throw new DOMException('Cancelled','AbortError');
      const html=o.renderMarkdown?o.renderMarkdown(fragment):o.html;
-     parts.push(await renderVectorChunk(html,{...o,markdown:fragment,renderMarkdown:null,imageBudget,appearance,bands},job,isLast?attachments:[]));
-     progress(parts.length,parts.length,parts.length);
+     const sections=splitPdfSections(html,state);
+     if(!sections.length&&isLast&&(attachments.length||(!appearance.coverEnabled&&!parts.length)))sections.push({html:''});
+     for(const [index,section] of sections.entries()){
+      parts.push(await renderVectorChunk(section.html,{...o,markdown:fragment,renderMarkdown:null,imageBudget,appearance,bands,coverTitle,tocAfter:section.tocAfter},job,
+       isLast&&index===sections.length-1?attachments:[]));
+      progress(parts.length,parts.length,parts.length);
+     }
     };
     for(const fragment of markdownFragments(String(o.markdown),PDF_CHUNK_CHARS)){
      if(pending!==null)await emit(pending,false);
      pending=fragment;
     }
     await emit(pending??'',true);
-    const blob=await mergeVectorPdf(parts,stem,job,appearance,bands);if(alive())download(blob,stem+'.pdf');return;
+    let cover=null;
+    if(appearance.coverEnabled){
+     try{
+      const frameBody=await snapshot({...o,renderDiagrams:null},job,'');
+      const coverBands=await renderPdfBands(frameBody,{...o,appearance,coverTitle},job,pdfPage([]),true);
+      cover={bands:coverBands,title:coverBands.coverTitle};
+     }finally{job.frame?.remove();job.frame=null;}
+    }
+    const blob=await mergeVectorPdf(parts,stem,job,appearance,bands,cover);if(alive())download(blob,stem+'.pdf');return;
    }
    let blob,extension;
    if(format==='md'){blob=new Blob([o.markdown],{type:'text/markdown;charset=utf-8'});extension='md';}
@@ -692,10 +789,16 @@
    if(menu?.button===button){closeMenu();return;}closeMenu();
    const host=document.createElement('div');host.className='markdown-export-menu';host.setAttribute('role','menu');host.setAttribute('aria-label',t('导出'));button.parentNode.append(host);
    const formats=[['pdf','PDF','直接下载 · 分页文档'],['md','Markdown','下载原文 · .md'],['zip','Markdown + 资源','图片与附件 · .zip'],['png','PNG 图片','渲染为一张长图']];
-   if(window.AideMarkdownPdfAppearance)formats.push(['appearance','PDF 版式设置','页眉、页脚、页码与目录']);
+   if(window.AideMarkdownPdfAppearance)formats.push(['appearance','PDF 版式设置','首页、页眉、页脚与目录']);
    for(const [format,label,description] of formats){const item=document.createElement('button');item.type='button';item.setAttribute('role','menuitem');const badge=document.createElement('span');badge.className='markdown-export-format';badge.textContent=format==='appearance'?'PDF':format.toUpperCase();const text=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=t(label);small.textContent=t(description);text.append(strong,small);item.append(badge,text);host.append(item);
     if(format==='appearance'){
-     item.onclick=()=>{const o=options();closeMenu();if(o)window.AideMarkdownPdfAppearance.open({key:o.appearanceKey,valid:o.valid,button,t,title:nameOf(o.title).replace(/\.(md|markdown)$/i,'')});};
+     item.onclick=()=>{
+      const o=options();closeMenu();
+      if(!o?.valid())return;
+      try{window.AideMarkdownPdfAppearance.open({key:o.appearanceKey,valid:o.valid,button,t,
+       title:nameOf(o.title).replace(/\.(md|markdown)$/i,''),headings:outlineForPdf(o)});}
+      catch(e){error(e);}
+     };
      continue;
     }
     item.onclick=async()=>{const o=options();closeMenu();if(!o)return;button.disabled=true;button.setAttribute('aria-busy','true');const progress=document.createElement('span');progress.className='markdown-export-status';progress.setAttribute('role','status');progress.setAttribute('aria-live','polite');progress.textContent=t('准备导出…');button.insertAdjacentElement('afterend',progress);try{await run(format,o,(current,total,chunk)=>{progress.textContent=chunk?t('正在转换 Markdown 片段 {chunk}…').replace('{chunk}',String(chunk)).replace('{current}',String(current)).replace('{total}',String(total)):t('正在渲染第 {current}/{total} 页').replace('{current}',String(current)).replace('{total}',String(total));button.setAttribute('aria-valuetext',progress.textContent);});}catch(e){if(e.name!=='AbortError')error(e);}finally{button.disabled=false;button.removeAttribute('aria-busy');button.removeAttribute('aria-valuetext');progress.remove();}};

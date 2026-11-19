@@ -967,6 +967,18 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
   min-width: 0; max-height: 260px; overflow: hidden auto;
   border: 1px solid var(--line); border-radius: 8px; background: #fff;
 }
+.markdown-pdf-header-preview[data-section="cover"] { max-height: 500px; }
+.markdown-pdf-cover-tools { display: grid; gap: 8px; }
+.markdown-pdf-cover-tools > button { justify-self: start; }
+.markdown-pdf-value-editor {
+  display: grid; gap: 6px; padding: 9px; border: 1px solid var(--line); border-radius: 8px;
+}
+.markdown-pdf-value-editor textarea { min-height: 54px; font-family: inherit; }
+.markdown-pdf-field-editable {
+  cursor: text; border-radius: 2px; outline: 1px dashed #91a9bd; outline-offset: 2px;
+}
+.markdown-pdf-field-editable:hover,.markdown-pdf-field-editable:focus { outline: 2px solid #47779d; }
+.markdown-pdf-field-editable:empty::before { content: attr(data-placeholder); color: #51637a; }
 .markdown-pdf-preview-paper { position: relative; min-height: 72px; overflow: hidden; color-scheme: light; background: #fff; }
 .markdown-pdf-preview-paper > .markdown-pdf-rich-html { position: absolute; z-index: 1; transform-origin: top left; }
 .markdown-pdf-preview-logo { position: absolute; z-index: 2; display: block; pointer-events: none; }

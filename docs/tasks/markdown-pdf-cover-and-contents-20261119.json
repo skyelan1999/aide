@@ -1,0 +1,79 @@
+{
+  "id": "markdown-pdf-cover-and-contents-20261119",
+  "request": "按 Teams 参考实现 HTML 首页、可编辑渲染变量和按标题插入 PDF 目录，中英文适配",
+  "baseline": "f4539be20b9946c1c77f2d2564cf58800d3dd78a",
+  "initial_status": "基线 f4539be2，独立工作树干净。",
+  "acceptance": [
+    "首页与目录可以独立启用。默认用首个一级标题作为首页标题。",
+    "目录可插在选定标题之后，正文、跨页目录、目录跳转和全文件页码一致。",
+    "使用参考图中的三行横线表和首页布局。自定义 HTML 内的字段可通过预览编辑值并用于导出。",
+    "中英文设置、预设、目录标题和提示词可用。"
+  ],
+  "scope": [
+    "Markdown PDF HTML 模板、首页、目录插入位置、界面和国际化、验收与说明"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "参考图的文控表、居中主副标题和摘要，首页与目录独立启停。",
+      "evidence": [
+        "Teams 自聊最新首页参考图",
+        "用户对首页 HTML、目录独立开关及英文适配的补充要求。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "首页单页，目录在已渲染标题边界插入，变量编辑只更新文字值。",
+      "evidence": [
+        "internal/server/web/markdown-export.js",
+        "internal/server/web/markdown-pdf-appearance.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成 HTML 首页、预览字段、双语标签、四种目录样式及插入位置。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "最终隔离构建、中英文浏览器验收、PDF 渲染与全仓快速检查通过。",
+      "evidence": [
+        "隔离 SDK 构建当前源码，运行 go build -mod=vendor -o /out/aide.release-candidate ./cmd/aide。",
+        "node --test scripts/markdown-pdf-layout.test.cjs scripts/markdown-download-export.test.js、node scripts/test_i18n_coverage.cjs 和 python3 scripts/check_docs.py 通过。",
+        "实际 Aide 分别以 Chromium 中文、Chromium 英文、WebKit 英文运行界面和导出测试。确认自定义 HTML、字段编辑、持久化、Logo、页码与 390 px 窄屏交互。",
+        "PDF 检查覆盖四种首页和目录开关组合、重复标题的位置、最后标题后的目录、跨页目录中的 75 项链接、横竖混排和全部实际页码。关闭目录后保留插入位置。",
+        "Poppler 渲染检查英文首页三行横线文控表、Logo、标题、副标题、摘要及目录链接预期版式。",
+        "python3 scripts/agent-route.py verify quick 的 346 项检查全部通过。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录首页、目录顺序、文本变量和自动页码。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "停止隔离验收容器并清理临时二进制，保留合成样稿、截图与验证日志。",
+      "evidence": [
+        "docker stop aide-pdf-cover-qa",
+        "git diff --check",
+        "python3 scripts/agent-route.py audit"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮本地交付。",
+      "evidence": [
+        "当前需求为 Aide 内置 Markdown PDF 版式改进。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退源码提交即可恢复原有 PDF 版式。同一设置键下的旧页眉、页脚及目录参数仍然可读。",
+  "handoff": "测试使用隔离 Aide。合成样稿和截图留在 .agent-state/pdf-cover。源码本地交付，未推送或安装到日用实例。"
+}
