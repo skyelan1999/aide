@@ -1,0 +1,22 @@
+.markdown-pdf-rich-html {
+  display: flow-root;
+  box-sizing: border-box;
+  color: #243448;
+  font: 14px/1.35 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+.markdown-pdf-rich-html * { box-sizing: border-box; }
+.markdown-pdf-rich-html :is(h1,h2,h3,h4,h5,h6,p,ul,ol,dl,blockquote,pre) { margin: 0 0 6px; }
+.markdown-pdf-rich-html :is(h1,h2,h3,h4,h5,h6) { line-height: 1.2; }
+.markdown-pdf-rich-html h1 { font-size: 23px; }
+.markdown-pdf-rich-html h2 { font-size: 19px; }
+.markdown-pdf-rich-html h3 { font-size: 16px; }
+.markdown-pdf-rich-html :is(h4,h5,h6) { font-size: 14px; }
+.markdown-pdf-rich-html :is(ul,ol) { padding-inline-start: 22px; }
+.markdown-pdf-rich-html pre { white-space: pre-wrap; }
+.markdown-pdf-rich-html hr { border: 0; border-top: 1px solid #c4ced9; }
+.markdown-pdf-rich-html table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.markdown-pdf-rich-html :is(th,td) { padding: 4px 7px; border: 1px solid #c4ced9; text-align: start; vertical-align: top; }
+.markdown-pdf-rich-html th { background-color: #eaf0f6; }
+.markdown-pdf-rich-html caption { padding: 4px; font-weight: 600; }
+.markdown-pdf-rich-html :is(p,ul,ol,dl,pre,blockquote):last-child { margin-bottom: 0; }

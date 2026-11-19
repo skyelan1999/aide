@@ -26,16 +26,19 @@ assert.equal(result.content[0].layout.vLineWidth(),0,'table grid uses light hori
 body.querySelectorAll=selector=>selector==='table'?[{...table,rows:[row([100,100,100,100,100,100])],querySelectorAll:()=>[]}]:[];
 const wide=vm.runInContext('vectorPdfDefinition(body)',context);
 assert.equal(wide.pageOrientation,'landscape','wide tables use landscape pages');
-const branded=vm.runInContext("vectorPdfDefinition(body, [], null, {color:'#1264a3',logo:'fixture',rows:[[{text:'Company',bold:true}],[{text:'Internal'}]],lineCount:2})",context);
+const branded=vm.runInContext("vectorPdfDefinition(body, [], null, {color:'#1264a3'}, 180)",context);
 assert.equal(branded.pageOrientation,'landscape','appearance does not change automatic orientation');
-assert.deepEqual(Array.from(branded.pageMargins),[48,66,48,48],'reserve room for the logo and text');
-assert.deepEqual(Array.from(branded.header().margin),[48,18,136,0]);
-const leftLogo=vm.runInContext("vectorPdfDefinition(body, [], null, {logo:'fixture',logoSide:'left',rows:[[{text:'Company'}]],lineCount:1})",context);
-assert.deepEqual(Array.from(leftLogo.header().margin),[136,18,48,0],'header text leaves room on the selected side');
-assert.equal(branded.header().stack[0].text[0].bold,true,'HTML formatting is retained in the running header');
-const logoOnly=vm.runInContext("vectorPdfDefinition(body, [], null, {logo:'fixture'})",context);
-assert.equal(logoOnly.header,undefined,'a logo does not insert a text header');
-assert.equal(logoOnly.pageMargins[1],66,'logo-only layouts also reserve space');
+assert.deepEqual(Array.from(branded.pageMargins),[48,180,48,48],'reserve the measured header height');
+assert.equal(branded.header,undefined,'header and logo are composited after vector body pagination');
+const headings=[{tagName:'H2',textContent:'A  subsection',dataset:{},style:{}},{tagName:'H4',textContent:' ',dataset:{},style:{}}];
+const oldQuery=body.querySelectorAll;
+body.querySelectorAll=selector=>selector==='h1,h2,h3,h4,h5,h6'?headings:oldQuery(selector);
+context.entries=[];
+vm.runInContext('vectorPdfDefinition(body, [], null, {}, 48, entries)',context);
+assert.deepEqual(JSON.parse(JSON.stringify(context.entries)),[{id:'aide-heading-0',level:2,title:'A subsection'}]);
+assert.deepEqual(JSON.parse(headings[0].dataset.pdfmake),{headlineLevel:2,id:'aide-heading-0'});
+assert.deepEqual(JSON.parse(headings[1].dataset.pdfmake),{headlineLevel:4});
+body.querySelectorAll=oldQuery;
 const tall=vm.runInContext('fitPdfMedia(800,9000,499,700)',context);
 assert.equal(tall.height,700);
 assert.ok(Math.abs(tall.width/tall.height-800/9000)<1e-10,'portrait image keeps aspect ratio');
@@ -48,26 +51,30 @@ const attached=vm.runInContext("vectorPdfDefinition(body,[{name:'sample.bin',dat
 assert.equal(attached.content.at(-1).columns[1].attachment.hidden,false,'embedded files must be discoverable in reader attachment panels');
 assert.equal(attached.content.at(-1).columns[1].attachment.relationship,'Data');
 
-const node=(tagName,childNodes=[],style='')=>({
- nodeType:1,tagName,childNodes,getAttribute:name=>name==='style'?style:null
-});
-const literal=data=>({nodeType:3,data});
-const host={createElement:name=>{
- assert.equal(name,'template','HTML is parsed away from the live document');
- return{content:{childNodes:[
-  node('P',[node('STRONG',[literal('Company')]),node('BR'),node('SPAN',[literal('Internal')],'color:#812852')]),
-  node('SCRIPT',[literal('active script')]),
-  node('svg',[node('script',[literal('foreign script')])]),
-  node('IMG')
- ]}};
-}};
-const appearanceContext={window:{},document:host,localStorage:{getItem:()=>null}};
+const logo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAI';
+const appearanceContext={window:{},localStorage:{getItem:()=>JSON.stringify({logo})},atob};
 vm.createContext(appearanceContext);
 vm.runInContext(fs.readFileSync('internal/server/web/markdown-pdf-appearance.js','utf8'),appearanceContext);
 const appearance=appearanceContext.window.AideMarkdownPdfAppearance;
-assert.equal(appearance.read('document').header,'','new document profiles have no default header');
-assert.equal(appearance.read('document').logoSide,'right','existing settings without a position keep the right-side logo');
-assert.equal(appearance.compile({logoSide:'left'}).logoSide,'left');
-const compiled=appearance.compile({header:'test markup'});
-assert.deepEqual(JSON.parse(JSON.stringify(compiled.rows)),[[{text:'Company',bold:true}],[{text:'Internal',color:'#812852'}]]);
-assert.equal(compiled.lineCount,2);
+const saved=appearance.read('document');
+assert.equal(saved.header,'','new document profiles have no default header');
+assert.equal(saved.logoSide,'right','legacy profiles retain the right-side logo');
+assert.equal(saved.toc,false,'legacy profiles do not generate a table of contents');
+const portrait=appearance.pageGeometry(false);
+const assertNear=(actual,expected)=>assert.ok(Math.abs(actual-expected)<0.001,`${actual} ≈ ${expected}`);
+const left=appearance.layout({...saved,logoSide:'left'},portrait,120);
+assert.equal(left.logo.x,left.html.x,'left logo is independently layered over the header');
+assert.equal(left.logo.y,left.html.y);
+assert.equal(left.html.height,90);
+assert.equal(left.topMargin,122);
+const right=appearance.layout(saved,portrait,120);
+assertNear(right.logo.x+right.logo.width,portrait.width-48);
+const custom=appearance.layout({...saved,logoSide:'custom',logoX:60,logoY:33},portrait,1200);
+assertNear(custom.logo.x,60*72/25.4);
+assertNear(custom.logo.y,33*72/25.4);
+assertNear(custom.topMargin,portrait.height/2);
+const empty=appearance.layout({},portrait,0);
+assert.equal(empty.topMargin,48);
+assert.equal(empty.logo,null);
+assert.equal(empty.html,null);
+console.log('PASS: layered PDF header geometry, legacy preferences and heading metadata');

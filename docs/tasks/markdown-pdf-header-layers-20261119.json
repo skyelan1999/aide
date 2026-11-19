@@ -1,0 +1,78 @@
+{
+  "id": "markdown-pdf-header-layers-20261119",
+  "request": "改进 Markdown PDF 页眉和设置面板，支持复杂 HTML、Logo 叠层和坐标、一键复制 AI 提示词，并按标题生成独立目录页",
+  "baseline": "acf760141185d526355320f8bca0b883dd7ad28d",
+  "initial_status": "",
+  "acceptance": [
+    "HTML 页眉可渲染超过四行，保留表格与内联样式。Logo 叠在 HTML 上方，支持左上、右上、自定义毫米坐标。",
+    "PDF 版式设置包含实时预览、提示词复制及按文件保存的目录开关。",
+    "目录单独成页，随长度自动分页，正文从新的一页开始；目录层级、页码与跳转适用于横竖混排。",
+    "无标题或关闭目录时，导出不新增目录页。"
+  ],
+  "scope": [
+    "Markdown PDF 版式设置、预览、导出、对应国际化、针对性检查和架构说明"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目录与正文分开分页，复杂页眉和 Logo 均在导出时复现。",
+      "evidence": [
+        "用户要求根据标题自动生成目录，并明确目录单独成页。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "页眉和 Logo 独立合成，目录使用实际排版的标题位置，保存沿用现有按文件配置。",
+      "evidence": [
+        "internal/server/web/markdown-export.js",
+        "internal/server/web/markdown-pdf-appearance.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已接通导出菜单、响应式设置、页眉预览、PDF 合成和目录跳转。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-header.css",
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离构建、实际浏览器导出、PDF 独立检查及全仓快速回归通过。",
+      "evidence": [
+        "在隔离 Docker SDK 运行 go build -mod=vendor -o /out/aide.final ./cmd/aide。",
+        "node --test scripts/markdown-pdf-layout.test.cjs scripts/markdown-download-export.test.js",
+        "Chromium 与 WebKit 在实际 Aide 中保存配置、导出 PDF，Poppler 像素验证和 pypdf 逐项检查 15 页横竖混排、4 页目录及 75 个页码和跳转目标。",
+        "桌面、390 px 窄屏预览检查，Chromium 剪贴板复制通过。",
+        "短样稿为两页，目录独占第一页，正文第二页；关闭目录或无标题时只有原正文页。",
+        "python3 scripts/agent-route.py verify quick，全项退出 0。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新页眉、Logo、目录、浏览器保存范围与渲染行为。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "停止隔离验收容器，保留样稿、截图和测试日志。",
+      "evidence": [
+        "docker stop aide-pdf-header-qa",
+        "git diff --check",
+        "python3 scripts/agent-route.py audit"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "完成本地交付。",
+      "evidence": [
+        "本轮变更为 Aide 主程序的 PDF 设置与渲染。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次提交即可恢复现有 PDF 导出路径；浏览器中的已有主题和 Logo 位置设置仍使用原键。",
+  "handoff": "在隔离 Docker 实例中运行当前源码构建的 Aide，以实际下载入口验收。容器已停止，样稿与截图保存在本地 .agent-state/pdf-header-layers。未推送源码或安装至日用实例。"
+}

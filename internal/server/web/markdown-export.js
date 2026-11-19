@@ -210,9 +210,6 @@
  }
  function compactPdfCssColors(value){return value.replace(/\b(rgba?)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/gi,(_,fn,r,g,b,a)=>fn.toLowerCase()==='rgba'&&a!==undefined?`rgba(${r},${g},${b},${a})`:`rgb(${r},${g},${b})`);}
  const PDF_MARGIN = 48;
- const PDF_HEADER_TOP = 18;
- const PDF_LOGO_WIDTH = 76;
- const PDF_LOGO_HEIGHT = 34;
  const PDF_PT_PER_PX = 0.75;
  const PDF_A4 = {width:595.28,height:841.89};
  const PDF_TABLE_LAYOUT = {
@@ -235,21 +232,57 @@
   while(luminance(color)>0.183)color=blendPdfColor(color,'#142b45',0.8);
   return color;
  }
- function pdfHeader(appearance,themeText){
-  const rows=appearance.rows||[];
-  if(!rows.length&&!appearance.logo)return {margin:PDF_MARGIN};
-  const textHeight=(appearance.lineCount||0)*14+rows.length*2;
-  const margin=PDF_HEADER_TOP+Math.max(textHeight,appearance.logo?PDF_LOGO_HEIGHT:0)+14;
-  const logoInset=appearance.logo?PDF_LOGO_WIDTH+12:0;
-  const leftLogo=appearance.logoSide==='left';
-  const content=rows.length?()=>({
-   margin:[PDF_MARGIN+(leftLogo?logoInset:0),PDF_HEADER_TOP,PDF_MARGIN+(leftLogo?0:logoInset),0],
-   stack:rows.map(row=>({
-    text:row.map(run=>({...run})),fontSize:9,lineHeight:1.15,wordBreak:'break-all',
-    margin:[0,0,0,2],color:themeText||'#243448'
-   }))
-  }):null;
-  return {margin,content};
+ function pdfPage(tables){
+  const landscape=tables.some(table=>pdfTableColumns(table)>5);
+  return {landscape,width:landscape?PDF_A4.height:PDF_A4.width,height:landscape?PDF_A4.width:PDF_A4.height};
+ }
+ async function renderPdfHeader(body,o,job,page){
+  const preferences=window.AideMarkdownPdfAppearance;
+  const result={layout:{topMargin:PDF_MARGIN},artwork:null};
+  if(!preferences||(!o.appearance.header&&!o.appearance.logo))return result;
+  const doc=body.ownerDocument,html=preferences.buildHtml(doc,o.appearance);
+  if(!html){
+   result.layout=preferences.layout(o.appearance,page,0);
+   return result;
+  }
+  const printStyle=doc.head.querySelector('link');
+  let canvas;
+  try{
+   printStyle.disabled=true;
+   const style=doc.createElement('link');
+   style.rel='stylesheet';
+   style.href='/markdown-pdf-header.css?v=1';
+   await job.wait(new Promise((resolve,reject)=>{
+    style.onload=resolve;
+    style.onerror=()=>reject(Error(uiTextMarkdownExport('无法加载导出样式')));
+    doc.head.append(style);
+   }));
+   const viewportWidth=Math.ceil(page.width/PDF_PT_PER_PX);
+   job.frame.style.width=viewportWidth+'px';
+   html.style.width=(page.width-2*PDF_MARGIN)/PDF_PT_PER_PX+'px';
+   html.style.position='absolute';
+   html.style.inset='0 auto auto 0';
+   doc.body.append(html);
+   const width=Math.max(html.offsetWidth,html.scrollWidth);
+   const height=Math.max(html.offsetHeight,html.scrollHeight);
+   result.layout=preferences.layout(o.appearance,page,height,width);
+   if(!result.layout.html)return result;
+   await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js?v=2',()=>!!window.html2canvas));
+   const scale=Math.min(2,4096/width,8192/height,Math.sqrt(12000000/(width*height)));
+   canvas=await job.wait(window.html2canvas(html,{
+    backgroundColor:null,width,height,scale,windowWidth:viewportWidth,logging:false,
+    signal:job.controller.signal
+   }));
+   const png=await job.wait(new Promise((resolve,reject)=>canvas.toBlob(blob=>{
+    if(blob)resolve(blob);else reject(Error(uiTextMarkdownExport('图片渲染失败')));
+   },'image/png')));
+   result.artwork=new Uint8Array(await job.wait(png.arrayBuffer()));
+   return result;
+  }finally{
+   html.remove();
+   printStyle.disabled=false;
+   if(canvas)canvas.width=canvas.height=0;
+  }
  }
  function fitPdfMedia(width,height,maxWidth,maxHeight){
   if(!(width>0&&height>0))return null;
@@ -297,15 +330,12 @@
    }
   }
  }
- function vectorPdfDefinition(body,attachments=[],pdfImages,appearance={}){
+ function vectorPdfDefinition(body,attachments=[],pdfImages,appearance={},topMargin=PDF_MARGIN,headings=null){
   trimPdfBlockWhitespace(body);
   const tables=[...body.querySelectorAll('table')];
-  const landscape=tables.some(table=>pdfTableColumns(table)>5);
-  const width=landscape?PDF_A4.height:PDF_A4.width;
-  const height=landscape?PDF_A4.width:PDF_A4.height;
+  const {landscape,width,height}=pdfPage(tables);
   const themeText=appearance.color?readablePdfColor(appearance.color):'';
-  const header=pdfHeader(appearance,themeText);
-  const printable={width:width-2*PDF_MARGIN,height:height-header.margin-PDF_MARGIN};
+  const printable={width:width-2*PDF_MARGIN,height:height-topMargin-PDF_MARGIN};
   const tableLayout=themeText?{
    ...PDF_TABLE_LAYOUT,hLineColor:(row,node)=>row===node.table.headerRows?
     blendPdfColor(themeText,'#ffffff',0.55):blendPdfColor(themeText,'#ffffff',0.18)
@@ -316,7 +346,14 @@
    body.style.paddingInline=PDF_MARGIN/PDF_PT_PER_PX+'px';
   }
   for(const heading of body.querySelectorAll('h1,h2,h3,h4,h5,h6')){
-   heading.dataset.pdfmake=JSON.stringify({headlineLevel:Number(heading.tagName.slice(1))});
+   const level=Number(heading.tagName.slice(1));
+   const properties={headlineLevel:level};
+   const title=(heading.textContent||'').trim().replace(/\s+/g,' ');
+   if(headings&&title){
+    properties.id='aide-heading-'+headings.length;
+    headings.push({id:properties.id,level,title});
+   }
+   heading.dataset.pdfmake=JSON.stringify(properties);
   }
   if(themeText){
    for(const element of body.querySelectorAll('h1,h2,h3,h4,h5,h6,a,th'))element.style.color=themeText;
@@ -397,30 +434,134 @@
    for(const item of attachments)content.push({columns:[{text:item.name,width:'*',fontSize:10,id:'aide-attachment-'+item.index},{attachment:{src:item.dataUrl,name:item.name,description:item.name,hidden:false,relationship:'Data'},icon:'Paperclip',width:24}],columnGap:8,margin:[0,0,0,6]});
   }
   return {
-   pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',pageMargins:[PDF_MARGIN,header.margin,PDF_MARGIN,PDF_MARGIN],
-   ...(header.content?{header:header.content}:{}),
+   pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',pageMargins:[PDF_MARGIN,topMargin,PDF_MARGIN,PDF_MARGIN],
    defaultStyle:{font:'NotoSansSC',fontSize:10.5,lineHeight:1.24,color:'#243448'},
    pageBreakBefore:(heading,context)=>!!heading.headlineLevel&&heading.pageNumbers?.length===1&&!context.getFollowingNodesOnPage().length&&context.getNodesOnNextPage().length>0,
    content
   };
  }
- async function renderVectorChunk(html,o,job,attachments=[]){
-  const pdfImages=new Map(),body=await snapshot(o,job,html,pdfImages);
-  return job.wait(window.pdfMake.createPdf(vectorPdfDefinition(body,attachments,pdfImages,o.appearance)).getBlob());
+ async function pdfLinePositions(output,job,ids){
+  const positions=new Map();
+  const stream=await job.wait(output.getStream());
+  // The bundled pdfMake exposes the completed layout on the PDFKit document.
+  // Resolve from laid-out lines so mixed orientations and split headings use
+  // their actual exported page and vertical position.
+  for(const [pageIndex,page] of stream._pdfMakePages.entries()){
+   for(const {type,item} of page.items){
+    if(type==='line'&&ids.has(item.id)&&!positions.has(item.id)){
+     positions.set(item.id,{pageIndex,y:item.y,height:item.getHeight()});
+    }
+   }
+  }
+  return positions;
  }
- async function mergeVectorPdf(parts,last,stem,job,appearance={}){
-  const {PDFDocument,StandardFonts,rgb}=window.PDFLib,target=await job.wait(PDFDocument.load(await job.wait(last.arrayBuffer())));let index=0;
-  for(const bytes of parts){if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');const source=await job.wait(PDFDocument.load(bytes)),pages=await job.wait(target.copyPages(source,source.getPageIndices()));for(const page of pages)target.insertPage(index++,page);}
+ async function renderVectorChunk(html,o,job,attachments=[]){
+  try{
+   const pdfImages=new Map(),body=await snapshot(o,job,html,pdfImages);
+   const page=pdfPage([...body.querySelectorAll('table')]);
+   let header=o.headers.get(page.landscape);
+   if(!header){
+    header=await renderPdfHeader(body,o,job,page);
+    o.headers.set(page.landscape,header);
+   }
+   const headings=o.appearance.toc?[]:null;
+   const output=window.pdfMake.createPdf(vectorPdfDefinition(body,attachments,pdfImages,o.appearance,header.layout.topMargin,headings));
+   if(headings?.length){
+    const positions=await pdfLinePositions(output,job,new Set(headings.map(heading=>heading.id)));
+    for(const heading of headings)Object.assign(heading,positions.get(heading.id));
+   }
+   return {blob:await job.wait(output.getBlob()),headings};
+  }finally{
+   job.frame?.remove();
+   job.frame=null;
+  }
+ }
+ async function renderPdfContents(entries,landscape,header,theme,job){
+  const color=theme?readablePdfColor(theme):'#243448';
+  const width=(landscape?PDF_A4.height:PDF_A4.width)-2*PDF_MARGIN;
+  const level=entries.reduce((min,entry)=>Math.min(min,entry.level),6);
+  const ids=new Set(entries.map((_,index)=>'aide-contents-'+index));
+  const render=async offset=>{
+   const definition={
+    pageSize:'A4',pageOrientation:landscape?'landscape':'portrait',
+    pageMargins:[PDF_MARGIN,header.layout.topMargin,PDF_MARGIN,PDF_MARGIN],
+    defaultStyle:{font:'NotoSansSC',fontSize:10.5,lineHeight:1.24,color},
+    content:[
+     {text:uiTextMarkdownExport('目录'),fontSize:28,bold:true,margin:[0,0,0,8]},
+     {canvas:[{type:'line',x1:0,y1:0,x2:width,y2:0,lineWidth:0.65,lineColor:blendPdfColor(color,'#ffffff',0.36)}],margin:[0,0,0,14]},
+     ...entries.map((entry,index)=>{
+      const chapter=entry.level===level;
+      return {
+       columns:[
+        {text:entry.title,id:'aide-contents-'+index,width:'*',wordBreak:'break-all',bold:chapter},
+        {text:String(entry.pageIndex+offset+1),width:45,alignment:'right'}
+       ],
+       columnGap:12,fontSize:chapter?12:10.5,
+       margin:[(entry.level-level)*15,chapter?3:0,0,8]
+      };
+     })
+    ]
+   };
+   const output=window.pdfMake.createPdf(definition);
+   const positions=await pdfLinePositions(output,job,ids);
+   const doc=await job.wait(window.PDFLib.PDFDocument.load(await job.wait(output.getBuffer())));
+   return {doc,positions};
+  };
+  const draft=await render(1);
+  return draft.doc.getPageCount()===1?draft:render(draft.doc.getPageCount());
+ }
+ function linkPdfContents(target,contents,entries){
+  const pages=target.getPages();
+  const offset=contents.doc.getPageCount();
+  const {PDFNull}=window.PDFLib;
+  for(const [index,entry] of entries.entries()){
+   const line=contents.positions.get('aide-contents-'+index);
+   if(!line)continue;
+   const page=pages[line.pageIndex],destination=pages[offset+entry.pageIndex];
+   const top=page.getHeight()-line.y;
+   const link=target.context.obj({
+    Type:'Annot',Subtype:'Link',Border:[0,0,0],
+    Rect:[PDF_MARGIN,top-line.height,page.getWidth()-PDF_MARGIN,top],
+    Dest:[destination.ref,'XYZ',PDFNull,Math.min(destination.getHeight(),destination.getHeight()-entry.y+8),PDFNull]
+   });
+   page.node.addAnnot(target.context.register(link));
+  }
+ }
+ async function mergeVectorPdf(parts,stem,job,appearance,headers){
+  const {PDFDocument,StandardFonts,rgb}=window.PDFLib;
+  const readPart=async part=>job.wait(PDFDocument.load(await job.wait(part.blob.arrayBuffer())));
+  const target=await readPart(parts.at(-1)),entries=[];
+  let index=0;
+  for(const [partIndex,part] of parts.entries()){
+   for(const heading of part.headings||[]){
+    if(Number.isInteger(heading.pageIndex))entries.push({...heading,pageIndex:index+heading.pageIndex});
+   }
+   if(partIndex===parts.length-1)break;
+   const source=await readPart(part);
+   const pages=await job.wait(target.copyPages(source,source.getPageIndices()));
+   for(const page of pages)target.insertPage(index++,page);
+  }
+  if(entries.length){
+   const first=target.getPage(0),landscape=first.getWidth()>first.getHeight();
+   const contents=await renderPdfContents(entries,landscape,headers.get(landscape),appearance.color,job);
+   const pages=await job.wait(target.copyPages(contents.doc,contents.doc.getPageIndices()));
+   for(const [i,page] of pages.entries())target.insertPage(i,page);
+   linkPdfContents(target,contents,entries);
+  }
   const pages=target.getPages(),font=await job.wait(target.embedFont(StandardFonts.Helvetica));
-  const logo=appearance.logo?await job.wait(target.embedPng(appearance.logo)):null;
-  const logoSize=logo?.scaleToFit(PDF_LOGO_WIDTH,PDF_LOGO_HEIGHT);
+  const logo=[...headers.values()].some(header=>header.layout.logo)?await job.wait(target.embedPng(appearance.logo)):null;
+  const artwork=new Map();
+  for(const [landscape,header] of headers){
+   if(header.artwork)artwork.set(landscape,await job.wait(target.embedPng(header.artwork)));
+  }
   const ruleColor=appearance.color?blendPdfColor(appearance.color,'#ffffff',0.23):'';
   const footerRule=ruleColor?rgb(...[1,3,5].map(i=>parseInt(ruleColor.slice(i,i+2),16)/255)):rgb(0.81,0.85,0.89);
   for(const [index,page] of pages.entries()){
    const right=page.getWidth()-PDF_MARGIN;
-   if(logo){
-    const x=appearance.logoSide==='left'?PDF_MARGIN:right-logoSize.width;
-    page.drawImage(logo,{...logoSize,x,y:page.getHeight()-PDF_HEADER_TOP-logoSize.height});
+   const landscape=page.getWidth()>page.getHeight();
+   const layers=headers.get(landscape)?.layout;
+   for(const [image,box] of [[artwork.get(landscape),layers?.html],[logo,layers?.logo]]){
+    if(image&&box)page.drawImage(image,{x:box.x,y:page.getHeight()-box.y-box.height,width:box.width,height:box.height});
    }
    page.drawLine({start:{x:PDF_MARGIN,y:34},end:{x:right,y:34},thickness:0.45,color:footerRule});
    const label=(index+1)+' / '+pages.length,size=8;
@@ -436,16 +577,24 @@
   try{
    if(format==='pdf'&&!shared){
     const preferences=window.AideMarkdownPdfAppearance;
-    const appearance=preferences?.compile(preferences.read(o.appearanceKey));
-    if(appearance?.lineCount>4)throw Error(uiTextMarkdownExport('页眉超过 4 行，请缩短内容。'));
+    const appearance=preferences?.read(o.appearanceKey)||{};
     await loadVectorPdf(job,o);
     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},6*60*60*1000);
     const attachments=await preparePdfAttachments(String(o.markdown),o,job);for(const item of attachments){item.dataUrl=await imageDataURL(item.blob,job.controller.signal);item.blob=null;}
-    const prior=[],imageBudget={total:0,pdfTotal:0};let pending=null,chunk=0,last=null;
-    const emit=async(fragment,isLast)=>{if(!alive())throw new DOMException('Cancelled','AbortError');const html=o.renderMarkdown?o.renderMarkdown(fragment):o.html;last=await renderVectorChunk(html,{...o,markdown:fragment,renderMarkdown:null,imageBudget,appearance},job,isLast?attachments:[]);chunk++;progress(chunk,chunk,chunk);};
-    for(const fragment of markdownFragments(String(o.markdown),PDF_CHUNK_CHARS)){if(pending!==null){await emit(pending,false);prior.push(new Uint8Array(await job.wait(last.arrayBuffer())));}pending=fragment;}
-    if(pending!==null)await emit(pending,true);else await emit('',true);
-    const blob=await mergeVectorPdf(prior,last,stem,job,appearance);if(alive())download(blob,stem+'.pdf');return;
+    const parts=[],headers=new Map(),imageBudget={total:0,pdfTotal:0};
+    let pending=null;
+    const emit=async(fragment,isLast)=>{
+     if(!alive())throw new DOMException('Cancelled','AbortError');
+     const html=o.renderMarkdown?o.renderMarkdown(fragment):o.html;
+     parts.push(await renderVectorChunk(html,{...o,markdown:fragment,renderMarkdown:null,imageBudget,appearance,headers},job,isLast?attachments:[]));
+     progress(parts.length,parts.length,parts.length);
+    };
+    for(const fragment of markdownFragments(String(o.markdown),PDF_CHUNK_CHARS)){
+     if(pending!==null)await emit(pending,false);
+     pending=fragment;
+    }
+    await emit(pending??'',true);
+    const blob=await mergeVectorPdf(parts,stem,job,appearance,headers);if(alive())download(blob,stem+'.pdf');return;
    }
    let blob,extension;
    if(format==='md'){blob=new Blob([o.markdown],{type:'text/markdown;charset=utf-8'});extension='md';}
@@ -469,7 +618,7 @@
    if(menu?.button===button){closeMenu();return;}closeMenu();
    const host=document.createElement('div');host.className='markdown-export-menu';host.setAttribute('role','menu');host.setAttribute('aria-label',t('导出'));button.parentNode.append(host);
    const formats=[['pdf','PDF','直接下载 · 分页文档'],['md','Markdown','下载原文 · .md'],['zip','Markdown + 资源','图片与附件 · .zip'],['png','PNG 图片','渲染为一张长图']];
-   if(window.AideMarkdownPdfAppearance)formats.push(['appearance','PDF 版式设置','主题色、HTML 页眉与 Logo']);
+   if(window.AideMarkdownPdfAppearance)formats.push(['appearance','PDF 版式设置','主题色、页眉、Logo 与目录']);
    for(const [format,label,description] of formats){const item=document.createElement('button');item.type='button';item.setAttribute('role','menuitem');const badge=document.createElement('span');badge.className='markdown-export-format';badge.textContent=format==='appearance'?'PDF':format.toUpperCase();const text=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=t(label);small.textContent=t(description);text.append(strong,small);item.append(badge,text);host.append(item);
     if(format==='appearance'){
      item.onclick=()=>{const o=options();closeMenu();if(o)window.AideMarkdownPdfAppearance.open({key:o.appearanceKey,valid:o.valid,button,t});};
