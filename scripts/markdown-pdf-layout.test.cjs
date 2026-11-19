@@ -30,6 +30,8 @@ const branded=vm.runInContext("vectorPdfDefinition(body, [], null, {color:'#1264
 assert.equal(branded.pageOrientation,'landscape','appearance does not change automatic orientation');
 assert.deepEqual(Array.from(branded.pageMargins),[48,66,48,48],'reserve room for the logo and text');
 assert.deepEqual(Array.from(branded.header().margin),[48,18,136,0]);
+const leftLogo=vm.runInContext("vectorPdfDefinition(body, [], null, {logo:'fixture',logoSide:'left',rows:[[{text:'Company'}]],lineCount:1})",context);
+assert.deepEqual(Array.from(leftLogo.header().margin),[136,18,48,0],'header text leaves room on the selected side');
 assert.equal(branded.header().stack[0].text[0].bold,true,'HTML formatting is retained in the running header');
 const logoOnly=vm.runInContext("vectorPdfDefinition(body, [], null, {logo:'fixture'})",context);
 assert.equal(logoOnly.header,undefined,'a logo does not insert a text header');
@@ -64,6 +66,8 @@ vm.createContext(appearanceContext);
 vm.runInContext(fs.readFileSync('internal/server/web/markdown-pdf-appearance.js','utf8'),appearanceContext);
 const appearance=appearanceContext.window.AideMarkdownPdfAppearance;
 assert.equal(appearance.read('document').header,'','new document profiles have no default header');
+assert.equal(appearance.read('document').logoSide,'right','existing settings without a position keep the right-side logo');
+assert.equal(appearance.compile({logoSide:'left'}).logoSide,'left');
 const compiled=appearance.compile({header:'test markup'});
 assert.deepEqual(JSON.parse(JSON.stringify(compiled.rows)),[[{text:'Company',bold:true}],[{text:'Internal',color:'#812852'}]]);
 assert.equal(compiled.lineCount,2);
