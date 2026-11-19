@@ -3,6 +3,9 @@
  'use strict';
 
  const PREFIX='aide.markdown-pdf.appearance.v1:';
+ const CONFIG_FORMAT='aide.markdown-pdf-layout', CONFIG_VERSION=1;
+ // Fits every supported profile, even when all text requires JSON escaping.
+ const MAX_CONFIG_BYTES=5*1024*1024;
  const MAX_HTML=64*1024;
  const MAX_LOGO=512*1024;
  const MAX_FIELDS=128, MAX_FIELD_LENGTH=4096;
@@ -98,22 +101,45 @@ ${cell('参考','{{reference}}')}
   if(/^#[0-9a-f]{6}$/.test(hex))return hex;
   return /^#[0-9a-f]{3}$/.test(hex)?'#'+Array.from(hex.slice(1),n=>n+n).join(''):'';
  }
+ function normalizeProfile(saved){
+  if(!saved||typeof saved!=='object'||Array.isArray(saved))return {};
+  return {
+   color:colorValue(saved.color),
+   header:htmlValue(saved.header),footer:htmlValue(saved.footer),cover:htmlValue(saved.cover),
+   coverEnabled:saved.coverEnabled===true,coverInToc:saved.coverInToc===true,
+   tocAfter:typeof saved.tocAfter==='string'&&saved.tocAfter.length<=4096?saved.tocAfter:'',
+   values:fieldValues(saved.values),typography:window.AideMarkdownPdfStyle?.normalize(saved.typography)||null,
+   pageNumbers:pageNumberPosition(saved.pageNumbers),tocStyle:contentsStyle(saved.tocStyle),
+   logo:typeof saved.logo==='string'&&saved.logo.length<=MAX_LOGO&&/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(saved.logo)?saved.logo:'',
+   toc:saved.toc===true,logoSide:logoSide(saved.logoSide),logoX:coordinate(saved.logoX,17),logoY:coordinate(saved.logoY,6.35)
+  };
+ }
  function read(key){
   if(!key)return {};
-  try{
-   const saved=JSON.parse(localStorage.getItem(PREFIX+key)||'{}');
-   if(!saved||typeof saved!=='object')return {};
-   return {
-    color:colorValue(saved.color),
-    header:htmlValue(saved.header),footer:htmlValue(saved.footer),cover:htmlValue(saved.cover),
-    coverEnabled:saved.coverEnabled===true,coverInToc:saved.coverInToc===true,
-    tocAfter:typeof saved.tocAfter==='string'&&saved.tocAfter.length<=4096?saved.tocAfter:'',
-    values:fieldValues(saved.values),typography:window.AideMarkdownPdfStyle?.normalize(saved.typography)||null,
-    pageNumbers:pageNumberPosition(saved.pageNumbers),tocStyle:contentsStyle(saved.tocStyle),
-    logo:typeof saved.logo==='string'&&saved.logo.length<=MAX_LOGO&&/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(saved.logo)?saved.logo:'',
-    toc:saved.toc===true,logoSide:logoSide(saved.logoSide),logoX:coordinate(saved.logoX,17),logoY:coordinate(saved.logoY,6.35)
-   };
-  }catch{return {};}
+  try{return normalizeProfile(JSON.parse(localStorage.getItem(PREFIX+key)||'{}'));}
+  catch{return {};}
+ }
+ function encodeConfig(profile){
+  return JSON.stringify({format:CONFIG_FORMAT,version:CONFIG_VERSION,profile},null,2)+'\n';
+ }
+ // Reject a lossy import, allowing field order to differ from the exported JSON.
+ function matchesProfile(input,profile){
+  if(!profile||typeof profile!=='object')return input===profile;
+  if(!input||typeof input!=='object'||Array.isArray(input)!==Array.isArray(profile))return false;
+  const keys=Object.keys(profile);
+  return Object.keys(input).length===keys.length&&keys.every(key=>Object.hasOwn(input,key)&&matchesProfile(input[key],profile[key]));
+ }
+ function decodeConfig(text){
+  const config=JSON.parse(text);
+  if(config?.format!==CONFIG_FORMAT||config.version!==CONFIG_VERSION||!config.profile||
+     typeof config.profile!=='object'||Array.isArray(config.profile))throw new Error('Invalid PDF layout configuration');
+  const profile=normalizeProfile(config.profile);
+  if(!matchesProfile(config.profile,profile))throw new Error('Invalid PDF layout profile');
+  if(profile.logo){
+   const dimensions=logoDimensions(profile.logo);
+   if(!dimensions||dimensions.width>600||dimensions.height>240)throw new Error('Invalid PDF layout logo');
+  }
+  return profile;
  }
  function appendTemplateText(doc,parent,text,context){
   let start=0;
@@ -195,7 +221,7 @@ ${cell('参考','{{reference}}')}
   window.AideMarkdownPdfStyle?.applyHtmlFonts(surface,profile.typography);
   return surface.textContent.trim()||surface.children.length?surface:null;
  }
- function logoSize(logo){
+ function logoDimensions(logo){
   if(!logo)return null;
   try{
    const start=logo.indexOf(',')+1;
@@ -203,10 +229,15 @@ ${cell('参考','{{reference}}')}
    if(bytes.length!==24||bytes[0]!==137||bytes[1]!==80||bytes[2]!==78||bytes[3]!==71)return null;
    const data=new DataView(bytes.buffer);
    const width=data.getUint32(16),height=data.getUint32(20);
-   if(!width||!height)return null;
-   const fit=Math.min(LOGO_WIDTH/width,LOGO_HEIGHT/height);
-   return {width:width*fit,height:height*fit};
+   return width&&height?{width,height}:null;
   }catch{return null;}
+ }
+ function logoSize(logo){
+  const dimensions=logoDimensions(logo);
+  if(!dimensions)return null;
+  const {width,height}=dimensions;
+  const fit=Math.min(LOGO_WIDTH/width,LOGO_HEIGHT/height);
+  return {width:width*fit,height:height*fit};
  }
  function pageGeometry(landscape){
   return landscape?{width:PAGE.height,height:PAGE.width}:PAGE;
@@ -275,12 +306,12 @@ ${cell('参考','{{reference}}')}
 
  function close(){activeDialog?.close();}
 
- function open({key,valid,button,t,title,headings=[]}){
+ function open({key,valid,button,t,title,headings=[],download}){
   close();
   if(!key||!valid())return;
   const saved=read(key);
   let logo=saved.logo||'',logoRequest=0,activeField='',activeRegion='';
-  const values=fieldValues(saved.values);
+  let values=fieldValues(saved.values);
   const coverTitle=headings.find(item=>item.level===1)?.title||title;
   const fieldLabel=field=>FIELD_LABELS.has(field)?t(FIELD_LABELS.get(field)):field;
   const make=(tag,text,className)=>{
@@ -418,9 +449,15 @@ ${cell('参考','{{reference}}')}
   const error=make('p',null,'task-error');error.setAttribute('role','status');
   const status=make('p',null,'muted');status.setAttribute('role','status');
   const buttons=make('div',null,'markdown-pdf-appearance-actions');
+  const transfer=make('div',null,'markdown-pdf-layout-transfer');
+  const configFile=make('input');configFile.type='file';configFile.accept='.json,application/json';configFile.hidden=true;
+  configFile.setAttribute('aria-label',t('导入 PDF 版式配置'));
+  const importConfig=action('导入配置');
+  const exportConfig=action('导出配置');
+  transfer.append(importConfig,exportConfig,configFile);
   const cancel=action('取消');
   const save=action('保存','primary');save.type='submit';
-  buttons.append(status,cancel,save);
+  buttons.append(status,transfer,cancel,save);
   form.append(navigation,columns,error,buttons);
   dialog.append(heading,form);
   document.body.append(dialog);
@@ -608,31 +645,93 @@ ${cell('参考','{{reference}}')}
   file.onchange=async()=>{
    const chosen=file.files?.[0];if(!chosen)return;
    const request=++logoRequest;
-   save.disabled=true;error.textContent='';
+   setTransferDisabled(true);error.textContent='';
    try{
     const data=await loadLogo(chosen);
     if(dialog.open&&valid()&&request===logoRequest){logo=data;refresh();}
    }catch(cause){
     if(dialog.open&&request===logoRequest)error.textContent=t(cause.message);
    }finally{
-    if(request===logoRequest){file.value='';save.disabled=false;}
+    if(request===logoRequest){file.value='';setTransferDisabled(false);}
    }
   };
-  remove.onclick=()=>{logoRequest++;save.disabled=false;file.value='';logo='';refresh();};
+  remove.onclick=()=>{logoRequest++;setTransferDisabled(false);file.value='';logo='';refresh();};
+  function draftProfile(){
+   const draft=current();
+   if(color.value.trim()&&!draft.color){section='header';paint();error.textContent=t('请输入有效的十六进制主题色。');color.focus();return null;}
+   draft.header=draft.header.trim();
+   draft.footer=draft.footer.trim();
+   draft.cover=draft.cover.trim();
+   if(draft.cover===COVER_TEMPLATE)draft.cover='';
+   return normalizeProfile(draft);
+  }
+  function applyProfile(profile){
+   color.value=profile.color;
+   picker.value=profile.color||'#24598a';
+   for(const region of ['header','footer','cover']){
+    editors[region].value=profile[region]||(region==='cover'?COVER_TEMPLATE:'');
+    editors[region].scrollTop=0;
+   }
+   coverEnabled.checked=profile.coverEnabled;
+   includeCover.checked=profile.coverInToc;
+   toc.checked=profile.toc;
+   tocPreset.value=profile.tocStyle;
+   const missingHeading=profile.tocAfter&&!headings.some(item=>item.key===profile.tocAfter);
+   tocAfter.value=missingHeading?'':profile.tocAfter;
+   numberPlacement.value=profile.pageNumbers;
+   logo=profile.logo;
+   position.value=profile.logoSide;
+   x.value=profile.logoX;
+   y.value=profile.logoY;
+   values=profile.values;
+   activeField=activeRegion='';
+   valueEditor.hidden=true;
+   styleUI.write(profile.typography);
+   refresh();
+   status.textContent=t(missingHeading?'配置已导入。未找到对应标题，目录位置已设为正文之前。点击保存以应用。':'配置已导入。点击保存以应用到当前文档。');
+  }
+  function setTransferDisabled(disabled){
+   save.disabled=importConfig.disabled=exportConfig.disabled=disabled;
+  }
+  importConfig.onclick=()=>configFile.click();
+  configFile.onchange=async()=>{
+   const chosen=configFile.files?.[0];
+   configFile.value='';
+   if(!chosen||save.disabled)return;
+   status.textContent=error.textContent='';
+   setTransferDisabled(true);
+   choose.disabled=remove.disabled=true;
+   try{
+    if(chosen.size>MAX_CONFIG_BYTES)throw new Error('PDF layout file is too large');
+    const profile=decodeConfig(await chosen.text());
+    if(profile.logo){
+     const image=new Image();
+     image.src=profile.logo;
+     await image.decode();
+    }
+    if(dialog.open&&valid())applyProfile(profile);
+   }catch{
+    if(dialog.open&&valid())error.textContent=t('无法导入配置，请选择有效且版本受支持的 Aide PDF 版式 JSON 文件。');
+   }finally{
+    setTransferDisabled(false);
+    choose.disabled=remove.disabled=false;
+   }
+  };
+  exportConfig.onclick=()=>{
+   if(!valid()){dialog.close();return;}
+   status.textContent=error.textContent='';
+   const profile=draftProfile();
+   if(!profile)return;
+   download(new Blob([encodeConfig(profile)],{type:'application/json'}),(title||'document')+'.pdf-layout.json');
+   status.textContent=t('已导出 PDF 版式配置。');
+  };
   cancel.onclick=()=>dialog.close();
   form.onsubmit=event=>{
    event.preventDefault();
    if(save.disabled)return;
    if(!valid()){dialog.close();return;}
-   const profile=current();
-   profile.header=profile.header.trim();
-   profile.footer=profile.footer.trim();
-   profile.cover=profile.cover.trim();
-   if(profile.cover===COVER_TEMPLATE)profile.cover='';
-   profile.values=fieldValues(profile.values);
-   profile.logoX=coordinate(profile.logoX,17);
-   profile.logoY=coordinate(profile.logoY,6.35);
-   if(color.value.trim()&&!profile.color){section='header';paint();error.textContent=t('请输入有效的十六进制主题色。');color.focus();return;}
+   const profile=draftProfile();
+   if(!profile)return;
    try{
     if(profile.typography||profile.color||profile.header||profile.footer||profile.cover||profile.coverEnabled||Object.keys(profile.values).length||profile.logo||profile.toc||profile.tocAfter||profile.coverInToc||profile.pageNumbers!=='footer'||profile.tocStyle!=='editorial')localStorage.setItem(PREFIX+key,JSON.stringify(profile));
     else localStorage.removeItem(PREFIX+key);
@@ -651,4 +750,5 @@ ${cell('参考','{{reference}}')}
  }
 
  window.AideMarkdownPdfAppearance={close,open,read,buildHtml,layout,coverLayout,pageGeometry,relativeBox,pdfValue,templateValue,COVER_TEMPLATE,MARGIN,PT_PER_PX};
+ if(window.__AIDE_MARKDOWN_EXPORT_TEST__)window.AideMarkdownPdfAppearance.test={encodeConfig,decodeConfig};
 })();

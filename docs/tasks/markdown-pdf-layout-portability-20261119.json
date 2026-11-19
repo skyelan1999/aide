@@ -1,0 +1,77 @@
+{
+  "id": "markdown-pdf-layout-portability-20261119",
+  "request": "你这对应的配置支持导入和导出吗，不支持的话做一下",
+  "baseline": "c64fa577955c9124d6f2f32a5541b4d8464984b9",
+  "initial_status": "工作树干净。版式配置已有按文档的本地保存，暂无配置文件交换入口。",
+  "acceptance": [
+    "导出有版本标识的 JSON，包含当前版式、模板变量和 Logo。",
+    "可在另一 Markdown 文档导入，预览后手动保存，重载后恢复。",
+    "无效配置不改变当前草稿。目录标题无法匹配时采用正文之前并提示。",
+    "在真实 Aide 中验收中英文、窄屏与导入后的 PDF。"
+  ],
+  "scope": [
+    "Markdown PDF 版式设置、文档及验收"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "支持完整 PDF 版式的备份和跨文档复用。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "从当前草稿下载版本化 JSON，导入复用保存时的数据规范。仅点保存时写入当前文档。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/markdown-pdf-style.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "版式对话框新增 JSON 导入和导出，保存与导出共享规范化的草稿，导入完成后更新设置和预览。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/markdown-pdf-style.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离 Aide 的 Chromium 中文及 WebKit 英文验证导出草稿、跨文档导入、错误文件拒绝、取消、保存、重载和 390px 窄屏。两份实际 PDF 验证了 Logo、字体、目录链接及匹配标题后的页序。仓库 346 项快速检查通过。",
+      "evidence": [
+        "node --test scripts/markdown-pdf-layout.test.cjs scripts/markdown-download-export.test.js",
+        "node scripts/test_i18n_coverage.cjs",
+        "python3 scripts/agent-route.py verify quick",
+        ".agent-state/pdf-layout-portability/check.cjs",
+        ".agent-state/pdf-layout-portability/verify.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录可交换字段、预览保存流程与目录回退行为。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已停止并移除本次隔离验收容器、删除临时二进制并保留验收样稿。",
+      "evidence": [
+        "docker stop aide-pdf-layout-portability-qa",
+        ".agent-state/pdf-layout-portability"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "完成本地交付。",
+      "evidence": [
+        "本次请求为版式配置导入导出。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次提交移除交换入口，既有按文档存储格式兼容。",
+  "handoff": "源码位于 feat/markdown-pdf-typography。验收样稿使用合成 Markdown 和 Logo，日用 Aide 未替换。"
+}

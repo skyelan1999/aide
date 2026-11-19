@@ -847,7 +847,7 @@
       const o=options();closeMenu();
       if(!o?.valid())return;
       try{window.AideMarkdownPdfAppearance.open({key:o.appearanceKey,valid:o.valid,button,t,
-       title:nameOf(o.title).replace(/\.(md|markdown)$/i,''),headings:outlineForPdf(o)});}
+       title:nameOf(o.title).replace(/\.(md|markdown)$/i,''),headings:outlineForPdf(o),download});}
       catch(e){error(e);}
      };
      continue;

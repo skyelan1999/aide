@@ -264,7 +264,7 @@
   useReference.onclick=()=>{replace(reference());draw();};
   reset.onclick=()=>{replace(null);draw();};
   draw();
-  return {read:()=>settings,section:()=>section};
+  return {read:()=>settings,write:value=>{replace(value);draw();},section:()=>section};
  }
 
  window.AideMarkdownPdfStyle={normalize,STANDARDS,CSS_FONTS,applyPdfFonts,applyHtmlFonts,headingPaint,tablePaint,preview,controls};

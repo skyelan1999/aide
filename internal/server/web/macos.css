@@ -1007,8 +1007,9 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 }
 .markdown-pdf-empty-preview { margin: 0; padding: 24px; color: #51637a; font-size: 19px; }
 .markdown-pdf-appearance-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
-.markdown-pdf-appearance-actions .muted { margin-inline-end: auto; }
-.markdown-pdf-appearance-actions .muted:has(textarea) { flex-basis: 100%; }
+.markdown-pdf-appearance-actions .muted { flex-basis: 100%; }
+.markdown-pdf-appearance-actions .muted:empty { display: none; }
+.markdown-pdf-layout-transfer { display: flex; flex-wrap: wrap; gap: 8px; margin-inline-end: auto; }
 @media(max-width:680px) {
   .markdown-pdf-appearance-columns { grid-template-columns: minmax(0,1fr); gap: 10px; }
   .markdown-pdf-appearance textarea { height: 180px; }
