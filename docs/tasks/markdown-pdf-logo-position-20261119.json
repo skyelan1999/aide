@@ -1,0 +1,71 @@
+{
+  "id": "markdown-pdf-logo-position-20261119",
+  "request": "Markdown PDF Logo 可以放在左上角或右上角",
+  "baseline": "83bf3238ddfb8c5d384c526b93d335d3e06ccc23",
+  "initial_status": "从已合并的 83bf3238 开始。Markdown PDF 的 Logo 固定在右上角。",
+  "acceptance": [
+    "在 PDF 版式设置选择左上角或右上角。",
+    "预览与每页导出一致，页眉文字始终避开 Logo。",
+    "保存位置并支持旧配置，旧配置默认右上角。"
+  ],
+  "scope": [
+    "Markdown PDF 版式设置、导出位置及其回归验证。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "为用户准备左右两个页眉位置。",
+      "evidence": [
+        "用户请求"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保存在逐文件 PDF 版式设置中，导出按同一侧预留文字边距。",
+      "evidence": [
+        "Markdown PDF 字段和排版函数"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "加入 Logo 位置选择并同步预览与实际页眉。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "390px 浏览器真实 Aide 预览和刷新持久化验证。分别导出 6 页 PDF，逐页测量 Logo 坐标和文字间距。",
+      "evidence": [
+        "Node 版式和导出测试通过",
+        "真实候选的 Chromium 导出验证通过",
+        "Poppler 首页面视觉检查"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "说明可选左右和默认右上角。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "验收容器已停止，保留两份样张。",
+      "evidence": [
+        "隔离容器已退出"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前交付为本地源码和验证。",
+      "evidence": [
+        "本轮未要求推送"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "可回退源码，旧导出器继续以右上角为固定位置。",
+  "handoff": "日用 Aide 尚未更新。"
+}

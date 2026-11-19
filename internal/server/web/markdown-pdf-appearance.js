@@ -8,6 +8,7 @@
  const DROP_TAGS=new Set(['SCRIPT','STYLE','TEMPLATE','IFRAME','OBJECT','EMBED','SVG','MATH','AUDIO','VIDEO','PICTURE','IMG','INPUT','TEXTAREA','SELECT','BUTTON']);
  const BLOCK_TAGS=new Set(['P','DIV','H1','H2','H3','H4','H5','H6']);
  let activeDialog=null;
+ const logoSide=value=>value==='left'?'left':'right';
 
  function colorValue(value){
   const hex=String(value||'').trim().toLowerCase();
@@ -59,7 +60,7 @@
   // Forty-two glyphs is a conservative line width at 9 pt in A4 with a logo.
   // Reserve room for line wraps before page layout and keep the body below it.
   const lineCount=rows.reduce((total,row)=>total+Math.ceil(Array.from(row.map(run=>run.text).join('').trim()).length/42),0);
-  return {color:profile.color,logo:profile.logo,rows,lineCount};
+  return {color:profile.color,logo:profile.logo,logoSide:logoSide(profile.logoSide),rows,lineCount};
  }
 
  function read(key){
@@ -70,7 +71,8 @@
    return {
     color:colorValue(saved.color),
     header:typeof saved.header==='string'&&saved.header.length<=MAX_HTML?saved.header:'',
-    logo:typeof saved.logo==='string'&&saved.logo.length<=MAX_LOGO&&/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(saved.logo)?saved.logo:''
+    logo:typeof saved.logo==='string'&&saved.logo.length<=MAX_LOGO&&/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(saved.logo)?saved.logo:'',
+    logoSide:logoSide(saved.logoSide)
    };
   }catch{return {};}
  }
@@ -132,6 +134,13 @@
   const logoLabel=make('label','页眉 Logo');logoLabel.append(file);
   const remove=action('移除 Logo');
   const logoField=make('div');logoField.className='markdown-pdf-logo-setting';logoField.append(logoLabel,remove);
+  const position=make('select');
+  position.setAttribute('aria-label',t('Logo 位置'));
+  for(const [value,label] of [['left','左上角'],['right','右上角']]){
+   const option=make('option',label);option.value=value;position.append(option);
+  }
+  position.value=logoSide(saved.logoSide);
+  const positionLabel=make('label','Logo 位置');positionLabel.append(position);
   const preview=make('div');preview.className='markdown-pdf-header-preview';
   preview.setAttribute('aria-label',t('页眉预览'));
   const error=make('p');error.className='task-error';error.setAttribute('role','status');
@@ -139,7 +148,7 @@
   const cancel=action('取消');
   const save=action('保存','primary');save.type='submit';
   buttons.append(cancel,save);
-  form.append(colorField,headerLabel,help,logoField,preview,error,buttons);
+  form.append(colorField,headerLabel,help,logoField,positionLabel,preview,error,buttons);
   dialog.append(title,form);
   document.body.append(dialog);
 
@@ -163,13 +172,18 @@
     text.append(line);
    }
    preview.append(text);
-   if(logo){const image=make('img');image.alt=t('页眉 Logo');image.src=logo;preview.append(image);}
+   if(logo){
+    const image=make('img');image.alt=t('页眉 Logo');image.src=logo;
+    if(position.value==='left')preview.prepend(image);else preview.append(image);
+   }
    if(!logo&&!content.rows.length)text.textContent=t('页眉为空');
    remove.hidden=!logo;
+   position.disabled=!logo;
   }
 
   color.oninput=header.oninput=()=>{error.textContent='';refresh();};
   picker.oninput=()=>{color.value=picker.value;color.oninput();};
+  position.onchange=refresh;
   file.onchange=async()=>{
    const chosen=file.files?.[0];if(!chosen)return;
    const request=++logoRequest;
@@ -191,7 +205,7 @@
    if(!valid()){dialog.close();return;}
    const theme=colorValue(color.value);
    if(color.value.trim()&&!theme){error.textContent=t('请输入有效的十六进制主题色。');color.focus();return;}
-   const profile={color:theme,header:header.value.trim(),logo};
+   const profile={color:theme,header:header.value.trim(),logo,logoSide:logoSide(position.value)};
    const content=compile(profile);
    if(content.lineCount>4){error.textContent=t('页眉超过 4 行，请缩短内容。');header.focus();return;}
    if(!content.rows.length)profile.header='';

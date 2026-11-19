@@ -240,8 +240,10 @@
   if(!rows.length&&!appearance.logo)return {margin:PDF_MARGIN};
   const textHeight=(appearance.lineCount||0)*14+rows.length*2;
   const margin=PDF_HEADER_TOP+Math.max(textHeight,appearance.logo?PDF_LOGO_HEIGHT:0)+14;
+  const logoInset=appearance.logo?PDF_LOGO_WIDTH+12:0;
+  const leftLogo=appearance.logoSide==='left';
   const content=rows.length?()=>({
-   margin:[PDF_MARGIN,PDF_HEADER_TOP,PDF_MARGIN+(appearance.logo?PDF_LOGO_WIDTH+12:0),0],
+   margin:[PDF_MARGIN+(leftLogo?logoInset:0),PDF_HEADER_TOP,PDF_MARGIN+(leftLogo?0:logoInset),0],
    stack:rows.map(row=>({
     text:row.map(run=>({...run})),fontSize:9,lineHeight:1.15,wordBreak:'break-all',
     margin:[0,0,0,2],color:themeText||'#243448'
@@ -416,7 +418,10 @@
   const footerRule=ruleColor?rgb(...[1,3,5].map(i=>parseInt(ruleColor.slice(i,i+2),16)/255)):rgb(0.81,0.85,0.89);
   for(const [index,page] of pages.entries()){
    const right=page.getWidth()-PDF_MARGIN;
-   if(logo)page.drawImage(logo,{...logoSize,x:right-logoSize.width,y:page.getHeight()-PDF_HEADER_TOP-logoSize.height});
+   if(logo){
+    const x=appearance.logoSide==='left'?PDF_MARGIN:right-logoSize.width;
+    page.drawImage(logo,{...logoSize,x,y:page.getHeight()-PDF_HEADER_TOP-logoSize.height});
+   }
    page.drawLine({start:{x:PDF_MARGIN,y:34},end:{x:right,y:34},thickness:0.45,color:footerRule});
    const label=(index+1)+' / '+pages.length,size=8;
    page.drawText(label,{x:right-font.widthOfTextAtSize(label,size),y:20,size,font,color:rgb(0.32,0.38,0.46)});

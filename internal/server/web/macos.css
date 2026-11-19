@@ -939,6 +939,7 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
   min-height: 52px; color: #243448; background: #fff; overflow-wrap: anywhere; font-size: 12px;
 }
 .markdown-pdf-header-preview img { max-width: 76px; max-height: 34px; width: auto; height: auto; object-fit: contain; }
+.markdown-pdf-header-preview > div { flex: 1; min-width: 0; }
 .markdown-pdf-appearance-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .markdown-export-format{display:grid;place-items:center;flex:0 0 40px;height:35px;border-radius:8px;background:#8295ab18;color:var(--brand,#557da2);font:600 11px/1 ui-monospace,monospace;letter-spacing:.04em}
 .markdown-export-menu strong,.markdown-export-menu small{display:block}.markdown-export-menu strong{font-size:13px;font-weight:600;line-height:1.5}.markdown-export-menu small{margin-top:2px;font-size:11px;opacity:.68;line-height:1.5}
