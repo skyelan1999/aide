@@ -678,6 +678,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .md-reader-content :is(th,td) :is(code,pre) { white-space: pre-wrap; overflow-wrap: anywhere; }
 .md-review-host { container: markdown-reader / inline-size; }
+.md-review-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+.md-review-toggle .ui-icon { width: 16px; height: 16px; }
 .md-review-toggle[aria-expanded="true"] { background: var(--selected); color: var(--brand-text, var(--text)); }
 .md-review-panel {
   grid-column: 1 / -1; min-width: 0; max-height: min(36dvh, 350px); overflow-y: auto;

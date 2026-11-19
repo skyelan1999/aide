@@ -50,7 +50,8 @@
         "PDF 文本和页码可提取，内嵌常规和半粗中英文字体，Poppler 验收实际字形",
         "真实矢量导出另验证了 PNG、GIF、SVG 和内嵌附件",
         "WebKit 切换页面时取消了三个独立的后台轮询，Markdown 交互和导出通过",
-        "全仓 quick 通过，源码指纹 2aae05e1b380a8770cf5ddf23fba5884a5b4d8d323d1f73e0a162064c0af5414"
+        "全仓 quick 通过，源码指纹 2aae05e1b380a8770cf5ddf23fba5884a5b4d8d323d1f73e0a162064c0af5414",
+        "批注入口调整为图标加文字，隔离 Aide 的 1440px 和 390px 文件页验证通过，覆盖点击及 Enter 打开和关闭"
       ]
     },
     "documentation": {

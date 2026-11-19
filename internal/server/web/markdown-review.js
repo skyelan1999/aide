@@ -117,6 +117,8 @@
     let activeId = '';
     const toggle = button('批注', () => setOpen(!review.open));
     toggle.classList.add('md-review-toggle');
+    toggle.title = t('批注');
+    toggle.insertAdjacentHTML('afterbegin', '<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 15a2 2 0 0 1-2 2H9l-5 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2zM8 9h8m-8 4h5"/></svg>');
     const panel = element('aside', 'md-review-panel');
     panel.id = 'markdown-comments-' + slot;
     toggle.setAttribute('aria-controls', panel.id);
