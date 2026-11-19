@@ -54,7 +54,7 @@ assert.equal(attached.content.at(-1).columns[1].attachment.hidden,false,'embedde
 assert.equal(attached.content.at(-1).columns[1].attachment.relationship,'Data');
 
 const logo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAI';
-const appearanceContext={window:{},localStorage:{getItem:()=>JSON.stringify({logo})},atob};
+const appearanceContext={window:{__AIDE_MARKDOWN_EXPORT_TEST__:true},localStorage:{getItem:()=>JSON.stringify({logo})},atob};
 vm.createContext(appearanceContext);
 vm.runInContext(fs.readFileSync('internal/server/web/markdown-pdf-appearance.js','utf8'),appearanceContext);
 const appearance=appearanceContext.window.AideMarkdownPdfAppearance;
@@ -86,8 +86,49 @@ assertNear(footer.html.y+footer.html.height,portrait.height-37);
 assert.equal(footer.bottomMargin,141);
 const headerNumber=appearance.layout({},portrait,0,undefined,{automatic:true});
 assert.equal(headerNumber.numberTop,26);
+assert.equal(saved.coverEnabled,false,'legacy PDF profiles have no cover');
+assert.equal(saved.tocAfter,'','legacy contents precede the body');
+assert.equal(appearance.templateValue('title',{region:'cover',title:'file',coverTitle:'Heading'}),'Heading');
+assert.equal(appearance.templateValue('title',{region:'header',title:'file',coverTitle:'Heading'}),'file');
+assert.equal(appearance.templateValue('reviewer',{values:{reviewer:'Ada'}}),'Ada');
+assert.equal(appearance.templateValue('constructor',{values:{}}),'','inherited values do not resolve');
+const cover=appearance.coverLayout(portrait,90,80,1100,700);
+assert.equal(cover.y,118);
+assertNear(cover.y+cover.height,portrait.height-80);
 const empty=appearance.layout({},portrait,0);
 assert.equal(empty.topMargin,48);
 assert.equal(empty.logo,null);
 assert.equal(empty.html,null);
+vm.runInContext(fs.readFileSync('internal/server/web/markdown-pdf-style.js','utf8'),appearanceContext);
+const styling=appearanceContext.window.AideMarkdownPdfStyle;
+const typography=styling.normalize({fonts:{han:'NotoSerifSC',latin:'Times',digits:'Courier'},size:999,headings:[{size:24,before:7}],table:{mode:'grid',border:0.6,repeat:false}});
+assert.equal(typography.size,36);
+assert.equal(typography.headings[0].size,24);
+const fontText=[{text:'中文 Alpha 128',headlineLevel:2,id:'title'}];
+styling.applyPdfFonts(fontText,typography);
+assert.deepEqual(JSON.parse(JSON.stringify(fontText[0].text)),[
+ {text:'中文 ',font:'NotoSerifSC'},{text:'Alpha ',font:'Times'},{text:'128',font:'Courier'}
+]);
+assert.equal(fontText[0].id,'title');
+const grid=vm.runInContext("customPdfTableLayout({mode:'grid',border:.75,borderColor:'#000000',padding:7},1)",context);
+assert.equal(grid.vLineWidth(),0.75);
+assert.equal(grid.paddingLeft(),7);
 console.log('PASS: layered PDF header geometry, legacy preferences and heading metadata');
+
+
+const {encodeConfig,decodeConfig}=appearance.test;
+const portable={...appearance.read('document'),header:'<div>{{logo}} · {{reference}}</div>',
+ cover:'<h1>{{coverTitle}}</h1>',footer:'<div>{{page}}</div>',coverEnabled:true,coverInToc:true,
+ toc:true,tocStyle:'classic',tocAfter:'[2,"Review"]:1',values:{reference:'设计验证 2026'},typography,
+ logoSide:'custom',logoX:35,logoY:9,color:'#112233',pageNumbers:'off'};
+const encoded=encodeConfig(portable);
+assert.deepEqual(JSON.parse(JSON.stringify(decodeConfig(encoded))),JSON.parse(JSON.stringify(portable)));
+const config=JSON.parse(encoded);
+config.profile=Object.fromEntries(Object.entries(config.profile).reverse());
+assert.doesNotThrow(()=>decodeConfig(JSON.stringify(config)),'JSON object key order is irrelevant');
+assert.throws(()=>decodeConfig(JSON.stringify({...config,version:2})),/configuration/);
+assert.throws(()=>decodeConfig(JSON.stringify({...config,profile:{}})),/profile/);
+assert.throws(()=>decodeConfig(JSON.stringify({...config,profile:{...portable,logo:'data:image/jpeg;base64,AA=='}})),/profile/);
+assert.throws(()=>decodeConfig(JSON.stringify({...config,profile:{...portable,logo:'data:image/png;base64,AAAA'}})),/logo/);
+assert.throws(()=>decodeConfig(JSON.stringify({...config,profile:{...portable,typography:{...typography,size:90}}})),/profile/);
+console.log('PASS: versioned PDF configuration round trip and invalid profile rejection');

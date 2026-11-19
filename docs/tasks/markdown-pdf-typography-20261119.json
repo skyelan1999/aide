@@ -1,0 +1,78 @@
+{
+  "id": "markdown-pdf-typography-20261119",
+  "request": "按参考文档增加 Markdown PDF 各级标题、表格和分文字类型字体设置",
+  "baseline": "7388b508bea5161d34d2192f49557254fb6a79f6",
+  "initial_status": "承接本地 PDF 首页与目录提交 7388b508。新工作树干净。",
+  "acceptance": [
+    "H1 到 H6 支持各自的字号、字形、颜色、对齐和段距，预设与参考文档的标题定义一致。",
+    "表格支持边框、表头底色、隔行底色、字号、内边距、表头加粗和跨页重复。",
+    "中文、英文、数字字体能分别选择，用在导出的正文、表格、目录、HTML 模板和页码中。",
+    "设置按文档保存，原默认配置仍支持导出。中英文界面实测。"
+  ],
+  "scope": [
+    "Markdown PDF 正文样式、渲染、字体资产、验收和相关文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "根据 Teams 参考 Word 文档核对标题字号、颜色、段距和表格网格。",
+      "evidence": [
+        "读取文档 OOXML 中使用的样式定义。只提取排版参数。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "正文样式可按文档设置。在保留 PDF 向量正文和目录链接的前提下按文字类型选择字体。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-style.js",
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成预设、独立字体、标题与表格设置、实时预览和中英文条目。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-style.js",
+        "internal/server/web/vendor/markdown-export/README.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离 Aide 的 Chromium 中文与 WebKit 英文均通过实际导出和设置持久化检查。PDF 验证 11.5/10.5 pt 字号、分文字类型字体、目录链接、表格线和跨页表头。",
+      "evidence": [
+        "隔离 SDK 构建",
+        "python3 scripts/agent-route.py verify quick（346 项通过）",
+        ".agent-state/pdf-style/verify.py",
+        ".agent-state/pdf-style/chromium-zh-CN-custom.pdf",
+        ".agent-state/pdf-style/webkit-en-custom.pdf"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录正文样式、预设和新增字体的来源及校验值。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "internal/server/web/vendor/markdown-export/README.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已停止隔离验收容器，清除临时构建产物，保留验收样稿和日志。",
+      "evidence": [
+        "docker stop aide-pdf-typography-qa",
+        ".agent-state/pdf-style/quick.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮本地交付。",
+      "evidence": [
+        "当前需求为 Aide 内置 Markdown PDF 正文样式。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次提交恢复此前导出样式。旧 PDF 版式配置仍保留。",
+  "handoff": "用隔离 Aide 和合成中英文带表格文档验证，样稿和日志保存在 .agent-state/pdf-style。参考 Word 原文没有加入源码。"
+}

@@ -23,3 +23,24 @@
 .markdown-pdf-rich-html .markdown-pdf-logo-slot { display: inline-block; width: min(150px,100%); height: 22px; vertical-align: middle; }
 .markdown-pdf-rich-html .markdown-pdf-page-value { display: inline-block; white-space: nowrap; font-family: Arial, sans-serif; font-variant-numeric: tabular-nums; }
 .markdown-pdf-measuring .markdown-pdf-page-value { visibility: hidden; }
+.markdown-pdf-field { white-space: pre-wrap; overflow-wrap: anywhere; }
+@font-face {
+  font-family: "Aide PDF Noto Sans SC";
+  src: url("/vendor/markdown-export/NotoSansSC-Regular.ttf") format("truetype");
+  font-weight: 100 599;
+}
+@font-face {
+  font-family: "Aide PDF Noto Sans SC";
+  src: url("/vendor/markdown-export/NotoSansSC-SemiBold.ttf") format("truetype");
+  font-weight: 600 900;
+}
+@font-face {
+  font-family: "Aide PDF Noto Serif SC";
+  src: url("/vendor/markdown-export/NotoSerifSC-Regular.woff") format("woff");
+  font-weight: 100 599;
+}
+@font-face {
+  font-family: "Aide PDF Noto Serif SC";
+  src: url("/vendor/markdown-export/NotoSerifSC-Bold.woff") format("woff");
+  font-weight: 600 900;
+}

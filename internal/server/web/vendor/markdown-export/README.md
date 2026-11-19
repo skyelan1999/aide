@@ -1,6 +1,6 @@
 # Markdown export browser dependencies
 
-Vendored browser dependencies loaded locally on demand. PDF output uses pdfmake 0.3.13, html-to-pdfmake 2.5.29, pdf-lib 1.17.1, and two static Noto Sans SC weights. Their upstream licenses are included beside each asset.
+Vendored browser dependencies loaded locally on demand. PDF output uses pdfmake 0.3.13, html-to-pdfmake 2.5.29, pdf-lib 1.17.1, two static Noto Sans SC weights, and two optional Noto Serif SC weights. Their upstream licenses are included beside each asset.
 
 - Upstream `pdfmake.min.js` 0.3.13 SHA-256 `cd2b315d9453352486f47a7ecb91f23de53d4c701275f59c31b6c0e7e971979d`
 - Aide `pdfmake.min.js` SHA-256 `27817155017babbe5c7e797d0fc505c3153772bc861d8afc75dfa3eef9625c97`
@@ -10,11 +10,17 @@ Vendored browser dependencies loaded locally on demand. PDF output uses pdfmake 
 - `NotoSansSC-SemiBold.ttf` SHA-256 `085597b66a9c249102e2662609d9a80d2f9e8909aa896fca1497f6ebd1f5b267`
 - Source Noto Sans SC variable TTF SHA-256 `a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da`
 - Noto Sans SC Variable font source: https://github.com/google/fonts/tree/main/ofl/notosanssc (SIL Open Font License 1.1).
+- Noto Serif SC source: https://github.com/google/fonts/tree/2e61f4355afd22b801791b0df176065082423b87/ofl/notoserifsc (SIL Open Font License 1.1).
+- Source Noto Serif SC variable TTF SHA-256 `050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9`.
+- `NotoSerifSC-Regular.woff` SHA-256 `4a74da726839bf7f3d1bd0547afbd65fe66a4a13fec5d28772d0dae4096f25f3`.
+- `NotoSerifSC-Bold.woff` SHA-256 `3460969f9d096c60aa9a639c5a5205eed9e4ea3765bc137af7c5c686febc9956`.
+- The WOFF files use FontTools 4.59.2 to instantiate the upstream variable font at weights 400 and 700. The original glyph coverage remains available. The optional serif files load only when selected.
+- The PDFMake 0.3.13 browser standard font bundles register layout metrics only when the family is selected. Their SHA-256 values are `fa2722f102f186d1e83750f153a26a2352c339c2babba238d25cc5948d964ebc` for `Helvetica.js`, `931005fb50d0ff2ae77105cfc0eef188bbbcef2270943766c4b47d86f1580d3d` for `Times.js`, and `22be8f83c54eb3cc5cd64fa4076053000d1f21dffa0a354b1f086f6e4b2b7d5a` for `Courier.js`.
 - pdfmake source: https://registry.npmjs.org/pdfmake/-/pdfmake-0.3.13.tgz
 - html-to-pdfmake source: https://registry.npmjs.org/html-to-pdfmake/-/html-to-pdfmake-2.5.29.tgz
 - pdf-lib source: https://registry.npmjs.org/pdf-lib/-/pdf-lib-1.17.1.tgz
 
-The PDF pipeline converts rendered HTML to PDFMake vector/text elements, embeds images and clickable PDF file attachments, and merges bounded Markdown chunks with pdf-lib. Images decoded by the browser that PDFMake cannot embed directly are converted to PNG. Inline SVG diagrams remain vector elements. `html2canvas.min.js` handles only PNG downloads.
+The PDF pipeline converts rendered HTML to PDFMake vector/text elements, embeds images and clickable PDF file attachments, and merges bounded Markdown chunks with pdf-lib. Images decoded by the browser that PDFMake cannot embed directly are converted to PNG. Inline SVG diagrams remain vector elements. `html2canvas.min.js` handles PNG downloads and snapshots of HTML covers, headers, and footers.
 
 Aide's PDFMake patch replaces the PNG decoder's `const co=unzlib;` alias with the callback adapter below. This uses the same bundled fflate decompressor in the workbench without starting a blob worker. The workbench retains `worker-src 'self'`. The adapter keeps errors from the decoder visible to the caller. Export checks input image bounds before calling PDFMake.
 

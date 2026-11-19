@@ -967,6 +967,18 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
   min-width: 0; max-height: 260px; overflow: hidden auto;
   border: 1px solid var(--line); border-radius: 8px; background: #fff;
 }
+.markdown-pdf-header-preview[data-section="cover"] { max-height: 500px; }
+.markdown-pdf-cover-tools { display: grid; gap: 8px; }
+.markdown-pdf-cover-tools > button { justify-self: start; }
+.markdown-pdf-value-editor {
+  display: grid; gap: 6px; padding: 9px; border: 1px solid var(--line); border-radius: 8px;
+}
+.markdown-pdf-value-editor textarea { min-height: 54px; font-family: inherit; }
+.markdown-pdf-field-editable {
+  cursor: text; border-radius: 2px; outline: 1px dashed #91a9bd; outline-offset: 2px;
+}
+.markdown-pdf-field-editable:hover,.markdown-pdf-field-editable:focus { outline: 2px solid #47779d; }
+.markdown-pdf-field-editable:empty::before { content: attr(data-placeholder); color: #51637a; }
 .markdown-pdf-preview-paper { position: relative; min-height: 72px; overflow: hidden; color-scheme: light; background: #fff; }
 .markdown-pdf-preview-paper > .markdown-pdf-rich-html { position: absolute; z-index: 1; transform-origin: top left; }
 .markdown-pdf-preview-logo { position: absolute; z-index: 2; display: block; pointer-events: none; }
@@ -995,8 +1007,9 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 }
 .markdown-pdf-empty-preview { margin: 0; padding: 24px; color: #51637a; font-size: 19px; }
 .markdown-pdf-appearance-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
-.markdown-pdf-appearance-actions .muted { margin-inline-end: auto; }
-.markdown-pdf-appearance-actions .muted:has(textarea) { flex-basis: 100%; }
+.markdown-pdf-appearance-actions .muted { flex-basis: 100%; }
+.markdown-pdf-appearance-actions .muted:empty { display: none; }
+.markdown-pdf-layout-transfer { display: flex; flex-wrap: wrap; gap: 8px; margin-inline-end: auto; }
 @media(max-width:680px) {
   .markdown-pdf-appearance-columns { grid-template-columns: minmax(0,1fr); gap: 10px; }
   .markdown-pdf-appearance textarea { height: 180px; }
@@ -1155,3 +1168,12 @@ button:has(> .icon) {
 .md-preview-deferred { display:block; }
 .md-preview-deferred-card { display:flex; flex-direction:column; align-items:flex-start; gap:8px; max-width:440px; margin:32px auto; padding:20px 22px; border:1px solid var(--line); border-radius:14px; background:var(--panel,var(--bg)); }
 .md-preview-deferred-card p { margin:0; }
+
+.markdown-pdf-style-settings,.markdown-pdf-style-fields { display: grid; gap: 10px; min-width: 0; }
+.markdown-pdf-style-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.markdown-pdf-style-fields input[type="color"] { width: 100%; min-width: 0; height: 36px; }
+.markdown-pdf-style-fields .markdown-pdf-toc-setting { grid-column: 1/-1; }
+.markdown-pdf-header-preview[data-section="style"] { max-height: 490px; }
+.markdown-pdf-style-sample { padding: 18px; color: #243448; overflow-wrap: anywhere; }
+.markdown-pdf-style-sample table { width: 100%; border-collapse: collapse; }
+.markdown-pdf-style-sample :is(th,td) { text-align: left; vertical-align: top; }
