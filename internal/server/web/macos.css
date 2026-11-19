@@ -919,6 +919,27 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 .markdown-export-menu button{display:flex;gap:12px;align-items:center;width:100%;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:inherit;text-align:left;cursor:pointer}
 .markdown-export-menu button:hover,.markdown-export-menu button:focus-visible{background:var(--surface-alt,#8295ab20);outline:2px solid transparent}
 .markdown-export-menu button:focus-visible{outline-color:var(--brand,#557da2)}
+.markdown-pdf-appearance {
+  width: min(540px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto;
+}
+.markdown-pdf-appearance form { display: grid; gap: 13px; }
+.markdown-pdf-appearance label { display: grid; min-width: 0; gap: 5px; }
+.markdown-pdf-appearance :is(input[type="text"],textarea) { width: 100%; min-width: 0; }
+.markdown-pdf-appearance textarea { resize: vertical; min-height: 82px; font-family: ui-monospace, monospace; }
+.markdown-pdf-appearance :is(.markdown-pdf-color,.markdown-pdf-logo-setting) {
+  display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 8px;
+}
+.markdown-pdf-color input[type="color"] { width: 40px; min-width: 0; height: 35px; padding: 3px; }
+.markdown-pdf-logo-setting input[type="file"] { max-width: 100%; }
+.markdown-pdf-appearance :is(.muted,.task-error) { margin: 0; }
+.markdown-pdf-appearance .task-error:empty { display: none; }
+.markdown-pdf-header-preview {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  min-height: 52px; color: #243448; background: #fff; overflow-wrap: anywhere; font-size: 12px;
+}
+.markdown-pdf-header-preview img { max-width: 76px; max-height: 34px; width: auto; height: auto; object-fit: contain; }
+.markdown-pdf-appearance-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .markdown-export-format{display:grid;place-items:center;flex:0 0 40px;height:35px;border-radius:8px;background:#8295ab18;color:var(--brand,#557da2);font:600 11px/1 ui-monospace,monospace;letter-spacing:.04em}
 .markdown-export-menu strong,.markdown-export-menu small{display:block}.markdown-export-menu strong{font-size:13px;font-weight:600;line-height:1.5}.markdown-export-menu small{margin-top:2px;font-size:11px;opacity:.68;line-height:1.5}
 .markdown-export-status{display:inline-flex;align-items:center;min-height:30px;margin-inline-start:8px;color:var(--muted,var(--text));font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}

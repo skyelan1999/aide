@@ -1,0 +1,77 @@
+{
+  "id": "markdown-pdf-appearance-20261119",
+  "request": "在 Markdown PDF 导出中加入文档主题色、HTML 页眉和 Logo，默认留空并说明横竖版规则",
+  "baseline": "9aeac963fb9694e33dcf78b7a5612ec0ca5e58cb",
+  "initial_status": "从已合并的 9aeac963 起步。导出按 Markdown 片段和表格列数决定方向，缺少文档版式设置。",
+  "acceptance": [
+    "说明 5 列及以下、6 列及以上和长文档分片的方向判定。",
+    "PDF 导出可逐文档设置主题色、HTML 页眉和 Logo。初始设置为空。",
+    "页眉内容和 Logo 在每页正确显示。媒体在预留页眉空间后仍保持在版心内。",
+    "文档之间隔离设置，刷新保留，编辑器原文保持原样。"
+  ],
+  "scope": [
+    "Markdown 导出菜单、PDF 专用版式设置和实际 PDF 渲染。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求说明自动横竖版，并增加默认空白的主题色、HTML 页眉与 Logo。",
+      "evidence": [
+        "用户请求"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "版式设置按浏览器、工作区和文件保存。用惰性模板解析 HTML 片段生成安全文本样式。在合并好的 PDF 中仅嵌入一份 Logo。",
+      "evidence": [
+        "internal/server/web/markdown-pdf-appearance.js",
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新版导出菜单提供版式对话框、主题取色、页眉 HTML 预览和本地图片。主题影响标题、链接、表头与分隔线。",
+      "evidence": [
+        "internal/server/web/markdown-export.js",
+        "internal/server/web/markdown-pdf-appearance.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "实际候选资源与源码一致。Chromium 与 WebKit 验证设置、文档隔离、Logo 默认和移除状态、上传与实际导出。",
+      "evidence": [
+        "单元测试检查默认页边距、独立 Logo、HTML 样式和脚本保护",
+        "候选浏览器使用 390px 窄窗并完成配置",
+        "两种浏览器各生成 6 页竖版，逐页检查 HTML 页眉、格式、Logo 和大图边界",
+        "横版 Logo-only 文件与未配置的竖版样张验证通过",
+        "同一个跨 196608 个代码单元边界的 PDF 正确呈现纵向页和横向页",
+        "Poppler 输出逐页渲染及关键页目视检查",
+        "全仓 quick 通过，源码指纹 a3b3c9220522f831d1f8d6fa224a5b1d0ada34389cba082d3ab9c8ee858051a4"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "维护使用说明，记录方向规则、支持的页眉内容和浏览器本地保存。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "停止隔离验收容器，保留最终本地候选与 PDF 样张。",
+      "evidence": [
+        "aide-pdf-appearance-qa 已停止"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "此任务交付本地源码与离线候选。",
+      "evidence": [
+        "当前请求未授权推送或部署"
+      ]
+    }
+  },
+  "release_authorization": "本轮未要求推送或部署。",
+  "rollback": "源码可回退，无数据库迁移。浏览器中的文件版式设置由本地存储键保留。",
+  "handoff": "日用 Aide 尚未更新本次功能。"
+}
