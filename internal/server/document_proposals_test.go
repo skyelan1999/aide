@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -124,6 +125,129 @@ func TestDocumentProposalExistingAttachmentAndVersion(t *testing.T) {
 		t.Fatal("version conflict overwritten")
 	}
 }
+func TestDocumentProposalReadsExistingMarkdownFromSameSource(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		before string
+	}{
+		{"complete", "# Existing report\n"},
+		{"segmented", strings.Repeat("x", maxReadToolWindow) + "\n尾段\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			a := testApp(t)
+			enableMarkdownHistory(t, a)
+			dir := bindProposalDocs(t, a, "docs-A")
+			s, task := documentProposalTask(a)
+			const name = "report.md"
+			const next = "# Updated report\n"
+			target := filepath.Join(dir, name)
+			if err := os.WriteFile(target, []byte(test.before), 0600); err != nil {
+				t.Fatal(err)
+			}
+			read := func(offset *int) string {
+				t.Helper()
+				args := map[string]any{"source": systemDocsSource, "path": name}
+				if offset != nil {
+					args["byteOffset"] = *offset
+				}
+				raw, _ := json.Marshal(args)
+				var call ToolCall
+				call.Function.Name, call.Function.Arguments = "read_file", string(raw)
+				return a.executeToolCall(context.Background(), call, task, nil)
+			}
+			out := read(nil)
+			if test.name == "complete" {
+				if out != test.before {
+					t.Fatalf("read_file did not return the whole file: %q", out)
+				}
+			} else {
+				offset := maxReadToolWindow
+				if !strings.Contains(out, "byteOffset="+strconv.Itoa(offset)) {
+					t.Fatalf("read_file omitted the continuation: %.300s", out)
+				}
+				if _, err := proposeDocument(a, task, nil, name, next); err == nil || !strings.Contains(err.Error(), "继续读取剩余字节") {
+					t.Fatalf("incomplete read accepted: %v", err)
+				}
+				// Ranges observed at different versions cannot complete a snapshot.
+				edited := []byte(test.before)
+				edited[0] = 'y'
+				if err := os.WriteFile(target, edited, 0600); err != nil {
+					t.Fatal(err)
+				}
+				if out := read(&offset); !strings.HasSuffix(out, "\n尾段\n") || !strings.Contains(out, "本段已到文件末尾") {
+					t.Fatalf("read_file omitted the remaining bytes: %.300s", out)
+				}
+				if _, err := proposeDocument(a, task, nil, name, next); err == nil {
+					t.Fatal("ranges from different file versions accepted")
+				}
+				read(nil)
+				test.before = string(edited)
+			}
+			if _, err := proposeDocument(a, task, nil, name, next); err != nil {
+				t.Fatal(err)
+			}
+			if got := task.Files[0].BaseHash; got != hash([]byte(test.before)) {
+				t.Fatalf("wrong full-file baseline: %s", got)
+			}
+			if current, err := os.ReadFile(target); err != nil || string(current) != test.before {
+				t.Fatal("proposal changed the original before approval", err)
+			}
+			requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/apply", nil), 200)
+			if current, err := os.ReadFile(target); err != nil || string(current) != next {
+				t.Fatal("approved update did not reach the original", err)
+			}
+			identity, _, err := a.historyTarget(systemDocsSource, name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			index, err := loadMarkdownIndex(a.markdownHistoryDir(identity), name)
+			if err != nil || len(index.Versions) != 2 || index.Versions[0].Content != hash([]byte(test.before)) || index.Versions[1].Content != hash([]byte(next)) {
+				t.Fatalf("history omitted the original or updated body: %+v %v", index.Versions, err)
+			}
+		})
+	}
+}
+
+func TestDocumentProposalToolsRejectStaleOrReboundRead(t *testing.T) {
+	for _, rebind := range []bool{false, true} {
+		a := testApp(t)
+		dir := bindProposalDocs(t, a, "docs-A")
+		s, task := documentProposalTask(a)
+		const name = "report.md"
+		const before = "# Report\n"
+		target := filepath.Join(dir, name)
+		if err := os.WriteFile(target, []byte(before), 0600); err != nil {
+			t.Fatal(err)
+		}
+		var read ToolCall
+		read.Function.Name = "read_file"
+		read.Function.Arguments = `{"source":"system-docs","path":"report.md"}`
+		if got := a.executeToolCall(context.Background(), read, task, nil); got != before {
+			t.Fatalf("unexpected read: %q", got)
+		}
+		if rebind {
+			other := bindProposalDocs(t, a, "docs-B")
+			if err := os.WriteFile(filepath.Join(other, name), []byte(before), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := proposeDocument(a, task, nil, name, "# Changed\n"); err == nil {
+				t.Fatal("read baseline survived a change to the source binding")
+			}
+			continue
+		}
+		if _, err := proposeDocument(a, task, nil, name, "# Changed\n"); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, []byte("# External edit\n"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/apply", nil), 409)
+		if got, err := os.ReadFile(target); err != nil || string(got) != "# External edit\n" {
+			t.Fatal("external edit overwritten", err)
+		}
+	}
+}
+
 func TestDocumentProposalRejectsUnavailableAndEscapedBinding(t *testing.T) {
 	a := testApp(t)
 	_, task := documentProposalTask(a)
