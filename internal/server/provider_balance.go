@@ -155,6 +155,11 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		key, e = a.vaultKeyByIDLocked(modelProviderVaultID(p.ID, kid))
+		if e == nil && b.Format == miMoPlan && strings.HasPrefix(key, "ttp-") {
+			a.mu.Unlock()
+			jsonOut(w, 200, map[string]any{"supported": false, "kind": "quota", "quota_infos": []any{}, "balance_infos": []any{}})
+			return
+		}
 		if e == nil && key == "" {
 			e = errors.New("model API key not configured")
 		}
@@ -245,6 +250,14 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, out)
 }
 func normalizeBalance(raw []byte, format string) (map[string]any, error) {
+	switch format {
+	case miMoMetered:
+		return normalizeMiMoBalance(raw)
+	case miMoPlan:
+		return normalizeMiMoPlan(raw)
+	case moonshotBalance:
+		return normalizeMoonshotBalance(raw)
+	}
 	if format == "quota-windows" {
 		return normalizeQuotaWindows(raw)
 	}

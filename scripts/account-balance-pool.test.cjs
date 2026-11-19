@@ -120,3 +120,16 @@ test('website help is collapsed by default, remembers expansion across refresh, 
  assert(f.all('p').some(p=>p.textContent==='专用官网窗口已关闭，请恢复窗口后继续同步。'));
  assert.equal(f.all('div').filter(d=>d.className==='balance-amount').length,0);
 });
+
+test('MiMo plan credits and Kimi balance details remain distinct',async()=>{
+ const f=fixture(async path=>{
+  const keyId=new URLSearchParams(path.split('?')[1]).get('keyId');
+  if(keyId==='0')return{supported:true,providerId:'provider',keyId,kind:'quota',quota_infos:[{id:'mimo',label:'MiMo Token Plan',remainingPercent:25,remainingCredits:25,totalCredits:100}]};
+  return{supported:true,providerId:'provider',keyId,balance_infos:[{currency:'CNY',total_balance:'6',available_cash_balance:'-2',granted_balance:'8'}]};
+ });
+ await f.start();
+ assert(f.cards()[0].querySelectorAll('p').some(p=>p.textContent==='剩余积分 25 / 100'));
+ assert(f.cards()[0].querySelectorAll('div').some(p=>p.textContent==='25.0%'));
+ assert(f.cards()[1].querySelectorAll('p').some(p=>p.textContent==='现金余额 -2.00 CNY'));
+ assert(f.cards()[1].querySelectorAll('p').some(p=>p.textContent==='赠送额度 8.00 CNY'));
+});
