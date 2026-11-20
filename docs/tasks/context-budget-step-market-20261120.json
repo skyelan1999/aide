@@ -39,15 +39,15 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Aide quick、定向 race tests、Go vet、插件13项Python及Node回归、市场验证和线上ZIP身份检查已通过；Aide PR CI待合并。",
+      "status": "pass",
+      "summary": "最终实现通过定向 race 回归、Aide quick/Go/vet 门禁、PR CI；插件包测试和官方目录/线上包校验均通过。完整本地 Go race 套件在修复前曾于基线同样失败的两项上下文测试处被停止；修复后的完整 Go CI 成功，未声称本地 full race 重跑。",
       "evidence": [
-        "Docker targeted race: two context compaction tests plus three #968/#969 tests PASS",
-        "Aide verify quick PASS: .agent-state/verify-20261120T102425858889Z.log",
-        "Aide Go vet: go vet -mod=vendor ./internal/server PASS",
-        "STEP Viewer 13 Python tests and six Node tests PASS",
-        "shop verify_catalog/public catalog/routing/Node tests PASS",
-        "GitHub Pages catalog and ZIP size/SHA match PASS"
+        "Aide targeted Docker Go race: TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall, TestContextRecoveryPreflightCompactsMultipleHistoryBatches, TestAnalyzeShellFailureDwgHint, TestAssistantDeliveryWaitsForSourceProposalApproval, TestAssistantDeliveryEvidenceGate — PASS after final 65a60723.",
+        "Aide local python3 scripts/agent-route.py verify quick — PASS (.agent-state/verify-20261120T102425858889Z.log).",
+        "Aide go vet -mod=vendor ./internal/server — PASS.",
+        "Aide PR #973 checks quick, go and gate — SUCCESS at head 65a607231bda7af073c37f979fb1627b7d800b8a.",
+        "STEP Viewer package: 13 Python tests and 6 Node tests — PASS; reproducible ZIP 212495 bytes, SHA-256 bb3bbeae3985fbd100f7c0bc8ec345fd24fd7a020f5c04628513246150249c57.",
+        "Official shop catalog and routing checks — PASS; Pages deployed; live catalog and downloaded ZIP bytes/SHA matched exactly."
       ]
     },
     "documentation": {
@@ -66,15 +66,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "STEP Viewer Release与官方Pages市场已发布并核对；Aide预算修复PR待合并。在线市场按运行时行为从官方main抓取。",
+      "status": "pass",
+      "summary": "Aide预算修复及STEP Viewer插件发布/市场更新全部已合并推送；相关 issue 已按验证结果关闭。",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-STEPViewer/releases/tag/v0.1.3",
-        "aide-pkg-shop PR #69 merged at 2204f36afdfbd53328a102eb8cb5d116cadbb4fa"
+        "Aide PR #973 merged as 07bafd6fd5580976a67c901ef69dd0b13cc464b9; main verified at that SHA.",
+        "Aide issues #974, #968, #969, #971 are CLOSED/COMPLETED.",
+        "STEP Viewer release PR #6 merged at 007708ebac7dfb1cb72d7c52905ffd3aeb236ca0; v0.1.3 Release assets include ZIP and SHA256SUMS.",
+        "aide-pkg-shop PR #69 merged at 2204f36afdfbd53328a102eb8cb5d116cadbb4fa; Pages deployment succeeded; live ZIP SHA-256 verified.",
+        "The Aide offline frozen public-package snapshot remains at its existing 31-plugin QA revision. The online market fetches current main; expanding the frozen snapshot to the live 36-plugin catalog requires complete package QA and was not claimed."
       ]
     }
   },
   "release_authorization": "用户明确要求：“继续修，合并，插件release后更新市场”。该消息授权修复/合并、插件发布及随后更新市场。",
   "rollback": "Aide: revert relevant PR. Market: revert Aide market pointer and shop catalog commits; keep published versions immutable and never overwrite old packages.",
-  "handoff": ""
+  "handoff": "完成。上下文压缩在摘要单独导致轻微超窗时，仅回收超额加64 token余量，输出预留下限1024。STEP Viewer 0.1.3已发布，官方市场目录和线上包身份一致。Aide main 的在线市场会按运行时刷新到 shop main；仓库离线冻结的公开包清单仍是31项，未冒充为对当前36项目录的完整双架构验收。"
 }
