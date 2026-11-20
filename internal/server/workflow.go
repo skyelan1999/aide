@@ -665,7 +665,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		}
 		// Retained history and its summary must fit beside this exact request,
 		// including current system/tool costs, rather than a fixed allowance.
-		compactHistoryBudget = current.ContextWindow - current.OutputReserve - current.InputEstimate - 512
+		// Leave enough room for the compacted-summary envelope and estimator
+		// drift, which are not fully represented by the raw retained-message
+		// budget. A 512-token margin still allowed a 26-token overflow at 16k.
+		compactHistoryBudget = current.ContextWindow - current.OutputReserve - current.InputEstimate - 1024
 		if compactHistoryBudget < 0 {
 			compactHistoryBudget = 0
 		}
@@ -713,6 +716,21 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		preview = a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
 		a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
 		if preview.OverLimit && (s.CompactedMessages <= foldedBefore || len(s.Messages) == 0) {
+			// Once every history message has been folded, a small summary can be
+			// the only remaining excess. Preserve that continuity record and
+			// reclaim only the exact shortfall plus a small estimator cushion from
+			// the response reserve. Never reduce the requested output below 1k.
+			const minOutputReserve = 1024
+			const estimateHeadroom = 64
+			reduction := preview.TotalEstimate - preview.ContextWindow + estimateHeadroom
+			if reduction > 0 && preview.OutputReserve-reduction >= minOutputReserve && s.Compact != "" {
+				params.MaxTokens = preview.OutputReserve - reduction
+				preview = a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
+				a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
+				if !preview.OverLimit {
+					break
+				}
+			}
 			fail(w, 400, fmt.Errorf("自动压缩后仍超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；请减少附件/提示内容或新建会话", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
 			return
 		}
