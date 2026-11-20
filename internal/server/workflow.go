@@ -4977,11 +4977,16 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 
 	causeTitle, causeFix := "命令以非零退出码结束", "查看下方输出定位具体报错，检查参数、依赖和当前目录；修改后重试"
 	lowCmd := strings.ToLower(command)
+	// Only classify an actual DWG converter invocation as a conversion failure.
+	// A .dwg path may just be data (for example, a file being hashed while a
+	// separate report path is missing).
+	commandParts := strings.Fields(lowCmd)
+	dwgConverter := false
+	if len(commandParts) > 0 {
+		executable := path.Base(strings.Trim(commandParts[0], "\"'"))
+		dwgConverter = executable == "dwgwrite" || executable == "dwg2dxf"
+	}
 	switch {
-	// dwg 闭源格式探测失败：直接引导换 dxf/ezdxf，停止无效空转（本次 bug 的直接诱因）
-	case strings.Contains(lowCmd, "dwgwrite") || strings.Contains(lowCmd, "dwg2dxf") || strings.Contains(lowCmd, "libredwg") || strings.Contains(lowCmd, ".dwg"):
-		causeTitle = "dwg 是闭源二进制格式，容器内无法直接生成或转换"
-		causeFix = "不要再探测/安装 dwgwrite、dwg2dxf、libredwg。直接用容器已装的 ezdxf 生成 .dxf（AutoCAD/ZWCAD/GstarCAD 可直接打开），例如：python3 -c 'import ezdxf; doc=ezdxf.new(\"R2010\"); msp=doc.modelspace(); msp.add_line((0,0),(100,0)); doc.saveas(\"户型.dxf\")'"
 	case strings.Contains(lowCmd, "apt-get") || strings.Contains(lowCmd, "apt ") || strings.Contains(lowCmd, "dpkg") || strings.Contains(lowCmd, "sudo"):
 		causeTitle = "容器内无 root 权限，无法用 apt/sudo 安装系统包"
 		causeFix = "不要重复 apt-get install / sudo。需要系统库时告知用户在镜像里预装；Python 能力优先用容器已装的包（如 ezdxf），pip 全局安装通常也无写权限"
@@ -4994,6 +4999,9 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 	case strings.Contains(hay, "超时") || strings.Contains(hay, "context deadline exceeded"):
 		causeTitle = "命令执行超时被终止"
 		causeFix = "简化命令（去掉全量构建/测试/下载），或在设置里调大 ShellTimeout 后重试"
+	case dwgConverter && (strings.Contains(hay, "command not found") || strings.Contains(hay, "executable file not found") || code == 127):
+		causeTitle = "DWG 转换工具未安装或不在 PATH 中"
+		causeFix = "先核对当前环境可用的 CAD 转换能力和工具路径；只有确认缺少工具后再处理依赖。不要把 DWG 路径本身当作格式不支持的证据，也不要把转换器未安装与转换执行失败混为一谈"
 	case strings.Contains(hay, "command not found"):
 		causeTitle = "命令不存在或不在 PATH 中"
 		causeFix = "检查命令拼写；确认工具已安装（容器内 PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin）；必要时用绝对路径"
@@ -5006,6 +5014,9 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 	case strings.Contains(hay, "syntax error") || strings.Contains(hay, "unexpected token"):
 		causeTitle = "shell 语法错误"
 		causeFix = "检查引号/管道/重定向是否闭合，命令是否被错误拆成多行"
+	case dwgConverter:
+		causeTitle = "DWG 转换工具已启动但执行失败"
+		causeFix = "按下方转换器原始错误检查输入文件、版本兼容性、参数和输出限制；当前错误不能证明所有 DWG 都不支持，也不要仅凭扩展名改用其他格式"
 	}
 
 	var b strings.Builder

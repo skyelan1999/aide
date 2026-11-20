@@ -47,6 +47,39 @@ func TestAssistantDeliveryEvidenceGate(t *testing.T) {
 		t.Fatal("tutorial requires artifact")
 	}
 }
+
+func TestAssistantDeliveryWaitsForSourceProposalApproval(t *testing.T) {
+	a := testApp(t)
+	task := &Task{ID: newID(), Prompt: "生成锅炉 STEP 文件", Files: []Change{{Path: "build.py", Content: "print('build STEP')"}}}
+	registerHarnessFixtureTask(t, a, task)
+	if err := a.prepareTaskDeliveryBaseline(context.Background(), task); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.checkTaskDelivery(task, "已提交 STEP 生成器，等待审批"); err != nil {
+		t.Fatalf("source proposal should continue to approval: %v", err)
+	}
+	if task.Delivery == nil || task.Delivery.State != "pending_approval" {
+		t.Fatalf("delivery = %+v, want pending_approval", task.Delivery)
+	}
+
+	// Applying the generator does not count as delivering the requested STEP.
+	if err := putText(a.workspace, "build.py", []byte(task.Files[0].Content)); err != nil {
+		t.Fatal(err)
+	}
+	task.Files[0].Applied = true
+	task.Applied = true
+	a.finalizeProposalDeliveryLocked(task)
+	if task.Delivery == nil || task.Delivery.State != "missing" || len(task.Delivery.Artifacts) != 0 || !strings.Contains(task.Delivery.Reason, "目标制品尚未执行") {
+		t.Fatalf("applied generator was mistaken for STEP delivery: %+v", task.Delivery)
+	}
+	if err := a.checkTaskDelivery(task, "生成器已应用，但尚未导出 STEP"); !errors.Is(err, errDeliveryIncomplete) {
+		t.Fatalf("applied source without STEP should remain incomplete: %v", err)
+	}
+	if task.Delivery == nil || task.Delivery.State != "missing" {
+		t.Fatalf("delivery = %+v, want missing after proposal application", task.Delivery)
+	}
+}
+
 func TestAssistantDeliveryPromiseReturnsIncomplete(t *testing.T) {
 	a := testApp(t)
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { parallelReply(w, "我会生成图片。") }))

@@ -174,12 +174,30 @@ func TestToolLoopUpstreamErrorPreservesChain(t *testing.T) {
 	}
 }
 
-// TestAnalyzeShellFailureDwgHint 验证 dwg/apt 失败被翻译成“换 dxf/ezdxf”引导，
-// 阻止模型在 dwg 闭源格式上无效空转。
+// TestAnalyzeShellFailureDwgHint keeps converter diagnostics separate from
+// incidental .dwg paths and from failures emitted by other tools.
 func TestAnalyzeShellFailureDwgHint(t *testing.T) {
-	out := analyzeShellFailure("dwgwrite -o /workspace/x.dwg /workspace/x.dxf", "", 127, nil)
-	if !strings.Contains(out, "ezdxf") || !strings.Contains(out, ".dxf") {
-		t.Fatalf("dwg 失败未引导换 dxf: %s", out)
+	tests := []struct {
+		name, command, output string
+		code                  int
+		want                  string
+	}{
+		{"missing converter", "dwgwrite -o /workspace/x.dwg /workspace/x.dxf", "", 127, "DWG 转换工具未安装"},
+		{"converter failure", "dwg2dxf drawing.dwg", "[stderr] invalid DWG header", 2, "DWG 转换工具已启动但执行失败"},
+		{"incidental DWG path", "python3 inspect.py drawing.dwg report.json", "[stderr] FileNotFoundError: report.json: No such file or directory", 1, "路径不存在"},
+		{"permission with DWG data", "sha256sum drawing.dwg", "[stderr] Permission denied", 1, "权限不足"},
+		{"syntax with DWG data", "python3 inspect.py drawing.dwg", "[stderr] SyntaxError: unexpected token", 1, "shell 语法错误"},
+		{"timeout with DWG data", "python3 inspect.py drawing.dwg", "[stderr] context deadline exceeded", 124, "命令执行超时"},
+		{"ordinary failure with DWG path", "python3 inspect.py drawing.dwg", "[stderr] invalid option", 2, "命令以非零退出码结束"},
+		{"converter name in script", "python3 inspect.py dwg2dxf drawing.dwg", "[stderr] invalid option", 2, "命令以非零退出码结束"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out := analyzeShellFailure(tt.command, tt.output, tt.code, nil)
+			if !strings.Contains(out, tt.want) {
+				t.Fatalf("diagnostic = %s, want %q", out, tt.want)
+			}
+		})
 	}
 	out2 := analyzeShellFailure("apt-get install libredwg-dev", "permission denied", 1, nil)
 	if !strings.Contains(out2, "apt") && !strings.Contains(out2, "root") {
