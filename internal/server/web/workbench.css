@@ -84,15 +84,15 @@ button,select,input,textarea{touch-action:manipulation}
 .segmented{min-height:36px;border-radius:9px}
 .segmented button{padding:7px 10px;min-width:0;white-space:normal}
 dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
-.background-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.background-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,90px),1fr));gap:6px;margin-bottom:12px}
 .background-options button{border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--surface)}
 .background-options button[aria-pressed=true]{border-color:var(--brand);background:var(--selected);color:var(--brand-text)}
-.background-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
+.background-picker:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
 .background-picker input{max-width:100%;min-width:0;width:100%;padding:8px;border-radius:8px;font-size:12px}
 .background-status{font-size:12px;line-height:1.6;overflow-wrap:anywhere;color:var(--text-settings);min-height:1.6em}
 .background-control .muted{font-size:11px;line-height:1.7;color:var(--muted)}
 .workbench-background{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:strict;display:none}
-html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=studio] .workbench-background,html[data-background=modern] .workbench-background{display:block}
+html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=studio] .workbench-background,html[data-background=modern] .workbench-background,html[data-background=eye-comfort] .workbench-background{display:block}
 html[data-background]:not([data-background=off]) body{isolation:isolate;background:transparent}
 /* Shared materials sit after sanctum.css: let the backdrop softly show through
    without changing text, fields, code surfaces, or primary button opacity. */
@@ -133,7 +133,7 @@ html[data-background]:not([data-background=off]) .composer-wrap{background:trans
 .workbench-background{background:var(--bg)}
 .workbench-background::before{content:'';position:absolute;inset:0;z-index:1;background:var(--bg);opacity:calc(1 - var(--wb-background-strength,.22))}
 /* Independent compositor motion makes flow visible without animating paint or text. */
-html[data-background=aurora] .workbench-background::before,html[data-background=modern] .workbench-background::before{display:none}
+html[data-background=aurora] .workbench-background::before,html[data-background=modern] .workbench-background::before,html[data-background=eye-comfort] .workbench-background::before{display:none}
 .workbench-aurora{position:absolute;inset:-15%;opacity:var(--wb-background-strength,.22);transform-origin:center;animation:workbench-flow-primary 12s ease-in-out -6s infinite alternate}
 .workbench-aurora-primary{background:radial-gradient(ellipse 35% 37% at 40% 42%,color-mix(in srgb,var(--brand-hi,var(--brand)) 60%,#75cfc3),transparent 100%),radial-gradient(ellipse 27% 27% at 70% 70%,var(--accent),transparent 100%)}
 .workbench-aurora-secondary{background:radial-gradient(ellipse 32% 30% at 65% 34%,color-mix(in srgb,var(--accent) 65%,#b8a4e0),transparent 100%),radial-gradient(ellipse 29% 27% at 32% 69%,var(--brand),transparent 100%);opacity:calc(var(--wb-background-strength,.22) * .7);animation:workbench-flow-secondary 19s ease-in-out -11s infinite alternate}
@@ -148,6 +148,55 @@ html[data-theme=dark][data-background=modern] .workbench-background{background:r
 .workbench-modern-horizon{position:absolute;left:5%;right:5%;top:24%;height:1px;background:linear-gradient(90deg,transparent 2%,color-mix(in srgb,var(--text) 34%,transparent) 48%,color-mix(in srgb,var(--text) 44%,transparent) 54%,transparent 98%);box-shadow:0 32vh 100px 28vh color-mix(in srgb,var(--text) 5%,transparent),0 66vh 130px 26vh color-mix(in srgb,var(--text) 4%,transparent);opacity:calc(var(--wb-background-strength,.22) * 2)}
 html[data-background-paused] .workbench-background video,html[data-background-paused][data-background-media=animated] .workbench-background img{visibility:hidden}
 @media(prefers-reduced-motion:reduce){.workbench-aurora{animation:none!important}.workbench-background video{visibility:hidden}}
+
+/* Eye Comfort uses broad, muted light and translates a single layer. */
+html[data-background=eye-comfort] .workbench-background {
+  --eye-sage: #97b5a7;
+  --eye-warm: #c8baa1;
+}
+html[data-theme=dark][data-background=eye-comfort] .workbench-background {
+  --eye-sage: #526d64;
+  --eye-warm: #6d6356;
+}
+.workbench-eye-glow {
+  position: absolute;
+  inset: -12%;
+  opacity: calc(var(--wb-background-strength,.22) * .8);
+  background: radial-gradient(ellipse 46% 58% at 17% 70%,var(--eye-sage),transparent 100%),
+    radial-gradient(ellipse 51% 60% at 88% 18%,var(--eye-warm),transparent 100%);
+  animation: workbench-eye-drift 96s ease-in-out -48s infinite alternate;
+}
+@keyframes workbench-eye-drift {
+  from { transform: translate3d(-5%,2%,0); }
+  to { transform: translate3d(5%,-2%,0); }
+}
+html[data-background-paused] .workbench-eye-glow { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .workbench-eye-glow { animation: none; } }
+@media (forced-colors: active) { .workbench-eye-glow { display: none; } }
+
+.eye-rest-settings:not([hidden]) { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.eye-rest-settings p { width: 100%; margin: 0; }
+.eye-rest-settings label { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
+.eye-rest-settings input { margin: 0; }
+.eye-rest-notice {
+  position: fixed;
+  inset-block-start: 68px;
+  inset-inline-end: 16px;
+  /* Keep actions above the workbench’s sidebar resize handles. */
+  z-index: 71;
+  box-sizing: border-box;
+  width: min(320px,calc(100vw - 32px));
+  padding: 14px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 36px var(--shadow-2);
+}
+.eye-rest-notice p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; }
+.eye-rest-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+@media (max-width:700px) { .eye-rest-notice { inset-block-start: 104px; } }
+
 @media(pointer:coarse){:root{--wb-control:40px}.session-item{min-height:42px}.composer-toolbar :is(button,select){min-height:40px}}
 @media(max-width:760px){.settings-body{gap:10px}.settings-nav{width:104px;flex-basis:104px}.topbar{padding-inline:16px}.global-search input{width:110px}}
 @media(max-width:600px){.topbar{padding-inline:12px;gap:8px}.top-actions{gap:6px}.conversation{padding:16px 12px}.composer-wrap{padding:10px 12px 12px}.composer textarea{font-size:16px}.composer-toolbar{gap:6px;flex-wrap:wrap}.composer-note{flex-wrap:wrap}.starter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.starter{padding:12px;min-height:110px}#timeline :is(.chat-answer,.stage-answer){padding:14px}.settings-sheet.sheet-wide{width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}.settings-nav{width:90px;flex-basis:90px}.settings-content{padding-inline:0}.background-options{gap:4px}.background-options button{padding-inline:4px}}

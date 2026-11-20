@@ -11,7 +11,13 @@
   const accepted = new Set(['video/mp4', 'video/webm', 'image/gif', 'image/png', 'image/jpeg', 'image/webp']);
   let mode = '', generation = 0, media = null, url = '', record = null, message = '', saving = false;
   const panels = new Set();
+  const WORK_INTERVAL = 20 * 60_000;
+  const SNOOZE_INTERVAL = 5 * 60_000;
+  const REST_INTERVAL = 20_000;
   let database;
+  let pageActive = true, eyeTimer, activeSince = null, workRemaining = WORK_INTERVAL, restEnds = 0;
+  let notice, noticeStatus, noticeAction, noticeSnooze, previousFocus;
+
   function db() {
     if (!database) database = new Promise((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error(uiTextWorkbenchBackground('本地背景存储不可用')));
@@ -33,12 +39,96 @@
       transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error(uiTextWorkbenchBackground('本地背景存储不可用')));
     });
   }
-  function blocked() {
-    return document.hidden || root.dataset.motion === 'reduced' || reduced?.matches ||
-      !!document.querySelector('#login-dialog[open],#lock-screen:not([hidden])');
+  function pageAvailable() {
+    return pageActive && !document.hidden &&
+      !document.querySelector('#login-dialog[open],#lock-screen:not([hidden])');
+  }
+  function startEyeRest() {
+    if (mode !== 'eye-comfort' || !pageAvailable() || restEnds) return;
+    activeSince = null;
+    workRemaining = WORK_INTERVAL;
+    restEnds = performance.now() + REST_INTERVAL;
+    lifecycle();
+  }
+  function showEyeNotice(resting) {
+    if (!notice) {
+      notice = document.createElement('aside');
+      notice.className = 'eye-rest-notice';
+      noticeStatus = document.createElement('p');
+      noticeStatus.setAttribute('role', 'status');
+      noticeAction = document.createElement('button');
+      noticeAction.type = 'button';
+      noticeAction.className = 'primary';
+      noticeAction.onclick = () => {
+        if (!restEnds) { startEyeRest(); return; }
+        restEnds = 0;
+        lifecycle();
+      };
+      noticeSnooze = document.createElement('button');
+      noticeSnooze.type = 'button';
+      noticeSnooze.className = 'quiet';
+      noticeSnooze.onclick = () => {
+        workRemaining = SNOOZE_INTERVAL;
+        lifecycle();
+      };
+      const actions = document.createElement('div');
+      actions.className = 'eye-rest-actions';
+      actions.append(noticeAction, noticeSnooze);
+      notice.append(noticeStatus, actions);
+      notice.addEventListener('focusin', event => {
+        if (!notice.contains(event.relatedTarget)) previousFocus = event.relatedTarget;
+      });
+      document.body.append(notice);
+    }
+    notice.hidden = false;
+    const text = uiTextWorkbenchBackground(resting
+      ? '休息 20 秒。放松视线，看向约 6 米外。'
+      : '到远眺休息时间了。眨眨眼，看向屏幕外的远处。');
+    if (noticeStatus.textContent !== text) noticeStatus.textContent = text;
+    noticeAction.textContent = uiTextWorkbenchBackground(resting ? '结束休息' : '休息 20 秒');
+    noticeSnooze.textContent = uiTextWorkbenchBackground('5 分钟后提醒');
+    noticeSnooze.hidden = resting;
+  }
+  function hideEyeNotice() {
+    if (!notice || notice.hidden) return;
+    const hadFocus = notice.contains(document.activeElement);
+    notice.hidden = true;
+    if (hadFocus && pageAvailable() && previousFocus?.isConnected) previousFocus.focus({preventScroll:true});
+    previousFocus = null;
+  }
+  function syncEyeRest(visible) {
+    clearTimeout(eyeTimer);
+    const now = performance.now();
+    if (activeSince !== null) {
+      workRemaining = Math.max(0, workRemaining - (now - activeSince));
+      activeSince = null;
+    }
+    if (mode !== 'eye-comfort') {
+      workRemaining = WORK_INTERVAL;
+      restEnds = 0;
+      hideEyeNotice();
+      return false;
+    }
+    if (restEnds <= now) restEnds = 0;
+    const remind = window.aideUI?.get('eyeRestReminder') !== false;
+    if (!remind) workRemaining = WORK_INTERVAL;
+    if (!visible) { hideEyeNotice(); return !!restEnds; }
+    if (restEnds || (remind && workRemaining === 0)) {
+      showEyeNotice(!!restEnds);
+      if (restEnds) eyeTimer = setTimeout(lifecycle, Math.ceil(restEnds - now));
+    } else {
+      hideEyeNotice();
+      if (remind) {
+        activeSince = now;
+        eyeTimer = setTimeout(lifecycle, Math.ceil(workRemaining));
+      }
+    }
+    return !!restEnds;
   }
   function lifecycle() {
-    const paused = blocked();
+    const visible = pageAvailable();
+    const resting = syncEyeRest(visible);
+    const paused = !visible || root.dataset.motion === 'reduced' || reduced?.matches || resting;
     root.toggleAttribute('data-background-paused', paused);
     if (!media) return;
     if (media.tagName === 'VIDEO') {
@@ -86,6 +176,12 @@
     if(mode==='modern'){
       for(const name of ['glow','grid','horizon']){const node=document.createElement('span');node.className='workbench-modern-'+name;layer.append(node);}return;
     }
+    if (mode === 'eye-comfort') {
+      const glow = document.createElement('span');
+      glow.className = 'workbench-eye-glow';
+      layer.append(glow);
+      return;
+    }
     if (mode !== 'local') return;
     try {
       const asset = await stored('get');
@@ -100,7 +196,7 @@
       media.onerror = () => { if (ticket === generation) { release(); message = '背景素材无法播放，请更换文件'; refreshPanels(); } };
       root.dataset.backgroundMedia = video ? 'video' : (asset.type === 'image/gif' || asset.type === 'image/webp') ? 'animated' : 'image';
       layer.append(media);
-      if (video || !blocked() || root.dataset.backgroundMedia === 'image') media.src = url;
+      if (video || !root.hasAttribute('data-background-paused') || root.dataset.backgroundMedia === 'image') media.src = url;
       lifecycle(); refreshPanels();
     } catch (_) {
       if (ticket === generation) { message = '本地背景存储不可用'; refreshPanels(); }
@@ -111,7 +207,7 @@
     const node = document.createElement('div'); node.className = 'settings-control background-control';
     const label = document.createElement('div'); label.className = 'control-label'; label.textContent = t('工作台背景');
     const choices = document.createElement('div'); choices.className = 'background-options'; choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', t('工作台背景'));
-    const buttons = [['off', '关闭'], ['aurora', '流光'], ['studio', '静域'], ['modern', '现代光场'], ['local', '本地素材']].map(([value, text]) => {
+    const buttons = [['off', '关闭'], ['aurora', '流光'], ['studio', '静域'], ['modern', '现代光场'], ['eye-comfort', '护眼'], ['local', '本地素材']].map(([value, text]) => {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.value = value; button.textContent = t(text);
       button.onclick = () => window.aideUI?.set('background', value); choices.append(button); return button;
     });
@@ -127,10 +223,30 @@
     const value = document.createElement('output');
     intensity.append(intensityText, range, value);
     range.oninput = () => window.aideUI?.set('backgroundStrength', Number(range.value));
+    const eyeSettings = document.createElement('div');
+    eyeSettings.className = 'eye-rest-settings';
+    const eyeNote = document.createElement('p');
+    eyeNote.className = 'muted';
+    eyeNote.textContent = t('柔光缓慢移动，跟随系统减少动态效果设置。远眺提醒只累计页面可见且未锁屏的时间。');
+    const reminderLabel = document.createElement('label');
+    const reminder = document.createElement('input');
+    reminder.type = 'checkbox';
+    reminder.onchange = () => window.aideUI?.set('eyeRestReminder', reminder.checked);
+    reminderLabel.append(reminder, t('每 20 分钟提醒远眺'));
+    const rest = document.createElement('button');
+    rest.type = 'button';
+    rest.className = 'quiet';
+    rest.textContent = t('现在休息');
+    rest.onclick = startEyeRest;
+    eyeSettings.append(eyeNote, reminderLabel, rest);
     const panel = {node, update() {
       buttons.forEach(button => { button.setAttribute('aria-pressed', String(mode === button.dataset.value)); button.disabled = saving; });
       input.disabled = remove.disabled = saving;
       range.disabled = mode === 'off';
+      eyeSettings.hidden = mode !== 'eye-comfort';
+      reminder.checked = window.aideUI?.get('eyeRestReminder') !== false;
+      status.hidden = !eyeSettings.hidden && !message && !saving;
+      picker.hidden = remove.hidden = note.hidden = !eyeSettings.hidden;
       range.value = String(window.aideUI?.get('backgroundStrength') ?? 22);
       value.textContent = range.value + '%';
       range.setAttribute('aria-valuetext', value.textContent);
@@ -153,7 +269,7 @@
       catch (_) { message = '本地背景存储不可用'; }
       finally { saving = false; refreshPanels(); }
     };
-    picker.append(text, input); node.append(label, choices, picker, remove, status, note, intensity);
+    picker.append(text, input); node.append(label, choices, picker, remove, status, note, intensity, eyeSettings);
     panels.add(panel); panel.update(); return node;
   }
   const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('aide.background') : null;
@@ -163,8 +279,8 @@
   reduced?.addEventListener?.('change', lifecycle);
   const observer = new MutationObserver(lifecycle);
   for (const node of document.querySelectorAll('#login-dialog,#lock-screen')) observer.observe(node, {attributes:true, attributeFilter:['hidden','open','class']});
-  window.addEventListener('pagehide', () => { ++generation; release(); });
-  window.addEventListener('pageshow', () => apply(true));
+  window.addEventListener('pagehide', () => { pageActive = false; lifecycle(); ++generation; release(); });
+  window.addEventListener('pageshow', () => { pageActive = true; apply(true); });
   window.aideUI?.subscribe(() => apply());
   window.AideBackground = {renderSettings};
   apply();
