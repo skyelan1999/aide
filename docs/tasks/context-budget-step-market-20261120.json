@@ -1,0 +1,80 @@
+{
+  "id": "context-budget-step-market-20261120",
+  "request": "修复历史自动压缩后仍超上下文预算的两项主程序回归；发布 STEP Viewer 0.1.3 并更新 Aide 插件市场，完成测试、合并和推送",
+  "baseline": "bc60a3ec30aaff1de78e39688aebb4fbe3aa8405",
+  "initial_status": "M internal/server/context_recovery_test.go\n M internal/server/workflow.go",
+  "acceptance": [
+    "历史自动压缩后的摘要不会仅因输出预算边界导致请求超窗；没有可再压缩历史时，仅小幅回收输出预留并保留至少1024 token。",
+    "两项自动压缩回归及 DWG #968、交付 #969 定向回归通过。",
+    "STEP Viewer 0.1.3 Release ZIP 与 SHA256SUMS 已上传，ZIP 哈希与复现构建一致。",
+    "aide-pkg-shop 市场目录及公开 ZIP 已更新，线上 ZIP 大小与 SHA-256 匹配。",
+    "修复经 Aide CI 后合并推送；线上插件市场更新已验证，内置全量发布快照只有完成全插件验收后才另行更新。"
+  ],
+  "scope": [
+    "Aide: internal/server/workflow.go, internal/server/context_recovery_test.go, docs/tasks/context-budget-step-market-20261120.json",
+    "STEP Viewer: manifest.json, README.md and Release v0.1.3 package/tag",
+    "aide-pkg-shop: listings/step-viewer.json, versioned package ZIP, catalog.json and routing.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权修复、合并，要求插件Release后更新市场。",
+      "evidence": [
+        "本轮用户消息：继续修，合并，插件release后更新市场"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留连续摘要；历史无可再压缩项时按超额加64 token余量微调输出预留，最少1024。市场采用新版本路径与锁定SHA，旧包不覆盖。",
+      "evidence": [
+        "重现输入7834、输出8192、窗口16000及摘要29 tokens；超窗26。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Aide预算修复及回归断言已实现；STEP Viewer v0.1.3 Release 与官方动态市场目录已发布。Aide冻结的全插件发布快照保持原状态，避免不完整锁定。",
+      "evidence": [
+        "STEP Viewer source main 007708eb / tag v0.1.3",
+        "aide-pkg-shop PR #69 merged at 2204f36a"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Aide quick、定向 race tests、Go vet、插件13项Python及Node回归、市场验证和线上ZIP身份检查已通过；Aide PR CI待合并。",
+      "evidence": [
+        "Docker targeted race: two context compaction tests plus three #968/#969 tests PASS",
+        "Aide verify quick PASS: .agent-state/verify-20261120T102425858889Z.log",
+        "Aide Go vet: go vet -mod=vendor ./internal/server PASS",
+        "STEP Viewer 13 Python tests and six Node tests PASS",
+        "shop verify_catalog/public catalog/routing/Node tests PASS",
+        "GitHub Pages catalog and ZIP size/SHA match PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新插件README、Release说明、市场listing和Aide任务账本，准确标注包限制、租约和测试边界。",
+      "evidence": [
+        "STEP Viewer README and Release v0.1.3",
+        "aide-pkg-shop listing STEP Viewer 0.1.3"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "移除临时诊断输出；检查diff无空白错误。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "STEP Viewer Release与官方Pages市场已发布并核对；Aide预算修复PR待合并。在线市场按运行时行为从官方main抓取。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-STEPViewer/releases/tag/v0.1.3",
+        "aide-pkg-shop PR #69 merged at 2204f36afdfbd53328a102eb8cb5d116cadbb4fa"
+      ]
+    }
+  },
+  "release_authorization": "用户明确要求：“继续修，合并，插件release后更新市场”。该消息授权修复/合并、插件发布及随后更新市场。",
+  "rollback": "Aide: revert relevant PR. Market: revert Aide market pointer and shop catalog commits; keep published versions immutable and never overwrite old packages.",
+  "handoff": ""
+}

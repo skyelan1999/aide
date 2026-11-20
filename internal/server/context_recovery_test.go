@@ -349,12 +349,15 @@ func TestContextRecoverySummaryRetriesAndSurvivesRepeatedRuns(t *testing.T) {
 
 func TestContextRecoveryPreflightCompactsMultipleHistoryBatches(t *testing.T) {
 	a := testApp(t)
+	var responseReserve atomic.Int64
 	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
-			Stream bool `json:"stream"`
+			Stream    bool `json:"stream"`
+			MaxTokens int  `json:"max_tokens"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		if body.Stream {
+			responseReserve.Store(int64(body.MaxTokens))
 			sseSeq(w, w.(http.Flusher), []string{`{"choices":[{"delta":{"content":"answer"},"finish_reason":"stop"}]}`})
 			return
 		}
@@ -373,6 +376,9 @@ func TestContextRecoveryPreflightCompactsMultipleHistoryBatches(t *testing.T) {
 	w := request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "continue"})
 	requireStatus(t, w, 202)
 	waitTaskDone(t, a, s.ID)
+	if got := responseReserve.Load(); got <= 1024 || got >= 8192 {
+		t.Fatalf("expected compaction to reclaim only the small output-reserve shortfall, got max_tokens=%d", got)
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if s.CompactedMessages <= 400 || s.Runs[0].Status != "completed" {
