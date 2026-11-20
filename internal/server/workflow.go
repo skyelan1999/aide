@@ -665,10 +665,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		}
 		// Retained history and its summary must fit beside this exact request,
 		// including current system/tool costs, rather than a fixed allowance.
-		// Leave enough room for the compacted-summary envelope and estimator
-		// drift, which are not fully represented by the raw retained-message
-		// budget. A 512-token margin still allowed a 26-token overflow at 16k.
-		compactHistoryBudget = current.ContextWindow - current.OutputReserve - current.InputEstimate - 1024
+		compactHistoryBudget = current.ContextWindow - current.OutputReserve - current.InputEstimate - 512
 		if compactHistoryBudget < 0 {
 			compactHistoryBudget = 0
 		}
