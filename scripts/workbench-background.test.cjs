@@ -8,13 +8,25 @@ class Node {
  setAttribute(k,v){this.attrs[k]=String(v);}removeAttribute(k){delete this.attrs[k];}hasAttribute(k){return k in this.attrs;}
  toggleAttribute(k,on){on?this.setAttribute(k,''):this.removeAttribute(k);}
  append(...n){this.children.push(...n);}prepend(n){this.children.unshift(n);}replaceChildren(...n){this.children=n;}
+ addEventListener(){}contains(node){return node===this||this.children.some(c=>c?.contains?.(node));}
  remove(){this.isConnected=false;}play(){this.plays++;return Promise.resolve();}pause(){this.pauses++;}load(){}
  set src(v){this.setAttribute('src',v);}get src(){return this.attrs.src;}
 }
 function setup(initial='off'){
  const root=new Node(),body=new Node(),listeners={},subscriptions=[],urls=[],revoked=[],events={};
  root.style={setProperty:(key,value)=>root.attrs[key]=value};
- let strength=22;
+ let strength=22, remind=true;
+ let now=0,id=0;
+ const timers=new Map();
+ function advance(ms){
+  const target=now+ms;
+  while(timers.size){
+   const [key,entry]=[...timers].reduce((earliest,next)=>next[1].at<earliest[1].at?next:earliest);
+   if(entry.at>target)break;
+   now=entry.at;timers.delete(key);entry.run();
+  }
+  now=target;
+ }
  let mode=initial,asset,fail=false,locked=false;
  const mediaQuery={matches:false,addEventListener(){}};
  const document={documentElement:root,body,hidden:false,createElement:t=>new Node(t),querySelector:()=>locked?{}:null,querySelectorAll:()=>[],addEventListener:(k,f)=>listeners[k]=f};
@@ -24,10 +36,10 @@ function setup(initial='off'){
   delete(){const q={};queueMicrotask(()=>{asset=undefined;tx.oncomplete();});return q;}
  };}};return tx;},close(){}};
  const indexedDB={open(){const request={};queueMicrotask(()=>{request.result=database;request.onsuccess();});return request;}};
- const window={indexedDB,matchMedia:()=>mediaQuery,addEventListener:(k,f)=>events[k]=f,aideUI:{get:key=>key==='backgroundStrength'?strength:mode,set:(key,value)=>{if(key==='backgroundStrength')strength=value;else mode=value;subscriptions.forEach(f=>f());},subscribe:f=>subscriptions.push(f)}};
- const sandbox={window,document,indexedDB,URL:{createObjectURL:b=>{const u='blob:'+urls.length;urls.push(u);return u;},revokeObjectURL:u=>revoked.push(u)},MutationObserver:class{constructor(f){this.callback=f;}observe(){}},console};
+ const window={indexedDB,matchMedia:()=>mediaQuery,addEventListener:(k,f)=>events[k]=f,aideUI:{get:key=>key==='backgroundStrength'?strength:key==='eyeRestReminder'?remind:mode,set:(key,value)=>{if(key==='backgroundStrength')strength=value;else if(key==='eyeRestReminder')remind=value;else mode=value;subscriptions.forEach(f=>f());},subscribe:f=>subscriptions.push(f)}};
+ const sandbox={window,document,indexedDB,performance:{now:()=>now},setTimeout:(run,delay)=>{timers.set(++id,{run,at:now+delay});return id;},clearTimeout:key=>timers.delete(key),URL:{createObjectURL:b=>{const u='blob:'+urls.length;urls.push(u);return u;},revokeObjectURL:u=>revoked.push(u)},MutationObserver:class{constructor(f){this.callback=f;}observe(){}},console};
  vm.runInNewContext(source,sandbox);
- return {root,body,window,document,events,listeners,urls,revoked,mediaQuery,set asset(v){asset=v;},get asset(){return asset;},set fail(v){fail=v;},set locked(v){locked=v;},setMode:v=>window.aideUI.set('background',v),layer:()=>body.children[0],render:()=>window.AideBackground.renderSettings(),update:()=>subscriptions.forEach(f=>f())};
+ return {root,body,window,document,events,listeners,urls,revoked,mediaQuery,advance,set asset(v){asset=v;},get asset(){return asset;},set fail(v){fail=v;},set locked(v){locked=v;},setMode:v=>window.aideUI.set('background',v),layer:()=>body.children[0],render:()=>window.AideBackground.renderSettings(),update:()=>subscriptions.forEach(f=>f())};
 }
 (async()=>{
  let h=setup();assert.equal(h.root.dataset.background,'off');const unset=setup(null);assert.equal(unset.root.dataset.background,'studio');assert.equal(unset.layer().children.length,3);assert.equal(h.urls.length,0);assert.equal(h.body.children.length,1);
@@ -67,6 +79,31 @@ function setup(initial='off'){
  h.fail=false;picker.files=[{name:'new.webm',type:'video/webm',size:10}];await picker.onchange();await flush();assert.equal(h.asset.name,'new.webm');assert.equal(h.layer().children.length,1);
  await panel.children[3].onclick();assert.equal(h.asset,undefined);assert.equal(h.root.dataset.background,'off');assert.equal(h.layer().children.length,0);
  panel.isConnected=false;const nextPanel=h.render();panel.children[4].textContent='detached';h.setMode('aurora');assert.equal(panel.children[4].textContent,'detached');assert.equal(nextPanel.children[1].children[1].attrs['aria-pressed'],'true');
+ // Eye Comfort has one local light layer. Reduced motion pauses it without disabling breaks.
+ const eyes=setup('eye-comfort'),minute=60_000;
+ assert.deepEqual(eyes.layer().children.map(child=>child.className),['workbench-eye-glow']);
+ assert.equal(eyes.urls.length,0);
+ eyes.advance(9*minute);
+ eyes.document.hidden=true;eyes.listeners.visibilitychange();eyes.advance(40*minute);
+ assert.equal(eyes.body.children.length,1);
+ eyes.document.hidden=false;eyes.listeners.visibilitychange();
+ eyes.advance(7*minute);
+ eyes.locked=true;eyes.update();eyes.advance(20*minute);
+ assert.equal(eyes.body.children.length,1);
+ eyes.locked=false;eyes.root.dataset.motion='reduced';eyes.events['aide:motion']();
+ assert.ok(eyes.root.hasAttribute('data-background-paused'));
+ eyes.advance(4*minute);
+ const eyeNotice=eyes.body.children[1], [primary,snooze]=eyeNotice.children[1].children;
+ assert.match(eyeNotice.children[0].textContent,/远眺休息时间/);
+ snooze.onclick();assert.equal(eyeNotice.hidden,true);
+ eyes.advance(5*minute);assert.equal(eyeNotice.hidden,false);
+ eyes.root.dataset.motion='full';eyes.events['aide:motion']();
+ primary.onclick();assert.equal(snooze.hidden,true);assert.ok(eyes.root.hasAttribute('data-background-paused'));
+ eyes.advance(19_999);assert.equal(eyeNotice.hidden,false);
+ eyes.advance(1);assert.equal(eyeNotice.hidden,true);assert.equal(eyes.root.hasAttribute('data-background-paused'),false);
+ eyes.window.aideUI.set('eyeRestReminder',false);eyes.advance(20*minute);assert.equal(eyeNotice.hidden,true);
+ eyes.render().children[7].children[2].onclick();assert.equal(eyeNotice.hidden,false);
+ eyes.setMode('off');assert.equal(eyeNotice.hidden,true);assert.equal(eyes.layer().children.length,0);
  // Persisted settings, invalid defaults, and cross-tab normalization use aideUI.
  const attrs={},store={'aide.ui':JSON.stringify({background:'aurora',theme:'light'})},ws={localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=v,removeItem:k=>delete store[k]},navigator:{language:'en'},matchMedia:()=>({matches:false,addEventListener(){}}),dispatchEvent(){},addEventListener:(k,f)=>ws[k]=f};
  vm.runInNewContext(settings,{window:ws,document:{documentElement:{setAttribute:(k,v)=>attrs[k]=v}},Event:class{}});
@@ -77,7 +114,7 @@ function setup(initial='off'){
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local',backgroundStrength:36})});assert.equal(ws.aideUI.get('backgroundStrength'),36);
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local'})});assert.equal(ws.aideUI.get('background'),'local');ws.storage({key:'aide.ui',newValue:'{}'});assert.equal(ws.aideUI.get('background'),'studio');
  // Fresh defaults, preserved explicit background choices and system-owned motion.
- for(const background of [undefined,'off','aurora','studio','modern','local'])for(const motion of ['full','reduced','system']){
+ for(const background of [undefined,'off','aurora','studio','modern','eye-comfort','local'])for(const motion of ['full','reduced','system']){
   const values={'aide.ui':JSON.stringify({background,motion,theme:'dark'})},attributes={},queries={};
   const browser={localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},navigator:{language:'zh-CN'},dispatchEvent(){},
    matchMedia:query=>(queries[query]={matches:false,addEventListener:(kind,fn)=>queries[query].change=fn}),addEventListener:(kind,fn)=>browser[kind]=fn};
@@ -90,6 +127,9 @@ function setup(initial='off'){
   const system=queries['(prefers-reduced-motion: reduce)'];system.matches=true;system.change();assert.equal(attributes['data-motion'],'reduced');
   system.matches=false;system.change();assert.equal(attributes['data-motion'],'full');
  }
+ ws.aideUI.set('eyeRestReminder',false);assert.equal(JSON.parse(store['aide.ui']).eyeRestReminder,false);
+ ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'eye-comfort',eyeRestReminder:false})});
+ assert.equal(ws.aideUI.get('background'),'eye-comfort');assert.equal(ws.aideUI.get('eyeRestReminder'),false);
  const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.json','utf8'));
  assert(!schema.sections.find(s=>s.id==='appearance').controls.some(c=>c.id==='motion'),'manual motion choice removed from appearance');
  assert(fs.readFileSync('internal/server/web/workbench-background.js','utf8').includes("['modern', '现代光场']"));

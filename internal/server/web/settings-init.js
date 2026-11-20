@@ -75,6 +75,9 @@
     if (value === 'blue') return 'modern';
     return ['comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'modern';
   }
+  function normalizeBackground(value) {
+    return ['off', 'aurora', 'studio', 'modern', 'eye-comfort', 'local'].indexOf(value) >= 0 ? value : 'studio';
+  }
   function normalizeBackgroundStrength(value) {
     return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;
   }
@@ -104,7 +107,7 @@
     doc.language = normalizeLanguage(parsed.language);
     doc.motion = 'system';
     doc.startupAnimation = 'on';
-    doc.background = ['off', 'aurora', 'studio', 'modern', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
+    doc.background = normalizeBackground(parsed.background);
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
@@ -200,7 +203,7 @@
       doc.language = normalizeLanguage(parsed.language);
       doc.motion = 'system';
       doc.startupAnimation = 'on';
-      doc.background = ['off', 'aurora', 'studio', 'modern', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
+      doc.background = normalizeBackground(parsed.background);
       doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
       doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
@@ -234,8 +237,9 @@
       notifyAll();
     },
     set: function (name, value) {
+      if (name === 'eyeRestReminder') value = value !== false;
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'modern') : name === 'background' ? (['off','aurora','studio','modern','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'modern') : name === 'background' ? normalizeBackground(value) : name === 'startupAnimation' ? 'on' : value;
       if (name === 'palette') doc.paletteVersion = PALETTE_VERSION;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion' || name === 'palette') applyTheme();

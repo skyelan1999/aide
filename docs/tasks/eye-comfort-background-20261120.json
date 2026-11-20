@@ -1,0 +1,81 @@
+{
+  "id": "eye-comfort-background-20261120",
+  "request": "为 Aide 增加动态背景，名字叫护眼，用于久看屏幕后用眼休息",
+  "baseline": "5a2762f98c0e68d1c78cad4da4d8340ba885b107",
+  "initial_status": "基于已核对的远端 main 5a2762f9 创建独立工作树。",
+  "acceptance": [
+    "在工作台背景中选择护眼，明暗主题下均有低对比度缓慢动效，可以调节强度。",
+    "减少动态效果时保持静态，后台、锁屏和主动休息时暂停动画。",
+    "可关闭的远眺提醒，每累计 20 分钟显示，支持休息 20 秒和稍后提醒。",
+    "刷新保持背景与提醒偏好。在中英文浏览器实际验证界面。"
+  ],
+  "scope": [
+    "工作台背景、外观设置、浏览器内休息提醒及验收"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "实现工作台动态背景和用眼休息习惯提示。",
+      "evidence": [
+        "工作台背景设置",
+        "美国眼科学会 20-20-20 建议"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用背景图层、强度、动效生命周期和本机偏好。计时以可见且未锁屏的页面为准。",
+      "evidence": [
+        "internal/server/web/workbench-background.js",
+        "internal/server/web/settings-init.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增护眼背景、休息提醒和中英文设置，复用原工作台装饰层与强度。",
+      "evidence": [
+        "internal/server/web/workbench-background.js",
+        "internal/server/web/workbench.css",
+        "internal/server/web/settings-init.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "实际隔离 Aide 的 Chromium 中文和 WebKit 英文验证：深浅色动态、强度、布局、系统减少动态、锁屏遮罩状态、20 分钟提醒、延后和休息、刷新保持与 390px 窄屏。仓库 346 项快速检查通过。",
+      "evidence": [
+        "node --test scripts/workbench-background.test.cjs",
+        "node scripts/test_i18n_coverage.cjs",
+        ".agent-state/eye-comfort/browser.cjs",
+        ".agent-state/eye-comfort/zh-CN-light-settings.png",
+        ".agent-state/eye-comfort/en-narrow-rest.png",
+        "python3 scripts/agent-route.py verify quick",
+        ".agent-state/eye-comfort/quick-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录护眼背景行为、暂停条件、按标签可见时间计时和远眺来源。",
+      "evidence": [
+        "docs/builtin-background.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已停止并移除隔离容器、删除本轮构建二进制，保留截图和检查日志。",
+      "evidence": [
+        "docker stop aide-eye-comfort-qa",
+        ".agent-state/eye-comfort"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮完成本地实现。",
+      "evidence": [
+        "需求为新增护眼背景。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次提交即可移除护眼选项，旧客户端遇到该背景值会回退到静域。",
+  "handoff": "隔离 Chromium 中文和 WebKit 英文验收。锁屏覆盖状态通过浏览器属性变化与模拟计时回归验证。日用 Aide 未替换。"
+}
