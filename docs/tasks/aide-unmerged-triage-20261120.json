@@ -1,0 +1,80 @@
+{
+  "id": "aide-unmerged-triage-20261120",
+  "request": "检查当前 Aide 是否有未合并改动或未修复 bug，完成修复、合并到 main 并推送。",
+  "baseline": "c959826793405fb41e11cc2ed9f51a1234f420c0",
+  "initial_status": "Clean latest-main worktree at c959826793405fb41e11cc2ed9f51a1234f420c0. CloudDocs checkout is dirty and behind remote; preserve it unchanged.",
+  "acceptance": [
+    "盘点 Aide 当前开放 PR、当前 GitHub 操作账号的新 open issue 和本地候选分支。",
+    "修复并回归验证可在隔离工作区安全完成的 #968、#969；确认 #913 是否仍未修复。",
+    "检查 #971 的本机 STEP Viewer 修复，不覆盖其混有测量、主题和装配功能的脏工作区。",
+    "不覆盖 CloudDocs 脏工作区；只整合已指定的 #968、#969、#971 修复并按门禁推送，其他草稿/依赖 PR 保持不动。"
+  ],
+  "scope": [
+    "Aide 主程序隔离 worktree 中 #968/#969 修复、回归测试与任务记录。",
+    "STEP Viewer 隔离 worktree 中 #971 上传生命周期修复及对应回归测试。",
+    "不改 CloudDocs 中已有脏工作区及无关开放 PR。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认当前账号 skyelan1999；优先核对最新 open Issues #971、#969、#968，再查 #913。",
+      "evidence": [
+        "gh api user --jq .login",
+        "gh issue list -R skyelan1999/aide --state open --author skyelan1999"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "#968 仅在真实转换器调用时分类 DWG 错误；#969 将未审批源码提案交给正常审批，应用后仍按目标扩展名核验制品。#971 从含其他改动的脏插件工作区抽取到独立 worktree。",
+      "evidence": [
+        "Aide AGENTS.md and docs/agent/WORKFLOW.md",
+        "GitHub issue bodies #971 #969 #968 #913"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "主程序 #968/#969 两处修复与回归用例已在独立分支实现；STEP Viewer #971 上传租约、分块和重试校验修复已在插件独立分支实现。",
+      "evidence": [
+        "Aide commits: 6e90ec4a (#968), 7f295c70 (#969)",
+        "STEP Viewer commit: 4ce7b11 (#971)"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Aide 定向 Go 回归通过；#913 现有 16 MiB 展开/截断回归也在 runtime 容器通过。STEP Viewer 生命周期 7 项、内存预算检查和两项 Node 上传回归通过。未执行全量发布门禁或原生 Aide 重测。",
+      "evidence": [
+        "Docker golang:1.26-alpine: go test -mod=vendor ./internal/server -run TestAnalyzeShellFailureDwgHint|TestAssistantDeliveryWaitsForSourceProposalApproval|TestAssistantDeliveryEvidenceGate PASS",
+        "STEP Viewer: python3 -m unittest tests.test_job_lifecycle tests.test_memory_budget -v PASS",
+        "STEP Viewer: node tests/upload-io-lifecycle.cjs PASS; node tests/viewer-upload.cjs PASS",
+        "Docker aide:source runtime + compiled Go test binary: TestDWGPreviewExpandedOutputAndFileCap PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务记录更新为实际问题、变更分支、测试证据和发布边界。#913 已在 origin/main 的 f62a9eb2 中具备 16 MiB 输出限制及 RLIMIT 截断检测。",
+      "evidence": [
+        "git merge-base --is-ancestor f62a9eb2 origin/main",
+        "docs/tasks/aide-unmerged-triage-20261120.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅保留明确属于 #968/#969 与本任务记录的改动；主程序和 STEP Viewer 原始脏工作区未改变。",
+      "evidence": [
+        "git diff --check PASS in both isolated worktrees",
+        "Aide change list limited to workflow, delivery inspection and their tests/task record",
+        "STEP Viewer branch contains upload lifecycle files/tests only"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户已明确要求合并到 main 并推送；执行前先通过当前修订的 Aide full 门禁，随后确认远端分支保护与 STEP Viewer 仓库门禁。",
+      "evidence": [
+        "用户消息：合并到main并推送"
+      ]
+    }
+  },
+  "release_authorization": "2026-11-20 用户直接指令：合并到main并推送。范围限于本任务已审查的 #968/#969/#971 修复。",
+  "rollback": "代码变更保存在两个独立 Git worktree/分支；删除或重置这些新 worktree 前先核对提交与状态。原 CloudDocs 工作区未修改。",
+  "handoff": "Aide 主程序提交：6e90ec4a、7f295c70，worktree /Users/skyelan/WorkTrees/aide-issue-968-20261120。STEP Viewer 提交：4ce7b11，worktree /Users/skyelan/WorkTrees/stepviewer-issue-971-20261120。原 CloudDocs 主程序和 aide-pkg-STEPViewer 脏工作区保持未动。#913 的相关修复已在 origin/main 的 f62a9eb2 并通过有 runtime Python 的容器定向回归。当前无远端 PR/合并/发布。"
+}

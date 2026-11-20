@@ -30,6 +30,31 @@ var artifactLink = regexp.MustCompile(`!?\[[^\]\n]*\]\(<?([^\s<>\)]+)>?\)`)
 var artifactExtension = regexp.MustCompile(`(?i)\b(png|jpe?g|webp|mp4|mp3|wav|pdf|docx|xlsx|pptx|dxf|stl|step|stp|zip)\b`)
 var fileDeliveryAction = regexp.MustCompile(`(?i)(生成|制作|创建|导出|保存|输出|交付|generate|create|export|save|deliver).{0,60}\b(png|jpe?g|webp|mp4|mp3|wav|pdf|docx|xlsx|pptx|dxf|stl|step|stp|zip)\b`)
 
+func proposalMatchesRequestedArtifact(prompt, filePath string) bool {
+	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(filePath)), ".")
+	if ext == "" {
+		return false
+	}
+	if ext == "jpg" {
+		ext = "jpeg"
+	}
+	if ext == "stp" {
+		ext = "step"
+	}
+	for _, requested := range artifactExtension.FindAllString(strings.ToLower(prompt), -1) {
+		if requested == "jpg" {
+			requested = "jpeg"
+		}
+		if requested == "stp" {
+			requested = "step"
+		}
+		if requested == ext {
+			return true
+		}
+	}
+	return false
+}
+
 func requiredDeliveryKind(prompt string) string {
 	for _, prefix := range []string{"不要", "不用", "停止", "取消", "别生成", "do not", "don't", "stop", "cancel"} {
 		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(prompt)), prefix) {
@@ -137,7 +162,10 @@ func (scope deliveryWorkspace) inspect(task *Task, out string) *TaskDelivery {
 		return d
 	}
 	for _, f := range task.Files {
-		if !f.Applied && strings.Contains(strings.ToLower(prompt), strings.TrimPrefix(strings.ToLower(filepath.Ext(f.Path)), ".")) && filepath.Ext(f.Path) != "" {
+		// A source proposal (for example a STEP generator) must reach the
+		// ordinary approval flow before checking for the final artifact. Its
+		// extension does not need to match the requested output format.
+		if !f.Applied {
 			d.State = "pending_approval"
 			d.Reason = "文件修改仍是待审批提案"
 			return d
@@ -198,6 +226,9 @@ func (a *App) finalizeProposalDeliveryLocked(task *Task) {
 	}
 	d := &TaskDelivery{State: "missing", Kind: task.Delivery.Kind, Reason: "提案已应用，尚未验证交付文件", CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 	for _, f := range task.Files {
+		if !proposalMatchesRequestedArtifact(task.Prompt, f.Path) {
+			continue
+		}
 		b, err := a.readAppliedProposalLocked(task, f)
 		if err == nil && len(b) > 0 && string(b) == f.Content {
 			d.Artifacts = append(d.Artifacts, proposalDisplayPath(f))
@@ -206,6 +237,8 @@ func (a *App) finalizeProposalDeliveryLocked(task *Task) {
 	if len(d.Artifacts) > 0 {
 		d.State = "delivered"
 		d.Reason = ""
+	} else {
+		d.Reason = "前置源码提案已应用，目标制品尚未执行或验证"
 	}
 	task.Delivery = d
 	if d.State == "delivered" {
