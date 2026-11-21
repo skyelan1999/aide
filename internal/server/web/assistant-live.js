@@ -105,9 +105,12 @@
         if(phase==='recovering'&&!busy)state('watching');
         hooks.work?.(events);
         const fresh=events.filter(event=>!seen.has(event.id));for(const event of events)seen.add(event.id);
+        const approvals=fresh.filter(event=>event.kind==='approval');
+        if(approvals.length)hooks.approvals?.(approvals);
         while(seen.size>1000)seen.delete(seen.values().next().value);
         hooks.saveSeen?.([...seen]);
-        const meaningful=fresh.filter(event=>event.kind!=='task'||!['running','queued'].includes(event.status));
+        const approvalRuns=new Set(events.filter(event=>event.kind==='approval'&&event.runId).map(event=>event.runId));
+        const meaningful=fresh.filter(event=>event.kind!=='task'||(!approvalRuns.has(event.runId)&&!['running','queued'].includes(event.status)));
         const report=baseline?meaningful:meaningful.filter(event=>event.priority>=3);
         if(report.length&&(!hooks.announceEvents||hooks.announceEvents())){const latest=report.slice(0,5);hooks.events?.(latest);notices.push(...latest.map(event=>[event.text,event.blocker,event.nextAction].filter(Boolean).join(' ')));notices=notices.slice(-5);if(!busy&&!finalText&&!interim)void announce();}baseline=true;
         if(hooks.initiative&&allowed()&&!busy&&!speaking&&!notices.length&&!finalText&&!interim&&Date.now()-lastActivity>=30000&&Date.now()-lastInitiativeCheck>=30000&&(!hooks.canInitiate||hooks.canInitiate())){

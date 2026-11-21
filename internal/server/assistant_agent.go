@@ -47,6 +47,7 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 用户提到某个历史任务/会话、要你跟进或把结论写过去：先用 search_sessions 找到它，旧约束用 search_history 获取带来源的命中片段，必要时 get_session 读近期消息，再 follow_session 标记或 push_to_session 推送；新独立任务用 push_to_session（ref 留空/"new"）新建会话承接。push_to_session 会立即启动或排队任务，不要把它描述为仅创建草稿。
 - 用户询问你是否记得/能否翻历史，或在刚才的历史查询后只补充一个关键词/主题：要把它当作查历史的延续，主动用 search_sessions 检索；找到后用 get_session 查看相关上下文，再结合事实回答。找不到时如实说明，不要假装记得。
 - 用户询问市场有哪些插件、是否有某项插件能力或插件详情：直接使用内置 browse_plugin_market，即使尚未安装插件也可查询；缓存过期时先刷新再判断是否缺少插件，查询不会安装或启用插件。
+- 查询当前工作区、会话运行、已安装插件和待人工审批，用 aide_component_status。用户明确指定一个会话编号并要求暂停、继续、停止或重试任务，用 control_session_run，按工具回执说明实际状态。
 - 询问进度时先用 work_status 查看交付、阻塞和下一步；completed 运行状态不等于产物已交付，待审批不能说已完成。重试生成、发布或代答审批仍遵守原授权边界。
 - 回答时先结合本小秘会话最近的对话，不能把用户当前一句从上下文里孤立处理；跨会话的旧事实仍须通过历史工具检索，不要猜测。
 - 想记住用户的习惯/偏好/待办：调用 remember 写进你自己的私有记忆。
@@ -73,6 +74,7 @@ func assistantAgentToolSchemas(allowSilent bool) []any {
 	base := crossSessionToolSchemas() // search_sessions/get_session/follow_session/push_to_session
 	base = append(base, map[string]any{"type": "function", "function": map[string]any{"name": "clear_followups", "description": "用户明确要求清理跟进台账时调用。仅取消助理跟进，保留任务和会话，不终止运行、不删除记录。全部清理需本轮明确说全部/都；否则仅处理本轮明确的 #编号。无需转交 aide。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"all": map[string]any{"type": "boolean", "description": "仅用户明确要求全部清理时为 true；否则 false，按用户本轮 #编号处理"}}, "required": []string{"all"}}}})
 	base = append(base, pluginMarketBrowseTool)
+	base = append(base, assistantComponentToolSchemas()...)
 	extra := []any{
 		map[string]any{"type": "function", "function": map[string]any{
 			"name":        "dispatch_to_aide",
@@ -279,6 +281,14 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		return a.executeMessageAssistant(context.Background(), call)
 	}
 	switch call.Function.Name {
+	case "aide_component_status":
+		return a.assistantComponentStatus(ctx, str("component"))
+	case "control_session_run":
+		heard := ""
+		if len(authorization) > 0 {
+			heard = authorization[0]
+		}
+		return a.controlAssistantSessionRun(ctx, heard)
 	case "clear_followups":
 		heard := ""
 		if len(authorization) > 0 {
@@ -392,20 +402,14 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		var target *Session
 		var created bool
 		if ref == "" || ref == "new" {
-			now := time.Now().UTC().Format(time.RFC3339Nano)
-			titleRunes := []rune(msg)
-			if len(titleRunes) > 24 {
-				titleRunes = titleRunes[:24]
+			dispatch := a.dispatchToAideLocked(msg)
+			if dispatch == nil {
+				a.mu.Unlock()
+				return "未能保存新会话。"
 			}
-			target = &Session{
-				ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
-				Messages: []Message{}, Runs: []*Task{}, PendingPrompt: msg, FollowedByAssistant: true,
-			}
-			a.assignSessionNumber(target)
-			a.sessions[target.ID] = target
+			targetID, _ := dispatch["sessionId"].(string)
+			target = a.sessions[targetID]
 			created = true
-			_ = a.save(target)
-			a.broadcastSessionsChanged(target.ID)
 		} else {
 			target = a.resolveSessionRef(ref)
 			if target == nil {

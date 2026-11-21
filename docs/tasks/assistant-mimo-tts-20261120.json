@@ -1,0 +1,143 @@
+{
+  "id": "assistant-mimo-tts-20261120",
+  "request": "助理会话朗读支持模型设置中选择已配置密钥，自动获取并筛选TTS模型，选择模型后配置/获取音色并支持角色模拟和试听",
+  "baseline": "409644a7038a7ce80056a5ea75fd1d0ab359b755",
+  "initial_status": "main 存在其他任务的跟踪和未跟踪改动。共享文件按补丁区分，其他任务改动保留在工作区。",
+  "acceptance": [
+    "模型设置中的 TTS 控件可选择已配置连接及该连接下已有密钥；密钥明文不返回浏览器，不修改聊天模型的活动密钥。",
+    "可按所选连接/密钥刷新并只展示识别为 TTS 的模型，选择项持久化。",
+    "MiMo 标准 TTS 和文本音色设计可通过现有助理朗读链路合成，提供预置音色与可编辑角色描述。",
+    "对未配置连接、无密钥、发现失败、无匹配模型和不支持的模型给出明确错误，不静默切换凭证。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/tts_catalog.go",
+    "internal/server/voice_model_bindings.go",
+    "internal/server/tts/",
+    "internal/server/web/app.js",
+    "docs/tasks/assistant-mimo-tts-20261120.json",
+    "docs/mimo-tts.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "以当前用户消息细化需求：利用模型设置内既有连接与密钥；选择连接/密钥后自动发现和筛选 TTS 模型；选择模型后配置音色/角色并试听。边界是不读取/回显密钥，不影响聊天活动密钥。",
+      "evidence": [
+        "用户消息：做一下；前序明确交互方案。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "采用独立 TTS 连接/密钥 ID 和模型配置；凭证始终由服务端 vault 解析，不更改聊天活动密钥。MiMo 目录和合成调用限制为官方 HTTPS 域名；角色描述走模型支持的 user 消息。",
+      "evidence": [
+        "internal/server/voice_model_bindings.go",
+        "internal/server/tts_catalog.go",
+        "internal/server/tts/mimo.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增 MiMo TTS 目录发现、密钥绑定、标准音色与文本音色设计合成，并在语音设置加入连接/密钥/模型/角色描述/试听流程。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/voice_model_bindings.go",
+        "internal/server/tts_catalog.go",
+        "internal/server/tts/mimo.go",
+        "internal/server/tts/provider.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未运行测试、构建或真实模型调用；当前 shell 未安装 go/gofmt，且未在浏览器/Aide 中验收 UI。",
+      "evidence": [
+        "本轮未运行测试或模型调用"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增 MiMo 助理朗读操作和凭证边界说明，含官方 API 参考。",
+      "evidence": [
+        "docs/mimo-tts.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅审阅任务相关差异；保留初始工作区已有的其他修改和未跟踪文件。app.js 中预先存在的文件双击时序改动也保留。",
+      "evidence": [
+        "初始 git status 与本轮 scoped diff"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "此前的本机安装和实测见后续记录。当前修复按用户要求合入本地 main；GitHub Release 和生产替换尚未执行。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "MiMo TTS 功能源码和文档已实现，仍需 Go 测试/构建、浏览器设置页验收，以及配置真实模型设置密钥后的上游试听验收。voiceclone 模型暂不展示，因为当前 UI 未实现音频样本上传。",
+  "followupSharedVoiceProvider": {
+    "request": "朗读和通话共用一个模型提供商，复用模型设置密钥，只列出可用本机语音和所选提供商能检索到的语音模型。",
+    "acceptance": [
+      "单一提供商选择，云端朗读和实时通话取同连接的活动密钥。",
+      "打开语音页、切换提供商和保存模型设置自动刷新目录。",
+      "目录拒绝或不可达时隐藏云端候选，保留可用本机朗读。",
+      "按已支持语音协议过滤目录，发现的模型无需添加为聊天模型。"
+    ],
+    "verification": {
+      "go": "PASS go test -mod=vendor ./internal/server ./internal/server/tts -run Test(VoiceModelBinding|VoiceProvider|QwenNativeAPI|OpenAISpeechProtocol|OpenAIRealtimeNarration)",
+      "build": "PASS go build -mod=vendor ./cmd/aide using the isolated Docker SDK and a source archive.",
+      "browser": "PASS Playwright Chrome on the isolated Aide server at 1440x940 and 440x880. Verified initial discovery, selection/save/readback, missing IDs hidden, HTTP 401 clears provider models, local voice stays, and saving Model Settings refreshes the open voice page.",
+      "realProviderDirectory": "PASS running Aide used its existing MiMo Token Plan China connection to return mimo-v2.5-tts and mimo-v2.5-tts-voicedesign through its authenticated model listing API.",
+      "realProviderSynthesisAndCall": "NOT_RUN",
+      "installedAppAndRelease": "NOT_RUN. Source validated in a separate instance. The installed Aide service was used only for the directory query."
+    }
+  },
+  "nativeAcceptance": {
+    "sourceBuild": "build.command built and installed Aide 0.1.19.0 RC2. The initial launch wait timed out while the container continued starting. The final image is sha256:f9f3a7f12dda4b23c20871205187d6a5b289cde8d782bc337d9f1d37210faead. Host health returned status=ok and integrity=ok, Docker reported healthy, and the native client reconnected.",
+    "mimoPreview": "Native Aide preview used the saved MiMo Token Plan China connection and mimo-v2.5-tts with the default voice. Aide reported currentTTSEngine=mimo after reading an audio response, and the native preview completed without reporting a playback error.",
+    "modelSettings": "The first save returned 不支持的语音接口类型. Added mimo-tts to model settings validation and the editor, then rebuilt. The native app reported 模型设置已保存 and showed the automatically discovered Qwen Realtime candidates without manual refresh. The returned OpenAI catalog no longer included the dedicated transcription or translation models.",
+    "regression": "PASS go test -mod=vendor ./internal/server -run TestVoice(ModelBinding|Provider), including GET /api/config to PUT /api/settings round trip.",
+    "realtime": "PENDING native Aide local microphone authorization. Assistant identity verification passed and the call button was clicked for qwen3.8-omni-flash-realtime.",
+    "realtimeFollowup": {
+      "native": "Microphone permission passed. Native OpenAI Realtime redial returned to idle. WebKit recorded loopback TLS certificate verification OK, then NSURLErrorDomain -1005 for the WebSocket.",
+      "configuredModel": "gpt-realtime-2.1-mini · OpenAI · marin",
+      "control": "Using the saved provider on the same Aide port and installation certificate pin, an authenticated WebSocket returned HTTP 101, aide.ready and aide.pong after 3 seconds of synthetic PCM silence. This is not native microphone or speech playback acceptance.",
+      "status": "The reproduced playback-backlog disconnect originated in the native client. Rebuild and native speech/playback acceptance are tracked separately below.",
+      "disconnectDiagnosis": {
+        "status": "in_progress",
+        "build": "build.command produced source build 409644a7038a7ce80056a5ea75fd1d0ab359b755-dirty.e6d310d4708bcfc2ceabbf040cc56f6907010da5091f892770978492e3417059. The launcher health probe timed out; the running container subsequently reached healthy, integrity ok. Native Aide reconnected.",
+        "diagnostics": "The native call relay logs client and provider upgrades, readiness and the observed first ending with sanitized reason. A prior WebKit trace shows successful loopback TLS and 78480 bytes sent before error -1005; it does not establish who initiated the close.",
+        "verification": "PASS targeted Go AssistantRealtime/OpenAIRealtime tests and Node assistant-realtime/assistant-call tests. Initial retest reached HTTP 423 before separate assistant session verification.",
+        "reproduction": "2026-11-21 13:48:57–13:49:06 CST. The relay logged client upgrade, provider upgrade and ready, followed by first_end=client reason=hangup. Native UI showed a freshly transcribed utterance and 实时音频播放积压，通话已结束. The client terminated the call when the scheduled audio exceeded its 12-second limit.",
+        "repair": "Queue received PCM separately from the short window scheduled on the audio clock. Drain the reply across provider completion, retain sample-based interruption offsets, and cancel only the current reply if the bounded queue fills.",
+        "regression": "PASS node --test scripts/assistant-realtime.test.cjs scripts/assistant-call.test.cjs. A 16-second burst drained in order without gaps or hangup. Oversized reply cancellation preserved the call. Interruption dropped scheduled and pending audio and reported the played sample offset.",
+        "repairBuild": "build.command compiled source build 409644a7038a7ce80056a5ea75fd1d0ab359b755-dirty.495fc3015052025be6f0ca4a4eb39f6507d50c9fbb77149adaecb0a8b7cf7dca. Initial launcher health probe timed out. The container then reached healthy with integrity ok, localhost served the matching v3 playback asset, and native Aide reconnected.",
+        "repairAcceptance": "2026-11-21 14:31:55–14:35:04 CST. Native Aide connected and the user-supplied screenshot shows multiple new utterances and model replies. The relay recorded ready, then a client hangup after about three minutes, with no backlog error reported for that call. Audible playback has not been explicitly confirmed."
+      },
+      "identityFollowup": {
+        "cause": "The shared voiceIdentityPrompt listed a literal self-introduction under a rule covering every reply. Native call setup and subsequent instruction updates reused it.",
+        "repair": "Use first-person pronouns in ordinary turns and reserve the configured name for explicit identity or introduction requests.",
+        "verification": "PASS targeted Go identity, prompt assembly, OpenAI Realtime relay and MIXSoul tests with the installed Node 24 runtime copied into an isolated Go test container.",
+        "build": "2026-11-21. build.command compiled source build 409644a7038a7ce80056a5ea75fd1d0ab359b755-dirty.b6d89e24a818c3b593f539f8c07b25596e82d8a8e9367f309fc7fb41789dd8a3. After the launcher health probe timed out, the running container reached healthy and integrity ok. Verified matching buildCommit via /api/config and reconnected native Aide.",
+        "liveAcceptance": "2026-11-21 14:54:08–14:57:40 CST. Native Aide connected with gpt-realtime-2.1-mini and marin. Several replies continued the topic without saying the name. The transcript for 你是谁 showed 我是小绵 and a brief description of its role. The call ended with a client hangup."
+      },
+      "nativeWorkFollowup": {
+        "cause": "The running assistant settings endpoint reported configured mimo-v2.5-asr for work handling, while the native call endpoint reported gpt-realtime-2.1-mini. Tool decisions need a conversation model. A tool request could also be rejected if it arrived before transcription.",
+        "repair": "Filter non-conversation and known tool-incompatible models in assistant settings. Existing incompatible catalog selections use the current workbench conversational model and display the fallback. Wait briefly for the corresponding turn transcript before authorizing work.",
+        "approval": "An explicit session reference opens one pending shell approval or file proposal in the call panel. A later explicit user utterance submits a one-time decision using the existing guarded human approval handlers. The offer binds workspace revision, session, run, payload fingerprint and question round.",
+        "opening": "OpenAI native calls request one concise spoken opening from recent user topics, or a neutral opener when none is suitable. The opener requests no tools and is marked proactive for server-side gating.",
+        "regression": "PASS targeted Go native approval binding, late transcription, conversation model fallback, history-based opener, existing native quotation and confirmation tests. PASS frontend call and playback tests.",
+        "live": "Source build 409644a7038a7ce80056a5ea75fd1d0ab359b755-dirty.f72f0a8771cc5f44067fe46a599576621b7f2dc08ace9c418e43a172c1c82827 reached healthy with integrity ok. GET /api/xiaomi/model reports gpt-6.1-sol fallback for the saved mimo-v2.5-asr. Native Aide call at 15:21 CST opened before the first fresh transcribed user utterance and successfully read session 188 status through the work tool. The following call returned the real #189 weather result to voice. Real pending approvals were left untouched.",
+        "openingRefinement": "The first opening was generic. The next source revision explicitly requires a concrete recent topic when available, and the synthetic opener and file approval tests passed again. That refinement is not in the running container while #188 is awaiting human approval."
+      },
+      "componentAndApprovalFollowup": {
+        "repair": "Added assistant queries for the current workspace, sessions, installed plugins and human approvals. Explicit session-number commands reuse the pause, resume, stop and retry handlers with run and workspace guards. Session creation persists before publishing a refresh, and the sidebar updates while the composer has focus.",
+        "approvalReminders": "Pending human decisions show linked session numbers even for untracked sessions. Native OpenAI Realtime waits for a conversation break, then announces new approvals once per call. Ordinary clarification and automatic review do not trigger this notice. Voice review requests with several pending decisions in one session ask the user to choose in the session.",
+        "verification": "PASS isolated source compilation and targeted Go tests including the OpenAI Realtime socket fixture, the history-based opening, audible-response packet relay for an approval, approval-round binding and run control. PASS four Node regression suites. In the isolated browser, session #74 appeared automatically while the composer kept its draft and focus, and the manual approval notice linked to session #73.",
+        "installedNative": "NOT_RUN for this source revision. Native Aide still runs the previous build, and its UI showed session #188 at the command-approval prompt. Restart would interrupt it, so the existing approval was left pending."
+      }
+    }
+  }
+}

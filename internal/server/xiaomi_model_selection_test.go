@@ -102,3 +102,25 @@ func TestXiaomiModelSourceCompatibility(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestXiaomiLegacyAssistantASRUsesExistingChatModel(t *testing.T) {
+	a := testApp(t)
+	selectionModels(a, "https://provider-a.invalid/v1", "https://provider-b.invalid/v1")
+	a.settings.Models = append(a.settings.Models, ModelRef{ID: "mimo-v2.5-asr", ProviderID: "b"})
+	if err := a.vault.Put(modelProviderVaultID("a", "fixture"), VaultTypeModelAPIKey, "fixture", []byte("chat-key"), ""); err != nil {
+		t.Fatal(err)
+	}
+	requireStatus(t, request(a, "PUT", "/api/xiaomi/model", map[string]any{"source": "configured", "model": "mimo-v2.5-asr"}), 400)
+	a.settings.XiaomiModelSource = "configured"
+	a.settings.XiaomiModel = "mimo-v2.5-asr"
+	a.mu.Lock()
+	cfg, err := a.xiaomiModelConfigLocked()
+	a.mu.Unlock()
+	if err != nil || cfg.Model != "model-a" || cfg.APIKey != "chat-key" {
+		t.Fatalf("legacy ASR did not use the workbench chat model: %q %v", cfg.Model, err)
+	}
+	got := request(a, "GET", "/api/xiaomi/model", nil)
+	if !strings.Contains(got.Body.String(), `"fallbackModel":"model-a"`) || !strings.Contains(got.Body.String(), `"model":"mimo-v2.5-asr"`) {
+		t.Fatal("assistant model fallback was not disclosed")
+	}
+}

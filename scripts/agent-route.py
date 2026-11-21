@@ -283,6 +283,8 @@ def main():
         if git('branch', '--show-current') != 'main': errors.append('Release requires main')
         if git('status', '--porcelain'): errors.append('Release requires clean Git status')
         if errors: raise ValueError('\n'.join(errors))
+        if subprocess.run([sys.executable, 'scripts/check_docs.py'], cwd=ROOT, timeout=60).returncode:
+            raise ValueError('Documentation check failed; release refused')
         check_public_runtime_assets()
         print('PASS: local prerequisites and public default assets. No merge, tag, push or deployment performed.')
     return 0

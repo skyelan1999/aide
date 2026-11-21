@@ -23,11 +23,12 @@ func TestVoiceIdentityContainsName(t *testing.T) {
 func TestVoiceIdentityFirstPerson(t *testing.T) {
 	cfg := Settings{VoiceAssistantName: "小秘"}
 	got := voiceIdentityPrompt(cfg)
-	if !strings.Contains(got, "我是") {
-		t.Fatalf("身份提示缺少第一人称自称\"我是\": %q", got)
+	if !strings.Contains(got, "自称用第一人称「我」") {
+		t.Fatalf("身份提示未要求用第一人称自称: %q", got)
 	}
-	if !strings.Contains(got, "说\"我\"") {
-		t.Fatalf("身份提示未要求用第一人称\"我\"自称: %q", got)
+	if !strings.Contains(got, "只有用户明确询问你的姓名或身份，或请你自我介绍时") ||
+		strings.Contains(got, "我是小秘") {
+		t.Fatalf("身份提示应提醒按需介绍，避免例行报名字: %q", got)
 	}
 }
 
@@ -84,7 +85,7 @@ func TestVoiceIdentityNameChange(t *testing.T) {
 	// 改名后立即跟随
 	cfg := Settings{VoiceAssistantName: "小蓝"}
 	got := voiceIdentityPrompt(cfg)
-	if !strings.Contains(got, "「小蓝」") || !strings.Contains(got, "我是小蓝") {
+	if !strings.Contains(got, "「小蓝」") {
 		t.Fatalf("改名后身份提示未跟随: %q", got)
 	}
 	if strings.Contains(got, "「小秘」") {

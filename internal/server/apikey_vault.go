@@ -329,6 +329,7 @@ type modelConfigItem struct {
 	VoiceAPI            string            `json:"voiceAPI,omitempty"`
 	ReasoningEfforts    []string          `json:"reasoningEfforts"`
 	SupportsVision      bool              `json:"supportsVision"`
+	SupportsAssistant   bool              `json:"supportsAssistant"`
 	ID                  string            `json:"id"`
 	Name                string            `json:"name,omitempty"`
 	ProviderID          string            `json:"providerId,omitempty"`
@@ -353,9 +354,10 @@ func (a *App) modelConfigOut() []modelConfigItem {
 			}
 		}
 		out = append(out, modelConfigItem{
-			VoiceAPI:         voiceModelAPI(m),
-			ReasoningEfforts: modelReasoningEfforts(cfg),
-			SupportsVision:   modelSupportsVision(m.ID, a.settings.Models), ID: m.ID, Name: m.Name, ProviderID: m.ProviderID, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
+			VoiceAPI:          voiceModelAPI(m),
+			ReasoningEfforts:  modelReasoningEfforts(cfg),
+			SupportsAssistant: supportsAssistantTools(m),
+			SupportsVision:    modelSupportsVision(m.ID, a.settings.Models), ID: m.ID, Name: m.Name, ProviderID: m.ProviderID, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
 			Capabilities: m.Capabilities, CapabilitiesSource: m.CapabilitiesSource, CapabilitiesChecked: m.CapabilitiesChecked,
 		})
 	}

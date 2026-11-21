@@ -201,12 +201,6 @@
               "label": "模型连接与密钥"
             },
             {
-              "id": "voice-providers",
-              "type": "voice-providers",
-              "label": "原有语音连接与密钥",
-              "advanced": true
-            },
-            {
               "id": "model-profiles",
               "type": "profiles-manager",
               "label": "参数配置"
