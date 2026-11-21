@@ -10,6 +10,7 @@ FROM ${PYTHON_BASE} AS python
 FROM ${GO_BASE} AS toolchain
 COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/
 ARG AIDE_CN_SOURCE_FALLBACK=1
+ARG AIDE_APT_SOURCE=standard
 COPY --from=python /usr/local /usr/local
 RUN ldconfig
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
@@ -22,7 +23,7 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 FROM toolchain AS dev
 COPY scripts/install-office-preview.sh /usr/local/lib/aide/install-office-preview.sh
 RUN sh /usr/local/lib/aide/install-office-preview.sh
-ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+ARG PIP_INDEX_URL=https://pypi.org/simple/
 RUN sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
       python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0 \
     && groupadd -g 1000 aide \
@@ -97,7 +98,7 @@ RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/i18n.js \
     && node --check internal/server/web/locales/en.js
 ARG AIDE_RUN_TESTS=0
-ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+ARG PIP_INDEX_URL=https://pypi.org/simple/
 # Go tests exercise the same Office scripts that the runtime image ships. Give
 # the build-stage test process the pinned Python modules too; these packages do
 # not enter the final runtime stage from this build stage.
@@ -140,6 +141,7 @@ ARG TARGETOS
 ARG TARGETARCH
 COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/
 ARG AIDE_CN_SOURCE_FALLBACK=1
+ARG AIDE_APT_SOURCE=standard
 # A fresh root is essential: deleting SDK files from toolchain retains its layers.
 RUN sh /usr/local/lib/aide/apt-install-retry.sh \
       ca-certificates curl git openssh-client xauth procps bzip2 \
@@ -160,7 +162,7 @@ RUN groupadd -g 1000 aide && useradd -m -u 1000 -g aide aide \
 #    pip 下载缓存经 cache mount 跨构建复用。
 #    离线/air-gap 首次构建：先在联网机跑 scripts/prebuild-wheels.sh 预下载到 docker/wheels/，
 #    再 --build-arg PIP_OFFLINE=1 用 --no-index --find-links=/wheels 纯本地安装。
-ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+ARG PIP_INDEX_URL=https://pypi.org/simple/
 ARG PIP_OFFLINE=0
 COPY docker/wheels /wheels
 RUN --mount=type=cache,target=/root/.cache/pip \

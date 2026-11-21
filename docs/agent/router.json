@@ -1754,6 +1754,14 @@
       [
         "python3",
         "scripts/test_cad_step_curve_check.py"
+      ],
+      [
+        "python3",
+        "scripts/test_build_network.py"
+      ],
+      [
+        "python3",
+        "scripts/test_license_component_control.py"
       ]
     ],
     "full": [

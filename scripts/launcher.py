@@ -5,6 +5,7 @@ POSIX entrypoints use this coordinator. Windows entrypoints use the native C++
 host; no host Python or PowerShell is required there. Never executes .env.
 """
 import argparse
+import importlib.util
 import hashlib
 import json
 import os
@@ -22,6 +23,13 @@ ROOT = Path(__file__).resolve().parents[1]
 IMAGE_ID = re.compile(r"sha256:[a-f0-9]{64}\Z")
 PROGRESS_INTERVAL = 10
 CONTAINER_ID = re.compile(r"[a-f0-9]{12,64}\Z")
+
+
+def build_network_module():
+    spec = importlib.util.spec_from_file_location('aide_build_network', Path(__file__).with_name('build-network.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class BuildFailure(RuntimeError):
@@ -194,6 +202,65 @@ class Launcher:
             raise ValueError('Build ownership receipt does not match this installation')
         return value
 
+    def select_build_sources(self, build, arguments):
+        network = build_network_module()
+        mode = os.environ.get('AIDE_BUILD_SOURCE', str(arguments.pop('AIDE_BUILD_SOURCE', 'auto')))
+        if mode not in ('auto', 'standard', 'china'):
+            raise ValueError('AIDE_BUILD_SOURCE must be auto, standard or china')
+        print('AIDE: 编译前检测标准源与国内源（宿主和可用的 Docker 网络）…', flush=True)
+        host = network.assess()
+        container = None
+        # Reuse an installed Python runtime so assessment does not itself need
+        # to download an image from an untested source.
+        candidates = [self.image, 'python:3.12-slim-bookworm']
+        local = self.d('image', 'ls', '--filter', 'label=aide.runtime-profile=slim',
+                       '--format', '{{.ID}}', capture=True, check=False)
+        if isinstance(local, str):
+            candidates += local.splitlines()[:2]
+        for image in candidates:
+            present = self.d('image', 'inspect', image, '--format', '{{.Id}}', capture=True, check=False)
+            if not isinstance(present, str) or not IMAGE_ID.fullmatch(present.strip()):
+                continue
+            command = [self.docker, 'run', '--rm', '--pull=never', '--read-only',
+                       '--cap-drop=ALL', '--security-opt=no-new-privileges', '--pids-limit=32',
+                       '--memory=128m', '--entrypoint=python3']
+            if build.get('network') and build['network'] != 'default':
+                command += ['--network', build['network']]
+            command += [present.strip(), '-c', Path(__file__).with_name('build-network.py').read_text()]
+            try:
+                result = subprocess.run(command, cwd=self.root, capture_output=True, text=True, timeout=18)
+                if result.returncode == 0:
+                    container = json.loads(result.stdout)
+                    break
+            except (OSError, ValueError, subprocess.TimeoutExpired):
+                continue
+        selected = network.select(host, container, mode, str(arguments.get('AIDE_CN_SOURCE_FALLBACK', '1')) != '0')
+        atomic_json(self.state / 'network.json', {'version': 1, 'mode': mode, 'host': host,
+                    'container': container, 'selected': selected})
+        for kind, region in selected.items():
+            print('AIDE: ' + kind + ' → ' + {'standard': '标准源', 'china': '国内源',
+                  'unavailable': '均未探测成功，保留原配置并由实际下载校验'}[region], flush=True)
+        if container is None:
+            print('AIDE: 本地暂无可用于探测的 Python 容器，包源按宿主检测预选；实际容器下载仍会校验。', flush=True)
+        if mode == 'auto' and str(arguments.get('AIDE_CN_SOURCE_FALLBACK', '1')) == '0':
+            return arguments
+        index = str(arguments.get('PIP_INDEX_URL', network.PIP['standard']))
+        if str(arguments.get('PIP_OFFLINE', '0')) != '1' and index in network.PUBLIC_PIP:
+            if selected['pip'] != 'unavailable':
+                arguments['PIP_INDEX_URL'] = network.PIP[selected['pip']]
+        if selected['apt'] != 'unavailable':
+            arguments['AIDE_APT_SOURCE'] = selected['apt']
+        dockerfile = (self.root / build.get('dockerfile', 'Dockerfile')).read_text()
+        if selected['registry'] == 'china':
+            for key in ('PYTHON_BASE', 'NODE_BASE', 'GO_BASE'):
+                default = re.search(r'(?m)^ARG ' + key + r'=([^\r\n ]+)', dockerfile)
+                ref = str(arguments.get(key, default[1] if default else ''))
+                canonical = re.sub(r'^(docker\.io/library/|docker\.io/|library/)', '', ref)
+                if re.fullmatch(r'(python|node|golang)(:[A-Za-z0-9_.-]+)?(@sha256:[a-f0-9]{64})?', canonical):
+                    arguments[key] = 'docker.m.daocloud.io/library/' + canonical
+            self.bootstrap_image = 'docker.m.daocloud.io/moby/buildkit:buildx-stable-1'
+        return arguments
+
     def ensure_builder(self):
         self.validate_state()
         existing = self.d('buildx', 'inspect', self.builder, capture=True, check=False)
@@ -201,7 +268,9 @@ class Launcher:
             if not self.owner():
                 raise ValueError('A builder with this name exists without this installation receipt; refusing to adopt it')
             return
-        self.d('buildx', 'create', '--name', self.builder, '--driver', 'docker-container', '--driver-opt', 'memory=4g,memory-swap=4g,cpu-period=100000,cpu-quota=200000,restart-policy=no')
+        self.d('buildx', 'create', '--name', self.builder, '--driver', 'docker-container', '--driver-opt',
+               'memory=4g,memory-swap=4g,cpu-period=100000,cpu-quota=200000,restart-policy=no',
+               '--driver-opt', 'image=' + getattr(self, 'bootstrap_image', 'moby/buildkit:buildx-stable-1'))
         atomic_json(self.receipt, {'version': 1, 'scope': self.scope, 'builder': self.builder})
 
     def configure_image(self):
@@ -344,6 +413,9 @@ class Launcher:
                                             dependencies=[str(value) for key, value in build_args.items()
                                                           if key.endswith('_IMAGE') and value])
             self.call(disk_check)
+        configuration = json.loads(self.d('compose', 'config', '--format', 'json', capture=True))
+        build = configuration['services']['aide']['build']
+        arguments = self.select_build_sources(build, dict(build.get('args') or {}))
         source = self.call(['bash', 'scripts/aide.sh', 'source-sha'], capture=True, timeout=1800,
                            progress='AIDE: 正在读取源码计算构建指纹；此阶段尚未进入 Docker 编译…')
         if not re.fullmatch(r'[a-f0-9]{64}', source):
@@ -355,9 +427,6 @@ class Launcher:
             # Retain the dirty marker without collapsing different source builds
             # onto one ambiguous identity. Drafts stay in place and untracked.
             commit += '-dirty.' + source
-        configuration = json.loads(self.d('compose', 'config', '--format', 'json', capture=True))
-        build = configuration['services']['aide']['build']
-        arguments = dict(build.get('args') or {})
         arguments.update(AIDE_VERSION=display, AIDE_COMMIT=commit, AIDE_SRC_SHA=source, AIDE_RUNTIME_MODE='source')
         if builder_mode == 'default':
             details = self.d('buildx', 'inspect', 'default', capture=True, check=False)

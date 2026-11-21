@@ -205,6 +205,25 @@ sys.exit(23 if failed else 0)
         self.assertEqual(len(calls), 3)
         self.assertIn('https://mirrors.aliyun.com/debian', modified)
 
+    def test_preselected_china_is_used_by_first_apt_request(self):
+        self.env['AIDE_APT_SOURCE'] = 'china'
+        apt = self.root/'apt-get'
+        apt.write_text('#!/bin/sh\ncat "$AIDE_APT_SOURCES_DIR/sources.list.d/debian.sources" >> "$ATTEMPT_LOG.first"\nexit 0\n')
+        apt.chmod(0o700)
+        # The fake package manager records sources at the instant it is called.
+        directory = self.root/'apt/sources.list.d'
+        directory.mkdir(parents=True)
+        source = directory/'debian.sources'
+        source.write_text('URIs: http://deb.debian.org/debian\nSuites: bookworm\nSigned-By: /keys/debian.gpg\n')
+        self.env['AIDE_APT_SOURCES_DIR'] = str(directory.parent)
+        result = subprocess.run(['sh', str(ROOT/'scripts/apt-install-retry.sh'), 'curl=1.0'],
+                                env=self.env, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        actual = Path(str(self.log)+'.first').read_text()
+        self.assertIn('URIs: https://mirrors.tuna.tsinghua.edu.cn/debian', actual)
+        self.assertNotIn('deb.debian.org', actual)
+        self.assertIn('Signed-By: /keys/debian.gpg', actual)
+
     def test_apt_custom_source_package_error_and_optout_never_switch(self):
         for source, failure, disabled in [('deb https://private.example/debian bookworm main\n', 'Failed to fetch: timeout', False),
             ('deb http://deb.debian.org/debian bookworm main\n', 'Unable to locate package', False),

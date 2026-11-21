@@ -4,6 +4,18 @@ set -eu
 sources=${AIDE_APT_SOURCES_DIR:-/etc/apt}
 log=$(mktemp)
 trap 'rm -f "$log"' EXIT HUP INT TERM
+# Select before the first apt request. Preserve suites and signature settings.
+case "${AIDE_APT_SOURCE:-standard}" in
+  standard) ;;
+  china)
+    for file in "$sources/sources.list" "$sources"/sources.list.d/*.list "$sources"/sources.list.d/*.sources; do
+      [ -f "$file" ] || continue
+      sed -E 's#https?://(deb\.debian\.org|security\.debian\.org)/debian(-security)?#https://mirrors.tuna.tsinghua.edu.cn/debian\2#g' "$file" >"$log"
+      cat "$log" >"$file"
+    done
+    ;;
+  *) echo 'Invalid AIDE_APT_SOURCE' >&2; exit 2 ;;
+esac
 attempt=0
 while :; do
   if (apt-get -o Acquire::Retries=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 \

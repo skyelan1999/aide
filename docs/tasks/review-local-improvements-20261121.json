@@ -17,13 +17,13 @@
     "hardware": "未验证工程图纸或真实 CAD SDK 硬件/数据精度。",
     "quick": "python3 scripts/agent-route.py verify quick 通过；.agent-state/verify-20261121T141516198433Z.log",
     "go_full": "裸 golang 镜像的全量 go test 失败（182 项），环境缺 Node/Python Office 依赖与脚本路径；不计为通过。随后用 Dockerfile toolchain（Go、Node、Python）重跑变更及相关恢复/助理用例：server 85.836s、execsandbox 0.188s 全部通过；go vet 通过。全量运行镜像验收未完成。",
-    "ci": "PR #979 在 d08a7ab2 的 quick/go/gate 通过；新增回归已加入 basic_go，最终提交仍需远端 gate。",
+    "ci": "PR #979 在 d2eaf4cc 的 quick/go/gate 通过；同步 main 后重新执行远端 gate。",
     "evidence": [
       ".agent-state/full-go.log",
       ".agent-state/complete-toolchain-targeted.log",
       ".agent-state/verify-20261121T141516198433Z.log"
     ]
   },
-  "merge": "PR #979 等待新提交 gate 和本次专属管理员合并授权",
+  "merge": "用户已授权全部合入 main；#978 合并后，只合并 router.json 两边追加的检查。#979 等待此次合并提交 gate，成功后管理员合并。",
   "release": "已提交 push 并创建 PR，未升版、发布、替换生产服务"
 }
