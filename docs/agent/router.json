@@ -95,6 +95,7 @@
         ],
         "verification": [
           "bash -n 检查涉及的 shell 脚本",
+          "每次自动 Release 按 WORKFLOW.md 核查仓库维护的全部文档并更新对应说明，在打 tag 前运行 python3 scripts/check_docs.py、提交文档并记录结果",
           "仅按用户授权执行构建、发布或推送"
         ]
       },
