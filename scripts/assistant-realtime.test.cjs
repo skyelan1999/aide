@@ -2,12 +2,30 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const tick=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
 function fixture(config){
  let stopped=0,freed=0,pending=null,valid=true,timer,states=[],errors=[];
- class AC{constructor(){this.currentTime=1;this.destination={};this.audioWorklet={addModule:async()=>{}};this.sources=[];}resume(){return Promise.resolve();}close(){this.closed=true;return Promise.resolve();}createMediaStreamSource(){return {connect(){},disconnect(){}}}createGain(){return {gain:{value:1},connect(){},disconnect(){}}}createBuffer(n,size,rate){return {duration:size/rate,getChannelData:()=>new Float32Array(size)}}createBufferSource(){const p={connect(){},start(){},stop(){stopped++}};this.sources.push(p);return p;}}
+ class AC{
+  constructor(){AC.last=this;this.currentTime=1;this.destination={};this.audioWorklet={addModule:async()=>{}};this.sources=[];}
+  resume(){return Promise.resolve();}
+  close(){this.closed=true;return Promise.resolve();}
+  createMediaStreamSource(){return {connect(){},disconnect(){}};}
+  createGain(){return {gain:{value:1},connect(){},disconnect(){}};}
+  createBuffer(n,size,rate){return {duration:size/rate,getChannelData:()=>new Float32Array(size)};}
+  createBufferSource(){
+   const p={connect(){},disconnect(){},start(at){this.at=at;},stop(){stopped++;}};
+   this.sources.push(p);return p;
+  }
+  finishNext(){
+   const source=this.sources.find(p=>p.onended);
+   if(!source)return false;
+   this.currentTime=source.at+source.buffer.duration;
+   const ended=source.onended;source.onended=null;ended();
+   return true;
+  }
+ }
  class Worklet{constructor(ctx,name,options){this.port={};this.options=options;Worklet.last=this;}connect(){}disconnect(){}}
  class WS{constructor(url,protocols){this.url=url;this.protocols=protocols;this.readyState=1;this.bufferedAmount=0;this.sent=[];WS.last=this;}send(s){this.sent.push(JSON.parse(s));}close(){this.closed=true;}event(e){this.onmessage({data:JSON.stringify(e)});}}
  const c={window:{AudioContext:AC},navigator:{mediaDevices:{getUserMedia:async()=>pending||{getTracks:()=>[{stop(){freed++}}]}}},location:{href:'https://localhost:9999/',protocol:'https:'},AudioWorkletNode:Worklet,WebSocket:WS,URL,Uint8Array,DataView,Float32Array,ArrayBuffer,Set,JSON,atob,btoa,setInterval:fn=>{timer=fn;return 1},clearInterval:()=>{timer=null}};vm.createContext(c);vm.runInContext(fs.readFileSync('internal/server/web/assistant-realtime.js','utf8'),c);
  const live=c.window.AideAssistantRealtime.create({valid:()=>valid,session:()=> 'assistant',token:()=> 'synthetic-token',preflight:async()=>config,state:s=>states.push(s.phase),error:e=>errors.push(e)});
- return {live,WS,Worklet,states,errors,freed:()=>freed,stopped:()=>stopped,permission:p=>pending=p,setValid:v=>valid=v,poll:()=>timer?.(),timer:()=>timer};
+ return {live,WS,Worklet,AC,states,errors,freed:()=>freed,stopped:()=>stopped,permission:p=>pending=p,setValid:v=>valid=v,poll:()=>timer?.(),timer:()=>timer};
 }
 (async()=>{
  const f=fixture();await f.live.start();const ws=f.WS.last;assert(!String(ws.url).includes('synthetic-token'));assert(ws.protocols.includes('aide-auth.synthetic-token'));assert.equal(f.live.snapshot().phase,'requesting');ws.event({type:'aide.ready'});assert.equal(f.live.snapshot().phase,'listening');
@@ -20,6 +38,39 @@ function fixture(config){
  const late=fixture();let release;late.permission(new Promise(r=>release=r));const p=late.live.start();await tick();late.live.stop();let released=0;release({getTracks:()=>[{stop(){released++}}]});await p;assert.equal(released,1);
  const raced=fixture();let doneA,doneB,freedA=0,freedB=0;raced.permission(new Promise(r=>doneA=r));const racing=raced.live.start();await tick();await raced.live.setMicrophone(false);raced.permission(new Promise(r=>doneB=r));const resume=raced.live.setMicrophone(true);await tick();doneA({getTracks:()=>[{stop(){freedA++}}]});await racing;assert.equal(freedA,1,'superseded permission cannot attach a second live capture');doneB({getTracks:()=>[{stop(){freedB++}}]});await resume;raced.live.stop();assert.equal(freedB,1);
  const congested=fixture();await congested.live.start();congested.WS.last.event({type:'aide.ready'});congested.WS.last.bufferedAmount=300000;congested.Worklet.last.port.onmessage({data:new ArrayBuffer(640)});assert.equal(congested.live.snapshot().enabled,false);assert.equal(congested.errors.length,1);
+ const burst=fixture();await burst.live.start();
+ const burstSocket=burst.WS.last, player=burst.AC.last;
+ burstSocket.event({type:'aide.ready'});
+ burstSocket.event({type:'response.created',response:{id:'burst'}});
+ const audio={type:'response.audio.delta',item_id:'long-item',response_id:'burst',delta:Buffer.alloc(48000,64).toString('base64')};
+ for(let i=0;i<16;i++)burstSocket.event(audio);
+ burstSocket.event({type:'response.done',response:{id:'burst'}});
+ assert.equal(player.sources.length,2,'schedule only a short lead when a long reply arrives all at once');
+ assert.equal(burst.live.snapshot().phase,'speaking');
+ let chunks=0;while(player.finishNext())chunks++;
+ assert.equal(chunks,16,'play every chunk after the provider finishes sending');
+ for(let i=1;i<player.sources.length;i++)assert.equal(player.sources[i].at,player.sources[i-1].at+1,'queued audio plays without gaps');
+ assert.equal(burst.live.snapshot().phase,'listening');
+ assert.equal(burst.errors.length,0);
+ assert(!burstSocket.sent.some(e=>e.type==='aide.hangup'));
+ burstSocket.event({type:'response.created',response:{id:'burst'}});
+ const oversized={...audio,delta:Buffer.alloc(192000,64).toString('base64')};
+ for(let i=0;i<23;i++)burstSocket.event(oversized);
+ assert.equal(burst.live.snapshot().phase,'listening');
+ assert(burst.live.snapshot().enabled,'overflow cancels the reply while keeping the socket open');
+ assert.equal(burst.errors.length,1);
+ assert(burstSocket.sent.some(e=>e.type==='response.cancel'));
+ assert(!player.finishNext(),'overflow clears queued playback');
+ burstSocket.event({type:'response.created',response:{id:'recovered'}});
+ burstSocket.event({...audio,response_id:'recovered'});
+ assert.equal(burst.live.snapshot().phase,'speaking');
+ for(let i=0;i<3;i++)burstSocket.event({...audio,response_id:'recovered'});
+ player.finishNext();
+ player.currentTime=player.sources.find(p=>p.onended).at+0.25;
+ burstSocket.event({type:'input_audio_buffer.speech_started'});
+ assert.equal(burstSocket.sent.findLast(e=>e.type==='conversation.item.truncate').audio_end_ms,1250);
+ assert(!player.finishNext(),'barge-in clears queued and scheduled playback for the interrupted turn');
+ burst.live.stop();
  let processor;const work={AudioWorkletProcessor:class{constructor(){this.port={postMessage:b=>work.packets.push(b)}}},sampleRate:48000,registerProcessor:(n,p)=>processor=p,Int16Array,ArrayBuffer,DataView,Math,packets:[]};vm.runInNewContext(fs.readFileSync('internal/server/web/assistant-pcm-worklet.js','utf8'),work);const pcm=new processor();for(let i=0;i<15;i++)pcm.process([[new Float32Array(128).fill(.5)]]);assert.equal(work.packets.length,2);assert.equal(work.packets[0].byteLength,640);assert.equal(new DataView(work.packets[0]).getInt16(0,true),16384);
  const openai=fixture({provider:'openai',model:'gpt-realtime-2.1-mini',voice:'cedar',inputRate:24000});await openai.live.start();assert.equal(openai.Worklet.last.options.processorOptions.inputRate,24000);openai.WS.last.event({type:'aide.ready',provider:'openai',model:'gpt-realtime-2.1-mini',voice:'cedar'});assert.equal(openai.live.snapshot().voice,'cedar');assert.equal(openai.live.snapshot().provider,'openai');openai.live.stop();
  work.packets=[];const pcm24=new processor({processorOptions:{inputRate:24000}});for(let i=0;i<15;i++)pcm24.process([[new Float32Array(128).fill(.5)]]);assert.equal(work.packets.length,2);assert.equal(work.packets[0].byteLength,960);assert.equal(new DataView(work.packets[0]).getInt16(0,true),16384);

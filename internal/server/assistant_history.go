@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
@@ -18,11 +19,47 @@ import (
 func (a *App) xiaomiModelSettings(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	jsonOut(w, 200, a.xiaomiModelSettingsLocked())
+}
+
+func (a *App) xiaomiModelSettingsLocked() map[string]any {
 	source := a.settings.XiaomiModelSource
 	if source == "" {
 		source = "inherit"
 	}
-	jsonOut(w, 200, map[string]any{"source": source, "baseURL": a.settings.XiaomiBaseURL, "model": a.settings.XiaomiModel, "hasKey": a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey)})
+	out := map[string]any{"source": source, "baseURL": a.settings.XiaomiBaseURL, "model": a.settings.XiaomiModel, "hasKey": a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey)}
+	if model, found := assistantModelRef(a.settings, a.settings.XiaomiModel); source == "configured" && found && !supportsAssistantTools(model) {
+		if current, _ := assistantModelRef(a.settings, a.settings.Model); supportsAssistantTools(current) {
+			out["fallbackModel"] = current.ID
+		}
+	}
+	return out
+}
+
+func assistantModelRef(cfg Settings, id string) (ModelRef, bool) {
+	pos := slices.IndexFunc(cfg.Models, func(model ModelRef) bool { return model.ID == id })
+	if pos < 0 {
+		return ModelRef{ID: id}, false
+	}
+	return cfg.Models[pos], true
+}
+
+func supportsAssistantTools(model ModelRef) bool {
+	id := strings.ToLower(strings.TrimSpace(model.ID))
+	if id == "" || model.Capabilities["tool_calls"] == "unsupported" || generationModelOutput(id) != "" {
+		return false
+	}
+	switch voiceModelAPI(model) {
+	case "qwen-tts", "mimo-tts", "openai-speech", "openai-realtime":
+		return false
+	}
+	for _, part := range strings.FieldsFunc(id, func(r rune) bool { return r == '-' || r == '_' || r == '.' || r == '/' }) {
+		switch part {
+		case "asr", "transcribe", "whisper", "embedding", "embeddings", "rerank":
+			return false
+		}
+	}
+	return !strings.HasPrefix(id, "gpt-realtime-translate")
 }
 
 func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) {
@@ -54,19 +91,21 @@ func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) 
 			fail(w, 400, errors.New("自定义模型名称不能为空且最长 128 个字符"))
 			return
 		}
+		if !supportsAssistantTools(ModelRef{ID: in.Model}) {
+			fail(w, 400, errors.New("助理模型需要支持对话和工具调用"))
+			return
+		}
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if in.Source == "configured" {
-		found := false
-		for _, model := range a.settings.Models {
-			if model.ID == in.Model {
-				found = true
-				break
-			}
-		}
+		model, found := assistantModelRef(a.settings, in.Model)
 		if !found {
 			fail(w, 400, errors.New("所选模型已不可用，请重新选择"))
+			return
+		}
+		if !supportsAssistantTools(model) {
+			fail(w, 400, errors.New("助理模型需要支持对话和工具调用"))
 			return
 		}
 		if _, err := settingsForSelectedModel(a.settings, in.Model); err != nil {
@@ -102,34 +141,38 @@ func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) 
 		fail(w, 500, err)
 		return
 	}
-	jsonOut(w, 200, map[string]any{"source": in.Source, "baseURL": in.BaseURL, "model": in.Model, "hasKey": a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey)})
+	jsonOut(w, 200, a.xiaomiModelSettingsLocked())
 }
 
 func (a *App) xiaomiModelConfigLocked() (Settings, error) {
 	cfg := a.settings
 	if cfg.XiaomiModelSource != "custom" {
 		if cfg.XiaomiModelSource == "configured" {
-			found := false
-			for _, model := range cfg.Models {
-				if model.ID == cfg.XiaomiModel {
-					found = true
-					break
-				}
-			}
+			model, found := assistantModelRef(cfg, cfg.XiaomiModel)
 			if !found {
 				return cfg, errors.New("所选模型已不可用，请重新选择")
 			}
-			var err error
-			cfg, err = settingsForSelectedModel(cfg, cfg.XiaomiModel)
-			if err != nil {
+			// Older versions offered the entire model catalog. An explicitly
+			// incompatible saved model can use the existing chat default.
+			if supportsAssistantTools(model) {
+				var err error
+				cfg, err = settingsForSelectedModel(cfg, cfg.XiaomiModel)
+				if err != nil {
+					return cfg, err
+				}
+				cfg.APIKey, err = a.modelAPIKeyForConfigLocked(cfg)
 				return cfg, err
 			}
-			cfg.APIKey, err = a.modelAPIKeyForConfigLocked(cfg)
-			return cfg, err
+		}
+		if model, _ := assistantModelRef(cfg, cfg.Model); cfg.Model != "" && !supportsAssistantTools(model) {
+			return cfg, errors.New("请为助理选择支持对话和工具调用的模型")
 		}
 		key, err := a.modelAPIKeyLocked()
 		cfg.APIKey = key
 		return cfg, err
+	}
+	if !supportsAssistantTools(ModelRef{ID: cfg.XiaomiModel}) {
+		return cfg, errors.New("请为助理选择支持对话和工具调用的模型")
 	}
 	cfg.billingIsolated = true
 	cfg.BaseURL, cfg.Model, cfg.ActiveModel = cfg.XiaomiBaseURL, cfg.XiaomiModel, cfg.XiaomiModel
@@ -532,7 +575,10 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 	}
 	a.assignSessionNumber(target)
 	a.sessions[target.ID] = target
-	_ = a.save(target)
+	if err := a.save(target); err != nil {
+		delete(a.sessions, target.ID)
+		return nil
+	}
 	a.broadcastSessionsChanged(target.ID)
 	return map[string]any{
 		"sessionId": target.ID,

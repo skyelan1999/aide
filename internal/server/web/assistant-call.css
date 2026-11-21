@@ -1,4 +1,4 @@
-.assistant-call{margin-bottom:8px;display:flex;justify-content:flex-end}
+.assistant-call{margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
 .assistant-call[hidden],.assistant-call [hidden]{display:none!important}
 .assistant-call-start{font-size:12px;display:flex;align-items:center;gap:6px}
 .assistant-call-panel{width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--border);border-radius:16px;background:var(--panel);box-sizing:border-box}
@@ -9,6 +9,9 @@
 .assistant-call-controls{display:flex;gap:8px}.assistant-call-controls button{padding:7px 12px;font-size:12px;border-radius:9px}
 .assistant-call-end{background:#b83b49;color:white;border:1px solid #b83b49}
 .assistant-call-controls [aria-pressed=true]{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.assistant-call-review{padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--panel);font-size:12px}
+.assistant-call-review pre{max-height:200px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.assistant-call-review small{color:var(--muted)}
 .assistant-call[data-phase=listening] .assistant-call-orb,.assistant-call[data-phase=speaking] .assistant-call-orb{animation:assistant-call-breathe 2.4s ease-in-out infinite}
 @keyframes assistant-call-breathe{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 9%,transparent)}}
 @media(max-width:600px){.assistant-call-panel{gap:10px;padding:12px;flex-wrap:wrap}.assistant-call-body small{display:none}.assistant-call-controls{width:100%;justify-content:flex-end}.assistant-call-orb{flex-basis:36px;height:36px}}

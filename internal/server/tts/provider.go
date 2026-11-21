@@ -129,6 +129,8 @@ func NewProvider(name string, cfg Config) (TTSProvider, error) {
 		return newOpenAI(cfg), nil
 	case "qwen":
 		return newQwen(cfg), nil
+	case "mimo", "mimo-tts":
+		return newMiMo(cfg), nil
 	case "clone", "voice-clone", "cloned":
 		return newClone(cfg), nil
 	default:
@@ -179,6 +181,8 @@ func buildChain(cfg Config) []TTSProvider {
 		return []TTSProvider{newOpenAI(cfg)}
 	case "qwen":
 		return []TTSProvider{newQwen(cfg)}
+	case "mimo", "mimo-tts":
+		return []TTSProvider{newMiMo(cfg)}
 	case "clone", "voice-clone", "cloned":
 		if c := newClone(cfg); c.Available() {
 			chain = append(chain, c)

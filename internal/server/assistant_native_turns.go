@@ -7,6 +7,7 @@ type nativeReplyEvidence struct {
 	inputs                []string
 	done, canceled, saved bool
 	proactive             bool
+	opening               bool
 	review                *nativeSpeechReview
 	quotation             nativeQuotation
 }
@@ -29,7 +30,6 @@ func (l *nativeTurnLedger) commit(id string) {
 	}
 	for _, old := range l.inputs {
 		if old == id {
-			l.latest = id
 			return
 		}
 	}
@@ -84,7 +84,7 @@ func (l *nativeTurnLedger) ready() []*nativeReplyEvidence {
 	var out []*nativeReplyEvidence
 	for _, id := range l.order {
 		r := l.replies[id]
-		if r.done && !r.canceled && !r.saved && (r.review == nil || !r.review.enabled) && r.text != "" && l.heard[r.turn] != "" {
+		if r.done && !r.canceled && !r.saved && !r.opening && (r.review == nil || !r.review.enabled) && r.text != "" && l.heard[r.turn] != "" {
 			out = append(out, r)
 		}
 	}
