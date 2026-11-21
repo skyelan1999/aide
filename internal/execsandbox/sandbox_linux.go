@@ -98,6 +98,6 @@ func runChild(p policy, command string) error {
 	if err := unix.Chdir(p.Workspace); err != nil {
 		return err
 	}
-	env := []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "TERM=dumb", "HOME=" + filepath.Join(p.Temporary, "home"), "TMPDIR=" + p.Temporary, "GOCACHE=" + filepath.Join(p.Temporary, "cache"), "GOPATH=" + filepath.Join(p.Temporary, "go"), "AIDE_CACHE=" + filepath.Join(p.Temporary, "cache"), "AIDE_SANDBOX=1"}
+	env := []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "TERM=dumb", "HOME=" + filepath.Join(p.Temporary, "home"), "TMPDIR=" + p.Temporary, "GOCACHE=" + filepath.Join(p.Temporary, "cache"), "GOPATH=" + filepath.Join(p.Temporary, "go"), "AIDE_CACHE=" + filepath.Join(p.Temporary, "cache"), "AIDE_SANDBOX=1", "OPENBLAS_NUM_THREADS=1", "OMP_NUM_THREADS=1", "MKL_NUM_THREADS=1"}
 	return unix.Exec("/bin/bash", []string{"bash", "--noprofile", "--norc", "-c", command}, env)
 }

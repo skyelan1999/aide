@@ -20,6 +20,9 @@ func recoveryOperation(tool string, args map[string]any) string {
 	return recoveryHash([]any{tool, args})
 }
 func (a *App) recoveryOperationError(task *Task, tool string, args map[string]any, skipPlan *PluginExecutionPlan) error {
+	if tool == "view_image" || tool == "prepare_artifacts" {
+		return nil // A bound read observation never repeats a mutation.
+	}
 	if tool == "project_knowledge" && stringValue(args["action"]) == "list" {
 		return nil
 	}

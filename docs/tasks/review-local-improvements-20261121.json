@@ -1,0 +1,23 @@
+{
+  "id": "review-local-improvements-20261121",
+  "request": "审查日常源码目录中其余有用的未提交代码并合入 main",
+  "baseline": "11091aee8a454b1a7c100fea1e5d7dfa936c5847",
+  "scope": [
+    "internal/server",
+    "internal/execsandbox",
+    "scripts/cad*",
+    "scripts/python_static_check.py",
+    "docs/architecture/artifact-execution.md"
+  ],
+  "review": "跳过已在 main 的内存快照、迁移、Office 和构建层拆分。合并时保留 main 的审批用途字段与实际 DWG 转换能力，剔除旧的全部 DWG 不支持提示。新增三个工具的目录注册与执行入口一起验证。",
+  "verification": {
+    "go": "定向服务端/执行沙箱回归通过；go vet 通过。",
+    "python": "静态 Python、CAD SDK、DXF、STEP 检查均通过。",
+    "ui": "文件单击/双击时序的实际 JS 事件回归通过，新增状态文字尚无真实原生客户端验收。",
+    "hardware": "未验证工程图纸或真实 CAD SDK 硬件/数据精度。",
+    "quick": "python3 scripts/agent-route.py verify quick 通过；.agent-state/verify-20261121T141516198433Z.log",
+    "go_full": "进行中，不计为通过"
+  },
+  "merge": "等待 quick/gate",
+  "release": "尚未提交或发布，无生产服务替换"
+}

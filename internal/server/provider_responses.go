@@ -191,6 +191,7 @@ func (b *responsesBody) Close() error { _ = b.upstream.Close(); return b.ReadClo
 func translateResponsesStream(src io.Reader, dst io.Writer) error {
 	scanner := bufio.NewScanner(io.LimitReader(src, (8<<20)+1))
 	scanner.Buffer(make([]byte, 64<<10), 2<<20)
+	calls := responsesStreamCalls{}
 	emit := func(delta map[string]any, finish string, usage any) error {
 		choice := map[string]any{"delta": delta}
 		if finish != "" {
@@ -213,15 +214,12 @@ func translateResponsesStream(src io.Reader, dst io.Writer) error {
 			continue
 		}
 		var event struct {
-			Type  string `json:"type"`
-			Delta string `json:"delta"`
-			Index int    `json:"output_index"`
-			Item  struct {
-				Type   string `json:"type"`
-				CallID string `json:"call_id"`
-				Name   string `json:"name"`
-			} `json:"item"`
-			Response openAIResponse `json:"response"`
+			Type      string                `json:"type"`
+			Delta     string                `json:"delta"`
+			Index     int                   `json:"output_index"`
+			Arguments *string               `json:"arguments"`
+			Item      responsesFunctionItem `json:"item"`
+			Response  openAIResponse        `json:"response"`
 		}
 		if err := json.Unmarshal([]byte(strings.TrimSpace(strings.TrimPrefix(line, "data:"))), &event); err != nil {
 			return err
@@ -235,22 +233,42 @@ func translateResponsesStream(src io.Reader, dst io.Writer) error {
 			if err := emit(map[string]any{"reasoning_content": event.Delta}, "", nil); err != nil {
 				return err
 			}
-		case "response.output_item.added":
+		case "response.output_item.added", "response.output_item.done":
 			if event.Item.Type == "function_call" {
-				if err := emit(map[string]any{"tool_calls": []any{map[string]any{"index": event.Index, "id": event.Item.CallID, "type": "function", "function": map[string]any{"name": event.Item.Name, "arguments": ""}}}}, "", nil); err != nil {
+				if err := calls.observe(event.Index, event.Item, event.Type == "response.output_item.done"); err != nil {
 					return err
 				}
 			}
+			if err := emit(map[string]any{}, "", nil); err != nil {
+				return err
+			}
 		case "response.function_call_arguments.delta":
-			if err := emit(map[string]any{"tool_calls": []any{map[string]any{"index": event.Index, "function": map[string]any{"arguments": event.Delta}}}}, "", nil); err != nil {
+			calls.slot(event.Index).delta.WriteString(event.Delta)
+			if err := emit(map[string]any{}, "", nil); err != nil {
+				return err
+			}
+		case "response.function_call_arguments.done":
+			if err := calls.observe(event.Index, responsesFunctionItem{Arguments: event.Arguments}, true); err != nil {
+				return err
+			}
+			if err := emit(map[string]any{}, "", nil); err != nil {
 				return err
 			}
 		case "response.completed", "response.incomplete":
+			completeCalls, err := calls.finish(&event.Response)
+			if err != nil {
+				return err
+			}
+			for index, call := range completeCalls {
+				if err := emit(map[string]any{"tool_calls": []any{map[string]any{"index": index, "id": call.ID, "type": "function", "function": call.Function}}}, "", nil); err != nil {
+					return err
+				}
+			}
 			_, _, finish, usage := event.Response.chatResult()
 			if err := emit(map[string]any{}, finish, usage); err != nil {
 				return err
 			}
-			_, err := io.WriteString(dst, "data: [DONE]\n\n")
+			_, err = io.WriteString(dst, "data: [DONE]\n\n")
 			return err
 		case "error", "response.failed":
 			return errors.New("OpenAI Responses stream failed")
