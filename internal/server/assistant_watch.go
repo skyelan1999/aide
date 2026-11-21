@@ -16,6 +16,7 @@ type assistantWatchEvent struct {
 	Kind       string        `json:"kind"`
 	Text       string        `json:"text"`
 	SessionID  string        `json:"sessionId,omitempty"`
+	Number     int           `json:"sessionNumber,omitempty"`
 	Status     string        `json:"status,omitempty"`
 	Priority   int           `json:"priority"`
 	Detail     string        `json:"detail,omitempty"`
@@ -28,6 +29,81 @@ type assistantWatchEvent struct {
 
 func watchEvent(kind, key, text, session string) assistantWatchEvent {
 	return assistantWatchEvent{ID: fmt.Sprintf("%x", sha256.Sum256([]byte(kind+":"+key))), Kind: kind, Text: text, SessionID: session}
+}
+
+// Human approvals are visible even for sessions the assistant is not following.
+// Only expose the session and approval type, never the underlying action.
+func (a *App) humanApprovalEventsLocked() []assistantWatchEvent {
+	events := []assistantWatchEvent{}
+	workspace := a.wsID()
+	for _, s := range a.sessions {
+		if s.Deleted || s.Archived || s.Kind == assistantSessionKind {
+			continue
+		}
+		for _, run := range s.Runs {
+			if (run.WorkspaceID != "" && run.WorkspaceID != workspace) || run.StopRequested || run.approvalAnswered {
+				continue
+			}
+			switch run.ApprovalState {
+			case "reviewing", "recommended", "approved", "applying":
+				continue
+			}
+			var key, label string
+			switch run.Status {
+			case "awaiting_approval":
+				if len(run.Files) > 0 {
+					key, label = "files", "文件提案"
+				}
+			case "awaiting_clarification":
+				var question struct {
+					ID   string `json:"questionId"`
+					Kind string `json:"approvalKind"`
+				}
+				if run.AnswerCh != nil && json.Unmarshal(run.PendingQuestion, &question) == nil &&
+					(question.Kind == "shell" || surfaceApprovalKind(question.Kind)) {
+					key, label = fmt.Sprintf("%s:%d", question.ID, run.answerRound), "操作"
+				}
+			}
+			if key == "" {
+				continue
+			}
+			event := watchEvent("approval", s.ID+":"+run.ID+":"+key,
+				fmt.Sprintf("会话 #%d 有%s需要你审批。", s.Number, label), s.ID)
+			event.Number, event.RunID, event.Status = s.Number, run.ID, run.Status
+			event.Priority, event.UpdatedAt = 4, s.Updated
+			event.NextAction = "打开对应会话查看审批"
+			events = append(events, event)
+		}
+	}
+	sort.Slice(events, func(i, j int) bool {
+		if events[i].UpdatedAt != events[j].UpdatedAt {
+			return events[i].UpdatedAt > events[j].UpdatedAt
+		}
+		return events[i].ID < events[j].ID
+	})
+	return events
+}
+
+func nativeApprovalAnnouncement(events []assistantWatchEvent, seen map[string]bool) string {
+	count, number := 0, 0
+	for _, event := range events {
+		if seen[event.ID] || event.Number <= 0 {
+			continue
+		}
+		seen[event.ID] = true
+		count++
+		if number == 0 {
+			number = event.Number
+		}
+	}
+	if count == 0 {
+		return ""
+	}
+	prefix := "只用一句话简短提醒用户，不作自我介绍，不决定审批，不调用工具。"
+	if count == 1 {
+		return prefix + fmt.Sprintf("会话 %d 有一项需要你审批，可以打开对应会话查看。", number)
+	}
+	return prefix + fmt.Sprintf("有 %d 项需要你审批，其中一项在会话 %d，其他可以打开工作统筹查看。", count, number)
 }
 
 // Passive page polling: no model calls, task starts or consent decisions.
@@ -48,7 +124,7 @@ func (a *App) assistantWatch(w http.ResponseWriter, r *http.Request) {
 		fail(w, 423, errors.New("请先解锁小秘会话"))
 		return
 	}
-	events := a.assistantWorkLedgerLocked()
+	events := append(a.humanApprovalEventsLocked(), a.assistantWorkLedgerLocked()...)
 	now := time.Now()
 	for _, reminder := range a.reminders {
 		if reminder.Status != "pending" || reminder.Notify == "none" || reminder.DueAt == "" || reminder.Area == "workspace" && reminder.WorkspaceID != a.wsID() {
@@ -90,6 +166,9 @@ func (a *App) assistantWatch(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(events, func(i, j int) bool {
 		if events[i].Priority != events[j].Priority {
 			return events[i].Priority > events[j].Priority
+		}
+		if events[i].Kind == "approval" && events[j].Kind == "approval" && events[i].UpdatedAt != events[j].UpdatedAt {
+			return events[i].UpdatedAt > events[j].UpdatedAt
 		}
 		return events[i].ID < events[j].ID
 	})

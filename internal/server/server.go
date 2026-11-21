@@ -140,6 +140,10 @@ type Settings struct {
 	OpenAITTSBaseURL      string  `json:"openaiTTSBaseURL,omitempty"`
 	OpenAITTSAPIKey       string  `json:"openaiTTSAPIKey,omitempty"` // Independent narration key; never echoed by /api/config.
 	TTSModel              string  `json:"ttsModel,omitempty"`
+	VoiceModelProviderID  *string `json:"voiceModelProviderId,omitempty"` // nil retains legacy voice settings.
+	TTSModelProviderID    string  `json:"ttsModelProviderId,omitempty"`
+	TTSModelKeyID         string  `json:"ttsModelKeyId,omitempty"`
+	TTSRoleStyle          string  `json:"ttsRoleStyle,omitempty"`
 	TTSRegion             string  `json:"ttsRegion,omitempty"`
 	TTSModelRef           string  `json:"ttsModelRef,omitempty"`
 	AssistantCallModelRef string  `json:"assistantCallModelRef,omitempty"`
@@ -178,7 +182,7 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 	for _, m := range models {
 		m.ID = strings.TrimSpace(m.ID)
 		switch m.VoiceAPI {
-		case "", "openai-realtime", "openai-speech", "qwen-tts", "qwen-realtime":
+		case "", "openai-realtime", "openai-speech", "qwen-tts", "qwen-realtime", "mimo-tts":
 		default:
 			return nil, errors.New("不支持的语音接口类型")
 		}
@@ -1793,6 +1797,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/tts/synthesize", a.ttsSynthesize)
 	mux.HandleFunc("GET /api/tts/catalog", a.ttsCatalog)
 	mux.HandleFunc("POST /api/tts/catalog", a.ttsCatalog)
+	mux.HandleFunc("POST /api/tts/models", a.discoverTTSModels)
 	mux.HandleFunc("POST /api/tts/colloquialize", a.ttsColloquialize)
 	// ── 少样本音色克隆 + 性格推断（#36）──
 	mux.HandleFunc("POST /api/voice-sample/upload", a.voiceSampleUpload)
@@ -1890,6 +1895,9 @@ func (a *App) buildHandler() {
 			if origin := r.Header.Get("Origin"); origin != "" {
 				u, err := url.Parse(origin)
 				if err != nil || u.Host != r.Host {
+					if strings.HasSuffix(r.URL.Path, "/assistant-call/socket") {
+						log.Printf("[assistant-call] request=%s stage=origin-rejected status=403", w.Header().Get("X-AIDE-Request-ID"))
+					}
 					fail(w, 403, errors.New("跨站请求被拒绝"))
 					return
 				}
@@ -1904,6 +1912,9 @@ func (a *App) buildHandler() {
 				token = r.URL.Query().Get("access_token")
 			}
 			if !lanAuthorized(r) && subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
+				if strings.HasSuffix(r.URL.Path, "/assistant-call/socket") {
+					log.Printf("[assistant-call] request=%s stage=auth-rejected status=401", w.Header().Get("X-AIDE-Request-ID"))
+				}
 				w.Header().Set("X-Aide-Auth-Required", "token")
 				fail(w, 401, errors.New("请输入访问令牌，或用 start.command 打开"))
 				return
@@ -1937,7 +1948,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "computerControlEnabled": a.settings.ComputerControlEnabled, "computerControlAllowedApps": a.settings.ComputerControlAllowedApps, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "assistantEngine": a.assistantEngine, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "remoteAccessEnabled": a.settings.RemoteAccessEnabled, "remoteSession": lanAuthorized(r), "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "computerControlEnabled": a.settings.ComputerControlEnabled, "computerControlAllowedApps": a.settings.ComputerControlAllowedApps, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "voiceModelProviderId": a.settings.VoiceModelProviderID, "ttsModelProviderId": a.settings.TTSModelProviderID, "ttsModelKeyId": a.settings.TTSModelKeyID, "ttsRoleStyle": a.settings.TTSRoleStyle, "mimoVoices": tts.MiMoVoices(), "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "assistantEngine": a.assistantEngine, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "remoteAccessEnabled": a.settings.RemoteAccessEnabled, "remoteSession": lanAuthorized(r), "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1994,6 +2005,10 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
 		TTSModelRefInput           *string                     `json:"ttsModelRef,omitempty"`
+		VoiceModelProviderIDInput  *string                     `json:"voiceModelProviderId,omitempty"`
+		TTSModelProviderIDInput    *string                     `json:"ttsModelProviderId,omitempty"`
+		TTSModelKeyIDInput         *string                     `json:"ttsModelKeyId,omitempty"`
+		TTSRoleStyleInput          *string                     `json:"ttsRoleStyle,omitempty"`
 		AssistantCallModelRefInput *string                     `json:"assistantCallModelRef,omitempty"`
 		AssistantCallVoiceInput    *string                     `json:"assistantCallVoice,omitempty"`
 		AgentManagementInput       *AgentManagementPermissions `json:"agentManagement,omitempty"`
@@ -2262,11 +2277,32 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	} else {
 		in.Settings.VoiceInputDevice = a.settings.VoiceInputDevice
 	}
+	in.Settings.VoiceModelProviderID = a.settings.VoiceModelProviderID
+	if in.VoiceModelProviderIDInput != nil {
+		providerID := strings.TrimSpace(*in.VoiceModelProviderIDInput)
+		in.Settings.VoiceModelProviderID = &providerID
+	}
 	in.Settings.TTSModelRef = a.settings.TTSModelRef
+	in.Settings.TTSModelProviderID = a.settings.TTSModelProviderID
+	in.Settings.TTSModelKeyID = a.settings.TTSModelKeyID
+	in.Settings.TTSRoleStyle = a.settings.TTSRoleStyle
 	in.Settings.AssistantCallModelRef = a.settings.AssistantCallModelRef
 	in.Settings.AssistantCallVoice = a.settings.AssistantCallVoice
 	if in.TTSModelRefInput != nil {
 		in.Settings.TTSModelRef = strings.TrimSpace(*in.TTSModelRefInput)
+	}
+	if in.TTSModelProviderIDInput != nil {
+		in.Settings.TTSModelProviderID = strings.TrimSpace(*in.TTSModelProviderIDInput)
+	}
+	if in.TTSModelKeyIDInput != nil {
+		in.Settings.TTSModelKeyID = strings.TrimSpace(*in.TTSModelKeyIDInput)
+	}
+	if in.TTSRoleStyleInput != nil {
+		in.Settings.TTSRoleStyle = strings.TrimSpace(*in.TTSRoleStyleInput)
+		if len([]rune(in.Settings.TTSRoleStyle)) > 1000 {
+			fail(w, 400, errors.New("音色角色描述不能超过 1000 个字符"))
+			return
+		}
 	}
 	if in.AssistantCallModelRefInput != nil {
 		in.Settings.AssistantCallModelRef = strings.TrimSpace(*in.AssistantCallModelRefInput)
@@ -2377,16 +2413,25 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if in.TTSModelRefInput != nil && in.Settings.TTSModelRef != "" {
-		if _, err := voiceModel(in.Settings, in.Settings.TTSModelRef, false); err != nil {
-			fail(w, 400, err)
-			return
+	if in.VoiceModelProviderIDInput != nil && *in.Settings.VoiceModelProviderID != "" && !providerIDs[*in.Settings.VoiceModelProviderID] {
+		fail(w, 400, errors.New("所选语音模型提供商已不可用"))
+		return
+	}
+	providerChanged := in.VoiceModelProviderIDInput != nil && (a.settings.VoiceModelProviderID == nil || *in.Settings.VoiceModelProviderID != *a.settings.VoiceModelProviderID)
+	if providerChanged || in.TTSModelRefInput != nil {
+		if in.Settings.TTSModelRef != "" {
+			if _, err := voiceModel(in.Settings, in.Settings.TTSModelRef, false); err != nil {
+				fail(w, 400, err)
+				return
+			}
 		}
 	}
-	if in.AssistantCallModelRefInput != nil && in.Settings.AssistantCallModelRef != "" {
-		if _, err := voiceModel(in.Settings, in.Settings.AssistantCallModelRef, true); err != nil {
-			fail(w, 400, err)
-			return
+	if providerChanged || in.AssistantCallModelRefInput != nil {
+		if in.Settings.AssistantCallModelRef != "" {
+			if _, err := voiceModel(in.Settings, in.Settings.AssistantCallModelRef, true); err != nil {
+				fail(w, 400, err)
+				return
+			}
 		}
 	}
 	if in.ActiveModel == "" && len(in.Models) > 0 {
@@ -2572,6 +2617,8 @@ func ttsProviderName(p string) string {
 		return "openai"
 	case "qwen":
 		return "qwen"
+	case "mimo", "mimo-tts":
+		return "mimo"
 	case "edge", "edge-tts", "edgetts":
 		return "edge"
 	case "sherpa", "local", "offline", "sherpa-onnx":
@@ -3903,6 +3950,8 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	var bindingErr error
 	if cfg.TTSModelRef != "" {
 		cfg, bindingErr = a.voiceModelConfigLocked(cfg.TTSModelRef, false)
+	} else if cfg.VoiceModelProviderID == nil && ttsProviderName(cfg.TTSProvider) == "mimo" {
+		cfg, bindingErr = a.mimoTTSConfigLocked(cfg)
 	}
 	a.mu.Unlock()
 	if bindingErr != nil {
@@ -3920,6 +3969,10 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	providerName := strings.TrimSpace(in.Provider)
 	if providerName == "" {
 		providerName = cfg.TTSProvider
+	}
+	if ttsProviderName(providerName) == "mimo" && ttsProviderName(cfg.TTSProvider) != "mimo" {
+		fail(w, 400, errors.New("请先在设置中选择 MiMo TTS 并绑定模型连接与密钥"))
+		return
 	}
 	if strings.ToLower(providerName) == "webspeech" {
 		fail(w, 400, tts.ErrBrowserOnly)
@@ -3953,6 +4006,10 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		SherpaBin:      "", // 空=默认 /usr/local/bin；可用 SHERPA_BIN 环境变量覆盖
 		SherpaDir:      "", // 空=默认 /data/tts；可用 SHERPA_TTS_DIR 环境变量覆盖
 	}
+	// Only bound Qwen models carry a validated provider endpoint.
+	if ttsProviderName(providerName) == "qwen" && (cfg.VoiceModelProviderID == nil || cfg.TTSModelRef == "") {
+		pcfg.Endpoint = ""
+	}
 	if ttsProviderName(providerName) == "openai" {
 		pcfg.Mode, pcfg.Model = cfg.OpenAITTSMode, cfg.OpenAITTSModel
 		pcfg.Endpoint, pcfg.APIKey = cfg.OpenAITTSBaseURL, cfg.OpenAITTSAPIKey
@@ -3962,10 +4019,14 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	} else if pcfg.Voice == "" {
 		pcfg.Voice = cfg.TTSVoice
 	}
+	style := in.Style
+	if ttsProviderName(providerName) == "mimo" && strings.TrimSpace(cfg.TTSRoleStyle) != "" {
+		style = cfg.TTSRoleStyle
+	}
 	opts := tts.SynthOpts{
 		Voice:          pcfg.Voice,
 		Rate:           rate,
-		Style:          in.Style,
+		Style:          style,
 		Gender:         gender,
 		Expressiveness: cfg.TTSExpressiveness,
 	}
@@ -3998,7 +4059,7 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-TTS-Engine", engineUsed)
 	// sherpa 本地离线输出 WAV；edge/azure 输出 MP3。前端经 blob 播放，按此 Content-Type 正确解码。
 	ct := "audio/mpeg"
-	if engineUsed == "sherpa" || engineUsed == "qwen" || (engineUsed == "openai" && pcfg.Mode != "speech") {
+	if engineUsed == "sherpa" || engineUsed == "qwen" || engineUsed == "mimo" || (engineUsed == "openai" && pcfg.Mode != "speech") {
 		ct = "audio/wav"
 	}
 	w.Header().Set("Content-Type", ct)

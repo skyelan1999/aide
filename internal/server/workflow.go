@@ -1313,6 +1313,10 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("任务不存在"))
 		return
 	}
+	if err := a.checkAssistantRunLocked(r, s, orig); err != nil {
+		fail(w, 409, err)
+		return
+	}
 	if orig.MediaGeneration != nil {
 		fail(w, 409, errors.New("媒体任务已提交；请继续原任务查询或下载，重新生成请明确发送新消息"))
 		return
@@ -1424,6 +1428,11 @@ func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
 			if task.ID != r.PathValue("run") {
 				continue
 			}
+			if err := a.checkAssistantRunLocked(r, s, task); err != nil {
+				a.mu.Unlock()
+				fail(w, 409, err)
+				return
+			}
 			// A terminal result wins a late click. Repeated requests are harmless.
 			if task.StopRequested || (task.Status != "running" && task.Status != "awaiting_clarification") {
 				a.mu.Unlock()
@@ -1464,6 +1473,11 @@ func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
 	for _, task := range s.Runs {
 		if task.ID != r.PathValue("run") {
 			continue
+		}
+		if err := a.checkAssistantRunLocked(r, s, task); err != nil {
+			a.mu.Unlock()
+			fail(w, 409, err)
+			return
 		}
 		if task.Status != "running" || task.StopRequested {
 			a.mu.Unlock()
@@ -1523,6 +1537,10 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if orig == nil {
 		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	if err := a.checkAssistantRunLocked(r, s, orig); err != nil {
+		fail(w, 409, err)
 		return
 	}
 	if orig.GoalInputsStale {
@@ -1687,6 +1705,10 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 
 // answerTask 接收用户对澄清问题的应答，唤醒被 ask_user 阻塞的 run。
 func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
+	a.answerTaskGuarded(w, r, nil)
+}
+
+func (a *App) answerTaskGuarded(w http.ResponseWriter, r *http.Request, guard func(*Session, *Task) error) {
 	var in struct {
 		Answer     string `json:"answer"`
 		Remember   bool   `json:"remember"`
@@ -1707,6 +1729,12 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, t := range s.Runs {
 		if t.ID == r.PathValue("run") && t.Status == "awaiting_clarification" && t.AnswerCh != nil {
+			if guard != nil {
+				if err := guard(s, t); err != nil {
+					fail(w, 409, err)
+					return
+				}
+			}
 			if err := a.taskSSHBindingLocked(t); err != nil {
 				fail(w, 409, err)
 				return
@@ -1850,6 +1878,10 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	fail(w, 409, errors.New("当前无可应答的澄清问题"))
 }
 func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
+	a.applyTaskWithGuard(w, r, nil)
+}
+
+func (a *App) applyTaskWithGuard(w http.ResponseWriter, r *http.Request, guard func(*Task) error) {
 	var in struct {
 		Remember  bool   `json:"remember"`
 		ExpiresAt string `json:"expiresAt"`
@@ -1861,6 +1893,11 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	a.applyTaskGuarded(w, r, func(task *Task) error {
+		if guard != nil {
+			if err := guard(task); err != nil {
+				return err
+			}
+		}
 		if in.Remember {
 			if err := a.rememberApprovalUntilLocked(task, "files", approvalFilesFingerprint(task.Files), in.ExpiresAt); err != nil {
 				return err

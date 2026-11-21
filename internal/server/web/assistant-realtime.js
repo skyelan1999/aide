@@ -1,13 +1,22 @@
 (() => {
  'use strict';
+ const outputRate=24000, scheduleAhead=0.35, maxQueuedSamples=90*outputRate;
  function create(hooks){
   let enabled=false,microphone=false,phase='off',epoch=0,stream=null,context=null,node=null,source=null,gain=null,ws=null,ping=0,muted=false,inputSerial=0;
-  let nextTime=0,players=new Set(),ignoreAudio=false,responding=false,caption='',responseID='',itemID='',firstAudioTime=0,discarded=new Set();
+  let nextTime=0,queuedSamples=0,ignoreAudio=false,responding=false,caption='',responseID='',itemID='';
+  const players=new Map(),pendingAudio=[],receivedSamples=new Map(),discarded=new Set();
   let metadata={},inputRate=16000;
   const snapshot=()=>({enabled,microphone,paused:false,phase,...metadata});
   const state=value=>{phase=value;hooks.state?.(snapshot());};
   const send=event=>{if(ws?.readyState===1){if(ws.bufferedAmount>256000){hooks.error('实时音频网络拥堵，通话已结束');stop();return;}ws.send(JSON.stringify(event));}};
-  function clearAudio(){for(const player of players){player.onended=null;try{player.stop();}catch(_){}}players.clear();nextTime=context?.currentTime||0;}
+  function clearAudio(){
+   for(const player of players.keys()){
+    player.onended=null;
+    try{player.stop();}catch(_){}
+    player.disconnect();
+   }
+   players.clear();pendingAudio.length=0;queuedSamples=0;nextTime=context?.currentTime||0;
+  }
   function releaseInput(){inputSerial++;if(node){node.port.onmessage=null;node.disconnect();node=null;}source?.disconnect();source=null;gain?.disconnect();gain=null;stream?.getTracks().forEach(t=>t.stop());stream=null;}
   function stop(){epoch++;enabled=false;microphone=false;muted=false;clearInterval(ping);ping=0;releaseInput();clearAudio();if(ws){const old=ws;ws.onclose=ws.onmessage=ws.onerror=null;try{if(old.readyState===1)old.send(JSON.stringify({type:'aide.hangup'}));}catch(_){}try{old.close();}catch(_){}ws=null;}const old=context;context=null;if(old)void old.close().catch(()=>{});state('off');}
   function fatal(message){hooks.error(message);stop();}
@@ -19,19 +28,70 @@
    node.port.onmessage=event=>{if(token!==epoch||muted||phase==='requesting'||!hooks.valid())return;let s='';for(const byte of new Uint8Array(event.data))s+=String.fromCharCode(byte);send({type:'input_audio_buffer.append',audio:btoa(s)});};
    source.connect(node);node.connect(gain);gain.connect(context.destination);
   }
-  function audio(base64){
+  function scheduleAudio(){
+   // Providers can deliver several seconds of PCM in a burst. Only schedule
+   // the next part on the audio clock, keeping the rest in a bounded queue.
+   const now=context.currentTime;
+   while(pendingAudio.length&&players.size<24&&(players.size<2||nextTime-now<scheduleAhead)){
+    const chunk=pendingAudio.shift();
+    queuedSamples-=chunk.samples;
+    const view=new DataView(chunk.bytes.buffer);
+    const buffer=context.createBuffer(1,chunk.samples,outputRate),samples=buffer.getChannelData(0);
+    for(let i=0;i<samples.length;i++)samples[i]=view.getInt16(i*2,true)/32768;
+    const player=context.createBufferSource();
+    player.buffer=buffer;player.connect(context.destination);
+    const start=nextTime>now?nextTime:now+0.025;
+    nextTime=start+buffer.duration;
+    players.set(player,{item:chunk.item,offset:chunk.offset,samples:chunk.samples,start,end:nextTime});
+    player.onended=()=>{
+     players.delete(player);player.disconnect();
+     if(!enabled||!context)return;
+     scheduleAudio();
+     if(!players.size&&!responding)state(muted?'watching':'listening');
+    };
+    player.start(start);
+   }
+  }
+  function interruptAudio(){
+   const now=context.currentTime;
+   const next=[...players.values()].find(chunk=>chunk.end>now)||pendingAudio[0];
+   if(next?.item){
+    const played=next.start===undefined?0:Math.max(0,Math.floor((now-next.start)*outputRate));
+    const audioEndMS=Math.floor((next.offset+Math.min(next.samples,played))*1000/outputRate);
+    send({type:'conversation.item.truncate',item_id:next.item,audio_end_ms:audioEndMS});
+   }
+   ignoreAudio=true;
+   if(responseID){
+    discarded.add(responseID);
+    if(discarded.size>128)discarded.delete(discarded.values().next().value);
+   }
+   clearAudio();
+   if(responding)send({type:'response.cancel'});
+   responding=false;caption='';
+   if(enabled)state(muted?'watching':'listening');
+  }
+  function audio(base64,item){
    if(ignoreAudio||!context)return;
-   const data=atob(base64);if(data.length%2||data.length>192000){fatal('实时音频格式无效');return;}
-   const bytes=Uint8Array.from(data,c=>c.charCodeAt(0)),view=new DataView(bytes.buffer),buffer=context.createBuffer(1,bytes.length/2,24000),samples=buffer.getChannelData(0);
-   for(let i=0;i<samples.length;i++)samples[i]=view.getInt16(i*2,true)/32768;
-   if(nextTime-context.currentTime>12){fatal('实时音频播放积压，通话已结束');return;}
-   const player=context.createBufferSource();player.buffer=buffer;player.connect(context.destination);players.add(player);
-   player.onended=()=>{players.delete(player);if(!players.size&&!responding&&enabled)state(muted?'watching':'listening');};
-   nextTime=Math.max(context.currentTime+0.025,nextTime);if(!firstAudioTime)firstAudioTime=nextTime;player.start(nextTime);nextTime+=buffer.duration;state('speaking');
+   const data=atob(base64);
+   if(!data.length||data.length%2||data.length>192000){fatal('实时音频格式无效');return;}
+   const samples=data.length/2;
+   if(pendingAudio.length>=8192||queuedSamples+samples+Math.max(0,nextTime-context.currentTime)*outputRate>maxQueuedSamples){
+    interruptAudio();
+    if(enabled)hooks.error('本轮语音播放超出缓冲上限，可以继续通话');
+    return;
+   }
+   const offset=receivedSamples.get(item)||0;
+   receivedSamples.set(item,offset+samples);
+   pendingAudio.push({bytes:Uint8Array.from(data,c=>c.charCodeAt(0)),samples,offset,item});
+   queuedSamples+=samples;
+   scheduleAudio();
+   if(phase!=='speaking')state('speaking');
   }
   async function start(){
    if(enabled)return;if(!hooks.valid())return;
-   const token=++epoch;metadata={};inputRate=16000;enabled=true;microphone=true;muted=false;state('requesting');hooks.beforeStart?.();
+   const token=++epoch;metadata={};inputRate=16000;enabled=true;microphone=true;muted=false;
+   nextTime=0;ignoreAudio=false;responding=false;caption='';responseID='';itemID='';receivedSamples.clear();discarded.clear();
+   state('requesting');hooks.beforeStart?.();
    try{
     const Ctor=window.AudioContext||window.webkitAudioContext;context=new Ctor();const resumed=context.resume();
     const [,config]=await Promise.all([resumed,hooks.preflight?.()]);if(token!==epoch)return;
@@ -47,13 +107,12 @@
      if(e.response_id&&discarded.has(e.response_id))return;
      if(e.type==='response.done'&&discarded.has(e.response?.id))return;
      if(e.type==='aide.error'){fatal(e.message);return;}
+     if(e.type==='aide.approval'){hooks.approval?.(e);return;}
      if(e.type==='aide.ready'){metadata={provider:e.provider||metadata.provider,model:e.model||metadata.model,voice:e.voice||metadata.voice};state('listening');hooks.ready?.(e);return;}
-     if(e.type==='input_audio_buffer.speech_started'){ignoreAudio=true;if(responseID){discarded.add(responseID);if(discarded.size>128)discarded.delete(discarded.values().next().value);}
-      if(itemID&&firstAudioTime)send({type:'conversation.item.truncate',item_id:itemID,audio_end_ms:Math.max(0,Math.floor((Math.min(context.currentTime,nextTime)-firstAudioTime)*1000))});
-      clearAudio();if(responding)send({type:'response.cancel'});responding=false;caption='';state('listening');}
+     if(e.type==='input_audio_buffer.speech_started')interruptAudio();
      else if(e.type==='input_audio_buffer.speech_stopped')state('thinking');
-     else if(e.type==='response.created'){responding=true;ignoreAudio=false;caption='';responseID=e.response?.id||'';itemID='';firstAudioTime=0;state('thinking');}
-     else if(e.type==='response.audio.delta'){itemID=e.item_id||itemID;audio(e.delta);}
+     else if(e.type==='response.created'){responding=true;ignoreAudio=false;caption='';responseID=e.response?.id||'';itemID='';receivedSamples.clear();state('thinking');}
+     else if(e.type==='response.audio.delta'){itemID=e.item_id||itemID;audio(e.delta,itemID);}
      else if(e.type==='response.audio_transcript.delta'){caption+=e.delta;hooks.transcript?.('assistant',caption);}
      else if(e.type==='conversation.item.input_audio_transcription.completed')hooks.transcript?.('user',e.transcript);
      else if(e.type==='response.done'){responding=false;if(!players.size)state(muted?'watching':'listening');hooks.turn?.();}

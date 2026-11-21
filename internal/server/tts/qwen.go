@@ -31,6 +31,18 @@ func (*qwenProvider) Name() string      { return "qwen" }
 func (*qwenProvider) Format() string    { return "wav" }
 func (q *qwenProvider) Available() bool { return strings.TrimSpace(q.cfg.APIKey) != "" }
 
+func QwenSpeechBaseURL(raw string) (*url.URL, error) {
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.Port() != "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return nil, errors.New("千问 TTS 需要有效的百炼 HTTPS 提供商地址")
+	}
+	host := strings.ToLower(u.Hostname())
+	if host != "dashscope.aliyuncs.com" && host != "dashscope-intl.aliyuncs.com" && !strings.HasSuffix(host, ".maas.aliyuncs.com") {
+		return nil, errors.New("千问 TTS 需要百炼官方服务地址")
+	}
+	return &url.URL{Scheme: "https", Host: host}, nil
+}
+
 func (q *qwenProvider) Synth(ctx context.Context, text string, opts SynthOpts) (io.ReadCloser, error) {
 	if !q.Available() {
 		return nil, errors.New("请先配置百炼 TTS API Key")
@@ -46,6 +58,13 @@ func (q *qwenProvider) Synth(ctx context.Context, text string, opts SynthOpts) (
 	default:
 		return nil, errors.New("不支持的百炼地域")
 	}
+	if q.cfg.Endpoint != "" {
+		base, err := QwenSpeechBaseURL(q.cfg.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+		host = base.Host
+	}
 	model := strings.TrimSpace(q.cfg.Model)
 	if model == "" {
 		model = "qwen3-tts-flash"
@@ -57,10 +76,14 @@ func (q *qwenProvider) Synth(ctx context.Context, text string, opts SynthOpts) (
 	if voice == "" {
 		voice = "Cherry"
 	}
-	b, _ := json.Marshal(map[string]any{"model": model, "input": map[string]string{
-		"text": text, "voice": voice, "language_type": "Auto",
-	}})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://"+host+"/api/v1/services/aigc/multimodal-generation/generation", bytes.NewReader(b))
+	path := "/api/v1/services/aigc/multimodal-generation/generation"
+	input := map[string]any{"text": text, "voice": voice, "language_type": "Auto"}
+	if strings.HasPrefix(model, "qwen-audio-") {
+		path = "/api/v1/services/audio/tts/SpeechSynthesizer"
+		input = map[string]any{"text": text, "voice": voice, "format": "wav", "sample_rate": 24000}
+	}
+	b, _ := json.Marshal(map[string]any{"model": model, "input": input})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://"+host+path, bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}

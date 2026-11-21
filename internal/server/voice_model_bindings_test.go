@@ -48,6 +48,31 @@ func TestVoiceModelBindingsIsolationAndPersistence(t *testing.T) {
 		t.Fatal("clear lost old credential")
 	}
 }
+
+func TestVoiceModelBindingUsesSelectedProviderKeyAndKeepsMiMoSeparate(t *testing.T) {
+	a := testApp(t)
+	configureVoiceModels(t, a, "https://api.openai.com/v1")
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"modelProviders": []ModelProvider{
+			{ID: "default", Name: "Chat", BaseURL: "https://chat.example/v1", Keys: []ModelProviderKey{{ID: "key", Label: "Chat"}}, ActiveKeyID: "key"},
+			{ID: "voice", Name: "Speech", BaseURL: "https://api.openai.com/v1", Keys: []ModelProviderKey{{ID: "key", Label: "Default"}, {ID: "alternate", Label: "Alternate"}}, ActiveKeyID: "key"},
+		},
+		"providerKeyWrites": []map[string]any{{"providerId": "voice", "keyId": "alternate", "apiKey": "fixture-alternate-voice-secret"}},
+	}), 200)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"ttsModelRef": "speech-alias", "ttsModelKeyId": "alternate"}), 200)
+	a.mu.Lock()
+	selected, err := a.voiceModelConfigLocked("speech-alias", false)
+	a.mu.Unlock()
+	if err != nil || selected.OpenAITTSAPIKey != "fixture-alternate-voice-secret" {
+		t.Fatalf("selected voice key was not used: err=%v", err)
+	}
+
+	// Old configs may have accidentally tagged MiMo TTS as OpenAI Speech. The
+	// canonical MiMo model ID still routes to the dedicated MiMo engine.
+	if got := voiceModelAPI(ModelRef{ID: "mimo-v2.5-tts", VoiceAPI: "openai-speech"}); got != "mimo-tts" {
+		t.Fatalf("MiMo TTS was misclassified as %q", got)
+	}
+}
 func TestVoiceModelBindingsSynthesisUsesVault(t *testing.T) {
 	a := testApp(t)
 	hits := 0
@@ -161,5 +186,111 @@ func TestSettingsAutoSavePermissionsPersistence(t *testing.T) {
 	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"agentManagement": map[string]bool{"aidePlugins": true}}), 500)
 	if curSettings(a).AgentManagement.AidePlugins {
 		t.Fatal("failed write granted permission")
+	}
+}
+
+func TestVoiceProviderCatalogAndSharedBinding(t *testing.T) {
+	a := testApp(t)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer fixture-voice-secret" {
+			t.Error("directory or synthesis did not use the selected provider's active key")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		switch r.URL.Path {
+		case "/v1/models":
+			_, _ = w.Write([]byte(`{"data":[{"id":"gpt-4o-mini-tts-discovered"},{"id":"speech-alias"},{"id":"chat"},{"id":"gpt-realtime-2.1-mini"},{"id":"gpt-4o-mini-tts-discovered"}]}`))
+		case "/v1/audio/speech":
+			var in struct{ Model string }
+			_ = json.NewDecoder(r.Body).Decode(&in)
+			if in.Model != "gpt-4o-mini-tts-discovered" {
+				t.Error("synthesis must use the discovered model")
+			}
+			w.Header().Set("Content-Type", "audio/mpeg")
+			_, _ = w.Write([]byte("ID3fixture"))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer upstream.Close()
+	configureVoiceModels(t, a, upstream.URL+"/v1")
+
+	catalog := request(a, "POST", "/api/tts/models", map[string]any{"providerId": "voice", "keyId": "ignored"})
+	requireStatus(t, catalog, 200)
+	var result struct {
+		Models []struct {
+			ID   string
+			Read bool
+			Call bool
+		}
+	}
+	if err := json.Unmarshal(catalog.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Models) != 2 || result.Models[0].ID != "gpt-4o-mini-tts-discovered" || !result.Models[0].Read || result.Models[0].Call || result.Models[1].ID != "speech-alias" {
+		t.Fatalf("unexpected catalog: %+v", result)
+	}
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"voiceModelProviderId": "voice", "ttsModelRef": result.Models[0].ID, "ttsProvider": "auto", "openaiTTSVoice": "nova",
+	}), 200)
+	requireStatus(t, request(a, "POST", "/api/tts/synthesize", map[string]any{"text": "Fixture"}), 200)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"assistantCallModelRef": result.Models[0].ID}), 400)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"voiceModelProviderId": "missing"}), 400)
+	if cfg := curSettings(a); cfg.ActiveModel != "chat" || len(cfg.Models) != 3 {
+		t.Fatal("adding a voice binding changed the workbench model list")
+	}
+
+	configureVoiceModels(t, a, "https://api.openai.com/v1")
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"ttsModelRef": "gpt-realtime-2.1-mini", "assistantCallModelRef": "gpt-realtime-2.1-mini", "assistantCallVoice": "cedar",
+	}), 200)
+	a.mu.Lock()
+	read, readErr := a.voiceModelConfigLocked("gpt-realtime-2.1-mini", false)
+	call, callErr := a.realtimeCallConfigLocked()
+	a.mu.Unlock()
+	if readErr != nil || callErr != nil || read.OpenAITTSAPIKey != "fixture-voice-secret" || call.APIKey != read.OpenAITTSAPIKey {
+		t.Fatalf("shared provider configuration failed: read=%v call=%v", readErr, callErr)
+	}
+}
+
+func TestVoiceProviderRoutesMiMoTokenPlan(t *testing.T) {
+	a := testApp(t)
+	base := "https://token-plan-cn.xiaomimimo.com/v1"
+	configureVoiceModels(t, a, base)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"voiceModelProviderId": "voice", "ttsModelRef": "mimo-v2.5-tts-voicedesign",
+	}), 200)
+	a.mu.Lock()
+	cfg, err := a.voiceModelConfigLocked("mimo-v2.5-tts-voicedesign", false)
+	a.mu.Unlock()
+	if err != nil || cfg.TTSProvider != "mimo" || cfg.TTSEndpoint != base || cfg.TTSAPIKey != "fixture-voice-secret" {
+		t.Fatalf("MiMo Token Plan binding failed: %v", err)
+	}
+	// The native Model Settings form reads this list and sends it back on save.
+	models := []ModelRef{{ID: "chat", ProviderID: "default"}, {ID: "mimo-v2.5-tts", ProviderID: "voice"}}
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"models": models, "activeModel": "chat"}), 200)
+	config := request(a, "GET", "/api/config", nil)
+	requireStatus(t, config, 200)
+	var payload struct{ Models []ModelRef }
+	if err := json.Unmarshal(config.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Models[1].VoiceAPI != "mimo-tts" {
+		t.Fatal("MiMo capability missing from Model Settings")
+	}
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"models": payload.Models, "activeModel": "chat"}), 200)
+
+	for _, id := range []string{"mimo-v2.5-tts-voiceclone", "mimo-v2.6-pro", "gpt-realtime-2.1-mini"} {
+		if providerVoiceAPI(base, ModelRef{ID: id}) != "" {
+			t.Errorf("unsupported MiMo model appeared: %s", id)
+		}
+	}
+}
+
+func TestVoiceProviderExcludesRealtimeTaskModels(t *testing.T) {
+	for _, id := range []string{"gpt-realtime-whisper", "gpt-realtime-translate"} {
+		if got := providerVoiceAPI("https://api.openai.com/v1", ModelRef{ID: id}); got != "" {
+			t.Errorf("%s is a dedicated audio task model, got %s", id, got)
+		}
 	}
 }

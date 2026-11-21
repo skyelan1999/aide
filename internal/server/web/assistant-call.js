@@ -16,10 +16,21 @@
     const controls=document.createElement('div');controls.className='assistant-call-controls';
     const mute=document.createElement('button');mute.type='button';mute.className='quiet';
     const hangup=document.createElement('button');hangup.type='button';hangup.className='assistant-call-end';hangup.textContent=t('挂断');
-    controls.append(mute,hangup);body.append(title,status,detail);panel.append(orb,body,clock,controls);root.append(entry,panel);
-    let active=false,muted=false,started=0,timer=0,requestAt=null;
+    const review=document.createElement('details');review.className='assistant-call-review';review.hidden=true;
+    const reviewTitle=document.createElement('summary'),reviewDetail=document.createElement('pre'),reviewHint=document.createElement('small');
+    reviewHint.textContent=t('审阅后说“批准本次审批”或“拒绝本次审批”。');
+    review.append(reviewTitle,reviewDetail,reviewHint);
+    controls.append(mute,hangup);body.append(title,status,detail);panel.append(orb,body,clock,controls);root.append(entry,panel,review);
+    let active=false,muted=false,started=0,timer=0,requestAt=null,approvalExpires=0;
     const labels={requesting:'正在连接语音',listening:'正在听你说',thinking:'正在思考',speaking:'助理正在说话',watching:'等待你开口',recovering:'正在恢复连接',paused:'通话已中断'};
-    function updateClock(){if(active&&requestAt!==null&&now()-requestAt>=20000){hooks.error(t('语音连接超时，请检查麦克风权限后重试'));end();return;}const seconds=Math.max(0,Math.floor((now()-started)/1000));clock.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
+    function approval(value){
+      approvalExpires=value?.expiresAt||0;
+      review.hidden=!active||approvalExpires<=now()||!value?.sessionNumber;
+      reviewTitle.textContent=review.hidden?'':t(value.kind==='files'?'会话 #{0} · 文件提案':'会话 #{0} · 第 {1} 轮命令审批',value.sessionNumber,value.round);
+      reviewDetail.textContent=review.hidden?'':String(value.detail||'');
+      review.open=!review.hidden;
+    }
+    function updateClock(){if(active&&requestAt!==null&&now()-requestAt>=20000){hooks.error(t('语音连接超时，请检查麦克风权限后重试'));end();return;}if(approvalExpires&&now()>=approvalExpires)approval(null);const seconds=Math.max(0,Math.floor((now()-started)/1000));clock.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
     function paint(value){
       if(active&&(!hooks.valid()||value.paused||!value.enabled||(!muted&&!value.microphone))){end();return;}
       root.hidden=!hooks.valid();entry.hidden=!hooks.valid()||active;panel.hidden=!active;
@@ -42,6 +53,7 @@
     function end(){
       if(!active)return;
       active=false;muted=false;requestAt=null;(hooks.clearInterval||clearInterval)(timer);timer=0;
+      approval(null);
       // Invalidates pending recognition permissions, requests and queued speech.
       hooks.live().stop();hooks.cancelSpeech();paint(hooks.live().snapshot());
       if(!root.hidden)entry.focus();
@@ -50,7 +62,7 @@
     entry.onclick=()=>void start();mute.onclick=toggleMute;hangup.onclick=end;
     root.addEventListener('keydown',event=>{if(event.key==='Escape'&&active){event.preventDefault();end();}});
     paint({enabled:false,phase:'off'});
-    return Object.freeze({element:root,entry,start,end,paint,active:()=>active,caption:text=>{detail.textContent=String(text).slice(-160);}});
+    return Object.freeze({element:root,entry,start,end,paint,approval,active:()=>active,caption:text=>{detail.textContent=String(text).slice(-160);}});
   }
   window.AideAssistantCall=Object.freeze({create});
 })();

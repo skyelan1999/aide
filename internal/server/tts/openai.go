@@ -45,7 +45,18 @@ func (p *openAIProvider) Format() string {
 	}
 	return "wav"
 }
-func (p *openAIProvider) Available() bool { return strings.TrimSpace(p.cfg.APIKey) != "" }
+func (p *openAIProvider) Available() bool {
+	return strings.TrimSpace(p.cfg.APIKey) != "" || p.cfg.Mode == "speech" && LocalSpeechEndpoint(p.cfg.Endpoint)
+}
+
+func LocalSpeechEndpoint(raw string) bool {
+	u, err := OpenAITTSBaseURL(raw)
+	if err != nil {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	return host == "localhost" || host == "host.docker.internal" || net.ParseIP(host).IsLoopback()
+}
 
 // OpenAITTSBaseURL also validates a user-supplied compatible API base. Never
 // accept credentials in URLs, queries or fragments (which could leak in errors).
@@ -115,7 +126,9 @@ func (p *openAIProvider) speech(ctx context.Context, u *url.URL, model, voice, t
 	if err != nil {
 		return nil, errors.New("OpenAI 语音请求创建失败")
 	}
-	req.Header.Set("Authorization", "Bearer "+p.cfg.APIKey)
+	if p.cfg.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+p.cfg.APIKey)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "audio/mpeg")
 	res, err := p.client.Do(req)

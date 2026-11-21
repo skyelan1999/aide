@@ -94,6 +94,85 @@ func TestAssistantOpenAIRealtimeRelayAndLock(t *testing.T) {
 	}
 }
 
+func TestAssistantOpenAIRealtimeApprovalReminder(t *testing.T) {
+	a := testApp(t)
+	id := assistantSessionID(t, a)
+	unlockAssistantSessionForTest(t, a)
+	a.mu.Lock()
+	a.settings = nativeOpenAIFixture()
+	a.sessions[id].Messages = []Message{{Role: "user", Content: "我们接着聊桂花乌龙。"}}
+	a.sessions["manual"] = &Session{ID: "manual", Number: 73, Runs: []*Task{
+		{ID: "manual-run", WorkspaceID: a.wsID(), Status: "awaiting_approval", ApprovalState: "manual", Files: []Change{{Path: "test.txt", Content: "LOCAL-ONLY"}}},
+	}}
+	a.mu.Unlock()
+	instructions := make(chan string, 3)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ws, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer ws.Close()
+		_ = ws.WriteJSON(map[string]any{"type": "session.created"})
+		var setup map[string]any
+		if ws.ReadJSON(&setup) != nil {
+			return
+		}
+		_ = ws.WriteJSON(map[string]any{"type": "session.updated"})
+		for _, replyID := range []string{"opening", "reminder"} {
+			var event struct {
+				Type     string `json:"type"`
+				Response struct {
+					Instructions string `json:"instructions"`
+					ToolChoice   string `json:"tool_choice"`
+				} `json:"response"`
+			}
+			if ws.ReadJSON(&event) != nil {
+				return
+			}
+			if event.Type != "response.create" || event.Response.ToolChoice != "none" {
+				t.Error("expected reminder speech with no tools")
+			}
+			instructions <- event.Response.Instructions
+			_ = ws.WriteJSON(map[string]any{"type": "response.created", "response": map[string]any{"id": replyID}})
+			if replyID == "reminder" {
+				_ = ws.WriteJSON(map[string]any{"type": "response.output_audio.delta", "response_id": replyID, "item_id": "notice", "delta": base64.StdEncoding.EncodeToString(make([]byte, 960))})
+			}
+			_ = ws.WriteJSON(map[string]any{"type": "response.done", "response": map[string]any{"id": replyID, "status": "completed"}})
+		}
+		var event map[string]any
+		_ = ws.ReadJSON(&event)
+	}))
+	defer provider.Close()
+	local := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.SetPathValue("id", id)
+		a.assistantRealtimeSocketWithDial(w, r, func(ctx context.Context, _ string, headers http.Header) (*websocket.Conn, *http.Response, error) {
+			return websocket.DefaultDialer.DialContext(ctx, "ws"+strings.TrimPrefix(provider.URL, "http"), headers)
+		})
+	}))
+	defer local.Close()
+	client, _, err := (&websocket.Dialer{Subprotocols: []string{"aide-realtime"}}).Dial("ws"+strings.TrimPrefix(local.URL, "http"), http.Header{"Origin": {local.URL}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+	_ = client.SetReadDeadline(time.Now().Add(10 * time.Second))
+	for {
+		var event map[string]any
+		if err := client.ReadJSON(&event); err != nil {
+			t.Fatal("approval reminder never reached desktop playback:", err)
+		}
+		if event["type"] == "response.audio.delta" && event["item_id"] == "notice" {
+			break
+		}
+	}
+	if opener := <-instructions; !strings.Contains(opener, "桂花乌龙") {
+		t.Fatal("opening did not use conversation history")
+	}
+	if notice := <-instructions; !strings.Contains(notice, "会话 73") || strings.Contains(notice, "LOCAL-ONLY") {
+		t.Fatalf("incorrect reminder instructions: %s", notice)
+	}
+}
+
 func testOpenAIRealtimeRelayClose(t *testing.T, change string) {
 	a := testApp(t)
 	id := assistantSessionID(t, a)
