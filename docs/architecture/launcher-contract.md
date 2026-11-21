@@ -32,6 +32,14 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 每个安装目录拥有独立的 `aide-<目录摘要>` docker-container Buildx 构建器、`aide:source-<目录摘要>` 镜像和 `.aide-data/build/owner.json` 归属收据。已有同名构建器但无匹配收据时拒绝接管。构建器限制为 4 GiB / 2 核；增量层和 cache mount 留在该构建器中。冷启动需要获取 BuildKit、基础镜像、固定工具链及依赖；默认 Docker 引擎已有基础镜像 tag 不代表专用构建器已有离线缓存。无网络的机器优先使用完整 Release 包，或预先准备该专用构建环境。
 
+### macOS / Linux 构建前网络选源
+
+源码构建在计算指纹、创建构建器及下载依赖之前，并发检测 Docker 标准源与 DaoCloud 镜像、PyPI 与清华镜像、Debian 与清华镜像。Docker 检测包含匿名令牌与清单读取；APT、PyPI 检查有效的源响应。标准源可用时优先使用标准源，失败而国内源可用时直接预选国内源。设置 `AIDE_BUILD_SOURCE=standard` 或 `china` 可明确指定，默认 `auto`。探测结果写入本安装 `.aide-data/build/network.json`，不包含凭据。
+
+存在可用的本地 Python 运行镜像时，包源另在 Docker 网络中探测，以容器结果决定初始包源；冷机器无可用镜像时明确报告仅有宿主探测结果。Docker 引擎和 BuildKit 的实际拉取继续校验镜像；探测成功不证明所有镜像层或依赖均可下载。两端均未探测成功时保留有效原配置并报告，后续失败恢复仍适用。私有源、额外索引、离线安装和镜像摘要继续遵循各自配置。Windows 原生宿主目前沿用下述失败恢复流程。
+
+macOS 启动或重新打开 Aide 时，会唤起已安装的 `com.skyelan.aide.pp-offline-license` 用户服务。服务启动使用其既有安装配置，不强制重启正在运行的核心。准备容器时，仅将已存在的标准 `bridge` 目录只读映射至 `/run/pp-license`，不映射设备状态目录；健康实例的普通重开不重建容器，新映射需在正常应用镜像时生效。缺失或失败的组件会给出提示，不阻止工作台启动。PP 商业插件需要另外安装本机授权组件，Aide 源码编译不包含私有核心和用户授权。
+
 ### 构建失败后的中国大陆源恢复
 
 `build.command` / `build.sh`、Windows 原生源码构建及首次 `build.bat` 引导默认启用 `AIDE_CN_SOURCE_FALLBACK=1`。先使用当前配置；识别到下载失败后，按依赖类型选择备用源，保留已指定版本、镜像摘要和构建平台：

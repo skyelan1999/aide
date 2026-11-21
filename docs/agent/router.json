@@ -1734,6 +1734,14 @@
         "node",
         "--check",
         "scripts/browser-usability-audit.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_build_network.py"
+      ],
+      [
+        "python3",
+        "scripts/test_license_component_control.py"
       ]
     ],
     "full": [

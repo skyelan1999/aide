@@ -1,0 +1,86 @@
+{
+  "id": "build-network-preflight-20261121",
+  "request": "编译开始评估网络自动选择标准源或国内源，排查 macOS 跨电脑产物与 lic 授权核心异常",
+  "baseline": "11091aee8a454b1a7c100fea1e5d7dfa936c5847",
+  "initial_status": "main 11091aee; scope branch isolated from daily iCloud edits. Doubao startup-source edits archived and reverted separately.",
+  "acceptance": [
+    "构建指纹与专用 builder 之前探测标准/国内源，自动选择可用源；保留离线和私有配置",
+    "已安装 macOS 授权组件在 Aide 启动时唤起，只读映射连接目录，不改写设备身份",
+    "区分本机软件测试与另一台 M4 的实际导出验收"
+  ],
+  "scope": [
+    "scripts/launcher.py",
+    "scripts/build-network.py",
+    "scripts/aide.sh",
+    "scripts/license-component-control.sh",
+    "scripts/apt-install-retry.sh",
+    "Dockerfile",
+    "Dockerfile.local",
+    "compose.yaml",
+    "focused regression tests",
+    "launcher documentation and task record"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求构建前自动选源；M4 上 PP 导出失败由核心未启动引起",
+      "evidence": [
+        "用户当前需求与补充说明"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "分开评估宿主与可用 Docker 网络，公共源可达性优先；授权核心独立安装且由既有服务启动",
+      "evidence": [
+        "scripts/build-network.py",
+        "docs/architecture/launcher-contract.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "前置选源与既有失败恢复结合；服务启动和连接映射独立处理，私有核心不进入 Aide",
+      "evidence": [
+        "scripts/launcher.py",
+        "scripts/license-component-control.sh"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "本机选源、启动器、包源恢复、组件服务合成回归通过；真实宿主和 Docker 探测均执行，本机选择标准源。未进行完整冷构建、另一台 M4 导出或 Windows 前置选源验收",
+      "evidence": [
+        "scripts/test_build_network.py",
+        "scripts/test_license_component_control.py",
+        "scripts/test_build_cn_sources.py",
+        ".aide-data/build/network.json",
+        ".agent-state/network-quick.log",
+        ".agent-state/verify-20261121T142343759416Z.log",
+        "实际 Docker 临时容器：宿主 UID 读取 0600 只读 bridge，并通过 host.docker.internal 访问合成宿主回环服务，取得认证后 405；未接触真实授权组件"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新启动契约、选源边界、服务与连接目录映射说明；历史文档和许可证原件保持原貌",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "逐文件审阅范围，测试日志与运行配置留在忽略目录，不清理用户日常源码",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "准备 PR，等待 gate；未升版、构建发行包或替换生产",
+      "evidence": [
+        "用户授权有用代码合入 main"
+      ]
+    }
+  },
+  "release_authorization": "用户：其他的有用的该合并到main就和进去；未授权本次新 PR 的管理员跳过审核",
+  "rollback": "Revert the scoped commit; existing .env, workspace, installed component plist and device state remain intact.",
+  "handoff": "另一台 M4 的组件安装与真实 PP 导出待验收；Windows 仍沿用已有失败后恢复。主程序源码构建不分发私有授权组件。"
+}

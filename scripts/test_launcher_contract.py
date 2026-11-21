@@ -41,6 +41,9 @@ class BoundaryLauncher(module.Launcher):
         self.gate = True
         self.recycle_calls = []
 
+    def select_build_sources(self, build, arguments):
+        return arguments
+
     def recycle_build_artifacts(self, **kwargs):
         # Image/health/GC boundaries are exercised separately by RecycleTests.
         self.recycle_calls.append((len(self.commands), kwargs))
