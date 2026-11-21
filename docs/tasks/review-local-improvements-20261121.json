@@ -13,11 +13,12 @@
   "verification": {
     "go": "定向服务端/执行沙箱回归通过；go vet 通过。",
     "python": "静态 Python、CAD SDK、DXF、STEP 检查均通过。",
-    "ui": "文件单击/双击时序的实际 JS 事件回归通过，新增状态文字尚无真实原生客户端验收。",
+    "ui": "实际打开隔离 Go Handler 工作台（临时数据、无配置密钥），单击真实文件行显示合成正文；双击未出现内嵌预览且无控制台错误，IAB 未观测到弹出标签页；完整双击时序由实际 JS 事件回归验证。原生客户端完整验收未运行。",
     "hardware": "未验证工程图纸或真实 CAD SDK 硬件/数据精度。",
     "quick": "python3 scripts/agent-route.py verify quick 通过；.agent-state/verify-20261121T141516198433Z.log",
-    "go_full": "进行中，不计为通过"
+    "go_full": "裸 golang 镜像的全量 go test 失败（182 项），环境缺 Node/Python Office 依赖与脚本路径；不计为通过。补齐工具链后重跑变更及相关恢复/助理用例，结果待记录。",
+    "ci": "PR #979 在 d08a7ab2 的 quick/go/gate 通过；新增回归已加入 basic_go，下次提交重新执行。"
   },
-  "merge": "等待 quick/gate",
-  "release": "尚未提交或发布，无生产服务替换"
+  "merge": "PR #979 等待新提交 gate 和本次专属管理员合并授权",
+  "release": "已提交 push 并创建 PR，未升版、发布、替换生产服务"
 }
