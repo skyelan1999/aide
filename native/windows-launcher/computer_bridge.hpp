@@ -17,6 +17,7 @@
 #include <mutex>
 #include <vector>
 #include <sstream>
+#include "graphics_capture.hpp"
 
 namespace aide_desktop {
 class ComputerBridge {
@@ -48,11 +49,15 @@ class ComputerBridge {
  static std::string base64(const std::vector<BYTE>& bytes){DWORD n=0;if(!CryptBinaryToStringA(bytes.data(),DWORD(bytes.size()),CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,nullptr,&n)||!n)throw std::runtime_error("PNG base64 encoding failed");std::string out(n,'\0');if(!CryptBinaryToStringA(bytes.data(),DWORD(bytes.size()),CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF,out.data(),&n))throw std::runtime_error("PNG base64 encoding failed");out.resize(n&&out[n-1]=='\0'?n-1:n);return out;}
  static std::vector<BYTE> screenshot(const Target& target){
   RECT rect{};if(!GetWindowRect(target.window,&rect))throw std::runtime_error("Cannot read app window bounds");int width=rect.right-rect.left,height=rect.bottom-rect.top;if(width<1||height<1||width>4096||height>4096||int64_t(width)*height>4000000)throw std::runtime_error("App window exceeds screenshot limits");
-  HDC screen=GetDC(nullptr),memory=CreateCompatibleDC(screen);HBITMAP bitmap=CreateCompatibleBitmap(screen,width,height);if(!screen||!memory||!bitmap){if(bitmap)DeleteObject(bitmap);if(memory)DeleteDC(memory);if(screen)ReleaseDC(nullptr,screen);throw std::runtime_error("Cannot allocate screenshot buffer");}
-  auto old=SelectObject(memory,bitmap);BOOL captured=PrintWindow(target.window,memory,PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(nullptr,screen);if(!captured){DeleteObject(bitmap);throw std::runtime_error("Windows could not capture this app window");}
+  HBITMAP bitmap=nullptr;
+  if(GraphicsCapture::supported())bitmap=GraphicsCapture::capture(target.window);
+  else{
+   HDC screen=GetDC(nullptr),memory=screen?CreateCompatibleDC(screen):nullptr;bitmap=screen?CreateCompatibleBitmap(screen,width,height):nullptr;if(!screen||!memory||!bitmap){if(bitmap)DeleteObject(bitmap);if(memory)DeleteDC(memory);if(screen)ReleaseDC(nullptr,screen);throw std::runtime_error("Cannot allocate screenshot buffer");}
+   auto old=SelectObject(memory,bitmap);BOOL captured=PrintWindow(target.window,memory,PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(nullptr,screen);if(!captured){DeleteObject(bitmap);throw std::runtime_error("Windows could not capture this app window");}
+  }
   Gdiplus::Bitmap image(bitmap,nullptr);IStream* stream=nullptr;HRESULT hr=CreateStreamOnHGlobal(nullptr,TRUE,&stream);if(FAILED(hr)){DeleteObject(bitmap);throw std::runtime_error("Cannot allocate PNG stream");}
   CLSID png{};CLSIDFromString(L"{557CF406-1A04-11D3-9A73-0000F81EF32E}",&png);auto saved=image.Save(stream,&png,nullptr);DeleteObject(bitmap);if(saved!=Gdiplus::Ok){stream->Release();throw std::runtime_error("PNG capture encoding failed");}
-  STATSTG stat{};if(FAILED(stream->Stat(&stat,STATFLAG_NONAME))||stat.cbSize.QuadPart<8||stat.cbSize.QuadPart>2*1024*1024){stream->Release();throw std::runtime_error("Screenshot exceeds 2 MiB");}
+  STATSTG stat{};if(FAILED(stream->Stat(&stat,STATFLAG_NONAME))||stat.cbSize.QuadPart<8||stat.cbSize.QuadPart>16*1024*1024){stream->Release();throw std::runtime_error("Screenshot exceeds 16 MiB");}
   LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);std::vector<BYTE> bytes(size_t(stat.cbSize.QuadPart));ULONG read=0;hr=stream->Read(bytes.data(),ULONG(bytes.size()),&read);stream->Release();if(FAILED(hr)||read!=bytes.size())throw std::runtime_error("PNG capture read failed");return bytes;
  }
  static WORD keyCode(const std::string& key){static const std::map<std::string,WORD> keys{{"ENTER",VK_RETURN},{"TAB",VK_TAB},{"ESCAPE",VK_ESCAPE},{"BACKSPACE",VK_BACK},{"DELETE",VK_DELETE},{"UP",VK_UP},{"DOWN",VK_DOWN},{"LEFT",VK_LEFT},{"RIGHT",VK_RIGHT},{"SPACE",VK_SPACE}};auto it=keys.find(key);if(it==keys.end())throw std::runtime_error("Unsupported key");return it->second;}
@@ -81,6 +86,14 @@ class ComputerBridge {
 public:
  explicit ComputerBridge(std::string secret):token(std::move(secret)){}
  ~ComputerBridge(){stop();}
+ json captureForeground(HWND expected){
+  std::lock_guard<std::mutex> operation(operationMutex);
+  auto target=frontmost();if(target.window!=expected||target.pid==GetCurrentProcessId())throw std::runtime_error("Foreground app changed or is Aide; capture cancelled");
+  auto image=screenshot(target);if(!same(target))throw std::runtime_error("Foreground app changed; screenshot discarded");
+  RECT bounds{};if(!GetWindowRect(target.window,&bounds))throw std::runtime_error("Cannot read foreground window size");
+  SYSTEMTIME time{};GetSystemTime(&time);wchar_t stamp[40]{};swprintf_s(stamp,L"%04u-%02u-%02uT%02u:%02u:%02u.%03uZ",time.wYear,time.wMonth,time.wDay,time.wHour,time.wMinute,time.wSecond,time.wMilliseconds);
+  return {{"imageBase64",base64(image)},{"app",utf8(target.process)},{"bundleId",std::string{}},{"windowTitle",utf8(target.title.substr(0,500))},{"capturedAt",utf8(stamp)},{"pixelWidth",bounds.right-bounds.left},{"pixelHeight",bounds.bottom-bounds.top}};
+ }
  void start(){if(token.size()<32)return;WSADATA wsa{};if(WSAStartup(MAKEWORD(2,2),&wsa)!=0)throw std::runtime_error("Computer bridge network startup failed");winsockStarted=true;Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)throw std::runtime_error("Screenshot encoder startup failed");listener=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(listener==INVALID_SOCKET)throw std::runtime_error("Computer bridge socket unavailable");BOOL exclusive=TRUE;setsockopt(listener,SOL_SOCKET,SO_EXCLUSIVEADDRUSE,reinterpret_cast<const char*>(&exclusive),sizeof(exclusive));sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_ANY);address.sin_port=htons(port);if(bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address))!=0||listen(listener,16)!=0){closesocket(listener);listener=INVALID_SOCKET;throw std::runtime_error("Computer bridge port 17778 is unavailable");}stopping=false;acceptThread=std::thread([this]{loop();});}
  void stop(){stopping=true;if(listener!=INVALID_SOCKET){shutdown(listener,SD_BOTH);closesocket(listener);listener=INVALID_SOCKET;}if(acceptThread.joinable())acceptThread.join();{std::lock_guard<std::mutex> lock(clientsMutex);for(auto& client:clients)if(client.joinable())client.join();clients.clear();}if(gdiplusToken){Gdiplus::GdiplusShutdown(gdiplusToken);gdiplusToken=0;}if(winsockStarted){WSACleanup();winsockStarted=false;}}
 };
