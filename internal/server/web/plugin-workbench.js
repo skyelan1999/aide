@@ -90,8 +90,8 @@
     speechEvent('authorizing','正在等待系统麦克风和语音识别授权…');
     let authorizationTimer;const value=await Promise.race([nativeSpeech()({action:'start',session}),new Promise((_,reject)=>{authorizationTimer=setTimeout(()=>reject(Error('系统语音授权超时。请在系统设置 → 隐私与安全性 → 语音识别中检查 Aide 权限后重试。')),20000);})]).finally(()=>clearTimeout(authorizationTimer));
     if(invalid()||speechSession!==session){await nativeSpeech()({action:'stop',session});return;}
-    if(value.error)throw Error(value.error);speechStop.hidden=false;speechEvent('recording','本机录音中');
-    speechPoll=setInterval(async()=>{if(invalid()){void item.stopSpeech();return;}try{const value=await nativeSpeech()({action:'status',session});if(speechSession!==session)return;if(value.error)throw Error(value.error);speechEvent(value.state,value.message||'本机录音中',value.text);if(value.state!=='recording')void item.stopSpeech();}catch(error){speechEvent('error',error.message);void item.stopSpeech();}},350);
+    if(value.error)throw Error(value.error);speechStop.hidden=false;speechEvent(value.state||'starting',value.message||'正在启动本机语音识别…');
+    speechPoll=setInterval(async()=>{if(invalid()){void item.stopSpeech();return;}try{const value=await nativeSpeech()({action:'status',session});if(speechSession!==session)return;if(value.error)throw Error(value.error);speechEvent(value.state,value.message||'本机录音中',value.text);if(value.state!=='recording'&&value.state!=='starting')void item.stopSpeech();}catch(error){speechEvent('error',error.message);void item.stopSpeech();}},350);
    }else{
     const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!Ctor||!('processLocally' in Ctor.prototype))throw Error('当前浏览器不支持强制离线识别。请使用 Aide Mac 桌面版或支持本机识别的浏览器。');

@@ -1,0 +1,81 @@
+{
+  "id": "windows-parity-20261115",
+  "request": "核对当前系统运行 aide 产生的 bug，重点优化 Windows 并避免影响其他系统；识别 macOS 专属功能并在 Windows 实现相同体验；逐 topic 更新文档并创建审计 Issue，测试通过后关闭 Issue；每个变更经 CI 和实际测试后提交 PR，PR 保持未合并；更新 Discussion #916；改善 Windows UI；测试线性执行并监控资源。",
+  "baseline": "e8c47360cd1de50110c071c7d156810ec8cfff0a",
+  "initial_status": "main clean at 7da2f573384decf8776e5b7fba0d9fccf4f5bc45; fetched latest main e8c47360 and isolated topic worktrees. Previous local changes preserved in stash.",
+  "acceptance": [
+    "按系统功能矩阵核对当前 Windows 运行缺陷，逐项复现并优先修复确认问题",
+    "识别 macOS-only 用户能力并为 Windows 实现匹配体验，保留平台隔离与其他系统回归",
+    "每个主题具备项目文档、GitHub 审计 Issue、针对性测试、CI 与独立未合并 PR；通过完整验收后关闭 Issue",
+    "改善 Windows UI，并在实际 Windows 桌面和浏览器场景验收视觉与交互",
+    "将方案、进度和结论写入 GitHub Discussion #916",
+    "测试逐项线性执行，记录主机资源状况；PR 不合并"
+  ],
+  "scope": [
+    "Windows runtime/backend/frontend and desktop implementation",
+    "macOS/Windows feature parity inventory and architecture",
+    "docs/tasks/windows-parity-20261115.json and per-topic docs/tasks evidence",
+    "GitHub Issues, PRs and Discussion #916",
+    "Windows UI styling and interaction",
+    "No merge to main; no unrelated environment regression",
+    "首个独立主题：Windows desktop on-device speech parity, Issue #918",
+    "第二个独立主题：Windows global foreground app capture parity, Issue #922"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "in_progress",
+      "summary": "跨平台功能盘点中；已确认 Windows 缺少 macOS 插件工作台本机语音桥及全局前台窗口截图到草稿能力，分别建立 Issue #918/#922 和隔离工作树。",
+      "evidence": [
+        "基线 main 7da2f573384decf8776e5b7fba0d9fccf4f5bc45；本轮确认仅总体任务账本未跟踪，其他工作区干净。",
+        "Discussion #916 当前标题 Windows Dev，正文 automatic test，0 comments；已读页面，无本会话可用的 discussion update API。",
+        "首个主题 Windows 本机语音转写：docs/tasks/windows-native-speech-parity-20261115.json；Issue #918 open。",
+        "Feature audit found macOS-only AideNativeSpeech bridge; created #918. Official Microsoft documentation rules out current WinRT default dictation and stable WebView2 local recognition as parity implementation today.",
+        "Feature audit also found AideNativeCapture/ScreenCaptureKit absent from Windows; created Issue #922 and isolated branch/worktree."
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Native SAPI COM proof on current Windows host passes shared recognizer/context/grammar creation and dictation grammar load without opening microphone; this supports implementation in unpackaged host, while real offline recognition quality still requires device acceptance.",
+      "evidence": [
+        "Official Windows speech API and Edge WebView2 docs reviewed; references recorded in docs/tasks/windows-native-speech-parity-20261115.json",
+        "Current Windows host System.Speech enumeration returned a zh-CN Microsoft Speech Recognizer 8.0 recognizer (read-only).",
+        "Official SAPI dictation activation/hypothesis docs reviewed; host System.Speech emulation returned empty metadata and is recorded as inconclusive, not pass.",
+        "MSVC 2022 + Windows SDK compiled native SAPI probe; sharedRecognizer/createContext/createGrammar/loadDictation all returned S_OK."
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "首个 topic 已实现 Windows AideNativeSpeech/SAPI 桥接并更新文档；Draft PR #921 已打开。第二个 Topic #922 仍在设计/实现阶段。",
+      "evidence": ["https://github.com/skyelan1999/aide/pull/921", "https://github.com/skyelan1999/aide/issues/918", "https://github.com/skyelan1999/aide/issues/922"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Topic #918 的 Aide CI run 584 和 Windows Desktop Check run 55 全绿（amd64/arm64/native-ui）；实际麦克风与可视 WebView 验收未运行。Topic #922 的手势/草稿/本地 i18n 测试通过；run 585 曾因两个英文 catalog key 缺失失败，修复后 PR head e24269323e17791a49064ff5999f739c0ee45dee 的 run 587/57 正在复验。截图 GPU 质量、真实全局监听/UI 仍未验收。",
+      "evidence": [
+        "python scripts/test_windows_speech_bridge.py — PASS on Windows MSVC; temporary output moved out of compiler process working directory to avoid hosted-runner directory lock.",
+        "PR #921 head 1946fd5a89ab2cf2ffd9081aaf0263c33752dd7c: Aide CI run 584 PASS; Windows Desktop Check run 55 PASS including amd64, arm64 and native-ui.",
+        "PR #923 head 12d95a3b438037638a8e1411e88458edd6f55ae2 Aide CI run 585 failed because two new UI strings lacked English catalog entries; existing English keys are now reused at e24269323e17791a49064ff5999f739c0ee45dee and recheck runs 587/57 are in progress.",
+        "No desktop/browser control connector exposed; actual microphone and visual UI acceptance remain NOT_RUN.",
+        "2026-11-16 Windows host resource check: 14.5 GiB free of 31.7 GiB visible RAM; tests ran one at a time."
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "首个 topic 架构/用户指南和第二个 topic 架构/用户指南均已更新。总体能力矩阵、其他 Windows bug、Windows UI 美化和 Discussion #916 更新待继续。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Topic #918 的 Draft PR #921 保持 open/unmerged；Aide CI 和 Windows Desktop Check 全绿。Topic #922 的 Draft PR #923 保持 open/unmerged；针对 CI 暴露的 i18n 回归已本地修复并等待新 CI。所有 PR 必须保持未合并。",
+      "evidence": ["https://github.com/skyelan1999/aide/pull/921", "https://github.com/skyelan1999/aide/issues/918", "https://github.com/skyelan1999/aide/issues/922"]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "每个 topic 使用独立分支/PR；回滚通过关闭 PR 或 revert 该主题提交。",
+  "handoff": "Speech topic Issue #918 / Draft PR #921: Aide CI and Windows Desktop Check pass at head 1946fd5a89ab2cf2ffd9081aaf0263c33752dd7c; real mic/visual UI remain NOT_RUN. Capture topic Issue #922 / Draft PR #923: code, docs, local tests and first CI failure correction are present; latest CI is being rechecked. PrintWindow GPU quality and real global hotkey/UI remain NOT_RUN. Discussion #916 still has no write tool available, and this session has no visual desktop/browser control. Continue broad Windows issue audit, macOS-only feature inventory, capture quality evaluation and UI polish. Run tests linearly while monitoring memory. Keep both PRs unmerged."
+}
