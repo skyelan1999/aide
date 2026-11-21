@@ -1703,7 +1703,7 @@ async function stopRunById(runId) {
   setInterval(() => { refreshBadge(); checkDuePopups(); if (document.body.classList.contains('reminders-mode') && !$('lock-screen')?.matches(':not([hidden])') && window.LockCluster?.snapshot()?.locked !== true && !form.classList.contains('open')) void loadList(); }, 30000);
   window.addEventListener('focus', checkDuePopups);
   window.addEventListener('aide:notification-policy',checkDuePopups);
-  const messageUI = window.AideMessageCenter?.mount({center, api, t, toast,
+  const messageUI = window.AideMessageCenter?.mount({center, api, t, toast, token:()=>state.token,
     openSettings: async section => { settingsPanel.active=section; await openSettingsSheet(); },
     raw: (path, options={}) => fetch('/api'+path,{...options,headers:{Authorization:'Bearer '+state.token,...options.headers}}),
     isLocked: () => !$('lock-screen')?.hidden || window.LockCluster?.snapshot()?.locked === true
@@ -11795,6 +11795,7 @@ function initAssistantLive(){
       valid:()=>valid()&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden',
       session:()=>assistantEntrySession.id,token:()=>state.token,device:()=>state.config?.voiceInputDevice,
       preflight:()=>api(`/sessions/${assistantEntrySession.id}/assistant-call`),
+      voip:()=>api('/voip/settings'),
       state:paint,beforeStart:()=>{ttsCancel();window.aideAssistantLive.stop();},
       ready:()=>{window.aideAssistantLive.start(false);},
       approval:value=>window.aideAssistantCall?.approval?.(value),
@@ -12680,6 +12681,7 @@ function renderCloneProviderControl(){const wrap=el('div','settings-control'),cf
 
 return wrap;}
 controlRenderers['tts-engine'] = renderTTSEngineControl;
+controlRenderers.voip = () => window.AideVoIP.settings(api, t);
 
 // 设置 → 个性化音色（#36）：克隆服务配置 + 录音样本 + 创建音色 + 性格推断
 function renderVoiceCloneControl() {

@@ -73,12 +73,18 @@ if [[ -n "$REMOTE_WARNING" ]]; then
   printf '%s\n' "$REMOTE_WARNING" >> "$NATIVE/bridge.log"
 fi
 # A separate session survives the launching Terminal/tool process group.
-python3 - "$BIN" "$DIR" "$TARGET" "$CAPTURE_TARGET" "$REMOTE_TARGET" "$NATIVE/bridge.log" <<'PYTHON'
+VOIP_TARGET=""
+if [[ "$HELPER_CAPABILITIES" == *'"voip":1'* ]]; then
+  VOIP_BINDING="$("$DOCKER_BIN" compose port aide 8080 2>/dev/null || true)"
+  if [[ "$VOIP_BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]]; then VOIP_TARGET="$VOIP_BINDING"; fi
+fi
+python3 - "$BIN" "$DIR" "$TARGET" "$CAPTURE_TARGET" "$REMOTE_TARGET" "$VOIP_TARGET" "$NATIVE/bridge.log" <<'PYTHON'
 import subprocess,sys
-binary,directory,target,capture,remote,log=sys.argv[1:]
+binary,directory,target,capture,remote,voip,log=sys.argv[1:]
 with open(log,'ab') as out:
     args=[binary,'-dir',directory,'-target',target,'-capture-target',capture]
     if remote:args.extend(['-remote-target',remote])
+    if voip:args.extend(['-voip-origin',voip])
     subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=out,stderr=out,start_new_session=True,close_fds=True)
 PYTHON
 for attempt in {1..30}; do

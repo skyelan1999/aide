@@ -346,7 +346,8 @@ case "$MODE" in
       ACTIVE_IMAGE_ID="$("$DOCKER_BIN" inspect --format '{{.Image}}' "$ACTIVE_CONTAINER")"
       [[ "$ACTIVE_IMAGE_ID" == "$BUNDLE_ID" ]] || { echo "A/B 激活镜像不匹配（expected $BUNDLE_ID, running $ACTIVE_IMAGE_ID）。" >&2; exit 1; }
     fi
-    if [[ "$REUSE_RUNNING" != 1 ]]; then
+    VOIP_HOST_MISSING="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(int(d.get("capabilities",{}).get("voipHostProtocol")==1 and not d.get("voipReady")))' <<< "$CONTAINER_HEALTH" 2>/dev/null || true)"
+    if [[ "$REUSE_RUNNING" != 1 || "$VOIP_HOST_MISSING" == 1 ]]; then
       bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
     fi
     if [[ -n "${AIDE_STARTUP_RELEASE_TAG:-}" ]]; then

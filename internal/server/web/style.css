@@ -1891,3 +1891,12 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .xlsx-table td textarea{height:auto;min-height:31px;resize:vertical;white-space:pre-wrap;overflow:auto;display:block}
 
 /* Office editor keeps the existing viewer surface and surrounding Aide layout. */
+
+.voip-control h4 { margin: 0 0 8px; font-size: 14px; }
+.voip-control label.voice-reply-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); }
+.voip-control label.voice-reply-row:has(input[type="checkbox"]) { grid-template-columns: minmax(0, 1fr) auto; }
+.voip-control label.voice-reply-row > span { white-space: normal; }
+.voip-control label.voice-reply-row > input:not([type="checkbox"]) { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (max-width: 500px) {
+  .voip-control label.voice-reply-row:has(input:not([type="checkbox"])) { grid-template-columns: minmax(0, 1fr); }
+}

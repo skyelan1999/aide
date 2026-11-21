@@ -1,3 +1,7 @@
+# github.com/emiago/sipgo v1.7.4
+## explicit; go 1.23.0
+github.com/emiago/sipgo
+github.com/emiago/sipgo/sip
 # github.com/fxamacker/cbor/v2 v2.9.4
 ## explicit; go 1.20
 github.com/fxamacker/cbor/v2
@@ -25,6 +29,19 @@ github.com/go-webauthn/x/crypto/secp256k1
 github.com/go-webauthn/x/crypto/secp256k1/ecdsa
 github.com/go-webauthn/x/encoding/asn1
 github.com/go-webauthn/x/revoke
+# github.com/gobwas/httphead v0.1.0
+## explicit; go 1.15
+github.com/gobwas/httphead
+# github.com/gobwas/pool v0.2.1
+## explicit
+github.com/gobwas/pool
+github.com/gobwas/pool/internal/pmath
+github.com/gobwas/pool/pbufio
+github.com/gobwas/pool/pbytes
+# github.com/gobwas/ws v1.3.2
+## explicit; go 1.15
+github.com/gobwas/ws
+github.com/gobwas/ws/wsutil
 # github.com/golang-jwt/jwt/v5 v5.3.1
 ## explicit; go 1.21
 github.com/golang-jwt/jwt/v5
@@ -46,6 +63,10 @@ github.com/gorilla/websocket
 github.com/hashicorp/golang-lru/v2
 github.com/hashicorp/golang-lru/v2/internal
 github.com/hashicorp/golang-lru/v2/simplelru
+# github.com/icholy/digest v1.2.0
+## explicit; go 1.22
+github.com/icholy/digest
+github.com/icholy/digest/internal/param
 # github.com/kr/fs v0.1.0
 ## explicit
 github.com/kr/fs
@@ -101,6 +122,9 @@ golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+# golang.org/x/sync v0.16.0
+## explicit; go 1.23.0
+golang.org/x/sync/singleflight
 # golang.org/x/sys v0.48.0
 ## explicit; go 1.26.0
 golang.org/x/sys/cpu

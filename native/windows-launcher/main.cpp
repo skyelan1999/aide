@@ -503,12 +503,13 @@ public:
    auto cid=container();auto actual=d({L"inspect",wide(cid),L"--format",L"{{.Image}}"});required(actual,"Cannot identify running image");auto selected=inspect(image);if(selected.is_null()||selected.value("Id","")!=trim(actual.out))throw std::runtime_error("Running image changed; refusing helper extraction");
    auto binary=embeddedHelper("message-lan"),dir=root/L".aide-data/storage/data/messages/lan-bridge";privateDirectory(dir);
    std::vector<std::wstring> lanArgs{L"-dir",dir.wstring(),L"-target",wide(binding(L"45840")),L"-capture-target",wide(binding(L"45841"))};
-   auto probe=run(binary,{L"-capabilities"},5000);int helperRemoteProtocol=0;
-   if(!probe.code){auto caps=json::parse(probe.out,nullptr,false);if(caps.is_object()&&caps.value("protocol",0)==kLanBridgeProtocolVersion&&caps.contains("capabilities")&&caps["capabilities"].is_object())helperRemoteProtocol=caps["capabilities"].value("remoteAccess",0);}
+   auto probe=run(binary,{L"-capabilities"},5000);int helperRemoteProtocol=0;bool helperVoip=false;
+   if(!probe.code){auto caps=json::parse(probe.out,nullptr,false);if(caps.is_object()&&caps.value("protocol",0)==kLanBridgeProtocolVersion&&caps.contains("capabilities")&&caps["capabilities"].is_object()){helperRemoteProtocol=caps["capabilities"].value("remoteAccess",0);helperVoip=caps["capabilities"].value("voip",0)==1;}}
    else{auto help=run(binary,{L"-h"},5000);if((help.out+help.err).find("-remote-target")!=std::string::npos)helperRemoteProtocol=kLanRemoteAccessProtocolVersion;}
    bool remoteReady=helperRemoteProtocol>0&&helperRemoteProtocol<=serverRemoteAccessProtocol();
    if(remoteReady){try{lanArgs.push_back(L"-remote-target");lanArgs.push_back(wide(binding(L"45842")));}catch(const std::exception&){remoteReady=false;lanArgs.resize(6);}}
    if(!remoteReady)say("LAN remote access unavailable: update and restart Aide; messaging remains available.");
+   if(helperVoip){try{auto workbench=wide(binding(L"8080"));lanArgs.push_back(L"-voip-origin");lanArgs.push_back(workbench);}catch(const std::exception&){say("Local SIP handset unavailable: missing loopback workbench port.");}}
    required(run(binary,{L"-stop",L"-dir",dir.wstring()}),"Old LAN helper could not stop");
    spawn(binary,lanArgs,stateRoot/L"lan-helper.log");
    bool ready=false;for(int i=0;i<30;i++){if(!run(binary,{L"-status",L"-dir",dir.wstring()},5000).code){ready=true;break;}Sleep(100);}if(!ready)throw std::runtime_error("LAN helper not ready; check its local log");say("LAN bridge ready.");
