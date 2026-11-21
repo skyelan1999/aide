@@ -3110,7 +3110,8 @@ function beginInlineRename(rowBtn, nameSpan, file, target = {root:state.root,sou
     else if (ev.key === 'Escape') { settled = true; restore(); }
   };
 }
-const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600, FILE_CLICK_OPEN_MS = 240;
+// Wait through the full double-click window before starting an in-place preview.
+const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600, FILE_CLICK_OPEN_MS = FILE_DBLCLICK_MS + 1;
 function clearFileOpenTimers() {
   document.querySelectorAll('#files .file-item').forEach(row => clearTimeout(row._clickTimer));
 }

@@ -447,6 +447,10 @@ func TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall(t *testing.T) {
 	a.mu.Lock()
 	a.settings = Settings{BaseURL: provider.URL, Model: "test", ActiveModel: "test", Models: []ModelRef{{ID: "test", ContextWindow: 16000}}}
 	s = a.sessions[s.ID]
+	// Keep this a history-compaction fixture as builtin schemas grow. Tests
+	// for genuinely oversized current input retain their explicit small limits.
+	minimum := a.buildContextPreview(s, "继续当前工作", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 8192}, false)
+	a.settings.Models[0].ContextWindow = max(16000, minimum.TotalEstimate+2048)
 	for i := 0; i < 10; i++ {
 		s.Messages = append(s.Messages, Message{Role: "user", Content: strings.Repeat("u", 6000)}, Message{Role: "assistant", Content: strings.Repeat("a", 6000)})
 	}

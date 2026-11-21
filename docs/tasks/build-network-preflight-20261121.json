@@ -73,14 +73,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "准备 PR，等待 gate；未升版、构建发行包或替换生产",
+      "status": "pass",
+      "summary": "PR #978 gate 成功后按用户本次授权管理员合入 main（6f0cbec63af70732276084147e7fc9271ec2d302）。交付仅为源码合并，未进行公开发行、完整冷构建或生产部署。",
       "evidence": [
-        "用户授权有用代码合入 main"
+        "https://github.com/skyelan1999/aide/pull/978",
+        "https://github.com/skyelan1999/aide/actions/runs/44913990847"
       ]
     }
   },
-  "release_authorization": "用户：其他的有用的该合并到main就和进去；未授权本次新 PR 的管理员跳过审核",
+  "release_authorization": "用户：所有都合并到main（在明确说明本次管理员合并要求之后）",
   "rollback": "Revert the scoped commit; existing .env, workspace, installed component plist and device state remain intact.",
   "handoff": "另一台 M4 的组件安装与真实 PP 导出待验收；Windows 仍沿用已有失败后恢复。主程序源码构建不分发私有授权组件。"
 }

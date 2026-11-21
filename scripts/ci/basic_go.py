@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PATTERN = (r'^Test(DWGPreview.*|PluginGuide.*|ChangeImpact.*|BusinessFlow.*|Goal.*|ProjectKnowledge.*|Plan.*|MemoryTokens.*|Issue801.*|TypeScript.*|Issue695And697.*|Issue796.*|Issue762.*|StalePID.*|HelperSingleInstance.*|MapWorkbench.*|MapDocument.*|AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNeverReturnKey|'
            r'ExecutionDiffLargeArtifactsUseBoundedMemory|ExecutionTextArtifactMatchesProposalTextContract|'
            r'ExecutionCollectPartialFailureRetainsIdempotentReceipts|StaticAuditFixture|'
+           r'PrepareArtifacts.*|FilenameLookup.*|ReadProposal.*|ImageView.*|ShellMemory.*|ApplyHistory.*|RunBounded.*|ProcessMemory.*|SessionCandidate.*|'
            r'TerminalCopyContextCanonicalIdentityAndVisibility|TerminalContextPinnedMasterNeverRetargets|'
            r'ReferenceRelayDeadlineOrdering|ReferenceRelayUntrustedPayloadAndCancellation|'
            r'VoiceModelBindings.*|SettingsAutoSavePermissionsPersistence|ExecutionScheduler.*|Incidents.*|ContextRecoverySummaryExtractsWrappedJSON|'

@@ -1736,6 +1736,26 @@
         "scripts/browser-usability-audit.cjs"
       ],
       [
+        "node",
+        "scripts/file-click-open-window.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_python_static_check.py"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_sdk_python.py"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_dxf_dimensions.py"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_step_curve_check.py"
+      ],
+      [
         "python3",
         "scripts/test_build_network.py"
       ],

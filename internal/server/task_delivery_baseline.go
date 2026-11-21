@@ -18,9 +18,10 @@ const deliveryBaselineReadBytes = 64 << 20
 const deliveryBaselineMetadataBytes = 128 << 10
 const deliveryBaselineEntries = 20000
 
-// Backend evidence captured before this task can run tools or call a provider.
-// Scanned directories prove absence without pretending an incomplete tree walk
-// covered the entire workspace. Resume copies retain this evidence with the task.
+// The bounded workspace scan is captured before task execution. Targeted
+// prepare_artifacts observations extend before-state evidence during a task,
+// before those exact outputs are written. Uncovered paths remain unproven.
+// Resume copies retain both kinds of evidence with the task.
 type TaskDeliveryBaseline struct {
 	WorkspaceID string                        `json:"workspaceId"`
 	Revision    uint64                        `json:"revision"`
@@ -28,6 +29,7 @@ type TaskDeliveryBaseline struct {
 	Directories map[string]bool               `json:"directories"`
 	Scanned     map[string]bool               `json:"scanned"`
 	Excluded    []string                      `json:"excluded,omitempty"`
+	Prepared    map[string]artifactPathBefore `json:"prepared,omitempty"`
 }
 
 type deliveryFileBefore struct {
@@ -320,5 +322,5 @@ func (scope deliveryWorkspace) deliveryIsCurrent(task *Task, p string, f *os.Fil
 		}
 		dir = parent
 	}
-	return false
+	return scope.preparedArtifactIsCurrent(task, p, f, info, remaining)
 }

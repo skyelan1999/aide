@@ -354,6 +354,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		if f.Applied || task.Applied {
 			state = "application_recorded"
 		}
+		if f.HistoryPending {
+			state = "saved_history_pending"
+		}
 		files = append(files, outcomeFile{Source: f.Source, TargetPath: f.TargetPath, Path: f.Path, State: state, BeforeHash: f.BaseHash, ProposedHash: hash([]byte(f.Content)), ProposedBytes: len(f.Content)})
 	}
 	eEnd := min(len(task.ToolUses), executionOffset+limit)

@@ -1,0 +1,29 @@
+{
+  "id": "review-local-improvements-20261121",
+  "request": "审查日常源码目录中其余有用的未提交代码并合入 main",
+  "baseline": "11091aee8a454b1a7c100fea1e5d7dfa936c5847",
+  "scope": [
+    "internal/server",
+    "internal/execsandbox",
+    "scripts/cad*",
+    "scripts/python_static_check.py",
+    "docs/architecture/artifact-execution.md"
+  ],
+  "review": "跳过已在 main 的内存快照、迁移、Office 和构建层拆分。合并时保留 main 的审批用途字段与实际 DWG 转换能力，剔除旧的全部 DWG 不支持提示。新增三个工具的目录注册与执行入口一起验证。",
+  "verification": {
+    "go": "定向服务端/执行沙箱回归通过；go vet 通过。",
+    "python": "静态 Python、CAD SDK、DXF、STEP 检查均通过。",
+    "ui": "实际打开隔离 Go Handler 工作台（临时数据、无配置密钥），单击真实文件行显示合成正文；双击未出现内嵌预览且无控制台错误，IAB 未观测到弹出标签页；完整双击时序由实际 JS 事件回归验证。原生客户端完整验收未运行。",
+    "hardware": "未验证工程图纸或真实 CAD SDK 硬件/数据精度。",
+    "quick": "python3 scripts/agent-route.py verify quick 通过；.agent-state/verify-20261121T141516198433Z.log",
+    "go_full": "裸 golang 镜像的全量 go test 失败（182 项），环境缺 Node/Python Office 依赖与脚本路径；不计为通过。随后用 Dockerfile toolchain（Go、Node、Python）重跑变更及相关恢复/助理用例：server 85.836s、execsandbox 0.188s 全部通过；go vet 通过。全量运行镜像验收未完成。",
+    "ci": "PR #979 在 d2eaf4cc 的 quick/go/gate 通过；同步 main 后重新执行远端 gate。",
+    "evidence": [
+      ".agent-state/full-go.log",
+      ".agent-state/complete-toolchain-targeted.log",
+      ".agent-state/verify-20261121T141516198433Z.log"
+    ]
+  },
+  "merge": "用户已授权全部合入 main；#978 合并后，只合并 router.json 两边追加的检查。#979 等待此次合并提交 gate，成功后管理员合并。",
+  "release": "已提交 push 并创建 PR，未升版、发布、替换生产服务"
+}

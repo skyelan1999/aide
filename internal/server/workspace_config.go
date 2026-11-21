@@ -327,7 +327,7 @@ func (a *App) cwdPromptLineLocked() string {
 	if dir == "" {
 		dir = "/workspace"
 	}
-	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。临时辅助脚本和项目记忆放在 $AIDE_CACHE/aide/ 下，不要自行在工作目录创建 .cache；用户要求交付的正式文件仍写到其指定位置。"
+	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。本地受限命令中的 $AIDE_CACHE 可能在本条命令结束后清理，不能依赖它跨命令保留脚本。临时脚本应在同一条命令中创建并执行；需要跨命令使用或交付的工程文件，通过正常文件提案与审批保存到用户指定的项目位置。不要自行在工作目录创建 .cache；用户要求交付的正式文件仍写到其指定位置。"
 }
 
 // The local cache picker selects a parent folder. Keep explicit .cache paths
