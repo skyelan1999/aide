@@ -1,0 +1,88 @@
+{
+  "id": "voip-phone-takeover-20261121",
+  "request": "为消息语音通话和助理电话在设置中添加 VoIP 语音通话接管，目标为摩托罗拉 IP9910-2W。由 Aide 发起或接听时话机响铃，摘机接管双向语音。优先验证未注册局域网 SIP 直连。",
+  "baseline": "bc0ef1457cc0aabdc5fa941fd5786deaa705a139",
+  "initial_status": "隔离开发分支基于 bc0ef145。开始前只有本任务记录，日常运行实例使用之前的本地构建。",
+  "acceptance": [
+    "同一局域网内，Aide 发起或用户接听消息通话、发起助理电话时，可选用 IP9910-2W。话机响铃，摘机后才接通双向媒体，任一端结束即释放。",
+    "消息邀请与通话授权继续走现有流程。助理锁定、会话过期或断线时关闭话机通话。用户可以选择现有本机音频设备。",
+    "优先实测未注册时的 SIP 直拨。记录 SIP 应答、协商的编解码、双向声音和两端挂断结果。兼容性结论以目标固件实测为准。",
+    "交付前用零注册 Baresip 软电话分别验证消息主叫、消息被叫和助理通话，检查双向收到的真实音频和挂断；设备到货后再验证该型号固件。"
+  ],
+  "scope": [
+    "现有消息 WebRTC 通话",
+    "现有助理实时音频通话",
+    "本机 VoIP 设备设置与局域网音频桥"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标话机为摩托罗拉 IP9910-2W，用户确认摘机接管。话机仍在运输，尚未注册，不使用运营商语音中继。",
+      "evidence": [
+        "用户在本轮对型号、响铃摘机行为、注册状态和到货状态的回复。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "宿主组件发起局域网 SIP/UDP，协商 G.711 RTP。消息端复用原有授权与 WebRTC，助理端摘机后复用实时会话与播放队列。两项分别开关，默认关闭。",
+      "evidence": [
+        "internal/voip/phone.go",
+        "internal/server/voip.go",
+        "internal/server/web/voip.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成话机设置、消息主叫和被叫接管、助理实时电话接管、双方挂断和响铃中取消。设置限制为本机管理，消息检查通话许可和租约，助理检查已解锁会话。修复消息端 SDP 在对方许可回传前被拒后的重发，以及 Chromium 未绑定播放元素时远端音轨接入 Web Audio 无声的问题。",
+      "evidence": [
+        "internal/server/web/settings-schema.json",
+        "internal/server/web/message-center.js",
+        "internal/server/web/assistant-realtime.js",
+        "scripts/message-lan-control.sh"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "零注册 Baresip 在隔离网络中通过 180、200、PCMU/PCMA 双向解码、双方挂断和响铃中取消。实际 Chromium 用例从两端 Aide 页发起及接听消息语音，Baresip 的 440 Hz 和对端的 660 Hz 均在对端解码。助理电话经测试用实时服务完成 440/770 Hz 双向音频及软电话主动挂断。消息 WebRTC 测试使用本地 TURN，SIP 段使用直拨。桌面和窄屏检查、Go race/vet、346 项 quick 检查通过。真实 IP9910-2W 硬件及在线模型音质仍待验。",
+      "evidence": [
+        "internal/voip/phone_test.go",
+        "internal/server/voip_test.go",
+        ".agent-state/voip/browser-check.log",
+        ".agent-state/voip/browser-incoming.log",
+        ".agent-state/verify-20261121T114524236140Z.log",
+        ".agent-state/voip/preview-smoke.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新了两条通话入口的配置说明、语音链路、固件限制与局域网接入条件。文档链接检查通过。",
+      "evidence": [
+        "README.md",
+        "docs/architecture/decentralized-messages.md",
+        "docs/architecture/assistant-openai-speech.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "专用测试服务已停。保留脱敏的浏览器与软电话测试日志、合成录音及预览镜像，临时测试凭据已移除。源码通过 git diff --check。",
+      "evidence": [
+        ".agent-state/voip/preview-smoke.log",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "在本机生成独立 ARM64 预览镜像并运行隔离启动检查，已确认镜像完整性、随包宿主组件校验与 macOS 宿主桥 TLS 注册。未进入发布流程。",
+      "evidence": [
+        "aide:voip-preview",
+        "sha256:b47538370d920db89ec427da84a0084060dbcfb72e9ca541e0276c0fca05d3a2",
+        "source fingerprint a10d2af85400fe8124d7845d0b03c3801a6e76eeeaf3630ee743d8861ecdb9bf",
+        ".agent-state/voip/docker-build.log"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "在设置分别关闭消息语音与助理电话接管，即可使用本机音频。发布与部署属于后续流程。",
+  "handoff": "feat/voip-phone-takeover 提供局域网直连实现。IP9910-2W 到货后，同一局域网下按未注册条件实测响铃、摘机、双向语音与挂断。若固件确认要求注册，再接入 Asterisk。"
+}

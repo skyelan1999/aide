@@ -40,6 +40,7 @@ COPY cmd/aide-local-mounts ./cmd/aide-local-mounts
 COPY internal/messaging ./internal/messaging
 COPY internal/hostbridge ./internal/hostbridge
 COPY internal/localmounts ./internal/localmounts
+COPY internal/voip ./internal/voip
 COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
 RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags "-s -w" -o /usr/local/bin/aide-message-relay ./cmd/aide-message-relay && \
@@ -55,6 +56,8 @@ COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-
 # Fail the build before shipping a page whose application script cannot parse.
 RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/message-center.js \
+    && node --check internal/server/web/voip.js \
+    && node --check internal/server/web/voip-pcm-worklet.js \
     && node --check internal/server/web/assistant-live.js \
     && node --check internal/server/web/settings-init.js \
     && node --check internal/server/web/i18n.js \

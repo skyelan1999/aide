@@ -21,7 +21,7 @@ import (
 // Provider credentials never leave this process. Browser authentication uses a
 // WebSocket subprotocol header, never a URL parameter or provider API key.
 func assistantSocketToken(r *http.Request) string {
-	if !strings.HasSuffix(r.URL.Path, "/assistant-call/socket") || !websocket.IsWebSocketUpgrade(r) {
+	if (!strings.HasSuffix(r.URL.Path, "/assistant-call/socket") && r.URL.Path != "/api/voip/socket") || !websocket.IsWebSocketUpgrade(r) {
 		return ""
 	}
 	for _, p := range websocket.Subprotocols(r) {

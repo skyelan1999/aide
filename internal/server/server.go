@@ -664,6 +664,7 @@ type App struct {
 	// ── 小秘系统会话密码门（#30）：内存解锁态，锁屏后失效，不持久化 ──
 	assistantUnlockMu       sync.Mutex
 	assistantRealtimeActive map[string]bool
+	voip                    voipRuntime
 	assistantUnlocked       map[string]bool
 	masterPasswordAttempts  masterPasswordAttempts
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
@@ -1227,6 +1228,11 @@ func New(work, reference, data string) (*App, error) {
 func (a *App) Close() {
 	a.closeOnce.Do(func() {
 		a.beginRuntimeShutdown()
+		a.voip.mu.Lock()
+		if a.voip.host != nil {
+			_ = a.voip.host.Close()
+		}
+		a.voip.mu.Unlock()
 		a.officePreviews.close()
 		a.bgMu.Lock()
 		a.bgClosing = true
@@ -1540,9 +1546,16 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /mobile-capture/api", a.mobileCapturePhone)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		a.confirmImageIntegrityUpgrade()
-		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "capabilities": map[string]int{"messageBridgeProtocol": messaging.LANBridgeProtocolVersion, "remoteAccessProtocol": messaging.LANRemoteAccessProtocolVersion}, "integrity": a.integrityStatus()})
+		a.voip.mu.Lock()
+		voipReady := a.voip.host != nil
+		a.voip.mu.Unlock()
+		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "capabilities": map[string]int{"messageBridgeProtocol": messaging.LANBridgeProtocolVersion, "remoteAccessProtocol": messaging.LANRemoteAccessProtocolVersion, "voipHostProtocol": 1}, "voipReady": voipReady, "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/voip/settings", a.voipSettingsAPI)
+	mux.HandleFunc("PUT /api/voip/settings", a.voipSettingsAPI)
+	mux.HandleFunc("GET /api/voip/socket", a.voipCallSocket)
+	mux.HandleFunc("GET /api/voip/host", a.voipHostSocket)
 	mux.HandleFunc("GET /api/computer-control/status", a.computerControlStatus)
 	mux.HandleFunc("POST /api/computer-control/permissions/{permission}", a.computerControlPermission)
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-call/socket", a.assistantRealtimeSocket)

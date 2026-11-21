@@ -30,15 +30,19 @@
       reviewDetail.textContent=review.hidden?'':String(value.detail||'');
       review.open=!review.hidden;
     }
-    function updateClock(){if(active&&requestAt!==null&&now()-requestAt>=20000){hooks.error(t('语音连接超时，请检查麦克风权限后重试'));end();return;}if(approvalExpires&&now()>=approvalExpires)approval(null);const seconds=Math.max(0,Math.floor((now()-started)/1000));clock.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
+    let phoneRinging=false;
+    function updateClock(){if(active&&requestAt!==null&&now()-requestAt>=(phoneRinging?47000:20000)){hooks.error(t('语音连接超时，请检查麦克风权限后重试'));end();return;}if(approvalExpires&&now()>=approvalExpires)approval(null);const seconds=Math.max(0,Math.floor((now()-started)/1000));clock.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
     function paint(value){
       if(active&&(!hooks.valid()||value.paused||!value.enabled||(!muted&&!value.microphone))){end();return;}
       root.hidden=!hooks.valid();entry.hidden=!hooks.valid()||active;panel.hidden=!active;
       root.dataset.phase=active?value.phase:'off';
       title.textContent=t('原生实时通话')+(active&&value.provider?' · '+(value.provider==='openai'?'OpenAI':value.provider==='qwen'?'Qwen':value.provider)+(value.voice?' · '+value.voice:''):'');
       title.title=active?String(value.model||''):'';
+      const nextRinging=!!value.statusMessage;
+      if(phoneRinging&&!nextRinging)requestAt=null;
+      phoneRinging=nextRinging;
       if(active&&value.phase==='requesting'){if(requestAt===null)requestAt=now();}else requestAt=null;
-      status.textContent=t(muted?'麦克风已静音':(labels[value.phase]||'等待你开口'));
+      status.textContent=t(muted?'麦克风已静音':(value.statusMessage||labels[value.phase]||'等待你开口'));
       mute.disabled=value.phase==='requesting';mute.textContent=t(muted?'取消静音':'静音');mute.setAttribute('aria-pressed',String(muted));
     }
     async function start(){

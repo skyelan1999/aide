@@ -5,7 +5,7 @@
   let enabled=false,microphone=false,phase='off',epoch=0,stream=null,context=null,node=null,source=null,gain=null,ws=null,ping=0,muted=false,inputSerial=0;
   let nextTime=0,queuedSamples=0,ignoreAudio=false,responding=false,caption='',responseID='',itemID='';
   const players=new Map(),pendingAudio=[],receivedSamples=new Map(),discarded=new Set();
-  let metadata={},inputRate=16000;
+  let metadata={},inputRate=16000,phone=null,speaker=null;
   const snapshot=()=>({enabled,microphone,paused:false,phase,...metadata});
   const state=value=>{phase=value;hooks.state?.(snapshot());};
   const send=event=>{if(ws?.readyState===1){if(ws.bufferedAmount>256000){hooks.error('实时音频网络拥堵，通话已结束');stop();return;}ws.send(JSON.stringify(event));}};
@@ -17,13 +17,13 @@
    }
    players.clear();pendingAudio.length=0;queuedSamples=0;nextTime=context?.currentTime||0;
   }
-  function releaseInput(){inputSerial++;if(node){node.port.onmessage=null;node.disconnect();node=null;}source?.disconnect();source=null;gain?.disconnect();gain=null;stream?.getTracks().forEach(t=>t.stop());stream=null;}
-  function stop(){epoch++;enabled=false;microphone=false;muted=false;clearInterval(ping);ping=0;releaseInput();clearAudio();if(ws){const old=ws;ws.onclose=ws.onmessage=ws.onerror=null;try{if(old.readyState===1)old.send(JSON.stringify({type:'aide.hangup'}));}catch(_){}try{old.close();}catch(_){}ws=null;}const old=context;context=null;if(old)void old.close().catch(()=>{});state('off');}
+  function releaseInput(){inputSerial++;if(node){node.port.onmessage=null;node.disconnect();node=null;}source?.disconnect();source=null;gain?.disconnect();gain=null;if(!phone)stream?.getTracks().forEach(t=>t.stop());stream=null;}
+  function stop(){epoch++;enabled=false;microphone=false;muted=false;clearInterval(ping);ping=0;releaseInput();clearAudio();const handset=phone;phone=null;speaker=null;handset?.close();if(ws){const old=ws;ws.onclose=ws.onmessage=ws.onerror=null;try{if(old.readyState===1)old.send(JSON.stringify({type:'aide.hangup'}));}catch(_){}try{old.close();}catch(_){}ws=null;}const old=context;context=null;if(old)void old.close().catch(()=>{});state('off');}
   function fatal(message){hooks.error(message);stop();}
   async function input(token){
    const ticket=++inputSerial;
-   const acquired=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,...(hooks.device?.()?{deviceId:{exact:hooks.device()}}:{})}});
-   if(token!==epoch||ticket!==inputSerial||!enabled||muted){acquired.getTracks().forEach(t=>t.stop());return;}
+   const acquired=phone?.stream||await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,...(hooks.device?.()?{deviceId:{exact:hooks.device()}}:{})}});
+   if(token!==epoch||ticket!==inputSerial||!enabled||muted){if(!phone)acquired.getTracks().forEach(t=>t.stop());return;}
    stream=acquired;source=context.createMediaStreamSource(stream);node=new AudioWorkletNode(context,'aide-pcm-input',{processorOptions:{inputRate}});gain=context.createGain();gain.gain.value=0;
    node.port.onmessage=event=>{if(token!==epoch||muted||phase==='requesting'||!hooks.valid())return;let s='';for(const byte of new Uint8Array(event.data))s+=String.fromCharCode(byte);send({type:'input_audio_buffer.append',audio:btoa(s)});};
    source.connect(node);node.connect(gain);gain.connect(context.destination);
@@ -39,7 +39,7 @@
     const buffer=context.createBuffer(1,chunk.samples,outputRate),samples=buffer.getChannelData(0);
     for(let i=0;i<samples.length;i++)samples[i]=view.getInt16(i*2,true)/32768;
     const player=context.createBufferSource();
-    player.buffer=buffer;player.connect(context.destination);
+    player.buffer=buffer;player.connect(speaker||context.destination);
     const start=nextTime>now?nextTime:now+0.025;
     nextTime=start+buffer.duration;
     players.set(player,{item:chunk.item,offset:chunk.offset,samples:chunk.samples,start,end:nextTime});
@@ -94,11 +94,21 @@
    state('requesting');hooks.beforeStart?.();
    try{
     const Ctor=window.AudioContext||window.webkitAudioContext;context=new Ctor();const resumed=context.resume();
-    const [,config]=await Promise.all([resumed,hooks.preflight?.()]);if(token!==epoch)return;
+    const [,config,route]=await Promise.all([resumed,hooks.preflight?.(),hooks.voip?.()]);if(token!==epoch)return;
     inputRate=config?.inputRate===24000?24000:16000;
     metadata={provider:config?.provider||'',model:config?.model||'',voice:config?.voice||''};
     await context.audioWorklet.addModule('/assistant-pcm-worklet.js?v=2');
     if(token!==epoch)return;
+    if(route?.assistant){
+     metadata={...metadata,statusMessage:'正在呼叫局域网话机'};state('requesting');
+     phone=window.AideVoIP.open({mode:'assistant',token:hooks.token(),permission:{session:hooks.session()},context,
+      onStatus:message=>{metadata={...metadata,statusMessage:message};state('requesting');},
+      onEnd:message=>{if(token===epoch&&enabled){if(message)hooks.error(message);stop();}}});
+     await phone.ready;
+     if(token!==epoch||!enabled)return;
+     speaker=phone.speaker;
+     metadata={...metadata,statusMessage:''};state('requesting');
+    }
     await input(token);if(token!==epoch||!enabled)return;
     const url=new URL(`/api/sessions/${hooks.session()}/assistant-call/socket`,location.href);url.protocol=location.protocol==='https:'?'wss:':'ws:';
     ws=new WebSocket(url,['aide-realtime','aide-auth.'+hooks.token()]);

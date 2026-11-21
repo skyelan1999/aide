@@ -35,6 +35,7 @@ type messageCenter struct {
 	voiceMu      sync.Mutex
 	voiceOwner   string
 	voiceCall    string
+	voiceGroup   string
 	voiceExpires time.Time
 	service      *messaging.Service
 	network      *messaging.Network
@@ -508,9 +509,10 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		m.voiceMu.Lock()
 		if path == "voice-release" {
-			if m.voiceOwner == input.Owner {
+			if m.voiceOwner == input.Owner && m.voiceCall == input.Call {
 				m.voiceOwner = ""
 				m.voiceCall = ""
+				m.voiceGroup = ""
 				m.voiceExpires = time.Time{}
 			}
 		} else if m.voiceOwner != "" && m.voiceOwner != input.Owner && time.Now().Before(m.voiceExpires) {
@@ -520,6 +522,7 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 		} else {
 			m.voiceOwner = input.Owner
 			m.voiceCall = input.Call
+			m.voiceGroup = input.Group
 			m.voiceExpires = time.Now().Add(15 * time.Second)
 		}
 		m.voiceMu.Unlock()

@@ -61,3 +61,7 @@ Voice settings (including personality text) and the four AI management permissio
 General appearance no longer exposes a startup-animation switch or replay action. The introduction remains enabled by default, old disabled preferences normalize to enabled, and reduced-motion/background accessibility behavior remains in force.
 
 Validation uses `scripts/browser-settings-autosave.cjs` (also available through the existing `browser-openai-speech.cjs` entrypoint), actual renderers/CSS at desktop/narrow widths in Chinese/English with isolated APIs, plus Go race/vet and voice request regressions. These are local implementation checks; they do not establish live provider audio quality or deployment to a running installation.
+
+## SIP 话机作为实时通话设备
+
+在「助理与语音 → 语音助理 → VoIP 话机接管」开启助理电话后，直接拨打配置的话机，摘机后才连接所选实时模型。听筒音频进入原有实时模型通路，模型音频经原有播放队列送到听筒。静音只影响助理听到的输入，两端都可以结束通话。设备配置和接入条件见[局域网 SIP 话机接管](decentralized-messages.md#局域网-sip-话机接管)。

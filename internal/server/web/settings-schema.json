@@ -343,6 +343,11 @@
           "label": "语音引擎"
         },
         {
+          "id": "voip",
+          "type": "voip",
+          "label": "VoIP 话机接管"
+        },
+        {
           "id": "voiceClone",
           "type": "voice-clone",
           "label": "个性化音色（声音克隆）",

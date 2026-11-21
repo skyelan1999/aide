@@ -17,7 +17,7 @@
     }
     return {name: file.name, size: file.size, hashes};
   }
-  function mount({center, api, raw, t, toast, isLocked, openSettings}) {
+  function mount({center, api, raw, t, toast, isLocked, openSettings, token}) {
     if (!center || center.dataset.messagesMounted) return;
     center.dataset.messagesMounted = 'true'; center.classList.add('message-center');
     const tr = text => document.documentElement.lang.startsWith('en') ? (english[text] || t(text)) : t(text);
@@ -124,7 +124,7 @@
       const username=input('TURN 用户名'),credential=input('TURN 密码（留空保留）','password');username.value=config.iceUsername||'';credential.autocomplete='new-password';advanced.append(field('TURN 用户名',username),field('TURN 密码（留空保留）',credential));form.append(advanced);
       const save=button('保存设置');save.type='submit';save.className='primary';form.append(save);form.onsubmit=safe(async event=>{event.preventDefault();save.disabled=true;epoch++;await stopVoice();status.textContent=tr('正在更新网络设置');try{const lines=e=>e.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);await api('/messages/config',{method:'PUT',body:JSON.stringify({config:{enabled:enabled.checked,assistantAccess:assistant.checked,network:{listen:listen.value.trim(),lan:lan.checked,relays:lines(relays),advertise:lines(advertise)},iceURLs:lines(ice),iceUsername:username.value},credential:credential.value})});credential.value='';await refresh(true);toast(tr('设置已保存')); }finally{save.disabled=false;}});form.append(button('通知与角标',showSettings));settingsBody.append(form);
     }
-    function requestCard(inv){const card=node('article','message-request');const kind={contact:'联系人申请',group:'群组邀请',voice:'语音邀请',file:'文件邀请'}[inv.kind]||inv.kind;card.append(node('strong','',tr(kind)),node('span','message-caption',name(inv.peer)));if(inv.kind==='file'){const f=data()?.transfers?.[inv.id];if(f)card.append(node('p','message-filename',f.manifest.name+' · '+bytes(f.manifest.size)));card.append(empty('同意前不会发送文件内容。'));}if(inv.kind==='group'){const g=data()?.groups?.[inv.resource];if(g)card.append(node('p','',g.name));}const fingerprint=node('details','message-fingerprint');fingerprint.append(node('summary','',tr('完整设备指纹')),node('code','',inv.peer));card.append(fingerprint);const ops=node('div','message-row');ops.append(button(inv.kind==='voice'?'接听':'同意',async()=>{if(inv.kind==='voice'&&activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));const captured=epoch;await post('decide',{id:inv.id,accept:true});await refresh(true);if(inv.kind==='voice'&&captured===epoch&&!isLocked())await answerVoice(inv);},'primary'),button('拒绝',async()=>{await post('decide',{id:inv.id,accept:false});await refresh(true);}));card.append(ops);return card;}
+    function requestCard(inv){const card=node('article','message-request');const kind={contact:'联系人申请',group:'群组邀请',voice:'语音邀请',file:'文件邀请'}[inv.kind]||inv.kind;card.append(node('strong','',tr(kind)),node('span','message-caption',name(inv.peer)));if(inv.kind==='file'){const f=data()?.transfers?.[inv.id];if(f)card.append(node('p','message-filename',f.manifest.name+' · '+bytes(f.manifest.size)));card.append(empty('同意前不会发送文件内容。'));}if(inv.kind==='group'){const g=data()?.groups?.[inv.resource];if(g)card.append(node('p','',g.name));}const fingerprint=node('details','message-fingerprint');fingerprint.append(node('summary','',tr('完整设备指纹')),node('code','',inv.peer));card.append(fingerprint);const ops=node('div','message-row');ops.append(button(inv.kind==='voice'?'接听':'同意',async()=>{if(inv.kind==='voice')return answerVoice(inv);await post('decide',{id:inv.id,accept:true});await refresh(true);},'primary'),button('拒绝',async()=>{await post('decide',{id:inv.id,accept:false});await refresh(true);}));card.append(ops);return card;}
     function paintContacts(){const host=panes.contacts;host.replaceChildren(identityCard());const search=node('form','message-add-form');const code=input('输入 6 位设备码');code.maxLength=6;code.autocomplete='off';code.spellcheck=false;code.className='message-code-input';const find=button('查找设备');find.type='submit';search.append(code,find);const results=node('div','message-discovery');search.onsubmit=safe(async event=>{event.preventDefault();find.disabled=true;results.replaceChildren();try{const cards=await post('discover',{code:code.value.trim().toUpperCase()});if(!cards.length)results.append(empty('未找到设备，请确认对方在线且使用相同中继或同一局域网。'));if(cards.length>1)results.append(empty('同码设备有多个，请核对完整指纹后选择。'));for(const card of cards){const item=node('article','message-request');item.append(node('strong','',card.name),node('code','message-full-fingerprint',card.device.fingerprint),empty('请通过其他可信渠道核对完整指纹。'));const checked=input('已核对完整指纹','checkbox');const checkedLabel=field('已核对完整指纹',checked);checkedLabel.classList.add('message-checkbox');const add=button('申请添加',async()=>{await post('invite',{peer:card.device.fingerprint,card,kind:'contact'});toast(tr('申请已发出'));results.replaceChildren();await refresh(true);},'primary');add.disabled=true;checked.onchange=()=>{add.disabled=!checked.checked;};item.append(checkedLabel,add);results.append(item);}}finally{find.disabled=false;}});host.append(node('h3','',tr('添加联系人')),search,results,node('h3','',tr('待处理申请')));
       const requests=pending();if(!requests.length)host.append(empty('暂无待处理申请'));for(const inv of requests)host.append(requestCard(inv));
       const all=Object.entries(relations());host.append(node('h3','',tr('联系人')));if(!all.length)host.append(empty('暂无联系人'));
@@ -168,28 +168,138 @@
     function saveFileForm(file,card){const existing=card.querySelector('.message-save-form');if(existing){existing.querySelector('input')?.focus();return;}const form=node('form','message-save-form'),name=input('保存文件名');name.value=file.manifest.name.split(/[\\/]/).pop();name.maxLength=240;const save=button('保存文件');save.type='submit';save.className='primary';form.append(field('保存文件名',name),save,button('取消保存',()=>form.remove()));form.onsubmit=safe(async event=>{event.preventDefault();if(!name.value.trim())return;save.disabled=true;try{await post('save',{id:file.id,name:name.value});toast(tr('文件已保存到工作目录'));form.remove();}finally{save.disabled=false;}});card.append(form);name.focus();}
     async function download(file){const response=await raw('/messages/download/'+encodeURIComponent(file.id),{method:'GET'});if(!response.ok){const error=await response.json();throw new Error(error.error||'请求失败');}const blob=await response.blob();if(blob.size!==file.manifest.size)throw new Error(uiTextMessageCenter('文件尚未接收完成'));const url=URL.createObjectURL(blob),link=node('a');link.href=url;link.download=file.manifest.name.split(/[\\/]/).pop();document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
     const voiceOwner=crypto.randomUUID().replace(/-/g,'');let voiceSerial=0;
-    async function startVoice(target){if(activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));const captured=epoch;if(target.group){const call=await post('group-call',{group:target.group});if(captured!==epoch||isLocked())return;activeVoice={id:call.id,group:target.group,peer:'',invitation:'',pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'等待接听'};}else{const result=await post('invite',{peer:target.peer,kind:'voice'});if(captured!==epoch||isLocked())return;activeVoice={id:result.invitation.resource,peer:target.peer,invitation:result.invitation.id,group:'',pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'等待接听'};}paintCall();await refresh(true);}
-    async function answerVoice(inv){if(activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));const call=data()?.calls?.[inv.resource];activeVoice={id:inv.resource,peer:call?'':inv.peer,group:call?.group||'',invitation:inv.id,pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'连接中'};paintCall();await syncVoice();}
+    function prepareVoiceContext(){
+      const Ctor=window.AudioContext||window.webkitAudioContext;
+      if(!window.AideVoIP||!Ctor)return null;
+      try{const context=new Ctor();void context.resume().catch(()=>{});return context;}catch(_){return null;}
+    }
+    async function startVoice(target){
+      if(activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));
+      const captured=epoch,voiceContext=prepareVoiceContext();
+      let id,invitation='';
+      try{
+        if(target.group){id=(await post('group-call',{group:target.group})).id;}
+        else{const result=await post('invite',{peer:target.peer,kind:'voice'});id=result.invitation.resource;invitation=result.invitation.id;}
+        if(captured!==epoch||isLocked())return;
+        activeVoice={id,peer:target.peer||'',group:target.group||'',invitation,voiceContext,pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'等待接听'};
+        paintCall();await refresh(true);
+      }finally{
+        if(voiceContext&&activeVoice?.voiceContext!==voiceContext&&voiceContext.state!=='closed')void voiceContext.close().catch(()=>{});
+      }
+    }
+    async function answerVoice(inv){
+      if(activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));
+      const captured=epoch,voiceContext=prepareVoiceContext();
+      try{
+        await post('decide',{id:inv.id,accept:true});
+        await refresh(true);
+        if(captured!==epoch||isLocked())return;
+        const call=data()?.calls?.[inv.resource];
+        activeVoice={id:inv.resource,peer:call?'':inv.peer,group:call?.group||'',invitation:inv.id,voiceContext,pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'连接中'};
+        paintCall();await syncVoice();
+      }finally{
+        if(voiceContext&&activeVoice?.voiceContext!==voiceContext&&voiceContext.state!=='closed')void voiceContext.close().catch(()=>{});
+      }
+    }
     function voiceParticipants(call){if(call.group){const record=data()?.calls?.[call.id];if(!record||record.ended||new Date(record.expires)<=new Date())return [];return Object.keys(record.members||{}).filter(peer=>peer!==own()&&!relations()[peer]?.blocked);}const inv=data()?.consent?.invitations?.[call.invitation];return inv?.status==='accepted'&&!relations()[call.peer]?.blocked&&new Date(inv.expires).getTime()+2*60*60*1000>Date.now()?[call.peer]:[];}
     function voicePermissionPayload(call){const peers=voiceParticipants(call);return{owner:voiceOwner,call:call.id,peer:peers[0]||call.peer,invitation:call.group?call.id:call.invitation,group:call.group};}
-    async function ensureMicrophone(call){if(call.stream||call.starting)return;call.starting=true;const captured=epoch;try{await post('voice-lease',voicePermissionPayload(call));if(activeVoice!==call||captured!==epoch||isLocked())return;const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});if(activeVoice!==call||captured!==epoch||isLocked()){stream.getTracks().forEach(track=>track.stop());return;}try{await post('voice-lease',voicePermissionPayload(call));}catch(error){stream.getTracks().forEach(track=>track.stop());throw error;}if(activeVoice!==call||captured!==epoch||isLocked()){stream.getTracks().forEach(track=>track.stop());return;}call.stream=stream;call.ice=await api('/messages/ice');if(activeVoice!==call||captured!==epoch||isLocked()){stream.getTracks().forEach(track=>track.stop());return;}call.ready=true;call.status='连接中';call.leaseTimer=setInterval(()=>{if(activeVoice===call)post('voice-lease',voicePermissionPayload(call)).catch(()=>stopVoice());},5000);}catch(error){await stopVoice();throw new Error(error.message==='语音正在其他窗口使用'?error.message:'麦克风不可用或权限被拒绝');}finally{call.starting=false;}}
+    async function ensureMicrophone(call){
+      if(call.stream||call.starting)return;
+      call.starting=true;
+      const captured=epoch;
+      const valid=()=>activeVoice===call&&captured===epoch&&!isLocked();
+      let stream;
+      try{
+        const permission=voicePermissionPayload(call);
+        await post('voice-lease',permission);
+        if(!valid())return;
+        call.leaseTimer=setInterval(()=>{
+          if(activeVoice===call)post('voice-lease',voicePermissionPayload(call)).catch(()=>stopVoice());
+        },5000);
+        const route=window.AideVoIP?await api('/voip/settings'):null;
+        if(!valid())return;
+        if(route?.messages){
+          call.phone=window.AideVoIP.open({mode:'messages',token:token(),permission,context:call.voiceContext,
+            onStatus:status=>{if(valid()){call.status=status;paintCall();}},
+            onEnd:message=>{if(valid()){if(message)toast(tr(message));void stopVoice();}}});
+          await call.phone.ready;
+          if(!valid())return;
+          stream=call.phone.stream;
+        }else{
+          if(call.voiceContext){void call.voiceContext.close().catch(()=>{});call.voiceContext=null;}
+          try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});}
+          catch(_){throw new Error('麦克风不可用或权限被拒绝');}
+        }
+        if(!valid())return;
+        await post('voice-lease',voicePermissionPayload(call));
+        const ice=await api('/messages/ice');
+        if(!valid())return;
+        call.stream=stream;call.ice=ice;call.ready=true;call.status='连接中';
+        void syncVoice().catch(error=>{if(valid()){void stopVoice();toast(tr(error.message));}});
+      }catch(error){
+        if(valid()){await stopVoice();toast(tr(error.message||'无法开启语音'));}
+      }finally{
+        if(call.stream!==stream)stream?.getTracks().forEach(track=>track.stop());
+        call.starting=false;
+      }
+    }
     async function sendSignal(call,peer,value){if(activeVoice!==call||isLocked()||!call.participants.has(peer))return;await post('signal',{peer,invitation:call.group?call.id:call.invitation,call:call.id,group:call.group,data:value});}
-    function makePeer(call,peer){if(call.pcs.has(peer))return call.pcs.get(peer);const pc=new RTCPeerConnection({iceServers:call.ice||[]});const entry={pc,candidates:[],making:false};call.pcs.set(peer,entry);for(const track of call.stream.getAudioTracks())pc.addTrack(track,call.stream);
-      pc.onicecandidate=event=>{if(event.candidate)void sendSignal(call,peer,{candidate:event.candidate.toJSON()}).catch(()=>{});};
-      pc.onnegotiationneeded=safe(async()=>{if(own()>peer||entry.making||activeVoice!==call)return;entry.making=true;try{await pc.setLocalDescription(await pc.createOffer());if(activeVoice===call)await sendSignal(call,peer,{description:pc.localDescription.toJSON()});}finally{entry.making=false;}});
-      pc.ontrack=event=>{if(activeVoice!==call)return;let audio=call.audio.get(peer);if(!audio){audio=node('audio');audio.autoplay=true;audio.playsInline=true;audio.setAttribute('aria-label',name(peer));call.audio.set(peer,audio);callBar.querySelector('.message-call-media')?.append(audio);}audio.srcObject=event.streams[0]||new MediaStream([event.track]);audio.play().catch(()=>{call.playRequired=true;paintCall();});};
+    async function publishDescription(call,peer,entry){
+      // The answer can arrive before signed acceptance reaches the caller.
+      // Retry the same description, then send ICE collected during that wait.
+      const valid=()=>activeVoice===call&&!isLocked()&&call.pcs.get(peer)===entry;
+      const description=entry.pc.localDescription.toJSON();
+      for(let attempt=0;valid();attempt++){
+        try{
+          await sendSignal(call,peer,{description});
+          entry.localSent=true;
+          for(const candidate of entry.outbound.splice(0))await sendSignal(call,peer,{candidate}).catch(()=>{});
+          return;
+        }catch(error){
+          if(attempt>=7)throw error;
+          await new Promise(resolve=>setTimeout(resolve,700));
+        }
+      }
+    }
+    function makePeer(call,peer){if(call.pcs.has(peer))return call.pcs.get(peer);const pc=new RTCPeerConnection({iceServers:call.ice||[]});const entry={pc,candidates:[],outbound:[],localSent:false,making:false};call.pcs.set(peer,entry);for(const track of call.stream.getAudioTracks())pc.addTrack(track,call.stream);
+      pc.onicecandidate=event=>{
+        if(!event.candidate)return;
+        const candidate=event.candidate.toJSON();
+        if(entry.localSent)void sendSignal(call,peer,{candidate}).catch(()=>{});
+        else if(entry.outbound.length<128)entry.outbound.push(candidate);
+      };
+      pc.onnegotiationneeded=safe(async()=>{
+        if(own()>peer||entry.making||activeVoice!==call)return;
+        entry.making=true;
+        try{await pc.setLocalDescription(await pc.createOffer());await publishDescription(call,peer,entry);}
+        finally{entry.making=false;}
+      });
+      pc.ontrack=event=>{
+        if(activeVoice!==call)return;
+        let audio=call.audio.get(peer);
+        if(!audio){
+          audio=node('audio');audio.autoplay=true;audio.playsInline=true;audio.setAttribute('aria-label',name(peer));
+          call.audio.set(peer,audio);callBar.querySelector('.message-call-media')?.append(audio);
+        }
+        // Chromium can deliver silence to Web Audio for a remote track that
+        // is not attached to a playing media element. Keep local playout muted.
+        audio.muted=!!call.phone;
+        audio.srcObject=event.streams[0]||new MediaStream([event.track]);
+        call.phone?.attach(peer,audio.srcObject);
+        audio.play().catch(()=>{call.playRequired=true;paintCall();});
+      };
       pc.onconnectionstatechange=()=>{if(activeVoice!==call)return;call.status=pc.connectionState==='connected'?'通话中':pc.connectionState==='failed'?'无法建立语音连接，请检查 STUN / TURN 设置。':'连接中';paintCall();};return entry;
     }
     async function processSignal(call,signal){if(processed.has(signal.id)||!call.participants.has(signal.peer))return;processed.add(signal.id);while(processed.size>512)processed.delete(processed.values().next().value);const entry=makePeer(call,signal.peer);const value=signal.data;if(!value||typeof value!=='object')return;
-      if(value.description){if(!['offer','answer'].includes(value.description.type)||typeof value.description.sdp!=='string')return;await entry.pc.setRemoteDescription(value.description);for(const candidate of entry.candidates)await entry.pc.addIceCandidate(candidate);entry.candidates=[];if(value.description.type==='offer'){await entry.pc.setLocalDescription(await entry.pc.createAnswer());await sendSignal(call,signal.peer,{description:entry.pc.localDescription.toJSON()});}}
+      if(value.description){if(!['offer','answer'].includes(value.description.type)||typeof value.description.sdp!=='string')return;if(entry.pc.remoteDescription?.type===value.description.type&&entry.pc.remoteDescription.sdp===value.description.sdp)return;await entry.pc.setRemoteDescription(value.description);for(const candidate of entry.candidates)await entry.pc.addIceCandidate(candidate);entry.candidates=[];if(value.description.type==='offer'){await entry.pc.setLocalDescription(await entry.pc.createAnswer());await publishDescription(call,signal.peer,entry);}}
       else if(value.candidate){if(entry.pc.remoteDescription)await entry.pc.addIceCandidate(value.candidate);else if(entry.candidates.length<128)entry.candidates.push(value.candidate);}
     }
     async function syncVoice(){const call=activeVoice;if(!call)return;if(isLocked()||!snapshot?.enabled){await stopVoice();return;}const inv=data()?.consent?.invitations?.[call.invitation];if(!call.group&&inv&&(['declined','revoked'].includes(inv.status)||(inv.status==='pending'&&new Date(inv.expires)<=new Date())||new Date(inv.expires).getTime()+2*60*60*1000<=Date.now())){await stopVoice();return;}if(call.group){const record=data()?.calls?.[call.id],memberInv=data()?.consent?.invitations?.[record?.invitation];if(record?.ended||new Date(record?.expires||0)<=new Date()||(record?.owner!==own()&&memberInv?.status!=='accepted')){await stopVoice();return;}}
-      const participants=voiceParticipants(call);call.participants=new Set(participants);for(const[peer,entry]of call.pcs)if(!call.participants.has(peer)){entry.pc.close();call.pcs.delete(peer);const audio=call.audio.get(peer);if(audio){audio.pause();audio.srcObject=null;audio.remove();call.audio.delete(peer);}}
-      if(!participants.length){if(call.group&&data()?.calls?.[call.id]?.owner===own()&&!invitations().some(i=>i.kind==='voice'&&i.resource===call.id&&i.status==='pending'&&new Date(i.expires)>new Date())){await stopVoice();return;}paintCall();return;}await ensureMicrophone(call);if(activeVoice!==call||!call.stream||!call.ready)return;for(const peer of participants)makePeer(call,peer);for(const signal of data()?.signals||[])if(signal.call===call.id&&(signal.group||'')===call.group)try{await processSignal(call,signal);}catch(error){call.status='无法建立语音连接，请检查 STUN / TURN 设置。';paintCall();}paintCall();
+      const participants=voiceParticipants(call);call.participants=new Set(participants);for(const[peer,entry]of call.pcs)if(!call.participants.has(peer)){entry.pc.close();call.pcs.delete(peer);call.phone?.detach(peer);const audio=call.audio.get(peer);if(audio){audio.pause();audio.srcObject=null;audio.remove();call.audio.delete(peer);}}
+      if(!participants.length){if(call.group&&data()?.calls?.[call.id]?.owner===own()&&!invitations().some(i=>i.kind==='voice'&&i.resource===call.id&&i.status==='pending'&&new Date(i.expires)>new Date())){await stopVoice();return;}paintCall();return;}if(!call.ready){void ensureMicrophone(call);return;}if(activeVoice!==call||!call.stream)return;for(const peer of participants)makePeer(call,peer);for(const signal of data()?.signals||[])if(signal.call===call.id&&(signal.group||'')===call.group)try{await processSignal(call,signal);}catch(error){call.status='无法建立语音连接，请检查 STUN / TURN 设置。';paintCall();}paintCall();
     }
     function paintCall(){if(!activeVoice){callBar.classList.add('hidden');callBar.replaceChildren();return;}callBar.classList.remove('hidden');const call=activeVoice;let controls=callBar.querySelector('.message-call-controls'),media=callBar.querySelector('.message-call-media');if(!media){media=node('div','message-call-media');callBar.append(media);}if(controls)controls.remove();controls=node('div','message-call-controls');controls.append(node('strong','',tr(call.status)),node('small','',call.group?data()?.groups?.[call.group]?.name||tr('群语音'):name(call.peer)));const ops=node('div','message-row');if(call.stream)ops.append(button(call.muted?'取消静音':'静音',()=>{call.muted=!call.muted;call.stream.getAudioTracks().forEach(track=>{track.enabled=!call.muted;});paintCall();}));if(call.playRequired)ops.append(button('播放语音',async()=>{await Promise.all([...call.audio.values()].map(audio=>audio.play()));call.playRequired=false;paintCall();}));ops.append(button('结束通话',()=>stopVoice(),'message-end-call'));controls.append(ops);callBar.prepend(controls);for(const audio of call.audio.values())if(audio.parentNode!==media)media.append(audio);}
-    async function stopVoice(){const call=activeVoice;if(!call)return;activeVoice=null;voiceSerial++;clearInterval(call.leaseTimer);call.stream?.getTracks().forEach(track=>track.stop());for(const{pc}of call.pcs.values())pc.close();for(const audio of call.audio.values()){audio.pause();audio.srcObject=null;audio.remove();}paintCall();const ids=call.group?invitations().filter(i=>i.kind==='voice'&&i.resource===call.id&&['pending','accepted'].includes(i.status)).map(i=>i.id):[call.invitation];const requests=ids.filter(Boolean).map(id=>post('cancel',{id},{keepalive:true}).catch(()=>{}));requests.push(post('voice-release',{owner:voiceOwner,call:call.id},{keepalive:true}).catch(()=>{}));await Promise.all(requests);}
+    async function stopVoice(){const call=activeVoice;if(!call)return;activeVoice=null;voiceSerial++;clearInterval(call.leaseTimer);call.phone?.close();if(call.voiceContext)void call.voiceContext.close().catch(()=>{});call.stream?.getTracks().forEach(track=>track.stop());for(const{pc}of call.pcs.values())pc.close();for(const audio of call.audio.values()){audio.pause();audio.srcObject=null;audio.remove();}paintCall();const ids=call.group?invitations().filter(i=>i.kind==='voice'&&i.resource===call.id&&['pending','accepted'].includes(i.status)).map(i=>i.id):[call.invitation];const requests=ids.filter(Boolean).map(id=>post('cancel',{id},{keepalive:true}).catch(()=>{}));requests.push(post('voice-release',{owner:voiceOwner,call:call.id},{keepalive:true}).catch(()=>{}));await Promise.all(requests);}
     function paint(force=false){if(!snapshot)return;updateBadge();const key=JSON.stringify([snapshot.enabled,snapshot.networkError,data()?.consent,data()?.messages,data()?.transfers,data()?.groups,data()?.read,data()?.unread,snapshot.notifications,activeTab,selected]);if(!force&&key===lastPaint)return;status.replaceChildren();if(snapshot.networkError)status.append(node('span','',snapshot.networkError));else if(pending().length){status.append(node('span','',tr('待处理申请')+' '+pending().length),button('查看申请',()=>selectTab('contacts')));}if(!force&&panes[activeTab].querySelector('.message-notification-rule-form:not([hidden])'))return;if(!force&&lastPaint&&panes[activeTab].contains(document.activeElement)&&document.activeElement.matches('input,textarea,select')&&document.activeElement.id!=='message-chat-draft')return;lastPaint=key;if(!snapshot.enabled){for(const id of['chats','contacts','files'])panes[id].replaceChildren(empty('设备通信未启用'),empty('提醒功能始终可用；设备通信默认关闭。'),button('消息设置',showSettings,'primary'));return;}
       const focused=document.activeElement,selection=focused?.id==='message-chat-draft'?{start:focused.selectionStart,end:focused.selectionEnd}:null;if(activeTab==='contacts')paintContacts();if(activeTab==='files')paintFiles();if(activeTab==='chats')paintChats();if(selection){const draft=document.getElementById('message-chat-draft');draft?.focus({preventScroll:true});draft?.setSelectionRange(selection.start,selection.end);}
     }

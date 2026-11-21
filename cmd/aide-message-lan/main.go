@@ -3,12 +3,14 @@ package main
 
 import (
 	"aide/internal/messaging"
+	"aide/internal/voip"
 	"context"
 	"encoding/json"
 	"flag"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 )
 
@@ -19,6 +21,7 @@ func helperCapabilities() map[string]any {
 			"message":      messaging.LANBridgeProtocolVersion,
 			"capture":      messaging.LANBridgeProtocolVersion,
 			"remoteAccess": messaging.LANRemoteAccessProtocolVersion,
+			"voip":         1,
 		},
 	}
 }
@@ -31,6 +34,7 @@ func main() {
 	remoteTarget := flag.String("remote-target", "", "optional fixed loopback password-protected workbench mapping")
 	status := flag.Bool("status", false, "check the live helper lease")
 	stop := flag.Bool("stop", false, "stop the helper owning this directory")
+	voipOrigin := flag.String("voip-origin", "", "local workbench loopback endpoint for SIP audio")
 	flag.Parse()
 	if *capabilities {
 		_ = json.NewEncoder(os.Stdout).Encode(helperCapabilities())
@@ -53,6 +57,9 @@ func main() {
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	if *voipOrigin != "" {
+		go voip.RunHost(ctx, *voipOrigin, filepath.Dir(filepath.Dir(*dir)))
+	}
 	if err := messaging.RunLANBridgeWithRemoteAccess(ctx, *dir, *target, *captureTarget, *remoteTarget); err != nil {
 		log.Fatal(err)
 	}
