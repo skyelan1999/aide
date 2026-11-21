@@ -21,7 +21,9 @@ services:
         # #43：由 scripts/aide.sh start 计算的 Go 源码哈希，写进镜像 label aide.srcsha，供快捷路径比对。
         AIDE_SRC_SHA: ${AIDE_SRC_SHA:-unknown}
         # #46：pip 依赖源；离线/air-gap 首次构建先 scripts/prebuild-wheels.sh 再置 PIP_OFFLINE=1。
-        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple/}
+        AIDE_BUILD_SOURCE: ${AIDE_BUILD_SOURCE:-auto}
+        AIDE_APT_SOURCE: ${AIDE_APT_SOURCE:-standard}
         PIP_OFFLINE: ${PIP_OFFLINE:-0}
         AIDE_CN_SOURCE_FALLBACK: ${AIDE_CN_SOURCE_FALLBACK:-1}
     ports:
