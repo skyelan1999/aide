@@ -8,6 +8,7 @@
 #include "desktop_hello.hpp"
 #include "desktop_chrome.hpp"
 #include "computer_bridge.hpp"
+#include "desktop_capture.hpp"
 namespace aide_desktop {
 inline void checked(HRESULT result,const char* message){if(FAILED(result))throw std::runtime_error(message);}
 inline std::vector<BYTE> certificate(const std::string& pem) {
@@ -20,10 +21,14 @@ inline std::vector<BYTE> certificate(const std::string& pem) {
 struct Desktop {
  struct Tab {Ptr<ICoreWebView2Controller> controller;Ptr<ICoreWebView2> web;bool closed=false,closing=false;unsigned generation=0;std::wstring title=L"Aide";};
  struct Reply {std::shared_ptr<Tab> tab;unsigned generation;std::string id;json value;std::shared_ptr<Hello::Operation> operation;};
+ struct CaptureReply {std::shared_ptr<Tab> tab;unsigned generation;std::string ticket;json value;std::string error;};
  HWND window=nullptr,bar=nullptr;std::wstring origin,entry,className;fs::path profile,statusFile;std::vector<BYTE> pin;
  Ptr<ICoreWebView2Environment> environment;std::vector<std::shared_ptr<Tab>> tabs;
  Chrome chrome;Hello hello;std::shared_ptr<Hello::Operation> ceremony;size_t selected=0;bool closingAll=false;DWORD closeStarted=0;
  ComputerBridge computer;
+ DesktopCapture capture;
+ std::thread captureWorker;
+ bool captureBusy=false;
  HMODULE loader=nullptr;HICON smallIcon=nullptr,bigIcon=nullptr;
  ~Desktop(){if(smallIcon)DestroyIcon(smallIcon);if(bigIcon)DestroyIcon(bigIcon);}
  void icons(){auto instance=GetModuleHandleW(nullptr);auto iconSmall=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(16),chrome.px(16),0)),iconBig=static_cast<HICON>(LoadImageW(instance,MAKEINTRESOURCEW(201),IMAGE_ICON,chrome.px(32),chrome.px(32),0));if(iconSmall){SendMessageW(window,WM_SETICON,ICON_SMALL,reinterpret_cast<LPARAM>(iconSmall));if(smallIcon)DestroyIcon(smallIcon);smallIcon=iconSmall;}if(iconBig){SendMessageW(window,WM_SETICON,ICON_BIG,reinterpret_cast<LPARAM>(iconBig));if(bigIcon)DestroyIcon(bigIcon);bigIcon=iconBig;}}
@@ -49,7 +54,7 @@ struct Desktop {
    erase(tab);if(closingAll&&!tabs.empty())close(tabs.back());});return S_OK;});
   if(FAILED(tab->web->ExecuteScript(L"window.AidePluginWorkbench?.isDirty?.()===true",done.get()))){tab->closing=false;closingAll=false;MessageBoxW(window,L"The page did not confirm its state. Please retry closing.",L"Aide",MB_OK|MB_ICONWARNING);}
  }
- void send(const std::shared_ptr<Tab>& tab,const std::string& id,const json& value){if(!tab->closed&&tab->web){auto reply=json{{"aideBiometrics",true},{"id",id},{"result",value}}.dump();tab->web->PostWebMessageAsJson(wide(reply).c_str());}}
+ void send(const std::shared_ptr<Tab>& tab,const std::string& id,const json& value,bool captureReply=false){if(!tab->closed&&tab->web){auto reply=json{{captureReply?"aideCapture":"aideBiometrics",true},{"id",id},{"result",value}}.dump();tab->web->PostWebMessageAsJson(wide(reply).c_str());}}
  void message(const std::shared_ptr<Tab>& tab,ICoreWebView2WebMessageReceivedEventArgs* args){
   LPWSTR sourceRaw=nullptr,bodyRaw=nullptr;checked(args->get_Source(&sourceRaw),"Message source unavailable");auto source=takeString(sourceRaw);
   if(!authRoot(source,origin)||tab!=active()||tab->closed||!IsWindowVisible(window)||IsIconic(window))return;
@@ -58,6 +63,11 @@ struct Desktop {
   auto id=body["id"].get<std::string>(),operation=body["operation"].get<std::string>();if(!std::regex_match(id,std::regex("[0-9]{1,9}")))return;
   if(operation=="appearance"){try{chrome.apply(window,bar,body["options"]);}catch(...){}return;}
   auto reject=[&](const char* name,const char* message){send(tab,id,{{"error",{{"name",name},{"message",message}}}});};
+  if(operation=="capture-status"||operation=="capture-permissions"){send(tab,id,capture.status(),true);return;}
+  if(operation=="capture-configure"){
+   auto options=body["options"];if(!options.contains("enabled")||!options["enabled"].is_boolean()||!options.contains("modifier")||!options["modifier"].is_string()){send(tab,id,{{"error",{{"name","TypeError"},{"message","全局截屏设置无效"}}}},true);return;}
+   send(tab,id,capture.configure(options["enabled"].get<bool>(),options["modifier"].get<std::string>()),true);return;
+  }
   if(operation=="status"){send(tab,id,hello.status(profile/L"hello-credentials.json"));return;}
   if(operation!="create"&&operation!="get"){reject("SecurityError","Unsupported native operation");return;}
   if(ceremony){reject("OperationError","Windows Hello is busy");return;}
@@ -68,6 +78,33 @@ struct Desktop {
    json result;try{result=api.perform(owner,operation,options,address,file,op);}catch(...){result={{"error",{{"name",(op->cancelled||op->userCancelled)?"NotAllowedError":"OperationError"},{"message","Windows Hello cancelled or failed; use the account password or bind it in Settings > Account"}}}};}
    op->done=true;auto reply=new Reply{tab,generation,id,std::move(result),op};if(!PostMessageW(owner,WM_APP+1,0,reinterpret_cast<LPARAM>(reply)))delete reply;
   }).detach();
+ }
+ void beginCapture(HWND targetWindow){
+  auto tab=active();if(!tab||tab->closed||!tab->web||targetWindow==window||!targetWindow||captureBusy)return;
+  LPWSTR source=nullptr;if(FAILED(tab->web->get_Source(&source))||!authRoot(takeString(source),origin))return;
+  auto generation=tab->generation;captureBusy=true;
+  auto prepared=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([this,tab,generation,targetWindow](HRESULT result,LPCWSTR raw){
+   if(FAILED(result)||!raw||tab->closed||tab!=active()||tab->generation!=generation){captureBusy=false;capture.result("Aide 当前页面不可用于添加截屏草稿。");return S_OK;}
+   auto parsed=json::parse(utf8(raw),nullptr,false);if(!parsed.is_string()||parsed.get<std::string>().size()!=36){captureBusy=false;capture.result("请先解锁 Aide 并连接工作区，再双击快捷键截屏。");return S_OK;}
+   auto ticket=parsed.get<std::string>();
+   captureWorker=std::thread([this,tab,generation,targetWindow,ticket]{auto reply=new CaptureReply{tab,generation,ticket,json::object(),{}};
+    try{reply->value=computer.captureForeground(targetWindow);}catch(const std::exception& error){reply->error=error.what();}
+    if(!PostMessageW(window,WM_APP+5,0,reinterpret_cast<LPARAM>(reply)))delete reply;
+   });
+   return S_OK;
+  });
+  if(FAILED(tab->web->ExecuteScript(L"window.AideDesktopCapture?.prepare()",prepared.get()))){captureBusy=false;capture.result("无法准备 Aide 截屏草稿。");}
+ }
+ void finishCapture(CaptureReply* raw){
+  std::unique_ptr<CaptureReply> reply(raw);if(captureWorker.joinable())captureWorker.join();captureBusy=false;
+  if(reply->tab->closed||reply->tab!=active()||reply->tab->generation!=reply->generation){capture.result("页面或会话已切换，截屏已丢弃。");return;}
+  ShowWindow(window,SW_RESTORE);SetForegroundWindow(window);capture.result(reply->error.empty()?"Attached":reply->error);
+  if(!reply->error.empty()){
+   auto js=L"window.AideDesktopCapture?.error("+wide(json(reply->error).dump())+L")";reply->tab->web->ExecuteScript(js.c_str(),nullptr);return;
+  }
+  reply->value["ticket"]=reply->ticket;auto js=L"window.AideDesktopCapture?.receive("+wide(reply->value.dump())+L")";
+  auto tab=reply->tab;auto complete=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([this,tab](HRESULT result,LPCWSTR raw){if(FAILED(result)||!raw){capture.result("截图已生成，但草稿未确认接收。");return S_OK;}auto accepted=json::parse(utf8(raw),nullptr,false);capture.result(accepted==true?"Attached":"Capture draft was not accepted");return S_OK;});
+  if(FAILED(tab->web->ExecuteScript(js.c_str(),complete.get())))capture.result("截图已生成，但草稿未确认接收。");
  }
  void configure(const std::shared_ptr<Tab>& tab,std::function<void(bool)> ready){
   EventRegistrationToken acceleratorToken{};
@@ -100,7 +137,7 @@ struct Desktop {
    if(kind==COREWEBVIEW2_PERMISSION_KIND_MICROPHONE||kind==COREWEBVIEW2_PERMISSION_KIND_CAMERA){Ptr<ICoreWebView2Deferral> defer;if(FAILED(args->GetDeferral(defer.put()))){args->put_State(COREWEBVIEW2_PERMISSION_STATE_DENY);return S_OK;}Ptr<ICoreWebView2PermissionRequestedEventArgs> pending(args);post([this,tab,kind,pending,defer]{bool allow=!tab->closed&&tab==active()&&MessageBoxW(window,kind==COREWEBVIEW2_PERMISSION_KIND_MICROPHONE?L"Allow this Aide page to use the microphone?":L"Allow this Aide page to use the camera?",L"Aide",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)==IDYES;pending->put_State(allow?COREWEBVIEW2_PERMISSION_STATE_ALLOW:COREWEBVIEW2_PERMISSION_STATE_DENY);defer->Complete();});}return S_OK;});
   tab->web->add_PermissionRequested(permissions.get(),&token);
   auto messages=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([this,tab](ICoreWebView2*,auto* args){message(tab,args);return S_OK;});tab->web->add_WebMessageReceived(messages.get(),&token);
-  const wchar_t* script=LR"JS((()=>{if(window!==window.top||location.pathname!=='/'||location.search||new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')||new URLSearchParams(location.hash.slice(1)).has('file'))return;let sequence=0;const pending=new Map();const appearance=()=>{const s=getComputedStyle(document.documentElement),hex=(key,fallback)=>{const v=s.getPropertyValue(key).trim();return /^#[0-9a-f]{6}$/i.test(v)?v:fallback;};chrome.webview.postMessage({id:'0',operation:'appearance',options:{dark:document.documentElement.dataset.theme!=='light',background:hex('--bg','#202328'),surface:hex('--panel','#24282e'),selected:hex('--selected','#344252'),text:hex('--text','#e0e4eb'),muted:hex('--muted','#a4adb9'),line:hex('--line','#373c44')}});};addEventListener('DOMContentLoaded',()=>{appearance();new MutationObserver(appearance).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette']});},{once:true});chrome.webview.addEventListener('message',event=>{const m=event.data;if(!m?.aideBiometrics)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.result?.error)p.reject(new DOMException(m.result.error.message,m.result.error.name));else p.resolve(m.result);});const request=(operation,options={})=>new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(new DOMException('Windows Hello request expired','NotAllowedError'));},125000);pending.set(id,{resolve,reject,timer});chrome.webview.postMessage({id,operation,options});});Object.defineProperty(window,'AideNativeBiometrics',{value:Object.freeze({platform:'windows',status:()=>request('status'),create:o=>request('create',o),get:o=>request('get',o)}),writable:false,configurable:false});})();)JS";
+  const wchar_t* script=LR"JS((()=>{if(window!==window.top||location.pathname!=='/'||location.search||new URLSearchParams(location.hash.slice(1)).has('pluginWorkbench')||new URLSearchParams(location.hash.slice(1)).has('file'))return;let sequence=0;const pending=new Map();const appearance=()=>{const s=getComputedStyle(document.documentElement),hex=(key,fallback)=>{const v=s.getPropertyValue(key).trim();return /^#[0-9a-f]{6}$/i.test(v)?v:fallback;};chrome.webview.postMessage({id:'0',operation:'appearance',options:{dark:document.documentElement.dataset.theme!=='light',background:hex('--bg','#202328'),surface:hex('--panel','#24282e'),selected:hex('--selected','#344252'),text:hex('--text','#e0e4eb'),muted:hex('--muted','#a4adb9'),line:hex('--line','#373c44')}});};addEventListener('DOMContentLoaded',()=>{appearance();new MutationObserver(appearance).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette']});},{once:true});chrome.webview.addEventListener('message',event=>{const m=event.data;if(!m?.aideBiometrics&&!m?.aideCapture)return;const p=pending.get(m.id);if(!p)return;pending.delete(m.id);clearTimeout(p.timer);if(m.result?.error)p.reject(new DOMException(m.result.error.message,m.result.error.name));else p.resolve(m.result);});const request=(operation,options={},channel='aideBiometrics')=>new Promise((resolve,reject)=>{const id=String(++sequence),timer=setTimeout(()=>{pending.delete(id);reject(new DOMException('Native desktop request expired','NotAllowedError'));},125000);pending.set(id,{resolve,reject,timer});chrome.webview.postMessage({id,operation,options});});Object.defineProperty(window,'AideNativeCapture',{value:Object.assign(args=>request('capture-'+args.action,args,'aideCapture'),{platform:'windows'}),writable:false,configurable:false});Object.defineProperty(window,'AideNativeBiometrics',{value:Object.freeze({platform:'windows',status:()=>request('status'),create:o=>request('create',o),get:o=>request('get',o)}),writable:false,configurable:false});})();)JS";
 
   auto security=tab->web.as<ICoreWebView2_14>();if(!security)throw std::runtime_error("Update Microsoft Edge WebView2 Runtime to enable local TLS validation");
   auto cert=callback<ICoreWebView2ServerCertificateErrorDetectedEventHandler,ICoreWebView2*,ICoreWebView2ServerCertificateErrorDetectedEventArgs*>([this](ICoreWebView2*,auto* args){
@@ -150,9 +187,11 @@ struct Desktop {
     else if(LOWORD(w)==106&&self->active()&&self->active()->web)self->active()->web->ExecuteScript(L"if(!document.getElementById('lock-screen')?.hidden)document.getElementById('lock-password')?.focus();else document.getElementById('brand-mini')?.click();",nullptr);return 0;
    case WM_CLOSE:if(l==1){self->hello.cancel(self->ceremony);DestroyWindow(hwnd);}else if(!self->closingAll){self->closingAll=true;self->hello.cancel(self->ceremony);if(self->tabs.empty())DestroyWindow(hwnd);else self->close(self->tabs.back());}return 0;
    case WM_APP+2:{std::unique_ptr<std::function<void()>> task(reinterpret_cast<std::function<void()>*>(l));(*task)();return 0;}
+   case WM_APP+4:self->beginCapture(reinterpret_cast<HWND>(l));return 0;
+   case WM_APP+5:self->finishCapture(reinterpret_cast<CaptureReply*>(l));return 0;
    case WM_APP+3:if(size_t(w)<self->tabs.size())self->close(self->tabs[size_t(w)]);return 0;
    case WM_APP+1:{std::unique_ptr<Reply> reply(reinterpret_cast<Reply*>(l));if(self->ceremony==reply->operation)self->ceremony.reset();if(!reply->operation->cancelled&&!reply->tab->closed&&reply->tab==self->active()&&reply->generation==reply->tab->generation&&IsWindowVisible(hwnd)&&!IsIconic(hwnd))self->send(reply->tab,reply->id,reply->value);return 0;}
-   case WM_DESTROY:self->hello.cancel(self->ceremony);PostQuitMessage(0);return 0;
+   case WM_DESTROY:self->hello.cancel(self->ceremony);if(self->captureWorker.joinable())self->captureWorker.join();{MSG pending{};while(PeekMessageW(&pending,hwnd,WM_APP+5,WM_APP+5,PM_REMOVE))delete reinterpret_cast<CaptureReply*>(pending.lParam);}PostQuitMessage(0);return 0;
   }
   return DefWindowProcW(hwnd,message,w,l);
  }
@@ -173,6 +212,7 @@ struct Desktop {
   chrome.install(bar);resize();
   ShowWindow(window,SW_SHOW);UpdateWindow(window);
   try{computer.start();}catch(...){MessageBoxW(window,L"Aide computer control is unavailable. Check whether port 17778 is already in use.",L"Aide",MB_OK|MB_ICONWARNING);}
+  capture.initialize(window,profile.wstring());
   loader=LoadLibraryExW(dll.c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_SYSTEM32);if(!loader)throw std::runtime_error("Verified WebView2 loader unavailable");
   using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
   auto create=reinterpret_cast<Create>(GetProcAddress(loader,"CreateCoreWebView2EnvironmentWithOptions"));if(!create)throw std::runtime_error("WebView2 loader API unavailable");

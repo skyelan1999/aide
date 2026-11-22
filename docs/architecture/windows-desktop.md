@@ -20,6 +20,16 @@ EXE 嵌入现有 Aide 蓝底白色 a 标志，含 16/20/24/32/40/48/64/96/128/25
 
 Windows runner 的窄窗口和合成 WM_DPICHANGED 截图用于验证宿主响应；不代表已在实体廉价显示器或多显示器硬件上测试。
 
+## 全局前台窗口截图候选（Issue #922 / Draft PR pending）
+
+当前 Windows 候选实现把全局键盘/鼠标低层钩子默认关闭；用户在设置中启用后才安装监听，可选双击 Shift 或 Ctrl。短按两次之间出现其他按键、鼠标按钮或滚轮输入会取消手势。Windows 不提供 macOS 辅助功能/录屏权限面板的同类授权流程，因此设置区显示本机监听状态和最近结果。配置保存在该桌面安装的 profile 中。
+
+触发后宿主从当前 Aide 顶层页面获取一次性草稿 ticket，再确认前台 HWND 未变、且目标不是 Aide，最后将 PNG 与进程名、窗口标题、时间和像素尺寸交给共享 `AideDesktopCapture`。附件只进入当前已解锁会话草稿，用户自行检查和发送；不自动发起模型请求。页面导航、会话切换、锁屏或 ticket 过期会阻止附加。
+
+`ComputerBridge` 在 Windows 10 1903 及更新版本优先使用 `Windows.Graphics.Capture` 的 HWND interop 捕获窗口，并把最新的稳定帧复制到 PNG；光标不包含在图像中。硬件 D3D11 设备创建失败时尝试 WARP。旧版 Windows 或捕获 API 不可用时保留 `PrintWindow` 回退。窗口尺寸限制为每边 4096 像素、总计 4,000,000 像素；PNG 限制为 16 MiB。Graphics Capture 的首次画面最多等待 1.8 秒，并在返回帧前收集 120 毫秒内到达的最新帧，以避开刚启动会话时可能出现的空白帧。
+
+GPU 路径已通过 Windows Desktop Check #74：Windows runner 上的 D3D11 合成窗口经 WGC 捕获为 320×240，中心像素匹配预期 RGB 230,26,51。当前开发会话无法把本地合成窗口设为前台，因此本地像素夹具返回黑帧/Access denied；这属于本地桌面会话限制，记录为 NOT_RUN/FAIL，不覆盖 CI 证据。真实前台应用、全局热键触发及图像附加到 Aide 解锁会话草稿的端到端交互仍未验收，Issue #922 保持开放。
+
 ## 会话、证书与身份验证
 
 桌面子进程仅通过参数接收安装路径；它自行校验现有实例并经私有 Docker 管道读取 transport token 和当前服务证书。Token 不出现在子进程命令行、桌面日志或插件新页链接中。TLS 仅对精确 localhost 原点、端口及一致叶证书作例外，同时检查证书有效期和 localhost 名称；没有全局忽略证书错误或写入系统信任根。

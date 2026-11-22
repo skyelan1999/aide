@@ -1,0 +1,96 @@
+{
+  "id": "windows-app-capture-20261115",
+  "request": "为 Windows 桌面端实现与 macOS 相当的全局前台窗口截图到 Aide 草稿能力；配置全局快捷键、权限反馈、应用/窗口/时间上下文、会话隔离；不自动发送，独立 Issue/文档/测试/PR，不合并。",
+  "baseline": "ba46ce28e9502d697321667b24de8d27d2d6d426",
+  "initial_status": "Topic branch rebased onto main ba46ce28; pushed as PR #923 head 12d95a3b438037638a8e1411e88458edd6f55ae2.",
+  "issue": "https://github.com/skyelan1999/aide/issues/922",
+  "acceptance": [
+    "Windows Aide desktop exposes an opt-in configurable global modifier gesture with actionable permission/listening status.",
+    "A clean double modifier gesture captures only the current foreground application window and includes app name, window title and timestamp context.",
+    "Single/long press, intervening key or mouse, lock/hidden window and Aide itself do not trigger/attach.",
+    "One-time capture ticket binds image+context to the active unlocked Aide session and draft only; never sends automatically.",
+    "Windows CI and real Windows desktop acceptance pass; macOS/Linux behavior remains unchanged; topic docs and separate PR are ready; keep PR unmerged and close issue only after acceptance."
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "internal/server/web/desktop-capture.js shared contract only if required",
+    "scripts capture gesture/native UI tests",
+    "docs/architecture/windows-desktop.md",
+    "docs/user-guide.md",
+    "docs/tasks/windows-app-capture-20261115.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Mac global app capture is shipped and Windows launcher lacks AideNativeCapture.",
+      "evidence": [
+        "docs/tasks/global-app-capture-20261108.json",
+        "native/macos-desktop/app_capture.swift",
+        "native/macos-desktop/main.swift: injected AideNativeCapture and foreground capture",
+        "internal/server/web/desktop-capture.js: shared one-time ticket/draft flow",
+        "Issue #922 created and open",
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged into PR #923 without conflicts; synchronized source head is 8ddde9d084a7124ea3e411b1526e8b72d2f6a529.",
+        "Latest upstream main da8fdc95c7bb432c8a29aa45d13e55635e480b7f was merged at head 24c92a8101ade2de020239c64e2365b393933932; main subsequently advanced to 409644a7038a7ce80056a5ea75fd1d0ab359b755 and is now included without conflicts."
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Use a dedicated global low-level keyboard/mouse listener and the existing one-use ticket/draft contract. Windows has no macOS-style Accessibility/Screen Recording permission prompts for this unpackaged desktop bridge. The implementation now prefers Windows.Graphics.Capture HWND interop on supported Windows versions, with bounded PNG dimensions, a 1.8-second frame wait, and a legacy PrintWindow fallback. GPU capture quality remains unaccepted until the GPU pixel fixture and an interactive Windows foreground app pass.",
+      "evidence": [
+        "Microsoft Learn: IGraphicsCaptureItemInterop::CreateForWindow supports HWND capture from Windows 10 1903: https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow",
+        "Microsoft Learn: PrintWindow asks the target app to render synchronously and may block: https://learn.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-printwindow",
+        "Current Windows desktop's ComputerBridge uses PrintWindow, so hardware-accelerated-window quality remains an explicit acceptance risk; it is not accepted as the final screenshot path"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Added opt-in global low-level keyboard/mouse hooks, persistent Shift/Ctrl choice, Windows AideNativeCapture message channel, host foreground-HWND validation, background screenshot worker, and one-time ticket delivery through shared draft API. Reused existing English catalog keys for the browser-only fallback and Windows permission status; added user-guide setup steps. Current screenshot implementation still uses PrintWindow and is not accepted as parity quality.",
+      "evidence": [
+        "native/windows-launcher/desktop_capture.hpp",
+        "native/windows-launcher/desktop.hpp",
+        "native/windows-launcher/computer_bridge.hpp",
+        "internal/server/web/desktop-capture.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "The PR is synchronized with current main 409644a7038a7ce80056a5ea75fd1d0ab359b755. Aide CI #694 and Windows Desktop Check #94 pass on source head 24c92a8101ade2de020239c64e2365b393933932. The native-ui job log confirms WGC captured a 320x240 HWND and exact center RGB 230,26,51; AMD64/ARM64 builds, gesture, recovery and WebView2 checks pass. Local draft/ticket, i18n and docs checks pass. A local WGC smoke on the previous source tree still returned black because this agent session cannot foreground its synthetic HWND; interactive user-app/global-hotkey and live-draft attachment acceptance remains NOT_RUN.",
+      "evidence": [
+        "PASS Aide CI #694 on synchronized source head 24c92a8101ade2de020239c64e2365b393933932.",
+        "PASS Windows Desktop Check #94 on synchronized source head 24c92a8101ade2de020239c64e2365b393933932.",
+        "PASS native-ui job log: `Captured 320x240 center RGB 230,26,51 expected 230,26,51`; `Pixel check PASS`; WGC returned expected GPU-rendered HWND pixels.",
+        "PASS AMD64 and ARM64 cross-builds, global gesture boundaries, Windows native-ui recovery and WebView2 checks in run #94.",
+        "PASS local `python -X utf8 scripts/check_docs.py` after current main sync: 544 Markdown files, 2562 local links; task JSON parsed and `git diff --check` passed.",
+        "PASS local `node --check internal/server/web/desktop-capture.js` and `node scripts/desktop-capture.test.cjs`.",
+        "PASS local `node scripts/test_i18n_coverage.cjs` (4047 translation sites) and `node scripts/test_i18n.cjs`.",
+        "PARTIAL/FAIL local WGC pixel smoke on prior code-equivalent source head 8ddde9d084a7124ea3e411b1526e8b72d2f6a529: fixture compiled, but session could not foreground synthetic HWND; WGC and PrintWindow returned black. Temporary directory was automatically removed.",
+        "NOT_RUN: real interactive global hook, user-app foreground capture, visible WebView and attachment into a live unlocked Aide draft."
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Windows desktop architecture and user guide document opt-in gestures and draft-only attachment. Architecture now documents WGC, its legacy fallback and limits, plus the failed local GPU pixel check and pending interactive acceptance.",
+      "evidence": [
+        "docs/architecture/windows-desktop.md",
+        "docs/user-guide.md",
+        "docs/tasks/windows-app-capture-20261115.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Not run.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "PR #923 remains open, draft, and unmerged. It is synchronized with current main and current Aide/Windows CI passes; Issue #922 remains open for real interactive hotkey and capture-to-draft acceptance.",
+      "evidence": [
+        "PR #923 source head 24c92a8101ade2de020239c64e2365b393933932 is open, draft, mergeable and unmerged.",
+        "Current main is 409644a7038a7ce80056a5ea75fd1d0ab359b755; branch comparison shows no commits behind.",
+        "Aide CI #694 and Windows Desktop Check #94 pass on the synchronized source head."
+      ]
+    }
+  },
+  "rollback": "Use a separate feature branch; close PR or revert its commit.",
+  "handoff": "Issue #922 remains open. PR #923 is draft/open/unmerged at source head 24c92a8101ade2de020239c64e2365b393933932 and includes main 409644a7038a7ce80056a5ea75fd1d0ab359b755 without conflict. Aide CI #694 and Windows Desktop Check #94 pass; native-ui log confirms WGC 320x240 and exact expected center RGB 230,26,51. Local draft-ticket, i18n, docs and shared-capture checks pass. The local WGC fixture on the previous code-equivalent head returned black because this agent session could not foreground the synthetic window. Real global-hook, user-app capture, visible WebView and live unlocked-draft attachment remain NOT_RUN. Keep Issue #922 open. Discussion #916 update remains pending because no Discussion-write or authenticated browser-control tool is available."
+}

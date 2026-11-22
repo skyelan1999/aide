@@ -60,6 +60,11 @@ jobs:
             GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o "$out/fixture.exe" scripts/ci/windows-desktop-fixture.go
             cp .agent-state/native-toolchain/WebView2Loader-amd64.dll "$out/WebView2Loader.dll"
           fi
+      - name: Validate global capture gesture boundaries
+        if: matrix.arch == 'amd64'
+        run: |
+          g++ -static -std=c++17 -O2 scripts/capture-gesture-smoke.cpp -o "$GITHUB_WORKSPACE/.agent-state/windows-desktop/capture-gesture-smoke.exe"
+          "$GITHUB_WORKSPACE/.agent-state/windows-desktop/capture-gesture-smoke.exe"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-desktop-${{ matrix.arch }}
