@@ -48,6 +48,12 @@ class ToolboxTests(unittest.TestCase):
         self.assertIn('HEALTHCHECK NONE', sdk)
         self.assertIn('ENTRYPOINT []', sdk)
 
+    def test_retired_office_engine_is_not_a_build_dependency(self):
+        for name in ('Dockerfile', 'Dockerfile.local'):
+            with self.subTest(dockerfile=name):
+                source = (ROOT / name).read_text()
+                self.assertNotIn('office-engine', source)
+
 
 if __name__ == '__main__':
     unittest.main()

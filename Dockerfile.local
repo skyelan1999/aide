@@ -1,19 +1,5 @@
 # Application-only build; all toolchains and packages are already local.
 ARG AIDE_DEPENDENCY_IMAGE=aide:dependencies-v2
-# Office is bundled at build time; file-open never fetches packages or images.
-FROM ${AIDE_DEPENDENCY_IMAGE} AS office-engine
-USER root
-WORKDIR /office-build
-COPY docker/office-engine ./docker/office-engine
-COPY scripts/install-office-engine.py ./scripts/install-office-engine.py
-ARG AIDE_OFFICE_ENGINE_OFFLINE=0
-RUN --mount=type=cache,target=/root/.cache/aide/office-engine \
-    python3 scripts/install-office-engine.py --output /opt/aide/office-engine \
-    $(if [ "$AIDE_OFFICE_ENGINE_OFFLINE" = 1 ]; then printf %s --offline; fi)
-COPY docker/office-engine/NOTICE /opt/aide/office-engine/NOTICE
-COPY scripts/run-office-engine.sh /opt/aide/office-engine/run
-RUN chmod 0755 /opt/aide/office-engine/run
-
 # Pinned standalone DWG conversion component, cached independently of app code.
 FROM ${AIDE_DEPENDENCY_IMAGE} AS dwg-converter
 USER root
@@ -118,10 +104,9 @@ COPY vendor/github.com/gorilla/websocket/LICENSE /opt/aide/licenses/gorilla-webs
 COPY --from=host-helpers /usr/local/bin/aide-message-relay /usr/local/bin/aide-message-relay
 COPY --from=host-helpers /opt/aide-message-lan /opt/aide/message-lan
 COPY --from=codex-host /opt/aide-host-components /opt/aide/host-components
-COPY --from=office-engine /opt/aide/office-engine /opt/aide/office-engine
 COPY scripts/office /opt/aide/office-scripts
 # Host checkouts may have private modes (for example after iCloud download).
-RUN chmod -R a+rX /opt/aide/dwg /opt/aide/licenses /opt/aide/office-scripts /opt/aide/office-engine
+RUN chmod -R a+rX /opt/aide/dwg /opt/aide/licenses /opt/aide/office-scripts
 
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 # Root-managed build identity; runtime upgrades may accept it only after readiness.

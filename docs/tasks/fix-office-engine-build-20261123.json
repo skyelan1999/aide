@@ -1,0 +1,88 @@
+{
+  "id": "fix-office-engine-build-20261123",
+  "request": "修复 aide 因 office-engine 构建阶段残留导致源码编译失败，并重新编译验证",
+  "baseline": "29e651af5e288a0165c464a82593be595bafcde9",
+  "initial_status": "",
+  "acceptance": [
+    "标准 Dockerfile 不再引用未定义的 office-engine stage 或同名外部镜像",
+    "Dockerfile.local 不再引用已经删除的旧 Office 安装与启动脚本",
+    "增加聚焦回归检查并实际运行 bash build.sh，记录构建及启动结果",
+    "修复与验收关联 skyelan1999/aide#987；不提交、不推送、不发布"
+  ],
+  "scope": [
+    "Dockerfile",
+    "Dockerfile.local",
+    "scripts/test_development_toolbox.py",
+    "docs/tasks/fix-office-engine-build-20261123.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户已授权修复；目标是清理合并残留并恢复源码构建，不恢复已经移除的旧 Office 引擎。缺陷记录为 skyelan1999/aide#987。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/987",
+        "Dockerfile:250",
+        "Dockerfile.local:4-15"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用 549f9fc4 的原生 LibreOffice 预览方案，最小删除两个 Dockerfile 中由 29e651af 重新带入的旧 Office stage/COPY/chmod 引用；以增加现有构建契约测试防止回归。",
+      "evidence": [
+        "git diff 29e651af^1 29e651af -- Dockerfile Dockerfile.local",
+        "git show 549f9fc4 -- Dockerfile Dockerfile.local",
+        "scripts/test_development_toolbox.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "删除标准 Dockerfile 的未定义 office-engine COPY/chmod 引用；删除 Dockerfile.local 的旧 Office stage 及同类引用；在现有构建契约测试中覆盖两个 Dockerfile。",
+      "evidence": [
+        "Dockerfile",
+        "Dockerfile.local",
+        "scripts/test_development_toolbox.py",
+        "python3 scripts/test_development_toolbox.py: Ran 4 tests, OK",
+        "git diff --check: PASS"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "聚焦回归测试和 git diff --check 通过；build.sh 退出码 0，Go vet/build、Docker 镜像导出、macOS 桌面更新、服务切换均成功。新容器运行且 healthy，https://localhost:9999/ 返回 200。首次桌面更新的未保存编辑阻塞已由正常退出 Aide 解除；无头浏览器启动失败是既有独立组件提示，不影响本次构建验收。",
+      "evidence": [
+        "python3 scripts/test_development_toolbox.py: Ran 4 tests, OK",
+        "git diff --check: PASS",
+        "AIDE_OPEN_BROWSER=0 bash build.sh: exit code 0",
+        "Docker build #62 go vet: CACHED (previous actual run DONE)",
+        "Docker build #32 go build: CACHED (previous actual run DONE)",
+        "Docker image sha256:075a38d4eae9ddb63dfb2dbbcb4925cbe9fd0c6cc3a6c8f8cb6072a62d43478a",
+        "docker inspect aide-aide-1: status=running health=healthy",
+        "curl --insecure https://localhost:9999/: HTTP 200"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "实现范围、命令、实际结果与独立无头浏览器提示已写入任务记录；关联缺陷 skyelan1999/aide#987。未修改 HANDOVER，因为本任务不是此前 active 任务，且不声称提交、推送或发布。",
+      "evidence": [
+        "docs/tasks/fix-office-engine-build-20261123.json",
+        "https://github.com/skyelan1999/aide/issues/987"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未保留临时源码或伪造 office-engine 镜像；build.sh 已自动回收一个过时运行镜像并保留当前镜像及编译缓存。工作区仅保留本次三个实现文件和任务记录。",
+      "evidence": [
+        "git status --short",
+        "AIDE: 自动回收过时运行镜像 1 个",
+        "AIDE: 旧构建层回收完成"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "如需回退，仅还原本次 Dockerfile、Dockerfile.local 与聚焦测试变更并重新运行 build.sh；不要恢复已删除的 Office 引擎源文件，不清理用户数据。",
+  "handoff": "waiting_commit：本地修复和完整 build.sh 验收已通过，关联 skyelan1999/aide#987 已关闭；等待提交，未推送、未发布。无头浏览器未启动是独立组件提示，不影响本次构建验收。"
+}
