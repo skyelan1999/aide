@@ -152,9 +152,17 @@ enum DesktopPolicy {
         local(url, origin: origin) && url.path.range(of: "^/plugin-workbench/[a-f0-9]{64}$", options: .regularExpression) != nil
     }
 
-    static func detachedWindowURL(_ url: URL, origin: URL) -> Bool {
-        local(url, origin: origin) && url.scheme == "https" && url.query == nil && url.fragment == nil
-            && url.path.range(of: "^/(plugin-window/[a-f0-9]{64}|plugin-viewer/[a-f0-9]{64}/window)$", options: .regularExpression) != nil
+    static func pluginViewerWindow(_ url: URL, origin: URL) -> Bool {
+        local(url, origin: origin) && url.query == nil && url.fragment == nil
+            && url.path(percentEncoded: true).range(of: #"^/plugin-viewer/[a-f0-9]{64}/window$"#, options: .regularExpression) != nil
+    }
+
+    static func terminalWorkbench(_ url: URL, origin: URL) -> Bool {
+        guard local(url, origin: origin), url.path == "/", url.query == nil,
+              let fragment = URLComponents(url: url, resolvingAgainstBaseURL: false)?.percentEncodedFragment,
+              let items = URLComponents(string: "?" + fragment)?.queryItems else { return false }
+        return items.first(where: { $0.name == "pluginWorkbench" })?.value == "terminal"
+            && items.first(where: { $0.name == "workspace" })?.value?.isEmpty == false
     }
 
     static func uiFrame(_ frame: WKFrameInfo, expected: URL) -> Bool {
@@ -174,8 +182,66 @@ enum DesktopPolicy {
     }
 }
 
+struct DesktopViewerFrames {
+    static let minSize = NSSize(width: 360, height: 260)
+    let core: NSRect
+    let viewer: NSRect
+
+    static func beside(_ original: NSRect, coreMin: NSSize, visible: NSRect) -> Self {
+        let margin: CGFloat = 8
+        let gap: CGFloat = 12
+        let compactViewerWidth: CGFloat = 260
+        let bounds = visible.insetBy(dx: margin, dy: margin)
+        let height = min(bounds.height, max(original.height, minSize.height))
+        let bottom = max(bounds.minY, min(original.maxY - height, bounds.maxY - height))
+        let left = original.minX - bounds.minX - gap
+        let right = bounds.maxX - original.maxX - gap
+
+        if bounds.contains(original), max(left, right) >= minSize.width {
+            let width = min(max(left, right), 640)
+            let x = right >= left ? original.maxX + gap : original.minX - gap - width
+            return Self(core: original, viewer: NSRect(x: x, y: bottom, width: width, height: height))
+        }
+
+        let available = bounds.width - gap
+        if available < coreMin.width + compactViewerWidth,
+           bounds.width >= coreMin.width, bounds.height >= coreMin.height + minSize.height + gap {
+            let coreHeight = max(coreMin.height, min(original.height, bounds.height - minSize.height - gap))
+            let viewerHeight = bounds.height - coreHeight - gap
+            return Self(core: NSRect(x: bounds.minX, y: bounds.maxY - coreHeight, width: bounds.width, height: coreHeight),
+                        viewer: NSRect(x: bounds.minX, y: bounds.minY, width: bounds.width, height: viewerHeight))
+        }
+
+        let coreWidth = min(available - min(compactViewerWidth, floor(available * 0.4)),
+                            max(coreMin.width, floor(available * 0.60)))
+        let core = NSRect(x: bounds.minX, y: bottom, width: coreWidth, height: height)
+        let viewer = NSRect(x: core.maxX + gap, y: bottom, width: available - coreWidth, height: height)
+        return Self(core: core, viewer: viewer)
+    }
+}
+
 final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, WKScriptMessageHandler, WKScriptMessageHandlerWithReply {
+    private struct ViewerReservation {
+        weak var opener: NSWindow?
+        let hidden: Bool
+    }
+
+    private final class ViewerPlacement {
+        weak var core: NSWindow?
+        weak var tabGroup: NSWindowTabGroup?
+        var restore: (original: NSRect, applied: NSRect)?
+
+        init(core: NSWindow) {
+            self.core = core
+            tabGroup = core.tabGroup
+        }
+
+        func matches(_ window: NSWindow) -> Bool {
+            core === window || (tabGroup != nil && tabGroup === window.tabGroup)
+        }
+    }
+
     let localSpeech = DesktopLocalSpeech()
     let appCapture = DesktopAppCapture()
     var appCaptureBusy = false
@@ -202,8 +268,8 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var configuredControllers = Set<ObjectIdentifier>()
     var titleObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
     var approvedCloses = Set<ObjectIdentifier>()
-    private var detachedWindows: [String: (window: NSWindow, owner: NSWindow, web: WKWebView, url: URL)] = [:]
-    private var detachedLayouts: [NSWindow: (original: NSRect, fitted: NSRect)] = [:]
+    private var viewerReservations: [ObjectIdentifier: ViewerReservation] = [:]
+    private var viewerPlacements: [ObjectIdentifier: ViewerPlacement] = [:]
     lazy var biometrics = DesktopBiometrics(namespace: Bundle.main.bundleIdentifier ?? "local.aide.desktop.invalid")
 
     init(root: URL, smokeOutput: URL?) {
@@ -402,13 +468,6 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideBiometrics")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideLocalSpeech")
             controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideAppCapture")
-            controller.addScriptMessageHandler(self, contentWorld: .page, name: "aideWorkbenchWindow")
-            controller.addUserScript(WKUserScript(source: """
-            if (window === top) Object.defineProperty(window, "AideNativeWorkbenchWindow", {value:Object.freeze({
-              open: path => window.webkit.messageHandlers.aideWorkbenchWindow.postMessage({action:"open",path}),
-              close: id => window.webkit.messageHandlers.aideWorkbenchWindow.postMessage({action:"close",id})
-            })});
-            """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window,'AideNativeCapture',{value:args=>window.webkit.messageHandlers.aideAppCapture.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: "if(window===top)Object.defineProperty(window, 'AideNativeSpeech', {value:args=>window.webkit.messageHandlers.aideLocalSpeech.postMessage(args)});", injectionTime: .atDocumentStart, forMainFrameOnly: true))
             controller.addUserScript(WKUserScript(source: """
@@ -441,55 +500,6 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     var activeWeb: WKWebView? { views[NSApp.keyWindow ?? mainWindow] ?? views[mainWindow] }
 
-    private func createDetachedWorkbenchWindow(_ url: URL, beside owner: NSWindow) -> String? {
-        guard let screen = owner.screen, detachedWindows.count < 16 else { return nil }
-        let available = screen.visibleFrame
-        let gap: CGFloat = 12
-        let ownerWidth = max(owner.minSize.width, (available.width * 0.60).rounded(.down))
-        let viewWidth = available.width - ownerWidth - gap
-        guard viewWidth >= 320, available.height >= owner.minSize.height else { return nil }
-        let original = detachedLayouts[owner]?.original ?? owner.frame
-        let fitted = NSRect(x: available.minX, y: available.minY, width: ownerWidth, height: available.height)
-        let viewFrame = NSRect(x: fitted.maxX + gap, y: fitted.minY, width: viewWidth, height: fitted.height)
-        owner.setFrame(fitted, display: true)
-        detachedLayouts[owner] = (original, owner.frame)
-        let window = makeWindow()
-        window.tabbingMode = .disallowed
-        window.minSize = NSSize(width: 320, height: 240)
-        window.setFrame(viewFrame, display: false)
-        let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .nonPersistent()
-        if url.path.hasPrefix("/plugin-viewer/") {
-            let controller = configuration.userContentController
-            controller.addScriptMessageHandler(self, contentWorld: .defaultClient, name: "aideDetachedWindowClose")
-            controller.addUserScript(WKUserScript(source: """
-            addEventListener('click', event => {
-              if (event.isTrusted && event.target instanceof Element && event.target.closest('#viewer-close')) {
-                event.stopImmediatePropagation();
-                void window.webkit.messageHandlers.aideDetachedWindowClose.postMessage('close');
-              }
-            }, true);
-            """, injectionTime: .atDocumentStart, forMainFrameOnly: true, in: .defaultClient))
-        }
-        let web = WKWebView(frame: .zero, configuration: configuration)
-        web.navigationDelegate = self
-        window.contentView = web
-        window.makeFirstResponder(web)
-        let id = UUID().uuidString.lowercased()
-        detachedWindows[id] = (window, owner, web, url)
-        titleObservers[ObjectIdentifier(web)] = web.observe(\.title, options: [.new]) { [weak window] view, _ in
-            window?.title = String((view.title?.isEmpty == false ? view.title! : "Aide").prefix(120))
-        }
-        web.load(URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData))
-        window.makeKeyAndOrderFront(nil)
-        return id
-    }
-
-    private func closeDetachedWindows(ownedBy owner: NSWindow) {
-        let windows = detachedWindows.values.filter { $0.owner === owner }.map { $0.window }
-        for window in windows { window.performClose(nil) }
-    }
-
     @objc func newTab() {
         guard let origin = origin else { return }
         let child = makeWindow()
@@ -499,14 +509,67 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         web.load(URLRequest(url: origin))
     }
 
+    private func showChildTab(_ child: NSWindow, from opener: NSWindow) {
+        let tabHost: NSWindow = opener.tabbingMode == .disallowed ? mainWindow : opener
+        tabHost.addTabbedWindow(child, ordered: .above)
+        child.makeKeyAndOrderFront(nil)
+    }
+
+    private func showViewer(_ child: NSWindow, from opener: NSWindow) {
+        if let group = child.tabGroup, group.windows.count > 1 {
+            group.removeWindow(child)
+        }
+        child.tabbingMode = .disallowed
+
+        let core = opener.tabGroup?.selectedWindow ?? opener
+        if let screen = core.screen ?? NSScreen.main {
+            let coreFrame = core.frame
+            var viewerFrame: NSRect
+            if core.styleMask.contains(.fullScreen) {
+                let separateScreen = NSScreen.screens.first(where: { $0.frame != screen.frame }) ?? screen
+                let bounds = separateScreen.visibleFrame.insetBy(dx: 8, dy: 8)
+                viewerFrame = NSRect(x: bounds.midX, y: bounds.minY, width: bounds.width / 2, height: bounds.height)
+            } else {
+                let placement = viewerPlacements.values.first(where: { $0.matches(core) }) ?? ViewerPlacement(core: core)
+                let frames = DesktopViewerFrames.beside(coreFrame, coreMin: core.minSize, visible: screen.visibleFrame)
+                if frames.core != coreFrame {
+                    let original = placement.restore.flatMap { $0.applied == coreFrame ? $0.original : nil } ?? coreFrame
+                    core.setFrame(frames.core, display: true)
+                    placement.restore = (original, core.frame)
+                }
+                viewerPlacements[ObjectIdentifier(child)] = placement
+                viewerFrame = frames.viewer
+            }
+            child.minSize = NSSize(width: min(DesktopViewerFrames.minSize.width, viewerFrame.width),
+                                   height: min(DesktopViewerFrames.minSize.height, viewerFrame.height))
+            child.setFrame(viewerFrame, display: true)
+        }
+        child.orderFront(nil)
+    }
+
+    private func restoreViewerPlacement(_ child: ObjectIdentifier) {
+        guard let placement = viewerPlacements.removeValue(forKey: child),
+              !viewerPlacements.values.contains(where: { $0 === placement }),
+              let restore = placement.restore, let core = placement.tabGroup?.selectedWindow ?? placement.core,
+              views[core] != nil, core.frame == restore.applied else { return }
+        core.setFrame(restore.original, display: true)
+    }
+
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        guard let origin = origin, let url = navigationAction.request.url else { return nil }
+        guard let origin = origin, let url = navigationAction.request.url, let mainWindow = mainWindow else { return nil }
         if DesktopPolicy.local(url, origin: origin) || url.absoluteString == "about:blank" {
             let child = makeWindow()
             let web = makeWebView(configuration: configuration, window: child)
-            (webView.window ?? mainWindow).addTabbedWindow(child, ordered: .above)
-            child.makeKeyAndOrderFront(nil)
+            let opener = webView.window ?? mainWindow
+            if url.absoluteString == "about:blank", navigationAction.sourceFrame.isMainFrame,
+               DesktopPolicy.media(navigationAction.sourceFrame.securityOrigin, expected: origin) {
+                // WKWindowFeatures does not expose the bare JavaScript `popup` feature.
+                let hide = webView.url.map { DesktopPolicy.terminalWorkbench($0, origin: origin) } == true
+                viewerReservations[ObjectIdentifier(child)] = ViewerReservation(opener: opener, hidden: hide)
+                if hide { return web }
+            }
+            showChildTab(child, from: opener)
             return web
         }
         if navigationAction.navigationType == .linkActivated && DesktopPolicy.external(url) {
@@ -517,15 +580,17 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let detached = detachedWindows.values.first(where: { $0.web === webView }) {
-            let mainView = navigationAction.targetFrame?.isMainFrame == true && navigationAction.request.url == detached.url
-            let packagedFrame = detached.url.path.hasPrefix("/plugin-window/") &&
-                navigationAction.targetFrame?.isMainFrame == false && navigationAction.request.url?.absoluteString == "about:srcdoc"
-            decisionHandler((mainView || packagedFrame) && !navigationAction.shouldPerformDownload ? .allow : .cancel)
-            return
-        }
         guard let origin = origin, let url = navigationAction.request.url else {
             decisionHandler(.cancel); return
+        }
+        if navigationAction.targetFrame?.isMainFrame == true, url.absoluteString != "about:blank", let child = webView.window,
+           let reservation = viewerReservations.removeValue(forKey: ObjectIdentifier(child)) {
+            let opener: NSWindow = reservation.opener.flatMap { views[$0] == nil ? nil : $0 } ?? mainWindow
+            if !navigationAction.shouldPerformDownload, DesktopPolicy.pluginViewerWindow(url, origin: origin) {
+                showViewer(child, from: opener)
+            } else if reservation.hidden {
+                showChildTab(child, from: opener)
+            }
         }
         if navigationAction.shouldPerformDownload && url.absoluteString.hasPrefix("blob:null/")
             && DesktopPolicy.uiFrame(navigationAction.sourceFrame, expected: origin) {
@@ -549,10 +614,6 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        if detachedWindows.values.contains(where: { $0.web === webView }) {
-            decisionHandler(navigationResponse.canShowMIMEType ? .allow : .cancel)
-            return
-        }
         decisionHandler(navigationResponse.canShowMIMEType ? .allow : .download)
     }
 
@@ -700,35 +761,8 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage,
                                replyHandler: @escaping (Any?, String?) -> Void) {
-        if message.name == "aideDetachedWindowClose" {
-            if message.frameInfo.isMainFrame, message.body as? String == "close",
-               let detached = detachedWindows.values.first(where: { $0.web === message.webView }),
-               detached.url.path.hasPrefix("/plugin-viewer/"), message.frameInfo.request.url == detached.url {
-                detached.window.performClose(nil)
-            }
-            replyHandler(nil, nil)
-            return
-        }
         func reject(_ error: BiometricFailure, name: String = "NotAllowedError") {
             replyHandler(["error": ["name": name, "message": error.message]], nil)
-        }
-        if message.name == "aideWorkbenchWindow" {
-            guard let origin = origin, message.frameInfo.isMainFrame,
-                  DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin),
-                  let web = message.webView, let source = web.url, let owner = web.window,
-                  views[owner] === web, DesktopPolicy.local(source, origin: origin), source.path == "/",
-                  let body = message.body as? [String: Any], body.count == 2, let action = body["action"] as? String else {
-                replyHandler([String: String](), nil); return
-            }
-            if action == "close", let id = body["id"] as? String, let detached = detachedWindows[id], detached.owner === owner {
-                detached.window.performClose(nil)
-            } else if action == "open", owner.isVisible, let path = body["path"] as? String,
-                      let url = URL(string: path, relativeTo: origin)?.absoluteURL,
-                      DesktopPolicy.detachedWindowURL(url, origin: origin),
-                      let id = createDetachedWorkbenchWindow(url, beside: owner) {
-                replyHandler(["id": id], nil); return
-            }
-            replyHandler([String: String](), nil); return
         }
         if message.name == "aideAppCapture" {
             guard let origin = origin, message.frameInfo.isMainFrame,
@@ -978,25 +1012,16 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func webViewDidClose(_ webView: WKWebView) { webView.window?.performClose(nil) }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        if let id = detachedWindows.first(where: { $0.value.window === sender })?.key,
-           let detached = detachedWindows.removeValue(forKey: id) {
-            detached.web.stopLoading()
-            titleObservers.removeValue(forKey: ObjectIdentifier(detached.web))
-            if !detachedWindows.values.contains(where: { $0.owner === detached.owner }),
-               let layout = detachedLayouts.removeValue(forKey: detached.owner), detached.owner.frame == layout.fitted {
-                detached.owner.setFrame(layout.original, display: true)
-            }
-            return true
-        }
         if sender == mainWindow {
-            closeDetachedWindows(ownedBy: sender)
             if let web = views[sender] { stopMedia(web) }
             sender.orderOut(nil)
             return false
         }
         let identity = ObjectIdentifier(sender)
-        if approvedCloses.remove(identity) != nil {
-            closeDetachedWindows(ownedBy: sender)
+        let hiddenReservation = viewerReservations[identity]?.hidden == true
+        if approvedCloses.remove(identity) != nil || hiddenReservation {
+            viewerReservations.removeValue(forKey: identity)
+            restoreViewerPlacement(identity)
             if let web = views[sender] {
                 stopMedia(web)
                 titleObservers.removeValue(forKey: ObjectIdentifier(web))
@@ -1161,15 +1186,16 @@ func policyTests() {
     precondition(!DesktopPolicy.external(URL(string: "file:///etc/passwd")!))
     precondition(!DesktopPolicy.external(URL(string: "ssh://host")!))
     precondition(DesktopPolicy.pluginURL(URL(string: "https://localhost:9999/plugin-workbench/" + String(repeating: "a", count: 64))!, origin: origin))
-    let ticket = String(repeating: "a", count: 64)
-    for path in ["/plugin-window/" + ticket, "/plugin-viewer/" + ticket + "/window"] {
-        precondition(DesktopPolicy.detachedWindowURL(URL(string: "https://localhost:9999" + path)!, origin: origin))
-        precondition(!DesktopPolicy.detachedWindowURL(URL(string: "https://localhost:9999" + path + "?data=1")!, origin: origin))
-        precondition(!DesktopPolicy.detachedWindowURL(URL(string: "https://example.org" + path)!, origin: origin))
-    }
-    precondition(!DesktopPolicy.detachedWindowURL(URL(string: "https://localhost:9999/plugin-viewer/" + ticket + "/websockify")!, origin: origin))
     for path in ["/api/config", "/plugin-workbench/short", "/plugin-workbench/" + String(repeating: "a", count: 64) + "/extra"] {
         precondition(!DesktopPolicy.pluginURL(URL(string: "https://localhost:9999" + path)!, origin: origin))
+    }
+    let viewerPath = "/plugin-viewer/" + String(repeating: "a", count: 64) + "/window"
+    precondition(DesktopPolicy.pluginViewerWindow(URL(string: origin.absoluteString + viewerPath)!, origin: origin))
+    for value in ["https://localhost:9998" + viewerPath, "https://other.test:9999" + viewerPath,
+                  origin.absoluteString + viewerPath + "?query", origin.absoluteString + viewerPath + "#fragment",
+                  origin.absoluteString + "/plugin-viewer/short/window", origin.absoluteString + viewerPath + "/extra",
+                  origin.absoluteString + viewerPath.replacingOccurrences(of: "/window", with: "/%77indow")] {
+        precondition(!DesktopPolicy.pluginViewerWindow(URL(string: value)!, origin: origin), value)
     }
     precondition(DesktopPolicy.biometric(URL(string: "https://localhost:9999/#token=fixture")!, origin: origin))
     for value in ["https://localhost:9999/#pluginWorkbench=compare&workspace=fixture",
