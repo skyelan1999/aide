@@ -84,5 +84,5 @@
   },
   "release_authorization": "",
   "rollback": "如需回退，仅还原本次 Dockerfile、Dockerfile.local 与聚焦测试变更并重新运行 build.sh；不要恢复已删除的 Office 引擎源文件，不清理用户数据。",
-  "handoff": "waiting_commit：本地修复和完整 build.sh 验收已通过，关联 skyelan1999/aide#987 已关闭；等待提交，未推送、未发布。无头浏览器未启动是独立组件提示，不影响本次构建验收。"
+  "handoff": "pushed：修复提交 8e30c803 已提交并推送到 origin/main；完整 build.sh 验收通过，关联 skyelan1999/aide#987 已关闭。未创建 Release。无头浏览器未启动是独立组件提示，不影响本次构建验收。"
 }
