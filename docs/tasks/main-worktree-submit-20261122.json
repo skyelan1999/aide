@@ -64,7 +64,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "11 local-only draft/reference/conflict-copy files archived intact; no runtime credentials found in candidates; source formatting and diff checks clean. Other94 worktrees and historical branches untouched.",
+      "summary": "11 local-only draft/reference/conflict-copy files archived intact; no runtime credentials found in candidates; source formatting and diff checks clean. Other worktrees and historical branches untouched.",
       "evidence": [
         ".agent-state/main-integration-20261122/preserved-local-artifacts.json",
         ".agent-state/main-integration-20261122/credential-scan.json",
@@ -72,14 +72,24 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Only authorized local main commits are being prepared. No remote push, tags, Release or runtime restart requested.",
+      "status": "pass",
+      "summary": "Authorized local main integration committed at 1379e4afb0d799cb7a5420a8d1ea103c5627f179. Remote push, tags, GitHub Release and runtime restart were not requested and were not performed.",
       "evidence": [
-        "Current user authorization and narrowed scope"
+        "1379e4afb0d799cb7a5420a8d1ea103c5627f179",
+        ".agent-state/main-integration-20261122/staged-files.json"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "All integration checks passed; explicitly staging current-worktree product source/tests/docs and preparing local main commit. No commit reported until verified."
+  "handoff": "Current worktree effective changes are committed on local main at 1379e4afb0d799cb7a5420a8d1ea103c5627f179.347 quick commands passed;157 selected server cases passed and1 operator-image fixture skipped; execsandbox/TTS race and whole-source vet passed.198 files integrated;11 local-only files recoverably archived. Original35 pending items/24 files unchanged. Historical branches and other worktrees untouched. No push, Release, tags or service restart. This final ledger update is documentation-only.",
+  "integration": {
+    "commit": "1379e4afb0d799cb7a5420a8d1ea103c5627f179",
+    "files": 198,
+    "branch": "main",
+    "remotePush": "not_run",
+    "release": "not_run",
+    "runtimeRestart": "not_run",
+    "preservation": ".agent-state/main-integration-20261122/preservation-final.json"
+  }
 }
