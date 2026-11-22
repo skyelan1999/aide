@@ -8,8 +8,8 @@ function fixture(response={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64)}){
  class MessageChannel{constructor(){const make=()=>({received:[],closed:false,start(){},close(){this.closed=true;},postMessage(value){this.other.received.push(value);return this.other.onmessage?.({data:value});}});this.port1=make();this.port2=make();this.port1.other=this.port2;this.port2.other=this.port1;}}
  const urls=new Set();const urlAPI={createObjectURL(){const u='blob:test-'+urls.size;urls.add(u);return u;},revokeObjectURL(u){urls.delete(u);}};
  class MutationObserver{constructor(fn){themeChange=fn;}observe(){}disconnect(){themeChange=null;}}
- const window={confirm:()=>confirmResult,open:(...args)=>opened.push(args),addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,URLSearchParams,encodeURIComponent,URL:urlAPI,crypto:{randomUUID:()=>"speech-session"},setTimeout:()=>1,clearTimeout:()=>{},setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
- return{modal:value=>modal=value,confirm:value=>confirmResult=value,opened,window,root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
+ const window={confirm:()=>confirmResult,open:(...args)=>opened.push(args),addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={navigator:{},window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,URLSearchParams,encodeURIComponent,URL:urlAPI,crypto:{randomUUID:()=>"speech-session"},setTimeout:()=>1,clearTimeout:()=>{},setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
+ return{navigator:ctx.navigator,modal:value=>modal=value,confirm:value=>confirmResult=value,opened,window,root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
 }
 const plugin={id:'test',enabled:true,workbench:{protocol:1,title:'Test'}};
 test('workbench uses sandbox without same-origin or credentials and close unloads the frame',async()=>{const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');assert.equal(frame.attributes.sandbox,'allow-scripts allow-downloads');assert.equal(frame.attributes.allow,'fullscreen *');assert.equal(frame.attributes.allowfullscreen,'');assert.equal(frame.src,'/plugin-workbench/'+'a'.repeat(64));f.controller.close();assert.equal(frame.src,'about:blank');assert.equal(f.focus.count,1);});
@@ -181,5 +181,18 @@ test('manual source selection requires the host grant and keeps commit on truste
   await port.postMessage({protocol:1,requestId:'bind',method:'files.select',arguments:{action:'bind',source:'workspace',path:'new.pr',mode:'save',version:''}});assert.equal(calls.length,grant?1:0);
   if(grant){await port.postMessage({protocol:1,requestId:'stage',method:'document.save.request',arguments:{}});const save=f.nodes.find(n=>n.textContent==='保存到所选文件');assert(save&&!save.hidden);const count=calls.length;await port.postMessage({protocol:1,requestId:'forged',method:'document.save.commit',arguments:{}});assert.equal(calls.length,count);await save.onclick({isTrusted:false});assert.equal(calls.length,count);await save.onclick({isTrusted:true});assert.equal(calls.at(-1).method,'document.save.commit');assert.equal(port.received.at(-1).event,'document.saved');}
   f.controller.close(true);
+ }
+});
+
+
+test('device location requires a declaration and separate host click; scope revocation drops late coordinates',async()=>{
+ for(const declared of [false,true]){
+  const f=fixture(bridgeResponse);let calls=0,success;f.navigator.geolocation={getCurrentPosition(ok){calls++;success=ok;}};
+  const p={...bridgePlugin,workbench:{...bridgePlugin.workbench,geolocation:declared}};
+  await f.controller.open(p,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0];
+  await port.postMessage({protocol:1,requestId:'location_1',method:'location.prepare'});assert.equal(calls,0);
+  const button=f.nodes.find(n=>n.tag==='button'&&n.textContent==='获取当前位置');assert.equal(button.hidden,!declared);
+  if(declared){button.onclick();assert.equal(calls,1);success({coords:{latitude:30.123456,longitude:110.123456,accuracy:100}});assert.equal(port.received.at(-1).result.latitude,30.123);button.onclick();f.changeScope();const count=port.received.length;success({coords:{latitude:31,longitude:111,accuracy:100}});assert.equal(port.received.length,count);}
+  f.controller.close();
  }
 });

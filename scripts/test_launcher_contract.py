@@ -389,7 +389,7 @@ class LauncherContractTests(unittest.TestCase):
 
 
 class ActualStartEntrypointTests(unittest.TestCase):
-    def exercise(self, running, marker=False, action='start'):
+    def exercise(self, running, marker=False, action='start', ready=True, ready_after=0):
         with tempfile.TemporaryDirectory(prefix='aide-start-contract-') as temporary:
             root = Path(temporary).resolve()
             (root / 'scripts').mkdir()
@@ -413,12 +413,23 @@ with open(os.environ['CALL_LOG'],'a') as f:f.write(json.dumps(a)+'\n')
 if a[0]=='info':sys.exit(0)
 if a[:3]==['compose','ps','--status']:
  print('a'*64 if os.environ['RUNNING']=='1' else '');sys.exit(0)
+if a[:3]==['compose','ps','--all']:
+ print('a'*64 if os.environ['RUNNING']=='1' else '');sys.exit(0)
 if a[:2]==['ps','-q']:sys.exit(0)
 if a[:3]==['compose','config','--images']:print('aide:owned');sys.exit(0)
 if a[:3]==['compose','exec','-T']:
- if 'curl' in a:print('{"service":"aide","status":"ok","instanceId":"owned-instance"}')
+ if 'curl' in a:
+  if os.environ['READY']!='1':
+   from pathlib import Path
+   counter=Path(os.environ['FIX_ROOT'])/'health-count'
+   n=int(counter.read_text())+1 if counter.exists() else 1;counter.write_text(str(n))
+   if not int(os.environ['READY_AFTER']) or n<=int(os.environ['READY_AFTER']):sys.exit(22)
+  print('{"service":"aide","status":"ok","instanceId":"owned-instance"}')
  else:print('synthetic-owned-token')
  sys.exit(0)
+if a[:2]==['inspect','--format']:
+ print(('running' if '.State.Status' in a[2] else 'true')+'|'+os.environ['FIX_ROOT']+'|aide');sys.exit(0)
+if a[:2]==['compose','logs']:sys.exit(0)
 if a[:2]==['compose','port']:print('127.0.0.1:18640');sys.exit(0)
 if a[:2]==['image','inspect']:sys.exit(1)
 sys.exit('Unexpected Docker action: '+repr(a))
@@ -428,22 +439,34 @@ sys.exit('Unexpected Docker action: '+repr(a))
             curl.write_text('#!/bin/sh\nprintf \'%s\' \'{"service":"aide","status":"ok","instanceId":"owned-instance"}\'\n')
             curl.chmod(0o755)
             env = dict(os.environ, PATH=str(root / 'bin') + os.pathsep + os.environ['PATH'],
-                       CALL_LOG=str(root / 'calls'), RUNNING=str(int(running)),
-                       AIDE_BUILD_FROM_SOURCE='1', AIDE_FORCE_REBUILD='1', AIDE_OPEN_BROWSER='0')
+                       CALL_LOG=str(root / 'calls'), RUNNING=str(int(running)), READY=str(int(ready)), READY_AFTER=str(ready_after), FIX_ROOT=str(root),
+                       AIDE_BUILD_FROM_SOURCE='1', AIDE_FORCE_REBUILD='1', AIDE_OPEN_BROWSER='0', AIDE_STARTUP_TIMEOUT='3')
             result = subprocess.run(['bash', 'scripts/aide.sh', action], cwd=root, env=env,
                                     capture_output=True, text=True, timeout=15)
             calls = [json.loads(line) for line in (root / 'calls').read_text().splitlines()]
-            success = running and action == 'start'
+            success = running and (ready or ready_after) and action == 'start'
             self.assertEqual(result.returncode == 0, success, result.stderr)
             for command in calls:
                 for forbidden in ('build', 'buildx', 'pull', 'load', 'create', 'tag', 'up'):
                     self.assertNotIn(forbidden, command, 'ordinary start invoked a compiler/image mutation')
             if not success:
-                self.assertIn('build.command', result.stderr)
+                if running and not ready and action == 'start':
+                    self.assertIn('等待', result.stderr)
+                    self.assertIn('超时', result.stderr)
+                    self.assertTrue(any(c[:3] == ['compose','config','--images']for c in calls))
+                else:
+                    self.assertIn('build.command', result.stderr)
             return calls
 
     def test_healthy_source_start_ignores_legacy_compile_switches(self):
         self.exercise(True)
+
+    def test_initializing_owned_instance_is_automatically_opened_without_recreation(self):
+        self.exercise(True, ready=False, ready_after=2)
+
+    def test_slow_owned_runtime_is_preserved_without_selecting_old_image(self):
+        self.exercise(True, ready=False)
+        self.exercise(True, ready=False, marker=True)
 
     def test_missing_runtime_refuses_instead_of_compiling(self):
         self.exercise(False)

@@ -79,6 +79,12 @@ func (a *App) publishAssistantResults() {
 		if source.Deleted || !source.FollowedByAssistant || source.Kind == assistantSessionKind {
 			continue
 		}
+		if source.historyDeferred {
+			source = a.sessionLocked(source.ID)
+			if source == nil {
+				continue
+			}
+		}
 		for _, run := range source.Runs {
 			if run == nil || run.WorkspaceID != "" && run.WorkspaceID != a.wsID() {
 				continue

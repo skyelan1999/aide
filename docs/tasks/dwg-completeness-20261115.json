@@ -1,0 +1,87 @@
+{
+  "id": "dwg-completeness-20261115",
+  "request": "继续修复部分实体未显示的问题，尽量让这张图纸完整预览",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "M .github/workflows/windows-desktop-check.yml\n M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/dwg-preview.md\n M docs/architecture/launcher-contract.md\n M internal/server/dwg_preview.go\n M internal/server/dwg_preview_test.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/preview-safety.js\n M native/windows-launcher/lifecycle_commands.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-dwg-converter.sh\n M scripts/fixtures/windows-entrypoint.cpp\n M scripts/launcher.py\n M scripts/native_launcher_portable.cpp\n M scripts/pip-install-retry.sh\n M scripts/test_dxf_preview_bounds.cjs\n M scripts/test_windows_bat_entrypoints.py\n M scripts/windows-bootstrap.bat\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/build-cn-source-fallback-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? native/windows-launcher/build_sources.hpp\n?? scripts/apt-install-retry.sh\n?? scripts/test_build_cn_sources.py\n?? scripts/windows-build-source.ps1\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Improve actual reported DWG geometry/text using local installed ezdxf drawing engine, including hatches, leaders, attributes, proxy graphics, transforms and proper spline evaluation.",
+    "Keep default DXF API compatibility, original downloads, readonly/source identity, process/concurrency and geometry/output budgets.",
+    "Report unrecoverable conversion data accurately instead of hiding partial content.",
+    "Real native visual/zoom/fit verification and original/data preservation before completing local update; no Aide release."
+  ],
+  "scope": [
+    "Embedded isolated CAD SVG renderer, optional DWG API output, bounded SVG image viewer with existing controls",
+    "Open-source CJK runtime font and focused CAD/render tests",
+    "Architecture and factual acceptance/task records; standard local runtime build preserving existing changes"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Inventoried skipped raw DXF entities and inaccurate dimensions/text in real drawing. Browser parser silently drops HATCH, LEADER, ATTRIB and ACAD_PROXY_ENTITY.",
+      "evidence": [
+        "local private raw/parsed DXF inventory"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use existing pinned ezdxf 1.4.4 SVG drawing backend with CJK outlines. Optional format=svg returns bounded SVG descriptor; display as isolated image with shared pan/zoom/fit. Retain raw DXF API and explicit unrecoverable counts.",
+      "evidence": [
+        "real bounded renderer: 6888 model entities, 9 invalid SPLINE skips, 182753 geometry points; 1.27 s under 512 MiB"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Embedded worker, 32-level/50000-entity/200000-point/text/line/process limits, CJK font/license packaging, detailed image UI and metadata added.",
+      "evidence": [
+        "internal/server/dwg_preview_svg.py",
+        "internal/server/dwg_preview.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final actual Go/race, 4 Python CAD regressions, frontend isolation/count/zoom/fit cleanup tests, quick, standard build/vet and runtime assets passed. Real native drawing, CJK labels, zoom/pan/fit and explicit 9 skipped SPLINE verified. Raw hash and protected data preserved.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-completeness.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and acceptance record updated with detailed SVG interface, line/geometry limits, CJK/license provenance and 9 unrecoverable conversion records.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-completeness.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed owned diff and retained unrelated work; closed old owned preview, left one final drawing tab and workbench. Customer data stays in ignored private evidence; backups retained.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-completeness.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Standard local runtime updated and verified, without version/tag/Release, push or merge; source changes are uncommitted.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-completeness.md"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly asks to continue improving this drawing; continue authorized local update, preserve data, no Aide version/tag/Release.",
+  "rollback": "aide-rollback:dwg-completeness-20261115 and private runtime backup /Users/skyelan/WorkTrees/aide-runtime-backups/20261115-dwg-completeness; no data migration.",
+  "handoff": "Local detailed DWG preview visibly improved and final drawing left open. Hatches/leaders/attributes/proxy graphics/dimensions/CJK/NURBS supported; 9 unrecoverable SPLINE reported. No public release; Issue #913 remains for upstream delivery.",
+  "actor": "skyelan1999",
+  "issue": "https://github.com/skyelan1999/aide/issues/913",
+  "parent_task": "dwg-preview-failure-20261115",
+  "runtime": {
+    "image": "sha256:fe9e9aaa35b011bbfcec177213dc131ea390296ee09aef7dbc37a5bc91e584ad",
+    "buildCommit": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.584265f438a3f0724fb68786109088ce20c1e1a1990a0c3c9d046a9ffa422765",
+    "health": "ok",
+    "integrity": "ok",
+    "modelEntities": 6888,
+    "unrecovered": {
+      "SPLINE": 9
+    }
+  },
+  "remaining": "Nine model SPLINE records have invalid/missing point definitions in the current conversion and no saved proxy graphic. Do not infer original DWG corruption or fabricate curves. No independent CAD engineering comparison."
+}

@@ -16,7 +16,7 @@ func assistantComponentToolSchemas() []any {
 	return []any{
 		map[string]any{"type": "function", "function": map[string]any{
 			"name":        "aide_component_status",
-			"description": "查询 Aide 当前工作区、会话运行、已安装插件或待人工审批。直接回报真实状态，不另建任务。插件市场使用 browse_plugin_market。",
+			"description": "查询 Aide 当前工作区、会话运行、已安装插件或待人工审批。直接回报真实状态，不另建任务。审批回执含 total 和 approvals，数量以 total 为准。插件市场使用 browse_plugin_market。",
 			"parameters": map[string]any{"type": "object", "properties": map[string]any{
 				"component": map[string]any{"type": "string", "enum": []string{"workspace", "sessions", "plugins", "approvals"}},
 			}, "required": []string{"component"}},
@@ -96,7 +96,8 @@ func (a *App) assistantComponentStatus(ctx context.Context, component string) st
 		sort.Slice(plugins, func(i, j int) bool { return plugins[i].ID < plugins[j].ID })
 		result = plugins
 	case "approvals":
-		result = a.humanApprovalEventsLocked()
+		events := a.humanApprovalEventsLocked()
+		result = map[string]any{"total": len(events), "approvals": events}
 	default:
 		return "请选择工作区、会话、插件或人工审批。"
 	}
@@ -148,6 +149,9 @@ func (a *App) checkAssistantRunLocked(r *http.Request, s *Session, run *Task) er
 }
 
 func (a *App) controlAssistantSessionRun(ctx context.Context, heard string) string {
+	if assistantReadOnlyCall(ctx) {
+		return assistantReadOnlyCallDenied
+	}
 	match := assistantRunAction.FindStringSubmatch(strings.TrimSpace(heard))
 	if match == nil {
 		return "请明确说一个动作和会话编号，例如「暂停会话 #12」。"

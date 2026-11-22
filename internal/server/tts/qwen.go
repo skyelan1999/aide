@@ -77,7 +77,11 @@ func (q *qwenProvider) Synth(ctx context.Context, text string, opts SynthOpts) (
 		voice = "Cherry"
 	}
 	path := "/api/v1/services/aigc/multimodal-generation/generation"
-	input := map[string]any{"text": text, "voice": voice, "language_type": "Auto"}
+	language := opts.Language
+	if language == "" {
+		language = "Auto"
+	}
+	input := map[string]any{"text": text, "voice": voice, "language_type": language}
 	if strings.HasPrefix(model, "qwen-audio-") {
 		path = "/api/v1/services/audio/tts/SpeechSynthesizer"
 		input = map[string]any{"text": text, "voice": voice, "format": "wav", "sample_rate": 24000}

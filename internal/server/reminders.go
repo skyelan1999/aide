@@ -679,7 +679,7 @@ func (a *App) reminderActorForTask(taskID string) string {
 	sessionID := a.liveSessionID(taskID)
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if s := a.sessions[sessionID]; s != nil && s.Kind == assistantSessionKind {
+	if s := a.sessionLocked(sessionID); s != nil && s.Kind == assistantSessionKind {
 		return "xiaomi"
 	}
 	return "aide"

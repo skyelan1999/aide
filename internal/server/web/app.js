@@ -584,10 +584,11 @@ async function openRcaReport(entry) {
   if (warnings.length) { warn.innerHTML = warnings.join('<br>'); warn.classList.remove('hidden'); }
 }
 async function refreshConfig({ modelConnectionsSaved = false } = {}) {
-  const previousScope=recoveryScope(),nextConfig=await api('/config');
+  const previousScope=recoveryScope(),[nextConfig,assistantModel]=await Promise.all([api('/config'),api('/xiaomi/model').catch(()=>null)]);
   const workspaceChanged=!!previousScope&&previousScope!==nextConfig.workspaceId;
   if(workspaceChanged){await persistChatDraft();recoveryReady=false;clearTimeout(recoveryTimer);++sessionSeq.value;}
   state.config = nextConfig;
+  state.xiaomiModelSettings = assistantModel;
   // Keep config-backed controls current without rebuilding the whole settings
   // sheet or disturbing unrelated controls the user may be editing.
   for(const refresher of settingsPanel.refreshers)refresher.onConfig?.(nextConfig, modelConnectionsSaved);
@@ -601,7 +602,7 @@ async function refreshConfig({ modelConnectionsSaved = false } = {}) {
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
   syncVoiceAssistantDisplayName();
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
-  $('model-name').textContent = state.config.configured ? t("{0} · API 已配置", state.config.model) : t("先配置模型，即可开始真实 AI 对话");
+  refreshStrategyUI();
   if (typeof resetIdleTimer === "function") resetIdleTimer();
   // 左下角 Docker 块锁定蒙版：仅已设密码时启用，点击即锁屏（不依赖是否打开过设置面板）
   const rcLock = $('runtime-card');
@@ -2391,6 +2392,8 @@ function renderAssistantMessage(msg) {
   return row;
 }
 function renderSession() {
+  const isAssistantSess = state.session?.kind === 'assistant';
+  document.body.classList.toggle('assistant-mode', !!isAssistantSess);
   const pluginPlanFocus = document.activeElement?.dataset?.pluginPlanFocus;
   const pluginPlanSessionId = state.session?.id;
   const selectionKey = JSON.stringify([state.session?.id, state.session?.modelSelection, state.session?.modelSelectionRevision]);
@@ -2410,8 +2413,6 @@ function renderSession() {
     .filter(node => node.dataset.assistantSession === state.session?.id)
     .map(node => [node.dataset.messageIndex, {node,signature:node.dataset.renderSignature}]));
   const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map(d => d.dataset.key));
-  const isAssistantSess = state.session?.kind === 'assistant';
-  document.body.classList.toggle('assistant-mode', !!isAssistantSess);
   window.aideAssistantLiveUI?.();
   syncAssistantModeControls(!!isAssistantSess);
   syncComposerApproval();
@@ -3074,7 +3075,8 @@ function beginInlineRename(rowBtn, nameSpan, file, target = {root:state.root,sou
     else if (ev.key === 'Escape') { settled = true; restore(); }
   };
 }
-const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600, FILE_CLICK_OPEN_MS = 240;
+// Wait through the full double-click window before starting an in-place preview.
+const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600, FILE_CLICK_OPEN_MS = FILE_DBLCLICK_MS + 1;
 function clearFileOpenTimers() {
   document.querySelectorAll('#files .file-item').forEach(row => clearTimeout(row._clickTimer));
 }
@@ -6117,23 +6119,31 @@ function renderProfilesManager(control) {
   return wrap;
 }
 /* 聊天栏策略按钮（FR-63） */
+function composerModelStatus(choice) {
+  const assistant = state.session?.kind === 'assistant';
+  const binding = state.xiaomiModelSettings;
+  const auto = !assistant && state.config?.modelRouter?.available === true && choice.modelRouter === 'auto';
+  const model = assistant ? String(binding?.effectiveModel || '').trim() : choice.model;
+  const selected = state.config?.models?.find(m => m.id === model);
+  return {model, auto, configured:assistant ? binding?.configured === true : state.config?.configured === true,
+    label:auto ? 'Auto' : [selected?.name || model, modelProviderName(selected?.providerId)].filter(Boolean).join(' · ')};
+}
 function refreshStrategyUI() {
   if(state.mode==='pw'&&(!state.config?.professionalWorkflow||state.session?.kind==='assistant'))setMode('chat');
   const pwButton=$('pw-mode'); if(pwButton) pwButton.classList.toggle('hidden', !state.config?.professionalWorkflow || state.session?.kind==='assistant');
 
   const choice = sessionModelPreferences();
+  const display = composerModelStatus(choice);
+  $('model-name').textContent = display.configured ? t('{0} · API 已配置', display.label) : t('先配置模型，即可开始真实 AI 对话');
   const p = state.profiles && {...state.profiles, strategy:choice.strategy, activeProfile:choice.profile};
   if (!p) return;
   const xiaomiOwnsModel = document.body.classList.contains('assistant-mode') && !state.xiaomiModelSettings?.fallbackModel && ['custom', 'configured'].includes(state.xiaomiModelSettings?.source);
   const xiaomiModelName = String(state.xiaomiModelSettings?.model || '').trim();
-  const xiaomiSelectedModel = state.config?.models?.find(m => m.id === xiaomiModelName);
-  const selectedModel = state.config?.models?.find(m => m.id === choice.model);
   const routerAvailable = !document.body.classList.contains('assistant-mode') && state.config?.modelRouter?.available === true;
   const autoModel = routerAvailable && choice.modelRouter === 'auto';
-  const modelName = autoModel ? 'Auto' : xiaomiOwnsModel ? ([xiaomiSelectedModel?.name || xiaomiModelName, modelProviderName(xiaomiSelectedModel?.providerId)].filter(Boolean).join(' · ') || t('小秘独立模型')) : [selectedModel?.name || choice.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
+  const modelName = display.label;
   const assistantMode = document.body.classList.contains('assistant-mode');
   const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
-  if (!assistantMode && state.config?.configured) $('model-name').textContent = t('{0} · API 已配置', autoModel ? 'Auto' : choice.model);
   $('strategy-label').textContent = label;
   $('strategy-label').title = label + ' · ' + t('当前会话独立配置') + ' · ' + t('推理强度') + ': ' + choice.reasoningEffort;
   const menu = $('strategy-menu');
@@ -12154,6 +12164,7 @@ function renderXiaomiModelControl(){
   }});
   api('/xiaomi/model').then(cfg=>{
     state.xiaomiModelSettings=cfg;
+    refreshStrategyUI();
     if(cfg.source==='custom')add('custom',t('原有独立模型')+' · '+cfg.model);
     if(cfg.source==='configured'&&!models.some(m=>m.id===cfg.model)){
       add('model:'+cfg.model,t('已不可用：{0}',cfg.model));source.lastElementChild.disabled=true;
@@ -12228,6 +12239,65 @@ function renderVoiceDispatchControl() {
 controlRenderers['voice-dispatch'] = renderVoiceDispatchControl;
 
 // Both voice features use the active key of one saved model connection.
+function renderSIPPhoneGuide() {
+  const wrap = el('section', 'settings-control');
+  wrap.append(el('h4', 'control-label', t('SIP 电话配置指南')));
+  const status = el('p', 'muted', t('正在读取电话网关状态…'));
+  status.setAttribute('role', 'status');
+  const refresh = el('button', 'btn-secondary', t('刷新网关状态'));
+  const table = el('table'); table.style.width = '100%';
+  const values = {};
+  for (const [key, label] of [['server','SIP 服务器'],['port','SIP 端口'],['account','话机账号'],['extension','助理分机'],['phone','允许接入的话机']]) {
+    const row=el('tr'), name=el('th','',t(label)), value=el('td');
+    name.scope='row'; name.style.textAlign='start';
+    value.style.overflowWrap='anywhere'; values[key]=value;
+    row.append(name,value); table.append(row);
+  }
+  wrap.append(status,refresh,table);
+  const callback=el('input'); callback.type='checkbox'; callback.disabled=true;
+  const callbackRow=el('label','voice-reply-row');
+  callbackRow.append(callback,el('span','',t('任务完成后回拨原话机')));
+  const callbackStatus=el('p','muted'); callbackStatus.setAttribute('role','status');
+  wrap.append(callbackRow,el('small','muted',t('仅本次电话新交办的任务，挂断且实际完成后才回拨；未接听不自动重拨。保持 Aide 运行、工作区及小绵解锁。')),callbackStatus);
+  const steps=el('ol');
+  for (const text of [
+    '准备：电脑与话机接入同一局域网，启用本机 SIP 网关；在上方选择可用的通话模型和音色。',
+    '话机：打开 SIP1，填写上表服务器、端口与话机账号，传输协议选择 UDP。本地单话机网关的鉴权账号与密码留空，模型密钥只配置在 Aide 中。',
+    '音频与拨号：优先使用 G.711U（PCMU），也可用 G.711A（PCMA）；音频包长 20 毫秒、DTMF 选择 RFC2833。手动接听，按听感调整音量。',
+    '通话：保持 Aide 运行并解锁小绵，话机拨助理分机后按 # 或拨号键；接通后自然说话，挂回听筒结束。'
+  ]) steps.append(el('li','',t(text)));
+  const details=el('details'), summary=el('summary','',t('未注册、拨不通或没有声音'));
+  details.append(summary);
+  for (const text of [
+    '未注册：先刷新网关状态，核对电脑局域网地址、话机地址、5060 端口和 UDP；电脑换网后重新核对服务器地址。',
+    '拨不通：检查网关是否运行、小绵是否解锁、通话模型是否可用；已有通话时先挂断。',
+    '没有声音：检查话机静音、听筒或免提音量以及 G.711 编码；双向 RTP 需要局域网可达。',
+    '日常使用与工作台语音通话共用助理设置及权限；查询审批不会批准任务，提交决定仍需明确确认。'
+  ]) details.append(el('p','',t(text)));
+  wrap.append(steps,details);
+  async function load() {
+    refresh.disabled=true;
+    try {
+      const info=await api('/assistant-sip/status');
+      callback.checked=info.callbacksEnabled===true; callback.disabled=false;
+      const labels={queued:'等待挂断或任务完成',claimed:'准备回拨',dialing:'正在拨号',connected:'正在汇报',reported:'已发送语音汇报',unanswered:'未接听',failed:'回拨未完成',canceled:'已取消回拨',expired:'回拨已过期'};
+      callbackStatus.textContent=t('待回拨：{0}',Number(info.callbackPending)||0)+(info.callbackLastStatus ? ' · #'+Number(info.callbackLastSession)+' · '+t(labels[info.callbackLastStatus]||'回拨未完成') : '');
+      status.textContent=t(info.running ? (info.mode==='normal'?'电话网关运行中 · 普通通话':'电话网关运行中 · 只读连接') : '电话网关未运行：请先在本机启用网关，再按本指南设置话机。');
+      for (const key of Object.keys(values)) values[key].textContent=String(info[key] || t('网关启动后显示'));
+    } catch (_) { status.textContent=t('无法读取电话网关状态，请检查本地服务连接。'); }
+    finally { refresh.disabled=false; }
+  }
+  callback.onchange=async()=>{
+    callback.disabled=true;
+    try { await api('/assistant-sip/callback-settings',{method:'POST',body:JSON.stringify({enabled:callback.checked})}); await load(); }
+    catch(error) { callback.checked=!callback.checked; callbackStatus.textContent=String(error.message||t('回拨设置保存失败')); callback.disabled=false; }
+  };
+  refresh.onclick=()=>void load();
+  void load();
+  return wrap;
+}
+controlRenderers['sip-phone-guide'] = renderSIPPhoneGuide;
+
 function renderTTSEngineControl() {
   const wrap = el('div', 'settings-control tts-engine-control');
   let cfg = state.config || {};

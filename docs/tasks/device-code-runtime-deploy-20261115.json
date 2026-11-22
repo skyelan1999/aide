@@ -1,0 +1,59 @@
+{
+  "id": "device-code-runtime-deploy-20261115",
+  "request": "当前实际运行的设备申请未带设备码，更新运行实例并完成真实界面导出验收",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Update the running source installation, not only source or plugin ZIP.",
+    "Fresh real export defaults to existing device code plus .prequest without manual filename edits.",
+    "Preserve persistent mounts, device identity, installed plugins and licensing component."
+  ],
+  "scope": [
+    "Local source build and deployment using official launcher",
+    "Native Aide acceptance of device request export"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "Actual native Save sheet still used generic filename; user requested device-code prefix.",
+      "evidence": []
+    },
+    "design": {
+      "status": "complete",
+      "summary": "Update old running Aide to existing merged main deviceInfo capability; keep installed commercial plugin and license runtime.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "Official build.command completed and replaced the owned runtime; consistent stopped-runtime data backup and rollback image retained.",
+      "evidence": [
+        "Local official build exit 0; running image sha256:e98d7d189dd4037172ab0895069ead34b97d3f4752a500d0396faffcb5e3ce74"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "New runtime healthy and integrity ok; mounts and device code preserved; native fresh export generated PPVJSP-prefixed .prequest with no manual edits.",
+      "evidence": [
+        "Observed native Save As default: PPVJSP-设备申请.prequest"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "Private deployment and acceptance receipts recorded; no commercial payload or credentials in public source.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "No source changes, no project edits, no credential changes; Save dialog left open for the user.",
+      "evidence": []
+    },
+    "release": {
+      "status": "complete",
+      "summary": "Authorized local deployment completed; no new public Aide release or package publication.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested the already installed Aide/plugin export workflow to work and previously authorized local upgrades.",
+  "rollback": "Consistent private persistent-data backup and named old-image rollback reference retained in private deployment receipt.",
+  "handoff": "Native Save sheet open with automatic device-code filename; user can save directly."
+}

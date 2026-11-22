@@ -230,7 +230,7 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 
 // Callers already holding a.mu must use the same detached projection as reads.
 func (a *App) outcomeTaskSnapshotLocked(sessionID, runID string) (*Task, int, string, error) {
-	s := a.sessions[sessionID]
+	s := a.sessionLocked(sessionID)
 	if s == nil || s.Deleted {
 		return nil, 0, "", errors.New("任务不存在")
 	}
@@ -353,6 +353,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		state := "proposed"
 		if f.Applied || task.Applied {
 			state = "application_recorded"
+		}
+		if f.HistoryPending {
+			state = "saved_history_pending"
 		}
 		files = append(files, outcomeFile{Source: f.Source, TargetPath: f.TargetPath, Path: f.Path, State: state, BeforeHash: f.BaseHash, ProposedHash: hash([]byte(f.Content)), ProposedBytes: len(f.Content)})
 	}

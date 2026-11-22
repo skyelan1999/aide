@@ -62,6 +62,12 @@ func (a *App) clearAssistantFollowups(ctx context.Context, args map[string]any, 
 		if s.Deleted || s.Kind == assistantSessionKind || !s.FollowedByAssistant || (!all && !selected[s.ID]) {
 			continue
 		}
+		if s.historyDeferred {
+			s = a.sessionLocked(s.ID)
+			if s == nil {
+				return "错误：会话历史暂不可读取"
+			}
+		}
 		previous := s.FollowedByAssistant
 		s.FollowedByAssistant = false
 		if err := a.save(s); err != nil {

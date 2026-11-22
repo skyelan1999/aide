@@ -505,3 +505,8 @@ The public `mapcanvas` workbench may call `map.document.bind` with exactly `sour
 
 
 [0.1.19 配套宿主与插件要求](release-guide-0.1.19.md)。
+
+
+## 用户点击授权的单次定位
+
+工作台可声明 `workbench.geolocation: true`。隔离 iframe 仍无 geolocation 权限及网络访问；通过已绑定 MessagePort 发送 `{protocol:1,requestId:"r_1",method:"location.prepare"}` 只显示宿主的「获取当前位置」按钮，不触发权限弹窗。只有用户点击宿主按钮后，才调用本机浏览器 `getCurrentPosition`（不启用高精度、不 watch）。用户仍需允许系统/网站定位。返回 `location.device` 事件含 `latitude/longitude/accuracyMeters`，坐标取三位小数；失败返回可显示错误。能力握手包含 `location.device`，旧宿主缺少时应提供城市/坐标输入。作用域失效时丢弃晚到结果；不持久化、不中继其他站点的位置。插件作者必须解释坐标用途与接收方。macOS 壳提供 `NSLocationUsageDescription`，不自动授权系统定位。

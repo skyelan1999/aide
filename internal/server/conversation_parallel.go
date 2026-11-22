@@ -541,6 +541,7 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 		if len(task.RequestSnapshots) < 12 && !task.SnapshotsTruncated {
 			task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{Purpose: purpose, Model: cfg.Model, MaxTokens: params.MaxTokens, Messages: append([]Message(nil), input...), Body: append(json.RawMessage(nil), body...), SHA256: hex.EncodeToString(sum[:]), At: time.Now().UTC().Format(time.RFC3339Nano)})
 			snapshotIndex = len(task.RequestSnapshots) - 1
+			task.RequestSnapshots[snapshotIndex].compactBody()
 		} else {
 			task.SnapshotsTruncated = true
 		}

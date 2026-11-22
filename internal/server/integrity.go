@@ -28,6 +28,7 @@ type IntegrityStatus string
 
 const (
 	IntegrityOK        IntegrityStatus = "ok"        // 一切正常
+	IntegrityPending   IntegrityStatus = "pending"   // historical bodies are validated on demand
 	IntegrityDegraded  IntegrityStatus = "degraded"  // 可自愈/降级运行（程序疑似篡改、re-wrap 失败等）
 	IntegrityCorrupted IntegrityStatus = "corrupted" // 严重损坏，需人工介入
 )
@@ -41,13 +42,14 @@ type IntegrityCheck struct {
 
 // IntegrityReport 一次完整性校验/自愈的完整报告。
 type IntegrityReport struct {
-	Status       IntegrityStatus   `json:"status"`
-	Checks       []IntegrityCheck  `json:"checks"`
-	Quarantined  []string          `json:"quarantined,omitempty"` // 移入隔离区的用户数据
-	Healed       []string          `json:"healed,omitempty"`      // 已自动恢复的项
-	Errors       []string          `json:"errors,omitempty"`      // 未解决的错误
-	CheckedAt    string            `json:"checkedAt"`
-	invalidFiles map[string]string // observed invalid bytes; never infer corruption from I/O errors
+	Status           IntegrityStatus   `json:"status"`
+	Checks           []IntegrityCheck  `json:"checks"`
+	Quarantined      []string          `json:"quarantined,omitempty"` // 移入隔离区的用户数据
+	Healed           []string          `json:"healed,omitempty"`      // 已自动恢复的项
+	Errors           []string          `json:"errors,omitempty"`      // 未解决的错误
+	CheckedAt        string            `json:"checkedAt"`
+	DeferredSessions int               `json:"deferredSessions,omitempty"`
+	invalidFiles     map[string]string // observed invalid bytes; never infer corruption from I/O errors
 }
 
 // baselineManifest 程序层基线清单（首次启动生成，随运行期比对）。
@@ -116,6 +118,10 @@ func VerifyIntegrity(data string) IntegrityReport {
 }
 
 func verifyIntegrity(data string, readFile func(string) ([]byte, error)) IntegrityReport {
+	return verifyIntegrityCached(data, readFile, nil)
+}
+
+func verifyIntegrityCached(data string, readFile func(string) ([]byte, error), cache *startupSessionCache) IntegrityReport {
 	rep := IntegrityReport{CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 
 	// ① 程序层哈希比对
@@ -169,13 +175,18 @@ func verifyIntegrity(data string, readFile func(string) ([]byte, error)) Integri
 	for _, dir := range sessionBucketDirs(data) {
 		ents, _ := filepath.Glob(filepath.Join(dir, "session-*.json"))
 		for _, f := range ents {
+			if cache != nil {
+				if _, _, ok := cache.catalogue.metadata(f); ok {
+					rep.DeferredSessions++
+					continue
+				}
+			}
 			b, err := readFile(f)
 			if err != nil {
 				markUnreadable(f)
 				continue
 			}
-			var s Session
-			if json.Unmarshal(b, &s) != nil {
+			if _, err := cache.decode(f, b); err != nil {
 				markInvalid(f, b)
 			}
 		}
@@ -295,6 +306,8 @@ func summarizeStatus(rep IntegrityReport) IntegrityStatus {
 		return IntegrityCorrupted
 	case len(rep.Quarantined) > 0 || hasDegradedCheck(rep):
 		return IntegrityDegraded
+	case rep.DeferredSessions > 0:
+		return IntegrityPending
 	default:
 		return IntegrityOK
 	}

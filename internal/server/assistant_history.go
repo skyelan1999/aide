@@ -28,6 +28,13 @@ func (a *App) xiaomiModelSettingsLocked() map[string]any {
 		source = "inherit"
 	}
 	out := map[string]any{"source": source, "baseURL": a.settings.XiaomiBaseURL, "model": a.settings.XiaomiModel, "hasKey": a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey)}
+	// Resolve through the execution path; never expose the resolved credential.
+	cfg, err := a.xiaomiModelConfigLocked()
+	out["effectiveModel"] = cfg.Model
+	if err != nil && source != "inherit" {
+		out["effectiveModel"] = a.settings.XiaomiModel
+	}
+	out["configured"] = err == nil && cfg.Model != "" && cfg.BaseURL != ""
 	if model, found := assistantModelRef(a.settings, a.settings.XiaomiModel); source == "configured" && found && !supportsAssistantTools(model) {
 		if current, _ := assistantModelRef(a.settings, a.settings.Model); supportsAssistantTools(current) {
 			out["fallbackModel"] = current.ID
@@ -417,7 +424,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// 在锁内取 *Session 指针副本，避免与 dispatchToAideLocked 并发写 a.sessions 触发 map 竞争。
 	a.mu.Lock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	workspace := a.wsID()
 	if s != nil {
 		if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
@@ -447,41 +454,9 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"action": "locked", "reason": "请先解锁小秘会话"})
 		return
 	}
-	runFallback := func(reason string) {
-		if source != "text" {
-			fail(w, 503, errors.New("语音助理暂不可用，请检查模型设置后重试"))
-			return
-		}
-		a.mu.Lock()
-		if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
-			a.mu.Unlock()
-			fail(w, 409, err)
-			return
-		}
-		var entry VoiceHistoryEntry
-		if va != nil {
-			entry = va.recordFallback(text, reason)
-		} else {
-			entry = VoiceHistoryEntry{Time: time.Now().Format("2006-01-02 15:04:05"), Heard: text, Text: text, Action: "send", Mode: "queue", Reason: reason}
-		}
-		a.recordAssistantExchangeLocked(text, entry, "text")
-		disp := a.dispatchToAideLocked(entry.Text)
-		a.mu.Unlock()
-		if disp != nil {
-			a.startDispatchedAssistantTaskWithContext(r.Context(), disp, entry.Text, in.AvatarFeedback, text)
-		}
-		jsonOut(w, 200, map[string]any{
-			"action": entry.Action, "text": entry.Text, "reply": describeVoiceEntry(entry),
-			"dispatched": disp, "reason": entry.Reason,
-		})
-	}
 
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
-		if a.mixSoulEnabled() {
-			fail(w, 503, errors.New("assistant agent model unavailable"))
-			return
-		}
-		runFallback("小秘模型未配置，原文已转交 aide")
+		fail(w, 503, errors.New("助理模型尚未配置，未执行或转交任务"))
 		return
 	}
 	// #62 修复：与 unlockAssistantSession 同一把锁（a.assistantUnlocked），不再误用 voice-history
@@ -497,10 +472,11 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
 			return
 		}
-		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
+		// A failed decision is not authorization to dispatch the raw input.
+		// Preserve the caller draft and leave all work/approvals untouched.
 		detail := strings.ReplaceAll(err.Error(), cfg.BaseURL, "<model-endpoint>")
 		log.Printf("小秘文字决策失败 session=%s model=%s: %s", s.ID, cfg.Model, detail)
-		runFallback("小秘模型调用失败，原文已转交 aide")
+		fail(w, 503, errors.New("助理模型调用失败，未执行或转交任务；请检查助理模型配置后重试"))
 		return
 	}
 
@@ -553,6 +529,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		"action": dec.Action, "text": dec.DispatchText, "ask": dec.Ask,
 		"mode": dec.Mode, "reason": dec.Reason, "reply": replyOut,
 		"dispatched": disp, "toolsUsed": dec.ToolsUsed, "avatarCue": dec.AvatarCue,
+		"approvalQueryRecovery": dec.approvalQueryRecovery,
 	})
 }
 

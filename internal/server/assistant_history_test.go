@@ -85,50 +85,16 @@ func TestContextToolsForAssistantOnly(t *testing.T) {
 	}
 }
 
-// TestAssistantMessageRecordsAndDispatches 未配置模型时：文字输入走兜底，
-// 必须把往来记录进 assistant 会话，且 send 时新建一个 aide 会话承接。
-func TestAssistantMessageRecordsAndDispatches(t *testing.T) {
+// Missing model configuration must not turn a chat message into work.
+func TestAssistantMessageMissingModelDoesNotDispatch(t *testing.T) {
 	a := testApp(t)
-	assistantID := assistantSessionID(t, a)
-
-	w := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message",
-		map[string]string{"text": "帮我把首页按钮改成蓝色"})
-	requireStatus(t, w, 200)
-	var body map[string]any
-	_ = json.Unmarshal(w.Body.Bytes(), &body)
-	if body["action"] != "send" {
-		t.Fatalf("expected send fallback, got %v", body)
-	}
-	disp, _ := body["dispatched"].(map[string]any)
-	if disp == nil || disp["sessionId"] == nil {
-		t.Fatalf("expected dispatched aide session, got %v", body)
-	}
-
-	// assistant 会话里应留下用户原话 + 小蜜说明两条
-	a.mu.Lock()
-	as := a.findAssistantSessionLocked()
-	msgs := as.Messages
-	a.mu.Unlock()
-	if len(msgs) < 2 {
-		t.Fatalf("assistant session messages = %d, want >=2", len(msgs))
-	}
-	if msgs[0].Role != "user" || msgs[0].Type != "text-in" {
-		t.Fatalf("first msg = %+v", msgs[0])
-	}
-	if msgs[1].Role != "assistant" || msgs[1].Type != "voice-note" {
-		t.Fatalf("second msg = %+v", msgs[1])
-	}
-
-	// 模型未配置时启动门会拒绝 run，但意图必须作为草稿持久保留。
-	dispID, _ := disp["sessionId"].(string)
-	a.mu.Lock()
-	ds := a.sessions[dispID]
-	a.mu.Unlock()
-	if ds == nil || ds.PendingPrompt != "帮我把首页按钮改成蓝色" || len(ds.Messages) != 0 {
-		t.Fatal("dispatched session not persisted")
-	}
-	if disp["started"] != false || disp["startError"] == "" {
-		t.Fatalf("expected truthful startup failure, got dispatch: %v", disp)
+	id := assistantSessionID(t, a)
+	unlockAssistantSessionForTest(t, a)
+	before := len(a.sessions)
+	w := request(a, "POST", "/api/sessions/"+id+"/assistant-message", map[string]string{"text": "帮我把首页按钮改成蓝色"})
+	requireStatus(t, w, 503)
+	if len(a.sessions) != before || len(a.findAssistantSessionLocked().Messages) != 0 {
+		t.Fatal("missing model dispatched or recorded a false action")
 	}
 }
 
@@ -143,28 +109,15 @@ func TestAssistantMessageRejectsNonAssistant(t *testing.T) {
 	requireStatus(t, w, 400)
 }
 
-// TestVoiceFilterRecordsToAssistantSession 语音 filter 的决策也要归位到 assistant 会话。
-func TestVoiceFilterRecordsToAssistantSession(t *testing.T) {
+// Missing voice model configuration must not turn ambient speech into work.
+func TestVoiceFilterMissingModelDoesNotDispatch(t *testing.T) {
 	a := testApp(t)
 	unlockAssistantSessionForTest(t, a)
-	before := 0
-	a.mu.Lock()
-	before = len(a.findAssistantSessionLocked().Messages)
-	a.mu.Unlock()
-
-	// 未配置模型 → 走 recordFallback 路径
-	w := request(a, "POST", "/api/voice-filter", map[string]string{"text": "电视里在放广告"})
-	requireStatus(t, w, 200)
-
-	a.mu.Lock()
-	after := len(a.findAssistantSessionLocked().Messages)
-	last := a.findAssistantSessionLocked().Messages[after-1]
-	a.mu.Unlock()
-	if after <= before {
-		t.Fatalf("voice exchange not recorded: before=%d after=%d", before, after)
-	}
-	if last.Type != "voice-note" && last.Type != "voice-ask" {
-		t.Fatalf("last recorded msg type = %q, want voice-note/ask", last.Type)
+	before := len(a.sessions)
+	w := request(a, "POST", "/api/voice-filter", map[string]string{"text": "只读查询审批状态，不批准。"})
+	requireStatus(t, w, 503)
+	if len(a.sessions) != before || len(a.findAssistantSessionLocked().Messages) != 0 {
+		t.Fatal("voice model failure dispatched or recorded a false action")
 	}
 }
 
@@ -205,51 +158,34 @@ func TestStartDispatchedAssistantTaskStartsRun(t *testing.T) {
 // 让上面引用的 httptest 包在未使用时不报错（保持与既有测试一致的 import 风格）。
 var _ = httptest.NewRecorder
 
-// TestAssistantMessageAgenticFailureDispatchesTypedRequest: typed instructions
-// are never sent through the ambient-audio analyze filter after an agentic
-// failure. The original text must be preserved and dispatched exactly once.
-func TestAssistantMessageAgenticFailureDispatchesTypedRequest(t *testing.T) {
-	decision := `{"action":"ask","summarized":"","ask":"你想改哪个按钮？","mode":"queue","stop":false,"reason":"缺对象，需要追问"}`
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var body struct {
-			Tools []any `json:"tools"`
+// A failed model decision grants no authority to dispatch, including explicit
+// work requests and read-only approval queries across text and call inputs.
+func TestAssistantMessageModelFailureDoesNotDispatch(t *testing.T) {
+	for _, engine := range []string{"builtin", "mixsoul"} {
+		for _, source := range []string{"text", "call", "voice", "filter"} {
+			t.Run(engine+"/"+source, func(t *testing.T) {
+				t.Setenv("AIDE_ASSISTANT_ENGINE", engine)
+				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Error(w, "Unsupported model fixture", 400) }))
+				defer srv.Close()
+				a := testApp(t)
+				a.settings.BaseURL = srv.URL
+				a.settings.Model = "test"
+				unlockAssistantSessionForTest(t, a)
+				id := assistantSessionID(t, a)
+				before := len(a.sessions)
+				for _, text := range []string{"只读查询待审批数量，不批准、不派发任务。", "帮我把那个按钮改一下", "你好"} {
+					path := "/api/sessions/" + id + "/assistant-message"
+					if source == "filter" {
+						path = "/api/voice-filter"
+					}
+					w := request(a, "POST", path, map[string]string{"text": text, "inputSource": source})
+					requireStatus(t, w, 503)
+					if len(a.sessions) != before || len(a.findAssistantSessionLocked().Messages) != 0 {
+						t.Fatal("model failure dispatched or recorded a false action")
+					}
+				}
+			})
 		}
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		if len(body.Tools) > 0 {
-			// agentic 循环请求：让它失败，触发回落
-			http.Error(w, "upstream boom", 500)
-			return
-		}
-		// analyze 请求：正常返回 ask 决策
-		jsonOut(w, 200, map[string]any{
-			"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: decision}}},
-		})
-	}))
-	defer srv.Close()
-
-	a := testApp(t)
-	a.mu.Lock()
-	a.settings.BaseURL = srv.URL
-	a.settings.Model = "test"
-	a.mu.Unlock()
-	unlockAssistantSessionForTest(t, a) // #62：agentic 路径需先过小秘密码门
-	assistantID := assistantSessionID(t, a)
-
-	w := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message",
-		map[string]string{"text": "帮我把那个按钮改一下"})
-	requireStatus(t, w, 200)
-	var body map[string]any
-	_ = json.Unmarshal(w.Body.Bytes(), &body)
-	if body["action"] != "send" || body["text"] != "帮我把那个按钮改一下" {
-		t.Fatalf("typed request was not preserved in fallback: %v", body)
-	}
-	disp, _ := body["dispatched"].(map[string]any)
-	if disp == nil {
-		t.Fatalf("typed request must dispatch after model failure: %v", body)
-	}
-	if disp["started"] == true {
-		sessionID, _ := disp["sessionId"].(string)
-		waitDispatchedRunTerminal(t, a, sessionID)
 	}
 }
 
@@ -276,10 +212,10 @@ func TestAssistantMessageGateLockedUnlockedClear(t *testing.T) {
 		t.Fatalf("lock reason = %q, want 新文案", reason)
 	}
 
-	// 2) 解锁后：绝不再返回 locked（模型不可达会回落到 fallback，但不是 locked）
+	// 2) Unlocked requests reach the unavailable model and fail without dispatch.
 	unlockAssistantSessionForTest(t, a)
 	w2 := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message", map[string]string{"text": "你好"})
-	requireStatus(t, w2, 200)
+	requireStatus(t, w2, 503)
 	var body2 map[string]any
 	_ = json.Unmarshal(w2.Body.Bytes(), &body2)
 	if body2["action"] == "locked" {

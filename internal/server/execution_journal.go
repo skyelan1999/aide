@@ -179,7 +179,7 @@ func recoverExecutionCheckpoint(task *Task) {
 // trailing record is reported, not invented or used as recovery state.
 func (a *App) executionJournal(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	var task *Task
 	if s != nil && !s.Deleted {
 		for _, run := range s.Runs {

@@ -1,0 +1,86 @@
+{
+  "id": "dwg-spline-recovery-measure-20261115",
+  "request": "继续从原始DWG恢复剩余9条样条，去掉预览说明行，并添加各种测量工具；图纸背景跟随主题；完成后测试 ZIP 及嵌套归档内全部图纸并报告异常",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "M .github/workflows/windows-desktop-check.yml\n M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/dwg-preview.md\n M docs/architecture/launcher-contract.md\n M internal/server/dwg_preview.go\n M internal/server/dwg_preview_test.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/preview-safety.js\n M legal/third_party/sources.json\n M native/windows-launcher/lifecycle_commands.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-dwg-converter.sh\n M scripts/fixtures/windows-entrypoint.cpp\n M scripts/launcher.py\n M scripts/native_launcher_portable.cpp\n M scripts/pip-install-retry.sh\n M scripts/test_dxf_preview_bounds.cjs\n M scripts/test_runtime_assets.py\n M scripts/test_windows_bat_entrypoints.py\n M scripts/windows-bootstrap.bat\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/build-cn-source-fallback-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? internal/server/dwg_preview_svg.py\n?? legal/third_party/runtime/wqy-zenhei/\n?? native/windows-launcher/build_sources.hpp\n?? scripts/apt-install-retry.sh\n?? scripts/test_build_cn_sources.py\n?? scripts/test_dwg_svg.py\n?? scripts/windows-build-source.ps1\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Inspect nine original DWG SPLINE records and attempt exact recovery from authoritative definitions; distinguish approximations and preserve original bytes.",
+    "Remove requested explanatory banner; background, geometry contrast and measurement markers follow light/dark theme changes.",
+    "Provide distance, polyline length, angle, area/perimeter, radius/diameter and coordinates, snapping and undo/clear, based on drawing coordinates and units.",
+    "Meaningful geometry/transform tests and actual native UI acceptance, standard local update preserving user sessions/plugins/drafts; no Aide version/tag/Release.",
+    "After feature completion, inspect every drawing in the supplied ZIP and nested RARs, report per-file failures/limits/remaining missing content and separate parsing from actual browser acceptance."
+  ],
+  "scope": [
+    "Standalone DWG converter/read definitions and provenance if needed",
+    "Embedded CAD metadata and bounded snap geometry; shared viewer measurement UI and theme adaptation",
+    "Tests, architecture/task/review evidence and standard local runtime build",
+    "Private nested-archive drawing inventory and end-to-end batch smoke checks, with user-facing per-file results."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Original recovery request plus three steering requests combined; existing dirty work preserved.",
+      "evidence": [
+        "User messages 2026-11-15"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep original DWG bytes and raw-DXF API; fix pinned standalone converter scenario; send affine/unit/snap metadata to isolated SVG-image viewer; local transient measurements and palette-driven background.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docker/libredwg/source.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Recovered nine target SPLINE definitions; measurement tools, banner removal and theme following implemented. Batch-discovered hatch, redraw-order, invalid proxy and invisible bounds cases handled or explicitly reported.",
+      "evidence": [
+        "internal/server/dwg_preview_svg.py",
+        "internal/server/web/cad-measure.js",
+        "docker/libredwg/spline-scenario.patch"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused Go race integration, Python renderer/converter, JS geometry/guard tests and quick gate passed. 425 actual DWG API requests, 408 distinct SVG browser decodes with visible pixels, and all 40 PDF pages exercised. After user unlock, native six-mode measurements and cross-tab theme cycle also passed; see native-acceptance.json.",
+      "evidence": [
+        ".agent-state/dwg-spline-recovery-measure-20261115/go-real-race.log",
+        ".agent-state/dwg-spline-recovery-measure-20261115/final-verification.json",
+        ".agent-state/dwg-spline-recovery-measure-20261115/quick-accepted.log",
+        "docs/reviews/2026-11-15-dwg-spline-measure-archive.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and sanitized review updated; private HTML/JSON report lists every archive file, hash and anomaly.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docs/reviews/2026-11-15-dwg-spline-measure-archive.md",
+        "/Users/skyelan/Downloads/Aide_图纸预览检查_20261115.html"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed own source additions and diff; existing untracked files, drafts and business data preserved. Own component server, isolated API container and browser test pages stopped. Kept local evidence and rollback image; native drawing tab remains locked as observed.",
+      "evidence": [
+        ".agent-state/dwg-spline-recovery-measure-20261115/audit.log",
+        ".agent-state/dwg-spline-recovery-measure-20261115/production-verification.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No Aide version bump, commit/tag, push or public Release requested. Standard local build installed and health/integrity checked; this is a dirty local build.",
+      "evidence": [
+        ".agent-state/dwg-spline-recovery-measure-20261115/build-accepted.log",
+        ".agent-state/dwg-spline-recovery-measure-20261115/production-verification.json"
+      ]
+    }
+  },
+  "release_authorization": "User requests continued recovery, banner removal, measurement tools and theme background; continue local update, preserve data, no public release/push.",
+  "rollback": "aide-rollback:dwg-spline-measure-20261115; private backup /Users/skyelan/WorkTrees/aide-runtime-backups/20261115-dwg-spline-measure; do not restore automatic lock-state to bypass a user lock.",
+  "handoff": "Local implementation and archive checks complete. 453 files: 361 pass preview checks, 86 with missing/outline/font diagnostics, 5 resource-limit failures and 1 structural failure. Native extended measurement/theme interactions passed after user unlock; subsequent pointer/wheel idle detection and direct-button requests continue in dwg-native-controls-idle-20261115. Source/package originals preserved, public issue #913 stays open for known limits.",
+  "actor": "skyelan1999",
+  "parent_task": "dwg-completeness-20261115",
+  "issue": "https://github.com/skyelan1999/aide/issues/913"
+}

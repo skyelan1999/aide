@@ -269,7 +269,7 @@ func (a *App) applyDocumentProposalLocked(w http.ResponseWriter, r *http.Request
 				break
 			}
 		}
-		if !found || a.wsRevision != revision || a.wsID() != workspace || a.sessions[s.ID] != s || s.Deleted || task.Status != "awaiting_approval" || len(task.Files) != len(files) {
+		if !found || a.wsRevision != revision || a.wsID() != workspace || a.sessionLocked(s.ID) != s || s.Deleted || task.Status != "awaiting_approval" || len(task.Files) != len(files) {
 			return errors.New("工作空间配置或任务状态已变化")
 		}
 		if sandboxMode(a.settings.SandboxMode) == "read-only" {

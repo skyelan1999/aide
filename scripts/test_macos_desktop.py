@@ -105,6 +105,23 @@ class DesktopTests(unittest.TestCase):
         self.assertEqual(value['certificateSHA256'], hashlib.sha256(b'fake').hexdigest())
         self.assertEqual(value['token'], 'f' * 64)
 
+    def test_sip_gateway_failure_keeps_the_verified_session(self):
+        (self.root/'scripts/aide_sip_service.py').write_text('# fixture\n')
+        directory=self.root/'.aide-data/sip-phone'
+        directory.mkdir(parents=True)
+        (directory/'config.json').write_text('{"enabled":true}')
+        count=0
+        def execute(command, **kwargs):
+            nonlocal count
+            count+=1
+            if 'aide_sip_service.py' in ' '.join(command):
+                raise subprocess.TimeoutExpired(command,10)
+            return subprocess.CompletedProcess(command,0,'','')
+        with patch.object(session.subprocess,'run',side_effect=execute):
+            value=session.session(self.root,start=True,command=self.command,health=self.health)
+        self.assertEqual(value['token'],'f'*64)
+        self.assertEqual(count,2)
+
     def test_foreign_owner_and_identity_mismatch_never_read_token(self):
         self.foreign = True
         with self.assertRaisesRegex(ValueError, 'another installation'):

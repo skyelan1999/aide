@@ -617,6 +617,12 @@ func (a *App) personalitySampleLocked(id string) string {
 	if latest == nil {
 		return ""
 	}
+	if latest.historyDeferred {
+		latest = a.sessionLocked(latest.ID)
+		if latest == nil {
+			return ""
+		}
+	}
 	start := len(latest.Messages) - 12
 	if start < 0 {
 		start = 0

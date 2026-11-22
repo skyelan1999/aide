@@ -363,6 +363,10 @@ func TestContextRecoveryPreflightCompactsMultipleHistoryBatches(t *testing.T) {
 	defer p.Close()
 	a.settings = Settings{BaseURL: p.URL, Model: "test", ActiveModel: "test", Models: []ModelRef{{ID: "test", ContextWindow: 16000}}}
 	s := createSession(t, a)
+	// Exercise repeated history compaction, independently of the evolving
+	// builtin schema size. Genuine over-budget-current-input tests stay separate.
+	minimum := a.buildContextPreview(s, "continue", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 8192}, false)
+	a.settings.Models[0].ContextWindow = max(16000, minimum.TotalEstimate+2048)
 	a.mu.Lock()
 	s = a.sessions[s.ID]
 	for i := 0; i < 450; i++ {

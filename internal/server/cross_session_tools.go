@@ -39,6 +39,15 @@ func (a *App) crossSessionToolsFor(sess *Session) []string {
 
 // resolveSessionRef 按 "#N" 编号或 hash 会话 ID 定位会话；找不到返回 nil。调用方持 a.mu。
 func (a *App) resolveSessionRef(ref string) *Session {
+	s := a.resolveSessionRefMetadata(ref)
+	if s == nil {
+		return nil
+	}
+	return a.sessionLocked(s.ID)
+}
+
+// Metadata resolution must not hydrate history while holding the app mutex.
+func (a *App) resolveSessionRefMetadata(ref string) *Session {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
 		return nil
@@ -57,7 +66,10 @@ func (a *App) resolveSessionRef(ref string) *Session {
 				match = s
 			}
 		}
-		return match
+		if match != nil {
+			return match
+		}
+		return nil
 	}
 	if s := a.sessions[ref]; s != nil && !s.Deleted {
 		return s
@@ -69,7 +81,7 @@ func (a *App) resolveSessionRef(ref string) *Session {
 func (a *App) searchSessionsTool(keyword string, includeArchived bool) []crossSessionSummary {
 	lower := strings.ToLower(strings.TrimSpace(keyword))
 	out := []crossSessionSummary{}
-	for _, s := range a.sessions {
+	for _, s := range a.sessionBodiesLocked() {
 		if s.Deleted {
 			continue
 		}
@@ -211,8 +223,38 @@ func (a *App) contextToolsFor(sess *Session) []any {
 func (a *App) findAssistantSessionLocked() *Session {
 	for _, s := range a.sessions {
 		if s.Kind == assistantSessionKind && !s.Deleted {
-			return s
+			return a.sessionLocked(s.ID)
 		}
 	}
 	return nil
+}
+
+// Phone search is a catalogue query. Cold multi-hundred-MB histories are loaded
+// explicitly by get_session outside the app mutex, never by a title search.
+func (a *App) searchAssistantCallSessionsLocked(keyword string, includeArchived bool) map[string]any {
+	lower := strings.ToLower(strings.TrimSpace(keyword))
+	out := []crossSessionSummary{}
+	deferred := 0
+	for _, s := range a.sessions {
+		if s.Deleted || !includeArchived && s.Archived {
+			continue
+		}
+		if s.historyDeferred {
+			deferred++
+		}
+		if lower != "" && !strings.Contains(strings.ToLower(s.Title), lower) && !strings.Contains(strings.ToLower(s.Compact), lower) {
+			continue
+		}
+		out = append(out, crossSessionSummary{Number: s.Number, ID: s.ID, Title: s.Title, Summary: clip(s.Compact, 120), CreatedAt: s.Created, Pinned: s.Pinned, Kind: s.Kind})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt == out[j].CreatedAt {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt > out[j].CreatedAt
+	})
+	if len(out) > 30 {
+		out = out[:30]
+	}
+	return map[string]any{"matches": out, "scope": "session_titles_and_summaries", "historySearched": false, "deferredHistories": deferred, "next": "需要具体会话内容时调用 get_session；目录无匹配不表示消息正文中不存在。"}
 }

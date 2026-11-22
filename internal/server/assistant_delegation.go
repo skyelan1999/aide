@@ -20,7 +20,7 @@ func (a *App) taskAutoReviewLocked(task *Task) bool {
 
 // Caller holds a.mu. Revoke old generations before scheduling new reviews.
 func (a *App) refreshAssistantReviewsLocked() {
-	for _, session := range a.sessions {
+	for _, session := range a.pendingSessionBodiesLocked() {
 		if session.Deleted {
 			continue
 		}

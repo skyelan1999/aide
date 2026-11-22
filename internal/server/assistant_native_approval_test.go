@@ -132,16 +132,25 @@ func TestNativeApprovalWaitsForSameTurnTranscriptionAndOpensFromHistory(t *testi
 		}
 		send(map[string]any{"type": "session.updated"})
 		event := read()
+		// aide.ready permits the client to start capture immediately. A frame
+		// can reach the provider before the independent opening response.
+		earlyMicrophone := 0
+		for event["type"] == "input_audio_buffer.append" {
+			earlyMicrophone++
+			event = read()
+		}
 		opening, _ := event["response"].(map[string]any)
 		text, _ := opening["instructions"].(string)
 		if event["type"] != "response.create" || opening["tool_choice"] != "none" || !strings.Contains(text, "桂花乌龙") || strings.Contains(text, "fixture-private") {
-			t.Error("expected a history-based opening without tools or private credentials")
+			t.Errorf("opening mismatch: type=%v choice=%v topic=%v private=%v", event["type"], opening["tool_choice"], strings.Contains(text, "桂花乌龙"), strings.Contains(text, "fixture-private"))
 			return
 		}
 		send(map[string]any{"type": "response.created", "response": map[string]any{"id": "opening"}})
 		send(map[string]any{"type": "response.done", "response": map[string]any{"id": "opening", "status": "completed"}})
-		for _, turn := range []struct{ id, transcript string }{{"offer", "查看会话 12 的审批。"}, {"decision", "批准本次审批。"}} {
-			if read()["type"] != "input_audio_buffer.append" {
+		for _, turn := range []struct{ id, transcript string }{{"offer", "查看会话十二的审批。"}, {"correction", "不是十三，是十二。"}, {"decision", "批准本次审批。"}} {
+			if earlyMicrophone > 0 {
+				earlyMicrophone--
+			} else if read()["type"] != "input_audio_buffer.append" {
 				t.Error("missing synthetic microphone frame")
 				return
 			}
@@ -173,7 +182,7 @@ func TestNativeApprovalWaitsForSameTurnTranscriptionAndOpensFromHistory(t *testi
 	}
 	defer client.Close()
 	_ = client.SetReadDeadline(time.Now().Add(8 * time.Second))
-	for want := range 2 {
+	for want := range 3 {
 		if want == 0 {
 			var event map[string]any
 			if err := client.ReadJSON(&event); err != nil || event["type"] != "aide.ready" {
@@ -185,10 +194,10 @@ func TestNativeApprovalWaitsForSameTurnTranscriptionAndOpensFromHistory(t *testi
 		}
 		select {
 		case result := <-outputs:
-			if want == 0 && (!strings.Contains(result, "第 7 轮命令") || len(run.AnswerCh) != 0) {
+			if want < 2 && (!strings.Contains(result, "第 7 轮命令") || len(run.AnswerCh) != 0) {
 				t.Fatal("offer executed or named the wrong approval", result)
 			}
-			if want == 1 && (!strings.Contains(result, "已向会话 #12") || len(run.AnswerCh) != 1) {
+			if want == 2 && (!strings.Contains(result, "已向会话 #12") || len(run.AnswerCh) != 1) {
 				t.Fatal("confirmed approval did not execute", result)
 			}
 		case <-time.After(5 * time.Second):

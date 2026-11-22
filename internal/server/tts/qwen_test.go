@@ -102,3 +102,25 @@ func TestQwenErrorsAndCancel(t *testing.T) {
 		t.Fatal("explicit provider used unrelated engines")
 	}
 }
+
+func TestQwenExplicitChineseLanguage(t *testing.T) {
+	q := newQwen(Config{APIKey: "fixture", Model: "qwen3-tts-flash"})
+	seen := false
+	q.client.Transport = qwenTransport(func(r *http.Request) (*http.Response, error) {
+		var body struct {
+			Input struct {
+				Language string `json:"language_type"`
+			}
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		seen = true
+		if body.Input.Language != "Chinese" {
+			t.Error("callback language not pinned", body.Input.Language)
+		}
+		return qwenResponse(400, `{"code":"fixture_stop"}`), nil
+	})
+	_, _ = q.Synth(context.Background(), "根目录存在项目说明文件。", SynthOpts{Language: "Chinese"})
+	if !seen {
+		t.Fatal("no synthesis request")
+	}
+}

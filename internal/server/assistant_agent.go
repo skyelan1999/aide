@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 )
@@ -17,20 +19,23 @@ import (
 //   - push_to_session / follow_session / search_sessions / get_session：跨会话调度与跟进
 //   - remember：写入小秘私有记忆
 //   - be_silent：背景声/与他人对话，静默不动作
-// analyze() 保留为兜底/既有甄别能力（不删除）；agentic 循环失败时回落。
+// Legacy analysis remains available internally; failed decisions never dispatch raw input.
 
 // assistantDecision 小秘 agentic 循环产出的统一决策（文字 assistant-message 与
 // 语音 voice-filter 共用）。输入来源会约束可用动作，Handler 再映射到各自前端契约。
 type assistantDecision struct {
-	Action       string     // dispatch | chat | ask | silent
-	Reply        string     // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
-	DispatchText string     // Action=dispatch：总结后要转达给 aide 的清晰意图
-	Mode         string     // queue | insert（dispatch 时）
-	Stop         bool       // 中止/止损类（dispatch 时，始终插队）
-	Ask          string     // Action=ask：单个追问
-	Reason       string     // 一句话理由
-	AvatarCue    *AvatarCue // optional validated cosmetic feedback
-	ToolsUsed    []string   // 本次小秘实际调用了哪些工具（透明可审计）
+	Action                string     // dispatch | chat | ask | silent
+	Reply                 string     // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
+	DispatchText          string     // Action=dispatch：总结后要转达给 aide 的清晰意图
+	Mode                  string     // queue | insert（dispatch 时）
+	Stop                  bool       // 中止/止损类（dispatch 时，始终插队）
+	Ask                   string     // Action=ask：单个追问
+	Reason                string     // 一句话理由
+	AvatarCue             *AvatarCue // optional validated cosmetic feedback
+	ToolsUsed             []string   // 本次小秘实际调用了哪些工具（透明可审计）
+	approvalTotal         *int       // Current trusted status receipt; never inferred from prose.
+	approvalQueryRecovery bool
+	taskStarted           bool // A successful host start receipt, never a model claim.
 }
 
 // assistantAgentPrinciples 写进小秘 system prompt 的动作原则。
@@ -40,6 +45,7 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 先处理正在交办的工作及待确认事项，空闲时再自然陪伴；性格设置影响语气，不改变工作优先的职责。没有新信息时保持安静，不为显得主动而创建新任务、反复汇报或调用模型。
 - 用户要查看消息模块：有 manage_messages 权限时直接读取并回答，不要转交工作台；无权限时说明需要在设置 → 消息开启助理访问，禁止绕过。发送消息必须得到用户明确指令，联系人、通话、群组和文件同意仍由用户操作。
 - 用户只是在跟你闲聊、倾诉、问生活问题、表达情绪：什么工具都不用调，直接用一句简短、温暖、口语的话回复他（这就是"陪聊"，回复只留在本会话，绝不打扰 aide）。
+- 天气查询若有 weather_forecast 就直接调用并按真实回执回答，无需建立 Aide 会话或再次确认；重名地点先搜索，当前位置按网络粗定位说明，工具不可用才自动交办。
 - 用户明确要做一件工作（写代码、改文件、跑命令、查资料、产出正式内容）：调用 dispatch_to_aide，把啰嗦/重复/口头禅去掉，总结成一句清晰可执行的意图放进 summary；mode 默认 queue，只有"马上/立刻/现在就要"或中止止损（停/取消/不对/等一下）才用 insert；中止止损把 urgent 设为 true。aide 会话创建后会立即排队启动任务；如果必要条件缺失或启动失败，如实告诉用户原因和会话编号。
 - 听上去是电视/广播/视频的背景声，或用户在跟身边真人打电话、闲聊：调用 be_silent，不要转达、不要搭话。
 - 意图不清楚（缺对象、缺要做什么）：不要乱猜，直接用一句话追问最关键的一个问题（不调工具，正文就是那个问题）。
@@ -53,9 +59,9 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 想记住用户的习惯/偏好/待办：调用 remember 写进你自己的私有记忆。
 
 【铁律】
-- 涉及工作、且用户明确要转达，才 dispatch_to_aide / push_to_session；私人陪聊、情绪、背景声绝不打扰 aide 主会话。
+- 用户明确要求查询或处理工作就是交办授权，无需再次要求用户确认转达；私人陪聊、情绪、背景声绝不打扰 aide 主会话。
 - 你不替 aide 写代码或造正式内容；你负责听懂、转交、跟进、用大白话讲结果。
-- 删除/覆盖/发布等不可逆动作，先在回复里向用户确认，不要直接派发。
+- 用户未明确授权的删除、覆盖、发布等不可逆动作才需要确认；已有明确授权不反复询问。可以先交给 aide 准备可审阅结果，实际执行仍遵守原权限及审批边界。
 - 先在心里判断，再调工具或回复；工具结果回来后继续判断，必要时再调，最后用一句话收尾（告诉用户你做了什么）。`
 
 // Explicit calls are directed conversation, distinct from ambient listening.
@@ -113,6 +119,7 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 	tools = append(tools, a.pluginToolSchemasForOwner("skill")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("current-time")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
+	tools = append(tools, a.assistantWeatherTools()...)
 	a.mu.Lock()
 	disabled := make(map[string]bool, len(a.settings.DisabledTools))
 	for _, name := range a.settings.DisabledTools {
@@ -140,7 +147,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		if agentErr != nil {
 			return decision, fmt.Errorf("%w: %v", errMixSoulActive, agentErr)
 		}
-		return decision, nil
+		return finalizeAssistantApprovalQuery(decision, heard), nil
 	}
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
@@ -164,17 +171,25 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	if inputSource == "call" {
 		sourceGuidance = assistantCallGuidance
 	}
-	system := voiceIdentityPrompt(cfg) + "\n\n" + assistantAgentPrinciples + "\n\n" + sourceGuidance +
+	system := voiceIdentityPrompt(cfg) + "\n\n" + assistantAgentPrinciples + "\n" + assistantAutonomyGuidance + "\n\n" + sourceGuidance +
 		aideSection +
 		fmt.Sprintf("【aide 的长期记忆（只读参考、绝不修改；它不是你自己的记忆）】\n%s\n\n", aideMem) +
 		fmt.Sprintf("【你自己的私有长期记忆】%s\n", voiceMemorySummary(mem))
 
 	messages := []Message{{Role: "system", Content: system}}
-	messages = append(messages, a.recentAssistantConversation()...)
+	if inputSource == "call" {
+		messages = append(messages, assistantCurrentCallHistory(ctx)...)
+	} else {
+		messages = append(messages, a.recentAssistantConversation()...)
+	}
 	messages = append(messages, Message{Role: "user", Content: heard})
 	// XiaoMi can read the clock, but must not inherit arbitrary workspace plugin tools.
 	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0]
-	tools := withAvatarCueTool(a.assistantAgentTools(inputSource == "voice"), avatarEnabled)
+	tools := assistantCallTools(ctx, assistantApprovalQueryTools(withAvatarCueTool(a.assistantAgentTools(inputSource == "voice"), avatarEnabled), heard))
+	if !assistantApprovalStatusQuery(heard) {
+		tools = append(tools, a.sipCallbackTools(ctx)...)
+	}
+	tools = sipTaskDispatchTools(ctx, heard, tools)
 	avatarCuesUsed := 0
 	params := ProfileParams{MaxTokens: 800, Temperature: fp(0.3)}
 	if inputSource == "call" {
@@ -183,6 +198,9 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 
 	dec := assistantDecision{Action: "chat"}
 	var toolsUsed []string
+	approvalRepair := false
+	workRepair := false
+	expectApproval := assistantApprovalStatusQuery(heard) && !a.toolDenied("aide_component_status")
 	maxRounds := 8
 	for round := 0; round < maxRounds; round++ {
 		out, calls, usage, err := complete(ctx, cfg, messages, params, tools, nil)
@@ -208,6 +226,27 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 				messages = append(messages, Message{Role: "user", Content: "Please reply normally; avatar feedback is optional and no longer needed."})
 				continue
 			}
+		}
+		if len(calls) == 0 && expectApproval && dec.approvalTotal == nil {
+			if approvalRepair {
+				return dec, errors.New("未取得本轮审批查询回执，未执行或转交任务")
+			}
+			approvalRepair = true
+			query, result, queryErr := a.recoverAssistantApprovalQuery(ctx, heard, &dec)
+			if queryErr != nil {
+				return dec, queryErr
+			}
+			toolsUsed = append(toolsUsed, query.Function.Name)
+			messages = append(messages, providerAssistantMessage(cfg, "", []ToolCall{query}, TokenUsage{}), Message{Role: "tool", ToolCallID: query.ID, Content: result}, Message{Role: "user", Content: assistantApprovalQueryRepair})
+			continue
+		}
+		if len(calls) == 0 && dec.Action == "chat" && (len(toolsUsed) == 0 || sipNeedsTaskReceipt(ctx, heard) && !dec.taskStarted) && assistantNeedsWorkTool(heard) && !assistantReadOnlyCall(ctx) {
+			if workRepair {
+				return dec, errors.New("本轮未取得查询或交办回执，任务尚未启动")
+			}
+			workRepair = true
+			messages = append(messages, Message{Role: "assistant", Content: out}, Message{Role: "system", Content: assistantWorkToolRepair})
+			continue
 		}
 		if len(calls) == 0 {
 			// 没有工具调用 → 正文就是小秘的收尾回复
@@ -256,7 +295,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	if dec.Action == "chat" && strings.TrimSpace(dec.Reply) == "" {
 		dec.Reply = "我在听，你想做点什么？"
 	}
-	return dec, nil
+	return finalizeAssistantApprovalQuery(dec, heard), nil
 }
 
 // execAssistantTool 执行小秘 agentic 循环里的单个工具调用。
@@ -267,6 +306,15 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authoriza
 }
 
 func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, dec *assistantDecision, authorization ...string) string {
+	if sipReportOnly(ctx) {
+		return "本次为任务结果回电，仅解释已有结果，不执行审批或任务操作。"
+	}
+	if assistantReadOnlyCall(ctx) && !assistantApprovalReadOnlyTool(call.Function.Name) {
+		return assistantReadOnlyCallDenied
+	}
+	if len(authorization) > 0 && assistantApprovalStatusQuery(authorization[0]) && !assistantApprovalReadOnlyTool(call.Function.Name) {
+		return "本轮为只读审批查询，未执行任何派发、批准或任务控制。"
+	}
 	if a.toolDenied(call.Function.Name) {
 		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 	}
@@ -280,9 +328,34 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 	if call.Function.Name == "manage_messages" {
 		return a.executeMessageAssistant(context.Background(), call)
 	}
+	if sipContext(ctx).CallID != "" && pluginExperienceIdentity(call.Function.Name) {
+		started := time.Now()
+		log.Printf("[assistant-call] stage=host-tool-start tool=%s", call.Function.Name)
+		defer func() {
+			log.Printf("[assistant-call] stage=host-tool-end tool=%s elapsed=%s", call.Function.Name, time.Since(started).Round(time.Millisecond))
+		}()
+	}
+	if sipContext(ctx).CallID != "" && (call.Function.Name == "get_session" || call.Function.Name == "follow_session") {
+		a.mu.Lock()
+		target := a.resolveSessionRefMetadata(str("ref"))
+		targetID := ""
+		if target != nil {
+			targetID = target.ID
+		}
+		a.mu.Unlock()
+		if targetID != "" {
+			if err := a.ensureSessionHistory(ctx, targetID); err != nil {
+				return "会话内容读取未完成：" + err.Error()
+			}
+		}
+	}
 	switch call.Function.Name {
 	case "aide_component_status":
-		return a.assistantComponentStatus(ctx, str("component"))
+		result := a.assistantComponentStatus(ctx, str("component"))
+		if str("component") == "approvals" && dec != nil {
+			dec.approvalTotal = assistantApprovalCountResult(result)
+		}
+		return result
 	case "control_session_run":
 		heard := ""
 		if len(authorization) > 0 {
@@ -297,6 +370,8 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		return a.clearAssistantFollowups(ctx, args, heard)
 	case "browse_plugin_market":
 		return a.browsePluginMarket(ctx, call.Function.Arguments)
+	case "phone_callback":
+		return a.sipCallbackTool(ctx, str("action"))
 	case "dispatch_to_aide":
 		summary := strings.TrimSpace(rawStr("summary"))
 		if summary == "" {
@@ -350,7 +425,12 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 			incArchived = v
 		}
 		a.mu.Lock()
-		res := a.searchSessionsTool(str("keyword"), incArchived)
+		var res any
+		if sipContext(ctx).CallID != "" {
+			res = a.searchAssistantCallSessionsLocked(str("keyword"), incArchived)
+		} else {
+			res = a.searchSessionsTool(str("keyword"), incArchived)
+		}
 		a.mu.Unlock()
 		b, _ := json.Marshal(res)
 		return string(b)
@@ -408,7 +488,7 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 				return "未能保存新会话。"
 			}
 			targetID, _ := dispatch["sessionId"].(string)
-			target = a.sessions[targetID]
+			target = a.sessionLocked(targetID)
 			created = true
 		} else {
 			target = a.resolveSessionRef(ref)
@@ -427,8 +507,14 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		if dispatch["started"] != true {
 			return fmt.Sprintf("会话 #%d 的任务未启动：%v。", number, dispatch["startError"])
 		}
+		dec.taskStarted = true
+		callback := ""
 		if created {
-			return fmt.Sprintf("已创建并启动会话 #%d（%s）的任务。", number, title)
+			rid, _ := dispatch["runId"].(string)
+			callback = a.attachSIPTask(ctx, id, rid)
+		}
+		if created {
+			return fmt.Sprintf("已创建并启动会话 #%d（%s）的任务。", number, title) + callback
 		}
 		return fmt.Sprintf("已向会话 #%d（%s）提交执行，忙碌时会排队。", number, title)
 	default:
@@ -440,6 +526,9 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		}
 		if strings.HasPrefix(call.Function.Name, "reminder_") {
 			return a.dispatchAssistantReminderTool(call)
+		}
+		if assistantWeatherTool(call.Function.Name) && a.pluginOwnerOf(call.Function.Name) == "weather" {
+			return a.assistantWeatherQuery(ctx, call.Function.Name, args)
 		}
 		if pluginID := a.pluginOwnerOf(call.Function.Name); pluginID == "current-time" || pluginID == "lunar-calendar" {
 			result, err := a.callPluginTool(pluginID, call.Function.Name, args)

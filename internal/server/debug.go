@@ -448,7 +448,7 @@ func (a *App) debugRunDetail(w http.ResponseWriter, r *http.Request) {
 	rid := r.PathValue("run")
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[sid]
+	s := a.sessionLocked(sid)
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return

@@ -94,3 +94,11 @@ test('assistant dialogue is encrypted provenance evidence, never a user fact or 
  assert.equal(s.context('你之前说了什么','2026-11-03T00:00:00Z').inferenceEvidence.assistantTurns.length,0);
  s.management({operation:'delete',recordId:c.sourceId},later);assert.equal(s.data.assistantTurns.length,0);assert.equal(s.context('你之前说了什么',later).inferenceEvidence.assistantTurns.length,0);s.close();
 });
+test('approval status and session control remain available through dialogue and tool-result rounds',async t=>{
+ const api={storage:fixture(t),settings:{consolidate:false}},hostTools=['aide_component_status','control_session_run','run_shell','write_file'];
+ const input={phase:'begin',turnId:'approval-query',heard:'只读查看待审批数量，不批准。',source:'call',now:T,hostTools};
+ const first=await assistantAgent(input,api);assert.deepEqual(first.tools,['aide_component_status','control_session_run']);assert.match(first.messages[0].content,/component=approvals/);
+ const next=await assistantAgent({...input,phase:'step',state:first.state,messages:first.messages,modelCalls:[{id:'q',type:'function',function:{name:'aide_component_status',arguments:'{"component":"approvals"}'}}],toolResults:[{role:'tool',tool_call_id:'q',content:'[]'}]},api);
+ assert.deepEqual(next.tools,first.tools);assert(next.messages.some(m=>m.role==='tool'));
+ const disabled=await assistantAgent({...input,turnId:'approval-disabled',hostTools:[]},api);assert.deepEqual(disabled.tools,[]);
+});

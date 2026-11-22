@@ -115,7 +115,7 @@ func realtimeCallNormalizeEvent(cfg Settings, event map[string]json.RawMessage) 
 func openAINativeCallSession(cfg Settings, instruction string, tool any) map[string]any {
 	return map[string]any{"type": "realtime", "output_modalities": []string{"audio"}, "instructions": instruction,
 		"audio": map[string]any{
-			"input":  map[string]any{"format": map[string]any{"type": "audio/pcm", "rate": 24000}, "transcription": map[string]any{"model": "gpt-transcribe"}, "turn_detection": map[string]any{"type": "server_vad", "silence_duration_ms": 650, "create_response": true, "interrupt_response": true}},
+			"input":  map[string]any{"format": map[string]any{"type": "audio/pcm", "rate": 24000}, "transcription": map[string]any{"model": "gpt-transcribe", "keywords": []string{"aide", "小绵", "会话", "审批", "状态", "只查询"}}, "turn_detection": map[string]any{"type": "server_vad", "silence_duration_ms": 650, "create_response": true, "interrupt_response": true}},
 			"output": map[string]any{"format": map[string]any{"type": "audio/pcm", "rate": 24000}, "voice": realtimeCallMetadata(cfg)["voice"]}},
 		"tools": []any{tool}, "tool_choice": "auto"}
 }

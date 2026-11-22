@@ -48,19 +48,19 @@ func TestIssue106LockedAssistantCannotUseUnconfiguredVoiceFallback(t *testing.T)
 	}
 }
 
-func TestIssue106UnlockedAssistantKeepsNoModelFallback(t *testing.T) {
+func TestIssue106UnlockedAssistantMissingModelCannotSend(t *testing.T) {
 	a := testApp(t)
 	a.settings.BaseURL = ""
 	a.settings.Model = ""
 	unlockAssistantSessionForTest(t, a)
 	w := request(a, "POST", "/api/voice-filter", map[string]any{"text": "owned-authorized-voice"})
-	requireStatus(t, w, 200)
+	requireStatus(t, w, 503)
 	var response struct{ Action string }
 	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Action != "send" {
-		t.Fatalf("authorized fallback not available: %q", response.Action)
+	if response.Action != "" {
+		t.Fatalf("missing model returned an execution action: %q", response.Action)
 	}
 	a.clearAssistantUnlock()
 	w = request(a, "POST", "/api/voice-filter", map[string]any{"text": "owned-locked-again"})

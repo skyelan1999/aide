@@ -390,6 +390,8 @@ if args[:3]==['compose','ps','--status']:
 if args[:3]==['compose','exec','-T']:
  if state=='unhealthy':sys.exit(22)
  print(json.dumps({'service':'other' if state=='foreign' else 'aide','status':'ok'},separators=(',',':')));sys.exit(0)
+if args[:2]==['inspect','--format']:
+ print(('false' if state=='stopped' else 'true')+'|'+('/foreign' if state=='foreign' else os.environ['PROJECT_DIR'])+'|'+('other' if state=='wrong-service' else 'aide'));sys.exit(0)
 if args[0]=='info':print('linux/arm64');sys.exit(0)
 if args[:2]==['image','inspect']:
  if state=='missing':sys.exit(1)
@@ -397,7 +399,7 @@ if args[:2]==['image','inspect']:
 sys.exit(90)
 """);self.docker.chmod(0o755)
     def probe(self,kind,state):
-        return subprocess.run(['bash','-ec','source "$1"; '+kind+' "$2" aide:local','fixture',str(ROOT/'scripts/prebuilt-image.sh'),str(self.docker)],env=dict(os.environ,FIX_STATE=state),capture_output=True,text=True)
+        return subprocess.run(['bash','-ec','source "$1"; '+kind+' "$2" aide:local','fixture',str(ROOT/'scripts/prebuilt-image.sh'),str(self.docker)],env=dict(os.environ,FIX_STATE=state,PROJECT_DIR=str(self.docker.parent)),capture_output=True,text=True)
     def test_source_selection_respects_checkout_and_explicit_override(self):
         root=self.docker.parent
         def selected(mode):
@@ -409,6 +411,9 @@ sys.exit(90)
     def test_running_instance_requires_local_service_health(self):
         for state,success in [('healthy',True),('stopped',False),('unhealthy',False),('foreign',False)]:
             with self.subTest(state=state):self.assertEqual(self.probe('launcher_running_ready',state).returncode==0,success)
+    def test_owned_running_instance_is_preserved_during_slow_start(self):
+        for state,success in [('healthy',True),('unhealthy',True),('stopped',False),('foreign',False),('wrong-service',False)]:
+            with self.subTest(state=state):self.assertEqual(self.probe('launcher_running_owned_instance',state).returncode==0,success)
     def test_only_explicit_a_b_activation_bypasses_healthy_reuse(self):
         def policy(mode,start_built,activation):
             result=subprocess.run(['bash','-ec','source "$1"; launcher_may_reuse_running "$2" "$3" "$4"','fixture',str(ROOT/'scripts/prebuilt-image.sh'),mode,str(start_built),str(activation)])

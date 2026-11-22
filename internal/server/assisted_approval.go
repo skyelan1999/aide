@@ -49,7 +49,7 @@ func (a *App) setApprovalMode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	var task *Task
 	if s != nil {
 		for _, t := range s.Runs {
@@ -172,7 +172,7 @@ func (a *App) reviewPendingCommand(task *Task) {
 	}
 	a.mu.Lock()
 	task.Usage = addUsage(task.Usage, usage)
-	current := s != nil && !s.Deleted && a.sessions[s.ID] == s && a.approvalSessionLocked(task) == s && task.answerRound == round && task.approvalGeneration == gen && task.AutoReview && !task.approvalAnswered && task.Status == "awaiting_clarification" && task.AnswerCh != nil && ctx.Err() == nil && a.wsID() == workspaceID && a.wsRevision == workspaceRevision && sandboxMode(a.settings.SandboxMode) == sandbox && a.workspaceMode() == workspaceMode
+	current := s != nil && !s.Deleted && a.sessionLocked(s.ID) == s && a.approvalSessionLocked(task) == s && task.answerRound == round && task.approvalGeneration == gen && task.AutoReview && !task.approvalAnswered && task.Status == "awaiting_clarification" && task.AnswerCh != nil && ctx.Err() == nil && a.wsID() == workspaceID && a.wsRevision == workspaceRevision && sandboxMode(a.settings.SandboxMode) == sandbox && a.workspaceMode() == workspaceMode
 	status := "manual"
 	if !current {
 		status = "aborted"
@@ -232,7 +232,7 @@ func (a *App) approvalAuthorizationLocked(task *Task) (string, bool) {
 			return "", false
 		}
 		seen[s.ID] = true
-		parent := a.sessions[s.ParentID]
+		parent := a.sessionLocked(s.ParentID)
 		if parent == nil || parent.Deleted {
 			return "", false
 		}

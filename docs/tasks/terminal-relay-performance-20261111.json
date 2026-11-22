@@ -1,0 +1,208 @@
+{
+  "id": "terminal-relay-performance-20261111",
+  "request": "优化Terminal插件实际中继转发卡顿；复用当前本地Aide，不另开实例",
+  "baseline": "91d47779f4b977953af06087adf2cac95a8edb8f",
+  "initial_status": "",
+  "acceptance": [
+    "SSH/Telnet短输入确认可返回真实增量输出，避免额外取回请求；保留单飞、有序输入、长粘贴与不明结果不重发。",
+    "交互轮询缩短首轮空等待，空闲/后台退避不变；输出去重与行号栏渲染合并。",
+    "修复已复现的串口中继500ms缓冲延迟，TLS身份验证和UDP边界不变。",
+    "所有测试复用当前本地Aide及其容器；当前实例验收明确区分回环夹具与用户WAN/设备。"
+  ],
+  "scope": [
+    "../aide-pkg-terminal/index.js",
+    "../aide-pkg-terminal/sessions.js",
+    "../aide-pkg-terminal/relay/agent.py",
+    "../aide-pkg-terminal/src/workbench.js",
+    "../aide-pkg-terminal/workbench.html",
+    "../aide-pkg-terminal/test",
+    "../aide-pkg-terminal/README.md",
+    "../aide-pkg-terminal/CHANGELOG.md",
+    "../aide-pkg-terminal/manifest.json",
+    "../aide-pkg-terminal/package.json",
+    "../aide-pkg-terminal/package-lock.json",
+    "docs/tasks/terminal-relay-performance-20261111.json",
+    "docs/reviews/2026-11-11-terminal-relay-performance.md",
+    "../aide-pkg-terminal/scripts/verify_package.py",
+    "../aide-pkg-terminal/docs/verification/relay-performance-20261111.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认主要是SSH/Telnet打字回显慢；串口500ms问题作为独立已复现路径。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/848"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "短输入可选32ms有界真实输出回读；动态偏移、去重、8/16/32/40ms交互退避与逐帧合并渲染；不扩大协议权限。",
+      "evidence": [
+        "../aide-pkg-terminal/sessions.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现真实输出回读、动态偏移和去重、交互退避、逐帧gutter合并，以及串口首字节读取；候选1.8.1已安装当前本地Aide。",
+      "evidence": [
+        "../aide-pkg-terminal/sessions.js",
+        "../aide-pkg-terminal/src/workbench.js",
+        "../aide-pkg-terminal/relay/agent.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "最终运行ZIP70/70通过；32ms调整后相关10/10通过；本地真实TLS/Telnet夹具回显中位82.45降至40.93ms、桥接3降至1；当前Aide界面完成重连、连续输入和结束。用户WAN及实体串口未测。",
+      "evidence": [
+        "docs/reviews/2026-11-11-terminal-relay-performance.md",
+        "../aide-pkg-terminal/docs/verification/relay-performance-20261111.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README、CHANGELOG和插件详细验收报告已更新，Aide交接报告记录最终行为、包指纹和测试边界。",
+      "evidence": [
+        "docs/reviews/2026-11-11-terminal-relay-performance.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅清理4条本任务测试会话及自建临时中继/回显进程，当前工作区0会话与初始一致；关闭自建工作台标签，保留用户数据和回退备份。 已删除容器内本任务专属临时目录；原始日志和备份留在本机忽略目录。",
+      "evidence": [
+        ".agent-state/terminal-relay-performance-20261111/cleanup.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "插件PR43与市场PR35按本次管理员授权、在所有PR检查通过后合并。main/tag v1.8.1已推送，GitHub正式Release上传ZIP/SHA256SUMS并下载核对，市场main与Pages部署成功；线上目录及下载包核对另记本机收据。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/pull/43",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.8.1",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/35",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/42985252897"
+      ]
+    }
+  },
+  "release_authorization": "用户：发布；随后明确允许本次插件PR43与市场PR35在自动检查全部通过后管理员合并（2026-11-11）。",
+  "rollback": "保留terminal-private会话数据；原1.7.0完整备份在.agent-state/terminal-relay-performance-20261111/installed-terminal-before.zip，标准升级自动备份亦保留。",
+  "handoff": "Terminal 1.8.1已发布，当前本地Aide已从正式Release ZIP更新，170个包内文件核对一致。当前实例SSH/Telnet TLS中继连续输入及真实回显通过；受控目标延迟25ms，最终每键1次桥接，SSH中位38.47ms、Telnet39.88ms。临时连接与进程已清理；用户WAN/SSH设备及实体串口未测。",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/848"
+  ],
+  "operator": "skyelan1999",
+  "plugin_baseline": "b2487d1",
+  "installed_baseline": "1.7.0",
+  "candidate": {
+    "version": "1.8.1",
+    "bytes": 1230066,
+    "sha256": "29c0e837974d372fbba6453c548999ed4f1f7eb79ad0e1cca10fcfe5b825a5dd",
+    "installed": true
+  },
+  "release_package": {
+    "version": "1.8.1",
+    "bytes": 1230048,
+    "sha256": "fc42c5a33f4ba440340fa25956aeed6c8b5b3b1561f477f8126064b6b1da5bc3",
+    "source": "cd5460ddf4aa5124f77542f008b92922fecc779c",
+    "note": "与本机候选仅README发行表述不同，功能代码一致",
+    "published": true
+  },
+  "local_official_acceptance": {
+    "status": "pass",
+    "request": "用户要求当前本地Aide更新到正式1.8.1并实测SSH/Telnet，不另开实例",
+    "install": {
+      "version": "1.8.1",
+      "enabled": true,
+      "backup": ".upgrade-backup-terminal-81d72be66454231c93e2f39c19201332",
+      "release_sha256": "fc42c5a33f4ba440340fa25956aeed6c8b5b3b1561f477f8126064b6b1da5bc3",
+      "release_bytes": 1230048,
+      "files_verified": 170,
+      "installed_from": "official downloaded GitHub Release ZIP"
+    },
+    "protocols": {
+      "ssh": {
+        "echo_ms": [
+          37.32,
+          36.99,
+          39.31,
+          37.16,
+          38.62,
+          38.31,
+          40.28,
+          43.86
+        ],
+        "median_ms": 38.47,
+        "calls_per_key": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact_echo": true,
+        "tls_relay": true,
+        "target_delay_ms": 25
+      },
+      "telnet": {
+        "echo_ms": [
+          39.31,
+          36.69,
+          44.68,
+          40.44,
+          42.24,
+          38.76,
+          38.81,
+          41.11
+        ],
+        "median_ms": 39.88,
+        "calls_per_key": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact_echo": true,
+        "tls_relay": true,
+        "target_delay_ms": 25
+      }
+    },
+    "ui": {
+      "ssh": {
+        "marker": "sshofficialfinal",
+        "occurrences": 1,
+        "native_ui": true
+      },
+      "telnet": {
+        "marker": "telnetofficialfinal",
+        "occurrences": 1,
+        "native_ui": true
+      }
+    },
+    "cleanup": {
+      "ui_final": {
+        "ssh": {
+          "marker": "sshofficialfinal",
+          "occurrences": 1,
+          "native_ui": true
+        },
+        "telnet": {
+          "marker": "telnetofficialfinal",
+          "occurrences": 1,
+          "native_ui": true
+        }
+      },
+      "owned_test_records_removed": 5,
+      "remaining_workspace_sessions": 0,
+      "fixture_stop_requested": true,
+      "fixture_stopped": true,
+      "temp_removed": true
+    },
+    "limits": "current installed official package through actual Aide Workbench bridge, real OpenSSH/Telnet and TLS1.3 relays; local fixtures with 25ms target delay, not customer WAN nor browser paint"
+  }
+}

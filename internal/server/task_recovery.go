@@ -20,6 +20,9 @@ func recoveryOperation(tool string, args map[string]any) string {
 	return recoveryHash([]any{tool, args})
 }
 func (a *App) recoveryOperationError(task *Task, tool string, args map[string]any, skipPlan *PluginExecutionPlan) error {
+	if tool == "view_image" || tool == "prepare_artifacts" {
+		return nil // A bound read observation never repeats a mutation.
+	}
 	if tool == "project_knowledge" && stringValue(args["action"]) == "list" {
 		return nil
 	}
@@ -252,7 +255,7 @@ func (a *App) taskRecoveryReviewLocked(sessionID string, task *Task) taskRecover
 func (a *App) taskRecoveryPreviewAPI(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil || s.Deleted {
 		fail(w, 404, errors.New("session not found"))
 		return

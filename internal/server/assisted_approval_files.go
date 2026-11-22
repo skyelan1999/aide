@@ -164,7 +164,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		}
 	}
 	current := func(t *Task) error {
-		if t != task || !t.AutoReview || t.approvalGeneration != gen || t.Status != "awaiting_approval" || ctx.Err() != nil || sandboxMode(a.settings.SandboxMode) != sandbox || a.workspaceMode() != workspaceMode || a.wsID() != workspaceID || a.wsRevision != workspaceRevision || a.sessions[s.ID] != s || s.Deleted || len(t.Files) != len(files) {
+		if t != task || !t.AutoReview || t.approvalGeneration != gen || t.Status != "awaiting_approval" || ctx.Err() != nil || sandboxMode(a.settings.SandboxMode) != sandbox || a.workspaceMode() != workspaceMode || a.wsID() != workspaceID || a.wsRevision != workspaceRevision || a.sessionLocked(s.ID) != s || s.Deleted || len(t.Files) != len(files) {
 			return errors.New("审批已取消或提案环境已变化")
 		}
 		for i, f := range files {
@@ -279,7 +279,7 @@ func updateLastApprovalReview(task *Task, status, reason string) {
 // 和 run 状态都保持不变才真正落盘，用户已手动处理或提案已变化时静默放弃。
 func (a *App) applyRecommendedFiles(sessionID, runID string, gen uint64) {
 	a.mu.Lock()
-	s := a.sessions[sessionID]
+	s := a.sessionLocked(sessionID)
 	if s == nil || s.Deleted {
 		a.mu.Unlock()
 		return
@@ -337,7 +337,7 @@ func (a *App) applyRecommendedFiles(sessionID, runID string, gen uint64) {
 func (a *App) declineTask(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return

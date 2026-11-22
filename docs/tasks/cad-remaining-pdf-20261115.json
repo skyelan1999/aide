@@ -1,0 +1,131 @@
+{
+  "id": "cad-remaining-pdf-20261115",
+  "request": "继续修复剩下6份打不开的图纸，以及PDF页面空白和字体缺失，修完再把所有图纸测一遍",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "M .github/workflows/windows-desktop-check.yml\n M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docker/libredwg/README.md\n M docker/libredwg/source.json\n M docs/agent/router.json\n M docs/architecture/dwg-preview.md\n M docs/architecture/launcher-contract.md\n M internal/server/dwg_preview.go\n M internal/server/dwg_preview_test.go\n M internal/server/lock_browser_fixture_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/preview-safety.js\n M internal/server/web/starmap.html\n M internal/server/web/style.css\n M legal/third_party/sources.json\n M native/windows-launcher/lifecycle_commands.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-dwg-converter.sh\n M scripts/fixtures/windows-entrypoint.cpp\n M scripts/launcher.py\n M scripts/lock-cluster-state.test.js\n M scripts/native_launcher_portable.cpp\n M scripts/pip-install-retry.sh\n M scripts/test_dxf_preview_bounds.cjs\n M scripts/test_runtime_assets.py\n M scripts/test_windows_bat_entrypoints.py\n M scripts/windows-bootstrap.bat\n?? docker/libredwg/spline-scenario.patch\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/build-cn-source-fallback-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? internal/server/dwg_preview_svg.py\n?? internal/server/web/cad-measure.js\n?? legal/third_party/runtime/wqy-zenhei/\n?? native/windows-launcher/build_sources.hpp\n?? scripts/apt-install-retry.sh\n?? scripts/lock-idle-activity.test.cjs\n?? scripts/test_build_cn_sources.py\n?? scripts/test_cad_measure.cjs\n?? scripts/test_dwg_converter.py\n?? scripts/test_dwg_svg.py\n?? scripts/windows-build-source.ps1\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Recover all six previously failing archive DWG/backup files with bounded processes; retain model geometry and clearly report any genuinely unsupported content rather than silently omitting it.",
+    "Fix scanned PDF blank pages and CJK/CMap font rendering without removing existing browser decoder guards; validate visible page content against an independent renderer.",
+    "Re-run all 453 archive files after the final implementation: all 425 actual DWG API requests, all distinct SVG browser renders, and every PDF page; publish updated per-file status/report.",
+    "Preserve originals, direct measurement buttons, theme behavior, idle-lock fixes, sessions/plugins/drafts; standard local rebuild with rollback and native smoke, no version/tag/public release."
+  ],
+  "scope": [
+    "DWG renderer resource accounting/serialization and narrow malformed-document recovery",
+    "PDF local resources and bounded compatible page preview path if browser guards cannot decode originals safely",
+    "Actual-code tests, complete private archive rerun, architecture/review/task records and local runtime update"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests all six remaining CAD and PDF blank/font failures fixed, then a full fresh archive rerun. Preserve existing changes and originals.",
+      "evidence": [
+        "User request 2026-11-15"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bound source database objects separately from visible work; narrowly normalize null dictionary placeholders; preserve PDF.js decoder budgets and use authorized bounded per-page local compatibility raster.",
+      "evidence": [
+        "internal/server/dwg_preview_svg.py",
+        "internal/server/pdf_preview.go",
+        "docs/architecture/dwg-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "All six formerly failing CAD records recover; pinned offline PDF resources and local Poppler compatibility renderer integrated. Measurement/theme/idle behavior preserved; English coverage repaired.",
+      "evidence": [
+        "internal/server/dwg_preview.go",
+        "internal/server/dwg_preview_svg.py",
+        "internal/server/pdf_preview.go",
+        "internal/server/web/app.js",
+        "internal/server/web/vendor/pdfjs/resources-source.json",
+        "Dockerfile.local"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "425/425 actual CAD APIs HTTP 200; 413/413 distinct SVGs visible; 28 PDFs/40 pages visible; six actual viewers pass; native WKWebView drawing/measurement/scanned PDF/CJK smoke passes; quick 345 checks, Go targeted race and asset checks pass.",
+      "evidence": [
+        ".agent-state/cad-remaining-pdf-20261115/complete-verification.json",
+        ".agent-state/cad-remaining-pdf-20261115/api-batch-results-private.json",
+        ".agent-state/cad-remaining-pdf-20261115/svg-browser-results-private.json",
+        ".agent-state/cad-remaining-pdf-20261115/pdf-browser-results-private.json",
+        ".agent-state/cad-remaining-pdf-20261115/six-viewers-private.json",
+        ".agent-state/cad-remaining-pdf-20261115/final-runtime-smoke.json",
+        ".agent-state/cad-remaining-pdf-20261115/go-race.log",
+        ".agent-state/cad-remaining-pdf-20261115/quick-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated architecture, pinned dependency notices, de-identified review and 453-row local HTML/JSON report with actual missing/degraded versus repair notices.",
+      "evidence": [
+        "docs/reviews/2026-11-15-cad-remaining-pdf.md",
+        "docs/architecture/dwg-preview.md",
+        "/Users/skyelan/Downloads/Aide_图纸预览检查_20261115.html"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed own browser context/component page and stopped isolated archive QA service. Preserved private evidence, user native tabs, unrelated dirty files, drafts, 86 sessions, 36 plugins and 194 protected files.",
+      "evidence": [
+        ".agent-state/cad-remaining-pdf-20261115/api-stopped.log",
+        ".agent-state/cad-remaining-pdf-20261115/production-verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Standard local build installed and healthy at unchanged 0.1.19.0 RC2. No commit, push, merge, version/tag or public Release. Final locale-only rebuild keeps preview source hashes unchanged; six CAD and one PDF endpoint smoke pass.",
+      "evidence": [
+        ".agent-state/cad-remaining-pdf-20261115/build-localized.log",
+        ".agent-state/cad-remaining-pdf-20261115/production-verification.json",
+        ".agent-state/cad-remaining-pdf-20261115/final-runtime-smoke.json"
+      ]
+    }
+  },
+  "release_authorization": "Local rebuild/update within existing authorized repair scope; no public release requested.",
+  "rollback": "Backup /Users/skyelan/WorkTrees/aide-runtime-backups/20261115-cad-remaining-pdf; image aide-rollback:cad-remaining-pdf-20261115.",
+  "handoff": "All 453 open checks pass, 0 failed APIs and 0 blank PDF pages. 89 files still have unsupported entities/fill degradation, separately listed from 77 repair/font/encoding notices. BAK files tested via DWG-identifying private copies; no universal .bak UI support claimed. No CAD entity-by-entity/manufacturing acceptance, public Release, or cross-platform full delivery matrix.",
+  "parent_task": "dwg-native-controls-idle-20261115",
+  "issue": "https://github.com/skyelan1999/aide/issues/913",
+  "local_runtime": {
+    "build": {
+      "buildVersion": "0.1.19.0 RC2",
+      "buildCommit": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.2ddd160a30d5ff64bb1ba60eb235e8f9ebadf594e085f8be05b157a1a527b8c1"
+    },
+    "imageID": "sha256:5e35dd6e17b5fba5760b86df5e503d6206f1e8dcfef06f848af3a6c8d5c77bfd",
+    "sessions": 86,
+    "plugins": 36,
+    "protectedFiles": 194
+  },
+  "verification_fingerprint": "c1d4f43defd033068af1ac32c361f489497204db3e1a1fb28749602bf2e55b33",
+  "quick_checks": 345,
+  "report_summary": {
+    "total": 453,
+    "extensions": {
+      ".dwg": 285,
+      ".bak": 140,
+      ".pdf": 28
+    },
+    "status": {
+      "partial": 89,
+      "normal": 287,
+      "notice": 77
+    },
+    "openFailures": 0,
+    "blankPDFPages": 0,
+    "uniqueContents": 441,
+    "browserSVGVariants": 413,
+    "pdfPagesRendered": 40,
+    "actualDWGAPIRequests": 425,
+    "recoveredPreviousFailures": [
+      196,
+      198,
+      199,
+      206,
+      207,
+      450
+    ]
+  }
+}

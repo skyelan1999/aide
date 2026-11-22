@@ -405,7 +405,8 @@ class Launcher:
         self.configure_image()
         print('Source build verified; starting this installation from ' + self.image, flush=True)
         env = dict(os.environ, AIDE_IMAGE=self.image, AIDE_INSTALLATION_KIND='source')
-        self.call(['bash', 'scripts/aide.sh', 'start-built'], env=env, timeout=240)
+        # The readiness budget is at most 1800s; leave room for host preparation.
+        self.call(['bash', 'scripts/aide.sh', 'start-built'], env=env, timeout=2100)
         self.try_recycle_build_artifacts(expected_image=metadata['Id'], builder_mode=builder_mode,
                                         dependencies=[str(value) for key, value in arguments.items()
                                                       if key.endswith('_IMAGE') and value])

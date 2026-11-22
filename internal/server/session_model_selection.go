@@ -193,7 +193,7 @@ func (a *App) sessionModelSelectionHandler(w http.ResponseWriter, r *http.Reques
 	choice := in.SessionModelSelection
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil || s.Deleted {
 		fail(w, 404, errors.New("会话不存在"))
 		return

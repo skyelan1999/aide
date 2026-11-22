@@ -109,6 +109,12 @@ func (a *App) assistantWorkLedgerLocked() []assistantWatchEvent {
 	events := []assistantWatchEvent{}
 	for _, s := range a.sessions {
 		if s.FollowedByAssistant {
+			if s.historyDeferred {
+				s = a.sessionLocked(s.ID)
+				if s == nil {
+					continue
+				}
+			}
 			if event := a.sessionWorkEventLocked(s); event != nil {
 				events = append(events, *event)
 			}

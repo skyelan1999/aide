@@ -10,6 +10,89 @@ launcher_running_ready() {
   [[ "$health" == *'"service":"aide"'* && "$health" == *'"status":"ok"'* ]]
 }
 
+# A slow cold start is still an existing runtime. Ordinary desktop reopen must
+# not replace its image/settings merely because the HTTP server is not ready.
+launcher_running_owned_instance() {
+  local docker_bin="$1" instance identity
+  instance="$("$docker_bin" compose ps --status running --quiet aide 2>/dev/null)" || return 1
+  [[ "$instance" =~ ^[a-f0-9]{12,64}$ ]] || return 1
+  identity="$("$docker_bin" inspect --format '{{.State.Running}}|{{index .Config.Labels "com.docker.compose.project.working_dir"}}|{{index .Config.Labels "com.docker.compose.service"}}' "$instance" 2>/dev/null)" || return 1
+  [[ "$identity" == "true|$PROJECT_DIR|aide" ]]
+}
+
+# One deadline covers container initialization and host TLS/instance checks.
+# Docker's temporary "unhealthy" during a cold start is not a process exit.
+launcher_startup_begin() {
+  local budget="${AIDE_STARTUP_TIMEOUT:-600}"
+  if [[ ! "$budget" =~ ^[0-9]{1,4}$ ]] || (( 10#$budget < 1 || 10#$budget > 1800 )); then
+    echo 'AIDE_STARTUP_TIMEOUT must be an integer from 1 to 1800 seconds.' >&2
+    return 1
+  fi
+  LAUNCHER_STARTUP_STARTED=$SECONDS
+  LAUNCHER_STARTUP_BUDGET=$((10#$budget))
+  LAUNCHER_STARTUP_DEADLINE=$((SECONDS + LAUNCHER_STARTUP_BUDGET))
+  LAUNCHER_STARTUP_PROGRESS=$SECONDS
+}
+
+launcher_startup_poll() {
+  local phase="$1" elapsed remaining
+  elapsed=$((SECONDS - LAUNCHER_STARTUP_STARTED))
+  remaining=$((LAUNCHER_STARTUP_DEADLINE - SECONDS))
+  if (( remaining <= 0 )); then
+    echo "AIDE: 等待${phase}超时（${LAUNCHER_STARTUP_BUDGET} 秒）；实例和数据已保留，可检查启动日志。" >&2
+    return 1
+  fi
+  if (( SECONDS >= LAUNCHER_STARTUP_PROGRESS )); then
+    echo "AIDE: 正在等待${phase}（${elapsed}/${LAUNCHER_STARTUP_BUDGET} 秒），就绪后将自动继续…" >&2
+    LAUNCHER_STARTUP_PROGRESS=$((SECONDS + 15))
+  fi
+  LAUNCHER_PROBE_TIMEOUT=3
+  if (( remaining < LAUNCHER_PROBE_TIMEOUT )); then LAUNCHER_PROBE_TIMEOUT=$remaining; fi
+}
+
+launcher_health_instance() {
+  local health="$1"
+  [[ "$health" =~ \"service\"[[:space:]]*:[[:space:]]*\"aide\" ]] || return 1
+  [[ "$health" =~ \"status\"[[:space:]]*:[[:space:]]*\"ok\" ]] || return 1
+  printf '%s\n' "$health" | sed -n 's/.*"instanceId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+}
+
+launcher_wait_container_ready() {
+  local docker_bin="$1" instance identity health_id
+  launcher_startup_begin || return 1
+  while launcher_startup_poll 'Aide 服务初始化'; do
+    instance="$("$docker_bin" compose ps --all --quiet aide 2>/dev/null)" || return 1
+    [[ "$instance" =~ ^[a-f0-9]{12,64}$ ]] || {
+      echo 'AIDE: 启动容器已不存在；请检查启动日志。' >&2; return 1;
+    }
+    identity="$("$docker_bin" inspect --format '{{.State.Status}}|{{index .Config.Labels "com.docker.compose.project.working_dir"}}|{{index .Config.Labels "com.docker.compose.service"}}' "$instance" 2>/dev/null)" || return 1
+    if [[ "$identity" != "running|$PROJECT_DIR|aide" ]]; then
+      echo 'AIDE: 启动容器已停止、正在重启或归属不匹配；请检查启动日志。' >&2
+      return 1
+    fi
+    if CONTAINER_HEALTH="$("$docker_bin" compose exec -T aide curl --disable -fsSk --connect-timeout 1 --max-time "$LAUNCHER_PROBE_TIMEOUT" https://127.0.0.1:8080/healthz 2>/dev/null)"; then
+      health_id="$(launcher_health_instance "$CONTAINER_HEALTH")" || health_id=''
+      if [[ -n "$health_id" ]]; then return 0; fi
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+launcher_wait_host_ready() {
+  local port="$1" certificate="$2" expected="$3" health_id
+  while launcher_startup_poll '宿主 HTTPS 连接'; do
+    if HOST_HEALTH="$(curl --disable --silent --show-error --fail --proto '=https' --noproxy '*' --connect-timeout 1 --max-time "$LAUNCHER_PROBE_TIMEOUT" --cacert "$certificate" "https://localhost:$port/healthz" 2>/dev/null)"; then
+      health_id="$(launcher_health_instance "$HOST_HEALTH")" || health_id=''
+      if [[ "$health_id" == "$expected" && -n "$health_id" ]]; then return 0; fi
+      echo 'AIDE: 宿主 HTTPS 响应与本安装的容器身份不匹配；浏览器尚未打开。' >&2
+      return 1
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 # Explicit A/B activation is the only healthy-instance reuse bypass. Ordinary
 # start remains a reopen operation and must never turn a changed marker into an
 # implicit image update.

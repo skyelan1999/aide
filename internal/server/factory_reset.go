@@ -237,6 +237,7 @@ func (a *App) applySessionsAndMemoryReset() error {
 		a.forgetLiveSessionLocked(id)
 	}
 	a.sessions = map[string]*Session{}
+	a.lazySessions = map[string]*lazySessionRecord{}
 	for id, cancel := range a.cancels {
 		cancel()
 		delete(a.cancels, id)

@@ -1,0 +1,1863 @@
+{
+  "id": "boiler-qc-luna-step-20261116",
+  "request": "控制aide把下载目录里面的金锅锅炉的预热锅炉的文件整理到工作区，然后并根据图纸设计三维零件并进行组装，格式为step，如果对应的功能缺失，请一并帮忙开发，模型使用luna那个模型",
+  "baseline": "da8fdc95c7bb432c8a29aa45d13e55635e480b7f",
+  "initial_status": "M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/server/web/starmap.html\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Aide实际建模请求使用gpt-6-luna；不混入WNS或旧4.5t参考几何",
+    "锅筒剩余有源依据细节、六面膜式壁与集箱、连接管路、锅内/吊挂/刚性梁及外包按当前原图生成命名STEP",
+    "整炉STEP含可追踪层级、有效毫米B-rep、源BOM对应及明确近似/资料缺口；装配位姿按总图和钢架",
+    "所有正式STEP独立回读、数量和关键源尺寸核对、实际装配干涉闭环",
+    "在Aide原生窗口检查总装预览、装配树/隐藏/爆炸、测量及重载",
+    "原始422份文件保持哈希不变；交付可重放脚本、验收和未闭合细节说明"
+  ],
+  "scope": [
+    "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116",
+    "task-scoped Aide Luna sessions",
+    "必要的本地CAD/预览能力修复；不覆盖无关工作，不推送/发布"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current user authorizes Aide/Luna file organization, drawing-based STEP parts/assembly and necessary local capability fixes. Source target inferred from the current QC13.1 drawing context and confirmed present.",
+      "evidence": [
+        "Current user request",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-availability-private.json"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Use the QC13.1 4.0 source family; Luna is still checking explicit revisions and per-view dimension mapping before modeling. Reuse trusted project-local LibreDWG/OCP to stay inside the unchanged workspace sandbox.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Formal202 unchanged. Aide single gpt-6-luna session171 correcting firsttwo seals from exact source/failed candidate review with2originalPNG. World17029KB proposal not applied or exported; independent original200R30 plan centers and long centerlines refute side spacing3600 and centerX3000. User asked to choose main3000mm versus component3400mm roof revision; independent work continues.",
+      "evidence": [
+        ".agent-state/boiler-qc-luna-step-20261116/copy-independent-verification.json",
+        ".agent-state/boiler-qc-luna-step-20261116/session-latest-private.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-capability-source.json",
+        ".agent-state/boiler-qc-luna-step-20261116/support-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/brace-slot-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/brace-interference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-brace-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/import-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-frame-multimodal-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/post-brace-all-step-readback.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-medium-request-params.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-cad32k-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/body-remaining-views.log",
+        ".agent-state/boiler-qc-luna-step-20261116/cladding-component-views.log",
+        ".agent-state/boiler-qc-luna-step-20261116/session-109-final-private.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-frame-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/global-nonsensitive-config-check.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-platform-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/session-110-final-private.json",
+        ".agent-state/boiler-qc-luna-step-20261116/steel-focused-views-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/cad-head-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/source-evidence-fallback-check.json",
+        ".agent-state/boiler-qc-luna-step-20261116/overall-source-views.log",
+        ".agent-state/boiler-qc-luna-step-20261116/roof-real-section-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/finished-members-real-roof-independent-analytic-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/frame-contact-envelope-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/tapered-channel-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/mating-helper-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-drum-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/drum-hole-source-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/drum-hole-independent-volume-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/drum-placement-revision-conflict.json",
+        ".agent-state/boiler-qc-luna-step-20261116/dxf-profile-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/dxf-profile-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/text-query-source-check.json",
+        ".agent-state/boiler-qc-luna-step-20261116/loft-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/loft-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-walls-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/main-drum-datum-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/dxf-path-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/dxf-path-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/middle-i-header-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/cad-job-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/middle-i-interface-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-middle-i-core-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-runtime-memory-test-preflight.json",
+        ".agent-state/boiler-qc-luna-step-20261116/strip-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/strip-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/wall-image-refresh-continuation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-walls-continuation-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-remaining-walls-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/header-source-packets-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/middle-i-source-mass-reconciliation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/frame-drum-support-datum-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/cap-source-registration-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/pipe-source-packets-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/cladding-source-packets-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/source-graph-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/source-graph-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-middle-ii-core-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-rear-core-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-3-0-interface-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-4-0-interface-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-3-0-header-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-4-0-header-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/body-detail-source-packets-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-right-wall-request-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-remaining-walls-batch-checkpoint.json",
+        ".agent-state/boiler-qc-luna-step-20261116/front-vi-raw-vs-annotation-review.json",
+        ".agent-state/boiler-qc-luna-step-20261116/front-focus-source-views-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/right-wall-source-visual-gates.txt",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-fin-independent-material.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-wall-interfaces-b7dbca06.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-header-bores-b7dbca06.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-left-R3-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/head136-independent-source-material.json",
+        ".agent-state/boiler-qc-luna-step-20261116/steam138-explicit-eight-images-restart-private.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-tubes-independent-material.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-protected-common.json",
+        ".agent-state/boiler-qc-luna-step-20261116/head136-independent-skirt-crop.json",
+        ".agent-state/boiler-qc-luna-step-20261116/head136-independent-ring-common.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-fin20-screen21-common-tolerance-diagnostic.json",
+        ".agent-state/boiler-qc-luna-step-20261116/steam-pipe-original-length-notes.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/luna138-II-IV-VI-normal-apply-private.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/steam138-family-d2ad3408-independent-geometry.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/steam138-family-d2ad3408-original-handle-check.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/source-422-after-left-R3-rehash.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/head136-direct-normal-ray-crosscheck.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/session-139-start-private.json",
+        ".agent-state/boiler-qc-luna-step-20261116/drum162candidate1-exact-context-source-signatures.json"
+      ],
+      "projectCapabilities": [
+        "Named XDE STEP creation, placement and hierarchical STEP import via cad_support.py; independent nested assembly calibration passed.",
+        "Hollow tube / analytic line-arc swept tube / explicit-axis ellipsoidal shell tools via cad_tubes.py; analytic volume and STEP readback calibration passed.",
+        "Project-local cad_python.py runner; engine/readers import verified.",
+        "Read-only source DXF geometry query by handles/types/region/length with source hashes; tested against known four-entity notch evidence and unique basename resolution.",
+        "Read-only compact source-dimension and inserted-BOM evidence query; explicit source ambiguity rejected.",
+        "Independent STEP and true-world-instance interference validators copied into project with provenance and calibrations.",
+        "Direct DXF reading renderer supports focused bounds and optional in-memory layer hiding; original DWG/DXF unmodified.",
+        "Explicit-section solid/hollow lofts via cad_lofts.py.3synthetic STEP exports/readbacks,2independent analytic volumes,material points and4invalid-input guards PASS; no constant normal thickness assumption.",
+        "Source-selected model-space LINE/ARC centerline reader cad_dxf_paths.py; explicit proper-rigid transform, source SHA, continuity/tangency guards.3synthetic hollow STEP exports with analytic volume/readback and6rejection cases PASS. No inferred boiler route.",
+        "Task-scoped cad_job.py starts explicit project CAD script, tracks source SHA/log/exit code, with no shell/settings/model changes. Success0 and failure7 actual child-process receipts verified. Launch alone is not geometry acceptance.",
+        "cad_strips.swept_strip sweeps an explicit rectangular section on a planar tangent LINE/ARC path, with plane/continuity/radius/volume guards.3synthetic actual STEP readbacks and analytic volumes plus3rejection cases PASS. No boiler route or dimensions inferred."
+      ],
+      "sourceLayoutConflict": {
+        "status": "RETRACTED source misidentification; no choice required",
+        "drumCenterFromLeftColumnMm": 3475,
+        "gasOutletCenterFromLeftColumnMm": 1500,
+        "basis": "Main drawing visual inspection matches body275 offset from middle column; corrected user commentary and project README.",
+        "userPreference": "Use main overall drawing and steel frame; numeric1500 in offered choice was my gas-outlet misidentification. Corrected aloud after user selected this option; true drum offset3475 remains.",
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/drum-placement-corrected-reference.json",
+        "drumCenterAboveGroundMm": 13000,
+        "datumEvidence": ".agent-state/boiler-qc-luna-step-20261116/main-drum-datum-independent-audit.json"
+      },
+      "drumProgress": {
+        "formalNewStepFiles": 8,
+        "totalFormalStepFiles": 97,
+        "assemblySolids": 56,
+        "status": "Basic drum source-fitted saddle interference passed; remaining drum details and current-revision native acceptance pending",
+        "currentAssemblySHA256": "3f9f2f3e459be94fec971607c5d1a85dead05a7c7a46805acb1ed9c42766f74b",
+        "verified": "56leaf solids;35source holes;1890 independent shell material points and analytic volume;8head aperture points; latest source-fitted saddle has0 intersections above0.01mm3 threshold. Some source-supported details and missing standard assemblies remain pending.",
+        "pending": [
+          "head formed aperture neck/reinforcement/A-B preparation",
+          "coaxial inner tube details",
+          "remaining source-supported small BOM parts",
+          "full boiler bodies/walls/pipes/cladding/global assembly"
+        ],
+        "interferenceCount": 0
+      },
+      "previewRetryFix": {
+        "status": "PASS native retry after shrink",
+        "observedAt": "2026-11-16T14:15:35.404942+00:00",
+        "nativeApp": "Aide",
+        "workbenchSession": "945cd637ae2114bf7e003273ae7c3c1d563e9274fbc8c28c5118a951a56dc855",
+        "sequence": [
+          "opened synthetic 3517010-byte STEP",
+          "observed native upload at2.4/3.4MiB",
+          "cancelled upload using native button",
+          "replaced same synthetic path with17005-byte STEP",
+          "used native reload in same workbench",
+          "observed12triangles20x30x40mm"
+        ],
+        "sourceFiles": {
+          "viewer.html": "a9b55f29cd5512f8a17e38aa136947bc2c17d37ef9c79a59b813154a9ca83e2c",
+          "tests/viewer-upload.cjs": "45b8a29c403a5c3f41ce22c6175d9ab432fb04e9386bffe1d370d5a0c14b87fd"
+        },
+        "installedBundleSHA256": "867fc25ed1680fb5fe25025d4ec740b50411c3cac751ee53c5970d0f8e873fb4",
+        "release": "local installed patch only; uncommitted; not published",
+        "issue": "https://github.com/skyelan1999/aide/issues/941"
+      },
+      "sourceStandardPDFs": {
+        "count": 20,
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/02_图纸解析/标准件PDF/来源索引.json",
+        "nativeReading": "JG5104 endcap original visually inspected; text alone has rotated/table extraction limitations"
+      },
+      "currentAideRun": {
+        "sessionId": "ba4f9bad164484eb468f18c77d9379d5",
+        "sessionNumber": 160,
+        "runId": "5d868aa8f50ca245583cd09347329b58",
+        "status": "running",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "medium",
+        "scope": "Handhole ring/gasket and existing standard7-piece local fit; not whole-boiler completion"
+      },
+      "drumContinuationResult": "Session112 resumed three times; last read-only source investigation ended on upstream unexpected EOF. No added drum features landed; stable56-solid model retained. Detailed focused source images prepared for later fresh completion.",
+      "membraneWallProgress": {
+        "status": "3 primary cores (I117/II145/rear117) exported and independently checked forSTEP/MM/XDE,source bores/volumes/interfaces and zero actualCommon. Native all3core displays passed. Right/left/front major geometry, allwall small hardware and full-boiler modeling/acceptance remain pending.",
+        "currentFormalSTEPCount": 110,
+        "headerAudit": ".agent-state/boiler-qc-luna-step-20261116/middle-i-header-independent-audit.json",
+        "actualSourceHoleCount": 58,
+        "independentMaterialPoints": 1798,
+        "maximumVolumeDeltaMm3": 0.000298,
+        "remainingWalls": 3,
+        "allWallsComplete": false,
+        "coreAssemblySHA256": "d37f172af4f10804bef0e350a4a114960e87f0799f8521df1c7751eff01c5669",
+        "interferenceCount": 0,
+        "interferenceJob": "99_过程记录/CAD后台任务/mwI-interference-01/result.json",
+        "middleII": {
+          "sha256": "25638efb973420407f3897cac85c3604ef6e942ec5bd5f1366e6d20b5a0fdfc1",
+          "leafInstances": 145,
+          "independentReadback": "PASS",
+          "interferenceCount": 0,
+          "nativeTriangles": 76928,
+          "sourceInterfacePointCount": 144,
+          "properRotations": 145,
+          "maximumInterfaceErrorMm": 2.3678130049763675e-10,
+          "interfaceAudit": "PASS",
+          "sourceHoleCount": 86,
+          "independentMaterialPoints": 1892,
+          "headerAudit": "PASS"
+        },
+        "rear": {
+          "sha256": "afcd671a04d44379a0efed629a6de9c0b3b485105ea151958711cfffaa504e7b",
+          "leafInstances": 117,
+          "independentReadback": "PASS",
+          "interference": "PASS zero actual volume intersections",
+          "native": "PASS core display",
+          "interferenceCount": 0,
+          "nativeTriangles": 57892,
+          "sourceInterfacePointCount": 116,
+          "properRotations": 117,
+          "maximumInterfaceErrorMm": 1.885017249401389e-11,
+          "interfaceAudit": "PASS",
+          "headerAudit": "PASS",
+          "sourceHoleCount": 58,
+          "independentMaterialPoints": 1276
+        },
+        "coreHolesVerified": 202,
+        "independentCoreMaterialSamples": 4966
+      },
+      "remainingHeaderSourcePackets": {
+        "status": "PACKAGED",
+        "scope": "Uninterpreted source DIMENSION/ARC/CIRCLE plus exact BOM/text for9header drawings; no engineering CAD authored",
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/03_三维建模/集箱原图取证/来源索引.json",
+        "indexSHA256": "f4715bc85e36deeca850e712ae5ff3581f69f04ffcc3a96fcaaddcdfebde692d",
+        "scriptSHA256": "87e9650afff072870b9370a34d0de7d6d15bdd2032fb7a8077d5c8d042828b07",
+        "drawings": 9
+      },
+      "drumFrameInterfaceAudit": {
+        "status": "OPEN provisional bolt alignment mismatch; cap support-face Z12030 independently passed",
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/frame-drum-support-datum-independent-audit.json",
+        "observedCapHoleXYmm": [
+          [
+            3105,
+            -2075
+          ],
+          [
+            3105,
+            2125
+          ]
+        ],
+        "candidateDrumBoltXYmm": [
+          [
+            3115,
+            -2100
+          ],
+          [
+            3115,
+            2100
+          ]
+        ],
+        "cadModified": false,
+        "next": "Verify original cap3-6 XY350x370 placement in column3/4/top frame before integration; do not move source-established drumX3475/Z13000.",
+        "sourceCapPlacementEvidence": ".agent-state/boiler-qc-luna-step-20261116/cap-source-registration-audit.json",
+        "sourceCapPlacementResult": "PASS source axis/chamfer registration: X3115,Y+-2100. Existing CAD correction pending; drum depth/secondary support still open.",
+        "sourceCapRegistration": "PASS source only; actual CAD correction pending",
+        "sourceCapHoleXYmm": [
+          [
+            3115,
+            -2100
+          ],
+          [
+            3115,
+            2100
+          ]
+        ],
+        "sourceFourBoltPattern": {
+          "centerXYmm": [
+            3475,
+            0
+          ],
+          "axesXYmm": [
+            [
+              3115,
+              -2100
+            ],
+            [
+              3115,
+              2100
+            ],
+            [
+              3835,
+              -2100
+            ],
+            [
+              3835,
+              2100
+            ]
+          ],
+          "actualCADCorrected": false
+        }
+      },
+      "remainingCenterlineSourcePackets": {
+        "status": "PACKAGED raw source only",
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/03_三维建模/管屏中心线取证/来源索引.json",
+        "sha256": "a18fba2af51665d8518a09bc76e029d7eb07fa81611bbb2cfa4d5dd0492ae1d8",
+        "drawings": 5,
+        "scope": "Full raw centerline-layer LINE/ARC/CIRCLE; includes auxiliary marks, no inferred boiler route."
+      },
+      "bodyPipeSourcePackets": {
+        "status": "PACKAGED raw source only",
+        "drawings": 14,
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/03_三维建模/本体管路原图取证/来源索引.json",
+        "indexSHA256": "798e44e4e5d130d44f9eda9b371ca95b465b5b730ea9d3f810ad8390f0eba3f6",
+        "scriptSHA256": "85de1ab35987011f0866fb526df706708a0c2182b82ee85abf199f633ece0747",
+        "centerlineEntities": 216,
+        "dimensions": 223,
+        "cadAuthored": false
+      },
+      "claddingSourcePackets": {
+        "status": "PACKAGED raw source only",
+        "drawings": 23,
+        "entities": 3376,
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/03_三维建模/外包原图取证/来源索引.json",
+        "indexSHA256": "37cba4e4b642ac6bdef09706bd1cde55a3ce273432dc4e95a50892d9cdc9ebc6",
+        "scriptSHA256": "9e9c48bf54c16bd9657e1cfa917621a01cdc593798a135d44df845ac6d9331b0",
+        "cadAuthored": false,
+        "note": "Existing read-only source query full rows retrieved before stdout limit. Initial wrapper limit errors corrected; actual final23drawings3376entities completed with original hashes checked."
+      },
+      "sourceConnectivityTool": {
+        "status": "PASS synthetic tool; PACKAGED actual source graph only",
+        "toolSHA256": "6e32bc208a1444d6267669b2e130d7608793cbcdc9fae1f3f2922ea8ac6682f2",
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/03_三维建模/源中心线连通图/来源索引.json",
+        "indexSHA256": "1b5453e122ddeb7765739eff320fc87b07a178753158a3ab2db5e887b527ef19",
+        "drawings": 19,
+        "edges": 1440,
+        "components": 701,
+        "scope": "No route selection or boiler CAD authored",
+        "calibration": ".agent-state/boiler-qc-luna-step-20261116/source-graph-tool-calibration.json",
+        "change": "Added original rawARCcenter/radius/angles/extrusion; existing endpoints/connectivity unchanged. Recalibrated and repackaged19sources."
+      },
+      "bodyDetailSourcePackets": {
+        "status": "PACKAGED raw model-space source data only",
+        "drawings": 97,
+        "entities": 19495,
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/03_三维建模/本体零件原图取证/来源索引.json",
+        "indexSHA256": "a153f610d202bd02733e94481915c54a84f24f959588fbabc429ae98dbdf679e",
+        "scriptSHA256": "aeac7894700ef5459bcc79e1fa32efa1949c957a3bc3eb94125c57a40e4087a9",
+        "originalsUnchanged": true,
+        "cadAuthored": false,
+        "limitations": "No INSERT expansion, fabrication route/curve interpretation or override application. Ezdxf emitted8unnamed-BLOCK warnings:20A4,17B8,12EB,439(x3),17B6,1733. These records do not establish complete recovery of every original DWG block."
+      },
+      "priorWallBatchCheckpoint": {
+        "sessionNumber": 114,
+        "status": "cancelled after accepted II/rear cores; no output deleted",
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/luna-remaining-walls-batch-checkpoint.json"
+      },
+      "futureSequentialLunaBatches": [
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/left-wall-prompt.txt",
+          "status": "prepared;not_started"
+        },
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/front-wall-prompt.txt",
+          "status": "prepared;not_started"
+        },
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/wall-details-prompt.txt",
+          "status": "prepared;not_started"
+        },
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/drum-details-prompt.txt",
+          "status": "prepared;not_started"
+        },
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/body-pipes-prompt.txt",
+          "status": "prepared;not_started"
+        },
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/cladding-prompt.txt",
+          "status": "prepared;not_started"
+        },
+        {
+          "prompt": ".agent-state/boiler-qc-luna-step-20261116/whole-assembly-prompt.txt",
+          "status": "prepared;not_started"
+        }
+      ],
+      "rightWallSourceGates": "Actual component1700x1000crossedrectangles are inner welded-pin areas with continuous tubes. Actual specialsocket13degR200 and245theoretical length differ from genericR300note; preserve source precision/conflict.",
+      "currentLunaBatch": {
+        "sessionId": "3a56821c27884e8788d2d0b2e77dd5cb",
+        "sessionNumber": 136,
+        "runId": "8c47d39ae8cfa7f6ff1c889283ffd799",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "medium",
+        "scope": "source U-return formed-head factory and common-free-end bevel, no formal outputs",
+        "status": "in_progress; direct normal proposal requested after per-command ephemeral cache staging proved nonpersistent"
+      },
+      "rightWallPriorDraft": {
+        "session": 116,
+        "state": "Intermediate draft applied and preserved, no build/export. Corrects drill direction,48-axis precondition,routeA direction,port station rows and fin coordinate frame. Fitting roots/III-IV-V/interfaces still incomplete; new high-reasoning Luna117 continuing.",
+        "sha256": "ee98fb73ff0ccdec8b9e05fc0b156250cc8277859a0898416254e92f455f6d7b",
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-wall-revision2-applied.json",
+        "syntaxReview": ".agent-state/boiler-qc-luna-step-20261116/right-wall-draft-syntax-review.json",
+        "preflight": ".agent-state/boiler-qc-luna-step-20261116/right-wall-revision-preflight.json"
+      },
+      "allLayerBodySourceEvidence": {
+        "at": "2026-11-17T00:10:09.218134+00:00",
+        "generatorSHA256": "d3b4e4adbc8c959f1c8f72d6af665218101429553e9c1f283b3652030b0076ce",
+        "command": "prepare_body_detail_evidence.py --all-line-layers",
+        "drawings": 97,
+        "entities": 52294,
+        "sourceIndexSHA256": "ff93433f903ebf029e568465b7ce4e5f5f03991a6c6dc6f9b77af19207a453ce",
+        "originalDWGAndDXFHashChecks": "Each97 checked by generator; no original mutated",
+        "limitations": [
+          "No INSERT expansion; eight unnamed BLOCK warnings retained from ezdxf",
+          "Raw projections/auxiliaries and dimension overrides still require interpretation",
+          "No engineering paths, poses, profiles or CAD geometry selected or generated"
+        ]
+      },
+      "genericBendChain": {
+        "scope": "Root generic analytic capability only; no boiler geometry or route authored",
+        "sha256": "be160ded058d722e4be742e97414af6c757e83aa5768ddbea0175cb98cd42141",
+        "status": "4 synthetic hollow BRep/STEP/endpoint/length/volume cases and10 rejection guards PASS",
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/bend-chain-tool-calibration.json"
+      },
+      "rightWallSourceProjectionAudit": {
+        "status": "source-image observations; correction requested in active Luna117, not yet implemented or accepted",
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-wall-let-I-II-image-observations.json",
+        "finding": "LetI and II true bend planes are oblique to wall. Existing front-projection planar paths require source-backed 3D correction."
+      },
+      "stepViewerCompatibilityFixes": {
+        "scope": "Generic optional plugin only, no boiler geometry authored by root",
+        "sourceRepo": "aide-pkg-STEPViewer",
+        "localInstalledBundleSHA256": "fdba67a4087786b256ce4db7bc5ff937a27532fa59d7e61f6037ebdd9eeb6bf3",
+        "changes": [
+          "Workspace JSON export through existing host save API; rejects existing targets",
+          "Memory guard includes only clean inactive cgroup file cache and host MemAvailable bound"
+        ],
+        "tests": [
+          "measurement-export.cjs PASS",
+          "test_memory_budget.py PASS",
+          "step-metrology.test.cjs PASS",
+          "viewer-upload.cjs PASS",
+          "worker.cjs PASS",
+          "step-assembly.test.cjs PASS",
+          "tests/install.py 4 PASS"
+        ],
+        "native": "Final candidate first-open rear model and coordinate/distance/angle export on disk PASS; no push/release"
+      },
+      "genericScipyNumericCapability": {
+        "at": "2026-11-17T01:18:58.609089+00:00",
+        "status": "PASS",
+        "scope": "Generic numeric dependency only; no boiler geometry authored",
+        "scipyVersion": "1.16.3",
+        "scipyModule": "/local/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/工具环境/readers/scipy/__init__.py",
+        "numpyVersion": "2.5.4",
+        "cases": [
+          {
+            "name": "linear",
+            "solution": [
+              1.9999999999999991,
+              0.9999999999999996
+            ],
+            "success": true,
+            "residual": [
+              -1.7763568394002505e-15,
+              -4.440892098500626e-16
+            ]
+          },
+          {
+            "name": "nonlinear",
+            "solution": [
+              1.0,
+              1.0
+            ],
+            "success": true,
+            "residual": [
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "name": "bounded",
+            "solution": [
+              1.9999999999999998,
+              1.9999999999999998
+            ],
+            "success": true,
+            "residual": [
+              -1.0000000000000002,
+              -2.0
+            ]
+          }
+        ],
+        "metadataSHA256": "a54602d0aa61fb25ac030b1d7b0faf0c8cfec508290d4d824198d6b43647ec1b",
+        "install": "PyPI binary scipy==1.16.3 --no-deps --target project 工具环境/readers; existing NumPy2.5.4 retained"
+      },
+      "rightWallPathModule": {
+        "author": "Luna117-119 through native Aide",
+        "sha256": "b08fa3666c716fbca0eb5adec359a8ffc38b969aa187c978efcae793a15ed166",
+        "normalApplyEvidence": ".agent-state/boiler-qc-luna-step-20261116/luna119-path-module-applied.json",
+        "remainingLimitation": "III source-conflict approximation retained, 52 degree source/endview vs fitted angle unresolved; physical header mounting and full wall not accepted"
+      },
+      "rightWallSourceHeaderClarifications": {
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-header-focused-render-provenance.json",
+        "sourceUnchanged": true,
+        "findings": [
+          "Lower89 outlets horizontal toward endviewIV; 40degree is weld bevel",
+          "Upper108 outlets negativeY/up35degree; 45degree weld bevel separate",
+          "LowerI right37bore nonradial, axis49below center; left46bore radialdown",
+          "LowerI leftcup/rightblind, lowerII leftblind/rightcup",
+          "LowerI158.5vertical drain on left,195nonradial on right; old unexecuted builder reversed lengths"
+        ],
+        "state": "Observed in original source images; implementation in Luna120 pending"
+      },
+      "rightWallHeaderModule": {
+        "author": "Luna120 in Aide",
+        "sha256": "c7b0f6cc1fd5a26554feaa3b1a838a2bc73e11e481a53c29a42464df00cd583c",
+        "normalApply": ".agent-state/boiler-qc-luna-step-20261116/luna120-header-module-applied.json",
+        "state": "Current Luna121 oblique-bore repair; all106formalcorebore checksPASS",
+        "historicalSHA256": "a7c51869397c92ac8d07647194f54ea591090fb26508b8b0cf7a0cd247463c51"
+      },
+      "rightWallCore": {
+        "state": "Formal core generated, independent geometry and actual native firstload/assembly/measurement/export PASS; source III approximation and fullhardware still incomplete",
+        "stepSHA256": "2f42e1d155c8954d8a342f0900583cb61fa9f749a3ed93f4056cc76944fc5e36",
+        "job": "RIGHT_CORE_R1",
+        "exitCode": 0,
+        "buildSeconds": 32.4322479730472,
+        "leafInstances": 210,
+        "formalSTEPCount": 111,
+        "sourceModuleSHA256": {
+          "paths": "b08fa3666c716fbca0eb5adec359a8ffc38b969aa187c978efcae793a15ed166",
+          "headers": "c7b0f6cc1fd5a26554feaa3b1a838a2bc73e11e481a53c29a42464df00cd583c",
+          "screen": "3ae631c356884f7910e81a00eacc3096e8b009e1e6e66a08a278096949989b37",
+          "coordinator": "288ec0e04d074f72ca20eda51eeb71cb4090b545cd0d9982c37a630e02dfb6cd"
+        },
+        "limits": [
+          "Coreonly: fullhardware/sealplates/grabpins notadded",
+          "III sourceconflictapproximation remains",
+          "I right nonradial drain freeenddatum adopted, notsourceexact"
+        ]
+      },
+      "historicalActiveBatchBefore122": {
+        "session": 117,
+        "sessionId": "081f4eaa92865e39871d4194373b9532",
+        "runId": "367fa97d671515a6ba345432bd1cab8d",
+        "purpose": "Complete right-wall fitting roots, finite interfaces andIII/IV/V before source application and execution",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high",
+        "actualImages": 8,
+        "wireProof": ".agent-state/boiler-qc-luna-step-20261116/luna-right-wall-close-request-proof.json",
+        "status": "in_progress",
+        "supersededBy": "currentLunaBatch122; preserved historical metadata only"
+      },
+      "leftWallPathModuleReview": {
+        "session122": "applied as intermediate source checkpoint only",
+        "sha256": "ffe4014ced48da969769baaa13e2e613ef835c574deaa5ad6666245a512e287a",
+        "acceptance": "NOT ACCEPTED; no formal left STEP",
+        "issues": [
+          "Missing start/end fields before assertions",
+          "Six-group left/right hands bend inward, potential OD60 interference",
+          "X datum must explicitly use first-screen-axis rather than wall midpoint"
+        ],
+        "preservedUnresolved": [
+          "own6-3-7 II source-side-view candidate, not source-exact3D",
+          "own6-3-10 VII association unresolved; lower800 feature unassigned, BOM not dropped"
+        ]
+      },
+      "leftWallPathModule": {
+        "sha256": "54104fe3df69408b92e962187d4b2e1b5a8b598beb25999c394375d32687a9cf",
+        "author": "Aide Luna sessions122-123",
+        "actualIndependentAcceptance": "PASS:36 private hollow sweeps,36MM STEP readbacks, trueR200/G1/endpoints/40degplane/analyticvolume;36Common candidates,zerooverlap",
+        "evidence": "04_STEP/验收/37510-6-3-5-0_管组独立路径验收.json",
+        "frame": "first-screen-axisX0..4700; centeredintegration subtract2350",
+        "limitations": [
+          "not complete leftwall",
+          "ownII rawsideviewcandidate; ownVII associationstillunresolved"
+        ]
+      },
+      "genericProjectedPathReader": {
+        "module": "03_三维建模/cad_projected_paths.py",
+        "sha256": "c97ae0ed44a36eb74a4c7302f3b3f5f731a99594b063b496670a21353f59b4b2",
+        "scope": "Generic explicit orthographic LINE/ARC/ELLIPSE circle restoration; no engineering route or view inference",
+        "actualAcceptance": "3 synthetic hollow STEP readbacks + reverse/trim/analytic length-volume and10rejectionguards PASS",
+        "evidence": "00_来源与核对/CAD投影圆弧读取工具校准.json",
+        "sourceDiscovery": "Original left component front ELLIPSE2056/2057/345F/3460, major200,ratio1/sqrt2,span30deg; engineering use/association remains Luna work"
+      },
+      "leftWallHeaderModule": {
+        "session124": "intermediate source only; no geometry acceptance",
+        "sha256": "b907cccc4f8d2b81e6007b09ece93237afef2e1927721e8ddc9b9c8f2a236ea1",
+        "reviewIssues": [
+          "All upper stations used2350 instead2480, shifting+130mm",
+          "Shared5-4-6source looked up in wrongleftfolder",
+          "Endcap argument count mismatch",
+          "ActualOCP8gp_Trsf(copy) TypeError; freshSetValues12copyverifiedworks",
+          "Path/source hash binding must be explicit"
+        ],
+        "next": "Luna125 repairs onefile, independentprivateSTEP/106bores/96ports/Common audit follows",
+        "formalLeftSTEP": "not generated",
+        "currentModuleSHA256": "e6601feab5206483ef962bcd06ff07a1faa0ede2bd886f3bfaf813923ce533eb",
+        "currentAuthor": "Aide Luna124-125",
+        "privateSTEP_SHA256": "f31f938f0875015e8a3d5aee128796a432ff3bc35bad789187cec0ca0b94e3cb",
+        "privateSTEPReadback": "PASS117validMMleaves,19.191s build",
+        "independentEndpointCheck": "PASS96source endpoints/2304material samples/121proper transforms",
+        "independentCommon": "PASS120candidates,zerooverlap above0.01mm3",
+        "independentBoreCheck": "PASS106holes/2332materialpoints",
+        "acceptance": "PASS private117leafheadercoreonly; noformalLeftSTEP/completewallacceptance",
+        "evidence": "04_STEP/验收/37510-6-0_集箱核心独立验收.json"
+      },
+      "leftOwnLetSourceRecovery": {
+        "session126": "finalnormallyapplied; actualownIIpreflightfailedbeforeSTEP",
+        "initialProposedSHA256": "611753b90a9908c90d8b81798284097ba55dde13a7c79a0f828324ca2e5e4583",
+        "staticReviewFindings": [
+          "Own1100frontELLIPSE positions require centralstraight262.996354647mm versus shared162.996354647mm; endlegsremain66.410161514mm",
+          "Initialcandidateadded50mmeachend, sourcearcswouldshift50mm; requestedactualorderedELLIPSE+trimLINErecovery",
+          "InitialVIIis2DfrontXZpathwithY0,not normal100-ready3D; keepdiagnosticandBOMassociationunresolved",
+          "VIIhas3R200arcs, not2asinitialthird-Itext"
+        ],
+        "evidence": "04_STEP/验收/37510-6-3-7_专用II原椭圆恢复独立验收.json",
+        "nextIndependentAudit": "Preparedcheck_left_own_ii_projection.py; NOTRUNpendingcorrectedLunafile/normalapply",
+        "currentModuleSHA256": "551cea170e5e73f1d3488c09e746416e66f1eff40be6f842444cb0c26ffb4acd",
+        "actualFailure": "ValueError disconnectededge162A; originalconstructionlineoffellipsejoin by0.015101140221frontmm /0.021356237308liftedmm",
+        "measuredSourceMaximumFrontOffsetMm": 99.9848988597787,
+        "repairRequest": "Preserveall4sourcearcs; reconstructonecentralparallelstraightfromactualellipseG1endpoints; quantify162Aoffset anddeclarewholefrontpathnotfullysourceexact",
+        "auditorCorrection": "Useactualoriginalellipse99.98489886offsetratherthanrounded100;4arcprojection1e-5toleranceremainsunchanged",
+        "externalSourceQuestion": "Optionaluserquestionpending: additional37510-6-3-10original/modificationdrawingoutsideDownloadarchive? Independentworkcontinues",
+        "session127": "normalapplied; ownIIactualprivatehollowSTEP/sourceprojectionQA PASS",
+        "actualOwnIIAcceptance": {
+          "lengthMm": 1165.9363442083627,
+          "volumeMm3": 1007296.6897175817,
+          "fourOriginalEllipsePointErrorsMm": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "endpointSpanMm": 1100,
+          "radiiMm": [
+            199.99999999999991,
+            200.00000000000045,
+            200.00000000000074,
+            200.0
+          ],
+          "stepSHA256": "14c7b325f248511eb60d5c1ac74a8bf586522501547f0034a8aa7167ab123a49"
+        },
+        "limits": [
+          "Sourcecentral162A precision reconciliation0.01510114frontmm/0.02135624liftedmm explicit",
+          "OldsideARC schematic conflict remains; sourcefront fourarc re-projectionexact",
+          "VII2Ddiagnosticonly/thirdIassociationunresolved; optionaladditional-source questionpending"
+        ],
+        "currentPrivateSTEP_SHA256": "da11bb92b86e2cbdcb95102eed5f8239117e5494b76a318889fbb10227b4006a",
+        "metadataCorrection": "AppliedLuna128; geometryQA rerunPASS andreceiptupdated"
+      },
+      "frontWallSourceCorrection": {
+        "sourceDimension": "271D",
+        "sourceCachedText": "9077.1",
+        "actualMeasurementMm": 9077.114913563335,
+        "priorReadingRetracted": "9071.1 was a reading error, not an originalsourceconflict",
+        "evidence": "00_来源与核对/前壁竖段9077_原标注核对.json",
+        "preparedPrompt": "front-wall-prompt.txt corrected; frontnotstarted"
+      },
+      "leftVIIAdditionalSourceSearch": {
+        "scope": "Drawingtitle/textsource search only, no geometry/nativepreviewacceptance",
+        "originalDWGIndex": "243originals/236SHAunique/7duplicate references, allindexedDXFscovered",
+        "currentDerivedDXFsSearched": 237,
+        "backupSourcesConverted": 108,
+        "backupSourceHashesUnchanged": true,
+        "converterFailures": 0,
+        "textObjectLoads": 344,
+        "textLowLevelFallbacks": 1,
+        "fallbackLimitation": "OldQC13.1-4.5totalBAK DXF GROUP objectloadererror; code0/1/3text extractiononly, no geometryrepair",
+        "result": "Only currentleftcomponentBOM ATTRIB55A7/55C5/55C6 matched ownII/VII numbers/name; no independentmatchingtitle found inboundedset",
+        "evidence": "00_来源与核对/左壁VII补充源检索汇总.json",
+        "revisionPolicy": "OlderBAK/方案1notautomaticallyadopted",
+        "optionalUserSourceQuestion": "answered2026-11-17: userhasnoadditionaldrawing; continuewithknownsources, no inventedVIIgeometry"
+      },
+      "frontWallPathModule": {
+        "currentAppliedSHA256": "3bdaa694e0a3306fa9d1497da37be1c3815ab9f797c68f4a7f68fefc978542e3",
+        "actualLocalGeometry": "PASS7privatehollowsweeps/MMreadback/G1/radii/volume; main12481.8177245,VI793.7171033;VIoriginalarcpointmaxerror6.82e-13",
+        "actualInstalledClearance": "FAILfourVIeach~87895mm3positiveCommonwithsourcevertical108cylinder; sourceall4bendinward",
+        "evidence": "04_STEP/验收/37510_前壁VI_初稿干涉诊断.json",
+        "unapplied129FirstProposal": "c2ac4d31... fixeswidthbuttakesoppositeNsigns; heldunappliedwhileamendingwithpositivesource-normal evidence",
+        "scope": "NotformalfrontSTEP/nativeacceptance"
+      },
+      "frontWallPathAccepted": {
+        "sha256": "8e040c208dfd64246a09e67b3d0b587f511b5c81aae808bb4bac523256a626a7",
+        "report": "04_STEP/验收/37510_前壁VI_修正后独立验收.json",
+        "scope": "private paths only; fullcore pending"
+      },
+      "frontWallCoreAccepted": {
+        "stepSHA256": "98dc62a1d7bd9279cfa5ad220a13f251487f3dd949c324af26486fbbb405115b",
+        "formalSTEPCountNow": 112,
+        "validMMLeaves": 88,
+        "routesMaterialSamples": 17600,
+        "lowerJointSamples": 1664,
+        "lowerBores": 30,
+        "lowerBoreSamples": 660,
+        "finStocks": 25,
+        "physicalFinFragments": 27,
+        "finSamples": 1638,
+        "actualCommonCandidates": 48,
+        "actualCommonIssues": 0,
+        "native": "PASS306260triangles/88remove87restore88/explode/reset/measure/export/independentrecompute",
+        "report": "04_STEP/验收/37510-7-0_核心独立验收.json",
+        "limitations": "Coreonly; source80vs100VIprojectiondifference retained;50flatbars/2seals/grabs/fullhardware/worldpose pending",
+        "engineeringAuthor": "AideLuna; finalexactproposals applied; rootmechanicaldraft neverapplied"
+      },
+      "leftLower800SourceCorrection": {
+        "status": "read-only source2Devidence; not3D/BOMassignment",
+        "heightMm": 800.0000000000018,
+        "projectedLengthMm": 835.832895759811,
+        "sourceSegments": "41BEtrim/4F66/4F63trim/4F60r/4F6Ar/4F6D/4F71trim",
+        "previous738Diagnostic": "truncatedchain only; falseheightconflict retracted",
+        "threeR29GroupProbePairs": 108,
+        "positiveCommons": 0,
+        "report": "00_来源与核对/左壁三处58与下部800完整源段核对.json",
+        "preparedNextPrompt": ".agent-state/boiler-qc-luna-step-20261116/left-wall-core-integrate-prompt.txt",
+        "started": false
+      },
+      "drumHeadInitialReview": {
+        "proposalSHA256": "4a67dd45b934f8a28faecee7e280a495cea0c07033175e9eec3f1eb6db9eeb46",
+        "AST": "PASS",
+        "applied": false,
+        "sourceIssues": [
+          "outward90normal neck vs sourceinwardaxialprojection",
+          "two ring40/50endvariants vs mating40/50ring/headlip edges",
+          "Aroot10 vsBroot1plusminus1, notboth1"
+        ],
+        "sourceReport": "00_来源与核对/锅筒成形孔颈_源轴向与坡口复核.json"
+      },
+      "frontMidIILocalMatch": {
+        "status": "PASS",
+        "interfaces": 26,
+        "materialSamples": 3328,
+        "maxEndpointErrorMm": 9.464099781742224e-11,
+        "midIItranslationInFrontFrameMm": [
+          0,
+          3400,
+          385
+        ],
+        "wholeBoilerPoseAccepted": false,
+        "report": "04_STEP/验收/37510_前壁与中II_局部接口匹配.json"
+      },
+      "drumHeadCompactDraft": {
+        "sha256": "6fc10a3ef0f7d1d3457ca13a79c043f40de80adfd38f9fcea917c33c29678bea",
+        "normalApply": true,
+        "formalSTEPChanged": false,
+        "privateActualExecution": "FAIL invalidloftBRep atheadAneck",
+        "sourceIssues": [
+          "A10/B1 radial lands misreadasaxial",
+          "40ring/50lip radial-axial slopes inverted",
+          "90sourceprojection datum stillrequiresreconciliation"
+        ],
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/formed-head-private-6fc10a3e.json"
+      },
+      "drumHeadFourthDraft": {
+        "sha256": "a84904187d7cd7b2e259dd36451e1295f7b16a09487830289c7f13bb904da782",
+        "normalAppliedForPrivateTesting": true,
+        "factoryValidAndRoundtrip": "PASS A/B/ring each1validMMsolid",
+        "formalDrumChanged": false,
+        "sourceInterfaceAcceptance": "FAIL26sector pressurewall gaps and122049.574653mm3 head/ringCommon; radialA/BrootsPASS",
+        "report": "04_STEP/验收/锅筒封头_第四稿独立缺口诊断.json",
+        "newOriginalSourceFacts": "00_来源与核对/锅筒孔颈_原平唇与加强圈轮廓.json",
+        "preparedNextCorrection": ".agent-state/boiler-qc-luna-step-20261116/drum-head-fifth-source-interface-prompt.txt",
+        "nextCorrectionStarted": false
+      },
+      "genericAnnularLoft": {
+        "path": "03_三维建模/cad_annular_loft.py",
+        "sha256": "2e3278f9a966d0fc72fe03f03cad2a4819c8601e660d09862f55116c59098e06",
+        "status": "PASS3syntheticanalyticvolumes/singlevalidMMSTEP/cavitymaterialpoints and3guards",
+        "scope": "Explicit caller wires only; no boiler dimensions. Fixed1e-7sewing; no wall/source/pose inference. Exchanged innerouter labels notautomatically distinguished.",
+        "report": "00_来源与核对/CAD非平面端部空心放样校准.json"
+      },
+      "preparedSplitPipeBatches": {
+        "state": "PREPARED_NOT_STARTED",
+        "steamPipes": "7manufacturingdrawings+bodymain,3571UTF8bytes",
+        "connectionPipes": "7manufacturingdrawings+bodymain,3516UTF8bytes",
+        "index": ".agent-state/boiler-qc-luna-step-20261116/split-pipe-batches.json",
+        "reason": "Each imagebatch now includes every assigned manufacturingdrawing rather than onlyrepresentatives"
+      },
+      "leftCoreFirstProposalReview": {
+        "sha256": "006a60859b4a968941be1f6f6d1fd48bbab6fea70bcea17a4077229122472b61",
+        "applied": false,
+        "sourceFinMapping": "Puredata functionPASS only; gap12/28 mappingvalid, but physicalendplanesFAIL: sourceMTEXTanchors are29.3336mm belowtrue edges. Earliertrue-terminalclaim corrected.",
+        "puredataActualExecution": "FAIL upperI missinglaneXtranslation; groupsdoubleZ7850->15700",
+        "steeredCorrectionSameRun": true,
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/left132-first-proposal-preflight.json"
+      },
+      "leftCoreSecondProposalReview": {
+        "screenSHA256": "5fb6fef6cb3eae4a22e5167b7d9f8068f21cbaf783758707fe33b2f24a2b7c95",
+        "ownLetsSHA256": "7ca0596be6ec15987eb2d73fa434adfc1e750355d19b7e83102d6ca409542fe4",
+        "applied": false,
+        "pureData": "PASS48routes/42intervals/actual96headerendpoints",
+        "independentMath": {
+          "status": "PASS",
+          "scope": "Purefrozenproposal route math only; no solids/officialSTEP/native acceptance",
+          "routes": 48,
+          "arcs": 129,
+          "maxC0GapMm": 6.059509117112506e-12,
+          "maxG1TangentVectorError": 3.72678964717548e-14,
+          "maxR200ErrorMm": 5.212541509536095e-11,
+          "maxMetadataLengthErrorMm": 1.8189894035458565e-12,
+          "bad": [],
+          "rows": "see privatefullreport"
+        },
+        "physicalFins": "Still pendingLuna correction Z380..9710, notMTEXT350.6664..9680.6664",
+        "sourceReport": "00_来源与核对/左壁鳍片_原轮廓与文字锚点核对.json",
+        "lower800Candidate": "2Dchordcomparison max5.926824mm, explicit shared-Icandidate notexactsource3D",
+        "formalSTEPGenerated": false
+      },
+      "leftVIISourceUserReply": {
+        "answer": "我没有",
+        "meaning": "No additional originalVII/modificationdrawing available from user",
+        "action": "Continue available source-backed modules and explicitly retain unassignedBOMslot/uncertainty; do not block allwork or invent dimensions"
+      },
+      "leftCoreFirstTerminalSourceCheckpoint": {
+        "screenSHA256": "95a1cd46c84304f6b043ff46b17c315937d1865c26e1d3904fd46a0d4688a84f",
+        "ownLetsSHA256": "7ca0596be6ec15987eb2d73fa434adfc1e750355d19b7e83102d6ca409542fe4",
+        "builderSHA256": "ee52732478e04e2a5f1bfbd45356d31bf4b0a3c1aad33350aa8f7bebf2b0dc5b",
+        "normalApply": "PASS exact3files",
+        "formalSTEPGenerated": false,
+        "pureData48Routes96InterfacesAndFinPhysicalEnds": "PASS",
+        "pendingAmendment": [
+          "builder reportdictionary start/end vsstartMm/endMm mismatch",
+          "use explicitDIM165 foradopted finaperture, preservelegacy159asrawsource"
+        ]
+      },
+      "genericThinOverlapInspectionFix": {
+        "oldInspectorSHA256": "e4f019d95eca2e7d49669c87b27fc11488744c8ff839ce03b0c69c519c31551b",
+        "newInspectorSHA256": "d46e0e496b7dbdb7ca1b713a7a2d9cbb47cce472e46429880622ae0fc09ea327",
+        "actualSyntheticBeforeIssues": 0,
+        "afterIssues": 1,
+        "expectedPositiveOverlapMm3": 0.5,
+        "thresholdMm3Unchanged": 0.01,
+        "report": "00_来源与核对/CAD薄层体积干涉校准.json",
+        "finalMainAssembliesRecheck": "pending allnewmodules; oldreports retainoriginalpredicate"
+      },
+      "leftCoreSecondTerminalReview": {
+        "screenSHA256": "6242a99b425a45fd267538d54f081fadb670a5e28792aaafe6ba436a693dbff9",
+        "builderSHA256": "469e2d3c143c74954035dcbdbb19057d85d346866bf2f58f0dfbf2028c1390a0",
+        "applied": false,
+        "AST": "builderFAIL listbracketatprintline594/595; screenPASS",
+        "geometryChanges": "165adoptedopening andsource/rawfields + upperICommon + endpointreceipt schema",
+        "correctionRequested": "samecodeonlyclosingbracket reposition, no rootengineeringcodeedit"
+      },
+      "left132ThirdReconstructedCandidate": {
+        "status": "paused byAide incomplete-delivery gate aftermodelself-rejected exact-older-proposal requirement",
+        "screenSHA256": "bd52688e3ffd72ce2d1aa3de6526814ea8f288c127c1b9e6c230c351895c7093",
+        "builderSHA256": "498cdf0f3bd36c29a60f43b1949fb578e5415c4bc3dae39ac0f678f9d549b34d",
+        "AST": "PASS both",
+        "applied": false,
+        "actualContractTest": "PASS sourcehashes/48routes/96ports/endpointreceipt/real165cut andretained84-radiuscell",
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left132-reconstructed-contracts.json",
+        "normalRecovery": "Byte-identical source-review copies nowaccessible under99_过程记录/源码提案校阅/132_已核验语法候选; freshLuna checkpoint re-proposes content throughnormal Aideversionguard; no gate/settings changes"
+      },
+      "leftCoreSourceAppliedFinal": {
+        "sessionNumber": 133,
+        "runId": "5bfe78c131a813fa55bc2c1f9a4af819",
+        "status": "PASS normalAideapply withhashandversionguards",
+        "screenSHA256": "bd52688e3ffd72ce2d1aa3de6526814ea8f288c127c1b9e6c230c351895c7093",
+        "builderSHA256": "498cdf0f3bd36c29a60f43b1949fb578e5415c4bc3dae39ac0f678f9d549b34d",
+        "ownLetsSHA256": "7ca0596be6ec15987eb2d73fa434adfc1e750355d19b7e83102d6ca409542fe4",
+        "engineeringAuthor": "AideLuna; reviewcopies byte-identical, rootdidnotpatchengineeringcode",
+        "job": "LEFT_CORE_R1 exited1 after46.293739s atfin10/tube10 ODrelief invalidBRepCut; formalSTEPnotwritten",
+        "receipt": ".agent-state/boiler-qc-luna-step-20261116/luna133-normal-applied-exact-private.json"
+      },
+      "leftCoreFirstActualBuild": {
+        "job": "LEFT_CORE_R1",
+        "status": "FAIL",
+        "entrySHA256": "498cdf0f3bd36c29a60f43b1949fb578e5415c4bc3dae39ac0f678f9d549b34d",
+        "actualReached": [
+          "acceptedcollectorsbuilt",
+          "48hollowroute+filledODsweeps/volumechecks",
+          "96endpointreceipt",
+          "upperI adopted165cylinderCommoncheck"
+        ],
+        "failure": "same-route Ø60 OD fin relief fin10/tube10 ->invalidBRepCut",
+        "formalSTEPGenerated": false,
+        "next": "private exactinputBRep capture/booleanstrategy diagnosis, no engineering source patch byroot"
+      },
+      "headFifthProviderFailure": {
+        "runId": "85dac368ac8dde974df7e9bf4cb79eb8",
+        "proposals": 0,
+        "modelRetryEvent": "2026-11-17T11:15:41.371383883Z",
+        "geometryOrSourceChanged": false
+      },
+      "leftCoreBooleanR2PreparedPrompt": ".agent-state/boiler-qc-luna-step-20261116/left-core-boolean-R2-prompt.txt",
+      "genericExactArcPartition": {
+        "tool": "03_三维建模/cad_partition_arcs.py",
+        "sha256": "fa09347faa4a93592fe1cab3dccbe2f499330e6ff81028370db83177bcc456eb",
+        "calibrationCases": 42,
+        "guardRejections": 4,
+        "source390SegmentsExactlyEqualToTestedPrototype": true
+      },
+      "leftCoreR2NormalApplied": {
+        "builderSHA256": "ed62fbdf110f470bf996ab4a65d53e6ead920acf9fb956d4ea603098db3c6364",
+        "normalApply": ".agent-state/boiler-qc-luna-step-20261116/luna135-normal-apply-private.json",
+        "runtimeContract": ".agent-state/boiler-qc-luna-step-20261116/left135-runtime-contract.json"
+      },
+      "leftCoreR2ActualBuild": {
+        "status": "FAIL after48.5108s, no formal STEP written",
+        "job": "99_过程记录/CAD后台任务/LEFT_CORE_R2",
+        "reason": "final residual on fin15/tube17 Common259.294373mm3; root isolating actual geometry vs protected Common",
+        "sourceUnchanged": true
+      },
+      "drumHeadSource90ReferenceCorrection": {
+        "sourceEvidence": "00_来源与核对/锅筒孔颈_90参照与成形弧顶核对.json",
+        "F2COffsetFromInnerBendVirtualApexMm": 0.3901197723985206,
+        "F2COffsetFromLegacyMainCrownMm": 14.187833536454491,
+        "conclusion": "F2C90 reference cannot be asserted as whole-head crown; source V-weld opens both bevels at common free-end",
+        "newLunaSession": 136
+      },
+      "continuationEvidence": [
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/inlet159-candidate1-physical-diagnostic.json",
+        "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/session-159-revision-run-context.json"
+      ],
+      "inlet159Revision": {
+        "sessionId": "75e8edd8fd379db60d45a7816675fafc",
+        "runId": "69538bd3cd15d41706131e5200051e33",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "medium",
+        "status": "candidate4 normally applied;3 prototypes+1 local formal artifacts,independent/native scoped PASS",
+        "candidate1Diagnostic": {
+          "members": 24,
+          "protectedCommonPairs": 20,
+          "intersectionsAbove001Mm3": 3,
+          "failedCommon": 0,
+          "channelsWithoutShellContact": 8,
+          "minimumChannelSeparationMm": 189.9695477982109,
+          "maximumChannelSeparationMm": 714.9336500496804
+        },
+        "formalSTEPCountUnchanged": null,
+        "wholeBoilerAssemblyCompleted": false,
+        "acceptedRunId": "263188b0bbcfb6ec4959fb4e4f02b983",
+        "formalSTEPCountAfter": 198,
+        "finalEvidence": [
+          "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/04_STEP/验收/进烟口源板件及名义测口_独立源位孔道材料及干涉核对.json",
+          "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/04_STEP/验收/进烟口源板件及名义测口_原生单件拆装测量验收.json"
+        ]
+      }
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Fresh all202 actual independent STEP parsing/mm/BRep/XDE and current installed real converter protocol/mesh PASS first pass202,0empty/0collapsed;3installed code hashes match;422original/copied source844SHA checks PASS. No whole-boiler STEP yet; seal169 candidate2 fails runtime/source/mating, world170 candidate1 has source-axis mismatches and unresolved400mm front roof revision.",
+      "evidence": [
+        ".agent-state/boiler-qc-luna-step-20261116/first-readback.json",
+        ".agent-state/boiler-qc-luna-step-20261116/validator-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/columns-readback-draft.json",
+        ".agent-state/boiler-qc-luna-step-20261116/column-hole-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/columns-interference-draft.json",
+        ".agent-state/boiler-qc-luna-step-20261116/interference-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/columns-readback-source-poses.json",
+        ".agent-state/boiler-qc-luna-step-20261116/columns-independent-source-pose-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/columns-interference-source-poses.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-column-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/columns-independent-source-pose-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-column-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/pre-brace-all-step-readback.json",
+        ".agent-state/boiler-qc-luna-step-20261116/girder-interference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-brace-multimodal-proof.json",
+        ".agent-state/boiler-qc-luna-step-20261116/primitive-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/post-brace-all-step-readback.json",
+        ".agent-state/boiler-qc-luna-step-20261116/brace-slot-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/brace-interference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-brace-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/manifest-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/finished-members-independent-analytic-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/short-members-interference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-short-member-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/post-finished-members-all-step-readback.json",
+        ".agent-state/boiler-qc-luna-step-20261116/connection-plates-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/frame-contact-envelope-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-frame-platform-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/roof-h250-h200-independent-envelope.json",
+        ".agent-state/boiler-qc-luna-step-20261116/contact-topology-calibration-pass.json",
+        ".agent-state/boiler-qc-luna-step-20261116/offset-head-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/roof-channel-web-relief-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/finished-members-after-roof-independent-analytic-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/c28-source-analytic-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/roof-real-section-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/finished-members-real-roof-independent-analytic-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/tapered-channel-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/mating-helper-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-frame-real-section-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/luna-drum-core-preflight-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/drum-shell-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/saddle-midplate-independent-area-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/drum-placement-corrected-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-step-retry-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/step-viewer-local-upgrade.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-drum-basic-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-document-ranges-backend-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/loft-tool-calibration.json",
+        ".agent-state/boiler-qc-luna-step-20261116/loft-tool-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-middle-ii-core-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-rear-core-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-rear-core-controls-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-3-0-header-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-4-0-header-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-3-0-interface-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/37510-4-0-interface-independent-audit.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-drum-current-basic-observation.json",
+        ".agent-state/boiler-qc-luna-step-20261116/body-all-layer-source-provenance.json",
+        ".agent-state/boiler-qc-luna-step-20261116/right-wall-fitting-annotation-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/right-wall-port-stations-reference.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-tubes-independent-material.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-protected-common.json",
+        ".agent-state/boiler-qc-luna-step-20261116/left-formal-header-fin-overlap-counterexamples.json",
+        ".agent-state/boiler-qc-luna-step-20261116/head136-corrected-crown-material-envelope.json",
+        ".agent-state/boiler-qc-luna-step-20261116/steam138-unapplied-path-preflight.json",
+        ".agent-state/boiler-qc-luna-step-20261116/steam138-first-candidate-source-review-steer-private.json",
+        ".agent-state/boiler-qc-luna-step-20261116/cross-component-calibration-summary.json",
+        ".agent-state/boiler-qc-luna-step-20261116/cross-component-positive-calibration-result.json",
+        ".agent-state/boiler-qc-luna-step-20261116/seal169candidate2-partial-diagnostic.log",
+        ".agent-state/boiler-qc-luna-step-20261116/seal169candidate2-T-material.log",
+        ".agent-state/boiler-qc-luna-step-20261116/formal202-independent-readback.json",
+        ".agent-state/boiler-qc-luna-step-20261116/formal202-actual-converter-report.json",
+        ".agent-state/boiler-qc-luna-step-20261116/formal202-converter-current-installed-code-match.json",
+        ".agent-state/boiler-qc-luna-step-20261116/source422-after-formal202-rehash.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-luna170-working-session-observation.json"
+      ],
+      "drumCorePreflight": {
+        "status": "PASS private core only",
+        "authoringModel": "gpt-6-luna",
+        "AideSession": 112,
+        "shellSHA256": "e5052b29d15ea2435ec5501d15de129fbaba767df0fff0c71d84986ffa1256a0",
+        "holeSampleCount": 1890,
+        "holeSamplesFailed": 0,
+        "volumeMm3": 301799210.46381855,
+        "independentVolumeMm3": 301799210.46391064,
+        "volumeDeltaMm3": -9.208917617797852e-05,
+        "preciseBoundsMm": [
+          0,
+          -616,
+          -616,
+          5000,
+          616,
+          616
+        ],
+        "note": "Executed frozen reviewed Luna functions. Private output, not yet formal drum assembly. Ordinary BndLib.Add overbounds trimmed edge toY618.453; AddOptimal confirms actualY616. Formal changed outputs require new SHA-bound audit."
+      },
+      "sourceStandardPDFs": {
+        "count": 20,
+        "index": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/02_图纸解析/标准件PDF/来源索引.json",
+        "scope": "Original sources read-only; PNG/text prepared. Visual review of JG5104 master completed; remaining sources checked as used."
+      },
+      "existing110Checkpoint": {
+        "at": "2026-11-17T00:44:02.449074+00:00",
+        "scope": "Existing110formal STEP current checkpoint, not complete boiler acceptance",
+        "status": "PASS",
+        "files": 110,
+        "passed": 110,
+        "report": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/04_STEP/验收/当前110份STEP全量回读.json",
+        "reportSHA256": "95dbbc3812eef83a616254ae04562a6cd966b13ea8cbeb50b11efe8cf870a5af",
+        "scriptSHA256": "b8ec24c2a3b88f69295a09ec60d938b8d2e5b07771fdab15ba0752b110ab03ab"
+      },
+      "source422IntermediateRehash": {
+        "at": "2026-11-17T00:41:37.218071+00:00",
+        "status": "PASS",
+        "sourceFiles": 422,
+        "copies": 422,
+        "hashChecks": 844,
+        "mismatches": [],
+        "scope": "Intermediate checkpoint, not final acceptance"
+      },
+      "nativePreviewMemoryAndExport": {
+        "state": "Local plugin fix, native component checks passed; final full boiler still pending",
+        "implementationRepo": "aide-pkg-STEPViewer",
+        "installedBundleSHA256": "fdba67a4087786b256ce4db7bc5ff937a27532fa59d7e61f6037ebdd9eeb6bf3",
+        "memory": "Two fresh rear-wall views rendered after accounting for clean inactive file cache;192MiB start/128MiB conversion guard,1GiB address space,timeout/cancel/lease unchanged. Host available memory remains upper bound.",
+        "export": "Native coordinate exported through existing workspace JSON file-save bridge and read from disk within1e-9mm. Native dialog cancellation passed. Later tiny cancel/extension guard edit has VM checks; final-source native rerun pending.",
+        "evidence": [
+          ".agent-state/boiler-qc-luna-step-20261116/native-workspace-measurement-export-observation.json",
+          ".agent-state/boiler-qc-luna-step-20261116/native-export-retest-memory.json",
+          ".agent-state/boiler-qc-luna-step-20261116/step-viewer-workspace-export-final-upgrade.json"
+        ],
+        "tests": [
+          "python3 tests/test_memory_budget.py",
+          "python3 tests/install.py",
+          "node tests/worker.cjs",
+          "node tests/viewer-upload.cjs",
+          "node tests/step-metrology.test.cjs",
+          "node tests/measurement-export.cjs",
+          "node tests/step-assembly.test.cjs"
+        ],
+        "release": "Local normal upgrade only; no commit/push/release"
+      },
+      "nativeMeasurementExport": {
+        "at": "2026-11-17T01:16:28.572056+00:00",
+        "nativeWorkbench": "7e97c274e25bea39214edd22a33c1219422b0a68b69eb8edf9b87b9e46142017",
+        "bundleSHA256": "fdba67a4087786b256ce4db7bc5ff937a27532fa59d7e61f6037ebdd9eeb6bf3",
+        "sourceSTEP_SHA256": "afcd671a04d44379a0efed629a6de9c0b3b485105ea151958711cfffaa504e7b",
+        "firstOpen": {
+          "status": "PASS no retry",
+          "triangles": 57892
+        },
+        "export": {
+          "status": "PASS actual native coordinate/distance/angle picks, path dialog, save receipt and independent disk JSON recomputation",
+          "file": "/Users/skyelan/linshi/金锅锅炉/QC13.1-1100-4-1.6_图纸建模_20261116/99_过程记录/后壁完整测量导出验收_20261117.json",
+          "sha256": "2677e3bec12806d1ca521d704447fc8e396eb34f53f3a72063067afc8feb52ae",
+          "records": 3,
+          "distanceMm": 9732.10431425441,
+          "angleDegrees": 4.0892145514314615,
+          "frame": {
+            "origin": [
+              -823.0780334472656,
+              -13.236633300781257,
+              9730
+            ],
+            "x": [
+              0.18174985029769244,
+              -0.0016911049438447685,
+              -0.9833433439449494
+            ],
+            "y": [
+              0.9833355224820627,
+              -0.004030855249603855,
+              0.18175533673288824
+            ],
+            "z": [
+              -0.004271082028622667,
+              -0.9999904461393747,
+              0.0009303162253404264
+            ]
+          },
+          "frameIndependentCheck": "PASS right-handed orthonormal frame, all exported point coordinates independently transformed"
+        },
+        "existingFileProtection": "PASS actual UI rejected same path, original file not rewritten",
+        "cancel": "PASS",
+        "cleanup": "Cleared markers and closed own file tab",
+        "limitations": "Custom frame is present and independently validated in the actual exported file. Frame creation UI sequence is not separately attributed in this pass; earlier native three-point calibration evidence remains separate. Whole-boiler acceptance pending."
+      },
+      "drumAfterMemoryFix": {
+        "at": "2026-11-17T01:32:51.482902+00:00",
+        "nativeWorkbench": "2a46477e6be606b46bf76a94811dab7de77dd6a3af7dc09f6d8dfa9763c90e87",
+        "bundleSHA256": "fdba67a4087786b256ce4db7bc5ff937a27532fa59d7e61f6037ebdd9eeb6bf3",
+        "sourceSTEP_SHA256": "3f9f2f3e459be94fec971607c5d1a85dead05a7c7a46805acb1ed9c42766f74b",
+        "status": "PASS actual first open without retry",
+        "triangles": 299692,
+        "dimensionsMm": [
+          5693.21,
+          1537.9,
+          1778
+        ],
+        "visual": "Shell, two heads, nominal nozzles, lifting ears and two saddles visibly rendered",
+        "cleanup": "Own file tab closed",
+        "scope": "Generic preview memory-guard regression on current basic drum; remaining engineering details/full boiler still pending"
+      },
+      "rightWallPathPreflight": {
+        "status": "PASS geometric path/sweep only",
+        "cases": 12,
+        "privateSTEPs": 12,
+        "sourceSHA256": "b08fa3666c716fbca0eb5adec359a8ffc38b969aa187c978efcae793a15ed166",
+        "checks": [
+          "independent G1 joins",
+          "R200 radii and analytic lengths",
+          "BRep and annular volume",
+          "actual STEP export/readback",
+          "both I profile/full-lane hands match",
+          "IV/V hard endpoint/tangent closure"
+        ],
+        "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-wall-path-preflight-b08fa366.json",
+        "limits": "Construction reference legs are included in these private sweeps; omit from finished stock. Not right-wall source/BOM/interface acceptance."
+      },
+      "rightWallPrivateHeaders": {
+        "stepSHA256": "957f90de351cd4c8c3c1c2f4ad35e6159d59c50e76d8f1d41fbcd391ea21ac5a",
+        "readback": {
+          "valid": true,
+          "leafInstances": 117,
+          "solidOccurrences": 117,
+          "units": "millimetre"
+        },
+        "buildSeconds": 19.09038542502094,
+        "screenJoints": {
+          "status": "PASS",
+          "joints": 96,
+          "materialSamples": 2304,
+          "properTransforms": 121,
+          "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-header-endpoints-957f90de.json"
+        },
+        "Common": {
+          "candidatePairs": 120,
+          "positiveVolumeOverlaps": 0,
+          "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-header-common-a7c51869.json"
+        },
+        "bores": {
+          "status": "FAIL repair requested in active Luna121",
+          "holes": 106,
+          "samples": 2332,
+          "failedSamples": 8,
+          "failure": "Two outer-wall edge points on each of4 oblique-X III bores still IN material: drill extent ro+3 misses bore-edge radial shift",
+          "evidence": ".agent-state/boiler-qc-luna-step-20261116/right-header-bores-957f90de-initial-v1.json",
+          "unchangedPasses": "upper51/1122;96actualendpoints/2304;121properposes;120Commonzerooverlaps",
+          "rootQAFix": "Bnd_Box.Get binding failure corrected to CornerMin/Max before the actual106 audit; engineering code unchanged for this QA compatibility fix"
+        },
+        "limitations": [
+          "Private assembly only, not formal right wall or full boiler",
+          "III source conflict approximation remains explicit",
+          "LowerI right nonradial drain overall endpoint datum not provided; adopted stock/fishmouth reference retained"
+        ]
+      },
+      "rightWallCore": {
+        "independentSTEP": "PASS210validMMleaves",
+        "boreMaterials": {
+          "holes": 106,
+          "samples": 2332,
+          "failures": 0
+        },
+        "joints": {
+          "count": 96,
+          "bothSideMaterialSamples": 6144,
+          "failures": 0
+        },
+        "openingsAndFinStocks": "PASS sourceØ165+3windows+45stocks/gaps13,29",
+        "properTransforms": 216,
+        "Common": {
+          "candidatePairs": 165,
+          "positiveVolumeOverlaps": 0
+        },
+        "projectEvidence": [
+          "04_STEP/验收/37510-5-0_集箱孔位独立校核.json",
+          "04_STEP/验收/37510-5-0_核心接口独立校核.json",
+          "04_STEP/验收/37510_右膜式壁_实体干涉.json",
+          "04_STEP/验收/37510-5-0_独立STEP回读.json"
+        ],
+        "native": {
+          "status": "PASS actual native firstopen withoutretry",
+          "triangles": 312012,
+          "displayDimensionsMm": [
+            5504.0,
+            526.03,
+            10366.61
+          ],
+          "assembly": "210->209->210;radialexplode100%->0% visibly exercised",
+          "measurements": "3records point/distance/angle exportedthroughworkspacebridge; independentrecomputePASS",
+          "evidence": ".agent-state/boiler-qc-luna-step-20261116/native-right-core-observation.json",
+          "measurementSHA256": "26870d2c10f116337713495ac15623a352d33e1a28291faf35d4dc94a77dade4",
+          "cleanup": "Ownfiletabclosed;usermaintabpreserved"
+        }
+      },
+      "nativeMeshScale": {
+        "before": {
+          "outputBytes": 167772160,
+          "complete": false,
+          "trianglesInCompleteBatches": 1152856
+        },
+        "candidate": {
+          "outputBytes": 84201753,
+          "triangles": 1837560,
+          "parts": 528,
+          "faces": 5352,
+          "complete": true,
+          "errors": [],
+          "seconds": 7.640167169971392
+        },
+        "fixtureScope": "sixoverlaidfrontcopies throughputfixture only; not actualwholeboilerassembly",
+        "limitsUnchanged": {
+          "addressSpaceMiB": 1024,
+          "outputMiB": 160,
+          "triangleBudget": 3000000
+        },
+        "unitNormalsColourPlacementChunkTests": "PASS nativeenginefidelity and forced24chunks; Nodeindexed/legacy/malformed/assembly/metrology/export/upload PASS",
+        "normalLocalUpgrade": ".agent-state/boiler-qc-luna-step-20261116/step-indexed-normal-upgrade.json",
+        "packageSHA256": "5864e60a8f03d0492152ce22d273264edfcd9fa61745549455ed9d6a6afb95aa",
+        "nativeUI": "PASS front306260tri/88remove87restore88/explode/pointdistanceangle/export; scale1837560tri/528remove527restore528/explode; ownwindowsclosed/originalworkbenchrestored",
+        "source": "aide-pkg-STEPViewer native/convert.py assets/step-import-worker.js",
+        "evidence": [
+          ".agent-state/boiler-qc-luna-step-20261116/native-scale-before-fix.json",
+          ".agent-state/boiler-qc-luna-step-20261116/native-scale-indexed-candidate.json"
+        ],
+        "report": "04_STEP/验收/STEPViewer_索引网格与大型原生验收.json",
+        "nativeBackendIO": "PASS actual installedengine upload/convert/pagedoutput, badoffset/pathtraversal/competingadmission/cancel/reopen"
+      },
+      "futureAssemblyRigidTransformDiagnostic": {
+        "sourceSTEPsha256": "98dc62a1d7bd9279cfa5ad220a13f251487f3dd949c324af26486fbbb405115b",
+        "scope": "two frontcollectorprototypes under7synthetic rigidtransforms; no engineeringposes adopted/no sourcechanges",
+        "finding": "Local/syntheticZ13000 and(3475,2100,3000) with0/90Zrotation valid. Header underX6400/12000 andbranchunderX12000 expose edge-curve/facepcurve discrepancies near1.3e-7/4.2e-7mm beyondstorededge tolerance. Whole actual worldassembly must still be checked.",
+        "geometryOrToleranceModified": false,
+        "report": ".agent-state/boiler-qc-luna-step-20261116/front-rigid-transform-validity-diagnostic.json"
+      },
+      "leftOwnIIGeometryPreservation": {
+        "status": "PASS exactlyequal old/newsegments/start/end/tangents/length",
+        "oldModuleSHA256": "551cea170e5e73f1d3488c09e746416e66f1eff40be6f842444cb0c26ffb4acd",
+        "currentModuleSHA256": "7ca0596be6ec15987eb2d73fa434adfc1e750355d19b7e83102d6ca409542fe4",
+        "report": "04_STEP/验收/37510-6-3-7_左壁集成前几何保持校核.json"
+      },
+      "leftFailedCutIndependentSemanticCheck": {
+        "status": "FAIL doNOTadopt validity-onlysame-domain repair",
+        "inputFinValid": true,
+        "inputCutterValid": true,
+        "ordinaryCutInvalid": true,
+        "simplifiedCutBRepValid": true,
+        "simplifiedPostCommonReportedMm3": 0,
+        "materialSamples": 15791,
+        "failedMaterialSamples": 233,
+        "closedVolumeMismatchMm3": 3582.1544806335587,
+        "analytic12Points": "ALL inside actualtrue route OD radius30; retainedfin material iswrong",
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left-same-domain-cut-independent-check.json",
+        "inputCapture": "99_过程记录/左壁布尔切口诊断_R1/input_capture.json",
+        "next": "isolatedNURBS/boundedcutter/segmentwise cutter variants, then independentsemantic/fullSTEP/finpoint checks beforeacceptance"
+      },
+      "leftExactArcPartitionCandidate": {
+        "status": "PASS isolated pair only; full wall not built",
+        "sourceGeometryChangeMm": 0,
+        "toolArcMaxDegrees": 30,
+        "materialCheckOnActualSTEP": {
+          "samples": 60020,
+          "failed": 0
+        },
+        "inputFinVolumeMm3": 1866000,
+        "retainedMm3": 1831708.7521653192,
+        "readbackMm3": 1831708.7347984484,
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left-chunked-roundtrip-material-check.json",
+        "independentNumericalVolumeIntegral": ".agent-state/boiler-qc-luna-step-20261116/left-cut-independent-interval-integral.json",
+        "next": "Luna amend builder via normal source proposal; build LEFT_CORE_R2; all fin semantic and STEP audits"
+      },
+      "leftAllFinPartitionPreflight": {
+        "status": "44PASS / 1FAIL; not formal wall acceptance",
+        "stockCount": 45,
+        "passingSamplesOnSTEP": 132000,
+        "failedFinItem": 20,
+        "failureStage": "STEP readback validity/volume assertion; diagnostic refinement running",
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left-all-fin-partition-private-preflight.json"
+      },
+      "leftFin20DenseExactPartition": {
+        "status": "PASS private source stock + all actual STEP material samples",
+        "maxToolArcSweepDegrees": 10,
+        "actualSTEPsamples": 80000,
+        "failed": 0,
+        "actualSTEPVolumeDeltaMm3": -3.5711564123630524e-05,
+        "sourceGeometryChanged": false,
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left-fin20-dense-partition10.0-private-preflight.json",
+        "scope": "One private fin stock only; whole wall formal output/assembly checks stillpending"
+      },
+      "head134UnappliedFactory": {
+        "status": "FAIL source slope regression and actual ring overlap; NOT applied",
+        "moduleSHA256": "87cb5b8cd847dd3741f519f2c9b57e2fef8694331fdeb5d8652e03e0fa29ae91",
+        "actualFactoryAndMMSTEP": "PASS A/B/ring valid single solids only",
+        "counterexample": {
+          "pointMm": [
+            214,
+            0,
+            225
+          ],
+          "headState": "IN",
+          "ringState": "IN"
+        },
+        "report": ".agent-state/boiler-qc-luna-step-20261116/head134-point-overlap-counterexample.json",
+        "bulkDiagnostic": "Stopped only redundant private audit process after concrete failure preserved; no completed bulk Common result claimed",
+        "sourceIssue": "Candidate erased 50degree head lip slope in actual station while retaining metadata; normal source remains a849; formal drum unchanged"
+      },
+      "leftFin15ResidualRecovery": {
+        "status": "PASS private exact-circle angle10 candidate; formal builder still pending numerical policy update",
+        "priorResidualMm3": 259.2943733133419,
+        "trueMaterialConfirmed": true,
+        "sourceRouteDistanceAt20Samples": "all<30 and IN actual fin/cutter",
+        "newActualSTEPsamples": 80000,
+        "failed": 0,
+        "newWholeODCommon": 0,
+        "newVolumeDriftMm3": -8.086208254098892e-07,
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left-fin15-dense-partition10.0-private-preflight.json"
+      },
+      "leftPrivateAll45DenseMaterial": {
+        "status": "PASS private QA fixture only",
+        "stocks": 45,
+        "physicalFragments": 47,
+        "actualSTEPsamples": 1177200,
+        "failed": 0,
+        "seconds": 35.897381266986486,
+        "stepSHA256": "52f8e8d075f12f9ddc18206952e251c32f817e7b4cf37fd7788311e4886aa690",
+        "report": ".agent-state/boiler-qc-luna-step-20261116/left-private-fixture-fin-independent-material.json",
+        "geometryPolicy": "fin15/20 exactcircle max10deg; other43 exactcircle max30deg; source dimensions unchanged",
+        "next": "Luna update formal builder fin15 policy; LEFT_CORE_R3; independent actual formal STEP/material/header/interface/native checks"
+      }
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "No push/Release/unarchive requested for this new modeling task; prior Office delivery authorization is not reused.",
+  "rollback": "",
+  "handoff": "Luna added to existing official OpenAI provider after live model-list verification, current global default gpt-6.1-sol retained; composer explicitly selects gpt-6-luna. Task submitted in native Aide and observed running.",
+  "updatedAt": "2026-11-19T04:12:21.743279+00:00",
+  "latestUserRequest": "继续用luna把剩余锅筒细节、六面膜式壁、管路和外包做完，完成整炉STEP组装，再在Aide里全面测试一遍。",
+  "continuationEvidence20261117": {
+    "at": "2026-11-17T14:52:30.986541+00:00",
+    "formalStepCount": 119,
+    "wholeBoilerCompleted": false,
+    "leftR4": {
+      "stepSHA256": "a16224db1a2bb2e1a53d036dcf3a8c008feb081805a42135e89a23b12f267501",
+      "leaves": 212,
+      "strictPairs": 518,
+      "positiveVolumePairs": 0,
+      "invalidCommonPairs": 1,
+      "finSamples": 1177200,
+      "finFailures": 0,
+      "headerRouteMaterialSamples": 11200,
+      "headerRouteFailures": 0,
+      "interfaces": 96,
+      "interfaceSamples": 6144,
+      "interfaceFailures": 0,
+      "next": "Luna bounded numerical correction of fin20/screen21; strict Common remains failed until independently retested"
+    },
+    "sixSteamManufacturingCores": {
+      "factorySHA256": "d2ad34085a86ad9a5d9164b67be48ffcb909774e683d2fd742f9508d9c6f0330",
+      "formalExports": 6,
+      "actualGeometryAndSourceHandles": "PASS",
+      "nativeDisplayed": 6,
+      "worldPoseAndSourceEndBevel": "not modeled"
+    },
+    "head140": {
+      "sourceSHA256": "78fc0603d954f61cd318ac4b394301866df59761cfc7ca730ad52434d17bfe47",
+      "privateFactoryActualExecution": "PASS A/B/ring valid1solid and MMSTEP readback",
+      "formalDrumReplaced": false,
+      "actual80NormalRays": "FAIL 6rays at short-axis root, min13.5691229mm; middle arc near16",
+      "actual400MaterialProbes": "2 failures near root normal+7.8mm",
+      "independentCenterCurvature": "Root90/270 minimum normal radius5.38681244mm below8mm offset; offset singularity risk confirmed by actual void intervals",
+      "nextPrompt": ".agent-state/boiler-qc-luna-step-20261116/head-root-curvature-refinement-prompt.txt",
+      "evidence": [
+        "head140-independent-actual-normal-wall.json",
+        "head140-independent-root-curvature.json"
+      ]
+    },
+    "fileDoubleClickFix": {
+      "sourceAndFocusedTests": "PASS",
+      "isolatedCandidateBuild": "PASS",
+      "imageID": "sha256:e3c0700f7ed2c4ed17996b40519ddd144b96d621bff23e409ca145b79bfa36ed",
+      "installation": "PASS health/integrity/mounts/ports/auth checked",
+      "nativeFixedRuntimeRetest": "PASS two double clicks and single click, no duplicate preview/busy",
+      "startupBoundary": "temporary7GiB; restored6GiB; underlying large-history cold start performance not fixed"
+    },
+    "unresolvedVII": "User has no additional drawing; keep source allocation unresolved",
+    "git": "No task commit/push/release; main advanced externally to409644a7; unrelated changes retained",
+    "left141": {
+      "normalSourceApply": "PASS",
+      "builderSHA256": "482c7fc6d318a8067ae0336d3cd97d53a10c42af7a280b5ed9006af93ab16e7e",
+      "scope": "fin20/screen21 cutter radial+0.0001mm only; stricter Boolean input/result validity; no physical tube change",
+      "R5Rebuild": "pending behind active private head generation",
+      "incrementalMassQA": "Pending comparison against preservedR4; model per-cut removal is full nominal cut, not extra numerical volume"
+    },
+    "leftR5": {
+      "job": "LEFT_CORE_R5",
+      "state": "running after normally applied Luna141",
+      "sourceSHA256": "482c7fc6d318a8067ae0336d3cd97d53a10c42af7a280b5ed9006af93ab16e7e",
+      "finalStrictCommonAndMaterialQA": "pending"
+    },
+    "wall142": {
+      "state": "9c070732 first proposal not applied; correction active",
+      "sessionId": "9a5de6697508e9306bc83844dce616b9",
+      "runId": "bf20e0fb0920c3630273ade793857437",
+      "sourceImages": 8,
+      "defects": "Cup inner root goes outsideOD; unused placeholder; clamp R35/R130 conflated, outer arch polygon; Y wire sweep open shell; cover metadata contact face incorrect; originalPDF path wrong",
+      "correctionPrompt": ".agent-state/boiler-qc-luna-step-20261116/wall-standard-correction-prompt.txt"
+    }
+  },
+  "continuationEvidence20261118": {
+    "at": "2026-11-17T17:07:10.477302+00:00",
+    "wholeBoilerCompleted": false,
+    "leftR5": {
+      "factorySHA256": "482c7fc6d318a8067ae0336d3cd97d53a10c42af7a280b5ed9006af93ab16e7e",
+      "stepSHA256": "18b400ea76c365881777c477ba363385d72a1dec9fbcae9961d2c6007d407454",
+      "actualJob": "completed exit0 640.16s",
+      "leafSolids": 212,
+      "strictCommon": {
+        "status": "PASS",
+        "testedPairs": 518,
+        "positivePairs": 0,
+        "invalidPairs": 0,
+        "thresholdMm3": 0.01
+      },
+      "finMaterial": {
+        "status": "PASS",
+        "samples": 1177200,
+        "failures": 0
+      },
+      "headerBoreAudit": "PASS106 bores2716 actual controls",
+      "nativeAcceptance": "PASS212 display/hide211/restore212/explode/reset/distance and angle export",
+      "screenMaterial": "PASS48 continuous tubes93600 points plus analytic volumes",
+      "interfaces": "PASS96 joints6144 samples",
+      "coreSummary": "04_STEP/验收/37510-6-0_左壁R5核心验收汇总.json",
+      "incrementalFin20RemovedMm3": 0.4558719848282635
+    },
+    "head143": {
+      "sessionId": "097682e44edf1af2f6a535159a612046",
+      "runId": "f587756759b610d73c7a84066ed22d55",
+      "model": "gpt-6-luna",
+      "status": "actual private A/B/ring valid/readback; scoped skirt/ring tests PASS; NOT accepted because root topology-tolerance growth after Fuse",
+      "normalWall120RaysMm": [
+        15.993083443401485,
+        16.00187952334886
+      ],
+      "materialChecks600": "FAIL2 intended interior points actuallyON; not equivalent to definite empty physical cavity",
+      "actualStepMaxEdgeToleranceMm": 1.6286328633899516,
+      "frozenReplayMaxEdgeToleranceAfterUnionMm": 3.3112046340356476,
+      "nextPrompt": ".agent-state/boiler-qc-luna-step-20261116/head-root-junction-topology-prompt.txt"
+    },
+    "wall142": {
+      "secondProposalSHA256": "0ae3ef6316dfe790f86d821a436a46937d3052490f09aaba7a36f09f833e0d2e",
+      "applied": false,
+      "sourceReview": "FAIL flat-cup closed face/R5 location; clamp planar-wire axes and arch interpretation; lower cover bevel stepped; nominal nut/washer dimensions need correction",
+      "nextPrompt": ".agent-state/boiler-qc-luna-step-20261116/wall-standard-third-correction-prompt.txt"
+    },
+    "nominalFasteners": {
+      "sourceRecord": "00_来源与核对/手孔装置_M20名义标准件外部来源核对.json",
+      "scope": "supplier primary manual nominal envelopes; not original boiler measured parts"
+    },
+    "fileDoubleClickRuntime": "candidate installed, healthy, native double/single acceptance PASS previously recorded; cold-start load/save performance remains a separate limitation",
+    "wall144": {
+      "factorySHA256": "3e433da94844c32edfd43668f9c9dddb407f3f19633792b2c8f6cb288996c36e",
+      "applied": false,
+      "AST": "PASS",
+      "actual9Factories": "PASS valid single solids and MMSTEP readback",
+      "sourceMaterial": "8 components PASS; clamp convex plan FAIL4 source-bound probes",
+      "nextPrompt": ".agent-state/boiler-qc-luna-step-20261116/wall-standard-fifth-correction-prompt.txt"
+    },
+    "remainingSteam145": {
+      "sessionId": "6e3ccf76e14d9ff79419eccbad9fe32b",
+      "status": "running gpt-6-luna manual medium, actual5sourcePNG attached",
+      "target": "03_三维建模/body_steam_pipe_remaining.py"
+    },
+    "updateAfter148": {
+      "at": "2026-11-17T18:03:05.468634+00:00",
+      "head146": "PASS 120 normal rays/600 material controls;2472 source material controls;A/B skirt crop;2 former root witnesses;max vertex .001888mm;ring Common0;formal3 unchanged B-rep byte exports. Native in progress. C2 approx about12mm retained.",
+      "wall147": "normal applied7f14dbae;9topology/MMreadback;3cups1835each/cover1500/clamp8 and nominal volumesPASS;9formalprototypes exported;integrationpending",
+      "remaining148": "normal appliedf9187b88;all6privatevalid/MM;I/III/V2856actualpath samples/volumesPASS;200borecontrolsPASS. Cap260materialcontrols1FAIL;52rays~10mmPASS butfailed .01ballCommonempty;notformalaccepted. Drainoveralllength/innerinsertioninterface pending",
+      "drum149": "unapplieda3f9757c proposal ASTFAIL line134 quantity1each;only2blanktypes,mostsourceitemsunresolved;requiresLunacorrection",
+      "wall150": "In progress after critical steers: original20 source packet SHA mixed with DXF SHA causes actual factoryFAIL at firstrow; JSON line70 invalid; midII52 vsrear26 transposed. No apply. Root actual20packet SHA table and sixfrozen XDE leaf poses supplied.",
+      "sourceSplines": "97originalDXF readonly supplement1032raw splines;15actual downcomer curves765points independentSciPy max3.1e-12PASS",
+      "formalSTEPCount": 131,
+      "wholeBoilerAssemblyCompleted": false,
+      "head146Native": "PASS three actual formal previews;A157294/B157290/ring2228tri;A distance1199.6323431941619mm saved and arithmetic independentlyrecomputed; not exact source dimension",
+      "wall147Native": "PASS all9actual formal single previews with screenshot inspection; no initial load failures; own editors/workbenches closed"
+    },
+    "updateAfter152": {
+      "normalAppliedLuna151FactorySHA256": "56d8a2a22f98ef612d22e35e9bb6e73a53ed9ec822878749113da9bcd5b0ca5f",
+      "normalAppliedLuna152FactorySHA256": "ba2c82509575eb6d318b28f699ae0f9869325d283c500b64fd8dc634bf45732f",
+      "wall152JSONSHA256": "c7cceca0e3d651e1d34c2bc33501d876581ff77ce234b012ee26c0a573bb06a8",
+      "wallPrototypeBOMQuantities": [
+        288,
+        82,
+        815,
+        12,
+        12,
+        12,
+        12
+      ],
+      "newFormalPrototypes": 8,
+      "allEightNativeRendered": true,
+      "capOldWitnessResolved": true,
+      "capFormalSamples": 260,
+      "capFormalNormalRays": 52,
+      "capKernelToleranceMaxMm": 1e-07,
+      "localDowncomerInterfaceSamples": 896,
+      "localDowncomerProtectedCommonVolumesMm3": [
+        0,
+        0,
+        0
+      ],
+      "formalSTEPCount": 140,
+      "activeLunaSession": 153,
+      "wholeBoilerComplete": false,
+      "missingLetVII": "User confirmed no additional drawing; unresolved allocation retained, no surrogate engineering geometry",
+      "downcomerFormalLocalAssemblySHA256": "797c0eaf3d96d484189dbd9e7a9ffb723de4b67b5a2b15ae99d66f591481e549",
+      "downcomerFormalLocalInterfaces": "PASS actual exported XDE896 controls /3Common=0",
+      "downcomerNativeLocalInteractions": "PASS 3 parts hide2/restore3/explode71/reset0",
+      "midI153InitialReview": "Unapplied first draft has empty installation arrays and inconsistent keys; critical steer sent; 4 is requirement index not staple direction count",
+      "newReadonlyHandholePDFVectors": "1731 paths; no mm scale inferred; source PDF SHA unchanged"
+    },
+    "updateAfter154": {
+      "at": "2026-11-17T19:53:11.913422+00:00",
+      "formalSTEPCount": 149,
+      "midI153": {
+        "sha256": "99304044a27f9ded57d02086e73f34c436017a5c1e2bb38d4a16c6dc248dd5ca",
+        "retained": 111,
+        "added": 54,
+        "sourceGraphSplice": "tools splice_step_instances.py preserves original assembly graph; standalone engineering builder reserialization failed strict original-volume gate and is archived",
+        "native": "PASS165/164/165 and57percent explosion/reset",
+        "remaining": "handhole hardware and160Ystuds"
+      },
+      "drum154": {
+        "factorySHA256": "625f1e8891ea836f31528065ab705fb317d6717433403110cb453f7d78745a99",
+        "formalIndependentMaterials": 3574,
+        "failedSamples": 0,
+        "native": "PASS eight individually opened and visually checked",
+        "installation": "not accepted"
+      },
+      "connection155": {
+        "sessionId": "b2849bfdacce0b58a223c80d0ab412b2",
+        "runId": "5df43ba696425c5b9ec94858fdf081e4",
+        "status": "running source feedback, first partial proposal not applied"
+      },
+      "sourceGap": "User has no further let-VII drawing; do not re-ask or invent the omitted part"
+    },
+    "updateAfter155": {
+      "at": "2026-11-17T20:12:18.391601+00:00",
+      "formalSTEPCount": 185,
+      "factorySHA256": "0c3565b421052edd4be23ce18e50064119ff730ba42b6fb0e217beb1d059c1c7",
+      "manufacturingPrototypes": 28,
+      "declaredPhysicalManufacturingPieces": 32,
+      "localThreePieceGroups": 8,
+      "manufacturingMaterialControls": 19968,
+      "localInterfaceControls": 288,
+      "protectedCommonPairs": 16,
+      "independentStatus": "PASS scoped geometry/source-local interfaces; no world assembly",
+      "native": "PASS all eight three-piece local groups individually visible; II-minus3/2/3 hide/restore,57percent explosion/reset exercised. Four simple manufacturing variants native check pending.",
+      "luna156": {
+        "sessionId": "67cfa84b4785dd8274300a4e81dea74c",
+        "runId": "d33bf544189304dc8f4a71b52cd1c8c8",
+        "scope": "inlet manufacturing and local assembly",
+        "model": "gpt-6-luna medium",
+        "status": "running"
+      },
+      "sources422": "844 hashes PASS no differences 2026-11-17T19:57:56Z"
+    },
+    "connection155FourSimpleNative": {
+      "status": "PASS",
+      "receipt": "04_STEP/验收/连接管I_A_I_B_III_V_原生逐件预览验收.json",
+      "count": 4
+    },
+    "inlet156Revision": {
+      "runId": "6f272b87e1a7d1b4e17721e74f43198e",
+      "status": "in_progress",
+      "previousRunUnapplied": "mixed incorrect P03 and correct target paths; geometry review errors",
+      "newSourceEvidenceCircles": 50
+    },
+    "formal185FullReadback": {
+      "at": "2026-11-17T20:33:28.980755+00:00",
+      "status": "PASS",
+      "files": 185,
+      "passed": 185,
+      "preflightHashesUnchanged": true,
+      "report": "04_STEP/验收/当前185份正式STEP_全量独立回读.json",
+      "reportSHA256": "c8b846e971280a804bde4bba7b5ca551d6819a39d87ce6eb2877c96dd2bb2558",
+      "scope": "All currently exported formal STEP files. Topology/mm/finite-positive volume/XDE names and structure checks only; not source fit, no whole boiler assembly yet."
+    },
+    "formal185ActualConverter": {
+      "at": "2026-11-17T20:47:18.923802+00:00",
+      "status": "PASS after 7 resource-guard retests",
+      "files": 185,
+      "firstPass": 178,
+      "initialResourceGuards": 7,
+      "retestedPass": 7,
+      "finalFailures": [],
+      "allFormalHashesUnchanged": true,
+      "maximumTriangles": 768038,
+      "maximumParts": 624,
+      "missingOrEmptyNodes": 0,
+      "collapsedFaces": 0,
+      "wrapperSHA256": "5b67debec68a22ee79b74aa654bf30fe47de19f1f5b96c6effd6ca72b199aa3e",
+      "converterSHA256": "2ceb00284e209d67943e8bb725f5f7942371f192cd2e2a2f3d0ff56c925c8297",
+      "limitsUnchanged": true,
+      "scope": "Actual STEPViewer converter protocol completeness. Native GUI subset separately recorded; does not complete boiler geometry/source/assembly acceptance.",
+      "runs": [
+        {
+          "report": "04_STEP/验收/当前185份正式STEP_原生转换器全量检查.json",
+          "status": "FAIL"
+        },
+        {
+          "report": "04_STEP/验收/当前185份正式STEP_首轮内存保护七份复测.json",
+          "status": "PASS"
+        }
+      ]
+    },
+    "leftLetVIIAdditionalSourceReply": {
+      "answer": "User has no additional source drawing",
+      "scope": "37510-6-3-10 let VII versus third let I allocation unresolved; no invented exact geometry or BOM credit",
+      "independentOfConnectionVII": "37510-21-0 connection VII sourced and checked separately"
+    },
+    "source422AfterFormal185": {
+      "at": "2026-11-17T20:40:09.203296+00:00",
+      "status": "PASS",
+      "files": 422,
+      "SHA256Checks": 844,
+      "differences": [],
+      "scope": "Fresh source/copy byte checks after formal185 readback; construction remains in progress."
+    },
+    "inlet156SixPrototypeIndependentQA": {
+      "status": "PASS private prototypes only",
+      "factorySHA256": "2eb0a35411becee5e6594c673b43599368afae3e33858af8a02a8dd721e40e69",
+      "prototypes": 6,
+      "materialControls": 40370,
+      "receipt": ".agent-state/boiler-qc-luna-step-20261116/inlet156-candidate3-independent-profiles-flange.json",
+      "spatialStudAndLocalFit": "in_progress"
+    },
+    "inlet157CheckpointAndSixExports": {
+      "normalAppliedFactorySHA256": "2eb0a35411becee5e6594c673b43599368afae3e33858af8a02a8dd721e40e69",
+      "formalSTEPCount": 191,
+      "newManufacturingPrototypes": 6,
+      "declaredPieces": 14,
+      "nativeSix": "PASS",
+      "sourceMaterialsIndependentControlCount": 40370,
+      "scope": "manufacturing only; no whole inlet completion",
+      "formalIndependentStatus": "PASS"
+    },
+    "inlet158SpatialStud": {
+      "sessionId": "c40f7fc4e2467df6a452e20bec5144b5",
+      "sessionNumber": 158,
+      "status": "in_progress",
+      "model": "gpt-6-luna",
+      "reasoningEffort": "medium"
+    },
+    "inlet158Final": {
+      "factorySHA256": "8c08b773acb451ca9e870633ee5c659cda2715472ce8a0db8a54efba6d234b72",
+      "manifestSHA256": "6383a70989e1699cbaf63469b5216c2579bc5f0b158b776540d7ce3aedc57dab",
+      "materialControls": 6181,
+      "native": "PASS scoped3files/interactions",
+      "scope": "nominal reconstruction; source20 phase unresolved",
+      "formalSTEPCount": 194
+    },
+    "inlet159": {
+      "sessionId": "75e8edd8fd379db60d45a7816675fafc",
+      "sessionNumber": 159,
+      "status": "in_progress",
+      "scope": "source-local inlet large parts and supports/interfaces",
+      "model": "gpt-6-luna"
+    },
+    "liveInstalledConverterMatch": {
+      "at": "2026-11-17T21:05:17.305996+00:00",
+      "status": "PASS",
+      "scope": "Exact tested native converter/job/memory guard source bytes equal current installed Aide STEPViewer plugin; no software update.",
+      "rows": [
+        {
+          "file": "job.py",
+          "candidateSourceSHA256": "5b67debec68a22ee79b74aa654bf30fe47de19f1f5b96c6effd6ca72b199aa3e",
+          "liveInstalledSHA256": "5b67debec68a22ee79b74aa654bf30fe47de19f1f5b96c6effd6ca72b199aa3e",
+          "match": true
+        },
+        {
+          "file": "convert.py",
+          "candidateSourceSHA256": "2ceb00284e209d67943e8bb725f5f7942371f192cd2e2a2f3d0ff56c925c8297",
+          "liveInstalledSHA256": "2ceb00284e209d67943e8bb725f5f7942371f192cd2e2a2f3d0ff56c925c8297",
+          "match": true
+        },
+        {
+          "file": "memory_budget.py",
+          "candidateSourceSHA256": "d4ece9ef9563a341e53fdd0810cc9a892b4159d6f7bee596221550ccce365fb3",
+          "liveInstalledSHA256": "d4ece9ef9563a341e53fdd0810cc9a892b4159d6f7bee596221550ccce365fb3",
+          "match": true
+        }
+      ]
+    }
+  },
+  "status": "in_progress",
+  "runtime": {
+    "snapshotMemoryRecovery20261118": {
+      "status": "PASS local runtime and native STEP subset",
+      "liveService": "healthy on original9999/mounts; original6GiB memory and8GiB total swap",
+      "cause": "Request snapshots dominate4.6GiB session corpus;3303 bodies4.207GB projected2.896GB compressed",
+      "candidate": "aide-acceptance:snapshot-memory-20261118",
+      "sourceSHA256": "5fc9fd66b176cb26cb40b1926430e163008dfda08b17839dda582cc87f713848",
+      "unitTests": "PASS targeted request snapshot/debug/retry checks on exact old runtime source baseline plus patch",
+      "runtimeAssets": "PASS173files UID1000 offline DOCX roundtrip",
+      "isolatedStartup": "in_progress; copied162-session corpus verified all file hashes equal; no network and6GiB original memory limit",
+      "sourceBackups": "APFS clones in ignored task evidence; original drawings unchanged",
+      "limits": "Temporary7GiB/12GiB swap increase did not solve startup; restore6GiB/8GiB on candidate installation",
+      "CAD": "8-member distance/identity Common jobs exited137 and did not pass; future isolated sequential bounded CAD jobs",
+      "candidateImageID": "sha256:fdce63a38acc0bd961bc1d2b4f979eac0331dc0a1cd7f57a1134b3ace5405972",
+      "sessionMetadata": "143active/16archived/3excluded deleted tombstones",
+      "nativeSTEP": "576tri gasket dark/light actual; original comfort/system preference restored; own preview/editor closed",
+      "filesystemRepair": "162 session files and474 engine cache files materialized byte-identically with original backups and before/after checks; no source drawing changes",
+      "references": [
+        ".agent-state/boiler-qc-luna-step-20261116/snapshot-memory-final-live-health-session-metadata.json",
+        ".agent-state/boiler-qc-luna-step-20261116/native-step-theme-and-engine-recovery.json"
+      ]
+    },
+    "handhole161Final": {
+      "formalSTEPCount": 201,
+      "native": "PASS scoped3files and seven-member interactions",
+      "reference": "04_STEP/验收/手孔装置_七件名义局部装配_原生单件拆装测量验收.json"
+    }
+  },
+  "currentCADContinuation": {
+    "at": "2026-11-18T15:36:30.938978+00:00",
+    "activeSession": 175,
+    "model": "gpt-6-luna",
+    "formalSTEPCount": 210,
+    "wholeBoilerAssemblyCompleted": false,
+    "userDesignChoice": "approved main/body3000mm rebuild",
+    "roofPaths": "applied source/analytic validation PASS",
+    "roofTubes": "candidate1 topology canonical5/local26 PASS; independent material pending",
+    "sealShells12": "8 formal files geometry/material/converter/native GUI PASS; shell2 datum-label normalization pending",
+    "unappliedWorldProposalSHA256": "453b7cdbb30180e34113286e73b2018f3512696a337e317ed37a85fe24d6dddf"
+  },
+  "executionOwnership": {
+    "engineering": "Aide gpt-6-luna owns source inventory, engineering implementation, actual execution, repair, STEP assembly and self-checks",
+    "Codex": "develop reusable missing Aide capabilities; guide by natural-language goals; independently accept actual engineering outputs and native behavior",
+    "userClarification": "但是干的对不对还是要你来验收的哈",
+    "acceptanceRule": "Aide self-checks are evidence only; independently compare source drawings and actual exported entities, counts, dimensions, material, placements, interference, STEP readback and Aide native viewing/disassembly/measurement; return failures to Aide for correction and re-acceptance"
+  },
+  "latestLocalAcceptance": {
+    "at": "2026-11-19T06:36:14.512446+00:00",
+    "formalSTEPCount": 216,
+    "front3000R1": "PASS independent material/source graph/header35preservation/Common and native88parts; not whole boiler",
+    "frontR1SHA256": "0686bbc1563a938e569a22f59600e61fbe45e063e46bd92eea26232f0676d2a3",
+    "wholeBoiler": "NOT_DONE",
+    "actualLunaVisualToolUse": "PASS8 image calls; source-referenced endbars proposal written",
+    "genericArtifactProvenanceUpgrade": "carriedbyinstalled1f44; actualAidebefore-exportprepare+exportPASS; finaldeliveryrecognitionpending",
+    "formalCountScope": "files including preserved failedR1 and correctedR2;notuniqueBOMparts or completionpercentage",
+    "flatbar11R2": "PASS originalDXF13mmoffset/8holes/1solid/mm/volume/1440materialcontrols and native940tri/1part/hide-restore/1220mmsnapmeasure/clear/rotate-reset",
+    "flatbar11R2SHA256": "cd957a6805d1067df1865f7caa30f016cd2c0f77aa5c9b8b8eae5b340dcad306",
+    "flatbar11R1": "sourceFAIL;preserved",
+    "flatbar11BOM": "4required;1manufacturingprototype;0worldplaced",
+    "responsesArguments": "carriedbyinstalled1f44; realLunaparametersandexportsPASS; original11transportfailuresretained",
+    "nativeRuntimeRecovery": "2actualpluginassets+44actualengineEIOfiles restoredsamebytes withbackup;no restart",
+    "angle12R1": "PASS original3fillets/8holes/8676materialcontrols/sourcevolume andnative1032tri/1part/hide-restore/visibleholes/measurearithmetic/clear/reset",
+    "angle12R1SHA256": "4cec94a5b9bec1fd6f18f18d8091c5389df33cd6e2a3d79a2873b38b2b92132a",
+    "angle12BOM": "4required;oneprototype;0worldinstalled",
+    "full215Regression": "NOT_RUN finalbatchrequired afterremainingengineering",
+    "runtimeSourceFingerprint": "1f44b29013333eee422e4059b02d714a6ca2cb86bc1288125d8679572e7d0564",
+    "partialHistoryApplicationRepair": "installed1f44; isolatedcoldfault/restart/retry/no-rewritePASS; dailyhealth/integrity/scopes/all174sessions andnativeSTEPsmokePASS; normalengineering2fileapplyPASS",
+    "angleFrame1": "PASSnominalsource16584materialcontrols/6boreaxes/miterCommon+contact andnative768tri3parts/hide-restore/explode100-0/690mmpickededge; world0/3; source mass/rolledradiiunreconciled",
+    "activeLunaRun": "309dadb524643eb19b88b1154616c97c",
+    "angleFrame1SHA256": "84bdba09f30fb78aa953047d6c444ddbeb3cde2345e9c72603a2be58ef7b047f",
+    "full216Regression": "NOT_RUN finalrequiredbatchafterremainingengineering",
+    "angleFrame1AideSelfQA": "PASS E25 actualSTEP reread; casting/axialpoint/radialplane verifiererrorsselfrepaired; STEP84bdunchanged"
+  },
+  "latestWorldIntegration": {
+    "at": "2026-11-19T07:09:16.670511+00:00",
+    "actualFormalSTEPFileCount": 217,
+    "file": "04_STEP/总装/37510_37531_钢架与锅筒世界定位_R1.partial.step",
+    "sha256": "a897318f618c6d1cc12d14147a8068db61a950b32e0b4f994598853148fae509",
+    "sourceVersionCorrection": "Aide replaced old3f9 drum with accepted formed-head60-leaf4a72 after independent feedback",
+    "actualLeafCount": 684,
+    "frozenInvariants": "PASS every leaf",
+    "crossComponentCommon": "PASS2tested+37438strictlydisjoint; internal pairs excluded",
+    "actualWorldValidity": "FAIL1 drum shell; Aide tasked to self-repair",
+    "wholeBoiler": "NOT_DONE",
+    "native": "NOT_RUN",
+    "evidence": [
+      "world-frame-drum-R1-independent-frozen-invariants.json",
+      "world-frame-drum-R1-independent-cross-components.json",
+      "world-frame-drum-R1-independent-located-validity.log"
+    ]
+  }
+}

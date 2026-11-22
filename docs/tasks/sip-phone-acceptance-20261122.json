@@ -1,0 +1,242 @@
+{
+  "id": "sip-phone-acceptance-20261122",
+  "request": "Connect specified Motorola phone to the existing unlocked assistant; verify real calls and two-way voice; do not change existing pending approvals.",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/assistant-live.md\n M docs/architecture/launcher-contract.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/approval_policy.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_components.go\n M internal/server/assistant_delegation.go\n M internal/server/assistant_followup.go\n M internal/server/assistant_history.go\n M internal/server/assistant_history_test.go\n M internal/server/assistant_initiative.go\n M internal/server/assistant_mixsoul.go\n M internal/server/assistant_mixsoul_test.go\n M internal/server/assistant_native_approval.go\n M internal/server/assistant_native_approval_test.go\n M internal/server/assistant_realtime.go\n M internal/server/assistant_result_trigger.go\n M internal/server/assistant_retrieval.go\n M internal/server/assistant_watch.go\n M internal/server/assistant_work_ledger.go\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/assisted_approval_surface.go\n M internal/server/auth_verify.go\n M internal/server/business_flow.go\n M internal/server/change_impact.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/cross_session_tools.go\n M internal/server/debug.go\n M internal/server/debug_dataflow.go\n M internal/server/document_proposals.go\n M internal/server/execution_journal.go\n M internal/server/factory_reset.go\n M internal/server/goal_acceptance.go\n M internal/server/integrity.go\n M internal/server/integrity_upgrade.go\n M internal/server/interrupted_output.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_timeline.go\n M internal/server/migration.go\n M internal/server/mixsoul/agent.cjs\n M internal/server/mixsoul/system.test.cjs\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/persona.go\n M internal/server/plan.go\n M internal/server/plugin_effect_checks.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/professional_workflow.go\n M internal/server/project_briefing.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/reminder_schedule.go\n M internal/server/reminders.go\n M internal/server/server.go\n M internal/server/session_model_selection.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/task_release_receipts.go\n M internal/server/tool_calls.go\n M internal/server/voice_fallback_gate_test.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/assistant-approval-tools-20261122.json\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/lazy-session-startup-20261122.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/startup-performance-20261122.json\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/assistant_approval_query.go\n?? internal/server/assistant_approval_tools_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/lazy_sessions.go\n?? internal/server/lazy_sessions_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? internal/server/startup_sessions.go\n?? internal/server/startup_sessions_test.go\n?? scripts/assistant-model-status.test.cjs\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Establish a local SIP call to the specified phone and end it cleanly.",
+    "Verify real telephone microphone input, provider transcription, assistant response and RTP output separately from user hearing confirmation.",
+    "Enforce a per-call read-only scope at the backend: no approval decision, task dispatch, run control or memory tools.",
+    "Preserve pending approval identities and original task state."
+  ],
+  "scope": [
+    "internal/server/assistant_readonly_call.go",
+    "internal/server/assistant_readonly_call_test.go",
+    "existing assistant realtime and tool execution paths",
+    "scripts/aide_sip_phone.py",
+    "scripts/test_aide_sip_phone.py",
+    "phone local line settings without changing credentials",
+    "docs/tasks/sip-phone-acceptance-20261122.json",
+    ".agent-state/sip-phone-acceptance-20261122"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly selected phone-to-assistant integration and confirmed Mac unlock. Physical speech participation is needed at the final call.",
+      "evidence": [
+        "current user instruction"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Single-device local SIP/RTP bridge, localhost authenticated realtime relay, explicit server-side read-only call scope. No provider credentials on phone.",
+      "evidence": [
+        "scripts/aide_sip_phone.py",
+        "internal/server/assistant_readonly_call.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Local register, outgoing/incoming calls, G.711, band-limited 24-to-8 kHz conversion, peak-limited playback gain and persistent idle mode. Read-only tool/executor/native-decision/dispatch guards; instruction refresh and bounded false-completion speech correction.",
+      "evidence": [
+        "scripts/aide_sip_phone.py",
+        "internal/server/assistant_readonly_call.go",
+        "internal/server/assistant_readonly_call_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "13 focused Go race tests, 6 Python SIP/audio tests, 2 desktop session tests, JS syntax, docs and diff checks passed. Physical phone common settings persisted. Actual normal telephone query of session188 produced a model assistant_work call and matching host pendingCount0 receipt; spoken response seen in native timeline. Global35 approvals and original task files preserved. Guide verified in native Aide desktop light view; other phone models and full multi-theme/responsive matrix not accepted.",
+      "evidence": [
+        ".agent-state/sip-phone-approval-188-20261122/normal-approval-188-acceptance.json",
+        ".agent-state/sip-phone-approval-188-20261122/checks-normal.log",
+        ".agent-state/sip-phone-approval-188-20261122/protocol-tests-normal.log",
+        ".agent-state/sip-phone-approval-188-20261122/desktop-session-tests.log",
+        ".agent-state/sip-phone-approval-188-20261122/docs-check.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Built-in SIP settings guide with live non-secret connection fields and troubleshooting; Chinese/English user manuals and architecture updated.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture/assistant-live.md",
+        ".agent-state/sip-phone-approval-188-20261122/docs-check.log"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Temporary transcript-enabled probes ended; no test daemon remains. Failed login LaunchAgent was unloaded and archived after macOS denied protected-folder access. Ordinary gateway is opt-in under normal Aide desktop startup, with no OS permission weakening. Stable local dependencies/config prepared; gateway log private, no microphone recordings or keys on phone; existing dirty worktree retained.",
+      "evidence": [
+        ".aide-data/sip-phone/process.json",
+        ".agent-state/sip-phone-approval-188-20261122/normal-content-fingerprints.json",
+        ".agent-state/sip-phone-approval-188-20261122/preservation-normal.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Authorized local normal-call/guide build and desktop startup verified on 9a027c2c image. Opt-in local host gateway prepared for this installation. No public release, push or commit; SIP dependency installation is not yet bundled as a public installer.",
+      "evidence": [
+        ".agent-state/sip-phone-approval-188-20261122/build-normal.log",
+        ".agent-state/sip-phone-approval-188-20261122/normal-approval-188-acceptance.json"
+      ]
+    }
+  },
+  "release_authorization": "User requested rebuilding/acceptance and then explicitly connecting the physical phone to the assistant and testing real calls/two-way voice; local changes only.",
+  "rollback": "Stop only this gateway process; restore SIP1 to disabled, clear test user/display/server fields and restore handset/speaker volumes 5. Admin/auth/password/network/firewall were not changed. Backend rollback is source reversion and normal rebuild; old runtime image was reclaimed by normal launcher GC.",
+  "handoff": "Completed phone common settings, normal assistant call integration, built-in SIP setup/troubleshooting guide and real telephone approval lookup for188. Dial1000 with Aide running and assistant unlocked. Native model assistant_work call and host receipt matched;188 pending0, global35 unchanged, original tasks unchanged including188 SHA256. Ordinary gateway starts with the configured Aide desktop; stop via scripts/aide_sip_service.py stop --root <installation>. Administrator prepares Python dependencies once; public installer not released. No existing pending task approved, rejected or otherwise changed.",
+  "connectivity": {
+    "device_ip": "10.31.2.107",
+    "configured_sip_registration": "not changed",
+    "mac_ui": "unlocked; inspected Safari phone settings",
+    "checks": {
+      "tcp80": {
+        "reachable": true,
+        "seconds": 0.064
+      },
+      "sip_options": {
+        "responded": true,
+        "status_line": "SIP/2.0 200 OK"
+      }
+    }
+  },
+  "ui_acceptance": {
+    "status": "pass",
+    "summary": "Safari registered state and persisted volume 7 observed; Aide user identity verification completed after both builds."
+  },
+  "phone_acceptance": {
+    "tcp80": "pass",
+    "sip_options": "pass",
+    "registration": "pass; actual device UI registered",
+    "outgoing_call": "pass; 100,180,200, PCMU and remote BYE",
+    "incoming_call": "pass; phone dialled 1000, actual assistant ready and PCMU media connected, remote BYE at 100.510s",
+    "bidirectional_media": "pass; real user confirmed final voice clear and volume appropriate after gain 2 and off-loop FIR",
+    "assistant_dialogue": "PASS for ordinary real telephone approval query188; normal spoken result0 matched fresh host receipt. ASR remains fallible; earlier failed probes retained.",
+    "pending_approvals": "PASS:35 identities/states unchanged, no original task file size/mtime changed,188 content SHA256 unchanged, no new task files."
+  },
+  "runtime": {
+    "image": "sha256:9a027c2c9eeada5a2aa3eaf205a0b3f2b2026dace9539a9839701ebb0e0e2fa8",
+    "source_label": "6a2c1194eac352717f5a622dff809d2c83ad8dc776f98849ad0a503b4b1a1fb3",
+    "version": "0.1.19.0 RC2",
+    "realtime_provider": "openai",
+    "realtime_model": "gpt-realtime-2.1-mini",
+    "dialogue_model": "mimo-v2.6-pro",
+    "health": "healthy",
+    "host_gateway": {
+      "pid": 94027,
+      "mode": "normal",
+      "state": "ordinary gateway running; latest call verified",
+      "automatic_start": "opt-in with Aide desktop start",
+      "idle_provider_connection": false,
+      "show_transcripts": false,
+      "configuration": ".aide-data/sip-phone/config.json",
+      "control": "scripts/aide_sip_service.py",
+      "maximum_call_seconds": 1800
+    }
+  },
+  "phone_changes": {
+    "sip1_enabled": true,
+    "sip_user": "1001",
+    "display_name": "XiaoMian",
+    "server": "Mac local route IP, UDP 5060",
+    "credentials": "No admin, auth or password fields changed",
+    "handset_volume": {
+      "before": 5,
+      "after": 7
+    },
+    "speaker_volume": {
+      "before": 5,
+      "after": 7
+    },
+    "mic_gain": "unchanged (3)"
+  },
+  "approval188_followup": {
+    "status": "pass",
+    "request": "User requests actual telephone lookup of session 188 approval status, with proof of a real tool call, strictly no approval or task changes.",
+    "evidence": [
+      ".agent-state/sip-phone-approval-188-20261122/normal-approval-188-acceptance.json"
+    ],
+    "finding": "Actual model assistant_work and host approval event observed, but broad positive-action speech regex crossed clause/negation boundaries and caused a generic read-only denial instead of a status answer. Added query-specific host receipt and explicit pending count for read-only native calls. Existing pending tasks unchanged.",
+    "scope": [
+      "internal/server/assistant_readonly_call.go",
+      "internal/server/assistant_realtime.go",
+      "internal/server/assistant_readonly_call_test.go",
+      "scripts/aide_sip_phone.py"
+    ],
+    "checks": {
+      "go_race_tests": 10,
+      "python_protocol_tests": 5,
+      "docs": "pass",
+      "build": "local compile/start pass; real final phone query in progress"
+    },
+    "asr_findings": "Real telephone ASR sometimes confused session/approval vocabulary; added generic gpt-transcribe keywords only to read-only OpenAI calls, with no target number or expected answer in hints.",
+    "runtime": "Normal call on healthy local build 9a027c2c; no special read-only test greeting or extra read-only speech review used.",
+    "result": "Actual ordinary telephone call generated assistant_work; matching host approval_query receipt identified session188, pendingCount0. Normal spoken response said no pending manual approvals. Global35 approval identities/states and all original task file size/mtime unchanged, session188 SHA256 unchanged, no new task files.",
+    "model_call_id": "call_BjIQ8Rae1J42fpQS"
+  },
+  "normal_phone_setup": {
+    "status": "pass",
+    "request": "User prioritizes shared telephone settings, ordinary assistant calls, and a SIP configuration guide in Aide for users who do not know how to configure a phone. Preserve pending tasks; finish the 188 query acceptance after normal setup.",
+    "scope": [
+      "phone shared SIP/media/dial settings",
+      "scripts/aide_sip_phone.py",
+      "internal/server/assistant_sip_status.go",
+      "internal/server/assistant_sip_status_test.go",
+      "internal/server/assistant_realtime_provider.go",
+      "internal/server/web/app.js",
+      "internal/server/web/settings-schema.json",
+      "internal/server/web/locales/en.js",
+      "internal/server/web/index.html",
+      "docs/architecture/assistant-live.md",
+      "local user SIP gateway service configuration",
+      "docs/user-guide.md",
+      "docs/en/user-guide.md",
+      "scripts/aide_sip_service.py",
+      "scripts/desktop-session.py",
+      "scripts/test_macos_desktop.py",
+      "scripts/aide.sh"
+    ],
+    "phone_common": {
+      "dial_timeout_seconds": 3,
+      "hash_key_dials": true,
+      "codec_priority": [
+        "G.711U",
+        "G.711A",
+        "G.722",
+        "G.729AB",
+        "opus",
+        "iLBC"
+      ],
+      "handset_volume": 7,
+      "speaker_volume": 7,
+      "auto_answer": false,
+      "stun": "disabled for same LAN",
+      "ui_persistence": "G.711U first, G.711A second; # dials immediately, timeout dialing 3 seconds; RTP keepalive on, RTP relay off; saved settings and registered SIP1 observed."
+    },
+    "guide_paths": [
+      "internal/server/web/app.js:renderSIPPhoneGuide",
+      "docs/user-guide.md",
+      "docs/en/user-guide.md"
+    ],
+    "guide_ui": "PASS: native Aide Settings > Assistant and voice > Voice assistant displayed the actual running normal gateway, server, port, account, extension, allowed phone, step-by-step setup and troubleshooting. Refresh button tested; desktop light layout inspected.",
+    "startup": "PASS: stopped prior gateway, rebuilt/opened Aide desktop, observed a newly started normal gateway PID 94027 and fresh API status. No login LaunchAgent remains; macOS protected-folder restrictions respected.",
+    "checks": {
+      "go_top_level_tests": 13,
+      "python_protocol_tests": 6,
+      "desktop_session_tests": 2,
+      "docs": "pass",
+      "node_syntax": "pass",
+      "diff_check": "pass"
+    },
+    "conversation_acceptance": "PASS: user dialled 1000 in ordinary mode; true model tool request, host query receipt and normal spoken #188 status observed. No pending task changed.",
+    "evidence": [
+      ".agent-state/sip-phone-approval-188-20261122/build-normal.log",
+      ".agent-state/sip-phone-approval-188-20261122/checks-normal.log",
+      ".agent-state/sip-phone-approval-188-20261122/protocol-tests-normal.log",
+      ".agent-state/sip-phone-approval-188-20261122/desktop-session-tests.log",
+      ".agent-state/sip-phone-approval-188-20261122/preservation-normal.json"
+    ]
+  }
+}

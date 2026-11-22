@@ -207,6 +207,8 @@ type RequestSnapshot struct {
 	At            string          `json:"at"`
 	CompletedAt   string          `json:"completedAt,omitempty"`
 	ElapsedMillis int64           `json:"elapsedMillis,omitempty"`
+	bodyChunks    []*snapshotBodyChunk
+	bodySize      int
 }
 
 // contextTools 任务可用工具（与 toolLoop 使用的完全一致）；按设置过滤被禁用的工具。
@@ -866,7 +868,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	defer a.mu.Unlock()
 	var s *Session
 	if in.SessionID != "" {
-		s = a.sessions[in.SessionID]
+		s = a.sessionLocked(in.SessionID)
 		if s == nil {
 			fail(w, 404, errors.New("会话不存在"))
 			return
@@ -927,7 +929,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 func (a *App) runRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return

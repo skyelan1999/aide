@@ -47,6 +47,7 @@ type PluginWorkbench struct {
 	ProfessionalWorkflow bool `json:"professionalWorkflow,omitempty"`
 	Microphone           bool `json:"microphone,omitempty"`
 	OnDeviceSpeech       bool `json:"onDeviceSpeech,omitempty"`
+	Geolocation          bool `json:"geolocation,omitempty"`
 
 	HostComponent   string                     `json:"hostComponent,omitempty"`
 	ProjectMessages bool                       `json:"projectMessages,omitempty"`

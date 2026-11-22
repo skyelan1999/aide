@@ -102,6 +102,10 @@ func (a *App) prepareImageIntegrityUpgrade() {
 }
 
 func (u *integrityUpgrade) commit(data string) error {
+	return u.commitCached(data, nil)
+}
+
+func (u *integrityUpgrade) commitCached(data string, cache *startupSessionCache) error {
 	previous, err := os.ReadFile(baselinePath(data))
 	if err != nil || !bytes.Equal(previous, u.previous) {
 		return fmt.Errorf("baseline changed since startup")
@@ -111,7 +115,7 @@ func (u *integrityUpgrade) commit(data string) error {
 		return fmt.Errorf("image checksum changed since startup")
 	}
 	digest, err := currentBinarySHA256()
-	if err != nil || digest != trusted || !onlyBinaryMismatch(VerifyIntegrity(data)) {
+	if err != nil || digest != trusted || !onlyBinaryMismatch(verifyIntegrityCached(data, os.ReadFile, cache)) {
 		return fmt.Errorf("program or data integrity changed before readiness")
 	}
 	// Stable content-addressed backups are never overwritten. Failure to back up
@@ -152,17 +156,20 @@ func (u *integrityUpgrade) commit(data string) error {
 func (a *App) confirmImageIntegrityUpgrade() {
 	a.integrityMu.Lock()
 	defer a.integrityMu.Unlock()
+	defer func() { a.startupSessions = nil }() // Do not retain a per-boot cache during normal operation.
 	u := a.integrityUpgrade
 	if u == nil {
 		return
 	}
 	a.integrityUpgrade = nil
-	if err := u.commit(a.dataPath); err != nil {
+	started := time.Now()
+	if err := u.commitCached(a.dataPath, a.startupSessions); err != nil {
 		log.Printf("integrity: upgrade baseline retained: %v", err)
 	} else {
 		log.Printf("integrity: verified ready build baseline updated (%s, %s)", u.next.Version, u.next.Commit)
 	}
-	a.integrityRep = VerifyIntegrity(a.dataPath)
+	a.integrityRep = verifyIntegrityCached(a.dataPath, os.ReadFile, a.startupSessions)
+	log.Printf("startup: stage=ready-integrity elapsed=%s", time.Since(started).Round(time.Millisecond))
 }
 
 // Serialize periodic reads with the readiness transition, so an older report
@@ -176,7 +183,11 @@ func (a *App) runIntegrityChecks() {
 			return
 		case <-ticker.C:
 			a.integrityMu.Lock()
-			a.integrityRep = SelfHeal(a.dataPath, VerifyIntegrity(a.dataPath))
+			var cache *startupSessionCache
+			if a.lazySessionMode {
+				cache = &startupSessionCache{catalogue: &lazySessionStore{data: a.dataPath}}
+			}
+			a.integrityRep = SelfHeal(a.dataPath, verifyIntegrityCached(a.dataPath, os.ReadFile, cache))
 			a.integrityMu.Unlock()
 		}
 	}

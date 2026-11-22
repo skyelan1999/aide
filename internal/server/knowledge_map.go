@@ -160,7 +160,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	}
 	sort.Strings(keys)
 	for _, id := range keys {
-		s := a.sessions[id]
+		s := a.sessionLocked(id)
 		if s == nil || s.Deleted || s.Kind == "assistant" {
 			continue
 		}

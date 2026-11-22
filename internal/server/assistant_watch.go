@@ -36,7 +36,7 @@ func watchEvent(kind, key, text, session string) assistantWatchEvent {
 func (a *App) humanApprovalEventsLocked() []assistantWatchEvent {
 	events := []assistantWatchEvent{}
 	workspace := a.wsID()
-	for _, s := range a.sessions {
+	for _, s := range a.pendingSessionBodiesLocked() {
 		if s.Deleted || s.Archived || s.Kind == assistantSessionKind {
 			continue
 		}
@@ -113,7 +113,7 @@ func (a *App) assistantWatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
-	assistant := a.sessions[r.PathValue("id")]
+	assistant := a.sessionLocked(r.PathValue("id"))
 	if assistant == nil || assistant.Kind != assistantSessionKind {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("不是有效的小秘系统会话"))

@@ -16,7 +16,7 @@ def check_build_inputs():
         copies = {tuple(line.split()[1:]) for line in runtime.splitlines() if line.startswith('COPY ')}
         assert 'builtin-plugins' not in runtime, name
         assert 'bundled-plugins' not in (root/name).read_text(), name
-        assert ('--from=build', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
+        assert ('--from=host-helpers', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
 
 PROGRAM = r'''
 import hashlib, json, os, shutil, subprocess, tempfile
@@ -57,6 +57,8 @@ if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
 
     assert Path('/opt/aide/licenses/platform/wqy-zenhei-copyright').is_file(), 'CAD font notice missing'
     assert shutil.which('soffice'), 'Office layout renderer missing'
+    assert Path('/opt/aide/licenses/platform/libreoffice-writer-copyright').is_file(), 'Writer runtime notice missing'
+    assert Path('/opt/aide/licenses/platform/libreoffice-writer-copyright').read_bytes() == Path('/usr/share/doc/libreoffice-writer/copyright').read_bytes(), 'Writer runtime notice differs from installed package'
     subprocess.run(['/usr/bin/python3','-c','import uno'],check=True)
     assert Path('/opt/aide/licenses/platform/libreoffice-common-copyright').is_file(), 'Office notice missing'
     assert shutil.which('pdftoppm'), 'PDF compatibility renderer missing'
@@ -98,6 +100,7 @@ if os.environ.get('AIDE_REQUIRE_LAN_BRIDGE') == '1':
     assert set(entries) == required, 'native LAN platform inventory mismatch'
     for name, digest in entries.items():
         assert hashlib.sha256((bridge / name).read_bytes()).hexdigest() == digest, name
+writer_pdf = False
 with tempfile.TemporaryDirectory() as temporary:
     spec = Path(temporary) / 'input.json'
     output = Path(temporary) / 'output.docx'
@@ -106,8 +109,19 @@ with tempfile.TemporaryDirectory() as temporary:
                     'create', 'docx', str(spec), str(output)], check=True)
     document = Document(output)
     assert document.paragraphs[-1].text == 'readable'
+    if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
+        from pypdf import PdfReader
+        profile = (Path(temporary) / 'lo-profile').as_uri()
+        rendered = subprocess.run(['soffice', '-env:UserInstallation=' + profile,
+                                  '--headless', '--convert-to', 'pdf:writer_pdf_Export',
+                                  '--outdir', temporary, str(output)],
+                                 capture_output=True, text=True, timeout=30)
+        pdf = output.with_suffix('.pdf')
+        assert rendered.returncode == 0 and pdf.is_file(), 'Writer PDF conversion failed: ' + rendered.stdout + rendered.stderr
+        assert 'readable' in ''.join(page.extract_text() or '' for page in PdfReader(pdf).pages), 'Writer PDF lost document text'
+        writer_pdf = True
 print(json.dumps({'status': 'pass', 'uid': os.geteuid(), 'readableFiles': len(files),
-                  'docxRoundTrip': True, 'network': 'none'}))
+                  'docxRoundTrip': True, 'writerPdf': writer_pdf, 'network': 'none'}))
 '''
 
 if __name__ == '__main__':

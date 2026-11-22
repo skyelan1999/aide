@@ -1,0 +1,122 @@
+{
+  "id": "startup-readiness-20261122",
+  "request": "修复启动超时误报未就绪，编译完成后持续等待服务就绪并自动完成启动，无需手动重试",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/debug_dataflow.go\n M internal/server/migration.go\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/install-office-preview.sh\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "A several-minute successful cold start completes build.command without a manual retry.",
+    "Container and host HTTPS readiness use one bounded budget and progress heartbeat.",
+    "Exited containers, permanent timeout and wrong host identities never report success.",
+    "Owned initializing instances are waited for without recreation; outer build/desktop deadlines allow the readiness budget."
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "scripts/launcher.py",
+    "scripts/desktop-session.py",
+    "scripts/test_launcher_contract.py",
+    "scripts/test_startup_readiness.py",
+    "docs/architecture/launcher-contract.md",
+    "docs/agent/router.json",
+    "docs/tasks/startup-readiness-20261122.json",
+    ".agent-state/startup-readiness-20261122"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests automatic completion of slow but successful post-build startup without manual retry.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Shared 600s readiness budget configurable to 1..1800s, bounded probes, 15s progress, owned-instance reuse, actual exit detection, 2100s outer wrapper allowance.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "POSIX helper and entrypoint plus build/Mac wrappers updated; regression tests and contract documentation added.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "102 targeted regressions and complete offline resource check passed. A real build.command invocation completed automatically with exit=0 in 526.9s total; readiness progress reached 344/600s before automatic success. Both old 60-attempt and 240s outer limits were exceeded without abort or manual retry. Host TLS/instance checks passed. Optional post-build cache recycling skipped because Docker health status lagged behind direct HTTP readiness.",
+      "evidence": [
+        ".agent-state/startup-readiness-20261122/readiness-tests.log",
+        ".agent-state/startup-readiness-20261122/launcher-contract.log",
+        ".agent-state/startup-readiness-20261122/data-tests.log",
+        ".agent-state/startup-readiness-20261122/desktop-tests.log",
+        ".agent-state/startup-readiness-20261122/runtime-assets.log",
+        ".agent-state/startup-readiness-20261122/build.log",
+        ".agent-state/startup-readiness-20261122/build-exit",
+        ".agent-state/startup-readiness-20261122/host-health.json",
+        ".agent-state/startup-readiness-20261122/docker-health.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated launcher contract with deadline, progress, override, ownership and failure behavior; linked issue #981 and recorded actual results.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed task-scoped diffs; temporary test containers cleaned by test harness. Existing user changes/data retained. Optional normal build cache recycling did not run because Docker health label had not yet refreshed.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source build installed and validated; no commit, push, new version or public release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Keep pre-change local runtime under aide:startup-readiness-before-20261122 until real startup validation completes.",
+  "handoff": "Local startup false timeout fixed and validated with one complete build invocation. App remains at https://localhost:9999/. Startup can still take about six minutes, but now waits and completes without manual retry. Linux behavior covered by shell/fake-Docker tests; no physical Linux or Windows acceptance. Optional cache recycling was skipped on this run due to health-label lag.",
+  "issue": "https://github.com/skyelan1999/aide/issues/981",
+  "operator": "skyelan1999",
+  "tests": [
+    {
+      "command": "python3 scripts/test_startup_readiness.py",
+      "count": 7,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_launcher_contract.py",
+      "count": 38,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_launcher_data.py",
+      "count": 43,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_macos_desktop.py",
+      "count": 14,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_runtime_assets.py sha256:24f27c8b3cbbcf4de11e61443461e42211164b509e8aa45612e757ba3c43ac60 --require-lan-bridge",
+      "result": "PASS",
+      "details": {
+        "uid": 1000,
+        "network": "none",
+        "readableFiles": 156,
+        "docxRoundTrip": true,
+        "writerPdf": true
+      }
+    }
+  ],
+  "candidate": {
+    "image": "sha256:24f27c8b3cbbcf4de11e61443461e42211164b509e8aa45612e757ba3c43ac60",
+    "source_sha": "b35772c3c02394f40e18ea6e41ec4d04304a76415826a0a5ae64b34b20111da4"
+  },
+  "final_service_state": {
+    "docker_health": "healthy",
+    "host_health": "ok",
+    "integrity": "ok",
+    "url": "https://localhost:9999/",
+    "manual_start_retry": false,
+    "build_exit": 0
+  },
+  "issue_state": "closed (local verified fix, not published)"
+}
