@@ -233,6 +233,7 @@ type Task struct {
 	Created              string               `json:"created"`
 	Steps                []Step               `json:"steps"`
 	Files                []Change             `json:"files"`
+	WithdrawnProposals   []proposalWithdrawal `json:"withdrawnProposals,omitempty"`
 	Commands             []string             `json:"commands"`
 	Error                string               `json:"error,omitempty"`
 	Failures             int                  `json:"failures,omitempty"` // 工具失败累计次数（失败反馈循环）
@@ -326,7 +327,7 @@ var builtinTools = append([]any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_list_comments", "description": "列出 .docx 文件内的原生 Word 批注及精确锚点；支持本地/SSH 工作区及已授权引用；写入需要 RW。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "可选：已启用且对当前工作区 AI 可见的引用来源 ID；写入需要 RW"}, "path": map[string]any{"type": "string"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_add_comment", "description": "给 .docx 精确选中的 quote 原文添加原生 Word 批注；支持本地/SSH 工作区及已授权引用；写入需要 RW。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "可选：已启用且对当前工作区 AI 可见的引用来源 ID；写入需要 RW"}, "path": map[string]any{"type": "string"}, "quote": map[string]any{"type": "string", "description": "文档中已存在的原文片段"}, "text": map[string]any{"type": "string", "description": "批注内容"}, "author": map[string]any{"type": "string", "description": "可选，默认 aide"}, "anchorIndex": map[string]any{"type": "integer", "description": "可选：quote 第几次出现（0 起始），默认 0"}}, "required": []string{"path", "quote", "text"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_resolve_comment", "description": "把 .docx 的原生批注标记为已解决（Word 2016+ commentsExtended 格式）。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "可选：已启用且对当前工作区 AI 可见的引用来源 ID；写入需要 RW"}, "path": map[string]any{"type": "string"}, "id": map[string]any{"type": "string", "description": "批注 id（docx_list_comments 返回的 id）"}}, "required": []string{"path", "id"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；本轮模型结束后进行辅助审核或人工确认）。修改已有工作区文件或可写来源中的 Markdown 前，请完整读取或附加原文。对来源文件，read_file 和 write_file 必须传同一个 source；大文件应按 byteEnd 继续直至全文。应用时校验读取时的 SHA-256，文件发生变化则拒绝应用。新交付文档应使用 source=system-docs，路径相对于工作空间配置的自动系统文档目录；用户指定引用目录时填写其 source ID，仅可向可见且可写的来源生成提案；修改项目代码或用户明确指定的工作目录文件时省略 source。不要提前读回新文件或重复重试，最终应用及实际读回结果由系统回执补充。使用 PjPlan 时，先查询分类并按插件设置生成文件名。", "parameters": map[string]any{"type": "object", "properties": map[string]any{approvalPurposeField: approvalPurposeSchema(), "source": map[string]any{"type": "string", "description": "system-docs=工作空间配置的自动系统文档；用户明确指定引用目录时填写 list_sources 返回的可见且可写来源 ID；空=工作目录"}, "path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
+	writeFileTool,
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox. Read-only commands run immediately; commands that may write files, change external state, or use the network pause for explicit user confirmation.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"memoryMiB": map[string]any{"type": "integer", "minimum": 128, "maximum": 1536}, approvalPurposeField: approvalPurposeSchema(), "command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "agent": map[string]any{"type": "string", "description": "Optional configured agent name from the catalog"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_skill", "description": "Read an operator-configured Skill by its catalog name. Skill instructions do not grant tool permissions.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}}}},
@@ -5623,7 +5624,25 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		raw, _ := json.Marshal(result)
 		return string(raw)
 	case "write_file":
-		pathStr, content := str("path"), rawStr("content")
+		if _, withdraw := args["proposalWithdraw"]; withdraw {
+			result, err := a.withdrawPendingProposal(task, args)
+			if err != nil {
+				return failure("提案撤回被拒绝: " + err.Error())
+			}
+			return result
+		}
+		if _, patch := args["proposalPatch"]; patch {
+			result, err := a.patchPendingProposal(task, args, purpose, bound)
+			if err != nil {
+				return failure("提案局部修改被拒绝: " + err.Error())
+			}
+			return result
+		}
+		content, validContent := args["content"].(string)
+		if !validContent {
+			return failure("write_file requires complete string content, proposalPatch or proposalWithdraw")
+		}
+		pathStr := str("path")
 		var bindingRoot *os.Root
 		if bound {
 			bindingRoot = wsRoot
