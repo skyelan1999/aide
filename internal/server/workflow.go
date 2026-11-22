@@ -4000,19 +4000,24 @@ func (a *App) rewriteRequirementsIndex(dir, indexFile string) error {
 	if err != nil {
 		return err
 	}
-	re := regexp.MustCompile(`- 编号：REQ-(\d+)`)
+	reName := regexp.MustCompile(`^REQ-(\d+)-`)
+	reBody := regexp.MustCompile(`- 编号：REQ-(\d+)`)
 	var list []info
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
 			continue
 		}
 		body, readErr := os.ReadFile(filepath.Join(dir, e.Name()))
-		if readErr != nil {
-			continue
-		}
-		m := re.FindStringSubmatch(string(body))
+		// 既认 REQ-*.md 文件名，也认正文编号，兼容 PjPlan 分类命名的需求文档。
+		m := reName.FindStringSubmatch(e.Name())
 		if m == nil {
-			continue
+			if readErr != nil {
+				continue
+			}
+			m = reBody.FindStringSubmatch(string(body))
+			if m == nil {
+				continue
+			}
 		}
 		var n int
 		fmt.Sscanf(m[1], "%d", &n)

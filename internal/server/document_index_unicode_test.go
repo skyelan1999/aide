@@ -25,7 +25,7 @@ func TestGeneratedDocumentIndexesPreserveUnicodeTitles(t *testing.T) {
 			var err error
 			if prefix == "REQ" {
 				index = "requirements-index.md"
-				err = (&App{}).rewriteRequirementsIndex(dir)
+				err = (&App{}).rewriteRequirementsIndex(dir, "requirements-index.md")
 			} else {
 				err = rewriteDocIndex(dir, prefix, index, "文档索引")
 			}
