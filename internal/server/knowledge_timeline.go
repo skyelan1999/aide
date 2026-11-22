@@ -255,7 +255,7 @@ func (a *App) recordKnowledgeTime(g knowledgeGraph, code bool, epoch uint64) err
 	if err != nil {
 		return err
 	}
-	ai := captureKnowledgeAIConclusions(g, a.sessions, a.wsID())
+	ai := captureKnowledgeAIConclusions(g, a.sessionBodiesLocked(), a.wsID())
 	store, changed, err := appendKnowledgeTimeAI(store, g, ai, time.Now())
 	if err != nil || !changed {
 		return err

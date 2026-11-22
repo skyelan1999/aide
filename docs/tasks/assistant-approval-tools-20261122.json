@@ -1,0 +1,199 @@
+{
+  "id": "assistant-approval-tools-20261122",
+  "request": "修复小绵无法调用审批工具及模型名称显示不一致，重新编译并实际验收",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/launcher-contract.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/approval_policy.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_delegation.go\n M internal/server/assistant_followup.go\n M internal/server/assistant_history.go\n M internal/server/assistant_initiative.go\n M internal/server/assistant_native_approval.go\n M internal/server/assistant_realtime.go\n M internal/server/assistant_result_trigger.go\n M internal/server/assistant_retrieval.go\n M internal/server/assistant_watch.go\n M internal/server/assistant_work_ledger.go\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/assisted_approval_surface.go\n M internal/server/auth_verify.go\n M internal/server/business_flow.go\n M internal/server/change_impact.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/cross_session_tools.go\n M internal/server/debug.go\n M internal/server/debug_dataflow.go\n M internal/server/document_proposals.go\n M internal/server/execution_journal.go\n M internal/server/factory_reset.go\n M internal/server/goal_acceptance.go\n M internal/server/integrity.go\n M internal/server/integrity_upgrade.go\n M internal/server/interrupted_output.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_timeline.go\n M internal/server/migration.go\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/persona.go\n M internal/server/plan.go\n M internal/server/plugin_effect_checks.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/professional_workflow.go\n M internal/server/project_briefing.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/reminder_schedule.go\n M internal/server/reminders.go\n M internal/server/server.go\n M internal/server/session_model_selection.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/task_release_receipts.go\n M internal/server/tool_calls.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/lazy-session-startup-20261122.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/startup-performance-20261122.json\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/lazy_sessions.go\n?? internal/server/lazy_sessions_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? internal/server/startup_sessions.go\n?? internal/server/startup_sessions_test.go\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "MIXSoul text and delegated-call loops expose and execute permitted approval-status tools; disabled tools stay unavailable; queries do not approve or create work.",
+    "Native calls retain host routing instructions and resolve explicit Chinese spoken session numbers and bounded approval follow-up corrections without changing approval confirmation guards.",
+    "Assistant selector and footer resolve the same effective model, including independent, inherited, fallback and unavailable states; switching sessions and config refresh do not retain stale labels.",
+    "Rebuild and install local source runtime, run relevant race/protocol and JavaScript checks, verify actual native UI and a read-only assistant query.",
+    "Provider errors and missing config cannot dispatch raw text or speech; approval queries expose read-only tools and require a current receipt.",
+    "Counts use the host receipt total, not model arithmetic; live answers match the unchanged pending list."
+  ],
+  "scope": [
+    "internal/server/assistant_mixsoul.go",
+    "internal/server/mixsoul/agent.cjs",
+    "internal/server/assistant_realtime.go",
+    "internal/server/assistant_native_approval.go",
+    "internal/server/assistant_history.go",
+    "internal/server/web/app.js",
+    "focused regression tests",
+    "docs/architecture/assistant-live.md",
+    "docs/tasks/assistant-approval-tools-20261122.json",
+    ".agent-state/assistant-approval-tools-20261122",
+    "internal/server/assistant_approval_query.go",
+    "internal/server/assistant_history_test.go",
+    "internal/server/voice_fallback_gate_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Both screenshot defects and local rebuild/acceptance requested; real user approvals must remain untouched.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Restore existing permission-filtered tools in MIXSoul and delegated call path; retain native host routing prompt, add read-only spoken-number lookup with scoped follow-up context. Use execution-resolved nonsecret assistant model metadata for both composer labels and update mode before rendering.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "All engines fail without dispatching on model errors; approval queries offer/enforce read-only tools, obtain current receipts, recover one missing tool request with a guarded host read and format count from trusted total. Native routing/spoken lookup and effective model labels preserved.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final image accepted with 98 focused Go race passes, 4 explicit skips, 29 JS passes and complete offline resource checks. Actual MiMo Pro text and call-source queries each returned 35 in about 3.5s, using a permission-guarded host read-only recovery receipt (approvalQueryRecovery=true), then real model response and trusted-count formatting. Pending approval IDs and all session IDs unchanged during final queries; no dispatch or approval. Native UI shows both real replies and matching Pro labels. Physical microphone/ASR/audio not tested.",
+      "evidence": [
+        ".agent-state/assistant-approval-tools-20261122/go-tests-recovery.log",
+        ".agent-state/assistant-approval-tools-20261122/js-tests-final.log",
+        ".agent-state/assistant-approval-tools-20261122/build-recovery-result.json",
+        ".agent-state/assistant-approval-tools-20261122/runtime-assets-recovery.log",
+        ".agent-state/assistant-approval-tools-20261122/live-acceptance.json",
+        ".agent-state/assistant-approval-tools-20261122/final-preservation.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Assistant-live architecture documents host recovery provenance, counts, failure/no-dispatch and model resolution; documentation check passed.",
+      "evidence": [
+        "docs/architecture/assistant-live.md",
+        ".agent-state/assistant-approval-tools-20261122/docs-check-recovery.log"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Task-only fallback session 190 completed without approvals and was reversibly archived. All 189 original files remain, all 188 original non-assistant histories retain size/mtime. Final query preserves prior assistant messages and runs. Unrelated edits retained.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source build installed and healthy only; no commit, push, version bump or public release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Use the standard source build workflow to revert task-scoped changes if required. Original histories remain mounted and retained. User explicitly chose to keep MiMo Pro; workbench default/provider/credentials unchanged. Normal build GC removed preceding runtime tags, so no old-tag rollback is claimed.",
+  "handoff": "Local runtime healthy; actual MiMo Pro approval queries accepted for text and call-source input using explicitly reported host read-only recovery, then model reply. Pending 35-item set unchanged; no existing approval accepted/rejected or work started. Model labels match. No commit, push, version bump or public release; physical microphone/ASR/audio, full product suite and cross-platform hardware not claimed.",
+  "issue": "https://github.com/skyelan1999/aide/issues/984",
+  "build": {
+    "exit": 0,
+    "seconds": 49.216,
+    "image": "sha256:3093809baba80ab9c0646f96ee57653913a3daac205c6611196843887e6a012c",
+    "source_fingerprint": "42614dbc7d64869266a000e99f64263ed85a2d7f02845d2bcc9591c13a70ee5e",
+    "started_at": "2026-11-22T04:08:16.959447174Z",
+    "container_health": "healthy"
+  },
+  "test_results": {
+    "go_race_passed": 98,
+    "go_race_skipped": 4,
+    "go_race_seconds": 120.575,
+    "skipped_test": "TestAssistantAgenticPluginResultReturnedToModel; missing independent current-time source checkout",
+    "native_protocol_repeats_passed": 5,
+    "javascript_passed": 29,
+    "javascript_skipped": 0,
+    "resource_check": {
+      "status": "pass",
+      "uid": 1000,
+      "readable_files": 156,
+      "docx_round_trip": true,
+      "writer_pdf": true,
+      "network": "none"
+    },
+    "skipped_tests": [
+      "TestAssistantAgenticPluginResultReturnedToModel",
+      "TestAssistantDeliveryBrowserFixture",
+      "TestAssistantRealtimeLiveSyntheticAudio",
+      "TestAssistantOpenAICallLiveRelay"
+    ]
+  },
+  "test_corrections": [
+    "Initial new mock test used number instead of sessionNumber and misidentified consolidation prompts as dialogue; fixture corrected.",
+    "Existing native opening test assumed the opening response must precede microphone frames; full-suite diagnostics proved input_audio_buffer.append could arrive immediately after aide.ready. Fixture now buffers those legal early frames while retaining all opening, privacy, transcript, query-only and approval assertions; corrected protocol passed five repeats and the combined suite."
+  ],
+  "file_preservation_before_live_query": {
+    "before_count": 189,
+    "after_count": 189,
+    "missing": 0,
+    "new": 0,
+    "unchanged_size_and_mtime": 189
+  },
+  "ui_acceptance": {
+    "client": "Native macOS Aide.app WKWebView",
+    "assistant_model_labels": "pass; both selector and footer show mimo-v2.6-pro and same MiMo provider",
+    "ordinary_model_labels": "pass; selector and footer both gpt-6.1-sol / OpenAI",
+    "actual_provider_query": "pass; final native UI shows two current 35-item replies, pending count remains 35, Pro labels match"
+  },
+  "actual_engine": "builtin",
+  "model_change_authorization": "User selected option 1: keep MiMo Pro after acceptance.",
+  "model_change": {
+    "previous": "mimo-v2.6-pro-ultraspeed",
+    "selected": "mimo-v2.6-pro",
+    "provider_unchanged": true,
+    "workbench_default_unchanged": true
+  },
+  "actual_provider_earlier_failures": [
+    "live-acceptance-first-failure.json",
+    "live-pro-before-guard.json",
+    "live-pro-explicit-tool.json"
+  ],
+  "live_acceptance": {
+    "assistant_model": {
+      "source": "configured",
+      "model": "mimo-v2.6-pro",
+      "effectiveModel": "mimo-v2.6-pro",
+      "configured": true,
+      "fallbackModel": null
+    },
+    "workbench_model": "gpt-6.1-sol",
+    "approval_count_before": 35,
+    "queries": [
+      {
+        "input_source": "text",
+        "seconds": 3.558,
+        "action": "chat",
+        "tools_used": [
+          "aide_component_status"
+        ],
+        "reply": "当前有 35 项待人工审批。",
+        "dispatched": false,
+        "query_recovered": true
+      },
+      {
+        "input_source": "call",
+        "seconds": 3.485,
+        "action": "chat",
+        "tools_used": [
+          "aide_component_status"
+        ],
+        "reply": "当前有 35 项待人工审批。",
+        "dispatched": false,
+        "query_recovered": true
+      }
+    ],
+    "verified_build": {
+      "exit": 0,
+      "seconds": 49.216,
+      "image": "sha256:3093809baba80ab9c0646f96ee57653913a3daac205c6611196843887e6a012c",
+      "source_fingerprint": "42614dbc7d64869266a000e99f64263ed85a2d7f02845d2bcc9591c13a70ee5e",
+      "started_at": "2026-11-22T04:08:16.959447174Z",
+      "container_health": "healthy"
+    },
+    "approval_count_after": 35,
+    "approval_ids_unchanged": true,
+    "session_ids_unchanged": true,
+    "original_assistant_messages_preserved": true,
+    "original_assistant_runs_preserved": true
+  },
+  "final_preservation": {
+    "original_files": 189,
+    "original_non_assistant_files": 188,
+    "original_non_assistant_files_changed": 0,
+    "missing_original_files": 0,
+    "new_files": 1,
+    "new_acceptance_task_190_archived": true
+  },
+  "issue_state": "closed after final actual provider and native UI acceptance",
+  "follow_up_task": "sip-phone-acceptance-20261122"
+}

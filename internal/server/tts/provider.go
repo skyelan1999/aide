@@ -16,6 +16,7 @@ import (
 
 // SynthOpts 一次合成的参数。零值表示用 Provider 默认值。
 type SynthOpts struct {
+	Language string // Optional explicit synthesis language; empty keeps provider auto detection.
 	// Voice 目标音色名（edge-tts 形如 zh-CN-XiaoxiaoNeural）。空=按 Gender 映射默认音色。
 	Voice string
 	// Rate 语速倍率：1.0 正常，0.8 慢，1.3 快。

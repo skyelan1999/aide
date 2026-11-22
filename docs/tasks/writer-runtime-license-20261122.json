@@ -1,0 +1,85 @@
+{
+  "id": "writer-runtime-license-20261122",
+  "request": "修复 Writer 许可文件缺失，再跑完整资源检查",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/debug_dataflow.go\n M internal/server/migration.go\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "真实安装 libreoffice-writer，随镜像复制包内原始 copyright 文件",
+    "完整 test_runtime_assets.py --require-lan-bridge 退出 0，不跳过原检查",
+    "修复镜像启动健康，保留当前源码改动与用户数据"
+  ],
+  "scope": [
+    "scripts/install-office-preview.sh",
+    "scripts/test_runtime_assets.py",
+    "docs/tasks/writer-runtime-license-20261122.json",
+    ".agent-state/writer-runtime-license-20261122",
+    "本安装镜像构建与启动"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "修复用户点名的 Writer 缺失并重跑完整资源检查。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "同时安装 Writer 包并从其 /usr/share/doc 路径复制真实许可；完整检查增加一次离线 DOCX 转 PDF，验证组件实际可用。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "公共 Office 安装脚本补装 libreoffice-writer 并复制其原始 copyright 文件；资源检查核对许可原文并验证离线 DOCX 转 PDF。",
+      "evidence": [
+        "scripts/install-office-preview.sh",
+        "scripts/test_runtime_assets.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Complete offline runtime assets check exit=0: UID 1000, 156 readable files, authentic Writer notice bytes, CAD/helper checks, DOCX roundtrip and Writer PDF all passed. Image build succeeded. Initial automatic startup exceeded the existing wait window; canonical start.command retry exit=0 after initialization. Host TLS healthz, container health and application SHA256 passed.",
+      "evidence": [
+        ".agent-state/writer-runtime-license-20261122/runtime-assets.log",
+        ".agent-state/writer-runtime-license-20261122/build.log",
+        ".agent-state/writer-runtime-license-20261122/start.log",
+        ".agent-state/writer-runtime-license-20261122/host-health.json",
+        ".agent-state/writer-runtime-license-20261122/container-health.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Task record documents the root cause, actual package and notice fix, image identity and verification evidence.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed task file diffs; temporary asset-test container removed; previous image rollback tag and user data retained.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local build and validation only; no commit, push or release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "原镜像已保留为 aide:writer-license-before-20261122；新构建验收前不删除此 tag。",
+  "handoff": "Local fix and complete runtime resource checks finished. Running image a4cc026e5e08 is healthy at https://localhost:9999/. Previous image retained under aide:writer-license-before-20261122. Issue #980 closed with explicit local-only acceptance. No commit, push, release, full Go race suite or full UI/function acceptance.",
+  "operator": "skyelan1999",
+  "issue": "https://github.com/skyelan1999/aide/issues/980",
+  "image": {
+    "id": "sha256:a4cc026e5e08564c5f5e5d8b8e82d5b7bc4184a41117beeb568839053a0ba704",
+    "source_sha": "2060b87e94e149283453b1e2958de0cee5fdfe821e6c748dfdc842a2b546c42a",
+    "tag": "aide:source-0653b625c3392f1386bd",
+    "platform": "linux/arm64"
+  },
+  "resource_check": {
+    "command": "python3 scripts/test_runtime_assets.py sha256:a4cc026e5e08564c5f5e5d8b8e82d5b7bc4184a41117beeb568839053a0ba704 --require-lan-bridge",
+    "result": "PASS",
+    "exit_code": 0,
+    "network": "none",
+    "uid": 1000,
+    "readableFiles": 156,
+    "docxRoundTrip": true,
+    "writerPdf": true
+  }
+}

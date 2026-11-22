@@ -120,7 +120,7 @@ func (a *App) unlockAssistantAfterMasterAuth(id string) error {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[id]
+	s := a.sessionLocked(id)
 	if s == nil || s.Kind != assistantSessionKind {
 		return errors.New("不是有效的小秘系统会话")
 	}

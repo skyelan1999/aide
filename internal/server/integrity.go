@@ -28,6 +28,7 @@ type IntegrityStatus string
 
 const (
 	IntegrityOK        IntegrityStatus = "ok"        // 一切正常
+	IntegrityPending   IntegrityStatus = "pending"   // historical bodies are validated on demand
 	IntegrityDegraded  IntegrityStatus = "degraded"  // 可自愈/降级运行（程序疑似篡改、re-wrap 失败等）
 	IntegrityCorrupted IntegrityStatus = "corrupted" // 严重损坏，需人工介入
 )
@@ -41,13 +42,14 @@ type IntegrityCheck struct {
 
 // IntegrityReport 一次完整性校验/自愈的完整报告。
 type IntegrityReport struct {
-	Status       IntegrityStatus   `json:"status"`
-	Checks       []IntegrityCheck  `json:"checks"`
-	Quarantined  []string          `json:"quarantined,omitempty"` // 移入隔离区的用户数据
-	Healed       []string          `json:"healed,omitempty"`      // 已自动恢复的项
-	Errors       []string          `json:"errors,omitempty"`      // 未解决的错误
-	CheckedAt    string            `json:"checkedAt"`
-	invalidFiles map[string]string // observed invalid bytes; never infer corruption from I/O errors
+	Status           IntegrityStatus   `json:"status"`
+	Checks           []IntegrityCheck  `json:"checks"`
+	Quarantined      []string          `json:"quarantined,omitempty"` // 移入隔离区的用户数据
+	Healed           []string          `json:"healed,omitempty"`      // 已自动恢复的项
+	Errors           []string          `json:"errors,omitempty"`      // 未解决的错误
+	CheckedAt        string            `json:"checkedAt"`
+	DeferredSessions int               `json:"deferredSessions,omitempty"`
+	invalidFiles     map[string]string // observed invalid bytes; never infer corruption from I/O errors
 }
 
 // baselineManifest 程序层基线清单（首次启动生成，随运行期比对）。
@@ -116,13 +118,10 @@ func VerifyIntegrity(data string) IntegrityReport {
 }
 
 func verifyIntegrity(data string, readFile func(string) ([]byte, error)) IntegrityReport {
-	return verifyIntegrityWithSessionDigests(data, readFile, nil)
+	return verifyIntegrityCached(data, readFile, nil)
 }
 
-// Cache only successful typed validation by exact content. Every scan still
-// reads all bytes of an unchanged session, without allocating or decoding it.
-// A nil cache retains the independent full validation used by other callers.
-func verifyIntegrityWithSessionDigests(data string, readFile func(string) ([]byte, error), known map[string]string) IntegrityReport {
+func verifyIntegrityCached(data string, readFile func(string) ([]byte, error), cache *startupSessionCache) IntegrityReport {
 	rep := IntegrityReport{CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 
 	// ① 程序层哈希比对
@@ -173,21 +172,12 @@ func verifyIntegrityWithSessionDigests(data string, readFile func(string) ([]byt
 		markUnreadable(SettingsPath(data))
 	}
 	// 会话文件可逐条解析（坏文件只记录，不阻断）
-	var verified map[string]string
-	if known != nil {
-		verified = make(map[string]string, len(known))
-	}
 	for _, dir := range sessionBucketDirs(data) {
 		ents, _ := filepath.Glob(filepath.Join(dir, "session-*.json"))
 		for _, f := range ents {
-			if previous := known[f]; previous != "" {
-				digest, err := binarySHA256(f)
-				if err != nil {
-					markUnreadable(f)
-					continue
-				}
-				if digest == previous {
-					verified[f] = digest
+			if cache != nil {
+				if _, _, ok := cache.catalogue.metadata(f); ok {
+					rep.DeferredSessions++
 					continue
 				}
 			}
@@ -196,20 +186,9 @@ func verifyIntegrityWithSessionDigests(data string, readFile func(string) ([]byt
 				markUnreadable(f)
 				continue
 			}
-			var s Session
-			if json.Unmarshal(b, &s) != nil {
+			if _, err := cache.decode(f, b); err != nil {
 				markInvalid(f, b)
-			} else if verified != nil {
-				// Hash the exact bytes that passed parsing, even if the file changed
-				// between the streaming check and this fresh read.
-				verified[f] = hash(b)
 			}
-		}
-	}
-	if known != nil {
-		clear(known)
-		for file, digest := range verified {
-			known[file] = digest
 		}
 	}
 	rep.Checks = append(rep.Checks, IntegrityCheck{Name: "keyfiles", OK: len(corrupt) == 0, Detail: joinMissing(corrupt)})
@@ -327,6 +306,8 @@ func summarizeStatus(rep IntegrityReport) IntegrityStatus {
 		return IntegrityCorrupted
 	case len(rep.Quarantined) > 0 || hasDegradedCheck(rep):
 		return IntegrityDegraded
+	case rep.DeferredSessions > 0:
+		return IntegrityPending
 	default:
 		return IntegrityOK
 	}
@@ -407,3 +388,108 @@ func logRecovery(data, kind, src, detail string) {
 	f.Write(append(entry, '\n'))
 	log.Printf("integrity[%s] %s %s", kind, src, detail)
 }
+
+func verifyIntegrityWithSessionDigests(data string, readFile func(string) ([]byte, error), known map[string]string) IntegrityReport {
+	rep := IntegrityReport{CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
+
+	// ① 程序层哈希比对
+	if b, err := os.ReadFile(baselinePath(data)); err == nil {
+		var bl baselineManifest
+		if json.Unmarshal(b, &bl) == nil && bl.BinarySHA256 != "" {
+			cur, err := currentBinarySHA256()
+			if err != nil {
+				rep.Checks = append(rep.Checks, IntegrityCheck{Name: "binary", OK: false, Detail: err.Error()})
+			} else if cur != bl.BinarySHA256 {
+				// 程序被篡改/替换：只告警标 degraded，不自动修复（提示重新部署镜像）
+				rep.Checks = append(rep.Checks, IntegrityCheck{Name: "binary", OK: false, Detail: "程序二进制与基线不一致（疑似篡改/换版）"})
+			} else {
+				rep.Checks = append(rep.Checks, IntegrityCheck{Name: "binary", OK: true})
+			}
+		}
+	} else {
+		rep.Checks = append(rep.Checks, IntegrityCheck{Name: "baseline", OK: false, Detail: "无基线（将在首次自愈后生成）"})
+	}
+
+	// ② 目录结构：全部分层目录应存在
+	missing := []string{}
+	for _, d := range layeredDirs(data) {
+		if st, err := os.Stat(d); err != nil || !st.IsDir() {
+			missing = append(missing, d)
+		}
+	}
+	rep.Checks = append(rep.Checks, IntegrityCheck{Name: "dirs", OK: len(missing) == 0, Detail: joinMissing(missing)})
+
+	// ③ 关键文件可解析性（存在但损坏才算问题；缺失视为正常——首次安装无数据）
+	corrupt := []string{}
+	markInvalid := func(file string, b []byte) {
+		corrupt = append(corrupt, file)
+		if rep.invalidFiles == nil {
+			rep.invalidFiles = map[string]string{}
+		}
+		rep.invalidFiles[file] = hash(b)
+	}
+	markUnreadable := func(file string) {
+		rep.Checks = append(rep.Checks, IntegrityCheck{Name: "data-access", OK: false, Detail: file + ": 读取暂不可用；原件保留，下次巡检重试"})
+	}
+	if b, err := readFile(SettingsPath(data)); err == nil {
+		var s map[string]any
+		if json.Unmarshal(b, &s) != nil {
+			markInvalid(SettingsPath(data), b)
+		}
+	} else if !os.IsNotExist(err) {
+		markUnreadable(SettingsPath(data))
+	}
+	// 会话文件可逐条解析（坏文件只记录，不阻断）
+	var verified map[string]string
+	if known != nil {
+		verified = make(map[string]string, len(known))
+	}
+	for _, dir := range sessionBucketDirs(data) {
+		ents, _ := filepath.Glob(filepath.Join(dir, "session-*.json"))
+		for _, f := range ents {
+			if previous := known[f]; previous != "" {
+				digest, err := binarySHA256(f)
+				if err != nil {
+					markUnreadable(f)
+					continue
+				}
+				if digest == previous {
+					verified[f] = digest
+					continue
+				}
+			}
+			b, err := readFile(f)
+			if err != nil {
+				markUnreadable(f)
+				continue
+			}
+			var s Session
+			if json.Unmarshal(b, &s) != nil {
+				markInvalid(f, b)
+			} else if verified != nil {
+				// Hash the exact bytes that passed parsing, even if the file changed
+				// between the streaming check and this fresh read.
+				verified[f] = hash(b)
+			}
+		}
+	}
+	if known != nil {
+		clear(known)
+		for file, digest := range verified {
+			known[file] = digest
+		}
+	}
+	rep.Checks = append(rep.Checks, IntegrityCheck{Name: "keyfiles", OK: len(corrupt) == 0, Detail: joinMissing(corrupt)})
+	rep.Errors = append(rep.Errors, corrupt...)
+
+	rep.Status = summarizeStatus(rep)
+	return rep
+}
+
+// SelfHeal 根据校验报告自动恢复：
+//   - 缺失目录 → EnsureDirs 重建
+//   - 损坏关键文件 → 移入 .quarantine（用户数据不自动删）
+//   - 程序篡改 → 不修复，仅保持 degraded
+//   - 基线缺失 → 重新生成
+//
+// 返回更新后的报告（补充 healed/quarantined）。

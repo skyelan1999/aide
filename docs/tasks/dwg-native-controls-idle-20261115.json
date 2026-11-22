@@ -1,0 +1,82 @@
+{
+  "id": "dwg-native-controls-idle-20261115",
+  "request": "使用中不要自己锁屏，排查自动锁屏；测量工具给直接按钮，方便使用",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "M .github/workflows/windows-desktop-check.yml\n M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docker/libredwg/README.md\n M docker/libredwg/source.json\n M docs/agent/router.json\n M docs/architecture/dwg-preview.md\n M docs/architecture/launcher-contract.md\n M internal/server/dwg_preview.go\n M internal/server/dwg_preview_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/preview-safety.js\n M internal/server/web/style.css\n M legal/third_party/sources.json\n M native/windows-launcher/lifecycle_commands.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-dwg-converter.sh\n M scripts/fixtures/windows-entrypoint.cpp\n M scripts/launcher.py\n M scripts/native_launcher_portable.cpp\n M scripts/pip-install-retry.sh\n M scripts/test_dxf_preview_bounds.cjs\n M scripts/test_runtime_assets.py\n M scripts/test_windows_bat_entrypoints.py\n M scripts/windows-bootstrap.bat\n?? docker/libredwg/spline-scenario.patch\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/build-cn-source-fallback-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? internal/server/dwg_preview_svg.py\n?? internal/server/web/cad-measure.js\n?? legal/third_party/runtime/wqy-zenhei/\n?? native/windows-launcher/build_sources.hpp\n?? scripts/apt-install-retry.sh\n?? scripts/test_build_cn_sources.py\n?? scripts/test_cad_measure.cjs\n?? scripts/test_dwg_converter.py\n?? scripts/test_dwg_svg.py\n?? scripts/windows-build-source.ps1\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Viewer pointer/wheel interaction, including preventDefault and stopped bubbling, renews activity across file/workbench tabs; genuinely idle still locks at the configured timeout and manual locking still works.",
+    "Stale queued idle callbacks, locked screens and background chatter do not bypass current lock state.",
+    "All CAD measurement modes are directly visible buttons with selected state, keyboard access and responsive wrapping; units/snap/undo/clear remain usable.",
+    "Verify focused regressions plus browser/native controls, preserve local runtime data and user appearance preferences; update prior native acceptance and archive report without reclassifying unchanged drawings."
+  ],
+  "scope": [
+    "Frontend idle input/deadline logic and its existing LockCluster activity path",
+    "CAD measurement toolbar, CSS/accessibility and localization if needed",
+    "Focused regression/browser/native tests, records and standard local build preserving sessions/plugins/drafts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports active use locking and requests one-click measurement buttons; preserve configured timeout and genuine idle/manual lock semantics.",
+      "evidence": [
+        "User steering 2026-11-15"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Capture pointer/wheel plus existing input events; revalidate current idle timer/deadline. Replace measurement mode select with visible mutually exclusive buttons; preserve original drawing/theme/measurement code.",
+      "evidence": [
+        "internal/server/web/app.js resetIdleTimer/activity listeners",
+        "internal/server/web/cad-measure.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Capture-phase pointer/wheel input, current-timer/deadline checks, trailing timestamped file activity pings and visible accessible CAD tool buttons implemented. Configured idle/manual lock policy unchanged.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/lock-cluster.js",
+        "internal/server/web/cad-measure.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Current-code multi-tab input/deadline regressions and quick passed. Isolated real-workbench 4s timeout: 7.2s wheel/drag activity stays unlocked, genuine idle locks both, all direct buttons generate results, keyboard and 390px layout pass. Native seven buttons visible and two-click distance result confirmed; test overlays cleared.",
+      "evidence": [
+        ".agent-state/dwg-native-controls-idle-20261115/idle-tests.log",
+        ".agent-state/dwg-native-controls-idle-20261115/cluster-tests.log",
+        ".agent-state/dwg-native-controls-idle-20261115/recovery-tests.log",
+        ".agent-state/dwg-native-controls-idle-20261115/browser-results.json",
+        ".agent-state/dwg-native-controls-idle-20261115/native-acceptance.json",
+        ".agent-state/dwg-native-controls-idle-20261115/quick.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated CAD architecture, parent native acceptance/report, and current sanitized review. Documentation checker passed 540 Markdown files and 2553 local links.",
+      "evidence": [
+        "docs/architecture/dwg-preview.md",
+        "docs/reviews/2026-11-15-dwg-native-controls-idle.md",
+        ".agent-state/dwg-native-controls-idle-20261115/docs-check.log"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own browser pages and isolated API fixture stopped; native main/drawing tabs reconnected and left ready. Preserved prior dirty work, sessions/plugins/drafts, native appearance and configured timeout; no broad cleanup or lock-state restoration.",
+      "evidence": [
+        ".agent-state/dwg-native-controls-idle-20261115/production-verification.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local standard build installed and health/integrity passed; no version bump, tag, push or public Release authorized.",
+      "evidence": [
+        ".agent-state/dwg-native-controls-idle-20261115/build.log"
+      ]
+    }
+  },
+  "release_authorization": "User asks to fix active-use lock and replace measurement dropdown with buttons; standard local update within earlier authorization, preserve data. No public release/push.",
+  "rollback": "aide-rollback:dwg-native-controls-idle-20261115; /Users/skyelan/WorkTrees/aide-runtime-backups/20261115-dwg-native-controls-idle",
+  "handoff": "Completed local implementation and browser/native button checks. Actual production timeout unchanged. Idle activity behavior validated with 4s isolated timeout; not a 3600s production-duration soak. Prior archive anomalies remain reported, no drawing conversion code changed.",
+  "parent_task": "dwg-spline-recovery-measure-20261115"
+}

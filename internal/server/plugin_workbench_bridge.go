@@ -194,7 +194,7 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Method == "proposal.status" {
 		sessionID := b.Proposals[req.ProposalID]
-		s := a.sessions[sessionID]
+		s := a.sessionLocked(sessionID)
 		var result map[string]any
 		if s != nil && !s.Deleted {
 			for _, t := range s.Runs {

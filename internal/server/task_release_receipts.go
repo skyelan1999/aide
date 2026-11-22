@@ -96,7 +96,7 @@ func (a *App) taskReleaseReceiptAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	session := a.sessions[r.PathValue("id")]
+	session := a.sessionLocked(r.PathValue("id"))
 	if session == nil || session.Deleted {
 		fail(w, 404, errors.New("任务不存在"))
 		return

@@ -1,0 +1,98 @@
+{
+  "id": "buildkit-recovery-20261121",
+  "request": "处理 Aide 挂起进程，拉取 BuildKit 镜像，再重新编译 aide",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/debug_dataflow.go\n M internal/server/migration.go\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "仅终止本安装残留的两组 buildx 进程",
+    "BuildKit 镜像下载完成且专用构建器可运行",
+    "使用 build.command 编译当前工作区并验证本地服务健康"
+  ],
+  "scope": [
+    "本安装的残留构建进程与专用 Buildx 构建器",
+    "本地 Docker 构建所需镜像",
+    "docs/tasks/buildkit-recovery-20261121.json",
+    ".agent-state/buildkit-recovery-20261121"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权结束挂起进程、拉取 BuildKit 并重新编译本地 Aide。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留现有源码与数据；仅结束匹配本安装 builder 的残留进程，恢复同摘要 BuildKit，使用原 build.command。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "两组挂起构建进程终止；同官方摘要 BuildKit 镜像拉取并恢复 canonical tag；原 build.command 完成 Docker 镜像及 macOS 桌面程序编译。",
+      "evidence": [
+        ".agent-state/buildkit-recovery-20261121/pull-buildkit-default.log",
+        ".agent-state/buildkit-recovery-20261121/pull-buildkit-daocloud.log",
+        ".agent-state/buildkit-recovery-20261121/build.log"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "用户请求的恢复与编译验收已完成：构建内 Go vet/JS 语法检查通过，镜像身份核对通过，主程序 SHA256 通过，容器和宿主 TLS healthz 通过，start.command 重试 exit=0。额外运行资源回归失败：现有安装脚本未安装 libreoffice-writer，也未包含对应许可文件；不把此检查记为通过。",
+      "evidence": [
+        ".agent-state/buildkit-recovery-20261121/build.log",
+        ".agent-state/buildkit-recovery-20261121/reopen.log",
+        ".agent-state/buildkit-recovery-20261121/health.json",
+        ".agent-state/buildkit-recovery-20261121/runtime-assets.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务记录包含恢复方法、镜像身份、首次启动超时与复验结果。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "残留进程已结束，下载尝试进程已回收；保留 BuildKit、构建缓存与运行镜像及所有用户数据，未清理无关资源。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅恢复用户本地源码安装；未升版、提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "未清理数据、未改 Docker daemon 配置、未更改产品源码；本地运行镜像原已被删除，无旧镜像可切回。",
+  "handoff": "挂起进程已终止，BuildKit 恢复，当前工作区成功编译并在 https://localhost:9999/ 运行。macOS 桌面程序已生成并执行 --open-existing。首次启动超时后自动继续就绪，start.command 重试通过。额外资源回归在 Writer 许可文件检查失败，保留日志；未做完整功能/付费模型验收，未发布。",
+  "buildkit": {
+    "digest": "sha256:baf6138eb8c37644800c7c913fba051e840ebb9ba13eaf92d92ef9a1712d0b4c",
+    "platform": "linux/arm64",
+    "version": "v0.35.1",
+    "download": "docker.m.daocloud.io/moby/buildkit:buildx-stable-1",
+    "canonical_tag": "moby/buildkit:buildx-stable-1",
+    "builder": "aide-0653b625c3392f1386bd"
+  },
+  "image": {
+    "tag": "aide:source-0653b625c3392f1386bd",
+    "id": "sha256:77e9b366b91ecaa61218ce0b8e101569a33ec5f7d125ac87d89839dcdec72ee4",
+    "source_sha": "ff30cabeabd860f929fa7c2668878dc905b91c087c2f641f9535b37cea592fb9",
+    "version": "0.1.19.0 RC2",
+    "source_state": "existing uncommitted workspace changes included"
+  },
+  "additional_checks": [
+    {
+      "command": "python3 scripts/test_runtime_assets.py aide:source-0653b625c3392f1386bd --require-lan-bridge",
+      "result": "FAIL",
+      "reason": "Writer runtime notice missing",
+      "scope": "现有源码的 Office 依赖/测试不一致，未在本次环境恢复中修改产品源码。"
+    },
+    {
+      "command": "curl --cacert <local-cert> https://localhost:9999/healthz",
+      "result": "PASS",
+      "detail": "status=ok integrity=ok"
+    },
+    {
+      "command": "docker exec aide-aide-1 sha256sum -c /usr/local/bin/aide.sha256",
+      "result": "PASS"
+    }
+  ]
+}

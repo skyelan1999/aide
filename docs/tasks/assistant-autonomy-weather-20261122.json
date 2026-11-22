@@ -1,0 +1,126 @@
+{
+  "id": "assistant-autonomy-weather-20261122",
+  "request": "核对截图中读取文件、转交Aide会话、完成后主动回话能力；助理能力不足主动建立Aide会话不要反复确认；另做公开MIT天气插件，支持网络或授权定位获取当前位置；用户补充：助理可以直接调用天气。",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/assistant-live.md\n M docs/architecture/launcher-contract.md\n M docs/en/user-guide.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M docs/user-guide.md\n M internal/execsandbox/sandbox_linux.go\n M internal/server/approval_policy.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_components.go\n M internal/server/assistant_delegation.go\n M internal/server/assistant_followup.go\n M internal/server/assistant_history.go\n M internal/server/assistant_history_test.go\n M internal/server/assistant_initiative.go\n M internal/server/assistant_mixsoul.go\n M internal/server/assistant_mixsoul_test.go\n M internal/server/assistant_native_approval.go\n M internal/server/assistant_native_approval_test.go\n M internal/server/assistant_realtime.go\n M internal/server/assistant_realtime_provider.go\n M internal/server/assistant_result_trigger.go\n M internal/server/assistant_retrieval.go\n M internal/server/assistant_watch.go\n M internal/server/assistant_work_ledger.go\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/assisted_approval_surface.go\n M internal/server/auth_verify.go\n M internal/server/business_flow.go\n M internal/server/change_impact.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/cross_session_tools.go\n M internal/server/debug.go\n M internal/server/debug_dataflow.go\n M internal/server/document_proposals.go\n M internal/server/execution_journal.go\n M internal/server/factory_reset.go\n M internal/server/goal_acceptance.go\n M internal/server/integrity.go\n M internal/server/integrity_upgrade.go\n M internal/server/interrupted_output.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_timeline.go\n M internal/server/migration.go\n M internal/server/mixsoul/agent.cjs\n M internal/server/mixsoul/system.test.cjs\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/persona.go\n M internal/server/plan.go\n M internal/server/plugin_effect_checks.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/professional_workflow.go\n M internal/server/project_briefing.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/reminder_schedule.go\n M internal/server/reminders.go\n M internal/server/server.go\n M internal/server/session_model_selection.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/task_release_receipts.go\n M internal/server/tool_calls.go\n M internal/server/voice_fallback_gate_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_macos_desktop.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/assistant-approval-tools-20261122.json\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/lazy-session-startup-20261122.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/sip-phone-acceptance-20261122.json\n?? docs/tasks/startup-performance-20261122.json\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/assistant_approval_query.go\n?? internal/server/assistant_approval_tools_test.go\n?? internal/server/assistant_readonly_call.go\n?? internal/server/assistant_readonly_call_test.go\n?? internal/server/assistant_sip_status.go\n?? internal/server/assistant_sip_status_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/lazy_sessions.go\n?? internal/server/lazy_sessions_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? internal/server/startup_sessions.go\n?? internal/server/startup_sessions_test.go\n?? scripts/aide_sip_phone.py\n?? scripts/aide_sip_service.py\n?? scripts/assistant-model-status.test.cjs\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_aide_sip_phone.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Explicit read/research work automatically delegates without repeated confirmation; failed model never dispatches raw input.",
+    "Weather plugin MIT source, live city/coordinate/network weather, opt-in browser location, auditable sources/errors.",
+    "Existing pending approval IDs and original task files preserved.",
+    "Verify result notifications and honestly distinguish phone callback implementation from live hardware acceptance.",
+    "Assistant directly calls installed Weather tools without new executor session; complex/file work still delegates autonomously."
+  ],
+  "scope": [
+    "internal/server/assistant*.go",
+    "internal/server/mixsoul/agent.cjs",
+    "internal/server/plugins.go",
+    "internal/server/plugin_workbench*.go",
+    "internal/server/web/plugin-workbench.js",
+    "scripts/aide_sip_phone.py",
+    "docs",
+    "../aide-pkg-Weather",
+    "internal/server/assistant_weather.go",
+    "internal/server/assistant_weather_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorizes autonomous delegation and public MIT weather plugin; preserve pending tasks.",
+      "evidence": [
+        "Current user request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse dispatch/startTask/result notices; bounded model retries without raw dispatch. Independent MIT Weather plus one-shot host geolocation capability. Automatic phone callback absent and no longer promised.",
+      "evidence": [
+        "internal/server/assistant_history.go",
+        "internal/server/assistant_result_trigger.go",
+        "internal/server/assistant_autonomy.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Core autonomy and native retry implemented; location bridge and macOS usage description added; standalone Weather package complete. Follow-up: curated weather tools now directly available to assistant; native call routes through same assistant tool loop.",
+      "evidence": [
+        "internal/server/assistant_autonomy.go",
+        "internal/server/assistant_realtime.go",
+        "../aide-pkg-Weather/manifest.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "39 top-level Go race tests; full-package build vet; 26 workbench JS, 28 memory/initiative/result JS, 15 desktop Python, 6 Weather Node. Real model direct weather without new sessions; autonomous PDF task and durable result notices; native city/network UI. Original 189 task hashes and 35 pending events unchanged. Broader i18n scan has four existing missing strings; full release matrix and successful device GPS not claimed.",
+      "evidence": [
+        "docs/reviews/2026-11-22-assistant-autonomy-weather.md",
+        ".agent-state/assistant-autonomy-weather-20261122/live-direct-weather.json",
+        ".agent-state/assistant-autonomy-weather-20261122/go-tests.log",
+        ".agent-state/assistant-autonomy-weather-20261122/preservation-final.json",
+        ".agent-state/assistant-autonomy-weather-20261122/content-fingerprints.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated CN/EN guides, assistant architecture, plugin protocol, standalone Weather README/AI guide and acceptance report; no promise of automatic phone callback.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture/assistant-live.md",
+        "docs/plugin-protocol.md",
+        "docs/reviews/2026-11-22-assistant-autonomy-weather.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed exact incremental diffs; no resets/deletions of existing work or history. Evidence remains private; Weather package has six-file allowlist. Newly created useful result sessions retained.",
+      "evidence": [
+        ".agent-state/assistant-autonomy-weather-20261122/preservation-final.json",
+        ".agent-state/assistant-autonomy-weather-20261122/remote-package-receipt.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Public MIT Weather 0.1.0 prerelease source/ZIP published, downloaded SHA256 verified and installed. Aide core only built/vetted/deployed locally; main program remains uncommitted and no public core release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-Weather/releases/tag/v0.1.0",
+        ".agent-state/assistant-autonomy-weather-20261122/build-direct.log",
+        ".agent-state/assistant-autonomy-weather-20261122/remote-package-receipt.json"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly asked for a public MIT weather plugin. Core Aide local rebuild only; no Aide public release authorized.",
+  "rollback": "Disable only Weather if needed. Restore only this task’s incremental core differences using before-source backups, then normal launcher build; never reset or clean the shared dirty worktree.",
+  "handoff": "Complete within requested scope: direct Weather, autonomous executor fallback and result notice validated; public MIT plugin installed. Automatic phone callback absent and disclosed; successful system location unavailable. Original pending tasks preserved; ordinary SIP service left running.",
+  "github_actor": "skyelan1999",
+  "capability_audit": {
+    "workspace_read": "Implemented via automatic executor delegation; actual PDF metadata and pages 1–7 read in new session 192; no full-document or clinical guidance claim.",
+    "automatic_delegation": "Real assistant created/started sessions 191 and 192 without an additional forwarding confirmation. New executor commands use existing approval/auto-review settings.",
+    "result_notifications": "Weather completion and PDF completion notices persisted back to assistant. PDF also emitted an earlier authorization-wait notice; completion is distinct.",
+    "automatic_phone_callback": "Not implemented. Explicit operator SIP dial exists but no completion-triggered callback scheduler; assistant instructions now disclose limit.",
+    "weather_direct": "PASS: final live MiMo Pro call returned action=chat, toolsUsed=[weather_forecast], dispatched=null, no new sessions; native call shares same assistant tools but no new physical call retest claimed.",
+    "device_geolocation": "Host-click bridge implemented and tested; actual Mac returned unavailable; fallback to city/network observed.",
+    "weather_plugin": "Public MIT 0.1.0 prerelease source and ZIP published; installed and upgraded through authenticated Aide API; native city/network views pass."
+  },
+  "known_limits": [
+    "No automatic completion-triggered phone callback.",
+    "Successful device/system geolocation not established on this Mac; city and network-egress weather passed.",
+    "No full Aide public release or full multi-theme/narrow-screen matrix.",
+    "Broader i18n coverage scan reports four pre-existing untranslated keys in earlier app.js/assistant-call.js work; new location strings have translations."
+  ],
+  "runtime": {
+    "image": "sha256:9bcebea1abd7d8441ea713409372719526b5cf71326077c95be02525acc300dd",
+    "source": "21382108e750543ec156958414eb41c45cb1a1880f648f1f7e87f43b511744c8",
+    "version": "0.1.19.0 RC2",
+    "corePublicRelease": false,
+    "sipMode": "normal"
+  },
+  "weather_release": {
+    "version": "0.1.0",
+    "prerelease": true,
+    "repository": "https://github.com/skyelan1999/aide-pkg-Weather",
+    "release": "https://github.com/skyelan1999/aide-pkg-Weather/releases/tag/v0.1.0",
+    "packageSourceCommit": "a642cd2e3f735368c9d24b274854b20799c2e198",
+    "docsHead": "8f16aee",
+    "sha256": "d9801623918c2e25b5dcab7821dc2fcec57471a765d23a7f5df80c38e057013b"
+  }
+}

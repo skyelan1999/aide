@@ -60,7 +60,7 @@ def session(root, start=False, command=run, health=host_health):
                 raise ValueError('Desktop state must not be a symbolic link')
         env = dict(os.environ, AIDE_OPEN_BROWSER='0', AIDE_DESKTOP_SESSION='1')
         result = subprocess.run(['bash', 'scripts/aide.sh', 'start'], cwd=root, env=env,
-                                text=True, capture_output=True, timeout=240)
+                                text=True, capture_output=True, timeout=2100)
         logs = root / '.aide-data/desktop'
         logs.mkdir(parents=True, exist_ok=True, mode=0o700)
         log = logs / 'startup.log'
@@ -95,6 +95,16 @@ def session(root, start=False, command=run, health=host_health):
     token = d('exec', cid, 'sh', '-c', 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token')
     if not re.fullmatch(r'[A-Za-z0-9_.-]{16,512}', token):
         raise ValueError('Local access token is unavailable')
+    sip_control = root / 'scripts/aide_sip_service.py'
+    if start and sip_control.is_file() and (root / '.aide-data/sip-phone/config.json').is_file():
+        # The explicitly configured phone gateway follows the desktop's normal
+        # file access. A separate login daemon cannot read protected workspaces.
+        try:
+            subprocess.run([sys.executable, str(sip_control), 'start', '--root', str(root)],
+                           cwd=root, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=10)
+        except (OSError, subprocess.SubprocessError):
+            pass  # Core desktop startup must remain available without SIP.
     return {'origin': origin, 'token': token, 'certificateSHA256': hashlib.sha256(der).hexdigest(),
             'instanceId': inside['instanceId']}
 

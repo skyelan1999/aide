@@ -101,7 +101,7 @@ func (a *App) addPlanTask(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
@@ -152,7 +152,7 @@ func (a *App) updatePlanTask(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
@@ -199,7 +199,7 @@ func (a *App) dismissPlanStep(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
@@ -228,7 +228,7 @@ type planDocument struct {
 // 另一个会话/仓库里复用成专业工作流的任务清单。
 func (a *App) exportPlan(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))
@@ -275,7 +275,7 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return

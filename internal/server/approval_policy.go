@@ -139,7 +139,7 @@ func (a *App) changeGlobalApprovalMode(w http.ResponseWriter, enabled bool) {
 	}
 	var pending []*Task
 	var persistenceError error
-	for _, s := range a.sessions {
+	for _, s := range a.pendingSessionBodiesLocked() {
 		if s.Deleted {
 			continue
 		}
@@ -292,7 +292,7 @@ func (a *App) applyRememberedFiles(task *Task) bool {
 	r.SetPathValue("run", task.ID)
 	w := &approvalApplyResult{header: make(http.Header)}
 	a.applyTaskGuarded(w, r, func(t *Task) error {
-		if t != task || a.sessions[s.ID] != s || s.Deleted || approvalFilesFingerprint(t.Files) != payload || !a.rememberedApprovalLocked(t, "files", payload) {
+		if t != task || a.sessionLocked(s.ID) != s || s.Deleted || approvalFilesFingerprint(t.Files) != payload || !a.rememberedApprovalLocked(t, "files", payload) {
 			return errors.New("审批记忆或提案环境已变化")
 		}
 		rule, _ := a.matchApprovalRuleLocked(t, "files", payload)

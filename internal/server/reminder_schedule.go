@@ -119,7 +119,7 @@ func (a *App) validateScheduleDispatchLocked(ctx context.Context, s *Session) er
 	for _, r := range a.reminders {
 		e := r.Execution
 		if r.ID == id && r.Status == "pending" && e != nil && e.State == "dispatching" && e.SessionID == s.ID && e.WorkspaceID == a.wsID() {
-			if s.Deleted || s.Archived || a.sessions[s.ID] != s {
+			if s.Deleted || s.Archived || a.sessionLocked(s.ID) != s {
 				return errors.New("目标会话已删除或归档")
 			}
 			if sessionScheduleBusy(s) {
@@ -153,7 +153,7 @@ func (a *App) dispatchScheduledReminders(now time.Time) {
 			if runSessionID == "" {
 				runSessionID = e.SessionID
 			}
-			s := a.sessions[runSessionID]
+			s := a.sessionLocked(runSessionID)
 			if s == nil || s.Deleted {
 				old := *e
 				e.State = "interrupted"
@@ -194,7 +194,7 @@ func (a *App) dispatchScheduledReminders(now time.Time) {
 		if err != nil || due.After(now) {
 			continue
 		}
-		s := a.sessions[e.SessionID]
+		s := a.sessionLocked(e.SessionID)
 		if s != nil && !s.Deleted && !s.Archived && sessionScheduleBusy(s) {
 			continue
 		}

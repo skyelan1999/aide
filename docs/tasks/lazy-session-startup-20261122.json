@@ -1,0 +1,161 @@
+{
+  "id": "lazy-session-startup-20261122",
+  "request": "按需加载会话历史，先启动界面，优化剩余59秒首次解析；保留数据和恢复语义",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M docs/agent/router.json\n M docs/architecture/launcher-contract.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/debug_dataflow.go\n M internal/server/integrity.go\n M internal/server/integrity_upgrade.go\n M internal/server/migration.go\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/startup-performance-20261122.json\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? internal/server/startup_sessions.go\n?? internal/server/startup_sessions_test.go\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Standard Compose startup reads authenticated lightweight catalogues, not all history bodies.",
+    "A selected session is fully validated and restored on demand; concurrent HTTP loads coalesce without blocking session lists.",
+    "Partial catalogue objects cannot overwrite original history. Stale/missing/corrupt catalogues fall back safely.",
+    "List, archive, delete, numbering, search/export and interrupted-task recovery preserve data.",
+    "Run dedicated lazy-mode and compatibility race tests; measure real restart, list latency and first history access on the existing corpus."
+  ],
+  "scope": [
+    "internal/server lazy catalogue, hydration access sites, integrity and startup paths",
+    "compose.yaml",
+    "docs/tasks/lazy-session-startup-20261122.json",
+    "docs/architecture/launcher-contract.md",
+    ".agent-state/lazy-session-startup-20261122"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests on-demand historical session loading and early UI readiness.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Disposable HMAC-authenticated file-stamped catalogues; deferred histories explicitly reported pending; complete payload validation before hydration/migration; write guard; one-time legacy catalogue backfill. Standard Compose enables AIDE_LAZY_SESSIONS=1; standalone compatibility path remains available.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Authenticated disposable catalogues, explicit pending history validation, metadata startup, single-flight HTTP hydration outside global lock, partial-save guard, recovery persistence and audited demand-driven collection paths implemented.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "75 focused Go race tests passed, zero skips (49.651s). Actual source build exited 0 in 118.581s; one-time legacy catalogue backfill took 62.829s. Subsequent real container restart reached verified HTTPS readiness in 3.799s (server initialization 2.985s), versus 75.942s before lazy loading. Session-list API took 12.1ms; first access to a previously unopened 155081726-byte sample took 826.1ms, repeated access 18.4ms. Native macOS Aide workbench, sidebar and ordinary historical messages/tool records visually accepted. Complete network-isolated runtime resource check passed, including Writer DOCX/PDF. All 189 original files retained. Before UI acceptance, all 189 had unchanged size/mtime; after selecting a session, 188 unchanged and one expected checked/read marker update (+19 bytes), no removed or new histories.",
+      "evidence": [
+        ".agent-state/lazy-session-startup-20261122/go-tests.log",
+        ".agent-state/lazy-session-startup-20261122/build.log",
+        ".agent-state/lazy-session-startup-20261122/migration-startup.log",
+        ".agent-state/lazy-session-startup-20261122/index-restart.json",
+        ".agent-state/lazy-session-startup-20261122/api-performance.json",
+        ".agent-state/lazy-session-startup-20261122/file-preservation.json",
+        ".agent-state/lazy-session-startup-20261122/final-file-preservation.json",
+        ".agent-state/lazy-session-startup-20261122/runtime-assets.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Launcher contract documents standard Compose defaults, authenticated disposable catalogues, one-time migration, deferred integrity, demand-driven loading, partial-save refusal and eager-mode fallback. This task records observed timings, image/source identity and local-only acceptance.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Task-scoped diff whitespace check passed; test containers auto-removed; original corpus and unrelated worktree changes retained. Regenerable logs remain under .agent-state. Normal build garbage collection removed prior runtime tags, so rollback uses eager mode on the installed image.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local build and running installation only; no source commit, push, version bump or public release. Windows/Linux hardware acceptance and full product test suite were not run.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Set AIDE_LAZY_SESSIONS=0 in the launch environment or .env and recreate via the standard start command to return to eager loading on the installed image. Original JSON remains authoritative; disposable catalogues can be rebuilt. Previous runtime tags were removed by normal build garbage collection; no old-image rollback is claimed.",
+  "handoff": "Updated local source runtime is healthy at https://localhost:9999/; native app sidebar and historical conversation display verified, original selection restored. The one-time legacy index migration has completed. Subsequent startup is 3.799s. Historical body validation is explicitly pending until requested; export and global search may load all histories. Large individual histories still need their own first-access parse. No public release or full cross-platform acceptance claimed.",
+  "issue": "https://github.com/skyelan1999/aide/issues/983",
+  "test_results": {
+    "race_passed": 75,
+    "race_skipped": 0,
+    "seconds": 49.651
+  },
+  "runtime_image": {
+    "id": "sha256:c889a9e1494886fe42de4fb8e518720e5cbe287937934921435edf3df55b48e2",
+    "source_fingerprint": "c78f9d4687bbec63eba9a91bbcb32cfec83d8cbf474bc22b505228d2cf5f38fb",
+    "version": "0.1.19.0 RC2",
+    "build_exit": 0,
+    "build_seconds": 118.581
+  },
+  "legacy_migration": {
+    "constructor_seconds": 62.829,
+    "loaded_sessions": 186,
+    "deferred_sessions": 185,
+    "decoded_files": 189,
+    "recovery_writes": 0,
+    "note": "One-time full parse creates catalogues; repeated startup uses metadata."
+  },
+  "index_restart": {
+    "image": "sha256:c889a9e1494886fe42de4fb8e518720e5cbe287937934921435edf3df55b48e2",
+    "startedAt": "2026-11-21T17:35:13.825423551Z",
+    "ready_seconds": 3.799,
+    "start_wait_seconds": 3.728,
+    "start_exit": 0,
+    "health": {
+      "capabilities": {
+        "messageBridgeProtocol": 1,
+        "remoteAccessProtocol": 1
+      },
+      "instanceId": "2026-11-21T17:35:15.820457969Z",
+      "integrity": "pending",
+      "service": "aide",
+      "status": "ok"
+    },
+    "lazy_enabled": true,
+    "server_initialization_seconds": 2.985,
+    "deferred_sessions": 185,
+    "decoded_files": 4,
+    "reused_files": 6
+  },
+  "api_performance": {
+    "active_count": 167,
+    "archived_count": 19,
+    "initial_active_list_seconds": 0.0121,
+    "archived_list_seconds": 0.0097,
+    "sample_history_bytes": 155081726,
+    "first_sample_hydration_seconds": 0.8261,
+    "cached_sample_access_seconds": 0.0184,
+    "list_after_hydration_seconds": 0.0122,
+    "small_history_get_seconds": 0.0108,
+    "small_history_response_bytes": 7603,
+    "small_history_messages_preserved": true,
+    "counts_preserved": true
+  },
+  "file_preservation_before_ui": {
+    "before_count": 189,
+    "after_count": 189,
+    "missing": 0,
+    "new": 0,
+    "unchanged_size_and_mtime": 189
+  },
+  "file_preservation_after_ui": {
+    "before_count": 189,
+    "after_count": 189,
+    "missing": 0,
+    "new": 0,
+    "unchanged_size_and_mtime": 188,
+    "changed": 1,
+    "expected_change": "One clicked session was marked checked by the existing UI (+19 bytes); all files retained."
+  },
+  "ui_acceptance": {
+    "client": "Native macOS Aide.app WKWebView",
+    "result": "pass",
+    "observed": [
+      "Workbench connected and ordinary-session sidebar available",
+      "Selected existing ordinary session and observed preserved message and tool-call records",
+      "Restored original assistant selection; no message sent or task started"
+    ]
+  },
+  "runtime_assets": {
+    "result": "pass",
+    "uid": 1000,
+    "readable_files": 156,
+    "docx_round_trip": true,
+    "writer_pdf": true,
+    "network": "none"
+  }
+}

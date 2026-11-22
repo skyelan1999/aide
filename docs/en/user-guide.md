@@ -310,6 +310,16 @@ Every regular session (including child sessions) gets an incrementing number `#N
 
 The session list no longer needs manual refresh. The frontend opens one `GET /api/events` SSE stream; the backend broadcasts a `sessions-changed` event on session create/archive/pin/title/state changes and run start (15 s heartbeat). The frontend reloads at most every 300 ms, **preserves your collapsed groups**, and defers the refresh while you are typing in the focused input box. The stream auto-reconnects on drop.
 
+### Connect a SIP phone
+
+Open **Settings → Voice Assistant → SIP phone setup guide** for the actual local gateway status, server address, port, phone account and assistant extension. Enable the host gateway first, and connect the computer and phone to the same LAN. Calls share the workbench call model, voice and assistant permissions.
+
+Enable SIP1 on the phone. Use the LAN server address shown in the guide (without `https://`), UDP and the displayed port (default 5060). The local single-phone account defaults to 1001; leave authentication credentials blank for this local mode. Model API keys belong only in Aide. Prefer G.711U/PCMU, with G.711A/PCMA as fallback, 20 ms packets and RFC2833 DTMF. Answer manually and adjust handset or speaker volume.
+
+Keep Aide running, unlock the assistant, dial **1000** (or the displayed extension) and press `#` or Call. Speak naturally and replace the handset to hang up, or explicitly say “hang up” / “挂了吧”. The assistant ends the call after a brief farewell. A new user utterance can revoke a pending hangup before teardown; “do not hang up” and stopping a task do not end the phone call. An approval-status query does not submit an approval decision; decisions still require reviewing the corresponding item and explicit confirmation.
+
+For registration failures, refresh gateway status and check LAN addresses, UDP and the port. Recheck the SIP server after a network change. For failed calls, check assistant unlock, model availability and existing calls. For missing audio, check mute, volume, G.711 and bidirectional RTP reachability. Motorola IP9910-2W was physically tested; menu names on other phones can differ.
+
 ### Assistant system session
 
 Pinned at the very top of the sidebar is the assistant system session — the chat view for your voice secretary (since RC2 it uses a headphone line SVG instead of the 🤖 emoji):
@@ -519,3 +529,14 @@ Source additions (2026-11-13): [goals, acceptance and project decision records](
 For first use of impact analysis/workflows, open Trajectory → Tasks and planning and follow the [guided instructions](project-impact-workflows.md).
 
 See [plugin entry points and first use](plugin-usage.md).
+
+
+### Assistant delegation and Weather
+
+An explicit request to look up live weather or read a workspace document authorizes delegation. When the assistant needs executor capabilities, it creates and starts an Aide session without repeatedly asking whether to forward the request. Results appear in the assistant conversation; existing approval rules still apply. Missing essential details, identity lock and tool failures are reported honestly.
+
+When installed and enabled, the assistant calls the Weather tools directly and answers without creating an executor session. The separate MIT Weather plugin offers city/coordinate forecasts, explicit network-egress lookup and user-approved device location. A VPN/proxy or remote Aide host can make network location inaccurate. Device location requires a separate host-button click and system permission, with no continuous tracking. The source-code license is separate from third-party API/data terms. For phone callbacks, enable **Call this phone when a task finishes** in Settings → Voice assistant → SIP phone setup guide. Only Aide tasks newly delegated in the current phone call qualify. Hang up first; once the task actually completes with no pending approval or undelivered output, the assistant calls the original phone and reports its verified result. Failures also receive an honest status report. Retries of the same prompt and explicit continuations in that newly created task are followed to their final result; unrelated work is excluded. Direct weather queries and ordinary chat do not create background tasks, and historical tasks are never added retroactively.
+
+Callback calls read the verified result and end after playback, with no task or approval tools. Missed, busy or failed calls are not automatically retried. Pending entries expire after 24 hours; cancel during the originating call or disable callbacks in settings. Keep Aide and the gateway running, the same workspace selected, and the workbench and assistant unlocked. Restarting does not replay an attempted call. “Voice report sent” confirms transmission to the phone, not that the user heard it clearly.
+
+A completion callback reads the verified short result with the selected speech engine and ends after playback. It does not open another realtime model conversation. Ordinary incoming calls retain two-way assistant conversation.

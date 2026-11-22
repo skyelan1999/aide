@@ -97,12 +97,12 @@ Aide 提供来源指纹、执行结果、自测及未闭合项。独立验收者
 
 `scripts/cad_sdk_python.py` 安装为项目工具目录的 `cad_python.py`，与 `step-engine/`、`readers/` 及其他 SDK 工具同目录。入口将 SDK 自身、项目 `03_三维建模`、固定引擎和 readers 依次加入 Python 模块路径，并保留原有路径与动态库环境。这样从其他目录运行工程脚本时，同目录的 SDK 工具也可被导入。
 
-入口检查固定 OCP 目录是否存在，直接转交当前 Python 的参数与环境，不使用 shell、不安装依赖、不构造几何；仅导入入口不会执行 main。普通提案应用、命令审批、资源限制和实际制品验收继续生效。`python3 -I -S scripts/test_cad_sdk_python.py` 的七项合成回归覆盖同目录工具、项目/外部路径、SDK 优先级、参数转交、缺引擎拒绝、用法与环境不变。本轮在宿主运行合成回归通过；容器 SDK、安装和二进制构建需另行验证。安装与二进制构建分别记录，真实模型导出仍须单独验证。
+入口检查固定 OCP 目录是否存在，直接转交当前 Python 的参数与环境，不使用 shell、不安装依赖、不构造几何；仅导入入口不会执行 main。普通提案应用、命令审批、资源限制和实际制品验收继续生效。`python3 -I -S scripts/test_cad_sdk_python.py` 的七项合成回归覆盖同目录工具、项目/外部路径、SDK 优先级、参数转交、缺引擎拒绝、用法与环境不变；宿主及工作台 Python 3.12 均通过。安装与二进制构建分别记录，真实模型导出仍须单独验证。
 
 
 ## CAD 有效性检查的初始化
 
-Open CASCADE 的默认检查与 Exact 检查应分别在检查器初始化前选定模式。`BRepCheck_Analyzer(shape, True, False, True)` 可直接使用 Exact；若在已有检查器上调用 `SetExactMethod(True)`，须对形状重新 `Init` 后检查。仅切换标志不构成重新计算，可能将缓存的默认结果误报为 Exact 通过。现有检查器回归覆盖调用方式；真实 SDK 和工程制品结果需单独核验。其行为可对照[官方检查器源码](https://github.com/Open-Cascade-SAS/OCCT/blob/master/src/ModelingAlgorithms/TKTopAlgo/BRepCheck/BRepCheck_Analyzer.hxx)。
+Open CASCADE 的默认检查与 Exact 检查应分别在检查器初始化前选定模式。`BRepCheck_Analyzer(shape, True, False, True)` 可直接使用 Exact；若在已有检查器上调用 `SetExactMethod(True)`，须对形状重新 `Init` 后检查。仅切换标志不构成重新计算，可能将缓存的默认结果误报为 Exact 通过。实际 SDK 对照已复现两种用法结果不同，构造时启用 Exact 与设置后重新初始化的结果一致。其行为可对照[官方检查器源码](https://github.com/Open-Cascade-SAS/OCCT/blob/master/src/ModelingAlgorithms/TKTopAlgo/BRepCheck/BRepCheck_Analyzer.hxx)。
 
 逐级诊断须列出默认或 Exact 任一种失败的子形状，并分别记录模式。边单独有效不证明其在面的参数曲线上有效；离散残差采样仅是诊断证据。检查工具修正后，受影响的旧验收结论应撤回并保留纠正记录，实际制品重新核验，不能覆盖旧失败报告或据此放宽原有几何约束。
 
@@ -115,7 +115,7 @@ Open CASCADE 的默认检查与 Exact 检查应分别在检查器初始化前选
 
 退出码 0 仅表示测量流程完整，3 表示不完整，4 表示未运行；完整测量仍可能包含超出实体声明容差的配对。所有报告均为 `modelAccepted=false`。内核数值最大值不是严格数学误差上界，也不替代源图尺寸、材料、实体有效性、装配位姿或干涉验收。完整逐项数据仅写入新的独占报告文件，标准输出提供摘要和最差十项，既有报告不覆盖。
 
-本轮宿主七项保护及错误路径合成回归通过。尚未在真实 SDK 或工程制品上重新验收；这些回归只验证诊断工具。[官方数值检查接口](https://occt3d.com/dev/doc/refman/html/class_geom_lib___check_curve_on_surface.html)说明了计算和错误状态。
+七项保护及错误路径回归在宿主和工作台 Python 3.12 通过；真实扁钢对照 72 个配对无超差，已知失效筒体 246 个配对中 70 个超出声明容差，单配对预算正确返回不完整。它们只验证诊断工具。[官方数值检查接口](https://occt3d.com/dev/doc/refman/html/class_geom_lib___check_curve_on_surface.html)说明了计算和错误状态。
 
 ## DXF 标注证据读取
 
@@ -125,4 +125,4 @@ Open CASCADE 的默认检查与 Exact 检查应分别在检查器初始化前选
 
 输入上限64 MiB、绘制块512实体、单文字4096 UTF-8字节，报告上限8 MiB。缺句柄、绘制块、非有限值、API错误和预算耗尽明确返回不完整，错误不转为0。报告独占写入新文件，开始/结束核对源指纹；既有报告拒绝覆盖。退出0只表示所选证据完整，3为不完整、4为未运行，所有报告均 `modelAccepted=false`。仍使用正常命令审批、超时与RSS门禁，不构造几何、不修改图纸或单位。
 
-本轮宿主八项保护/错误路径合成回归通过，覆盖原文字、测量和见证点分别保留，以及预算耗尽返回不完整。尚未在真实 SDK 或工程图纸上重新验收；真实 Aide 调用与工程验收分别记录。
+八项保护/错误路径回归在宿主与工作台 Python3.12 通过。实际 SDK 合成对照保留显示7与测量9的差别、预算1返回不完整；实际图纸只读对照保留了显示35/测量36、显示720/计算0并附横向见证差720。这些结果只验证证据工具，真实 Aide 调用与工程验收分别记录。

@@ -145,7 +145,7 @@ func (a *App) businessFlowAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 423, errors.New("请先解锁工作台"))
 		return
 	}
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil || s.Deleted {
 		fail(w, 404, errors.New("会话不存在"))
 		return

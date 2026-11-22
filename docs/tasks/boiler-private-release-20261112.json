@@ -1,0 +1,98 @@
+{
+  "id": "boiler-private-release-20261112",
+  "request": "看下 boiler-design-assistant-sourcrcode 私有化仓库是否完成创建，没创建的话按照插件的格式修改并进行创建，做好对应的 release",
+  "baseline": "91d47779f4b977953af06087adf2cac95a8edb8f",
+  "initial_status": "?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/tasks/terminal-relay-performance-20261111.json",
+  "acceptance": [
+    "确认 GitHub 上是否已有对应私有仓库并避免重复创建",
+    "独立仓库遵循 aide 插件 manifest/index/workbench 格式，源码与版本一致",
+    "插件现有回归、JS/HTML 语法与实际宿主加载检查通过",
+    "发布私有 GitHub Release，包含可导入 ZIP 与 SHA-256，下载读回验证",
+    "明确未做生产安装、真实浏览器、豆包/飞书/CAD 联调；不上传公开仓库/市场"
+  ],
+  "scope": [
+    "plugins/boiler-design-assistant-sourcrcode 独立私有源码仓库",
+    "skyelan1999/aide-pkg-BoilerDesignAssistant 私有仓库与 v0.1.0 Release",
+    "docs/tasks/boiler-private-release-20261112.json 本地任务记录（不上传公开 Aide）"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "GitHub connector search + gh repo list 未发现锅炉仓库；当前目录无独立 .git，属于被 Aide 忽略的安装目录。",
+      "evidence": [
+        "GitHub search user:skyelan1999 boiler: repositories=[]",
+        "gh repo list skyelan1999 --limit 300",
+        "git check-ignore -v: /plugins/*"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留现有 0.1.0 业务/UI；按私有插件命名创建 aide-pkg-BoilerDesignAssistant，补元数据、私有打包、CI 与交付边界。Aide 主程序 version.sh/双架构 Delivery 不适用于不修改宿主的独立 semver 插件。",
+      "evidence": [
+        "docs/plugin-protocol.md §2/4/workbench",
+        "CommunityHomeVisit 私有插件 package.json/scripts/package.py 格式",
+        "现有 manifest.version / index.VERSION = 0.1.0"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "独立私有插件仓库已整理，原业务和 UI 内容摘要未改变。",
+      "evidence": [
+        "package.json",
+        ".gitignore",
+        "scripts/package.py",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "原始回归、语法、打包和当前源码实际 Node 宿主调用通过；浏览器/生产安装未执行。",
+      "evidence": [
+        "docs/verification-v0.1.0.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/CHANGELOG/LICENSE/发布范围说明已完成。",
+      "evidence": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/release-v0.1.0.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "显式分发文件白名单、源码敏感模式扫描无匹配；未更改既有安装或其他未跟踪文件。",
+      "evidence": [
+        "9-file ZIP allowlist",
+        "original source hashes unchanged"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "独立私有仓库已创建并确认 PRIVATE；main/tag 指向同一已验证提交；两个 CI success；正式 Release 与两份附件发布完成，认证下载读回 SHA-256 一致。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-BoilerDesignAssistant/releases/tag/v0.1.0",
+        "https://github.com/skyelan1999/aide-pkg-BoilerDesignAssistant/actions/runs/43055423410",
+        "https://github.com/skyelan1999/aide-pkg-BoilerDesignAssistant/actions/runs/43055423464",
+        "0b9e7933fe26897692e9be144d23205f23d90bc1",
+        "sha256:ea88482a2d9f55814726bc2afb8f924f82da76f17a15c1c44d65c98bd0aabba8"
+      ]
+    }
+  },
+  "release_authorization": "用户原话：没创建的话按照插件的格式修改并进行创建，做好对应的release",
+  "rollback": "不替换当前安装。Release 如需撤回可先改为 draft；保留源码和 tag，后续版本不得覆盖同名附件。",
+  "handoff": "源码保留在用户指定目录，已初始化独立 Git 并与 origin/main 同步，工作区干净。业务/UI 未改变；原 Aide 的另外两项未跟踪工作保留。本任务记录仅本地，不提交公开 Aide。未执行生产安装/重启、真实浏览器/Safari 下载、真实 API/工程 CAD 联调。",
+  "private_repository": "https://github.com/skyelan1999/aide-pkg-BoilerDesignAssistant",
+  "release": {
+    "version": "0.1.0",
+    "commit": "0b9e7933fe26897692e9be144d23205f23d90bc1",
+    "repository": "https://github.com/skyelan1999/aide-pkg-BoilerDesignAssistant",
+    "private": true,
+    "url": "https://github.com/skyelan1999/aide-pkg-BoilerDesignAssistant/releases/tag/v0.1.0",
+    "assets": [
+      "aide-pkg-BoilerDesignAssistant-v0.1.0.zip",
+      "aide-pkg-BoilerDesignAssistant-v0.1.0.zip.sha256"
+    ]
+  }
+}

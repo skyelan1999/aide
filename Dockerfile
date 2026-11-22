@@ -247,9 +247,10 @@ COPY --from=node /usr/local/LICENSE /opt/aide/licenses/platform/node-LICENSE
 COPY --from=host-helpers /usr/local/bin/aide-message-relay /usr/local/bin/aide-message-relay
 COPY --from=host-helpers /opt/aide-message-lan /opt/aide/message-lan
 COPY --from=codex-host /opt/aide-host-components /opt/aide/host-components
+COPY --from=office-engine /opt/aide/office-engine /opt/aide/office-engine
 COPY scripts/office /opt/aide/office-scripts
 # Host checkouts may have private modes (for example after iCloud download).
-RUN chmod -R a+rX /opt/aide/dwg /opt/aide/licenses /opt/aide/office-scripts
+RUN chmod -R a+rX /opt/aide/dwg /opt/aide/licenses /opt/aide/office-scripts /opt/aide/office-engine
 
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 # Root-managed build identity; runtime upgrades may accept it only after readiness.

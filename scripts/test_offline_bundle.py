@@ -43,6 +43,10 @@ elif a[:2] == ['info','--format']:
     if a[2] == '{{.MemTotal}}': print(6*1024**3)
     elif a[2] == '{{.NCPU}}': print(4)
     else: print(os.environ.get('ENGINE_PLATFORM','linux/aarch64'))
+elif a[:1] == ['inspect']:
+    if not (root/'container-started').exists() or a[-1] != 'c'*64: sys.exit(1)
+    state='running' if '.State.Status' in a[2] else 'true'
+    print(state+'|'+str(root.resolve())+'|aide')
 elif a[:2] == ['image','inspect']:
     if not (root/'image-id').exists(): sys.exit(1)
     local_id=(root/'image-id').read_text()
@@ -69,7 +73,10 @@ elif a[:4] == ['compose','exec','-T','aide'] and 'curl' in a:
     print(json.dumps({'status':'ok','service':'aide','instanceId':os.environ.get('CONTAINER_INSTANCE','fixture-instance')}))
 elif a[:2] == ['compose','up']:
     assert '--no-build' in a and '--pull' in a and a[a.index('--pull')+1] == 'never'
-elif a[:2] in (['compose','ps'], ['compose','run']): pass
+    (root/'container-started').write_text('running')
+elif a[:2] == ['compose','ps']:
+    if (root/'container-started').exists(): print('c'*64)
+elif a[:2] == ['compose','run']: pass
 elif a[:2] in (['compose','exec'], ['compose','stop']): pass
 else: sys.exit('Unexpected docker operation: '+repr(a))
 ''')
@@ -92,11 +99,11 @@ sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
 ''')
         curl.chmod(0o755)
         self.env = dict(os.environ, PATH=str(docker.parent) + os.pathsep + os.environ['PATH'],
-                        FIXTURE_ROOT=str(self.root), EXPECTED_ID=IMAGE_ID, AIDE_OPEN_BROWSER='0', AIDE_PORT='18097')
+                        FIXTURE_ROOT=str(self.root), EXPECTED_ID=IMAGE_ID, AIDE_OPEN_BROWSER='0', AIDE_PORT='18097', AIDE_STARTUP_TIMEOUT='5')
 
     def run_start(self):
         return subprocess.run(['bash', 'start.command'], cwd=self.root, env=self.env,
-                              capture_output=True, text=True, errors='replace')
+                              capture_output=True, text=True, errors='replace', timeout=30)
 
     def calls(self):
         return (self.root / 'calls').read_text()

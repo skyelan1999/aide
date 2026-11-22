@@ -1608,6 +1608,10 @@
       ],
       [
         "python3",
+        "scripts/test_startup_readiness.py"
+      ],
+      [
+        "python3",
         "scripts/test_macos_desktop.py"
       ],
       [

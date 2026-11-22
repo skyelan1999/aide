@@ -9,13 +9,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const nativeApprovalGuidance = "用户指定会话并询问审批时调用 assistant_work。用工具返回的会话编号和待审事项询问用户。只有用户另说“批准本次审批”或“拒绝本次审批”时，才再次调用工具提交这一项决定。"
 
-var nativeApprovalSession = regexp.MustCompile(`(?:[#＃][[:space:]]*|会话[[:space:]]*)([0-9]+)|([0-9]+)[[:space:]]*号[[:space:]]*会话`)
+const spokenSessionDigits = `0-9零〇一二两三四五六七八九幺十百千万`
+
+var nativeApprovalSession = regexp.MustCompile(`(?:[#＃][[:space:]]*|(?:会话|绘画)[[:space:]]*)([` + spokenSessionDigits + `]+)|([` + spokenSessionDigits + `]+)[[:space:]]*(?:号|的)?[[:space:]]*(?:会话|绘画)`)
+var nativeApprovalCorrection = regexp.MustCompile(`^(?:不是[` + spokenSessionDigits + `]+[，,、[:space:]]*(?:而?是)|是)?([` + spokenSessionDigits + `]+)[。.!！[:space:]]*$`)
 
 type nativeApprovalOffer struct {
 	session, run, workspace, kind string
@@ -27,7 +31,16 @@ type nativeApprovalOffer struct {
 }
 
 func nativeApprovalTarget(heard string) string {
-	if !strings.Contains(heard, "审批") {
+	return nativeApprovalTargetWithContext(heard, false)
+}
+
+// Spoken numbers and ASR's 会话/绘画 confusion are used only for a read-only
+// lookup. They never grant authority to submit an approval decision.
+func nativeApprovalTargetWithContext(heard string, recentApprovalQuery bool) string {
+	if !strings.Contains(heard, "审批") && assistantRunAction.MatchString(strings.TrimSpace(heard)) {
+		return ""
+	}
+	if !strings.Contains(heard, "审批") && !recentApprovalQuery {
 		return ""
 	}
 	for _, phrase := range []string{"不要审批", "别审批", "不需要审批", "不用审批"} {
@@ -37,9 +50,61 @@ func nativeApprovalTarget(heard string) string {
 	}
 	matches := nativeApprovalSession.FindAllStringSubmatch(heard, 2)
 	if len(matches) != 1 {
+		if len(matches) == 0 && recentApprovalQuery {
+			if corrected := nativeApprovalCorrection.FindStringSubmatch(strings.TrimSpace(heard)); corrected != nil {
+				if number, ok := spokenSessionNumber(corrected[1]); ok {
+					return "#" + strconv.Itoa(number)
+				}
+			}
+		}
 		return ""
 	}
-	return "#" + matches[0][1] + matches[0][2]
+	if number, ok := spokenSessionNumber(matches[0][1] + matches[0][2]); ok {
+		return "#" + strconv.Itoa(number)
+	}
+	return ""
+}
+
+func spokenSessionNumber(text string) (int, bool) {
+	if len([]rune(text)) > 16 {
+		return 0, false
+	}
+	if n, err := strconv.Atoi(text); err == nil {
+		return n, n > 0 && n <= 99999999
+	}
+	digits := map[rune]int{'零': 0, '〇': 0, '一': 1, '幺': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9}
+	units := map[rune]int{'十': 10, '百': 100, '千': 1000, '万': 10000}
+	total, section, number, previousUnit := 0, 0, 0, 10000
+	hasUnit := strings.ContainsAny(text, "十百千万")
+	for _, r := range text {
+		if d, ok := digits[r]; ok {
+			number = number*10 + d
+			continue
+		}
+		unit, ok := units[r]
+		if !ok {
+			return 0, false
+		}
+		if unit == 10000 {
+			if total != 0 || section+number == 0 {
+				return 0, false
+			}
+			total, section, number, previousUnit = (section+number)*unit, 0, 0, 10000
+			continue
+		}
+		if unit >= previousUnit || number == 0 && unit != 10 {
+			return 0, false
+		}
+		if number == 0 {
+			number = 1
+		}
+		section, number, previousUnit = section+number*unit, 0, unit
+	}
+	if !hasUnit {
+		section = 0
+	}
+	n := total + section + number
+	return n, n > 0 && n <= 99999999
 }
 
 func nativeApprovalDecision(heard string) string {
@@ -120,6 +185,9 @@ func nativeApprovalEvent(offer *nativeApprovalOffer) map[string]any {
 }
 
 func (a *App) submitNativeApproval(ctx context.Context, assistantID string, offer *nativeApprovalOffer, answer string) string {
+	if assistantReadOnlyCall(ctx) {
+		return assistantReadOnlyCallDenied
+	}
 	if offer == nil || time.Now().After(offer.expires) {
 		return "未提交审批。请先说要查看哪个会话的审批。"
 	}
@@ -142,7 +210,7 @@ func (a *App) submitNativeApproval(ctx context.Context, assistantID string, offe
 	if offer.kind == "files" && answer == "拒绝" {
 		a.mu.Lock()
 		defer a.mu.Unlock()
-		if session := a.sessions[offer.session]; session != nil && !session.Deleted {
+		if session := a.sessionLocked(offer.session); session != nil && !session.Deleted {
 			for _, task := range session.Runs {
 				if task.ID != offer.run || task.Status != "awaiting_approval" || guard(task) != nil {
 					continue

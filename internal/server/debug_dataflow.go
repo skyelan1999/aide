@@ -251,7 +251,7 @@ func (a *App) debugSessionDataflowDump(w http.ResponseWriter, r *http.Request) {
 	var journalID string
 	callRefs := map[string]string{}
 	a.mu.Lock()
-	session := a.sessions[sessionID]
+	session := a.sessionLocked(sessionID)
 	if session == nil || session.Deleted {
 		a.mu.Unlock()
 		fail(w, http.StatusNotFound, errors.New("会话不存在"))

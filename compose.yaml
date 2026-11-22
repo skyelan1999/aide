@@ -37,6 +37,7 @@ services:
       # Password-protected LAN workbench: host relay opens only with explicit consent.
       - "127.0.0.1::45842"
     environment:
+      AIDE_LAZY_SESSIONS: ${AIDE_LAZY_SESSIONS:-1}
       # Keep the Go heap below the cgroup cap so GC runs before the kernel OOM
       # killer takes the whole service down.
       GOMEMLIMIT: 2600MiB

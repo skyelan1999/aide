@@ -16,15 +16,7 @@ const completed={id:'s',revision:1,runningRuns:0,runs:[{id:'r',status:'completed
 {
  const app=fs.readFileSync('internal/server/web/app.js','utf8'),events={},refreshes=[];let sidebars=0,approvals=0;
  const c={sessionsEv:null,state:{token:'local-test-not-a-secret'},EventSource:function(){this.addEventListener=(name,fn)=>events[name]=fn;},scheduleSessionsRefresh:()=>sidebars++,refreshApprovalPolicy:async()=>{approvals++;},window:{AideManagement:{refresh(){}},AideTaskOutcome:{refreshSession:id=>refreshes.push(id)}}};
- vm.runInNewContext(app.slice(app.indexOf('function setupGlobalEvents()'),app.indexOf('/* ── 小秘系统会话密码门')),c);
- c.setupGlobalEvents();
- events['sessions-changed']({data:JSON.stringify({sessionId:'s'})});
- events['sessions-changed']({data:'broken'});
- assert.equal(sidebars,2,'both session events refresh the sidebar');
- events['open']();
- assert.equal(sidebars,3,'reconnect refreshes the sidebar to recover missed events');
- assert.deepEqual(refreshes,['s',undefined]);
- assert.equal(approvals,1,'reconnect keeps approval refresh');
+ vm.runInNewContext(app.slice(app.indexOf('function setupGlobalEvents()'),app.indexOf('/* ── 小秘系统会话密码门')),c);c.setupGlobalEvents();events['sessions-changed']({data:JSON.stringify({sessionId:'s'})});assert.equal(sidebars,1,'valid event refreshes sidebar');events['sessions-changed']({data:'broken'});assert.equal(sidebars,2,'malformed payload still refreshes authoritative sidebar');events['open']();assert.equal(sidebars,3,'reconnect refreshes sidebar too');assert.deepEqual(refreshes,['s',undefined]);assert.equal(approvals,1,'reconnect keeps approval refresh');
 }
 {
  const app=fs.readFileSync(process.argv[3]||'internal/server/web/app.js','utf8');

@@ -75,6 +75,12 @@ func (a *App) collectToolCallsLocked(sess *Session) []toolCallRecord {
 		if child.ParentID != sess.ID || child.Deleted {
 			continue
 		}
+		if child.historyDeferred {
+			child = a.sessionLocked(child.ID)
+			if child == nil {
+				continue
+			}
+		}
 		for _, run := range child.Runs {
 			for _, tu := range run.ToolUses {
 				display := tu.Preview
@@ -104,7 +110,7 @@ func (a *App) collectToolCallsLocked(sess *Session) []toolCallRecord {
 func (a *App) sessionToolCalls(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	a.mu.Lock()
-	sess := a.sessions[id]
+	sess := a.sessionLocked(id)
 	if sess == nil || sess.Deleted {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))

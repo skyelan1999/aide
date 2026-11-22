@@ -1,0 +1,111 @@
+{
+  "id": "sip-task-callback-20261122",
+  "request": "把挂断后自动回拨也做上，任务完成后让小绵主动打电话回来汇报，别动现有待审任务，做完重新编译验收。",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/assistant-live.md\n M docs/architecture/launcher-contract.md\n M docs/en/user-guide.md\n M docs/plugin-protocol.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M docs/user-guide.md\n M internal/execsandbox/sandbox_linux.go\n M internal/server/approval_policy.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_components.go\n M internal/server/assistant_delegation.go\n M internal/server/assistant_followup.go\n M internal/server/assistant_history.go\n M internal/server/assistant_history_test.go\n M internal/server/assistant_initiative.go\n M internal/server/assistant_mixsoul.go\n M internal/server/assistant_mixsoul_test.go\n M internal/server/assistant_native_approval.go\n M internal/server/assistant_native_approval_test.go\n M internal/server/assistant_realtime.go\n M internal/server/assistant_realtime_provider.go\n M internal/server/assistant_result_trigger.go\n M internal/server/assistant_retrieval.go\n M internal/server/assistant_watch.go\n M internal/server/assistant_work_ledger.go\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/assisted_approval_surface.go\n M internal/server/auth_verify.go\n M internal/server/business_flow.go\n M internal/server/change_impact.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/cross_session_tools.go\n M internal/server/debug.go\n M internal/server/debug_dataflow.go\n M internal/server/document_proposals.go\n M internal/server/execution_journal.go\n M internal/server/factory_reset.go\n M internal/server/goal_acceptance.go\n M internal/server/integrity.go\n M internal/server/integrity_upgrade.go\n M internal/server/interrupted_output.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_timeline.go\n M internal/server/migration.go\n M internal/server/mixsoul/agent.cjs\n M internal/server/mixsoul/system.test.cjs\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/persona.go\n M internal/server/plan.go\n M internal/server/plugin_effect_checks.go\n M internal/server/plugin_workbench.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/plugins.go\n M internal/server/professional_workflow.go\n M internal/server/project_briefing.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/reminder_schedule.go\n M internal/server/reminders.go\n M internal/server/server.go\n M internal/server/session_model_selection.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/task_release_receipts.go\n M internal/server/tool_calls.go\n M internal/server/voice_fallback_gate_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/plugin-workbench.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/plugin-workbench.test.cjs\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_macos_desktop.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/reviews/2026-11-22-assistant-autonomy-weather.md\n?? docs/tasks/assistant-approval-tools-20261122.json\n?? docs/tasks/assistant-autonomy-weather-20261122.json\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/lazy-session-startup-20261122.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/sip-phone-acceptance-20261122.json\n?? docs/tasks/startup-performance-20261122.json\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/assistant_approval_query.go\n?? internal/server/assistant_approval_tools_test.go\n?? internal/server/assistant_autonomy.go\n?? internal/server/assistant_autonomy_test.go\n?? internal/server/assistant_readonly_call.go\n?? internal/server/assistant_readonly_call_test.go\n?? internal/server/assistant_sip_status.go\n?? internal/server/assistant_sip_status_test.go\n?? internal/server/assistant_weather.go\n?? internal/server/assistant_weather_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/lazy_sessions.go\n?? internal/server/lazy_sessions_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? internal/server/startup_sessions.go\n?? internal/server/startup_sessions_test.go\n?? scripts/aide_sip_phone.py\n?? scripts/aide_sip_service.py\n?? scripts/assistant-model-status.test.cjs\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_aide_sip_phone.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Only newly accepted phone-origin tasks can enqueue completion callback to the configured original LAN phone. No existing pending task is approved/rejected/resumed.",
+    "Persist queue and at-most-once dial claims; wait for source hangup and actual completion; respect lock/workspace/disabled callbacks; no-answer does not redial.",
+    "On answer, report trusted task result in a report-only call, with no task-control/approval tools.",
+    "Unit/race/protocol checks and local rebuild plus actual phone callback/hearing acceptance.",
+    "Original task hashes and 35 pending approval identities preserved."
+  ],
+  "scope": [
+    "internal/server/assistant_sip_callbacks.go",
+    "internal/server/assistant_sip_callbacks_test.go",
+    "internal/server/assistant_realtime.go",
+    "internal/server/assistant_agent.go",
+    "internal/server/assistant_mixsoul.go",
+    "internal/server/assistant_sip_status.go",
+    "internal/server/assistant_autonomy.go",
+    "internal/server/mixsoul/agent.cjs",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/aide_sip_phone.py",
+    "scripts/aide_sip_service.py",
+    "docs",
+    "internal/server/tts/provider.go",
+    "internal/server/tts/qwen.go",
+    "internal/server/tts/qwen_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorizes local automatic callback implementation and real phone test, preserving existing pending tasks.",
+      "evidence": [
+        "Current user instruction"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Durable host queue and keyed local SIP context, actual completion gating, at-most-once dial, report-only callback; opt-in common setting enabled for this configured phone.",
+      "evidence": [
+        "internal/server/assistant_sip_callbacks.go",
+        "scripts/aide_sip_phone.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Durable opt-in callback queue, keyed phone provenance, real dispatch receipts, same-task recovery, idempotent claim recovery and report-only TTS playback with automatic hangup. Native incoming calls remain duplex; playback opens no realtime model/tool session.",
+      "evidence": [
+        "internal/server/assistant_sip_callbacks.go",
+        "internal/server/assistant_realtime.go",
+        "scripts/aide_sip_phone.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual phone-origin delegation created task #194 and durable callback. Execution recovered through same-task MiMo Flash continuation. Final callback used trusted Chinese-pinned TTS, transmitted complete audio, auto hangup acknowledged, and user confirmed full Chinese, clear sound and auto hangup. 35 original pending identities and all 24 containing session files are unchanged. Focused broad Go race checks, callback/recovery/language checks, 10 SIP/audio protocol tests and 31 related JS checks passed; image healthy.",
+      "evidence": [
+        ".agent-state/sip-task-callback-20261122/go-tests.log",
+        ".agent-state/sip-task-callback-20261122/go-callback-final.log",
+        ".agent-state/sip-task-callback-20261122/python-tests.log",
+        ".agent-state/sip-task-callback-20261122/js-tests.log",
+        ".agent-state/sip-task-callback-20261122/actual-callback.json",
+        ".agent-state/sip-task-callback-20261122/actual-queue.json",
+        ".agent-state/sip-task-callback-20261122/preservation-final.json",
+        ".agent-state/sip-task-callback-20261122/runtime-final.json",
+        ".agent-state/sip-task-callback-20261122/actual-callback-chinese.json",
+        ".agent-state/sip-task-callback-20261122/actual-queue-chinese.json",
+        ".agent-state/sip-task-callback-20261122/user-confirmation.json",
+        ".agent-state/sip-task-callback-20261122/language-test-summary.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "SIP guide includes separate callback toggle, queue status, hangup/completion prerequisites, no auto retry and report-only limits. English strings and user guide updated.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture/assistant-live.md",
+        "internal/server/web/app.js",
+        "docs/reviews/2026-11-22-sip-task-callback.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Verified stale SIP process removed; one current gateway owns the port. Original 35 pending identities and all 24 containing session files remain unchanged. Existing unrelated dirty work preserved.",
+      "evidence": [
+        ".agent-state/sip-task-callback-20261122/preservation-final.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Rebuilt and installed locally through standard launcher; physical Chinese report playback accepted. No public Aide release or push.",
+      "evidence": [
+        ".agent-state/sip-task-callback-20261122/build-chinese-report.log",
+        ".agent-state/sip-task-callback-20261122/runtime-final.json",
+        ".agent-state/sip-task-callback-20261122/user-confirmation.json"
+      ]
+    }
+  },
+  "release_authorization": "Current user authorized local rebuild/install and phone acceptance. No public Aide release requested.",
+  "rollback": "Restore only callback-owned source edits from private before-source snapshot, rebuild with standard launcher; disable callback setting to cancel future calls without changing tasks.",
+  "handoff": "Completed locally. Callback setting enabled for configured original phone; normal incoming calls remain duplex. Callback reports use selected Qwen WAV TTS with explicit Chinese and automatic hangup, no additional realtime model conversation. Missed/failed calls do not auto redial; explicit recovery retries were used during acceptance. Original pending tasks untouched. OpenAI realtime account quota and original executor stream failures were observed; current accepted path uses Qwen voice and recovered task result. Shared dirty worktree preserved.",
+  "runtime_repair": {
+    "summary": "Restored macOS host mount override and original workspace using verified standard build; removed a verified stale gateway owning SIP port. OpenAI realtime reports credit_balance_exhausted, so Qwen remains selected.",
+    "external_drift": ".agent-state/sip-task-callback-20261122/external-drift.json"
+  }
+}

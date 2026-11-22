@@ -45,7 +45,7 @@ func interruptedOutputMessage(task *Task) (Message, bool) {
 // Caller holds a.mu. Associate durable assistant text with its owning run so
 // legacy recovery and repeated finalization cannot duplicate that response.
 func (a *App) rememberTaskOutputLocked(s *Session, task *Task, answer string) {
-	if s == nil || s.Deleted || a.sessions[s.ID] != s {
+	if s == nil || s.Deleted || a.sessionLocked(s.ID) != s {
 		return
 	}
 	owned := false
@@ -186,7 +186,7 @@ func conversationHistory(s *Session) []Message {
 // Used only by writes/compaction, never a read-only context preview. Save the
 // recovered history before allowing compression to remove its retained anchor.
 func (a *App) materializeConversationLocked(s *Session) error {
-	if s == nil || s.Deleted || a.sessions[s.ID] != s {
+	if s == nil || s.Deleted || a.sessionLocked(s.ID) != s {
 		return fmt.Errorf("会话已变化")
 	}
 	history := conversationHistory(s)

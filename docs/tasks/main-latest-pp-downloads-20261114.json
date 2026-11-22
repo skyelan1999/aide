@@ -1,0 +1,83 @@
+{
+  "id": "main-latest-pp-downloads-20261114",
+  "request": "你把几个插件包帮我下载到下载里，我自己升级一下，要正式版，然后aide确保是main最新版，如果有今天未合并的分支请先帮我合并推送",
+  "baseline": "d6354f2b8e864148df2caa81d666d79258692602",
+  "initial_status": "?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Three exact formal commercial ZIPs in Downloads with matching SHA256.",
+    "Inspect all local/remote branches with tips dated 2026-11-14; verify six squashed PR heads are already merged, merge only genuine outstanding work.",
+    "Running Aide uses current origin/main source inputs; healthy HTTPS and preserved data, plugin settings, license bridge and issuer isolation."
+  ],
+  "scope": [
+    "Formal plugin package delivery only; user performs upgrades.",
+    "Aide branch audit and existing source-build deployment; no version/tag/public Release.",
+    "Local deployment receipts and rollback; preserve unrelated untracked files."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Explicit user scope confirmed; six candidate branch tips match merged PR heads; update actual runtime using existing source build and stable mounts.",
+      "evidence": [
+        "PR #895/#897/#898/#901/#902/#904 metadata; origin/main d6354f2b"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit user scope confirmed; six candidate branch tips match merged PR heads; update actual runtime using existing source build and stable mounts.",
+      "evidence": [
+        "PR #895/#897/#898/#901/#902/#904 metadata; origin/main d6354f2b"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Three formal commercial plugin ZIPs delivered to Downloads with original SHA256; existing source launcher built and started current main. All six today branches were already squash-merged; no redundant merge/push created.",
+      "evidence": [
+        "origin/main d6354f2b8e864148df2caa81d666d79258692602",
+        "Native source build exit 0; image sha256:4e02c36fa2d7fc10b2a30e53428cb65fab08649fe9204ca7145c839c5b9c3444",
+        "Image source fingerprint 1857b19774bb0573a30610644daeb37d91d5ef0b4dfacbb60f9329752e192011",
+        "HTTPS health status=ok, integrity=ok",
+        "Six 2026-11-14 branch heads match merged PR #895/#897/#898/#901/#902/#904; no open PRs",
+        "PR #904 Aide CI run 43571017577 conclusion=success"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Running image source fingerprint matches current main tracked inputs; authenticated plugin list has enabled PP 0.4.18/PPC 0.2.0/PPL 0.1.1 without errors. Three native offline license statuses UNACTIVATED; read-only bridge and private issuer tree mask retained. No new full-suite run: unchanged upstream main has successful PR CI and documented full-suite evidence. Existing browser verification page was closed; browser smoke NOT_RUN.",
+      "evidence": [
+        "origin/main d6354f2b8e864148df2caa81d666d79258692602",
+        "Native source build exit 0; image sha256:4e02c36fa2d7fc10b2a30e53428cb65fab08649fe9204ca7145c839c5b9c3444",
+        "Image source fingerprint 1857b19774bb0573a30610644daeb37d91d5ef0b4dfacbb60f9329752e192011",
+        "HTTPS health status=ok, integrity=ok",
+        "Six 2026-11-14 branch heads match merged PR #895/#897/#898/#901/#902/#904; no open PRs",
+        "PR #904 Aide CI run 43571017577 conclusion=success"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Task and private local deployment, branch audit, package and preservation receipts recorded; no sensitive runtime data or issuer material committed.",
+      "evidence": [
+        "docs/tasks/main-latest-pp-downloads-20261114.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Pre-existing untracked work preserved. Scoped launcher recycled only its obsolete build output; explicit rollback image retained. 927 recorded data files still present; plugin registry, mounts and ports unchanged. Large-session verification limited to metadata/size before snapshot; all 36 touched large files retain byte size and three unchanged conflict copies compare semantically equal; do not claim complete pre/post byte identity. Runtime helper PID and integrity baseline updates expected.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Authorized local main deployment complete and healthy; no Aide version/tag/public Release. Remote main already included all today branches, so no source merge/push needed.",
+      "evidence": [
+        "origin/main d6354f2b8e864148df2caa81d666d79258692602",
+        "Native source build exit 0; image sha256:4e02c36fa2d7fc10b2a30e53428cb65fab08649fe9204ca7145c839c5b9c3444",
+        "Image source fingerprint 1857b19774bb0573a30610644daeb37d91d5ef0b4dfacbb60f9329752e192011",
+        "HTTPS health status=ok, integrity=ok",
+        "Six 2026-11-14 branch heads match merged PR #895/#897/#898/#901/#902/#904; no open PRs",
+        "PR #904 Aide CI run 43571017577 conclusion=success"
+      ]
+    }
+  },
+  "release_authorization": "你把几个插件包帮我下载到下载里，我自己升级一下，要正式版，然后aide确保是main最新版，如果有今天未合并的分支请先帮我合并推送",
+  "rollback": "Restore saved immutable old image and original Compose configuration; preserved private deployment backup.",
+  "handoff": "Three formal ZIPs are in ~/Downloads for manual import/upgrade; runtime remains on HTTPS localhost:9999. Activation is pending, not signed/imported for the user."
+}

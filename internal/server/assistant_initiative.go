@@ -26,7 +26,7 @@ func (a *App) assistantInitiative(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	a.mu.Lock()
 	workspace := a.wsID()
-	s := a.sessions[id]
+	s := a.sessionLocked(id)
 	active := a.assistantRealtimeActive[id]
 	cfg, cfgErr := a.xiaomiModelConfigLocked()
 	a.mu.Unlock()

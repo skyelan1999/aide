@@ -153,7 +153,7 @@ func (a *App) pwControlLocked(args map[string]any) (any, error) {
 	}
 	if action == "status" {
 		sessions := []map[string]any{}
-		for _, s := range a.sessions {
+		for _, s := range a.sessionBodiesLocked() {
 			if !s.Deleted && s.Kind != "assistant" {
 				runs := []*Task{}
 				for _, t := range s.Runs {
@@ -171,7 +171,7 @@ func (a *App) pwControlLocked(args map[string]any) (any, error) {
 	}
 	if action == "approve" || action == "cancel" {
 		sid, rid := stringValue(args["sessionId"]), stringValue(args["runId"])
-		s := a.sessions[sid]
+		s := a.sessionLocked(sid)
 		if s == nil || s.Deleted {
 			return nil, errors.New("会话不存在")
 		}
@@ -238,7 +238,7 @@ func (a *App) pwControlLocked(args map[string]any) (any, error) {
 			}
 		} else {
 			sid := stringValue(args["sessionId"])
-			s := a.sessions[sid]
+			s := a.sessionLocked(sid)
 			if s == nil || s.Deleted || s.Kind == "assistant" {
 				return nil, errors.New("无效会话")
 			}
@@ -283,7 +283,7 @@ func (a *App) startPW(w http.ResponseWriter, r *http.Request, prompt string, att
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil || s.Deleted || s.Kind == "assistant" || !a.pwEnabledLocked() || a.loadLockStateLocked().Locked {
 		fail(w, 403, errors.New("PW 会话或插件不可用"))
 		return

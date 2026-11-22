@@ -459,10 +459,14 @@ type sessionCand struct {
 // rebalanceSessionBuckets 启动时把错位/重复/平铺残留的会话文件归位到唯一正确的桶。
 // 幂等、可重入、可回滚；损坏会话原地保留，绝不丢数据。
 func rebalanceSessionBuckets(data string) (returnErr error) {
+	return rebalanceSessionBucketsCached(data, nil)
+}
+
+func rebalanceSessionBucketsCached(data string, cache *startupSessionCache) (returnErr error) {
 	if err := recoverMigrationUndo(data, "session-bucket-migration"); err != nil {
 		return err
 	}
-	cands, err := scanSessionCandidates(data)
+	cands, err := scanSessionCandidatesCached(data, cache)
 	if err != nil {
 		return err
 	}
@@ -494,6 +498,33 @@ func rebalanceSessionBuckets(data string) (returnErr error) {
 		cb := sessionBucketFor(winner.sess)
 		canonicalRel := filepath.ToSlash(filepath.Join(sessionsDirName, cb, "session-"+id+".json"))
 		// 快路径：仅一份且已在正确桶 → 无需处理。
+		if len(members) == 1 && filepath.ToSlash(members[0].rel) == canonicalRel {
+			continue
+		}
+		// A catalogue is enough for a canonical no-op, never for moving data.
+		// Fully validate every deferred candidate before choosing a winner.
+		validated := make([]sessionCand, 0, len(members))
+		for _, member := range members {
+			if member.sess.historyDeferred {
+				raw, err := readSessionCandidate(member)
+				if err != nil {
+					return err
+				}
+				var full Session
+				if json.Unmarshal(raw, &full) != nil {
+					continue
+				}
+				member.sess = &full
+			}
+			validated = append(validated, member)
+		}
+		members = validated
+		if len(members) == 0 {
+			continue
+		}
+		winner = pickSessionWinner(members)
+		cb = sessionBucketFor(winner.sess)
+		canonicalRel = filepath.ToSlash(filepath.Join(sessionsDirName, cb, "session-"+id+".json"))
 		if len(members) == 1 && filepath.ToSlash(members[0].rel) == canonicalRel {
 			continue
 		}
@@ -618,14 +649,27 @@ func rebalanceSessionBuckets(data string) (returnErr error) {
 // scanSessionCandidates 收集所有需要归位检查的会话文件：三个桶 + 平铺根残留。
 // 无法读取/解析的文件不会进入返回值（原地保留，由完整性巡检报告）。
 func scanSessionCandidates(data string) ([]sessionCand, error) {
+	return scanSessionCandidatesCached(data, nil)
+}
+
+func scanSessionCandidatesCached(data string, cache *startupSessionCache) ([]sessionCand, error) {
 	var out []sessionCand
 	add := func(abs string) {
+		if cache != nil {
+			if meta, digest, ok := cache.catalogue.metadata(abs); ok {
+				rel, err := filepath.Rel(data, abs)
+				if err == nil {
+					out = append(out, sessionCand{abs: abs, rel: rel, sess: meta, hash: digest})
+				}
+				return
+			}
+		}
 		b, err := os.ReadFile(abs)
 		if err != nil {
 			return
 		}
-		var s Session
-		if json.Unmarshal(b, &s) != nil {
+		s, decodeErr := cache.decode(abs, b)
+		if decodeErr != nil {
 			return // 损坏：不纳入迁移
 		}
 		sum := sha256.Sum256(b)

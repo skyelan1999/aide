@@ -1,0 +1,136 @@
+{
+  "id": "startup-performance-20261122",
+  "request": "定位六分钟启动耗时并优化启动速度，以真实重启验证前后差异",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M docs/agent/router.json\n M docs/architecture/launcher-contract.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M internal/execsandbox/sandbox_linux.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/debug_dataflow.go\n M internal/server/migration.go\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/web/app.js\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Reduce real startup-to-ready latency on the same local session corpus vs prior ~350s readiness.",
+    "Keep complete typed session validation and fresh byte SHA256 checks; preserve migration/rollback, integrity, task recovery and numbering.",
+    "Do not rewrite unchanged session files; persist actual interrupted-task changes.",
+    "Record phase timings, safety regressions, benchmark and real build/start evidence."
+  ],
+  "scope": [
+    "internal/server/startup_sessions.go",
+    "internal/server/startup_sessions_test.go",
+    "internal/server/server.go",
+    "internal/server/migration.go",
+    "internal/server/integrity.go",
+    "internal/server/integrity_upgrade.go",
+    "docs/tasks/startup-performance-20261122.json",
+    "docs/architecture/launcher-contract.md",
+    ".agent-state/startup-performance-20261122"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests diagnosis and actual startup speed improvement. Corpus: 189 files, 6251775654 bytes; previous direct readiness ~350s.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-boot typed decode reuse keyed by exact SHA256 of freshly read bytes. Reuse across migration, integrity and loading through first image-upgrade readiness; drop cache then. Save only sessions changed by restart recovery; emit aggregate stage timings.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Per-boot byte-SHA256 keyed typed-session reuse across all startup validation passes; unchanged sessions no longer saved; recovery and assistant result wake preserved; aggregate phase timings added.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "64 relevant race regressions passed, no skips. New image startup phase sum 91.590s (constructor 75.328s plus ready-integrity 16.262s), versus previous approximately 350s. Repeat ordinary start after container restart measured 75.942s to verified host HTTPS and exit=0. Complete offline resource check passed. All 189 session files retained with unchanged size/mtime; zero startup recovery writes.",
+      "evidence": [
+        ".agent-state/startup-performance-20261122/go-tests.log",
+        ".agent-state/startup-performance-20261122/build.log",
+        ".agent-state/startup-performance-20261122/image-startup.log",
+        ".agent-state/startup-performance-20261122/file-preservation.json",
+        ".agent-state/startup-performance-20261122/runtime-assets.log",
+        ".agent-state/startup-performance-20261122/real-restart.json",
+        ".agent-state/startup-performance-20261122/restart.log",
+        ".agent-state/startup-performance-20261122/service-startup-phases.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated launcher contract with startup cache lifetime, exact-content checks, conditional persistence and timing diagnostics. Task records actual measurements and observer limitation.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Task-scoped diffs reviewed, test containers auto-removed, original session data preserved; evidence retained privately under .agent-state. Pre-change runtime tag retained for rollback.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source/runtime fix only; no commit, push, version bump or public release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Preserve pre-change runtime tag; existing user corpus stays intact except required recovery/migration writes.",
+  "handoff": "Updated local source runtime installed and healthy at https://localhost:9999/. First image startup about 92s, ordinary restart 75.942s; remaining dominant phase is one full decode of the 5.8GiB corpus (~59s). This is not instantaneous or lazy loading. No full application/UI acceptance, public release or Windows/Linux physical acceptance claimed. Optional post-build cache recycling skipped on initial run due to lagging Docker health flag.",
+  "issue": "https://github.com/skyelan1999/aide/issues/982",
+  "operator": "skyelan1999",
+  "tests": {
+    "race_regression": {
+      "passed": 64,
+      "skipped": 0,
+      "seconds": 41.284,
+      "result": "PASS",
+      "log": ".agent-state/startup-performance-20261122/go-tests.log"
+    },
+    "microbenchmark": {
+      "typed_decode_ns": 5975619,
+      "hash_reuse_ns": 384016,
+      "speedup": 15.56,
+      "reuse_allocations": 0
+    }
+  },
+  "image": {
+    "id": "sha256:e389f80da67ef56f488682912ac19e78812499d5f84bdb0eee0b349a7bed3376",
+    "source_sha": "d8878076adeb4b33bc36135806bb30caa6cd3e87612bcf0a4432c7bfd8723f2f"
+  },
+  "new_image_startup": {
+    "constructor_seconds": 75.328,
+    "first_upgrade_integrity_seconds": 16.262,
+    "sum_seconds": 91.59,
+    "build_and_start_seconds": 141.0,
+    "build_exit": 0,
+    "decoded_files": 189,
+    "startup_cache_reuses_before_health": 378,
+    "loaded_sessions": 186,
+    "restart_recovery_writes": 0,
+    "note": "First-ready observer received success but its nanosecond timestamp parsing failed; phase sum from real service logs is used, not an invented exact observer duration."
+  },
+  "file_preservation": {
+    "before_count": 189,
+    "after_count": 189,
+    "missing": 0,
+    "new": 0,
+    "unchanged_size_and_mtime": 189
+  },
+  "repeat_restart": {
+    "image": "sha256:e389f80da67ef56f488682912ac19e78812499d5f84bdb0eee0b349a7bed3376",
+    "startedAt": "2026-11-21T16:54:11.548556217Z",
+    "startup_seconds": 75.942,
+    "start_exit": 0,
+    "health": {
+      "capabilities": {
+        "messageBridgeProtocol": 1,
+        "remoteAccessProtocol": 1
+      },
+      "instanceId": "2026-11-21T16:55:10.522766175Z",
+      "integrity": "ok",
+      "service": "aide",
+      "status": "ok"
+    }
+  },
+  "resource_check": {
+    "result": "PASS",
+    "uid": 1000,
+    "readableFiles": 156,
+    "docxRoundTrip": true,
+    "writerPdf": true,
+    "network": "none"
+  }
+}

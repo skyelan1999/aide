@@ -70,7 +70,7 @@ func (a *App) searchAssistantHistory(raw string) string {
 		}
 		sessions = append(sessions, s)
 	} else {
-		for _, s := range a.sessions {
+		for _, s := range a.sessionBodiesLocked() {
 			if !s.Deleted {
 				sessions = append(sessions, s)
 			}

@@ -1,0 +1,84 @@
+{
+  "id": "dwg-preview-failure-20261115",
+  "request": "aide dwg预览失败",
+  "baseline": "bd5c6456162e48346e499dadb41f9e8939bd541f",
+  "initial_status": "M .github/workflows/windows-desktop-check.yml\n M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/launcher-contract.md\n M native/windows-launcher/lifecycle_commands.hpp\n M native/windows-launcher/main.cpp\n M scripts/aide.sh\n M scripts/build-dwg-converter.sh\n M scripts/fixtures/windows-entrypoint.cpp\n M scripts/launcher.py\n M scripts/native_launcher_portable.cpp\n M scripts/pip-install-retry.sh\n M scripts/test_windows_bat_entrypoints.py\n M scripts/windows-bootstrap.bat\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/build-cn-source-fallback-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? draft_4e60e92f_folder/\n?? native/windows-launcher/build_sources.hpp\n?? scripts/apt-install-retry.sh\n?? scripts/test_build_cn_sources.py\n?? scripts/windows-build-source.ps1\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Reported local readonly DWG renders using real conversion without changing the original.",
+    "Converted DWG supports up to 16 MiB and 1,000,000 lines, preserving existing DXF and geometry budgets.",
+    "Outputs reaching the converter file cap return HTTP 413 even when CLI exits successfully; incomplete outputs still reject.",
+    "Targeted Go/JS tests and real browser/native verification; preserve user sessions, drafts and plugins.",
+    "Malformed spline coordinates do not make fit-to-window blank; unsupported curves are skipped with the existing partial-content notice."
+  ],
+  "scope": [
+    "internal/server/dwg_preview.go and targeted tests",
+    "DWG-specific browser read/line limits with existing geometry budgets",
+    "Architecture/review/task evidence; local standard runtime build if checks pass"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Confirmed real 959630-byte DWG expands to 6685450-byte DXF, exceeding output cap.",
+      "evidence": [
+        "Issue #913",
+        "local private real conversion evidence"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bound converted DWG at 16 MiB/1,000,000 lines; keep direct DXF and entity/DOM/point limits unchanged. Correct file-cap error before CLI exit classification. Native acceptance exposed astronomical SPLINE fit points; skip invalid whole curves before SVG/bounds.",
+      "evidence": [
+        "Issue #913",
+        "local private real conversion evidence"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "DWG-only byte/line expansion limits, accurate file-cap errors and invalid SPLINE guard implemented.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-preview-failure.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final quick, targeted Go/race with actual customer drawing, standard build/vet, runtime assets, real reference API/hash and native WKWebView visual/zoom/fit passed. Full Go suite not run.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-preview-failure.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and sanitized acceptance record describe final limits and partial-geometry behavior.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-preview-failure.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed owned diff; retained unrelated source changes, backups and user tabs. Customer data only in ignored private evidence. One result tab left visible.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-preview-failure.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No version/tag/Release or push. Standard local runtime updated and verified, with source changes left uncommitted.",
+      "evidence": [
+        "docs/reviews/2026-11-15-dwg-preview-failure.md"
+      ]
+    }
+  },
+  "release_authorization": "Current request fixes local Aide; prior DWG task authorizes runtime update preserving data, and prohibits Aide version/tag/Release. No public release or push authorized here.",
+  "rollback": "Original runtime image retained as aide-rollback:dwg-preview-failure-20261115, with private runtime storage/config/draft backup; no data migration.",
+  "handoff": "Local Aide 0.1.19.0 RC2 updated; original reported DWG now visibly renders. Partial entities and text formatting remain limited; use CAD for engineering checks. Source changes are uncommitted and not pushed; Issue #913 remains open for upstream delivery.",
+  "actor": "skyelan1999",
+  "issue": "https://github.com/skyelan1999/aide/issues/913",
+  "runtime": {
+    "image": "sha256:ff9691565f0a755a584ce38b4b4b7a466114c2b7b6921330cd0580ca601bb334",
+    "buildCommit": "bd5c6456162e48346e499dadb41f9e8939bd541f-dirty.c1dea4bed47691537fe4c4ebf0cf491b8f4062787ed89358126b746d936cc3a9",
+    "health": "ok",
+    "integrity": "ok",
+    "sessions": 86,
+    "plugins": 36
+  }
+}

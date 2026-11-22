@@ -62,7 +62,7 @@ func (a *App) projectMessagesLocked(name, pid, file string, start, end time.Time
 	rows := []projectBriefMessage{}
 	// A run must belong to this workspace and explicitly refer to this project.
 	// A matching conversation title alone never grants access to unrelated runs.
-	for _, s := range a.sessions {
+	for _, s := range a.sessionBodiesLocked() {
 		if s == nil || s.Deleted || s.Kind == assistantSessionKind {
 			continue
 		}

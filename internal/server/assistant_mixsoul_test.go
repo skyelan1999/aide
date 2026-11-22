@@ -305,7 +305,7 @@ func TestMixSoulNativeTimeRefreshDoesNotGenerateResponses(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		select {
 		case text := <-updates:
-			if !strings.Contains(text, "Asia/Shanghai") || !strings.Contains(text, "idleSeconds") || !strings.Contains(text, "elapsedReliable") {
+			if !strings.Contains(text, "Asia/Shanghai") || !strings.Contains(text, "idleSeconds") || !strings.Contains(text, "elapsedReliable") || !strings.Contains(text, "assistant_work") {
 				t.Errorf("time context missing on update %d", i)
 			}
 		case <-time.After(70 * time.Second):

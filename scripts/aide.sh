@@ -12,7 +12,7 @@ source_sha() {
     find cmd internal vendor scripts/office legal/third_party docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/version.sh scripts/launcher-data.sh scripts/launcher-data.py
-    for extra in scripts/stage-third-party-licenses.py native/macos-desktop/main.swift native/macos-desktop/biometrics.swift native/macos-desktop/computer_control.swift native/macos-desktop/computer_control_scheduler.swift native/macos-desktop/computer_virtual_pointer.swift native/macos-desktop/modifier_gesture.swift native/macos-desktop/app_capture.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js scripts/native-computer-bridge.swift scripts/build-native-computer-bridge.sh stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/build-network.py scripts/license-component-control.sh scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/apt-install-retry.sh scripts/install-office-preview.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-dwg-converter.sh docker/libredwg/source.json docker/libredwg/README.md scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-source.ps1 scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
+    for extra in scripts/stage-third-party-licenses.py native/macos-desktop/main.swift native/macos-desktop/biometrics.swift native/macos-desktop/computer_control.swift native/macos-desktop/computer_control_scheduler.swift native/macos-desktop/computer_virtual_pointer.swift native/macos-desktop/modifier_gesture.swift native/macos-desktop/app_capture.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift scripts/computer-bridge-control.sh scripts/computer-bridge.js scripts/computer-bridge-linux.js scripts/native-computer-bridge.swift scripts/build-native-computer-bridge.sh stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/build-network.py scripts/license-component-control.sh scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/apt-install-retry.sh scripts/install-office-preview.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-dwg-converter.sh docker/libredwg/source.json docker/libredwg/README.md scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-source.ps1 scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/message-lan-control.sh scripts/aide_sip_phone.py scripts/aide_sip_service.py scripts/install-office-engine.py scripts/run-office-engine.sh docker/office-engine/source.json docker/office-engine/NOTICE; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -117,7 +117,7 @@ fi
 
 # A healthy owned instance is reopened before archive imports, migration or
 # package-image selection, including when a Release marker has changed.
-if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && launcher_running_ready "$DOCKER_BIN"; then
+if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && { launcher_running_ready "$DOCKER_BIN" || launcher_running_owned_instance "$DOCKER_BIN"; }; then
   MODE=start-image
 fi
 
@@ -299,7 +299,12 @@ case "$MODE" in
       REUSE_RUNNING=1
       IMG="$("$DOCKER_BIN" compose config --images aide)"
     else
+      if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && launcher_running_owned_instance "$DOCKER_BIN"; then
+        echo "现有 Aide 实例正在初始化，将等待就绪后自动打开；保留其镜像、资源配置和数据。" >&2
+        REUSE_RUNNING=1
+      fi
       IMG="$("$DOCKER_BIN" compose config --images aide)"
+      if [[ "$REUSE_RUNNING" != 1 ]]; then
       if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
         if [[ "$AIDE_INSTALLATION_KIND" == source ]]; then
           echo "当前源码安装缺少可用的已编译镜像；请先运行 build.command / build.sh。start 不会编译或替换成其他版本。" >&2
@@ -309,6 +314,7 @@ case "$MODE" in
         exit 1
       fi
       export AIDE_IMAGE="$IMG"
+      fi
     fi
     if [[ "$REUSE_RUNNING" != 1 ]]; then
     launcher_data_prepare "$DOCKER_BIN" "$IMG"
@@ -339,9 +345,8 @@ case "$MODE" in
       bash scripts/headless-browser-control.sh start || echo "无头浏览器未启动；可先运行 bash scripts/headless-browser-control.sh install。"
     fi
     fi
-    for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
-    if ! CONTAINER_HEALTH="$("$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz)"; then
-      echo "AIDE 未就绪，下面是启动错误；浏览器尚未打开。" >&2
+    if ! launcher_wait_container_ready "$DOCKER_BIN"; then
+      echo "AIDE 启动等待未完成，下面是容器日志；浏览器尚未打开。" >&2
       "$DOCKER_BIN" compose logs --tail=30 aide >&2
       if [[ -n "${AIDE_STARTUP_PREVIOUS_IMAGE_ID:-}" ]]; then
         echo "最新 Release 健康检查失败，恢复原镜像并重建服务。" >&2
@@ -384,15 +389,7 @@ case "$MODE" in
       echo 'AIDE 无法核对宿主连接（缺少实例身份、本地证书或 curl）；浏览器尚未打开。容器和数据已保留。' >&2
       exit 1
     fi
-    HOST_READY=0
-    for attempt in {1..3}; do
-      if HOST_HEALTH="$(curl --silent --show-error --fail --proto '=https' --noproxy '*' --connect-timeout 2 --max-time 3 --cacert "$HOST_CERT" "https://localhost:$HOSTPORT/healthz" 2>/dev/null)"; then
-        HOST_INSTANCE="$(printf '%s' "$HOST_HEALTH" | sed -n 's/.*"instanceId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
-        if [[ "$HOST_INSTANCE" == "$CONTAINER_INSTANCE" ]]; then HOST_READY=1; break; fi
-      fi
-      if (( attempt < 3 )); then sleep 1; fi
-    done
-    if [[ "$HOST_READY" != 1 ]]; then
+    if ! launcher_wait_host_ready "$HOSTPORT" "$HOST_CERT" "$CONTAINER_INSTANCE"; then
       echo 'AIDE 容器健康，但宿主 HTTPS 连接、证书或实例核对未通过；浏览器尚未打开。请检查端口发布、防火墙和启动目录证书。容器和数据已保留。' >&2
       exit 1
     fi

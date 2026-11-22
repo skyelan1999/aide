@@ -230,7 +230,7 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 
 // Callers already holding a.mu must use the same detached projection as reads.
 func (a *App) outcomeTaskSnapshotLocked(sessionID, runID string) (*Task, int, string, error) {
-	s := a.sessions[sessionID]
+	s := a.sessionLocked(sessionID)
 	if s == nil || s.Deleted {
 		return nil, 0, "", errors.New("任务不存在")
 	}

@@ -255,7 +255,7 @@ func (a *App) taskRecoveryReviewLocked(sessionID string, task *Task) taskRecover
 func (a *App) taskRecoveryPreviewAPI(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil || s.Deleted {
 		fail(w, 404, errors.New("session not found"))
 		return

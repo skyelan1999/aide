@@ -451,6 +451,7 @@ type Message struct {
 	ToolCallID    string            `json:"tool_call_id,omitempty"`
 }
 type Session struct {
+	historyDeferred        bool                   // catalogue only: never persist this partial object
 	Impacts                []ChangeImpact         `json:"impacts,omitempty"`
 	AssistantResultNotices map[string]string      `json:"assistantResultNotices,omitempty"` // Persisted executor-event receipts, local only.
 	ModelSelectionRevision uint64                 `json:"modelSelectionRevision,omitempty"`
@@ -640,6 +641,7 @@ type App struct {
 	voiceAgent                *VoiceAgent          // 语音小秘 agent（记忆+历史）
 	personalityState          personalityStateFile // 性格演化触发计数/回滚历史（#34，持久化 config/personality-state.json）
 	assistantResultsWake      chan struct{}
+	assistantSIPCalls         map[string]*assistantSIPCall
 	bgCtx                     context.Context
 	bgCancel                  context.CancelFunc
 	bgWg                      sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
@@ -668,10 +670,13 @@ type App struct {
 	assistantUnlocked       map[string]bool
 	masterPasswordAttempts  masterPasswordAttempts
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
-	integrityMu             sync.Mutex
-	integrityRep            IntegrityReport
-	integritySessionDigests map[string]string // protected by integrityMu after startup
-	integrityUpgrade        *integrityUpgrade
+	integrityMu          sync.Mutex
+	integrityRep         IntegrityReport
+	integrityUpgrade     *integrityUpgrade
+	startupSessions      *startupSessionCache          // constructor, then integrityMu until first ready health response
+	lazySessions         map[string]*lazySessionRecord // guarded by mu
+	lazySessionMode      bool
+	sessionHistoryReader func(string, string) (*Session, error) // per-instance test I/O seam
 }
 
 // setIntegrity 记录最近一次完整性校验/自愈报告（healthz 与 /api/debug 读取）。
@@ -867,6 +872,10 @@ func atomicJSON(path string, v any) error {
 	if err != nil {
 		return err
 	}
+	return atomicJSONBytes(path, b)
+}
+
+func atomicJSONBytes(path string, b []byte) error {
 	f, err := os.CreateTemp(filepath.Dir(path), ".aide-*")
 	if err != nil {
 		return err
@@ -886,6 +895,11 @@ func atomicJSON(path string, v any) error {
 	return os.Rename(name, path)
 }
 func New(work, reference, data string) (*App, error) {
+	stage := startupStageTimer()
+	startupSessions := &startupSessionCache{}
+	if os.Getenv("AIDE_LAZY_SESSIONS") == "1" {
+		startupSessions.catalogue = &lazySessionStore{data: data}
+	}
 	assistantEngine := strings.TrimSpace(os.Getenv("AIDE_ASSISTANT_ENGINE"))
 	if assistantEngine == "" {
 		assistantEngine = "builtin"
@@ -913,9 +927,10 @@ func New(work, reference, data string) (*App, error) {
 	}
 	// 会话桶归位：旧 save() 曾把归档/小秘会话全部写进 sessions/active/，archived|assistant 长期为空。
 	// 启动时把错位/重复/平铺残留的会话文件归位到唯一正确的桶（幂等、可回滚、零丢失），再开始加载。
-	if err := rebalanceSessionBuckets(data); err != nil {
+	if err := rebalanceSessionBucketsCached(data, startupSessions); err != nil {
 		return nil, fmt.Errorf("会话桶归位迁移失败: %w", err)
 	}
+	stage("session-rebalance")
 	w, err := os.OpenRoot(work)
 	if err != nil {
 		return nil, err
@@ -931,13 +946,16 @@ func New(work, reference, data string) (*App, error) {
 		return nil, err
 	}
 	a.startedAt = time.Now().UTC()
+	a.startupSessions = startupSessions
+	a.lazySessionMode = startupSessions.catalogue != nil
+	a.lazySessions = make(map[string]*lazySessionRecord)
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
 	a.assistantResultsWake = make(chan struct{}, 1)
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
 	_ = BuildBaseline(data)
-	a.integritySessionDigests = make(map[string]string)
-	a.setIntegrity(SelfHeal(data, verifyIntegrityWithSessionDigests(data, os.ReadFile, a.integritySessionDigests)))
+	a.setIntegrity(SelfHeal(data, verifyIntegrityCached(data, os.ReadFile, startupSessions)))
 	a.prepareImageIntegrityUpgrade()
+	stage("initial-integrity")
 	a.background(a.runIntegrityChecks)
 	b, err := os.ReadFile(AccessTokenPath(data))
 	if errors.Is(err, os.ErrNotExist) {
@@ -1141,6 +1159,7 @@ func New(work, reference, data string) (*App, error) {
 		}
 	}
 	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
+	stage("configuration-and-plugins")
 	var entries []string
 	for _, d := range sessionBucketDirs(data) {
 		got, gerr := filepath.Glob(filepath.Join(d, "session-*.json"))
@@ -1150,17 +1169,26 @@ func New(work, reference, data string) (*App, error) {
 		}
 		entries = append(entries, got...)
 	}
+	recoveredSessions := 0
 	for _, path := range entries {
+		if meta, _, ok := startupSessions.catalogue.metadata(path); ok && meta.Kind != assistantSessionKind {
+			if !meta.Deleted {
+				a.sessions[meta.ID] = meta
+				a.lazySessions[meta.ID] = &lazySessionRecord{path: path}
+			}
+			continue
+		}
 		b, err := os.ReadFile(path)
 		if err != nil {
 			a.Close()
 			return nil, err
 		}
-		var s Session
-		if err := json.Unmarshal(b, &s); err != nil {
-			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), err) // R09：坏文件不阻断启动
+		s, decodeErr := startupSessions.decode(path, b)
+		if decodeErr != nil {
+			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), decodeErr) // R09：坏文件不阻断启动
 			continue
 		}
+		startupSessions.catalogue.record(path, b, s)
 		if !validSessionID(s.ID) {
 			log.Printf("跳过无效会话ID文件 %s", filepath.Base(path))
 			continue
@@ -1168,40 +1196,24 @@ func New(work, reference, data string) (*App, error) {
 		if s.Deleted {
 			continue // 删除墓碑残留：不载入
 		}
-		a.sessions[s.ID] = &s
-		for _, task := range s.Runs {
-			if task.ApprovalState != "" {
-				task.ApprovalState = "manual"
-			} // no reviewer survives a service restart
-			if task.Status == "running" || task.Status == "awaiting_clarification" {
-				recoverExecutionCheckpoint(task)
-				task.Status = "interrupted"
-				task.PendingQuestion = nil
-				task.ApprovalState = ""
-				task.PauseRequested = false
-				if task.StopRequested {
-					task.Status = "cancelled"
-					task.CanResume = false
-					task.CheckpointMessages = nil
-					task.CheckpointStep = ""
-					task.Error = "任务已停止"
-					continue
-				}
-				if len(task.CheckpointMessages) > 0 {
-					task.CanResume = true
-				}
-				if task.CanResume {
-					task.Error = "服务重启，任务已中断。可以从已保存检查点继续。"
-				} else {
-					task.Error = "服务重启，任务已中断。可重新提交。"
-				}
+		a.sessions[s.ID] = s
+		changed := recoverSessionAtStartup(s)
+		if changed {
+			if err := a.save(s); err != nil {
+				a.Close()
+				return nil, err
+			}
+			recoveredSessions++
+		}
+		if s.FollowedByAssistant && s.Kind != assistantSessionKind {
+			select {
+			case a.assistantResultsWake <- struct{}{}:
+			default:
 			}
 		}
-		if err := a.save(&s); err != nil {
-			a.Close()
-			return nil, err
-		}
 	}
+	stage("session-load-and-recovery")
+	log.Printf("startup: sessions=%d deferred=%d recovered=%d decoded=%d reused=%d", len(a.sessions), len(a.lazySessions), recoveredSessions, startupSessions.decoded, startupSessions.reused)
 	// Preserve only a higher sequence left by the former flat-path counter
 	// writer. Canonical preferences and credentials retain migration priority.
 	if legacySessionSequence > a.settings.NextSessionSeq {
@@ -1223,6 +1235,7 @@ func New(work, reference, data string) (*App, error) {
 	a.background(func() { a.assistantResultLoop(a.bgCtx) })
 	a.background(func() { a.pageBalanceLoop(a.bgCtx) })
 	a.startMessagesIfEnabled()
+	stage("ready")
 	return a, nil
 }
 func (a *App) Close() {
@@ -1337,10 +1350,18 @@ func (a *App) save(s *Session) error {
 	if s.Deleted {
 		return nil
 	}
+	if s.historyDeferred {
+		return errors.New("session history is not loaded; refusing partial overwrite")
+	}
 	path := SessionPath(a.dataPath, s.ID, sessionBucketFor(s))
-	if err := atomicJSON(path, s); err != nil {
+	b, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
 		return err
 	}
+	if err := atomicJSONBytes(path, b); err != nil {
+		return err
+	}
+	(&lazySessionStore{data: a.dataPath}).record(path, b, s)
 	for _, dir := range sessionBucketDirs(a.dataPath) {
 		stale := filepath.Join(dir, "session-"+s.ID+".json")
 		if stale == path {
@@ -1366,6 +1387,7 @@ func (a *App) save(s *Session) error {
 func (a *App) removeSessionFiles(id string) {
 	for _, dir := range sessionBucketDirs(a.dataPath) {
 		p := filepath.Join(dir, "session-"+id+".json")
+		_ = os.Remove((&lazySessionStore{data: a.dataPath}).cataloguePath(p))
 		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
 			log.Printf("删除会话文件失败 %s: %v", p, err)
 		}
@@ -1436,6 +1458,9 @@ func (a *App) repairSessionNumbers() error {
 			seen[s.Number] = true
 			continue
 		}
+		if s.historyDeferred && a.sessionLocked(s.ID) == nil {
+			return errors.New("cannot repair numbering without complete history")
+		}
 		maxNumber++
 		s.Number = maxNumber
 		seen[s.Number] = true
@@ -1483,6 +1508,9 @@ func (a *App) ensureAssistantSession() {
 	defer a.mu.Unlock()
 	for _, s := range a.sessions {
 		if s.Kind == assistantSessionKind {
+			if s.historyDeferred && a.sessionLocked(s.ID) == nil {
+				return
+			}
 			s.Pinned = true // 永久置顶
 			syncName := s.Title
 			if want := a.assistantNameLocked(); syncName != want {
@@ -1559,6 +1587,13 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/computer-control/status", a.computerControlStatus)
 	mux.HandleFunc("POST /api/computer-control/permissions/{permission}", a.computerControlPermission)
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-call/socket", a.assistantRealtimeSocket)
+	mux.HandleFunc("GET /api/assistant-sip/status", a.assistantSIPStatus)
+	mux.HandleFunc("POST /api/assistant-sip/callback-settings", a.sipCallbackSettings)
+	mux.HandleFunc("POST /api/assistant-sip/calls", a.sipCallControl)
+	mux.HandleFunc("POST /api/assistant-sip/opening", a.sipIncomingOpening)
+	mux.HandleFunc("POST /api/assistant-sip/callbacks/claim", a.claimSIPCallback)
+	mux.HandleFunc("POST /api/assistant-sip/callbacks/report", a.sipCallbackReport)
+	mux.HandleFunc("POST /api/assistant-sip/callbacks/release", a.releaseSIPCallback)
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-call", a.assistantRealtimeStatus)
 	mux.HandleFunc("GET /api/knowledge-map/index-policy", a.getKnowledgeIndexPolicy)
 	mux.HandleFunc("PUT /api/knowledge-map/index-policy", a.putKnowledgeIndexPolicy)
@@ -1933,6 +1968,9 @@ func (a *App) buildHandler() {
 		}
 		if recorder, ok := w.(interface{ markIncidentAuthenticated() }); ok {
 			recorder.markIncidentAuthenticated()
+		}
+		if !a.prepareRequestSessionHistory(w, r) {
+			return
 		}
 		if nativeEditorMutationRoute(r) {
 			ctx, release := a.nativeEditorEnter(r.Context())
@@ -2671,7 +2709,7 @@ func cloneBackendName(b string) string {
 
 // voiceFilter 语音小秘：把浏览器 Web Speech API 的转写文本交给小秘 agent 分析决策。
 // 小秘结合记忆与上下文判断 send（对 aide 的指令，直接发到当前会话）/ ignore（背景声）/ standby（与人闲聊退下）。
-// 任何失败都降级为 send 原文，保证语音录入在模型不可用时仍可用。
+// Model failures return an error; transcription is never implicit dispatch authority.
 func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Text           string `json:"text"`
@@ -2703,60 +2741,18 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
-		if a.mixSoulEnabled() {
-			fail(w, 503, errors.New("assistant agent model unavailable"))
-			return
-		}
-		if va != nil {
-			entry := va.recordFallback(text, "未配置模型，直接发送")
-			// #62：语音往来归位到 assistant 会话时间线
-			a.mu.Lock()
-			a.recordAssistantExchangeLocked(text, entry, "voice")
-			a.mu.Unlock()
-			jsonOut(w, 200, entry)
-		} else {
-			jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "未配置模型，直接发送"})
-		}
+		fail(w, 503, errors.New("助理模型尚未配置，未执行或转交任务"))
 		return
 	}
+
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
-	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
+	// Inject the selected model credential; failed decisions never dispatch raw speech.
 	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice", in.AvatarFeedback)
 	if aerr != nil {
-		if a.mixSoulEnabled() || errors.Is(aerr, errMixSoulActive) {
-			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
-			return
-		}
-		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
-		if err != nil {
-			fb := va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error())
-			a.mu.Lock()
-			a.recordAssistantExchangeLocked(text, fb, "voice")
-			a.mu.Unlock()
-			jsonOut(w, 200, fb)
-			return
-		}
-		if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
-			entry.Text = text
-		}
-		a.mu.Lock()
-		a.recordAssistantExchangeLocked(text, entry, "voice")
-		if entry.Action == "send" {
-			fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
-			var sample string
-			if fire {
-				sample = a.personalitySampleLocked(personaXiaomi)
-			}
-			a.mu.Unlock()
-			if fire {
-				go a.runAutoEvolve(personaXiaomi, modeRefine, trigger, sample)
-			}
-		} else {
-			a.mu.Unlock()
-		}
-		jsonOut(w, 200, entry)
+		fail(w, 503, errors.New("助理模型调用失败，未执行或转交任务"))
 		return
 	}
+
 	// agentic 决策映射回既有 voice-filter 前端契约（send/ask/standby/ignore）
 	entry := decisionToVoiceEntry(dec, text)
 	if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
@@ -2980,7 +2976,7 @@ func (a *App) unlockAssistantSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	hash := a.settings.UserPasswordHash
 	a.mu.Unlock()
 	if s == nil {
@@ -3072,7 +3068,7 @@ func (a *App) migratePasswordHash(password string) bool {
 func (a *App) exportSessions(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	sessions := make([]*Session, 0, len(a.sessions))
-	for _, s := range a.sessions {
+	for _, s := range a.sessionBodiesLocked() {
 		sessions = append(sessions, s)
 	}
 	a.mu.Unlock()
@@ -3186,7 +3182,7 @@ func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
@@ -3223,7 +3219,7 @@ func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	id := r.PathValue("id")
-	s := a.sessions[id]
+	s := a.sessionLocked(id)
 	if s == nil {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))
@@ -3245,6 +3241,7 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	delete(a.sessions, id)
+	delete(a.lazySessions, id)
 	a.mu.Unlock()
 	// 会话可能落在 active/archived/assistant 任一桶（见 sessionBucketFor），三桶全清，防残留复活。
 	a.removeSessionFiles(id)
@@ -3274,6 +3271,7 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		delete(a.sessions, id)
+		delete(a.lazySessions, id)
 		// 归档会话按规范落在 sessions/archived/（见 sessionBucketFor），三桶全清防残留。
 		a.removeSessionFiles(id)
 		a.removeExecutionJournals(s)
@@ -3297,7 +3295,7 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	s := a.sessions[r.PathValue("id")]
+	s := a.sessionLocked(r.PathValue("id"))
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
@@ -3942,6 +3940,7 @@ func (a *App) voiceNarrate(w http.ResponseWriter, r *http.Request) {
 func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Text     string  `json:"text"`
+		Language string  `json:"language"`
 		Voice    string  `json:"voice"`
 		Rate     float64 `json:"rate"`
 		Style    string  `json:"style"`
@@ -3949,6 +3948,12 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		Provider string  `json:"provider"`
 	}
 	if err := decode(w, r, &in); err != nil {
+		return
+	}
+	switch in.Language {
+	case "", "Auto", "Chinese", "English", "Japanese", "Korean", "German", "Italian", "Portuguese", "Spanish", "French", "Russian":
+	default:
+		fail(w, 400, errors.New("unsupported speech language"))
 		return
 	}
 	text := strings.TrimSpace(in.Text)
@@ -4035,6 +4040,7 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		style = cfg.TTSRoleStyle
 	}
 	opts := tts.SynthOpts{
+		Language:       in.Language,
 		Voice:          pcfg.Voice,
 		Rate:           rate,
 		Style:          style,

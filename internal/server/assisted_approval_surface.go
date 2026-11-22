@@ -162,7 +162,7 @@ func (a *App) reviewPendingSurfaceAction(task *Task) {
 	reason = surfaceReviewReason(reason, input)
 	a.mu.Lock()
 	task.Usage = addUsage(task.Usage, usage)
-	current := session != nil && !session.Deleted && a.sessions[session.ID] == session && a.approvalSessionLocked(task) == session && task.answerRound == round && task.approvalGeneration == gen && task.AutoReview && !task.approvalAnswered && task.Status == "awaiting_clarification" && task.AnswerCh != nil && ctx.Err() == nil && a.wsID() == workspaceID && a.wsRevision == workspaceRevision
+	current := session != nil && !session.Deleted && a.sessionLocked(session.ID) == session && a.approvalSessionLocked(task) == session && task.answerRound == round && task.approvalGeneration == gen && task.AutoReview && !task.approvalAnswered && task.Status == "awaiting_clarification" && task.AnswerCh != nil && ctx.Err() == nil && a.wsID() == workspaceID && a.wsRevision == workspaceRevision
 	status := "manual"
 	if !current {
 		status, approved, reason = "aborted", false, "审批已取消、超时或执行环境已变化，未自动放行"

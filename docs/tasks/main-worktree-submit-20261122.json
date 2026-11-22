@@ -1,0 +1,95 @@
+{
+  "id": "main-worktree-submit-20261122",
+  "request": "把这些没合并没提交的所有内容都合并到main并提交吧；范围确认：当前工作区的全部有效改动。",
+  "baseline": "ab2fecf59b7285d2905cd2a7337fb60b857e4acc",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M compose.yaml\n M docs/agent/router.json\n M docs/architecture/assistant-live.md\n M docs/architecture/launcher-contract.md\n M docs/en/user-guide.md\n M docs/plugin-protocol.md\n M docs/tasks/build-cn-source-fallback-20261115.json\n M docs/user-guide.md\n M internal/execsandbox/sandbox_linux.go\n M internal/server/approval_policy.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_components.go\n M internal/server/assistant_delegation.go\n M internal/server/assistant_followup.go\n M internal/server/assistant_history.go\n M internal/server/assistant_history_test.go\n M internal/server/assistant_initiative.go\n M internal/server/assistant_mixsoul.go\n M internal/server/assistant_mixsoul_test.go\n M internal/server/assistant_native_approval.go\n M internal/server/assistant_native_approval_test.go\n M internal/server/assistant_realtime.go\n M internal/server/assistant_realtime_provider.go\n M internal/server/assistant_result_trigger.go\n M internal/server/assistant_retrieval.go\n M internal/server/assistant_speech_review.go\n M internal/server/assistant_watch.go\n M internal/server/assistant_work_ledger.go\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/assisted_approval_surface.go\n M internal/server/auth_verify.go\n M internal/server/business_flow.go\n M internal/server/change_impact.go\n M internal/server/context.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/cross_session_tools.go\n M internal/server/debug.go\n M internal/server/debug_dataflow.go\n M internal/server/document_proposals.go\n M internal/server/execution_journal.go\n M internal/server/factory_reset.go\n M internal/server/goal_acceptance.go\n M internal/server/integrity.go\n M internal/server/integrity_upgrade.go\n M internal/server/interrupted_output.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_timeline.go\n M internal/server/migration.go\n M internal/server/mixsoul/agent.cjs\n M internal/server/mixsoul/system.test.cjs\n M internal/server/model_led_agent.go\n M internal/server/native_editor.go\n M internal/server/persona.go\n M internal/server/plan.go\n M internal/server/plugin_effect_checks.go\n M internal/server/plugin_workbench.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/plugins.go\n M internal/server/professional_workflow.go\n M internal/server/project_briefing.go\n M internal/server/provider_image.go\n M internal/server/provider_responses.go\n M internal/server/remediation_test.go\n M internal/server/reminder_schedule.go\n M internal/server/reminders.go\n M internal/server/server.go\n M internal/server/session_model_selection.go\n M internal/server/task_delivery_baseline.go\n M internal/server/task_outcome.go\n M internal/server/task_recovery.go\n M internal/server/task_release_receipts.go\n M internal/server/tool_calls.go\n M internal/server/tts/provider.go\n M internal/server/tts/qwen.go\n M internal/server/tts/qwen_test.go\n M internal/server/voice_fallback_gate_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/plugin-workbench.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M scripts/aide.sh\n M scripts/build-macos-desktop.py\n M scripts/desktop-session.py\n M scripts/install-office-preview.sh\n M scripts/launcher.py\n M scripts/office/office_artifact.py\n M scripts/plugin-workbench.test.cjs\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_contract.py\n M scripts/test_launcher_data.py\n M scripts/test_macos_desktop.py\n M scripts/test_message_lan_launcher.py\n M scripts/test_runtime_assets.py\n?? docs/architecture/artifact-execution.md\n?? \"docs/reviews/2026-11-11-mapcanvas-0.2.0 2.md\"\n?? \"docs/reviews/2026-11-11-mapcanvas-gray-ui 2.md\"\n?? docs/reviews/2026-11-11-terminal-relay-performance.md\n?? docs/reviews/2026-11-15-cad-remaining-pdf.md\n?? docs/reviews/2026-11-15-dwg-completeness.md\n?? docs/reviews/2026-11-15-dwg-native-controls-idle.md\n?? docs/reviews/2026-11-15-dwg-preview-failure.md\n?? docs/reviews/2026-11-15-dwg-spline-measure-archive.md\n?? docs/reviews/2026-11-17-cad-file-click-window.md\n?? docs/reviews/2026-11-22-assistant-autonomy-weather.md\n?? docs/reviews/2026-11-22-sip-call-disconnect.md\n?? docs/reviews/2026-11-22-sip-task-callback.md\n?? docs/reviews/2026-11-22-sip-user-hangup.md\n?? docs/tasks/assistant-approval-tools-20261122.json\n?? docs/tasks/assistant-autonomy-weather-20261122.json\n?? docs/tasks/boiler-private-release-20261112.json\n?? docs/tasks/boiler-qc-luna-step-20261116.json\n?? docs/tasks/buildkit-recovery-20261121.json\n?? docs/tasks/cad-artifact-autonomy-20261118.json\n?? docs/tasks/cad-remaining-pdf-20261115.json\n?? docs/tasks/device-code-runtime-deploy-20261115.json\n?? docs/tasks/dwg-completeness-20261115.json\n?? docs/tasks/dwg-native-controls-idle-20261115.json\n?? \"docs/tasks/dwg-preview-20261114 2.json\"\n?? docs/tasks/dwg-preview-failure-20261115.json\n?? docs/tasks/dwg-spline-recovery-measure-20261115.json\n?? docs/tasks/lazy-session-startup-20261122.json\n?? docs/tasks/main-latest-pp-downloads-20261114.json\n?? \"docs/tasks/mapcanvas-ai-tools-20261111 2.json\"\n?? \"docs/tasks/mapcanvas-gray-ui-20261111 2.json\"\n?? \"docs/tasks/repo-triage-20261112 2.json\"\n?? docs/tasks/sip-call-disconnect-20261122.json\n?? docs/tasks/sip-phone-acceptance-20261122.json\n?? docs/tasks/sip-task-callback-20261122.json\n?? docs/tasks/sip-user-hangup-20261122.json\n?? docs/tasks/startup-performance-20261122.json\n?? docs/tasks/startup-readiness-20261122.json\n?? docs/tasks/terminal-relay-performance-20261111.json\n?? docs/tasks/writer-runtime-license-20261122.json\n?? draft_4e60e92f_folder/\n?? internal/execsandbox/memory_linux.go\n?? internal/execsandbox/memory_linux_test.go\n?? internal/execsandbox/memory_other.go\n?? internal/server/apply_history_recovery_test.go\n?? internal/server/artifact_prepare.go\n?? internal/server/artifact_prepare_test.go\n?? internal/server/assistant_approval_query.go\n?? internal/server/assistant_approval_tools_test.go\n?? internal/server/assistant_autonomy.go\n?? internal/server/assistant_autonomy_test.go\n?? internal/server/assistant_native_hangup.go\n?? internal/server/assistant_native_hangup_test.go\n?? internal/server/assistant_native_work_context.go\n?? internal/server/assistant_native_work_context_test.go\n?? internal/server/assistant_readonly_call.go\n?? internal/server/assistant_readonly_call_test.go\n?? internal/server/assistant_realtime_lifecycle_test.go\n?? internal/server/assistant_sip_callbacks.go\n?? internal/server/assistant_sip_callbacks_test.go\n?? internal/server/assistant_sip_opening.go\n?? internal/server/assistant_sip_opening_test.go\n?? internal/server/assistant_sip_status.go\n?? internal/server/assistant_sip_status_test.go\n?? internal/server/assistant_weather.go\n?? internal/server/assistant_weather_test.go\n?? internal/server/filename_lookup.go\n?? internal/server/filename_lookup_test.go\n?? internal/server/image_view.go\n?? internal/server/image_view_test.go\n?? internal/server/lazy_sessions.go\n?? internal/server/lazy_sessions_test.go\n?? internal/server/proposal_read.go\n?? internal/server/proposal_read_test.go\n?? internal/server/provider_responses_tools.go\n?? internal/server/provider_responses_tools_test.go\n?? internal/server/request_snapshot_memory.go\n?? internal/server/request_snapshot_memory_test.go\n?? internal/server/session_candidate_memory_test.go\n?? internal/server/shell_resources.go\n?? internal/server/shell_resources_test.go\n?? internal/server/startup_sessions.go\n?? internal/server/startup_sessions_test.go\n?? scripts/aide_sip_phone.py\n?? scripts/aide_sip_service.py\n?? scripts/assistant-model-status.test.cjs\n?? scripts/cad_dxf_dimensions.py\n?? scripts/cad_sdk_python.py\n?? scripts/cad_step_curve_check.py\n?? scripts/file-click-open-window.test.cjs\n?? scripts/python_static_check.py\n?? scripts/sip-callback-settings.test.cjs\n?? scripts/test_aide_sip_phone.py\n?? scripts/test_cad_dxf_dimensions.py\n?? scripts/test_cad_sdk_python.py\n?? scripts/test_cad_step_curve_check.py\n?? scripts/test_python_static_check.py\n?? scripts/test_startup_readiness.py\n?? writing-style.md\n?? writing_references_tmp/",
+  "acceptance": [
+    "Current worktree effective source, tests and documentation committed on local main; other worktrees and historical branches unchanged.",
+    "Preserve initial HEAD, tracked diff and all initial untracked files in recoverable local archive; no runtime data, pending approvals or credentials committed.",
+    "Review all candidate file ownership; archive local writing drafts and historical duplicate task copies without deleting content.",
+    "Quick checks plus affected Go race tests, execsandbox/TTS tests and vet pass before commit; document any genuine external prerequisite gaps.",
+    "Final main worktree clean, commit SHA and included scope reported; no remote push or Release unless separately instructed."
+  ],
+  "scope": [
+    "Current tracked modifications and new product files enumerated in .agent-state/main-integration-20261122/candidate-paths.nul",
+    "docs/tasks/main-worktree-submit-20261122.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User clarified current worktree only. main already checked out; preserve recoverable backup, review/verify explicit file inventory, commit product changes on main without merging historical branches or pushing.",
+      "evidence": [
+        "Current user scope clarification",
+        ".agent-state/main-integration-20261122/status-before.txt",
+        ".agent-state/main-integration-20261122/worktree-before.tar.gz",
+        "preserve/main-before-worktree-submit-20261122"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "User clarified current worktree only. main already checked out; preserve recoverable backup, review/verify explicit file inventory, commit product changes on main without merging historical branches or pushing.",
+      "evidence": [
+        "Current user scope clarification",
+        ".agent-state/main-integration-20261122/status-before.txt",
+        ".agent-state/main-integration-20261122/worktree-before.tar.gz",
+        "preserve/main-before-worktree-submit-20261122"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Current main already contains the live worktree state; explicit194-file candidate list assembled.11 local draft/reference/conflict-copy files preserved in ignored local archive, initial diff and all untracked content recoverable, original HEAD pinned. No historical branch or other worktree mutation.",
+      "evidence": [
+        ".agent-state/main-integration-20261122/candidate-paths.nul",
+        ".agent-state/main-integration-20261122/worktree-before.tar.gz",
+        ".agent-state/main-integration-20261122/preserved-local-artifacts.json",
+        "preserve/main-before-worktree-submit-20261122"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "347 quick commands passed.158 selected server tests:157 pass,1 existing operator-raster-fixture skip; execsandbox/TTS race tests and whole-source vet passed. Gofmt clean. No full release/browser/platform matrix claimed.",
+      "evidence": [
+        ".agent-state/main-integration-20261122/quick.log",
+        ".agent-state/main-integration-20261122/go-tests.log",
+        ".agent-state/main-integration-20261122/gofmt.log",
+        ".agent-state/main-integration-20261122/docs-check.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Integration review records grouped source scope, fixes required by broad verification, recovery points, local-only artifacts and release limits.",
+      "evidence": [
+        "docs/reviews/2026-11-22-main-worktree-integration.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "11 local-only draft/reference/conflict-copy files archived intact; no runtime credentials found in candidates; source formatting and diff checks clean. Other worktrees and historical branches untouched.",
+      "evidence": [
+        ".agent-state/main-integration-20261122/preserved-local-artifacts.json",
+        ".agent-state/main-integration-20261122/credential-scan.json",
+        ".agent-state/main-integration-20261122/diff-check.log"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Authorized local main integration committed at 1379e4afb0d799cb7a5420a8d1ea103c5627f179. Remote push, tags, GitHub Release and runtime restart were not requested and were not performed.",
+      "evidence": [
+        "1379e4afb0d799cb7a5420a8d1ea103c5627f179",
+        ".agent-state/main-integration-20261122/staged-files.json"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Current worktree effective changes are committed on local main at 1379e4afb0d799cb7a5420a8d1ea103c5627f179.347 quick commands passed;157 selected server cases passed and1 operator-image fixture skipped; execsandbox/TTS race and whole-source vet passed.198 files integrated;11 local-only files recoverably archived. Original35 pending items/24 files unchanged. Historical branches and other worktrees untouched. No push, Release, tags or service restart. This final ledger update is documentation-only.",
+  "integration": {
+    "commit": "1379e4afb0d799cb7a5420a8d1ea103c5627f179",
+    "files": 198,
+    "branch": "main",
+    "remotePush": "not_run",
+    "release": "not_run",
+    "runtimeRestart": "not_run",
+    "preservation": ".agent-state/main-integration-20261122/preservation-final.json"
+  }
+}
