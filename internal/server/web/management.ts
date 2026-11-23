@@ -59,7 +59,21 @@ declare var state: any, lockScreen: any, api: any, t: any, action: any, refreshC
     const scope=state.config.workspaceId;
     if(scope!==renderedScope){renderedScope=scope;generation++;last='';reviewed.clear();document.getElementById('management-proposals')?.replaceChildren();}
     if(busy)return;busy=true;const epoch=generation;
-    try{const response=await api('/management-proposals');if(!available()||epoch!==generation||scope!==state.config.workspaceId)return;const fingerprint=scope+JSON.stringify(response.proposals);if(fingerprint===last)return;last=fingerprint;generation++;const node=host();node.replaceChildren(...(response.proposals||[]).map((p: any)=>card(p,generation,scope)));node.hidden=!(response.proposals||[]).length;}
+    try{
+      const response=await api('/management-proposals');
+      if(!available()||epoch!==generation||scope!==state.config.workspaceId)return;
+      const fingerprint=scope+JSON.stringify([response.proposals,response.storageError||'']);
+      if(fingerprint===last)return;
+      last=fingerprint;generation++;
+      const node=host();
+      if(response.storageError){
+        node.replaceChildren(text('p','management-result',tr('管理提案存储已损坏，原文件仍保留；请备份后修复或移走该文件。','Management proposal storage is damaged. The original file was preserved; back it up before repairing or removing it.')));
+        node.hidden=false;
+        return;
+      }
+      node.replaceChildren(...(response.proposals||[]).map((p: any)=>card(p,generation,scope)));
+      node.hidden=!(response.proposals||[]).length;
+    }
     catch(_){/* Preserve the last receipt during transient network loss. */}finally{busy=false;}
   }
   window.AideManagement={refresh};

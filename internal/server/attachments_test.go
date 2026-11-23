@@ -213,6 +213,36 @@ func TestReadLocalImageDataURL(t *testing.T) {
 	}
 }
 
+func TestReadLocalImageUsesContentMIME(t *testing.T) {
+	a := testApp(t)
+	jpeg := []byte{0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01}
+	if err := os.WriteFile(filepath.Join(a.workPath, "mislabeled.png"), jpeg, 0600); err != nil {
+		t.Fatal(err)
+	}
+	img, err := a.readLocalImage(Attachment{Root: "workspace", Path: "mislabeled.png"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if img.MediaType != "image/jpeg" || img.Format != "jpeg" || !strings.HasPrefix(img.DataURL, "data:image/jpeg;base64,") {
+		t.Fatalf("content MIME was not preserved: %+v", img)
+	}
+}
+
+func TestAttachmentContextUnsupportedImageBecomesReference(t *testing.T) {
+	a := testApp(t)
+	tiff := []byte{'I', 'I', 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00}
+	if err := os.WriteFile(filepath.Join(a.workPath, "clipboard.png"), tiff, 0600); err != nil {
+		t.Fatal(err)
+	}
+	ctx, images, _, err := a.attachmentContext([]Attachment{{Root: "workspace", Path: "clipboard.png"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(images) != 0 || !strings.Contains(ctx, `reason="unsupported-image"`) || !strings.Contains(ctx, "<untrusted-file-reference") {
+		t.Fatalf("unsupported image must remain a file reference: images=%v context=%s", images, ctx)
+	}
+}
+
 func TestAttachmentContextDirectory(t *testing.T) {
 	a := testApp(t)
 	if err := os.MkdirAll(filepath.Join(a.workPath, "folder/sub"), 0755); err != nil {

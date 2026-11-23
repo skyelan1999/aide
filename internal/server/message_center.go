@@ -205,6 +205,11 @@ func (a *App) configureMessages(w http.ResponseWriter, r *http.Request) {
 	a.messageMu.Lock()
 	defer a.messageMu.Unlock()
 	oldConfig, err := a.messageConfig()
+	if malformedStoredJSON(err) {
+		// A valid PUT is the recovery path for a malformed config. Other read
+		// errors still fail closed so an I/O problem cannot overwrite good data.
+		err = nil
+	}
 	if err != nil {
 		fail(w, 500, err)
 		return
@@ -307,7 +312,8 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	a.messageMu.Lock()
 	config, err := a.messageConfig()
-	if err != nil {
+	configState := path == "state" && r.Method == http.MethodGet
+	if err != nil && !(configState && malformedStoredJSON(err)) {
 		a.messageMu.Unlock()
 		fail(w, 500, err)
 		return
@@ -323,6 +329,9 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	messageErr := a.messageError
+	if configState && malformedStoredJSON(err) {
+		messageErr = "消息配置 JSON 已损坏；原文件仍保留，请在消息设置中重新保存以修复"
+	}
 	if m != nil {
 		m.lease.RLock()
 	}

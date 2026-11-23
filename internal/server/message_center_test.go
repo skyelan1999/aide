@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -190,5 +191,38 @@ func TestMessageCenterDockerBridgeIsLauncherOwned(t *testing.T) {
 	data, err := os.ReadFile(messageConfigPath(a.dataPath))
 	if err != nil || bytes.Contains(data, []byte(directory)) {
 		t.Fatal("private bridge path persisted in browser config")
+	}
+}
+
+func TestMessageCenterCorruptConfigIsReadableAndRepairable(t *testing.T) {
+	a := testApp(t)
+	a.settings.UserName = "Test Account"
+	file := messageConfigPath(a.dataPath)
+	if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
+		t.Fatal(err)
+	}
+	raw := []byte(`{"enabled":true,`)
+	if err := os.WriteFile(file, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	state := request(a, "GET", "/api/messages/state", nil)
+	requireStatus(t, state, 200)
+	if !strings.Contains(state.Body.String(), "消息配置 JSON 已损坏") || !strings.Contains(state.Body.String(), `"enabled":false`) {
+		t.Fatalf("corrupt config did not degrade to a readable state: %s", state.Body.String())
+	}
+	persisted, err := os.ReadFile(file)
+	if err != nil || string(persisted) != string(raw) {
+		t.Fatalf("state polling modified corrupt config: %q %v", persisted, err)
+	}
+	config := messageCenterConfig{Enabled: false, Network: structNetworkConfigForTest()}
+	requireStatus(t, request(a, "PUT", "/api/messages/config", map[string]any{"config": config}), 200)
+	persisted, err = os.ReadFile(file)
+	if err != nil || !json.Valid(persisted) {
+		t.Fatalf("valid PUT did not repair config: %q %v", persisted, err)
+	}
+	repaired := request(a, "GET", "/api/messages/state", nil)
+	requireStatus(t, repaired, 200)
+	if strings.Contains(repaired.Body.String(), "消息配置 JSON 已损坏") {
+		t.Fatalf("repair left stale error: %s", repaired.Body.String())
 	}
 }

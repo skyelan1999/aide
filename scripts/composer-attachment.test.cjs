@@ -49,7 +49,7 @@ function setup(respond = () => ({ok: true, json: async () => ({})})) {
     (paste ? prompt : taskForm).dispatchEvent(event);
     return event;
   }
-  return {state, prompt, requests, attachments, notices, dispatch,
+  return {context, state, prompt, requests, attachments, notices, dispatch,
     drain: () => vm.runInContext('composerFileQueue', context)};
 }
 
@@ -102,6 +102,63 @@ test('long pasted text retains its original content when upload fails', async ()
   await ui.drain();
   assert.match(ui.requests[0].query.get('path'), /粘贴文本-.+\.md$/);
   assert.equal(ui.prompt.value, text);
+});
+
+test('clipboard image formats retain their real extension instead of defaulting to PNG', async () => {
+  const ui = setup();
+  const files = [
+    new File(['jpeg'], '', {type: 'image/jpeg'}),
+    new File(['gif'], '', {type: 'image/gif'}),
+    new File(['webp'], '', {type: 'image/webp'}),
+    new File(['tiff'], '', {type: 'image/tiff'}),
+  ];
+  ui.dispatch('paste', {files, items: files.map(fileItem), getData: () => ''});
+  await ui.drain();
+  assert.deepEqual(ui.requests.map(({body}) => body.type), ['image/jpeg', 'image/gif', 'image/webp', 'image/tiff']);
+  assert.match(ui.attachments[0].path, /\.jpg$/);
+  assert.match(ui.attachments[1].path, /\.gif$/);
+  assert.match(ui.attachments[2].path, /\.webp$/);
+  assert.match(ui.attachments[3].path, /\.tiff$/);
+});
+
+test('browser-decodable TIFF is converted to a real PNG before upload', async () => {
+  const ui = setup();
+  let closed = false;
+  ui.context.createImageBitmap = async () => ({width: 2, height: 2, close: () => { closed = true; }});
+  ui.context.document = {createElement: tag => {
+    assert.equal(tag, 'canvas');
+    return {width: 0, height: 0, getContext: () => ({drawImage() {}}),
+      toBlob: resolve => resolve(new Blob(['real png'], {type: 'image/png'}))};
+  }};
+  ui.dispatch('drop', {files: [new File(['tiff'], 'scan.tiff', {type: 'image/tiff'})], types: ['Files']});
+  await ui.drain();
+  assert.equal(closed, true);
+  assert.equal(ui.requests[0].body.type, 'image/png');
+  assert.match(ui.attachments[0].path, /scan\.png$/);
+});
+
+test('mixed rich text and image paste preserves text and the 20000-byte attachment rule', async () => {
+  const short = setup();
+  const image = new File(['png'], 'image.png', {type: 'image/png'});
+  short.dispatch('paste', {files: [image], items: [fileItem(image)], getData: () => 'formatted text'});
+  await short.drain();
+  assert.equal(short.prompt.value, 'formatted text');
+  assert.equal(short.attachments.length, 1);
+
+  const boundary = setup();
+  assert.equal(boundary.dispatch('paste', {getData: () => 'a'.repeat(20000)}).defaultPrevented, false);
+  await boundary.drain();
+  assert.equal(boundary.requests.length, 0);
+
+  const long = setup();
+  const text = '长'.repeat(20001);
+  long.dispatch('paste', {files: [image], items: [fileItem(image)], getData: () => text});
+  await long.drain();
+  assert.equal(long.requests.length, 2);
+  assert.match(long.attachments[0].path, /粘贴文本-.+\.md$/);
+  assert.match(long.attachments[1].path, /image\.png$/);
+  assert.match(long.prompt.value, /长文本已转为附件/);
+  assert.notEqual(long.prompt.value, text);
 });
 
 for (const [target, switchOwner] of [

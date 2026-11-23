@@ -194,3 +194,33 @@ func TestAuthoringRejectsInvalidCodeAndPaths(t *testing.T) {
 		t.Fatal("invalid JS accepted")
 	}
 }
+
+func TestManagementProposalListPreservesAndReportsCorruptQueue(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	file := a.managementPathLocked()
+	a.mu.Unlock()
+	if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
+		t.Fatal(err)
+	}
+	raw := []byte(`[{"id":"pending",`)
+	if err := os.WriteFile(file, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	w := request(a, "GET", "/api/management-proposals", nil)
+	requireStatus(t, w, 200)
+	var out struct {
+		Proposals    []any  `json:"proposals"`
+		StorageError string `json:"storageError"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Proposals) != 0 || !strings.Contains(out.StorageError, "原文件已保留") {
+		t.Fatalf("corrupt queue was hidden: %+v", out)
+	}
+	persisted, err := os.ReadFile(file)
+	if err != nil || string(persisted) != string(raw) {
+		t.Fatalf("read-only polling modified corrupt queue: %q %v", persisted, err)
+	}
+}

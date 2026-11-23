@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"path"
 	"strings"
 )
@@ -44,6 +45,8 @@ var imageAttachmentTypes = map[string]string{
 	".gif":  "image/gif",
 	".webp": "image/webp",
 }
+
+var errUnsupportedImageAttachment = errors.New("图片内容不是可内联的 PNG、JPEG、GIF 或 WebP")
 
 // Small local media attachments are explicitly selected by the user. The
 // selected-model gate runs before any provider request; arbitrary binary files
@@ -153,6 +156,35 @@ func (a *App) readLocalImage(att Attachment) (MessageImage, error) {
 	return a.readLocalMedia(att, imageAttachmentTypes[strings.ToLower(path.Ext(att.Path))])
 }
 
+func messageImageFromBytes(att Attachment, b []byte, mediaType string) (MessageImage, error) {
+	if mediaType == "" {
+		return MessageImage{}, errors.New("不支持的媒体格式")
+	}
+	format := strings.TrimPrefix(strings.ToLower(path.Ext(att.Path)), ".")
+	if strings.HasPrefix(mediaType, "image/") {
+		detected := http.DetectContentType(b)
+		supported := false
+		for _, allowed := range imageAttachmentTypes {
+			if detected == allowed {
+				supported = true
+				break
+			}
+		}
+		if !supported {
+			return MessageImage{}, fmt.Errorf("%w（检测为 %s）", errUnsupportedImageAttachment, detected)
+		}
+		// A clipboard filename is only a label. Use the actual bytes so a JPEG or
+		// TIFF named .png is never sent to a provider with a false PNG MIME type.
+		mediaType = detected
+		format = strings.TrimPrefix(detected, "image/")
+	}
+	return MessageImage{
+		MediaType: mediaType,
+		DataURL:   "data:" + mediaType + ";base64," + base64.StdEncoding.EncodeToString(b),
+		Format:    format,
+	}, nil
+}
+
 func (a *App) readLocalMedia(att Attachment, mediaType string) (MessageImage, error) {
 	if mediaType == "" {
 		return MessageImage{}, errors.New("不支持的媒体格式")
@@ -162,7 +194,7 @@ func (a *App) readLocalMedia(att Attachment, mediaType string) (MessageImage, er
 		if err != nil {
 			return MessageImage{}, err
 		}
-		return MessageImage{MediaType: mediaType, DataURL: "data:" + mediaType + ";base64," + base64.StdEncoding.EncodeToString(b), Format: strings.TrimPrefix(strings.ToLower(path.Ext(att.Path)), ".")}, nil
+		return messageImageFromBytes(att, b, mediaType)
 	}
 	if err := safePath(att.Path); err != nil {
 		return MessageImage{}, err
@@ -187,15 +219,7 @@ func (a *App) readLocalMedia(att Attachment, mediaType string) (MessageImage, er
 	if err != nil {
 		return MessageImage{}, err
 	}
-	mt := mediaType
-	if mt == "" {
-		return MessageImage{}, errors.New("不支持的图片格式")
-	}
-	return MessageImage{
-		MediaType: mt,
-		DataURL:   "data:" + mt + ";base64," + base64.StdEncoding.EncodeToString(b),
-		Format:    strings.TrimPrefix(strings.ToLower(path.Ext(att.Path)), "."),
-	}, nil
+	return messageImageFromBytes(att, b, mediaType)
 }
 
 // truncateExtract 按 rune 截断超长提取文本，并标注"已截断/共 N 字"。

@@ -4373,6 +4373,43 @@ function composerTransferFiles(transfer) {
         .map((item) => item.getAsFile())
         .filter(Boolean);
 }
+async function prepareComposerImageFile(file) {
+    const type = String(file.type || '').toLowerCase();
+    const supported = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+    // Keep supported bytes and animation intact. SVG is left as a document instead
+    // of loading external resources through an image decoder.
+    if (supported.has(type) || type === 'image/svg+xml' || !type.startsWith('image/'))
+        return file;
+    if (typeof createImageBitmap !== 'function' || typeof document === 'undefined')
+        return file;
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(file);
+        if (!bitmap.width || !bitmap.height)
+            return file;
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d');
+        if (!context)
+            return file;
+        context.drawImage(bitmap, 0, 0);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (!blob)
+            return file;
+        const original = composerUploadName(file);
+        const stem = original.replace(/\.[^.]+$/, '') || 'pasted-image';
+        return new File([blob], stem + '.png', { type: 'image/png', lastModified: file.lastModified });
+    }
+    catch (_) {
+        // Some browsers cannot decode TIFF/HEIC/AVIF. Keep the original bytes and
+        // extension as a file reference rather than mislabeling them as PNG.
+        return file;
+    }
+    finally {
+        bitmap?.close();
+    }
+}
 function composerUploadTarget() {
     const workspaceId = recoveryScope(), sessionId = state.session?.id, token = state.token;
     const current = () => !lockScreen.locked && recoveryScope() === workspaceId &&
@@ -4392,10 +4429,13 @@ function queueComposerFiles(files, { active = () => true, target = composerUploa
             return { added: 0, failed: incoming.length };
         }
         let added = 0;
-        for (const file of incoming) {
+        for (const original of incoming) {
             if (!canAttach())
                 break;
             try {
+                const file = await prepareComposerImageFile(original);
+                if (!canAttach())
+                    break;
                 const name = composerUploadName(file);
                 const path = COMPOSER_ATTACHMENT_DIR + '/chat-' + crypto.randomUUID() + '-' + name;
                 const query = new URLSearchParams({ path, workspaceId });
@@ -4488,37 +4528,48 @@ function queuePastedText(text, start, end, name, replaceAll) {
 $('prompt').addEventListener('paste', (event) => {
     const clipboard = event.clipboardData;
     const files = composerTransferFiles(clipboard);
+    const text = typeof clipboard?.getData === 'function' ? clipboard.getData('text/plain') || '' : '';
+    const prompt = $('prompt');
+    const start = prompt.selectionStart ?? prompt.value.length;
+    const end = prompt.selectionEnd ?? start;
+    const projected = text ? prompt.value.slice(0, start) + text + prompt.value.slice(end) : prompt.value;
+    const oversized = !!text && composerByteLength(projected) > PROMPT_MAX_BYTES;
     if (!files.length) {
-        const text = clipboard?.getData('text/plain') || '';
-        if (text) {
-            const prompt = $('prompt');
-            const start = prompt.selectionStart ?? prompt.value.length;
-            const end = prompt.selectionEnd ?? start;
-            const projected = prompt.value.slice(0, start) + text + prompt.value.slice(end);
-            if (composerByteLength(projected) > PROMPT_MAX_BYTES) {
-                event.preventDefault();
-                const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const name = '粘贴文本-' + stamp + '.md';
-                const markerBytes = composerByteLength(t('（长文本已转为附件：{0}）', name));
-                // 输入框本身已接近上限时连现有草稿一起转存，避免"原文+引用"仍然超限。
-                const keepDraft = composerByteLength(prompt.value) <= PROMPT_MAX_BYTES - markerBytes;
-                void queuePastedText(keepDraft ? text : projected, start, end, name, !keepDraft);
-                return;
-            }
+        if (text && oversized) {
+            event.preventDefault();
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const name = '粘贴文本-' + stamp + '.md';
+            const markerBytes = composerByteLength(t('（长文本已转为附件：{0}）', name));
+            // 输入框本身已接近上限时连现有草稿一起转存，避免"原文+引用"仍然超限。
+            const keepDraft = composerByteLength(prompt.value) <= PROMPT_MAX_BYTES - markerBytes;
+            void queuePastedText(keepDraft ? text : projected, start, end, name, !keepDraft);
         }
-        else if (composerTransferHasFiles(clipboard)) {
+        else if (!text && composerTransferHasFiles(clipboard)) {
             event.preventDefault();
             toast(t('未能读取附件，请重新选择文件。'));
         }
         return;
     }
     event.preventDefault();
+    if (text) {
+        if (oversized) {
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const name = '粘贴文本-' + stamp + '.md';
+            const markerBytes = composerByteLength(t('（长文本已转为附件：{0}）', name));
+            const keepDraft = composerByteLength(prompt.value) <= PROMPT_MAX_BYTES - markerBytes;
+            void queuePastedText(keepDraft ? text : projected, start, end, name, !keepDraft);
+        }
+        else {
+            prompt.setRangeText(text, start, end, 'end');
+            prompt.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const attachments = files.map((blob, index) => {
         if (blob.name || !blob.type.startsWith('image/'))
             return blob;
-        const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg', 'image/bmp': 'bmp' }[blob.type] || 'png';
-        return new File([blob], `pasted-image-${stamp}-${index + 1}.${ext}`, { type: blob.type || 'image/png', lastModified: Date.now() });
+        const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg', 'image/bmp': 'bmp', 'image/tiff': 'tiff', 'image/heic': 'heic', 'image/heif': 'heif', 'image/avif': 'avif', 'image/x-icon': 'ico' }[blob.type] || 'bin';
+        return new File([blob], `pasted-image-${stamp}-${index + 1}.${ext}`, { type: blob.type || 'application/octet-stream', lastModified: Date.now() });
     });
     void queueComposerFiles(attachments);
 });

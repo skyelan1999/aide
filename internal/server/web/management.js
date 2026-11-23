@@ -143,12 +143,17 @@
             const response = await api('/management-proposals');
             if (!available() || epoch !== generation || scope !== state.config.workspaceId)
                 return;
-            const fingerprint = scope + JSON.stringify(response.proposals);
+            const fingerprint = scope + JSON.stringify([response.proposals, response.storageError || '']);
             if (fingerprint === last)
                 return;
             last = fingerprint;
             generation++;
             const node = host();
+            if (response.storageError) {
+                node.replaceChildren(text('p', 'management-result', tr('管理提案存储已损坏，原文件仍保留；请备份后修复或移走该文件。', 'Management proposal storage is damaged. The original file was preserved; back it up before repairing or removing it.')));
+                node.hidden = false;
+                return;
+            }
             node.replaceChildren(...(response.proposals || []).map((p) => card(p, generation, scope)));
             node.hidden = !(response.proposals || []).length;
         }

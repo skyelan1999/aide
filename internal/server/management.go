@@ -97,6 +97,12 @@ func loadManagementQueue(p string) ([]ManagementProposal, error) {
 	err = json.Unmarshal(b, &q)
 	return q, err
 }
+
+func malformedStoredJSON(err error) bool {
+	var syntax *json.SyntaxError
+	var valueType *json.UnmarshalTypeError
+	return errors.As(err, &syntax) || errors.As(err, &valueType)
+}
 func (a *App) managementBaseLocked(kind, id string) string {
 	if kind == "references" {
 		b, _ := json.Marshal(a.sourceRegistry)
@@ -454,6 +460,12 @@ func (a *App) listManagementProposals(w http.ResponseWriter, r *http.Request) {
 	file := a.managementPathLocked()
 	a.mu.Unlock()
 	q, err := loadManagementQueue(file)
+	if malformedStoredJSON(err) {
+		// Polling must remain usable without hiding that the on-disk queue needs
+		// repair. Mutating endpoints still fail closed and preserve the raw file.
+		jsonOut(w, 200, map[string]any{"proposals": []map[string]any{}, "storageError": "管理提案存储的 JSON 已损坏；原文件已保留，请备份后修复或移走该文件"})
+		return
+	}
 	if err != nil {
 		fail(w, 500, err)
 		return

@@ -343,6 +343,12 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 		// 1) 图片 → 多模态，原样交由模型接口处理。
 		if _, isImg := imageAttachmentTypes[ext]; isImg {
 			img, err := a.readLocalImage(att)
+			if errors.Is(err, errUnsupportedImageAttachment) {
+				if refErr := addReference(att.Root, att.Path, "unsupported-image"); refErr != nil {
+					return "", nil, nil, refErr
+				}
+				continue
+			}
 			if err != nil {
 				return "", nil, nil, err
 			}

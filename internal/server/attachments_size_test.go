@@ -14,6 +14,10 @@ func TestReadLocalImageHasNoFiveMiBLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, err := file.Write([]byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}); err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
 	if err := file.Truncate(imageSize); err != nil {
 		file.Close()
 		t.Fatal(err)
