@@ -73,8 +73,15 @@
   - 不要用 `as` 断言包裹三元/数组表达式（产物保留括号）；改为变量类型注解。
   - TS2774（方法恒存在）与"看似 bug"的原始属性访问（如 fence.char）用
     `as any` 逐字保留，禁止顺手修复。
-- **批 4**：中型模块与 scripts 桥接（starmap、avatar-player、urdf-preview、
-  computer-bridge 等；Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
+- **批 4a（已完成）**：八个小模块——`lan-login`、`file-types`（UMD）、
+  `runtime-lifecycle`、`plugin-workbench-tabs`、`mobile-capture`（BarcodeDetector/
+  ZXing 用 `declare var ...: any`）、`assistant-memory`、`plugin-file-preview`、
+  `settings-navigation`；严格等价全过，8 个相关 node 测试全过。
+  `AidePluginWorkbench` 暂以 `any` 声明于引用方，待权威实现改造时移交；
+  `globalThis.AideFileTypes` 引用用 `(globalThis as any)` 保持逐字。
+  mobile-capture.html 版本号 v4；lan-login.html 本无版本号，保持原样。
+- **批 4b（待做）**：其余小模块（starmap 子模块、plugin-*、file-* 等）与
+  scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。
