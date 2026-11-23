@@ -4,7 +4,7 @@ class Element {
  constructor(tag,cls='',text=''){this.tagName=tag;this.children=[];this.textContent=text;this.classes=new Set(cls.split(' '));this.classList={toggle:(k,on)=>on?this.classes.add(k):this.classes.delete(k)};this.value='';this.checked=false;}
  get lastElementChild(){return this.children.at(-1);}append(...nodes){this.children.push(...nodes);}setAttribute(k,v){this[k]=v;}
 }
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 const code=app.slice(app.indexOf('function renderXiaomiModelControl()'),app.indexOf("controlRenderers['xiaomi-model']"));
 async function fixture(cfg,models=[{id:'a',name:'Model A',providerId:'pa'},{id:'b',name:'Model B',providerId:'pb'}]){
  const writes=[];const state={config:{models,activeModel:'a'}};

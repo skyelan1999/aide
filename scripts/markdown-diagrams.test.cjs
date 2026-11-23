@@ -22,7 +22,7 @@ const load=async()=>{};
  const exportNode=node('flowchart LR\n X-->Y');await Promise.all([api.render(host,{load,dark:false}),api.render({querySelectorAll:()=>[exportNode]},{load,dark:false,strict:true})]);assert.equal(exportNode.svg,'svg-false');
  const retry=node('flowchart TD\n C-->D'),retryHost={querySelectorAll:()=>[retry]};await api.render(retryHost,{load:async()=>{throw Error('offline');}});assert.equal(retry.dataset.diagramTheme,undefined);await api.render(retryHost,{load});assert.equal(calls.at(-1).text,'flowchart TD\n C-->D');
  window.mermaid.render=async()=>{throw Error('invalid diagram');};await assert.rejects(api.render({querySelectorAll:()=>[node('bad')]},{load,strict:true}));
- const app=fs.readFileSync('internal/server/web/app.js','utf8');assert(!app.includes("theme:'neutral'"));assert(app.includes('dark:false,errorText:'));assert(app.includes("attributeFilter:['data-theme','data-palette']"));
+ const app=require('./fixtures/app-source.cjs').readAppSource();assert(!app.includes("theme:'neutral'"));assert(app.includes('dark:false,errorText:'));assert(app.includes("attributeFilter:['data-theme','data-palette']"));
  a.isConnected=false;exportNode.isConnected=false;retry.isConnected=false;removed([{removedNodes:[a]}]);assert.equal(doc.adoptedStyleSheets.length,0);
  console.log('PASS CSP CSSOM lifecycle, diagram contrast, source preservation, theme race, export isolation and retry');
 })().catch(e=>{console.error(e);process.exitCode=1;});

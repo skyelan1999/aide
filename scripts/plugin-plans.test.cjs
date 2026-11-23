@@ -50,7 +50,7 @@ vm.runInContext(fs.readFileSync('internal/server/web/locales/en.js','utf8'),c);
 const english=(s,...args)=>t(c.window.aideEnglish[s]||s,...args);
 assert.match(walk(api.render(run,{el,t:english})).map(n=>n.textContent).join('\n'),/Proposal not applied/);
 
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 for(const name of ['sessionPluginPlanView','sessionTextRevision','sessionRevision','sessionValueFingerprint','sessionRunRenderSignature']){
  const source=app.match(new RegExp('function '+name+'\\([^]*?\\n\\}'))?.[0];assert.ok(source,name);vm.runInContext(source,c);
 }

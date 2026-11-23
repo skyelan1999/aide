@@ -1,4 +1,5 @@
 'use strict';
+// @ts-ignore -- app and starmap are independent classic-script pages.
 const $ = (id) => document.getElementById(id), canvas = $('sky'), ctx = canvas.getContext('2d');
 const logbook = $('limits'), logbookToggle = $('logbook-toggle');
 const stellarLogbook = window.AideStellarLogbook.create();
@@ -167,6 +168,7 @@ function drawEvidencePath() {
     ctx.restore();
 }
 // Store navigation metadata only: no document excerpts, model answers or tokens.
+// @ts-ignore -- app and starmap own independent recovery timers.
 let recoveryTimer = 0, recoveryLoading = false, recoveryScopeLoaded = '', pendingRecoveredView = null, recoveryInput = 0, recoveryWarning = false, recoveryAttempt = null;
 function persistSkyView(active = () => !locked) {
     clearTimeout(recoveryTimer);

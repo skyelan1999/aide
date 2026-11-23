@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const signature = source.match(/function sessionRunRenderSignature\(run, view = \{\}\) \{[\s\S]*?\n\}/)?.[0];
 const assistantSignature = source.match(/function assistantMessageRenderSignature\(msg, view = \{\}\) \{[\s\S]*?\n\}/)?.[0];
 assert.ok(assistantSignature);

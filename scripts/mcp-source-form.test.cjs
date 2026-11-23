@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const registry = new Map();
 function element(tag) {
   const node = {tag,children:[],value:'',checked:false,hidden:false,dataset:{}, append(...children) { for (const child of children) {this.children.push(child);if (child && typeof child === 'object') child.parentNode=this;} if (tag==='select' && !this.value) this.value=children[0]?.value||'';},replaceChildren(){this.children=[];},close(){},reset(){}};

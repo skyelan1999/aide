@@ -5,7 +5,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 const {randomUUID} = require('node:crypto');
 
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const start = source.indexOf('const COMPOSER_ATTACHMENT_DIR');
 const end = source.indexOf("$('task-form').onsubmit", start);
 assert.ok(start >= 0 && end > start);

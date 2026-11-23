@@ -1,5 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 const start=app.indexOf('async function api(path,'),end=app.indexOf('\nfunction action(',start);
 assert.ok(start>=0&&end>start,'extract only the API helper, independently of action options');
 const source=app.slice(start,end);

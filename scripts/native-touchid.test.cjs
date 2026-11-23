@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const first = source.indexOf('function b64uToBuf(');
 const last = source.indexOf("$('lock-form').onsubmit", first);
 assert.ok(first >= 0 && last > first);

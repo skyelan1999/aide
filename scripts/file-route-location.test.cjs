@@ -19,7 +19,7 @@ const match=c.window.AideFileRoute.matchesSourceLocation;
  assert.equal(await match({codeHash:'old'},{hash:'new',content:body}),false);
  let encoded=0;const limited=vm.createContext({window:{},TextEncoder:class{encode(s){encoded=s.length;return new TextEncoder().encode(s);}},Uint8Array,crypto:webcrypto});vm.runInContext(text,limited);
  const prefix='x'.repeat(512);assert.equal(await limited.window.AideFileRoute.matchesSourceLocation({indexedTextHash:hash(prefix),indexedTextBytes:512},{content:prefix+'z'.repeat(1000000)}),true);assert.equal(encoded,512,'digest only bounded text rather than whole large document');
- const app=fs.readFileSync('internal/server/web/app.js','utf8');
+ const app=require('./fixtures/app-source.cjs').readAppSource();
  const implementation=app.slice(app.indexOf('function fileViewRouteCurrent('),app.indexOf('let filePresentationPrefs'));
  function harness(phase){
   const elements=new Map(),spec={root:'workspace',path:'report.md',readOnly:true,knowledgeWorkspace:'W',line:3};let scope='W',finishAPI,finishProof,proofCalls=0;

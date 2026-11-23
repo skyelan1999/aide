@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 const fn=source.slice(source.indexOf('function composerModelStatus('),source.indexOf('function refreshStrategyUI('));
 const state={session:null,config:{configured:true,model:'global',models:[{id:'global',name:'Global',providerId:'a'},{id:'mimo',name:'MiMo',providerId:'b'}],modelRouter:{available:true}},xiaomiModelSettings:{source:'configured',model:'mimo',effectiveModel:'mimo',configured:true}};
 const context={state,modelProviderName:id=>({a:'Provider A',b:'Provider B'})[id]||''};vm.createContext(context);vm.runInContext(fn,context);

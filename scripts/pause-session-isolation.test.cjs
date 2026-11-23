@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const src = fs.readFileSync('internal/server/web/app.js','utf8');
+const src = require('./fixtures/app-source.cjs').readAppSource();
 function extract(start,end){return src.slice(src.indexOf(start),src.indexOf(end,src.indexOf(start)));}
 const button={hidden:true,disabled:false,classList:{toggle(){}},attrs:{},setAttribute(k,v){this.attrs[k]=v;}};
 const a={id:'a',runs:[{id:'run-a',status:'running',canResume:true}]},b={id:'b',runs:[{id:'run-b',status:'running',canResume:true}]};

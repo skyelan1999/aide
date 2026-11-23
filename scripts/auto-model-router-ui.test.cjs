@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 function fn(name){const at=source.indexOf('function '+name+'('),line=source.slice(at,source.indexOf('\n',at));return line.endsWith('}')?line:source.slice(at,source.indexOf('\n}',at)+2);}
 function el(tag,cls='',text=''){return {tag,className:cls,textContent:text,children:[],dataset:{},scrollTop:0,classList:{toggle(){}},append(...x){this.children.push(...x);},replaceChildren(...x){this.children=x;},querySelector(){return null;},setAttribute(k,v){this[k]=v;}};}
 const elements=Object.fromEntries(['strategy-menu','strategy-label','strategy-button','model-name'].map(id=>[id,el('div')]));

@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const src=fs.readFileSync('internal/server/web/app.js','utf8');
+const src=require('./fixtures/app-source.cjs').readAppSource();
 const nodes=[],writes=[];let enabled=false,fail=false;
 const c={controlRenderers:{},t:(s,...v)=>s.replace(/\{(\d+)\}/g,(_,n)=>v[n]),el(tag,cls,text){const n={tag,style:{},textContent:text||'',children:[],setAttribute(){},append(...v){this.children.push(...v)}};nodes.push(n);return n},api:async(path,options)=>{if(options){writes.push({path,body:JSON.parse(options.body)});if(fail)throw Error('locked');enabled=JSON.parse(options.body).enabled;return {enabled}}return {running:true,mode:'normal',callbacksEnabled:enabled,callbackPending:1,callbackLastStatus:'queued',callbackLastSession:900}}};
 vm.createContext(c);vm.runInContext(src.slice(src.indexOf('function renderSIPPhoneGuide()'),src.indexOf('function renderTTSEngineControl()')),c);

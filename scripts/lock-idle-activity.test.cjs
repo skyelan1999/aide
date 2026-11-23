@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {environment}=require('./lock-cluster-state.test.js');
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 const timerCode=app.slice(app.indexOf('const lockScreen ='),app.indexOf('function refreshLockStatus()'));
 const inputCode=app.slice(app.indexOf('const lockActivityEvents ='),app.indexOf('setInterval(() => { if (lockScreen.locked) refreshLockStatus();'));
 const remoteHook=app.match(/LockCluster\.setRemoteActivityHook\([^\n]+/)[0];

@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 const code=app.slice(app.indexOf('function fileListRequestKey()'),app.indexOf('function currentFileTarget()'));
 class Element {
   constructor(){this.children=[];this.open=false;}

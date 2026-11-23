@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 const start=source.indexOf('const ttsPlayer ='),end=source.indexOf('function ttsWantsEdge(',start);
 const play=source.slice(source.indexOf('function ttsPlayOne('),source.indexOf('// 朗读入口：'));
 let created=0,blocked=false,retry=null,phases=[],revoked=[],intervals=new Map(),serial=0;

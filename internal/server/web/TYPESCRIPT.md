@@ -234,7 +234,17 @@
     `node-globals.d.ts` 提供最小 Node 全局，不引入 @types/node。
   - 编译命令：主配置与 worklet 配置照旧；桥接分别执行
     `./node_modules/.bin/tsc -p scripts/tsconfig.<name>.json`。
-- **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；最终核对自有 JS
-  是否全部完成 TS 化。
+- **批 5a（已完成）**：开始拆分 app 主脚本。`app-core`（启动、恢复草稿
+  前缀，103 行）与 `app-sidebar`（DOM helper、侧栏宽度、Toast，107 行）
+  TS 化，均与原片段严格等价；app 余下 13948 行保持原样。index 按
+  app-core → app-sidebar → app 顺序 defer 加载，版本分别为 v1/v1/v295。
+  新增 `scripts/fixtures/app-source.cjs`，按原始源码顺序拼接三个产物，
+  58 个历史 app 测试统一从单文件路径切换到组合视图；continuity 的核心
+  源码切片与断言改为格式不敏感。58 个 app 套件、相关边界套件及 22 个
+  星图套件通过。starmap 仅为跨页面 `$`/recoveryTimer 声明补充 ts-ignore，
+  cache buster v77。
+- **批 5b+（待做）**：继续按职责拆分并 TS 化 app 余下脚本；每扩展一个
+  拆分模块同步维护 app-source 的原始顺序视图，最终核对自有 JS 是否全部
+  完成 TS 化。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

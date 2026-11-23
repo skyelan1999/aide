@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const start = source.indexOf('const originalMarkdownRender=renderMarkdown;');
 const end = source.indexOf('/* ── 语音小秘', start);
 assert(start >= 0 && end > start, 'stable Markdown cache wrapper should be present');

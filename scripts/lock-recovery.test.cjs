@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\('));assert(start>=0,name);return app.slice(start,app.indexOf('\n}',start)+2);}
 function fixture(){
  const timers=new Map(),reads=[],renders=[],previews=[],saves=[],polls=[],pluginPages=[],suspendedReviews=[];let next=100;

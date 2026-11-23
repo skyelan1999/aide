@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 function fn(name){const start=source.search(new RegExp('^function '+name+'\\(','m'));assert(start>=0,name);const eol=source.indexOf('\n',start);return source.slice(start,source[eol-1]==='}'?eol:source.indexOf('\n}',start)+2);}
 const nodes=new Map();function $(id){if(!nodes.has(id))nodes.set(id,{value:'',hidden:false,dataset:{},attrs:{},classList:{toggle(){}},setAttribute(k,v){this.attrs[k]=v}});return nodes.get(id)}
 const run={id:'r',status:'running',canResume:true};const state={session:{id:'s',runs:[run]},attachments:[],busy:true,queueMode:source.match(/queueMode: (true|false)/)[1]==='true'};

@@ -24,6 +24,6 @@ function fixture(){
  const unsupported=fixture();unsupported.setSupported(false);await unsupported.call.start();assert.equal(unsupported.call.active(),false);assert.equal(unsupported.errors.length,1);
  const locked=fixture();await locked.call.start();locked.setValid(false);locked.call.paint(locked.live.snapshot());assert.equal(locked.freed(),1);assert.equal(locked.call.active(),false);assert.equal(locked.call.element.hidden,true);
  const paused=fixture();await paused.call.start();paused.live.pause();assert.equal(paused.call.active(),false);
- const app=fs.readFileSync('internal/server/web/app.js','utf8');assert(app.includes('if(id!==state.session?.id)window.aideAssistantCall?.end()'));assert(app.includes("if(document.visibilityState==='hidden'){window.aideAssistantCall?.end()"));
+ const app=require('./fixtures/app-source.cjs').readAppSource();assert(app.includes('if(id!==state.session?.id)window.aideAssistantCall?.end()'));assert(app.includes("if(document.visibilityState==='hidden'){window.aideAssistantCall?.end()"));
  console.log('PASS call: lifecycle, clock, mute/resume, hangup, late permission, permission denial, unsupported browser, lock, pause, page/session boundaries');
 })().catch(error=>{console.error(error);process.exitCode=1});

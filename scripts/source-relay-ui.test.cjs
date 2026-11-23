@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 function fn(name){let at=source.indexOf('function '+name+'(');assert(at>=0,name);if(source.slice(at-6,at)==='async ')at-=6;let end=source.indexOf('\n}',at);let first=source.slice(at,source.indexOf('\n',at));return first.endsWith('}')?first:source.slice(at,end+2);}
 const nodes={};
 function el(tag,cls='',text=''){return {tag,className:cls,textContent:text,children:[],dataset:{},value:'',checked:false,disabled:false,append(...items){for(const item of items){item.parentNode=this;this.children.push(item);}},prepend(...items){for(const item of items)item.parentNode=this;this.children.unshift(...items);},replaceChildren(){this.children=[];},set id(id){this._id=id;nodes[id]=this;},get id(){return this._id;},click(){downloads.push(this.download);}};}

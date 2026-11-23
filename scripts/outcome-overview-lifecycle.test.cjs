@@ -9,12 +9,12 @@ async function harness(session,options={}){const content=new Element('div'),time
  return {content,mounted,updates,callbacks,timers,refresh:id=>c.window.AideTaskOutcome.refreshSession?.(id),module:c.window.AideTaskOutcome,get calls(){return calls},setNext:s=>next=s,setBlocked:v=>blocked=v,setDeferred:p=>deferred=p};}
 const completed={id:'s',revision:1,runningRuns:0,runs:[{id:'r',status:'completed',steps:[]}]};
 {
- const app=fs.readFileSync('internal/server/web/app.js','utf8'),c={state:{historyLimit:30},sessionPluginPlanView:()=>[]};
+ const app=require('./fixtures/app-source.cjs').readAppSource(),c={state:{historyLimit:30},sessionPluginPlanView:()=>[]};
  vm.runInNewContext(app.slice(app.indexOf('function sessionRevision('),app.indexOf('function sessionPluginPlanView(')),c);
  assert.notEqual(c.sessionRevision({...completed,hasOlder:true,runs:[],runningRuns:1}),c.sessionRevision({...completed,hasOlder:true,runs:[],runningRuns:0}),'hidden activity metadata participates in session revision');
 }
 {
- const app=fs.readFileSync('internal/server/web/app.js','utf8'),events={},refreshes=[];let sidebars=0,approvals=0;
+ const app=require('./fixtures/app-source.cjs').readAppSource(),events={},refreshes=[];let sidebars=0,approvals=0;
  const c={sessionsEv:null,state:{token:'local-test-not-a-secret'},EventSource:function(){this.addEventListener=(name,fn)=>events[name]=fn;},scheduleSessionsRefresh:()=>sidebars++,refreshApprovalPolicy:async()=>{approvals++;},window:{AideManagement:{refresh(){}},AideTaskOutcome:{refreshSession:id=>refreshes.push(id)}}};
  vm.runInNewContext(app.slice(app.indexOf('function setupGlobalEvents()'),app.indexOf('/* ── 小秘系统会话密码门')),c);c.setupGlobalEvents();events['sessions-changed']({data:JSON.stringify({sessionId:'s'})});assert.equal(sidebars,1,'valid event refreshes sidebar');events['sessions-changed']({data:'broken'});assert.equal(sidebars,2,'malformed payload still refreshes authoritative sidebar');events['open']();assert.equal(sidebars,3,'reconnect refreshes sidebar too');assert.deepEqual(refreshes,['s',undefined]);assert.equal(approvals,1,'reconnect keeps approval refresh');
 }

@@ -6,7 +6,7 @@ const walk=n=>[n,...n.childNodes.flatMap(walk)];
  const calls=[],wrap=new Element('div');
  const state={token:'fixture',config:{workspaceId:'fixture-workspace',agentManagement:{aidePlugins:true,assistantPlugins:false,aideReferences:false,assistantReferences:true}}};
  const context=vm.createContext({setTimeout,clearTimeout,structuredClone,state,el:(...args)=>new Element(...args),t:x=>x,action:x=>x,toast:()=>{},api:async(path,opts)=>{calls.push([path,opts]);},refreshConfig:async()=>{},controlRenderers:{}});
- const app=fs.readFileSync('internal/server/web/app.js','utf8');vm.runInContext(app.slice(app.indexOf('let settingsWriteQueue ='),app.indexOf('// 设置面板：语音助理名称输入'))+app.slice(app.indexOf('function renderAgentManagementControl()'),app.indexOf("controlRenderers['agent-management']")),context);
+ const app=require('./fixtures/app-source.cjs').readAppSource();vm.runInContext(app.slice(app.indexOf('let settingsWriteQueue ='),app.indexOf('// 设置面板：语音助理名称输入'))+app.slice(app.indexOf('function renderAgentManagementControl()'),app.indexOf("controlRenderers['agent-management']")),context);
  const form=vm.runInContext('renderAgentManagementControl()',context),inputs=walk(form).filter(n=>n.tag==='input');assert.equal(inputs.length,4);
  assert.deepEqual(inputs.map(x=>[x.name,x.checked]),[['assistantPlugins',false],['assistantReferences',true],['aidePlugins',true],['aideReferences',false]]);
  inputs[0].checked=true;inputs[0].onchange();await vm.runInContext('flushSettingsAutosaves()',context);assert.deepEqual(JSON.parse(calls[0][1].body),{agentManagement:{assistantPlugins:true,assistantReferences:true,aidePlugins:true,aideReferences:false}});

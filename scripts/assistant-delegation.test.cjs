@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const src=fs.readFileSync('internal/server/web/app.js','utf8');
+const src=require('./fixtures/app-source.cjs').readAppSource();
 const el=(tag,cls,text)=>({tag,cls,text,children:[],setAttribute(){},prepend(node){this.children.unshift(node)},append(node){this.children.push(node)}});
 const ctx={el,t:x=>x,timelineClock:()=>''};vm.createContext(ctx);
 vm.runInContext(src.slice(src.indexOf('function timelineBubble('),src.indexOf('function renderSession()')),ctx);

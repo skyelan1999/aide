@@ -1,6 +1,6 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
-const source=fs.readFileSync('internal/server/web/app.js','utf8'),code=source.slice(source.indexOf('let compareLeftSelection=null;'),source.indexOf('let fileOpenRequest=0;'));
+const source=require('./fixtures/app-source.cjs').readAppSource(),code=source.slice(source.indexOf('let compareLeftSelection=null;'),source.indexOf('let fileOpenRequest=0;'));
 const enabled={id:'compare',enabled:true,settings:{fileContextMenu:true},workbench:{protocol:1}};
 function fixture(){
  const pending=[],opened=[],notices=[],state={plugins:[],token:'fixture-token',root:'workspace',config:{workspaceId:'A'},fileEntries:[{path:'a.txt',dir:false},{path:'b.txt',dir:false}],fileSelection:new Set(['a.txt'])};

@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const src=fs.readFileSync('internal/server/web/app.js','utf8');
+const src=require('./fixtures/app-source.cjs').readAppSource();
 const part=src.slice(src.indexOf('async function ttsEdgeSynthOne('),src.indexOf('\nfunction ttsPlayOne('));
 let request;
 const ctx={AbortController,setTimeout,clearTimeout,ttsPlayer:{},URL:{createObjectURL:()=> 'blob:test'},state:{token:'fixture-token',config:{ttsVoice:'Cherry'}},fetch:async (url,opt)=>{request={url,...JSON.parse(opt.body)};return{ok:true,blob:async()=>new Blob(['RIFF'])};},Blob};

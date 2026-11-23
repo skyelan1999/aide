@@ -1,5 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 const helper=source.slice(source.indexOf('async function restoreWorkspaceScene() {'),source.indexOf('async function saveWorkspaceConfig() {'));
 const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'A draft',classList:{toggle(){}}});return elements.get(id);};
 const records=new Map([['B:scene', {root:'workspace',dir:'child',fileDirs:{workspace:'child'},openFile:{root:'workspace',source:'',path:'child/notes.md'}}],['B:chat',{text:'B draft',attachments:[{path:'b.txt'}],start:2,end:4,scroll:22}]]);

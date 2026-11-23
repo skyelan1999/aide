@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 const start=source.indexOf('function proposalFileLabel('),end=source.indexOf('\n}',start)+2;
 const ctx={t:x=>x};vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
 assert.equal(ctx.proposalFileLabel({source:'system-docs',path:'report.md',targetPath:'/configured/docs/report.md'}),'自动系统文档 / report.md · /configured/docs/report.md');

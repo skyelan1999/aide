@@ -28,7 +28,7 @@ test('search finds pages by title and control while retaining group mapping',()=
  assert.equal(navigation.search(model,'  ').length,0);
 });
 test('every schema control has a renderer and key API routes exist',()=>{
- const app=fs.readFileSync('internal/server/web/app.js','utf8');
+ const app=require('./fixtures/app-source.cjs').readAppSource();
  const server=fs.readFileSync('internal/server/server.go','utf8');
  for(const section of schema.sections)for(const page of section.children||[section])for(const control of page.controls||[]){
   const type=control.type;
@@ -47,7 +47,7 @@ test('new sections and unknown legacy links have a safe reachable destination',(
  assert.equal(navigation.resolve(model,'permissions','').id,'permissions');
 });
 test('advanced controls initialize once only after expansion and keep original renderer',()=>{
- const source=fs.readFileSync('internal/server/web/app.js','utf8');let renders=0;
+ const source=require('./fixtures/app-source.cjs').readAppSource();let renders=0;
  function el(tag,className,text){return {tag,className,text,children:[],events:{},append(...nodes){this.children.push(...nodes)},addEventListener(name,fn){this.events[name]=fn}};}
  const ctx=vm.createContext({el,t:x=>x,console,window:{},settingsPanel:{refreshers:[]},requestAnimationFrame:fn=>fn(),controlRenderers:{fixture:control=>{renders++;assert.equal(control.id,'kept');return el('input')}}});
  vm.runInContext(source.slice(source.indexOf('function renderControlsInto('),source.indexOf('function renderSettingsSheet()')),ctx);
@@ -59,7 +59,7 @@ test('appearance uses independent palette and mode with unchanged stored values'
  assert.deepEqual(controls.filter(c=>['palette','theme'].includes(c.id)).map(c=>c.id),['palette','theme']);
  assert.deepEqual(controls.find(c=>c.id==='palette').options.map(x=>x.value),['comfort','green','professional','modern']);
  assert.deepEqual(controls.find(c=>c.id==='theme').options.map(x=>x.value),['light','dark','system']);
- const app=fs.readFileSync('internal/server/web/app.js','utf8');
+ const app=require('./fixtures/app-source.cjs').readAppSource();
  assert(!app.includes('前往模型设置配置厂商与密钥'));
 });
 test('modern palette persists and immediately changes the document theme attribute',()=>{
@@ -77,7 +77,7 @@ test('modern palette persists and immediately changes the document theme attribu
  assert.equal(legacyAttributes['data-palette'],'modern');assert.equal(legacyBrowser.aideUI.get('palette'),'modern');
 });
 test('opening voice settings never requests microphone permission; explicit refresh stops its temporary track',async()=>{
- const source=fs.readFileSync('internal/server/web/app.js','utf8');let permissions=0,stopped=0;
+ const source=require('./fixtures/app-source.cjs').readAppSource();let permissions=0,stopped=0;
  function el(tag,className,text){return {tag,className,text,children:[],append(...nodes){this.children.push(...nodes)},replaceChildren(){this.children=[]}};}
  const ctx=vm.createContext({el,t:x=>x,state:{config:{}},action:fn=>fn,navigator:{mediaDevices:{enumerateDevices:async()=>[{kind:'audioinput',deviceId:'mic',label:permissions?'Microphone':''}],getUserMedia:async()=>{permissions++;return {getTracks:()=>[{stop(){stopped++}}]}}}}});
  vm.runInContext(source.slice(source.indexOf('function renderVoiceInputSourceControl()'),source.indexOf("controlRenderers['voice-input-source']")),ctx);

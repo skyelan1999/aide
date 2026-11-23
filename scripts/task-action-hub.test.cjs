@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const src=fs.readFileSync('internal/server/web/app.js','utf8');
+const src=require('./fixtures/app-source.cjs').readAppSource();
 function fn(name){const a=src.indexOf('function '+name+'(');return src.slice(a,src.indexOf('\n}',a)+2)}
 class Node {
  constructor(tag='div',cls='',text=''){this.tag=tag;this.className=cls;this.textContent=text;this.children=[];this.dataset={};this.hidden=false;this.disabled=false;}

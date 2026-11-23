@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const start = source.indexOf("  const rcLock = $('runtime-card');");
 const end = source.indexOf('  if(workspaceChanged)await restoreWorkspaceScene();', start);
 assert.ok(start > 0 && end > start);

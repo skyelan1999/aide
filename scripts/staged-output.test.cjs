@@ -9,7 +9,7 @@ for(const next of [{id:'other',runs:[{id:'r',steps:[{name:'chat'}]}]},{id:'s',ru
 assert.equal(api.text({content:'旧回答'}),'旧回答');assert.equal(api.text({outputSegments:[part('one','早期')],content:'暂停的半段'}),'早期\n\n暂停的半段');
 function el(tag,className,textContent=''){return {tag,className,textContent,dataset:{},children:[],append(...xs){this.children.push(...xs)}}}
 const panel=api.render(step,{el,t:(s,n)=>s.replace('{0}',n),renderMarkdown:x=>'safe:'+x});assert.equal(panel.children.length,2);assert.equal(panel.children[0].children[1].innerHTML,'safe:第一段');assert.ok(!panel.children[0].children[1].className.includes('chat-answer'));
-const app=fs.readFileSync('internal/server/web/app.js','utf8');const c={state:{historyLimit:30},window:{AideStagedOutput:api}};vm.createContext(c);vm.runInContext(app.slice(app.indexOf('function sessionRevision('),app.indexOf('function getSessionWindow(')),c);const before=c.sessionRevision(prev);api.append(step,part('three','第三段'));assert.notEqual(c.sessionRevision(prev),before);
+const app=require('./fixtures/app-source.cjs').readAppSource();const c={state:{historyLimit:30},window:{AideStagedOutput:api}};vm.createContext(c);vm.runInContext(app.slice(app.indexOf('function sessionRevision('),app.indexOf('function getSessionWindow(')),c);const before=c.sessionRevision(prev);api.append(step,part('three','第三段'));assert.notEqual(c.sessionRevision(prev),before);
 assert.match(app,/state.stream !== es[\s\S]*addEventListener\('segment'/);assert.match(app,/copyText\(text, event.currentTarget\)/);
 console.log('staged output PASS: append, final dedup, stale snapshots, session/run isolation, legacy data, partial pause, renderer and revision');
 

@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('internal/server/web/app.js','utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 function fn(name, required=true){const start=source.search(new RegExp('^function '+name+'\\(', 'm'));if(start<0){assert.equal(required,false,name);return '';}return source.slice(start,source.indexOf('\n}',start)+2);}
 class Element {
   constructor(tag='div',cls='',text=''){this.tag=tag;this.className=cls;this.textContent=text;this.children=[];this.dataset={};this.scrollTop=0;this.scrollHeight=3000;this.clientHeight=700;this.classList={toggle(){},add(){},remove(){},contains(){return false;}};}

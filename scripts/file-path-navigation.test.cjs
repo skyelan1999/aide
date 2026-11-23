@@ -1,6 +1,6 @@
 'use strict';
 const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict');
-const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const source = require('./fixtures/app-source.cjs').readAppSource();
 const code = source.slice(source.indexOf('function fileListRequestKey()'), source.indexOf('function currentFileTarget()'));
 function fixture(fetch) {
   const nodes = Object.fromEntries(['file-path', 'new-file', 'files', 'login-dialog'].map(id => [id, {title:'', value:'', showModal(){this.open=true;}}]));

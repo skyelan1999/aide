@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const source=require('./fixtures/app-source.cjs').readAppSource();
 function fn(name){const a=source.indexOf('function '+name+'(');assert.ok(a>=0,name);return source.slice(a,source.indexOf('\n}',a)+2);}
 class Node{constructor(tag,cls,text){this.tag=tag;this.className=cls||'';this.textContent=text||'';this.children=[];this.attrs={};}append(...items){for(const item of items)item.parent=this;this.children.push(...items);}setAttribute(k,v){this.attrs[k]=v;}replaceWith(other){const children=this.parent.children;children[children.indexOf(this)]=other;other.parent=this.parent;}}
 const c={el:(...args)=>new Node(...args),t:(s,...args)=>s.replace(/\{(\d+)\}/g,(_,n)=>args[n])};vm.createContext(c);vm.runInContext(fn('fileEntryName'),c);

@@ -3,6 +3,7 @@ declare var AideContinuity: any;
 declare var AideStarCosmos: any;
 declare var aideI18n: any;
 declare var LockCluster: LockClusterApi;
+// @ts-ignore -- app and starmap are independent classic-script pages.
 const $=(id: any): any=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
 const logbook=$('limits'),logbookToggle=$('logbook-toggle');
 const stellarLogbook=window.AideStellarLogbook!.create();
@@ -72,6 +73,7 @@ function drawEvidencePath(){
 
 
 // Store navigation metadata only: no document excerpts, model answers or tokens.
+// @ts-ignore -- app and starmap own independent recovery timers.
 let recoveryTimer=0,recoveryLoading=false,recoveryScopeLoaded='',pendingRecoveredView: any=null,recoveryInput=0,recoveryWarning=false,recoveryAttempt: any=null;
 function persistSkyView(active: any=()=>!locked){
  clearTimeout(recoveryTimer);

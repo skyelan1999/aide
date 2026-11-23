@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const app=require('./fixtures/app-source.cjs').readAppSource();
 const constants=app.slice(app.indexOf('const FILE_DBLCLICK_MS ='),app.indexOf('function syncFileSelection()'));
 const handler=app.slice(app.indexOf('    b.onclick = (ev) => {',app.indexOf('function renderFileEntries(')),app.indexOf('    b.oncontextmenu =',app.indexOf('function renderFileEntries(')));
 assert.ok(handler.includes('openFileInNewTab(file)'),'exercise the real file-row handler');
