@@ -115,9 +115,28 @@
   `assistant-call`、`recovery-manager`、`file-diff`（UMD）、`starmap-logbook`、
   `session-model-selection`；严格等价全过，8 个相关测试全过。
   drawio-layout-fixes 由服务端注入，无 html cache buster。
-- **批 4f（待做）**：其余小模块（text-editor、parallel-chat、plugin-market、
-  file-transfers、keybindings、preview-safety、recovery-transfer、message-notifications
-  等）与 scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
+- **批 4f（已完成）**：八个小模块——`text-editor`、`parallel-chat`、`plugin-market`、
+  `file-transfers`、`keybindings`、`preview-safety`（UMD）、`recovery-transfer`、
+  `message-notifications`；严格等价全过，9 个相关测试全过（keybindings、
+  message-notifications、parallel-chat、plugin-market、recovery-transfer 与
+  docx/dxf/drawio/zip 四个 preview bounds 套件）。
+  基础设施随本批调整：`tsconfig` 由 `module: none`/`moduleResolution: classic`
+  改为 `module: ES2020`/`moduleResolution: node`，以支持 file-transfers 的
+  动态 `import('./zip.js')`；新增 `zip.d.ts` 仅声明运行时懒加载模块形状。
+  非模块全局脚本的产物不受 module 选项影响（本批仅 8 个目标 js 变化）。
+  `aideExperience` 暂在 plugin-market.ts 以 any 声明，待 experience 改造时移交。
+  新经验：
+  - 只含 `resolve()` 无参调用的 Promise 必须显式 `new Promise<void>`，否则 TS2794。
+  - `new Promise` 内 resolve 恒带参时用 `new Promise<any>` 保持 result 类型灵活。
+- **批 4g（待做）**：其余中小模块（assistant-live、assistant-realtime、cad-measure、
+  starmap-lensing、starmap-cosmos、crash-monitor、project-records、voip、
+  file-autosave、project-workflows、plugin-plans、drawio-preview-safety、
+  starmap-physics、highlight-grammar-fixes、session-review、continuity、
+  settings-init、workbench-background、plugin-workbench、message-center、
+  experience、urdf-preview、session-plan、avatar-player、starmap、
+  plantuml-resource-helpers 等）、两个 AudioWorklet（独立 lib 配置）、
+  `locales/en.js` 与 scripts 桥接（Node/CommonJS 脚本使用独立
+  `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。
