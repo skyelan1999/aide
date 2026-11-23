@@ -36,6 +36,11 @@
 6. 编译后递增 `index.html` 中该脚本的 `?v=` 版本号。
 7. **文件头注释必须放在 interface 声明之前**（或紧贴首个运行时语句）：
    注释与首个输出语句之间夹 interface 时，tsc 会把注释随声明一起擦除。
+8. **源码切片测试需适配产物格式**：`scripts/*.test.cjs` 中按字符串锚点
+   `indexOf` 切片 vm 执行的测试（如 markdown-history-writable），tsc printer
+   会重排空格/缩进/换行，锚点要改为产物实际格式；只改锚点，不改测试语义。
+9. 含运算的断言写法注意括号：`x - y as unknown as string`（as 绑定于 y）
+   可避免产物多出 `(x - y)` 括号；`setProperty` 传 number 时用此手法保留原表达式。
 
 ## 每批验收标准
 
@@ -52,8 +57,13 @@
 - **批 2（已完成）**：`async-action.ts`、`account-balance-pool.ts`（UMD）、
   `lock-cluster.ts`（选举/权威状态，436 行）；双侧同转译严格等价验证通过，
   6 个相关 node 测试全过；task-outcome 的 LockCluster 声明移交 lock-cluster.ts。
-- **批 3**：markdown 系列与中小模块（session-plan、review、pdf-appearance、media、code、
-  diagrams、message-center、plugin-workbench 等）。
+- **批 3a（已完成）**：markdown 小模块六个——`markdown-history-manager`、
+  `markdown-history`（LCS diff + 恢复）、`markdown-code`（高亮/复制）、
+  `markdown-diagrams`（Mermaid/CSSOM）、`markdown-media`（附件/模板/drawio）、
+  `markdown-outline`（目录 + 阅读器缩放双 IIFE）；严格等价验证全过，
+  8 个 markdown 相关测试全过（markdown-history-writable 切片锚点已适配产物格式）。
+- **批 3b（进行中）**：markdown 大模块——`markdown-pdf-style`(271)、
+  `markdown-review`(342)、`markdown-pdf-appearance`(754)、`markdown-export`(869)。
 - **批 4**：中型模块与 scripts 桥接（starmap、avatar-player、urdf-preview、
   computer-bridge 等；Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。

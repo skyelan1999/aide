@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/markdown-history.js','utf8');
-const start=source.indexOf('confirm.onclick=async()=>'),end=source.indexOf('\n       }catch(e)',start);
+const start=source.indexOf('confirm.onclick = async () =>'),firstCatch=source.indexOf('catch (e)',start),end=source.lastIndexOf('}',source.indexOf('catch (e)',firstCatch+1));
 assert.ok(start>=0&&end>start);
 async function run({failed=false,changed=false,lateChanged=false,lockedAfter=false,closedAfter=false,journal=false,selectedAfter=false}={}){
  let observed,closed=false,locked=false,drift=changed,shouldFail=failed;const messages=[],errors=[],editor={readOnly:false,value:'body'},spec={path:'notes.md',source:'sftp',wsId:'A'};
@@ -9,7 +9,7 @@ async function run({failed=false,changed=false,lateChanged=false,lockedAfter=fal
  vm.runInContext(source.slice(start,end),c);await c.confirm.onclick();return {editor,observed,closed,messages,errors,order,confirm:c.confirm,checkbox:c.checkbox,retry:()=>c.confirm.onclick()};
 }
 async function backup({changed=false,failed=false,manager=false}={}){
- const start=source.indexOf('const backupArea='),end=source.indexOf('\n    dialog.append',start);
+ const start=source.indexOf('const backupArea ='),end=source.indexOf('dialog.append(head)',start);
  const elements=[],calls=[],clicks=[];let closed=false,managerOptions,rendered=0;
  const window=manager?{AideMarkdownHistoryManager:{render(options){managerOptions=options;rendered++;return {};}}}:{};
  const spec={path:'notes.md',source:'sftp',wsId:'A'};
