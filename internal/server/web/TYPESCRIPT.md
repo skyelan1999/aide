@@ -179,9 +179,22 @@
   - `document.createElementNS(ns,'path')` 返回 Element 无 style/animate，
     结果常量标 any；`document.activeElement` 需要表单属性时同样标 any。
   - `iframe.contentWindow` 可能为 null，整 frame 常量标 any 比逐处断言更简洁。
-- **批 4j（待做）**：urdf-preview、session-plan、avatar-player、starmap、
-  两个 AudioWorklet（独立 lib 配置）、`locales/en.js` 与 scripts 桥接
-  （Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
+- **批 4j（已完成）**：三个模块——`urdf-preview`（THREE/URDFLoader 动态对象）、
+  `session-plan`（会话级计划面板）、`avatar-player`（精灵动画播放器）；
+  严格等价全过，相关测试全过（urdf-preview、urdf-interaction-budget、
+  session-review、settings-navigation）。session-plan cache buster v5→v6、
+  avatar-player v81→v82；urdf-preview 的 js 无 html cache buster（仅 css 有）。
+  新经验：
+  - 原文件故意保留同名函数的两份实现时，TS 报 TS2393 且错误落在第一份
+    声明上；在两份定义处各加 `@ts-ignore` 保留原样，产物等价。
+  - `for (const x of [].concat(...))` 会被推断为 never[]，在 concat 表达式
+    末尾加 `as any[]` 即可，不改变迭代结构。
+  - 对象字面量动态索引不能对整个字面量 `as any`（tsc 会丢掉原括号），
+    改用键的联合字面量断言（`kind as 'box'|'cylinder'|'sphere'`），并按
+    原文逐处保留括号。
+- **批 4k（待做）**：starmap、两个 AudioWorklet（独立 lib 配置）、
+  `locales/en.js` 与 scripts 桥接（Node/CommonJS 脚本使用独立
+  `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。
