@@ -80,7 +80,18 @@
   `AidePluginWorkbench` 暂以 `any` 声明于引用方，待权威实现改造时移交；
   `globalThis.AideFileTypes` 引用用 `(globalThis as any)` 保持逐字。
   mobile-capture.html 版本号 v4；lan-login.html 本无版本号，保持原样。
-- **批 4b（待做）**：其余小模块（starmap 子模块、plugin-*、file-* 等）与
+- **批 4b（已完成）**：八个小模块——`starmap-optics`、`drawio-linear-regex`
+  （CommonJS 导出用 `declare var module: any`）、`plugin-workbench-client`、
+  `staged-output`、`delimited-text`、`desktop-capture`、`file-route`、
+  `capabilities`；严格等价全过，8 个相关 node 测试全过且无需锚点适配。
+  drawio-linear-regex 由服务端注入、plugin-workbench-client 打包进插件 HTML，
+  两者无 html cache buster；starmap-optics 在 starmap.html 递增，其余在 index.html。
+  新经验：
+  - 正则内的控制字符必须保留 `\u0000` 转义写法，禁止写成字面控制字符。
+  - 对象字面量直接索引需保留原括号时，对**索引键**做联合字面量 `as` 断言，
+    不要对字面量本身 `as Record`（tsc 会丢掉外层括号）。
+  - 返回 setTimeout id 的箭头函数保持表达式体，不要改块体 void。
+- **批 4c（待做）**：其余小模块（starmap 子模块、plugin-*、file-* 等）与
   scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
