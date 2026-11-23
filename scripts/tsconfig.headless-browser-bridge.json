@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [
+    "headless-browser-bridge.ts",
+    "node-globals.d.ts"
+  ],
+  "include": []
+}

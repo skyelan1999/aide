@@ -39,7 +39,7 @@ interface Window {
 
     async function connect(): Promise<void> {
       try {
-        await Promise.all([context.resume(), context.audioWorklet.addModule('/voip-pcm-worklet.js?v=1')]);
+        await Promise.all([context.resume(), context.audioWorklet.addModule('/voip-pcm-worklet.js?v=2')]);
         if (closed) return;
         microphone = context.createMediaStreamDestination();
         node = new AudioWorkletNode(context, 'aide-voip-audio', {channelCount: 1, outputChannelCount: [1]});

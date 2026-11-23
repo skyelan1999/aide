@@ -177,7 +177,7 @@
                     return;
                 inputRate = config?.inputRate === 24000 ? 24000 : 16000;
                 metadata = { provider: config?.provider || '', model: config?.model || '', voice: config?.voice || '' };
-                await context.audioWorklet.addModule('/assistant-pcm-worklet.js?v=2');
+                await context.audioWorklet.addModule('/assistant-pcm-worklet.js?v=3');
                 if (token !== epoch)
                     return;
                 if (route?.assistant) {

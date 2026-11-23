@@ -217,8 +217,24 @@
     键的联合字面量断言。
   - `drawCosmicPlanet.surfaceCache` 这类函数动态属性用
     `(drawCosmicPlanet as any).surfaceCache`，不引入 namespace 合并。
-- **批 4l（待做）**：两个 AudioWorklet（独立 lib 配置）、`locales/en.js`
-  与 scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
-- **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
+- **批 4l（已完成）**：`locales/en`、两个 AudioWorklet 与四个 scripts 桥接
+  （computer-bridge、computer-bridge-linux、headless-browser-bridge、
+  safari-bridge）共七个模块 TS 化，全部严格等价；主 web、worklet 和四个
+  独立 CommonJS 编译配置均通过，相关语音/模板/插件/星图测试及桥接导出
+  helper 冒烟通过。
+  - en 字典中六个既有重复键以逐行 `@ts-ignore` 保留“后值覆盖前值”语义，
+    不去重、不改文案。cache buster：index v205、starmap v176、
+    mobile-capture v166。
+  - worklet 使用 `tsconfig.worklets.json` 与 `audio-worklet.d.ts`，独立于
+    DOM 主配置；类索引签名只提供动态字段类型，不 emit。worklet 加载版本
+    assistant v3、voip v2。
+  - scripts 使用 `tsconfig.base.json` + 每脚本独立 `tsconfig.<name>.json`，
+    编译目标 CommonJS。必须逐脚本隔离编译，不能用 `import type` 把文件
+    转为模块：即使导入完全擦除，tsc 仍会插入 `__esModule` 运行时标记。
+    `node-globals.d.ts` 提供最小 Node 全局，不引入 @types/node。
+  - 编译命令：主配置与 worklet 配置照旧；桥接分别执行
+    `./node_modules/.bin/tsc -p scripts/tsconfig.<name>.json`。
+- **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；最终核对自有 JS
+  是否全部完成 TS 化。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

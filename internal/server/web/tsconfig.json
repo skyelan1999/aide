@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2021",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ES2020",
     "moduleResolution": "node",
     "allowJs": false,
@@ -16,5 +20,13 @@
     "removeComments": false,
     "newLine": "lf"
   },
-  "include": ["*.ts", "locales/*.ts"]
+  "include": [
+    "*.ts",
+    "locales/*.ts"
+  ],
+  "exclude": [
+    "assistant-pcm-worklet.ts",
+    "voip-pcm-worklet.ts",
+    "audio-worklet.d.ts"
+  ]
 }

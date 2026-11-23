@@ -42,7 +42,7 @@
         }
         async function connect() {
             try {
-                await Promise.all([context.resume(), context.audioWorklet.addModule('/voip-pcm-worklet.js?v=1')]);
+                await Promise.all([context.resume(), context.audioWorklet.addModule('/voip-pcm-worklet.js?v=2')]);
                 if (closed)
                     return;
                 microphone = context.createMediaStreamDestination();

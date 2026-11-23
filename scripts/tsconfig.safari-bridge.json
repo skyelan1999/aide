@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [
+    "safari-bridge.ts",
+    "node-globals.d.ts"
+  ],
+  "include": []
+}
