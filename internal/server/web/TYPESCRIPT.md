@@ -91,8 +91,18 @@
   - 对象字面量直接索引需保留原括号时，对**索引键**做联合字面量 `as` 断言，
     不要对字面量本身 `as Record`（tsc 会丢掉外层括号）。
   - 返回 setTimeout id 的箭头函数保持表达式体，不要改块体 void。
-- **批 4c（待做）**：其余小模块（starmap 子模块、plugin-*、file-* 等）与
-  scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
+- **批 4c（已完成）**：八个 starmap 子模块——`starmap-preview`、`starmap-cache`、
+  `starmap-infrared`、`starmap-gravity`、`starmap-structure`、`starmap-assist`、
+  `starmap-topics`、`starmap-timeline`；严格等价全过，22 个 starmap 测试全过。
+  starmap.html 八个 cache buster 递增。
+  新经验：
+  - 内联 `({...}[key]||fallback)` 的原文括号往往包住**整个索引+回退表达式**，
+    类型化时只给 key 加联合字面量 `as` 断言，括号位置原样保留。
+  - `new Map(any.map(...))` 需显式 `new Map<any, any>`，否则 value 推断为 {}。
+  - 三元表达式分支后的 `.filter()/.slice()` 调用链不得擅自加括号改变作用域。
+- **批 4d（待做）**：其余小模块（remote-access、session-timeline、management、
+  plugin-*、file-* 等）与 scripts 桥接（Node/CommonJS 脚本使用独立
+  `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。
