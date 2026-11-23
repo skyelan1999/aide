@@ -8,7 +8,8 @@
     "Heavy artifact/CAD execution has bounded independent resource supervision and returns failures for Aide to repair",
     "A natural-language Luna continuation performs real work and self-checks through Aide tools",
     "Codex independently verifies source dimensions, materials, instances, interference and native UI; self-reports alone are not acceptance",
-    "Pending file candidates retain an initial completion review; unchanged candidate reads and application-dependent plans yield to normal approval without repeated completion loops; revisions and new execution remain reviewable"
+    "Pending file candidates retain an initial completion review; unchanged candidate reads and application-dependent plans yield to normal approval without repeated completion loops; revisions and new execution remain reviewable",
+    "Aide can retract an exact unsaved same-chat/workspace candidate without applying it or deleting disk files; full candidate audit survives persistence and remaining normal approval/version gates remain intact"
   ],
   "scope": [
     "Reusable Aide host/tool/runtime capabilities and tests",
@@ -16,7 +17,7 @@
     "Independent acceptance of generated artifacts"
   ],
   "release_authorization": "Local development and acceptance only; no push/release requested for this scope",
-  "updatedAt": "2026-11-19T05:00:31.171687+00:00",
+  "updatedAt": "2026-11-20T04:19:30.217727+00:00",
   "implementation": {
     "read_proposal": "same-chat/same-workspace draft pagination/hash/UTF8; no apply or disk-read proof",
     "shellResources": "Linux per-command sampled RSS guard, group and observed regrouped descendant termination, normal approvals/timeouts/cancellation retained",
@@ -107,7 +108,6 @@
     "initialTestFailure": "invalid-parentfixture preflightcorrectly409beforewriter,expected500waswrong;fixture renamed/corrected;originalFAILlog retained. ExistingMarkdownHistoryPartialWriteContract covers actualwriterfailure.",
     "actualEnvironmentRecovery": "PASS one actualEIO688Bindex byte-identically backedup/rematerialized andcontainerreadback; earlier engine44/plugin2same-byte records separate",
     "actualEngineeringContinuation": "Luna own recoveryrun3047 re-proposedonly2missingfiles;normalAPIapplyPASSexactreviewedSHAs;flatbarfirstoldwritepreserved; newfullengineering31d02 resumed",
-    "rootNarrowIntegration": "PASS selective guardedfunction+field;unrelatedroot/runtimebaseline differences preserved;build stays authoritative runtime worktree",
     "tests": {
       "targeted": "apply-history-recovery-targeted-v2.log PASS12.100s",
       "broadRaceVet": "apply-history-recovery-broad-race-vet.log PASS46.599s thenvet0exit",
@@ -125,7 +125,8 @@
     "installation": "PASS imagef803 source1f44; all174unique/177physicalretained; sameenv/mounts/limits/security; actualLunaresumed",
     "runtimeScopes": "PASS allpreviousenv,mounts,ports,limits,user,securityoptionsidentical",
     "sessionPreservation": "177physicalretained;176byteidentical;current176normalapprovalcontextcancelrecordonly atfirstcomparison;finalstartupAPIverificationpending",
-    "native": "PASS1032tri40x40x1220 hide0/1restore, measurementcontrols; ownpreviewclosed. Firstopenbridgeconnecting resolvedwithonenativetabrefresh; noextraEIO/assetrepairs; causeunestablished"
+    "native": "PASS1032tri40x40x1220 hide0/1restore, measurementcontrols; ownpreviewclosed. Firstopenbridgeconnecting resolvedwithonenativetabrefresh; noextraEIO/assetrepairs; causeunestablished",
+    "rootNarrowIntegration": "PASS selective guardedfunction+field;unrelatedroot/runtimebaseline differences preserved;build stays authoritative runtime worktree"
   },
   "filenameLookupCapability": {
     "status": "PASS source tests, build, isolated cold startup, daily scopes/session restoration, actual Luna filename lookup; native preview smoke after reload only",
@@ -182,7 +183,7 @@
       "scripts/test_launcher_data.py"
     ],
     "hostSHA256": {
-      "scripts/aide.sh": "f9d4bb437d2b841bf64fa5837929c3e4b72505a8fe992277f41ff7998e5c939c",
+      "scripts/aide.sh": "b5849b49fc8a4ae67a46609c166f0ead35bdfc06f0166d9bd0b1789b383c46f7",
       "scripts/prebuilt-image.sh": "c170f2c14eb9be4835ccd397cc5b19247551a2850b4f9b4c0e6530939c19f114"
     },
     "evidence": [
@@ -195,6 +196,24 @@
     "binaryBuildUnchanged": "65c894; host launcher source guard separately tested; no new binary implied",
     "engineeringChanged": false,
     "nativeReconnection": "PASS nativeChat176 connected and configured Luna observed"
+  },
+  "naturalLanguageEngineeringAcceptance20261119": {
+    "status": "in_progress",
+    "executionOwner": "Aide manual gpt-6-luna; engineering code and commands authored/executed by Aide, Codex reviews normal gates and independently audits actual STEP",
+    "currentNativeSession": 178,
+    "formalSTEPFilesIncludingFailures": 220,
+    "wholeBoiler": "NOT_DONE",
+    "R3LocalIndependent": "PASS60 actual leaves geometry/hierarchy/pose retention and FileUnits mm; not whole manufacturing acceptance",
+    "worldR2Independent": "FAIL4worldLocatedcylfaces; Aide selfrepair active, memory-only tests not acceptance",
+    "sourcePreservation": "422original+422copy hashes PASS against initial CSV",
+    "evidence": [
+      "luna176-drum-face12-r2-normal-apply-resolved.json",
+      "luna178-drum-R3-review3-static-pass.json",
+      "drum-face12-R3-independent-revision-preservation.json",
+      "drum-R3-world-R2-independent-topology.json",
+      "source422-after-drum-R2-rehash-20261119.json"
+    ],
+    "release": "No commit/merge/push/release; existing installed filename/hostguard acceptance remains separately recorded"
   },
   "pythonStaticCheckSDK": {
     "status": "host_actual_runtime_and_live_Aide_static_use_pass",
@@ -532,7 +551,7 @@
     }
   },
   "activeLunaContinuation20261119": {
-    "at": "2026-11-19T15:33:30.071267+00:00",
+    "at": "2026-11-19T15:33:30.073389+00:00",
     "session": 183,
     "run": "5c2633884026edf0bf30a404772fc3e8",
     "status": "running_after_provider_EOF_recovery",
@@ -542,7 +561,7 @@
     "evidence": "luna183-EOF-recovery-receipt.json"
   },
   "pendingProposalPatchCapability": {
-    "at": "2026-11-19T16:33:54.186600+00:00",
+    "at": "2026-11-19T16:33:54.187630+00:00",
     "status": "PASS targeted_related_race_vet_build_isolated_cold_daily_health_native_and_actual_Luna_patch_tool_use",
     "sourceWorktree": "/Users/skyelan/WorkTrees/aide-cad-autonomy-runtime-20261119",
     "implementation": [
@@ -568,7 +587,7 @@
     "normalApplyGatePreserved": true
   },
   "pendingProposalHandoff": {
-    "at": "2026-11-19T18:41:07.406970+00:00",
+    "at": "2026-11-19T18:41:07.403221+00:00",
     "status": "PASS_regression_related_race_vet_docs_NOT_DEPLOYED",
     "scope": [
       "internal/server/model_led_agent.go",
@@ -584,6 +603,267 @@
     "targeted": "Initial selected tests PASS 2.435s; strengthened candidate-read and workspace fixture passed related race suite",
     "baselineRegression": "Expected FAIL pre-edit logic: 5 provider calls/3 reviews versus fixed3 calls/1 review",
     "vet": "PASS exit0 SDK user0; initial readonly cache permission issue preserved",
-    "docs": "PASS545Markdown2563links and git diff --check"
+    "docs": "PASS545Markdown2563links and git diff --check",
+    "dailyInstallation": "PASS10b0d9 health/integrity scopes183paths current183JSONidentity native mainconnected; actual engineering handoff still being observed"
+  },
+  "pendingProposalWithdrawal": {
+    "at": "2026-11-19T19:45:16.152088+00:00",
+    "status": "PASS_source_tests_race_vet_build_isolated_cold_NOT_DAILY_INSTALLED",
+    "scope": [
+      "internal/server/proposal_withdraw.go",
+      "internal/server/proposal_withdraw_test.go",
+      "internal/server/proposal_patch.go",
+      "internal/server/workflow.go"
+    ],
+    "observed": "Luna explicitly invalidated a source interpretation but its old candidate remained in the all-files application batch with valid documents",
+    "boundary": "generic proposal lifecycle only; no engineering generator or geometry authored/executed by Codex; original candidate archived, no filesystem deletion",
+    "targeted": "PASS11.919s",
+    "dailyImageChanged": false,
+    "relatedRace": "PASS46.094s",
+    "vet": "PASS exit0",
+    "docs": "PASS545Markdown2563links",
+    "initialReadonlyTestExpectation": "Corrected to existing candidate-only allowed/apply403 boundary; production policy untouched",
+    "sourceFingerprint": "41a160f9e4dfa81bf252a8ff83f7cd11425e34da3d6ffec290d947c857dba4b6",
+    "candidateImage": "sha256:11bc92f8c109458715eda34a06cf37a335b523d9e653d05641c1d50f26692ad8",
+    "binarySHA256": "cb3efde4651b9bafd56e5d8ad355e565f351b8059b30e0efb2221e234ce447f9",
+    "cold": "PASS health/integrity normalapply200 stale409 archivedcandidateunwritten restartpersisted; no real data/model/engineering mounted",
+    "evidence": [
+      "proposal-withdraw-regression-acceptance.json",
+      "proposal-withdraw-candidate-build-receipt.json",
+      "proposal-withdraw-isolated-cold-acceptance.json"
+    ],
+    "selectedRevision": "v2",
+    "v2": {
+      "at": "2026-11-19T20:03:48.203890+00:00",
+      "status": "PASS_SOURCE_REGRESSION_COLD_DAILY_AND_ACTUAL_LUNA_WITHDRAWAL",
+      "image": "sha256:a09222235f563b092280f3ef5eaa40a77412840ea87b82c9ffeb7fdf4dac5c85",
+      "sourceFingerprint": "84de4c3cd499ed4ac1a2cebca7f81105e92f6c982a8a47eb66e096566cc00b77",
+      "binarySHA256": "e7ff53fc99901037469fb021aca8be4f8c052845ac757e509a171ddb8306daf1",
+      "extraBoundary": "historical empty awaiting batch becomes cancelled without applied=true; active run remainsrunning; stale recommendation cancelled; archive exactbytes retained",
+      "coldEvidence": "proposal-withdraw-v2-isolated-cold-acceptance.json",
+      "dailyImageChanged": true,
+      "dailyEvidence": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/proposal-withdraw-v2-daily-install-acceptance.json",
+      "activeLunaRun": "3641d392bfad54755938ee93412efa0c",
+      "actualLunaEvidence": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/boiler-qc-luna-step-20261116/proposal-withdraw-v2-actual-luna-acceptance.json",
+      "wholeBoilerAccepted": false
+    }
+  },
+  "shellFailureDiagnostics968": {
+    "at": "2026-11-19T22:25:29.807358+00:00",
+    "issue": "https://github.com/skyelan1999/aide/issues/968",
+    "status": "PASS_SOURCE_RACE_VET_BUILD_COLD_DAILY_NATIVE_REAL_FAILURE_NOT_REPLAYED",
+    "scope": [
+      "internal/server/workflow.go",
+      "internal/server/empty_completion_test.go",
+      "internal/server/shell_failure_diagnostics_test.go"
+    ],
+    "observed": "DWG hash/path string in read-only report query incorrectly overrode actual FileNotFoundError with unsupported-conversion claim",
+    "repair": "Remove command-string DWG capability assertion; classify actual error; recognize Python syntax/indent/tab and unmatched shell quote errors",
+    "baseline": "Pre-edit new regressions reproduced false cause",
+    "relatedRace": "PASS28.858s",
+    "vet": "PASSexit0",
+    "diffCheck": "PASS",
+    "candidateImage": "sha256:7fae969ac4f7af18812b330bda09783557490570bc7d512fc23b1fc557d43c7d",
+    "sourceFingerprint": "4970d3386ce125737cb47c9b18ed043abe36b0faf2daf5d2e077abcb6cc3cb68",
+    "dailyInstalled": true,
+    "actualLunaFailureFeedback": "No deliberate replay of engineering failed command; synthetic regressions pass, daily combined runtime accepted",
+    "engineeringModelChangedByCodex": false,
+    "releasePushMerge": false,
+    "installedImage": "sha256:d85fffdadd7b9dd9d74fd8bf30f0323a45e8ab5662f2b031f4ad3d1b255ded5b",
+    "installedAt": "2026-11-19T23:11:00Z",
+    "dailyAcceptance": "PASS exact image, health, integrity, 183 session paths and current session byte identity before resumed actor",
+    "nativeAcceptance": "PASS native reconnected, existing chat, single manual CAD32K gpt-6-luna selection"
+  },
+  "artifactPrerequisiteHandoff969": {
+    "at": "2026-11-19T23:06:35.734669+00:00",
+    "issue": "https://github.com/skyelan1999/aide/issues/969",
+    "status": "PASS_SOURCE_RACE_VET_BUILD_COLD_DAILY_NATIVE_AND_REAL_LUNA_SOURCE_APPLY",
+    "scope": [
+      "internal/server/task_delivery.go",
+      "internal/server/approval_file_result.go",
+      "internal/server/artifact_prerequisite_handoff_test.go"
+    ],
+    "observed": "Actual Luna source candidate preserved but effective STEP intent lacked py and final delivery gate paused before normal application",
+    "design": "Allow nonempty unapplied preparation candidates to reach ordinary approval for file artifacts; apply source still reports pending_execution and cannot claim requested STEP; retain provenance baseline",
+    "baseline": "Pre-edit regression reproduced paused with deliverymissing, receipt lacked pending-execution distinction",
+    "targeted": "PASS1.740s before additional mixed-file-order case",
+    "engineeringCodeModifiedByCodex": false,
+    "dailyInstalled": true,
+    "releasePushMerge": false,
+    "installedImage": "sha256:d85fffdadd7b9dd9d74fd8bf30f0323a45e8ab5662f2b031f4ad3d1b255ded5b",
+    "installedAt": "2026-11-19T23:11:00Z",
+    "dailyAcceptance": "PASS exact image, health, integrity, 183 session paths and current session byte identity before resumed actor",
+    "nativeAcceptance": "PASS native reconnected, existing chat, single manual CAD32K gpt-6-luna selection",
+    "relatedRace": "PASS37.368s",
+    "vet": "PASSexit0",
+    "coldAcceptance": "PASS normal apply200, stale409, archive and original tools survive restart, preparation source remains pending_execution/no fake STEP",
+    "actualLunaHandoff": {
+      "resumedFrom": "a169c55eed18b60fc4ef5013ac16ea24",
+      "runId": "34d720ce9238036ab2397e979ca42431",
+      "recoveryRequired": false,
+      "normalAwaitingApproval": true,
+      "normalAppliedSourceHash": "5a292868e54e8537a9a1b18dd2eaa94d7b16ce65ed35628a1cebb6c7720c4f93",
+      "engineeringExecutedByCodex": false
+    }
+  },
+  "curveProjectionSDK20261120": {
+    "at": "2026-11-20T02:46:34.366778+00:00",
+    "status": "PASS_R3_GENERIC_EXPLICIT_NODE_BUDGET_OFFGRID_SAMPLES_AND_INSTALLED_SYNTHETIC8_REAL_ENGINEERING_PENDING",
+    "scope": [
+      "scripts/cad_curve_projection.py",
+      "scripts/test_cad_curve_projection.py",
+      "docs/architecture/artifact-execution.md",
+      "scripts/cad_projection_native.cpp",
+      "scripts/cad_curve_projection_README.md"
+    ],
+    "sourceSHA256": "39bec51c3adcf94b8d35e542cf48c8ec62731317941f8b7bc5eb79ddf2b1e010",
+    "testSHA256": "ee55041fefd191cd12dc753b00b06392dff535b54e152d4ca23cdfbb9e2adc24",
+    "compatibilityObserved": "Pinned OCP ShapeConstruct Perform returns true but replaced C++ output handle not returned to Python, reproduced with synthetic plane/circle/wrong-line; alternative explicit-result path and adaptive original-parameter UV projection validated without editing model edges/tolerances",
+    "tests": {
+      "nativeInteropSyntheticPlaneCylinder": "PASS7.11720625s, same original OCP object roundtrip, returned typed result,129samples",
+      "candidate6AndFallback": "PASS3.520478792s",
+      "installedR2NativeAnd6": "PASS1.8781527089999999s, Python3.12.16, direct native installed-path import",
+      "static": "PASS no source execution",
+      "memoryMiB": 768,
+      "network": "none"
+    },
+    "dailyBinaryChanged": false,
+    "installedDailyImageStill": "sha256:d85fffdadd7b9dd9d74fd8bf30f0323a45e8ab5662f2b031f4ad3d1b255ded5b",
+    "sourceNowContainsAdditionalSDKFilesNotInDailyBuildSnapshot": true,
+    "boilerConstructionByCodex": false,
+    "realLunaCall": {
+      "actor": "9e31aeb9ff218009beca7377300984d7",
+      "R1Head257Nodes": "REJECTED .009285131344440284mm vs1e-7",
+      "R1Head1025Nodes": "REJECTED .0005792304123966122mm vs1e-7",
+      "R2Shell": "REJECTED; native .002135499649660957, direct9.663329627223302e-6, adaptive1025 2.7556141705747924e-5 all exceed1e-7",
+      "actualSTEPExported": false,
+      "noEngineeringRepairAccepted": true
+    },
+    "releasePushMerge": false,
+    "nativeCPPSourceSHA256": "f4fafc358668a0155584bc6491a8ebbaee7ae4924baa6864cc3d260c13b9dfee",
+    "nativeBinarySHA256": "f1f7b08ec87fd9dfee4af0df162e6ffa0e5fb81770ea2354eec7fe91731af106",
+    "nativeABI": "__pybind11_internals_v5_gcc_libstdcpp_cxxabi1019__",
+    "nativeCompilerImage": "sha256:5e927c284bf55a7dc796262e311a0703344f62f41f5621eb56843111b1d37e15",
+    "originalSDKUtilitiesArchived": true,
+    "previousPythonSDKR2": {
+      "at": "2026-11-20T02:00:54.622642+00:00",
+      "status": "PASS_NATIVE_RESULT_HANDLE_BINDING_AND_SYNTHETIC6_ACTUAL_R7_REJECTED_AT_ORIGINAL_BUDGET",
+      "sourceSHA256": "6017f789a96b45c4b01de42bb5e2c4f57662736a1c3aa942970d8ddb4e9b3248",
+      "testSHA256": "054bb88e1873361c131717629262374a1d8d1a3b2e2c1f6699c534a92d0478af"
+    },
+    "pythonSDKR3": {
+      "defaultNodes": 257,
+      "maximumExplicitNodes": 16385,
+      "autoIncreaseBudget": false,
+      "sameParameterToleranceRelaxed": false,
+      "samplePattern": "endpoints_and_off_grid_interior",
+      "baselineRegression": "PASS expected failures for unsupported16385 budget and aliased false zero from synthetic129-pole curve",
+      "candidateSynthetic8": "PASS0.877779292s",
+      "installedSynthetic8": "PASS0.932938042s Python3.12.16 actualSDKpath",
+      "nativeBinaryChanged": false,
+      "R2UtilitiesAndManifestArchived": true,
+      "engineeringGeometryReadOrConstructedByCodex": false,
+      "engineeringRepairAccepted": false,
+      "evidence": [
+        "projection-budget-v3-baseline-acceptance.json",
+        "projection-budget-v3-candidate-acceptance.json",
+        "projection-budget-v3-installed-acceptance.json",
+        "projection-budget-sdk-r3-install-private.json"
+      ],
+      "docs": "PASS545Markdown2563links and git diff --check"
+    }
+  },
+  "stepViewerUpload971": {
+    "issue": "https://github.com/skyelan1999/aide/issues/971",
+    "status": "local_fix_and_native_reopen_verified; release_not_published",
+    "implementationRepository": "aide-pkg-STEPViewer",
+    "scope": [
+      "index.js",
+      "native/job.py",
+      "viewer.html",
+      "README.md",
+      "tests/test_job_lifecycle.py",
+      "tests/upload-io-lifecycle.cjs",
+      "tests/viewer-upload.cjs"
+    ],
+    "cause": "private upload/conversion idle lease30s was shorter than the existing320s bridge reply allowance",
+    "change": "330s idle lease, existing900s absolute phase deadlines;512KiB document reads split into64KiB tool writes within unchanged parent and Linux argv limits; terminal job reports recorded reason",
+    "verification": {
+      "virtualTimeLifecycle": "7 PASS; baseline2 expected delay failures",
+      "backendUploadIO": "PASS bounds/malformed/offset/terminal reason/admission/cancel",
+      "viewerTransport": "PASS file growth/shrink, changed-size and incomplete rejection, parent/argv request envelope",
+      "native": "actual3.7MiB624-leaf unchanged steel frame closed/reopened three times in light,dark,restored follow-system;28608triangles/same dimensions"
+    },
+    "sourceAndInstalledSHA256": {
+      "index.js": "b208d7cb7a5a3329e65f5ae4a02f8c44e9017ee10e4032b5adcdc8caf50ec8d2",
+      "native/job.py": "ef5af2c8dad58dffa51ec347b146c3d8cea5271979166d670499e27f756e9def",
+      "viewer.html": "989fb27908413f71977f428d234ce878ca7878011ec3894d0c37c78e7ad65723"
+    },
+    "localReceipt": "step-upload-971-local-acceptance.json",
+    "aideRestarted": false,
+    "engineOrEngineeringGeometryChanged": false,
+    "committed": false,
+    "pushed": false,
+    "releasePublished": false
+  },
+  "steelR3IndependentAcceptance20261120": {
+    "actualFrameSHA256": "967447e59888377415da0d9f698d65c0c6945ef89424eff5d492352b87fba010",
+    "status": "accepted_bounded_cap_pose_and_retained_partial_frame; full_steel_BOM_and_whole_boiler_not_accepted",
+    "geometry": "624positive_single_proper_default_and_Exact;622noncap metric/pose signatures retained;2cap source geometry/axes/material controls passed",
+    "hierarchy": "actualSTEPsource roots read independently;all66components and624leaf multisets bijective;rawpaths unequal",
+    "native": "render/remove/restore/explode/point/distance/angle/calibration/export/light/dark/follow-system passed",
+    "measurementRecalculation": {
+      "distanceResidualMm": 0,
+      "angleResidualDeg": 2.842170943040401e-14,
+      "frameOrthonormalResidual": 2.220446049250313e-16
+    },
+    "aideSelftest": "R2 semantic verifier99eca21f9012B actually executed inside Aide43aa, exit0; oldR3FAIL and semanticR1FAIL preserved",
+    "remainingSteelBOMRows": 13,
+    "wholeBoiler": "NOT_DONE",
+    "CodexExecutedEngineeringGenerator": false,
+    "aideSelftestReportSHA256": "4c9c97069a75b36f0f6c70ec6b8f17a88bbc3d16520b20c1761ab95c08340975",
+    "compactIndependentAcceptanceSHA256": "1e76477400047eec58733d25d3b48edae7f88f83c402ef9caaf8add39a2d4b78",
+    "remainingSteelBOMItems": [
+      15,
+      18,
+      22,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36
+    ],
+    "selftestBOMEmptyArrays": "inherited geometry-only placeholders, not closure",
+    "currentLunaRun": "43aa47dcd0a5c50ef3da2a11348f9849",
+    "continuation": "v26 normal direct steer at completed source-image checkpoint; continue actual remaining parts, coreExact and wholeworld STEP",
+    "additionalCapInterfaceAudit": {
+      "scope": "two movedcaps vs623existingframe leaves each; not uninstalled BOM or whole boiler",
+      "relevantPairsTested": 8,
+      "allSurfaceDistanceMm": 0,
+      "allCommonVolumeMm3": 0,
+      "otherPairs": "bbox separation >1e-6mm on at least one coordinate",
+      "isolatedSeconds": 2.717778042,
+      "network": "none",
+      "memoryMiB": 768,
+      "geometryOrTolerancesChanged": false,
+      "reportSHA256": "10cdba3440b2818993d2020c67bf79e95d23d4415125e9aac5633432d3b3a066"
+    }
+  },
+  "existingSDKUVTangentProbe20261120": {
+    "status": "synthetic_numerical_only; no_actual_boiler_repair",
+    "API": "Geom2dAPI_Interpolate.Load(Array1_gp_Vec2d,HArray1_bool,Scale=False)",
+    "newSDKInstalled": false,
+    "curve": "C(t)=(100t,100t^4,0) on plane",
+    "nodes": 129,
+    "denseSamples": 2001,
+    "estimatedTangentsMax": 3.5924658448038853e-07,
+    "actualTangentsMax": 2.3280094296755823e-08,
+    "kernelExtremumGate": "NOT_RUN in this probe",
+    "engineeringUseOwner": "Aide Luna; preserve original physical/kernel/source gates"
   }
 }

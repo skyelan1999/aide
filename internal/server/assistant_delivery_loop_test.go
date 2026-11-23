@@ -62,14 +62,15 @@ func TestAssistantDeliveryWaitsForSourceProposalApproval(t *testing.T) {
 		t.Fatalf("delivery = %+v, want pending_approval", task.Delivery)
 	}
 
-	// Applying the generator does not count as delivering the requested STEP.
+	// Applying the generator does not count as delivering the requested STEP:
+	// #969 records a pending_execution handoff instead of a delivery.
 	if err := putText(a.workspace, "build.py", []byte(task.Files[0].Content)); err != nil {
 		t.Fatal(err)
 	}
 	task.Files[0].Applied = true
 	task.Applied = true
 	a.finalizeProposalDeliveryLocked(task)
-	if task.Delivery == nil || task.Delivery.State != "missing" || len(task.Delivery.Artifacts) != 0 || !strings.Contains(task.Delivery.Reason, "目标制品尚未执行") {
+	if task.Delivery == nil || task.Delivery.State != "pending_execution" || len(task.Delivery.Artifacts) != 0 || !strings.Contains(task.Delivery.Reason, "目标制品尚未执行") {
 		t.Fatalf("applied generator was mistaken for STEP delivery: %+v", task.Delivery)
 	}
 	if err := a.checkTaskDelivery(task, "生成器已应用，但尚未导出 STEP"); !errors.Is(err, errDeliveryIncomplete) {

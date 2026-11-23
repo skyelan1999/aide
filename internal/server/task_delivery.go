@@ -19,7 +19,7 @@ import (
 var errDeliveryIncomplete = errors.New("交付未完成")
 
 type TaskDelivery struct {
-	State     string   `json:"state"` // delivered, pending_approval, missing
+	State     string   `json:"state"` // delivered, pending_approval, pending_execution, missing
 	Kind      string   `json:"kind"`
 	Artifacts []string `json:"artifacts,omitempty"`
 	Reason    string   `json:"reason,omitempty"`
@@ -171,7 +171,36 @@ func (scope deliveryWorkspace) inspect(task *Task, out string) *TaskDelivery {
 			return d
 		}
 	}
+	// #969: preparation files need normal approval before they can produce a
+	// final-format artifact. This handoff is not proof of artifact delivery.
+	// Native media keeps its separate generation/provenance rules.
+	if kind == "file" {
+		for _, f := range task.Files {
+			if !f.Applied && !f.HistoryPending && strings.TrimSpace(f.Content) != "" {
+				d.State = "pending_approval"
+				d.Reason = "前置文件修改仍待正常审批；目标格式的制品尚未生成或核验"
+				return d
+			}
+		}
+	}
 	return d
+}
+
+func proposalMatchesDeliveryFormat(task *Task, kind, p string) bool {
+	if kind != "file" {
+		return true // Preserve existing native media proposal finalization.
+	}
+	prompt := task.Prompt
+	if task.MediaPrompt != "" {
+		prompt = task.MediaPrompt
+	}
+	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(p)), ".")
+	for _, requested := range artifactExtension.FindAllString(strings.ToLower(prompt), -1) {
+		if requested == ext {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *App) checkTaskDelivery(task *Task, out string) error {
@@ -213,7 +242,23 @@ func (a *App) checkTaskDelivery(task *Task, out string) error {
 		return fmt.Errorf("%w：工作区或任务证据已变化，请重新检查交付", errDeliveryIncomplete)
 	}
 	task.Delivery = d
-	if d != nil && d.State == "missing" {
+	if d != nil && d.State != "delivered" {
+		if d.State == "pending_approval" {
+			hasContent := false
+			for _, f := range snapshot.Files {
+				if !f.Applied && strings.TrimSpace(f.Content) != "" {
+					hasContent = true
+					break
+				}
+			}
+			// file: a real content proposal is a normal approval handoff, but
+			// an empty placeholder must not bypass the final-artifact gate.
+			// Native media: empty proposals keep the original approval handoff,
+			// while a real proposal never substitutes generation/provenance.
+			if hasContent == (d.Kind == "file") {
+				return nil
+			}
+		}
 		return fmt.Errorf("%w：%s；已有记录保留，请检查产物或继续当前任务，不能把执行承诺作为完成", errDeliveryIncomplete, d.Reason)
 	}
 	return nil
@@ -226,7 +271,9 @@ func (a *App) finalizeProposalDeliveryLocked(task *Task) {
 	}
 	d := &TaskDelivery{State: "missing", Kind: task.Delivery.Kind, Reason: "提案已应用，尚未验证交付文件", CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 	for _, f := range task.Files {
-		if !proposalMatchesRequestedArtifact(task.Prompt, f.Path) {
+		if !proposalMatchesDeliveryFormat(task, d.Kind, f.Path) {
+			d.State = "pending_execution"
+			d.Reason = "前置文件已保存；目标制品尚未生成或核验，需要继续实际执行与验收"
 			continue
 		}
 		b, err := a.readAppliedProposalLocked(task, f)

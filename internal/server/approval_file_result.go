@@ -66,6 +66,9 @@ func (a *App) recordReviewedFileResult(task *Task) {
 			}
 		}
 	}
+	if task.Applied && task.Delivery != nil && task.Delivery.State == "pending_execution" {
+		lines = append(lines, "\n前置文件已保存；目标制品尚未生成或核验。文件应用不等于制品交付，请继续实际执行与验收。")
+	}
 	content := "### 系统应用回执（模型回复后的实际状态）\n\n" + strings.Join(lines, "\n")
 	step := Step{Name: "file_application_receipt", Status: status, Content: content}
 	if existing >= 0 {

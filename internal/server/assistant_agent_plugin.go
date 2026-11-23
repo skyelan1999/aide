@@ -53,6 +53,12 @@ func (a *App) hasAssistantAgent() bool {
 func (a *App) selectedAssistantAgent() (*assistantAgentBinding, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	// An operator who explicitly selected the builtin engine keeps it even
+	// when a plugin declares assistantAgent; only the default engine and the
+	// non-MixSoul path allow a single plugin provider to take over.
+	if a.assistantEngine == "builtin" && a.assistantEngineExplicit {
+		return nil, nil
+	}
 	var binding *assistantAgentBinding
 	for _, p := range a.pluginRegistry.Plugins {
 		if !p.Enabled || p.AssistantAgent == nil {

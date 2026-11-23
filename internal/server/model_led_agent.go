@@ -97,17 +97,49 @@ func (a *App) updateAgentPlan(task *Task, raw string) string {
 
 // Count execution progress, excluding bookkeeping that cannot justify another
 // completion review on its own. Called under a.mu with the task fields stable.
+func agentReviewExecutionTool(tool string) bool {
+	switch tool {
+	case "update_plan", "research_status", "record_research_finding", "avatar_cue":
+		return false
+	default:
+		return true
+	}
+}
+
 func agentExecutionCount(task *Task) int {
 	count := 0
 	for _, use := range task.ToolUses {
-		switch use.Tool {
-		case "update_plan", "research_status", "record_research_finding", "avatar_cue":
-			continue
-		default:
+		if agentReviewExecutionTool(use.Tool) {
 			count++
 		}
 	}
 	return count
+}
+
+func agentPendingFileApproval(task *Task) bool {
+	for _, change := range task.Files {
+		if !change.Applied || change.HistoryPending {
+			return true
+		}
+	}
+	return false
+}
+
+// Keep the persisted execution-count numbering intact, including legacy
+// read_proposal records. Inspecting unchanged candidates is not new work that
+// can resolve their application gate; a write or other actual operation is.
+func agentUnreviewedProposalWork(task *Task) bool {
+	count := 0
+	for _, use := range task.ToolUses {
+		if !agentReviewExecutionTool(use.Tool) {
+			continue
+		}
+		count++
+		if count > task.AgentReviewToolCount && use.Tool != "read_proposal" {
+			return true
+		}
+	}
+	return false
 }
 
 func agentReviewNeeded(task *Task) bool {
@@ -125,7 +157,15 @@ func agentReviewNeeded(task *Task) bool {
 			}
 		}
 	}
-	return reviews < taskExecutionPolicy(task).CompletionReviews && (unfinishedPlan || (count > 0 && (!task.AgentReviewDone || count > task.AgentReviewToolCount)))
+	newWork := count > 0 && (!task.AgentReviewDone || count > task.AgentReviewToolCount)
+	if agentPendingFileApproval(task) {
+		// Remaining steps may require the normal post-round file application.
+		// Retain the initial review and reviews of new work, then yield to that
+		// gate instead of spending the budget restating an unfinished plan.
+		unfinishedPlan = false
+		newWork = !task.AgentReviewDone || agentUnreviewedProposalWork(task)
+	}
+	return reviews < taskExecutionPolicy(task).CompletionReviews && (unfinishedPlan || newWork)
 }
 
 var deliveryRequestStart = regexp.MustCompile(`(?i)^\s*(?:(?:请|你|帮我|给我|直接|麻烦|现在|please|can you|could you)\s*)*(?:写|撰写|编写|生成|制作|创建|输出|整理|write\b|draft\b|create\b|generate\b|compose\b)`)
@@ -177,6 +217,9 @@ func (a *App) agentCompletionReview(task *Task) string {
 	b.WriteString("\n实际来源与参数账本（早期记录仍保留，不以最近16条替代覆盖）：" + researchEvidenceReport(task.ToolUses, task.ResearchFindings) + "\n")
 	b.WriteString("完整结果已在前文；本账本只展示最近16条的摘要，不代表其他资料已读取。\n")
 	b.WriteString("若本轮实际生成了用户要求的文件，请在最终回复中提供相对于当前工作区的 Markdown 文件链接，如 [文件](项目目录/文件.step)，以便系统核查实际新产物；只有反引号文件名或路径不是可核查的交付链接。待审批候选仍不是磁盘文件，不得伪造链接或将其称为已交付。\n")
+	if agentPendingFileApproval(task) {
+		b.WriteString("当前有未完成正常应用的文件候选。完成必要审阅和修正后结束本轮，使系统进入原有文件应用审批；不得运行未应用候选。依赖应用的后续计划保持未完成，审批交接不表示用户总目标已完成。不要仅为反复报告同一应用门禁而重复读取候选或更新计划；候选修订和新增实际操作仍需按证据复核。\n")
+	}
 	b.WriteString("不要把本次自检当作新的用户请求。直接面向原用户交付所需结果，不叙述内部审核指令或账本流程。不要重复读取已有成功结果的同一文件来证明自己完成；只有用户要求复核、内容发生变化或现有读取不完整时才再次读取。若计划仍有未交付项，仅有正文写作而没有工具执行也应继续，不要为触发检查而凑调用。若文档/正文或计划尚未交付完，继续追加未完成部分，不要把简短摘要或继续承诺当作最终成果；已交付正文不重复。若确实完成或受阻，按真实结果更新计划状态，再准确报告结果及缺口。")
 	return b.String()
 }

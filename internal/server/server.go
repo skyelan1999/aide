@@ -529,6 +529,7 @@ type App struct {
 	incidents                 incidentJournal
 	executionEnvironment      *executionEnvironment
 	assistantEngine           string // operator-selected startup choice; never a plugin capability
+	assistantEngineExplicit   bool   // explicit AIDE_ASSISTANT_ENGINE=builtin must not yield to plugins
 	mixSoulCalls              pluginCallQueues
 	mu                        sync.Mutex
 	approvalGrace             time.Duration // 辅助审批返回推荐方案后的自动执行等待时间
@@ -1228,6 +1229,7 @@ func New(work, reference, data string) (*App, error) {
 		return nil, fmt.Errorf("修复会话编号失败: %w", err)
 	}
 	a.assistantEngine = assistantEngine
+	a.assistantEngineExplicit = strings.TrimSpace(os.Getenv("AIDE_ASSISTANT_ENGINE")) != ""
 	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
 	a.ensureAssistantSession()
 	a.background(func() { a.reminderLoop(a.bgCtx) })

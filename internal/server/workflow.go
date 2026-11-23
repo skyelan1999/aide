@@ -328,7 +328,7 @@ var builtinTools = append([]any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_add_comment", "description": "给 .docx 精确选中的 quote 原文添加原生 Word 批注；支持本地/SSH 工作区及已授权引用；写入需要 RW。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "可选：已启用且对当前工作区 AI 可见的引用来源 ID；写入需要 RW"}, "path": map[string]any{"type": "string"}, "quote": map[string]any{"type": "string", "description": "文档中已存在的原文片段"}, "text": map[string]any{"type": "string", "description": "批注内容"}, "author": map[string]any{"type": "string", "description": "可选，默认 aide"}, "anchorIndex": map[string]any{"type": "integer", "description": "可选：quote 第几次出现（0 起始），默认 0"}}, "required": []string{"path", "quote", "text"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_resolve_comment", "description": "把 .docx 的原生批注标记为已解决（Word 2016+ commentsExtended 格式）。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "可选：已启用且对当前工作区 AI 可见的引用来源 ID；写入需要 RW"}, "path": map[string]any{"type": "string"}, "id": map[string]any{"type": "string", "description": "批注 id（docx_list_comments 返回的 id）"}}, "required": []string{"path", "id"}}}},
 	writeFileTool,
-	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox. Read-only commands run immediately; commands that may write files, change external state, or use the network pause for explicit user confirmation.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"memoryMiB": map[string]any{"type": "integer", "minimum": 128, "maximum": 1536}, approvalPurposeField: approvalPurposeSchema(), "command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox. Read-only commands run immediately; commands that may write files, change external state, or use the network pause for explicit user confirmation.", "parameters": map[string]any{"type": "object", "properties": map[string]any{approvalPurposeField: approvalPurposeSchema(), "command": map[string]any{"type": "string"}, "memoryMiB": map[string]any{"type": "integer", "minimum": 128, "maximum": 1536, "description": "Local Linux command RSS budget in MiB, default768. Sampled group/descendant monitor; not a hard cgroup limit. Over-budget commands fail for repair; split heavy CAD workloads rather than retrying unchanged."}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "agent": map[string]any{"type": "string", "description": "Optional configured agent name from the catalog"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_skill", "description": "Read an operator-configured Skill by its catalog name. Skill instructions do not grant tool permissions.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}}}},
 	workflowInputsTool,
@@ -5086,20 +5086,12 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 
 	causeTitle, causeFix := "命令以非零退出码结束", "查看下方输出定位具体报错，检查参数、依赖和当前目录；修改后重试"
 	lowCmd := strings.ToLower(command)
-	// Only classify an actual DWG converter invocation as a conversion failure.
-	// A .dwg path may just be data (for example, a file being hashed while a
-	// separate report path is missing).
-	commandParts := strings.Fields(lowCmd)
-	dwgConverter := false
-	if len(commandParts) > 0 {
-		executable := path.Base(strings.Trim(commandParts[0], "\"'"))
-		dwgConverter = executable == "dwgwrite" || executable == "dwg2dxf"
-	}
+	// #968: a DWG filename/hash in a read-only query is not a failed conversion.
+	// Diagnose the actual process error without inventing unavailable capabilities.
 	switch {
 	case strings.Contains(hay, "command memory budget exceeded"):
 		causeTitle = "本次命令超过作业内存预算，进程已终止"
 		causeFix = "按零件或工序拆成更小批次，减少同时保留的几何实体，复用已生成文件；修改后再执行，并核对上一批输出的实际状态"
-
 	case strings.Contains(lowCmd, "apt-get") || strings.Contains(lowCmd, "apt ") || strings.Contains(lowCmd, "dpkg") || strings.Contains(lowCmd, "sudo"):
 		causeTitle = "容器内无 root 权限，无法用 apt/sudo 安装系统包"
 		causeFix = "不要重复 apt-get install / sudo。需要系统库时告知用户在镜像里预装；Python 能力优先用容器已装的包（如 ezdxf），pip 全局安装通常也无写权限"
@@ -5112,9 +5104,6 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 	case strings.Contains(hay, "超时") || strings.Contains(hay, "context deadline exceeded"):
 		causeTitle = "命令执行超时被终止"
 		causeFix = "简化命令（去掉全量构建/测试/下载），或在设置里调大 ShellTimeout 后重试"
-	case dwgConverter && (strings.Contains(hay, "command not found") || strings.Contains(hay, "executable file not found") || code == 127):
-		causeTitle = "DWG 转换工具未安装或不在 PATH 中"
-		causeFix = "先核对当前环境可用的 CAD 转换能力和工具路径；只有确认缺少工具后再处理依赖。不要把 DWG 路径本身当作格式不支持的证据，也不要把转换器未安装与转换执行失败混为一谈"
 	case strings.Contains(hay, "command not found"):
 		causeTitle = "命令不存在或不在 PATH 中"
 		causeFix = "检查命令拼写；确认工具已安装（容器内 PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin）；必要时用绝对路径"
@@ -5124,12 +5113,9 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 	case strings.Contains(hay, "no such file or directory"):
 		causeTitle = "路径不存在（文件或目录写错）"
 		causeFix = "先用 ls/find 确认实际路径，注意工作目录锁定在 workspace 内，使用相对路径"
-	case strings.Contains(hay, "syntax error") || strings.Contains(hay, "unexpected token"):
-		causeTitle = "shell 语法错误"
-		causeFix = "检查引号/管道/重定向是否闭合，命令是否被错误拆成多行"
-	case dwgConverter:
-		causeTitle = "DWG 转换工具已启动但执行失败"
-		causeFix = "按下方转换器原始错误检查输入文件、版本兼容性、参数和输出限制；当前错误不能证明所有 DWG 都不支持，也不要仅凭扩展名改用其他格式"
+	case strings.Contains(hay, "syntax error") || strings.Contains(hay, "syntaxerror:") || strings.Contains(hay, "indentationerror:") || strings.Contains(hay, "taberror:") || strings.Contains(hay, "unexpected token") || strings.Contains(hay, "unexpected eof while looking for matching"):
+		causeTitle = "代码或 shell 语法错误"
+		causeFix = "按真实报错检查代码缩进、引号/管道/重定向是否闭合，以及命令是否被错误拆成多行；文件名或扩展名不代表对应工具已经执行"
 	}
 
 	var b strings.Builder
