@@ -959,6 +959,7 @@ window.aideEnglish = {
   "发送前已压缩 {0} 条 · 活动上下文估算": "Compacted {0} messages before sending · estimated active context",
   "摘要处理中 · {0} {1}/{2}": "Summarizing · {0} {1}/{2}",
   "进度已停滞 · 最近 {0} 分钟无更新，仍在等待模型返回": "Progress stalled · no update for {0} min; waiting for the model",
+  "暂时失败 · {0} 秒后进行第 {1}/3 次尝试": "Temporary failure · retrying attempt {1}/3 in {0}s",
   "分段整理": "mapping",
   "连续归并": "reducing",
   "已用时 {0} 秒": "Elapsed {0}s",

@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -31,23 +33,41 @@ func TestContextRecoveryRetainsUncompactedHistory(t *testing.T) {
 }
 
 func TestCompactionTransportRetryIsBoundedAndCancelable(t *testing.T) {
-	for _, mode := range []string{"recover", "permanent EOF", "API error", "cancel"} {
-		t.Run(mode, func(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		mode      string
+		status    int
+		wantCalls int32
+	}{
+		{"recover EOF", "eof", 0, 2},
+		{"recover HTTP 429", "status", http.StatusTooManyRequests, 2},
+		{"recover HTTP 500", "status", http.StatusInternalServerError, 2},
+		{"recover HTTP 502", "status", http.StatusBadGateway, 2},
+		{"permanent EOF", "eof", 0, compactionMaxAttempts},
+		{"permanent HTTP 503", "status", http.StatusServiceUnavailable, compactionMaxAttempts},
+		{"ordinary API error", "status", http.StatusUnauthorized, 1},
+		{"cancel", "cancel", 0, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			var calls atomic.Int32
 			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				n := calls.Add(1)
 				_, _ = io.Copy(io.Discard, r.Body)
-				if mode == "API error" {
-					http.Error(w, "no authorization", 401)
+				if tc.mode == "status" && (tc.wantCalls == 1 || tc.wantCalls == compactionMaxAttempts || n == 1) {
+					http.Error(w, "fixture", tc.status)
 					return
 				}
-				if mode == "recover" && n > 1 {
+				if tc.mode == "status" {
+					parallelReply(w, `{"goal":"preserve evidence","decisions":[],"files":[],"facts":["ID-R42"],"pending":[]}`)
+					return
+				}
+				if tc.mode == "eof" && n > 1 && tc.wantCalls == 2 {
 					parallelReply(w, `{"goal":"preserve evidence","facts":["ID-R42"]}`)
 					return
 				}
-				if mode == "cancel" {
+				if tc.mode == "cancel" {
 					cancel()
 				}
 				conn, _, err := w.(http.Hijacker).Hijack()
@@ -57,23 +77,96 @@ func TestCompactionTransportRetryIsBoundedAndCancelable(t *testing.T) {
 			}))
 			defer provider.Close()
 			out, err := completeCompactionRequest(ctx, Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: "ID-R42"}})
-			want := int32(2)
-			if mode == "API error" || mode == "cancel" {
-				want = 1
+			if calls.Load() != tc.wantCalls {
+				t.Fatalf("got %d requests; want %d (err=%v)", calls.Load(), tc.wantCalls, err)
 			}
-			if calls.Load() != want {
-				t.Fatalf("got %d requests; want %d", calls.Load(), want)
+			if tc.wantCalls == 2 && (err != nil || !strings.Contains(out, "ID-R42")) {
+				t.Fatalf("transient failure did not recover: %q %v", out, err)
 			}
-			if mode == "recover" && (err != nil || !strings.Contains(out, "ID-R42")) {
-				t.Fatalf("transient EOF did not recover: %q %v", out, err)
-			}
-			if mode != "recover" && err == nil {
+			if tc.wantCalls != 2 && err == nil {
 				t.Fatal("failure hidden by retry")
 			}
-			if mode == "permanent EOF" && !errors.Is(err, io.EOF) {
+			if tc.name == "permanent EOF" && !errors.Is(err, io.EOF) {
 				t.Fatalf("original EOF was not retained: %v", err)
 			}
 		})
+	}
+}
+
+func TestCompactionTransportRetryPublishesBackoffAndHonorsCancellation(t *testing.T) {
+	t.Run("recovery metadata", func(t *testing.T) {
+		var calls atomic.Int32
+		provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if calls.Add(1) < compactionMaxAttempts {
+				http.Error(w, "fixture", http.StatusBadGateway)
+				return
+			}
+			parallelReply(w, `{"goal":"ok"}`)
+		}))
+		defer provider.Close()
+		var attempts []int
+		var delays []time.Duration
+		out, err := completeCompactionRequest(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: "fixture"}}, func(nextAttempt int, delay time.Duration, _ error) {
+			attempts = append(attempts, nextAttempt)
+			delays = append(delays, delay)
+		})
+		if err != nil || out == "" || calls.Load() != compactionMaxAttempts {
+			t.Fatalf("calls=%d out=%q err=%v", calls.Load(), out, err)
+		}
+		if !reflect.DeepEqual(attempts, []int{2, 3}) || !reflect.DeepEqual(delays, compactionRetryBackoff) {
+			t.Fatalf("attempts=%v delays=%v", attempts, delays)
+		}
+	})
+	t.Run("cancel during backoff", func(t *testing.T) {
+		var calls atomic.Int32
+		provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calls.Add(1)
+			http.Error(w, "fixture", http.StatusServiceUnavailable)
+		}))
+		defer provider.Close()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		_, err := completeCompactionRequest(ctx, Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: "fixture"}}, func(_ int, _ time.Duration, _ error) { cancel() })
+		if !errors.Is(err, context.Canceled) || calls.Load() != 1 {
+			t.Fatalf("calls=%d err=%v", calls.Load(), err)
+		}
+	})
+}
+
+func TestCompactionBatchRetryDoesNotReplayCompletedMap(t *testing.T) {
+	a := testApp(t)
+	var calls atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if calls.Add(1) == 2 {
+			http.Error(w, "temporary second-map failure", http.StatusInternalServerError)
+			return
+		}
+		parallelReply(w, `{"goal":"keep continuity","decisions":[],"files":[],"facts":[],"pending":[]}`)
+	}))
+	defer provider.Close()
+	folded := []Message{{Role: "user", Content: strings.Repeat("a", 8000)}, {Role: "assistant", Content: strings.Repeat("b", 8000)}}
+	summary, err := a.buildCompactionSummary(context.Background(), folded, Settings{BaseURL: provider.URL, Model: "fixture"}, "")
+	if err != nil || summary == "" {
+		t.Fatalf("batch recovery failed: calls=%d summary=%q err=%v", calls.Load(), summary, err)
+	}
+	// Two map calls and one reduce are required. Only the failed second map is
+	// replayed; replaying the completed first map would produce a fifth call.
+	if calls.Load() != 4 {
+		t.Fatalf("calls=%d, want 4 (successful map batches must not replay)", calls.Load())
+	}
+}
+
+func TestCompactionRetryPolicyRejectsPermanentConfigurationErrors(t *testing.T) {
+	for _, err := range []error{
+		newProviderHTTPError(http.StatusBadRequest, errors.New("bad request")),
+		newProviderHTTPError(http.StatusUnauthorized, errors.New("unauthorized")),
+		fmt.Errorf("provider: %w", x509.UnknownAuthorityError{}),
+		context.Canceled,
+		context.DeadlineExceeded,
+	} {
+		if compactionRetryable(err) {
+			t.Fatalf("permanent error was retryable: %v", err)
+		}
 	}
 }
 

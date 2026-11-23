@@ -6493,7 +6493,9 @@ function renderContextCompactionState(detail?: any) {
   row.setAttribute('aria-live', 'polite');
   if (inProgress) {
     row.append(el('span', stalled ? 'context-compaction-stall-icon' : 'context-compaction-orbit', stalled ? 'Ⅱ' : '◌'));
-    const progressText = event.preflight
+    const progressText = event.retryAttempt
+      ? t('暂时失败 · {0} 秒后进行第 {1}/3 次尝试', Math.max(1, Math.ceil((event.retryDelayMs || 0) / 1000)), event.retryAttempt)
+      : event.preflight
       ? (event.phase === 'folding'
         ? t('摘要已生成，正在折叠这 {0} 条早期消息并保存', event.folded || 0)
         : (event.batch > 0
@@ -6523,7 +6525,7 @@ function renderContextCompactionState(detail?: any) {
     row.append(el('strong', '', fmtTokens(event.beforeTokens || 0) + ' → ' + fmtTokens(event.afterTokens || 0) + ' (−' + fmtTokens(saved) + ')'));
   } else {
     row.append(el('span', 'context-compaction-check', ''));
-    row.append(el('span', '', event.preflight ? t('压缩未完成，原会话内容已保留') : (event.text || t('压缩未完成，原会话内容已保留'))));
+    row.append(el('span', '', event.text || t('压缩未完成，原会话内容已保留')));
   }
   if (inProgress || event.phase === 'completed') {
     const meter = el('div', 'context-compaction-meter');

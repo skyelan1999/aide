@@ -61,7 +61,7 @@ for (const phase of ['completed', 'failed', 'cancelled']) {
   assert.equal(context.isTerminalContextCompaction(phase), true, `${phase} is a terminal compaction state`);
 }
 assert.equal(context.isTerminalContextCompaction('folding'), false, 'active compaction remains non-terminal');
-assert.ok(source.includes('if (isTerminalContextCompaction(d.phase)) refreshSessionSoon();'), 'live terminal events refresh the saved session and context meter');
+assert.ok(/if\s*\(isTerminalContextCompaction\(d\.phase\)\)\s*refreshSessionSoon\(\);/.test(source), 'live terminal events refresh the saved session and context meter');
 
 context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600 });
 assert.equal(context.state.contextCompactions.get(sessionB).phase, 'started', 'background progress is retained by session');
@@ -77,6 +77,9 @@ context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8
 context.renderContextCompactionState(detail);
 assert.equal(detail.children.at(-1).children[1].textContent.includes('分段整理 2/5'), true, 'automatic compaction shows map batch progress');
 assert.equal(detail.children.at(-1).children.find(child=>child.className==='context-compaction-elapsed').textContent.includes('已用时 1 分 5 秒'), true, 'active compaction exposes elapsed time');
+context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600, batchStage: 'map', batch: 2, batches: 5, retryAttempt: 2, retryDelayMs: 800 });
+context.renderContextCompactionState(detail);
+assert.equal(detail.children.at(-1).children[1].textContent.includes('1 秒后进行第 2/3 次尝试'), true, 'transient failure exposes bounded retry timing');
 
 context.state.session = { id: sessionA };
 context.renderContextCompactionState(detail);
@@ -103,6 +106,11 @@ assert.equal(detail.children.at(-1).children[1].textContent.includes('最近 3 �
 assert.equal(detail.children.at(-1).children.find(child=>child.className==='context-compaction-elapsed').textContent.includes('已用时 4 分 0 秒'), true, 'elapsed time continues while stale');
 assert.equal(vm.runInContext(`contextCompactionElapsedTimers.has('${sessionC}')`, context), true, 'elapsed timer remains active while stalled');
 context.showContextCompaction({ sessionId: sessionC, phase: 'cancelled', text: '压缩已取消，原会话内容已保留' });
+
+context.showContextCompaction({ sessionId: sessionB, phase: 'failed', preflight: true, text: '摘要请求连续失败（HTTP 503），原会话内容已保留' });
+context.state.session = { id: sessionB };
+context.renderContextCompactionState(detail);
+assert.equal(detail.children.at(-1).children[1].textContent.includes('HTTP 503'), true, 'preflight terminal state retains the safe failure category');
 
 context.showContextCompaction({ sessionId: sessionB, phase: 'completed', folded: 8, beforeTokens: 13600, afterTokens: 5400 });
 context.state.session = { id: sessionB };

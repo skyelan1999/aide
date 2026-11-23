@@ -622,6 +622,7 @@ type App struct {
 	wsRevision                uint64
 	compactingSessions        map[string]bool
 	contextCompactionProgress map[string]contextCompactionProgress
+	contextCompactionCircuits map[compactionCircuitKey]compactionCircuitState
 	retiredRoots              []*os.Root
 	worktreeMu                sync.Mutex
 	wsRoots                   map[string]*os.Root // 工作区身份 → 打开中的根（R02 运行中任务的工具绑定）

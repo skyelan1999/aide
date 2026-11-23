@@ -139,7 +139,11 @@ func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Messag
 	if task != nil {
 		a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "started", StartedAt: startedAt, BeforeTokens: estimateProviderPromptTokens(input, tools), Folded: len(folded)})
 	}
-	summary, err := a.buildCompactionSummary(ctx, folded, cfg, "")
+	summary, err := a.buildCompactionSummary(ctx, folded, cfg, "", func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
+		if task != nil {
+			a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "started", StartedAt: startedAt, BeforeTokens: estimateProviderPromptTokens(input, tools), Folded: len(folded), BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
+		}
+	})
 	if err != nil {
 		return input, err
 	}

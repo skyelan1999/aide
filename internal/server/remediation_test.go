@@ -95,6 +95,8 @@ func TestContextOverflowCompactsHistoryBeforeRetry(t *testing.T) {
 	}
 	_ = a.save(s)
 	before := a.buildContextPreview(s, "continue", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 1000}, true)
+	circuitKey := compactionCircuitKey{sessionID: s.ID, model: "test"}
+	a.contextCompactionCircuits = map[compactionCircuitKey]compactionCircuitState{circuitKey: {failures: 2, retryAfter: time.Now().Add(time.Hour), updated: time.Now()}}
 	a.mu.Unlock()
 	if !before.OverLimit {
 		t.Fatalf("fixture should exceed its context window: %+v", before)
@@ -105,9 +107,10 @@ func TestContextOverflowCompactsHistoryBeforeRetry(t *testing.T) {
 	a.mu.Lock()
 	after := a.buildContextPreview(a.sessions[s.ID], "continue", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 1000}, true)
 	folded := a.sessions[s.ID].CompactedMessages
+	_, cooling := a.contextCompactionCircuits[circuitKey]
 	a.mu.Unlock()
-	if folded == 0 || after.OverLimit {
-		t.Fatalf("history not compacted enough: folded=%d preview=%+v", folded, after)
+	if folded == 0 || after.OverLimit || cooling {
+		t.Fatalf("preflight recovery failed: folded=%d preview=%+v cooling=%t", folded, after, cooling)
 	}
 }
 
@@ -312,9 +315,10 @@ func TestAutoCompactionCancellationPublishesTerminalAndPreservesHistory(t *testi
 	a.mu.Lock()
 	got := cloneCompactMessages(a.sessions[s.ID].Messages)
 	_, stillCompacting := a.compactingSessions[s.ID]
+	circuitCount := len(a.contextCompactionCircuits)
 	a.mu.Unlock()
-	if !compactSnapshotMatches(got, original) || stillCompacting {
-		t.Fatalf("cancellation must preserve source history and release session lock: messages=%d/%d compacting=%t", len(got), len(original), stillCompacting)
+	if !compactSnapshotMatches(got, original) || stillCompacting || circuitCount != 0 {
+		t.Fatalf("cancellation must preserve history, release its lock and avoid cooldown: messages=%d/%d compacting=%t circuits=%d", len(got), len(original), stillCompacting, circuitCount)
 	}
 }
 
@@ -912,7 +916,7 @@ func TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary(t *testing.T
 	previous := priorMarker + strings.Repeat(" prior constraint and decision.", 500)
 	var progressCalls int
 	var sawMap, sawReduce bool
-	summary, err := a.buildCompactionSummary(context.Background(), messages, Settings{BaseURL: provider.URL, Model: "test"}, previous, func(stage string, batch, batches int) {
+	summary, err := a.buildCompactionSummary(context.Background(), messages, Settings{BaseURL: provider.URL, Model: "test"}, previous, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
 		progressCalls++
 		if batch < 1 || batches < batch {
 			t.Errorf("invalid compaction progress: stage=%q batch=%d batches=%d", stage, batch, batches)

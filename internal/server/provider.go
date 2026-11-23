@@ -159,6 +159,21 @@ func isEmptyCompletionErr(err error) bool {
 	return errors.As(err, &e)
 }
 
+// providerHTTPError preserves the provider status without changing the safe,
+// user-facing error text. Context compaction uses it to retry only transient
+// statuses; ordinary task execution keeps its existing single-request policy.
+type providerHTTPError struct {
+	status int
+	err    error
+}
+
+func (e *providerHTTPError) Error() string { return e.err.Error() }
+func (e *providerHTTPError) Unwrap() error { return e.err }
+
+func newProviderHTTPError(status int, err error) error {
+	return &providerHTTPError{status: status, err: err}
+}
+
 // The provider boundary is intentionally small: any Chat Completions compatible
 // endpoint can be used, including a local model through host.docker.internal.
 // params 是本次任务的采样参数（FR-61），未设置字段不进入请求体；
@@ -353,9 +368,9 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 			detail = detail[:500]
 		}
 		if detail == "" {
-			return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d；请检查地址、模型、密钥和额度", resp.StatusCode)
+			return "", nil, TokenUsage{}, newProviderHTTPError(resp.StatusCode, fmt.Errorf("模型 API 返回 HTTP %d；请检查地址、模型、密钥和额度", resp.StatusCode))
 		}
-		return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d: %s", resp.StatusCode, detail)
+		return "", nil, TokenUsage{}, newProviderHTTPError(resp.StatusCode, fmt.Errorf("模型 API 返回 HTTP %d: %s", resp.StatusCode, detail))
 	}
 	b, err = io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 	if err != nil {
@@ -505,7 +520,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		if len(detail) > 300 {
 			detail = detail[:300] + "…"
 		}
-		return "", nil, TokenUsage{}, "", fmt.Errorf("模型 API 返回 HTTP %d：%s", resp.StatusCode, detail)
+		return "", nil, TokenUsage{}, "", newProviderHTTPError(resp.StatusCode, fmt.Errorf("模型 API 返回 HTTP %d：%s", resp.StatusCode, detail))
 	}
 	// 兼容：上游声称流式但实际返回完整 JSON（少数网关如此）时，回退到非流式解析。
 	if ct := resp.Header.Get("Content-Type"); !strings.Contains(ct, "event-stream") {
