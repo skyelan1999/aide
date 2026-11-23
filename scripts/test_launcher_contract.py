@@ -409,7 +409,7 @@ class ActualStartEntrypointTests(unittest.TestCase):
             if marker:
                 (root / '.aide-image').write_text('aide:old-slot sha256:' + 'f'*64 + ' linux/arm64 v0.1.0.0-RC1\n')
             docker = root / 'bin/docker'
-            docker.write_text('#!' + sys.executable + '\n' + r'''
+            docker.write_text('#!/bin/sh\n""":"\nexec "' + sys.executable + '" "$0" "$@"\n":"""\n' + r'''
 import json,os,sys
 a=sys.argv[1:]
 with open(os.environ['CALL_LOG'],'a') as f:f.write(json.dumps(a)+'\n')
@@ -521,7 +521,7 @@ class ReleaseAssemblyTests(unittest.TestCase):
             (root / 'fixture.exe').write_bytes(binary)
             (root / 'bin').mkdir()
             docker = root / 'bin/docker'
-            docker.write_text('#!' + sys.executable + '\n' + r'''
+            docker.write_text('#!/bin/sh\n""":"\nexec "' + sys.executable + '" "$0" "$@"\n":"""\n' + r'''
 import os,pathlib,sys
 a=sys.argv[1:]
 if a==['info']:sys.exit(0)
