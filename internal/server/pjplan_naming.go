@@ -22,9 +22,10 @@ type pjplanClass struct {
 // workflows can fall back to their original naming instead of hard failing.
 var errPjplanDisabled = errors.New("请先启用 PjPlan 插件并配置项目版本参数")
 
-func (a *App) pjplanEnabled() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
+// pjplanEnabledLocked 不加锁：与 buildContextPreviewWithTask 的约定一致，
+// 调用方必须已持有 a.mu（startTask/retryTask/spawnSubagent/contextPreviewHandler 均持锁）。
+// 此前此函数自行 a.mu.Lock 导致持锁路径重入死锁，任务启动挂起。
+func (a *App) pjplanEnabledLocked() bool {
 	for _, plugin := range a.pluginRegistry.Plugins {
 		if plugin.ID == "pjplan" {
 			return plugin.Enabled

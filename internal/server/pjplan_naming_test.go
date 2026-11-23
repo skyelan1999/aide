@@ -28,7 +28,7 @@ func TestBuildPjplanFilename(t *testing.T) {
 
 func TestPjplanValidationSkippedWhenDisabled(t *testing.T) {
 	a := &App{}
-	if a.pjplanEnabled() {
+	if a.pjplanEnabledLocked() {
 		t.Fatal("empty registry must report disabled")
 	}
 	if err := a.validatePjplanFilename("REQ-001-任意命名.md"); err != nil {
