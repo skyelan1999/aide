@@ -15,7 +15,7 @@ class PipRetryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='aide-pip-retry-') as temporary:
             base=Path(temporary)
             command=base/'pip-fixture'
-            command.write_text('#!'+sys.executable+'\n'+r'''
+            command.write_text('#!/bin/sh\n""":"\nexec "'+sys.executable+'" "$0" "$@"\n":"""\n'+r'''
 import json,os,pathlib,sys
 p=pathlib.Path(os.environ['ATTEMPT_LOG'])
 entries=json.loads(p.read_text()) if p.exists() else []

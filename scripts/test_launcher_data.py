@@ -254,7 +254,7 @@ class PrebuiltImportTests(unittest.TestCase):
         self.url='https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/fixture.tar.gz'
         self.manifest=self.root/'docker/prebuilt-images.tsv';self.write_manifest()
         self.bin=self.root/'bin';self.bin.mkdir()
-        program='#!'+sys.executable+r"""
+        program='#!/bin/sh\n""":"\nexec "'+sys.executable+'" "$0" "$@"\n":"""\n'+r"""
 import os,sys,pathlib,json,shutil
 args=sys.argv[1:];root=pathlib.Path(os.environ['FIX_ROOT'])
 with (root/'calls').open('a') as f:f.write(json.dumps([pathlib.Path(sys.argv[0]).name]+args)+'\n')
@@ -382,7 +382,7 @@ class RunningRuntimeReuseTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         root=Path(self.temp.name);self.docker=root/'docker'
-        self.docker.write_text("#!"+sys.executable+"\n"+r"""
+        self.docker.write_text("#!/bin/sh\n\"\"\":\"\nexec \""+sys.executable+"\" \"$0\" \"$@\"\n\":\"\"\"\n"+r"""
 import sys,os,json
 args=sys.argv[1:];state=os.environ.get('FIX_STATE','healthy')
 if args[:3]==['compose','ps','--status']:

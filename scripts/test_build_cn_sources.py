@@ -131,7 +131,7 @@ class DependencyWrapperTests(unittest.TestCase):
         for key in ('PIP_NO_INDEX', 'PIP_EXTRA_INDEX_URL', 'AIDE_CN_SOURCE_FALLBACK'):
             self.env.pop(key, None)
         command = self.root / 'fixture'
-        command.write_text('#!' + sys.executable + '\n' + '''import json,os,pathlib,sys
+        command.write_text('#!/bin/sh\n""":"\nexec "' + sys.executable + '" "$0" "$@"\n":"""\n' + '''import json,os,pathlib,sys
 p=pathlib.Path(os.environ['ATTEMPT_LOG']);entries=json.loads(p.read_text()) if p.exists() else []
 entries.append(sys.argv[1:]);p.write_text(json.dumps(entries))
 failed=len(entries)<=int(os.environ['FAILURES'])
@@ -243,7 +243,7 @@ sys.exit(23 if failed else 0)
                 metadata = base / 'source.json'
                 metadata.write_text(json.dumps(dict(version='0.14', url='https://ftp.gnu.org/gnu/libredwg/libredwg-0.14.tar.xz', sha256=hashlib.sha256(payload).hexdigest())))
                 curl = base / 'curl'
-                curl.write_text('#!' + sys.executable + '\n' + r'''import os,pathlib,sys
+                curl.write_text('#!/bin/sh\n""":"\nexec "' + sys.executable + '" "$0" "$@"\n":"""\n' + r'''import os,pathlib,sys
 p=pathlib.Path(os.environ['URL_LOG']);urls=p.read_text().splitlines() if p.exists() else []
 url=next(a for a in sys.argv if a.startswith('https://'));p.write_text('\n'.join(urls+[url]))
 if len(urls)==0:sys.exit(28)

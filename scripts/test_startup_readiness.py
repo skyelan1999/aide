@@ -37,7 +37,7 @@ class ReadinessTests(unittest.TestCase):
             root = Path(directory)
             for name in ('docker', 'curl'):
                 script = root / name
-                script.write_text('#!' + sys.executable + '\n' + PROBE)
+                script.write_text('#!/bin/sh\n""":"\nexec "' + sys.executable + '" "$0" "$@"\n":"""\n' + PROBE)
                 script.chmod(0o755)
             env = dict(os.environ, FIXTURE_ROOT=str(root), PATH=str(root)+os.pathsep+os.environ['PATH'])
             env.pop('AIDE_STARTUP_TIMEOUT', None)
