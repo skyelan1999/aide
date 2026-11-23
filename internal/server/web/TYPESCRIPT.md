@@ -248,7 +248,12 @@
   顺序 core → sidebar → runtime → app，runtime v1、app v296。58 个 app
   套件全部通过。动态认证 body/Error 扩展字段、原生生物识别和后置声明按
   原结构补充类型，不改运行时流程。
-- **批 5c+（待做）**：继续按职责拆分并 TS 化 app 余下脚本；每扩展一个
+- **批 5c（已完成）**：`app-config`（问题分析历史报告、配置与语音助理
+  显示刷新，196 行）TS 化并严格等价；app 余下 13508 行。加载顺序变为
+  core → sidebar → runtime → config → app，config v1、app v297。
+  58 个 app 套件中 lock-entry 的源码边界改为空白不敏感后全部通过，
+  session-review 同步通过。
+- **批 5d+（待做）**：继续按职责拆分并 TS 化 app 余下脚本；每扩展一个
   拆分模块同步维护 app-source 的原始顺序视图，最终核对自有 JS 是否全部
   完成 TS 化。
 
