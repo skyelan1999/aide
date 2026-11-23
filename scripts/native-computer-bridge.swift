@@ -8,6 +8,14 @@ let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 var listener: NWListener?
 var bridgeToken = ""
+var bridgeTokenFile = ""
+// 每次请求动态读取令牌文件，支持轮换而不重启；读取失败/过短时回退静态令牌。
+func currentBridgeToken() -> String {
+    if !bridgeTokenFile.isEmpty,
+       let token = try? String(contentsOfFile: bridgeTokenFile, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines),
+       token.count >= 32 { return token }
+    return bridgeToken
+}
 func error(_ message: String) -> NSError { NSError(domain: "AideBridge", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
 func allowedApp(_ input: [String: Any]) throws -> NSRunningApplication {
     guard let rules = input["allowedApps"] as? [String], !rules.isEmpty, rules.count <= 50,
@@ -247,7 +255,8 @@ func receive(_ connection: NWConnection, _ previous: Data = Data()) {
             let pieces = line.split(separator: ":", maxSplits: 1).map(String.init)
             if pieces.count == 2 { headers[pieces[0].lowercased()] = pieces[1].trimmingCharacters(in: .whitespaces) }
         }
-        guard bridgeToken.count >= 32, headers["authorization"] == "Bearer \(bridgeToken)" else { send(connection, 401, ["ok": false, "error": "未授权"]); return }
+        let activeToken = currentBridgeToken()
+        guard activeToken.count >= 32, headers["authorization"] == "Bearer \(activeToken)" else { send(connection, 401, ["ok": false, "error": "未授权"]); return }
         guard headers["transfer-encoding"] == nil, let size = Int(headers["content-length"] ?? "0"), size >= 0, size <= 16384 else { send(connection, 400, ["ok": false, "error": "请求体无效"]); return }
         if data.count - divider.upperBound < size { if complete { connection.cancel() } else { receive(connection, data) }; return }
         let request = (lines.first ?? "").split(separator: " ")
@@ -272,13 +281,24 @@ func receive(_ connection: NWConnection, _ previous: Data = Data()) {
 }
 func startServer() {
     do {
-        guard let configFile = Bundle.main.object(forInfoDictionaryKey: "AideConfigurationFile") as? String else { throw error("没有配置文件位置") }
-        let config = try String(contentsOfFile: configFile, encoding: .utf8)
-        for line in config.components(separatedBy: .newlines) where line.hasPrefix("AIDE_COMPUTER_BRIDGE_TOKEN=") {
-            bridgeToken = String(line.dropFirst("AIDE_COMPUTER_BRIDGE_TOKEN=".count)).trimmingCharacters(in: CharacterSet(charactersIn: " \"'"))
+        bridgeTokenFile = ProcessInfo.processInfo.environment["AIDE_COMPUTER_BRIDGE_TOKEN_FILE"] ?? ""
+        bridgeToken = ProcessInfo.processInfo.environment["AIDE_COMPUTER_BRIDGE_TOKEN"] ?? ""
+        if bridgeToken.isEmpty, let configFile = Bundle.main.object(forInfoDictionaryKey: "AideConfigurationFile") as? String {
+            let config = try String(contentsOfFile: configFile, encoding: .utf8)
+            for line in config.components(separatedBy: .newlines) where line.hasPrefix("AIDE_COMPUTER_BRIDGE_TOKEN=") {
+                bridgeToken = String(line.dropFirst("AIDE_COMPUTER_BRIDGE_TOKEN=".count)).trimmingCharacters(in: CharacterSet(charactersIn: " \"'"))
+            }
         }
-        guard bridgeToken.count >= 32 else { throw error("桥接令牌未配置") }
-        listener = try NWListener(using: .tcp, on: 17778)
+        guard currentBridgeToken().count >= 32 else { throw error("桥接令牌未配置") }
+        let port = UInt16(ProcessInfo.processInfo.environment["AIDE_COMPUTER_BRIDGE_PORT"] ?? "17778") ?? 17778
+        guard let endpointPort = NWEndpoint.Port(rawValue: port) else { throw error("桥接端口无效") }
+        if ProcessInfo.processInfo.environment["AIDE_COMPUTER_BRIDGE_LOOPBACK_ONLY"] == "1" {
+            let parameters = NWParameters.tcp
+            parameters.requiredLocalEndpoint = .hostPort(host: .ipv4(.loopback), port: endpointPort)
+            listener = try NWListener(using: parameters)
+        } else {
+            listener = try NWListener(using: .tcp, on: endpointPort)
+        }
         listener?.newConnectionHandler = { connection in
             guard case let .hostPort(host, _) = connection.endpoint else { connection.cancel(); return }
             let peer = String(describing: host)
