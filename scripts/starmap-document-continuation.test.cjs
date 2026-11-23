@@ -1,11 +1,12 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{value:'',hidden:true,disabled:false,textContent:''});return elements.get(id)};
 let response,resolve,body,rendered;
 const c=createUiContext(vm, {$:el,documentBatch:null,documentAbort:null,documentGeneration:0,graphGeneration:1,locked:false,loading:false,region:'workspace',graph:{workspace:'w'},retrievalMode:()=> 'original',AbortController,renderDocumentResults:d=>rendered=d,say(){},api:async(_,o)=>{body=JSON.parse(o.body);return response}});
-vm.runInContext(source.slice(source.indexOf('function resetDocumentBatch()'),source.indexOf('// Data revisions')),c);
-vm.runInContext(source.slice(source.indexOf('async function searchDocuments(')),c);
+vm.runInContext(source.slice(sourceIndex(source,'function resetDocumentBatch()'),sourceIndex(source,'// Data revisions')),c);
+vm.runInContext(source.slice(sourceIndex(source,'async function searchDocuments(')),c);
 (async()=>{
  el('search').value='needle';response={nextCursor:'next',scanned:32,total:60,hits:[{id:'a'}],warnings:[],files:32,chunks:32};
  await vm.runInContext('searchDocuments()',c);assert.equal(body.cursor,'');assert.equal(el('document-next').hidden,false);assert.match(el('document-coverage').textContent,/32 \/ 60/);

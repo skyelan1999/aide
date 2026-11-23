@@ -1,6 +1,7 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 function harness(providedNodes){
  const els=new Map(),el=id=>{if(!els.has(id))els.set(id,{disabled:false,hidden:false,textContent:'',value:'',replaceChildren(){this.textContent='';}});return els.get(id);};
@@ -14,12 +15,12 @@ function harness(providedNodes){
  c.cosmicData=key=>({scene:c.cosmos.scene(key),records:[],stars:c.graph.nodes.map(n=>({n})),edges:[],projection:[]});
  c.enterCosmic=key=>{c.cosmicKey=key;c.cosmicScene=c.cosmos.scene(key);c.cosmicStars=c.graph.nodes.map(n=>({n}));};
  Object.assign(c,{clusters:[],cosmicTextureCache:new Map(),cosmicRecords:[],cosmicLinks:[],cosmicStarEdges:[],cosmicFlight:null,projection:[],seeded:()=>.5,tau:Math.PI*2,colors:()=> '#000',cloudTexture:()=>null,applyStellarColor(){},prepareStellarConnections(){}});
- vm.runInContext(source.slice(source.indexOf('function layout('),source.indexOf('function eligibleEdge(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function layout('),sourceIndex(source,'function eligibleEdge(')),c);
  const realLayout=c.layout;c.layout=(...args)=>{c.layoutCalls++;return realLayout(...args);};
- vm.runInContext(source.slice(source.indexOf('const nodeFields='),source.indexOf('const sourceTypes=')),c);
- vm.runInContext(source.slice(source.indexOf('function cosmicPath('),source.indexOf('function cosmicPreferred(')),c);
- vm.runInContext(source.slice(source.indexOf('function ensureCosmicView('),source.indexOf('function cosmicLocate(')),c);
- vm.runInContext(source.slice(source.indexOf('function applyLiveUpdate('),source.indexOf('async function load(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'const nodeFields='),sourceIndex(source,'const sourceTypes=')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function cosmicPath('),sourceIndex(source,'function cosmicPreferred(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function ensureCosmicView('),sourceIndex(source,'function cosmicLocate(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function applyLiveUpdate('),sourceIndex(source,'async function load(')),c);
  const wireNode=n=>Object.fromEntries([...vm.runInContext('nodeFields',c)].filter(k=>n[k]!==undefined).map(k=>[k,n[k]]));
  c.liveWireNodes=new Map(nodes.map(n=>[n.id,JSON.stringify(wireNode(n))]));
  c.ensureCosmicView();c.modelBuilds=0;

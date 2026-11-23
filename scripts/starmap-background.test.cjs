@@ -1,6 +1,7 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const timers=[],handlers={},calls=[];
 const c=createUiContext(vm, {document:{hidden:true},locked:false,pageLeaving:false,loading:false,drag:null,cosmicFlight:null,
@@ -14,7 +15,7 @@ const c=createUiContext(vm, {document:{hidden:true},locked:false,pageLeaving:fal
  liveGhosts:[{start:100}],liveAnimationUntil:780,persistSkyView:()=>calls.push('persist'),settlePanels:()=>{},
  cancelAnimationFrame:()=>calls.push('cancel-paint'),redraw:()=>calls.push('redraw'),
  addEventListener:(name,fn)=>{handlers[name]=fn;}});
-function evaluate(start,end){vm.runInContext(source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))),c);}
+function evaluate(start,end){vm.runInContext(source.slice(sourceIndex(source,start),sourceIndex(source,end,sourceIndex(source,start))),c);}
 evaluate('function liveReady()','// Continue unfinished catalogues');
 evaluate('function scheduleLive(','function scheduleGraphCache(');
 evaluate('async function pollLive()','const retrievalMode=');
@@ -34,6 +35,6 @@ evaluate("addEventListener('visibilitychange'","$('search-form').onsubmit");
  assert.equal(c.liveGhosts[0].start,100);assert.equal(c.liveAnimationUntil,780);
  c.locked=true;c.scheduleLive(0);assert.equal(c.liveTimer,0);assert.equal(c.liveReady(),false);
  c.locked=false;c.pageLeaving=true;assert.equal(c.liveReady(),false);
- assert.match(source,/const update=await api\('\/updates\?background=1&code='/,'initial load opts into server continuation too');
+ sourceMatch(source,/const update=await api\('\/updates\?background=1&code='/,'initial load opts into server continuation too');
  console.log('PASS: hidden live requests/merges, app continuation opt-in, no abort on hide, bounded cadence, resume births, lock/leave guards');
 })().catch(e=>{console.error(e);process.exitCode=1;});

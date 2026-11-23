@@ -1,6 +1,7 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const records=new Map(),db={objectStoreNames:{contains:()=>true},transaction(){
  const tx={objectStore(){return {get(key){const req={result:records.get(key)};queueMicrotask(()=>tx.oncomplete?.());return req;},put(value,key){records.set(key,structuredClone(value));const req={result:key};queueMicrotask(()=>tx.oncomplete?.());return req;}};}};return tx;
 }};
@@ -35,7 +36,7 @@ function harness(idleDelay=0){
  const clearTimeout=id=>timers.delete(id);
  const identity={workspace:'A',epoch:'1',policy:'p'};
  const c=createUiContext(vm, {cacheWriteTimer:0,locked:false,cacheIdentity:identity,liveCursor:'R0',graph:{workspace:'A',nodes:[]},codeView:false,liveEpoch:1,setTimeout,clearTimeout,window:{AideStarmapCache:{write(mode,identity,graph,revision){writes.push({mode,workspace:identity.workspace,revision,at:now});return Promise.resolve(true);}},requestIdleCallback:true},requestIdleCallback:fn=>setTimeout(fn,idleDelay)});
- vm.runInContext(source.slice(source.indexOf('function scheduleGraphCache('),source.indexOf('async function pollLive(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function scheduleGraphCache('),sourceIndex(source,'async function pollLive(')),c);
  function advance(end){while(true){const row=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!row)break;now=row[1].at;timers.delete(row[0]);row[1].fn();}now=end;}
  return {c,writes,advance,clearTimeout};
 }

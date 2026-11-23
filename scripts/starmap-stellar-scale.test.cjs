@@ -1,7 +1,8 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync(process.argv[2]||'internal/server/web/starmap.js','utf8');
-const code=source.slice(source.indexOf('const stellarBands='),source.indexOf('function syncMapPalette('));
+const code=source.slice(sourceIndex(source,'const stellarBands='),sourceIndex(source,'function syncMapPalette('));
 const ctx={mapPalette:{light:false,highContrast:false},highlightedStarIDs:new Set(),codeView:false,glowSprite:()=>({}),window:{},graph:{nodes:[],edges:[]},nodeByID:new Map()};createUiContext(vm, ctx);vm.runInContext(code,ctx);
 const oldCapNodes=[64,128].map(connectionCount=>{const node={id:'cap'+connectionCount,connectionCount};ctx.applyStellarColor(node);return node;});
 assert.ok(ctx.stellarVisual(oldCapNodes[1],0).radius>ctx.stellarVisual(oldCapNodes[0],0).radius,'doubling high connection counts must still increase visible size');
@@ -23,5 +24,5 @@ ctx.highlightedStarIDs=new Set();ctx.codeView=true;assert.ok(ctx.stellarVisual(r
 ctx.codeView=false;assert.ok(ctx.stellarVisual(rows.at(-1),0).radius>ctx.stellarVisual(rows.at(-2),0).radius,'large degrees do not hit old 63-degree size cap');
 ctx.graph={nodes:[{id:'A'},{id:'B'},{id:'C'},{id:'P'},{id:'Q'}],edges:[{from:'A',to:'B',kind:'calls'},{from:'B',to:'A',kind:'calls'},{from:'A',to:'B',kind:'calls'},{from:'A',to:'A',kind:'calls'},{from:'A',to:'C',kind:'contains'},{from:'B',to:'C',kind:'defines'},{from:'A',to:'missing',kind:'calls'}]};ctx.nodeByID=new Map(ctx.graph.nodes.map(n=>[n.id,n]));ctx.prepareStellarConnections();assert.equal(ctx.nodeByID.get('A').connectionCount,1);assert.equal(ctx.nodeByID.get('B').connectionCount,1);assert.equal(ctx.nodeByID.get('C').stellarLevel,0);
 ctx.nodeByID.get('A').parentFile='P';ctx.nodeByID.get('B').parentFile='Q';ctx.prepareStellarConnections();assert.equal(ctx.nodeByID.get('P').connectionCount,1);assert.equal(ctx.nodeByID.get('Q').connectionCount,1,'file rollups keep unique real neighbors');
-assert.match(source,/r=stellarRadius\(node\)\*\.85\*mag/,'close-up planets use the same base size');
+sourceMatch(source,/r=stellarRadius\(node\)\*\.85\*mag/,'close-up planets use the same base size');
 console.log('Stellar scale PASS: cumulative power-of-two ranks, exact boundaries, proportional volume, all emphasis states, no old size cap, degree evidence and close-up integration');

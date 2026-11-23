@@ -1,10 +1,11 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const candidate=fs.readFileSync('internal/server/web/starmap.js','utf8');
 function harness(source){
  const c=createUiContext(vm, {window:{},cosmicSceneCache:new Map(),liveStableScenes:new Map(),nodeByID:new Map(),renderEdges:[],graph:{nodes:[],edges:[]},seeded:()=>.5,cosmicTexture:()=>null,cloudTexture:()=>null,mapPalette:{nebula:'#000'},tau:Math.PI*2});
  vm.runInContext(fs.readFileSync('internal/server/web/starmap-cosmos.js','utf8'),c);
- vm.runInContext(source.slice(source.indexOf('function cosmicData('),source.indexOf('function cosmicPath(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function cosmicData('),sourceIndex(source,'function cosmicPath(')),c);
  return {c,update(nodes,keep=false){
    if(keep)c.liveStableScenes=new Map(c.cosmicSceneCache);
    c.cosmicSceneCache.clear();c.graph.nodes=nodes;c.nodeByID=new Map(nodes.map(n=>[n.id,n]));c.cosmos=c.window.AideStarCosmos.build(nodes,[]);

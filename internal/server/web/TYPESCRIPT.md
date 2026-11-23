@@ -192,9 +192,33 @@
   - 对象字面量动态索引不能对整个字面量 `as any`（tsc 会丢掉原括号），
     改用键的联合字面量断言（`kind as 'box'|'cylinder'|'sphere'`），并按
     原文逐处保留括号。
-- **批 4k（待做）**：starmap、两个 AudioWorklet（独立 lib 配置）、
-  `locales/en.js` 与 scripts 桥接（Node/CommonJS 脚本使用独立
-  `module: commonjs` 配置）。
+- **批 4k（已完成）**：`starmap`（1217 行星图主脚本）TS 化，严格等价通过，
+  全部 22 个 `starmap-*.test.cjs` 套件通过。采用只插入类型标注的 codemod
+  （384 个参数/catch、57 个空值变量、53 个动态对象/DOM 句柄），不改写运行
+  时代码；`$` 返回 any 保留动态 DOM 访问，`graph` 等动态记录标 any，
+  `new Map/Set` 显式泛型。cache buster starmap v75→v76。
+  编译目标由 ES2020 提升为 **ES2021**，以保留原文件的 `||=` 逻辑赋值；
+  message-center/voip 的 `||=`、workbench-background 的数字分隔符随之恢复
+  原语法，已用各自改造前备份重新验证严格等价，相关测试通过。
+  跨页面全局 `api` 同名（starmap/mobile-capture 为函数、management/
+  remote-access 为 declare var）以 `@ts-ignore` 保留各自页面独立加载的
+  原结构；`LockCluster` 全局声明使用权威 `LockClusterApi`，不得标 any。
+  测试债修复：多个 starmap 套件以无空格源码标记切片/正则，tsc 格式化后
+  失效。新增 `scripts/fixtures/starmap-source.cjs` 提供空白不敏感的
+  `sourceIndex/sourceIncludes/sourceMatch/sourceRegex`，15 个套件改用该
+  helper；empty-state 的两个单行正则切片改为明确代码边界，lensing 的函数
+  提取改为起止函数边界。断言语义不变，仅消除格式耦合。
+  新经验：
+  - tsc 在语法错误时默认仍会 emit 并覆盖同名 js；大文件改造先 `--noEmit`
+    检查，且必须保留改造前备份用于恢复与等价验证。
+  - 单参箭头批量加标注时，是否已有括号应以 `=>` 前一个 token 判断，
+    不能以参数前字符判断（调用表达式的 `(` 会误判）。
+  - `({...} as any)[key]` 会丢掉原对象字面量括号；需要严格等价时改用
+    键的联合字面量断言。
+  - `drawCosmicPlanet.surfaceCache` 这类函数动态属性用
+    `(drawCosmicPlanet as any).surfaceCache`，不引入 namespace 合并。
+- **批 4l（待做）**：两个 AudioWorklet（独立 lib 配置）、`locales/en.js`
+  与 scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

@@ -1,6 +1,7 @@
 interface Window {
   AideLANAccess?: { render: (cfg: any, onUpdate: any) => any; activity: () => void; update: (wrap: any, cfg: any) => void };
 }
+// @ts-ignore -- 独立页面脚本的全局 api，与星图页面函数同名但不同页
 declare var state: any, api: any, lockScreen: any, el: any, t: any, action: any, passwordPrompt: any, refreshConfig: any, resetIdleTimer: any, toast: any;
 'use strict';
 // Account setting and user-activity lease. No credential is placed in a QR URL.

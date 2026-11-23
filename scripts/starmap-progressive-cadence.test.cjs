@@ -1,8 +1,9 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const c=createUiContext(vm, {});
-vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
+vm.runInContext(source.slice(sourceIndex(source,'function progressiveSummary('),sourceIndex(source,'function scheduleLive(')),c);
 const pending={sources:[{state:'partial',coverage:{progressive:true,pending:5}}]};
 assert.equal(c.progressiveSummary({...pending,nodes:[{},{}]}),'分批扫描中 · 已载入 2 个节点 · 待扫 5 个目录任务 · 待复核 0 个条目');
 const bodyPending={sources:[{state:'partial',coverage:{progressive:true,materialPending:8}}],nodes:[{}]};
@@ -16,5 +17,5 @@ assert.equal(c.progressiveDelay({sources:[]},10),2000);
 const capped={nodes:[{}],sources:[{state:'partial',coverage:{progressive:true,pending:881,discoveryBlocked:true,catalogLimit:20000}}]};
 assert.equal(c.progressiveDelay(capped,10),2000,'hard limit is not an active scan');assert.equal(c.progressiveSummary(capped),'');
 capped.sources[0].coverage.materialPending=2;assert.equal(c.progressiveDelay(capped,10),350,'known material still finishes');
-assert.match(source,/else scheduleLive\(progressiveDelay\(graph\)\)/);
+sourceMatch(source,/else scheduleLive\(progressiveDelay\(graph\)\)/);
 console.log('PASS progressive scan pacing, slow-source backpressure and completion cadence');

@@ -12,9 +12,9 @@
     const accepted = new Set(['video/mp4', 'video/webm', 'image/gif', 'image/png', 'image/jpeg', 'image/webp']);
     let mode = '', generation = 0, media = null, url = '', record = null, message = '', saving = false;
     const panels = new Set();
-    const WORK_INTERVAL = 20 * 60000;
-    const SNOOZE_INTERVAL = 5 * 60000;
-    const REST_INTERVAL = 20000;
+    const WORK_INTERVAL = 20 * 60_000;
+    const SNOOZE_INTERVAL = 5 * 60_000;
+    const REST_INTERVAL = 20_000;
     let database;
     let pageActive = true, eyeTimer, activeSince = null, workRemaining = WORK_INTERVAL, restEnds = 0;
     let notice, noticeStatus, noticeAction, noticeSnooze, previousFocus;

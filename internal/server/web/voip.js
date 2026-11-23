@@ -4,7 +4,7 @@
     function open({ mode, token, permission, context, onStatus, onEnd }) {
         const ownsContext = !context;
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        context || (context = new AudioContext());
+        context ||= new AudioContext();
         let socket, node, microphone, clock, closed = false, answered = false;
         const sources = new Map();
         let resolveReady, rejectReady;

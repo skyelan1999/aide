@@ -122,7 +122,7 @@
             const Audio = window.AudioContext || window.webkitAudioContext;
             if (!Audio)
                 return;
-            notificationAudio || (notificationAudio = new Audio());
+            notificationAudio ||= new Audio();
             if (notificationAudio.state === 'suspended')
                 void notificationAudio.resume().catch(() => { });
         }
@@ -133,7 +133,7 @@
                 try {
                     const Audio = window.AudioContext || window.webkitAudioContext;
                     if (Audio) {
-                        notificationAudio || (notificationAudio = new Audio());
+                        notificationAudio ||= new Audio();
                         void notificationAudio.resume().catch(() => { });
                     }
                 }
@@ -228,7 +228,7 @@
                         catch (_) { }
                     }
                 }
-                sound || (sound = !!event.allow.sound);
+                sound ||= !!event.allow.sound;
                 delivered++;
             }
             if (sound && notificationAudio?.state === 'running') {

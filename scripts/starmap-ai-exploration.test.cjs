@@ -1,6 +1,7 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const moduleSource=fs.readFileSync('internal/server/web/starmap-assist.js','utf8'),source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const c=createUiContext(vm, {window:{},AbortController,setTimeout,clearTimeout});vm.runInContext(moduleSource,c);const assist=c.window.AideStarmapAssist;
 let busy=false,scope='';const owner=assist.create({busy:v=>busy=v,scope:v=>scope=v});
@@ -32,7 +33,7 @@ const els=new Map(),el=id=>{if(!els.has(id))els.set(id,{value:'',disabled:false,
 const pending=[];let rendered=[];
 Object.assign(c,{$:el,locked:false,graph:{workspace:'W'},codeView:false,region:'workspace',selected:file,results:[file],aiAbort:null,retrievalMode:()=>c.mode||'nodes',api:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),renderDocumentResults(){},openNodePreview(){},nodeByID:new Map([['F1',file]]),select(){},say(){},document:doc,appendSourceLabel(){}});
 c.window.AideStarmapAssist={...assist,render:(_el,text)=>rendered.push(text)};
-vm.runInContext(source.slice(source.indexOf('const aiExplorer='),source.indexOf('let insertionSessions=[]')),c);
+vm.runInContext(source.slice(sourceIndex(source,'const aiExplorer='),sourceIndex(source,'let insertionSessions=[]')),c);
 (async()=>{
  const old=vm.runInContext('askAI()',c);assert.equal(el('ask').disabled,true);
  vm.runInContext('aiExplorer.updated()',c);assert.equal(c.aiAbort.signal.aborted,false);assert.match(el('ai-scope').textContent,/索引已有更新/);

@@ -1,6 +1,7 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync(process.argv[2]||'internal/server/web/starmap.js','utf8');
 const graph={nodes:Array.from({length:180},(_,i)=>({id:'N'+i,name:'file'+i+'.go',path:'docs/file'+i+'.go',kind:'file',region:'context',root:'context',source:'fixture'})),edges:Array.from({length:179},(_,i)=>({from:'N'+i,to:'N'+(i+1),kind:'mention'}))};
 const metrics={drawImage:0,fill:0,arc:0,save:0,restore:0,dustCalls:0,zonesExamined:0,infraredPoints:0};
@@ -8,7 +9,7 @@ const ctx=new Proxy({}, {get(t,key){if(key in t)return t[key];return (...args)=>
 const c=createUiContext(vm, {window:{},performance,console,graph,ctx,width:1325,height:940,zoom:1,yaw:0,pitch:.1,cosmicAimX:0,cosmicAimY:0,skyFloat:{x:0,y:0},tau:Math.PI*2,clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),easing:x=>x,clusters:[],nodeByID:new Map(),edgeAdjacency:new Map(),highlightedStarIDs:new Set(),structure:null,codeView:false,selected:null,region:'context',edgeMode:'all',focusCode:false,callDepth:'all',searchQuery:'',resultIDs:new Set(),renderNodes:[],renderEdges:[],edgeBatches:[],renderKey:'',renderRevision:1,focusCache:null,focusKey:'',graphGeneration:1,layoutGeneration:0,cosmicEnabled:true,locked:false,liveReconcile:false,liveStableScenes:new Map(),cosmicSceneCache:new Map(),cosmicDustFrameCache:null,cosmicTextureCache:new Map(),cosmicScopeKey:'',cosmicScene:null,cosmicKey:'',cosmos:null,cosmicRecords:[],cosmicStars:[],cosmicStarEdges:[],cosmicLinks:[],cosmicFlight:null,cosmicFocusID:'',cosmicHover:'',cosmicSelected:'',graphFade:null,cosmicLensOwnerByStar:new Map(),cosmicLensHits:[],cosmicLensedStarIDs:new Set(),cosmicLensAssignmentCamera:'',cosmicLensAssignmentScene:null,cosmicLocalHits:[],cosmicGates:[],cosmicCallState:null,projection:[],liveGhosts:[],liveAnimationUntil:0,animate:true,mapPalette:{light:false,highContrast:false,star:'#abcdef',nebula:'#123456',file:'#123456',reference:'#123456',session:'#123456'},glowSprite:()=>({}),cloudTexture:()=>({}),cosmicTexture:()=>null,colors:()=> '#123456',motionEnabled:()=>true,focusIDs:()=>null,updateLayerLabels(){},syncCosmicNav(){},invalidateView(){c.renderRevision++;c.renderKey='';},drawLiveGhosts(){},drawCosmicLocalSystem(){},drawBlackHole(){},drawBlackHoleLensOverlay(){},skyText:()=> '#fff',skyMuted:()=> '#aaa',infrared:{enabled:false,transitioning:false,draw(ctx,points){metrics.infraredPoints+=points.length;}}});
 for(const name of ['starmap-physics','starmap-optics','starmap-structure','starmap-cosmos','starmap-gravity','starmap-lensing'])vm.runInContext(fs.readFileSync('internal/server/web/'+name+'.js','utf8'),c);
 c.AideStarCosmos=c.window.AideStarCosmos;
-const extract=(from,to)=>vm.runInContext(source.slice(source.indexOf(from),source.indexOf(to)),c);
+const extract=(from,to)=>vm.runInContext(source.slice(sourceIndex(source,from),sourceIndex(source,to)),c);
 extract('function seeded(','function skyHash(');
 extract('const stellarBands=','function syncMapPalette(');
 extract('function birthAlpha(','function liveReady(');
@@ -49,5 +50,5 @@ const beforeActive=metrics.dustCalls,beforeParticles=metrics.arc;frame(10400);
 assert.ok(metrics.dustCalls>beforeActive,'active incident relation gets its own transmission');assert.ok(metrics.arc-beforeParticles>visibleStars,'selected particles draw in addition to every visible star');
 const afterActive=metrics.dustCalls;frame(10434);assert.equal(metrics.dustCalls,afterActive,'selected edge samples reuse');
 assert.equal(c.cosmicStars.length,graph.nodes.length);assert.equal(c.cosmicStarEdges.length,graph.edges.length);
-assert.ok(source.match(/cosmicSceneCache\.clear\(\);cosmicDustFrameCache=null;/g).length>=6,'scene clear paths, including lock, drop samples');
+assert.ok((source.replace(/\s+/g,'').match(/cosmicSceneCache\.clear\(\);cosmicDustFrameCache=null;/g)||[]).length>=6,'scene clear paths, including lock, drop samples');
 console.log('starmap frame work PASS: actual draw; all sources/edges, idle reuse, camera/scene/gas invalidation, optical equivalence, drift, active particles and infrared fade');

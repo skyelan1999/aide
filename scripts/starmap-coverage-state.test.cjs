@@ -1,8 +1,9 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const context=createUiContext(vm, {sourceStateLabel:v=>({ready:'已索引',partial:'部分索引',unavailable:'暂不可用'})[v]});
-vm.runInContext(source.slice(source.indexOf('function sourceCoverageState('),source.indexOf('function sourceCoverageLabel(')),context);
+vm.runInContext(source.slice(sourceIndex(source,'function sourceCoverageState('),sourceIndex(source,'function sourceCoverageLabel(')),context);
 for(const [input,expected] of [
  [{state:'partial',coverage:{progressive:true,pending:3}},'分批扫描中'],
  [{state:'partial',coverage:{progressive:true,pending:0,reasons:['catalog_limit']}},'范围受限'],
@@ -16,7 +17,7 @@ for(const [input,expected] of [
  [{state:'unavailable',coverage:{pending:2}},'暂不可用']
 ])assert.equal(context.sourceCoverageState(input),expected);
 assert.match(fs.readFileSync('internal/server/web/starmap.css','utf8'),/\.chips \.source-chip-meta \{ display:block/);
-vm.runInContext(source.slice(source.indexOf('function nodeDetailText('),source.indexOf('function select(n,focus=true)')),context);
+vm.runInContext(source.slice(sourceIndex(source,'function nodeDetailText('),sourceIndex(source,'function select(n,focus=true)')),context);
 assert.match(context.nodeDetailText({readState:'pending',text:'obsolete body'}),/等待分批复核/);
 assert.doesNotMatch(context.nodeDetailText({readState:'unavailable',text:'obsolete body'}),/obsolete/);
 assert.equal(context.nodeDetailText({text:'readable body'}),'readable body');

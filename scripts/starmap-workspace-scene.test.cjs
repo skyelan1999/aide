@@ -1,12 +1,13 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{textContent:'A',value:'A',replaceChildren(){this.textContent=''}});return elements.get(id)};
 function context(saved,workspace='B'){
  const c=createUiContext(vm, {$:el,params:new URLSearchParams(),motionReduced:()=>false,clearEvidencePath(){},clearTimeout,cacheWriteTimer:0,cacheIdentity:null,stellarLogbook:{connecting(){},interrupted(){}},locked:false,loading:false,stopLive(){},graphGeneration:0,codeView:false,AbortController,syncCodeView(){},say(){},api:async path=>path.startsWith('/identity')?({workspace,epoch:'1',policy:'p'}):({workspace,revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true}),recoveryInput:0,recoveryAttempt:null,recoveryScopeLoaded:'A',pendingRecoveredView:null,recoveryLoading:false,window:{AideStarmapCache:{read:async()=>null},AideContinuity:{readTab:async()=>saved}},graph:{workspace:'A'},aiAbort:{abort(){c.aborted=true}},aiExplorer:{cancel(){c.aborted=true}},resetDocumentBatch(){c.reset=true},beginGraphTransition(){},applyLiveUpdate(update){c.graph=update},restoreSkyView(value){c.restored=value},liveCursor:'',knowledgeTimeline:{sync(){}},liveFailures:0,redraw(){},scheduleLive(){}});
- vm.runInContext(source.slice(source.indexOf('function defaultSkyView()'),source.indexOf('function restoreSkyView(')),c);
- vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
- vm.runInContext(source.slice(source.indexOf('async function load(){'),source.indexOf('function syncMotion()')),c);return c;
+ vm.runInContext(source.slice(sourceIndex(source,'function defaultSkyView()'),sourceIndex(source,'function restoreSkyView(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'function progressiveSummary('),sourceIndex(source,'function scheduleLive(')),c);
+ vm.runInContext(source.slice(sourceIndex(source,'async function load(){'),sourceIndex(source,'function syncMotion()')),c);return c;
 }
 (async()=>{
  let c=context(null);await vm.runInContext('load()',c);assert.equal(c.restored.query,'');assert.equal(c.restored.retrievalMode,'nodes');assert.equal(c.restored.region,'');assert.equal(c.restored.camera.zoom,1);assert.equal(c.restored.infrared,false);assert.equal(c.aborted,true);assert.equal(c.reset,true);assert.equal(el('question').value,'');
@@ -113,8 +114,8 @@ const sky=createUiContext(vm, {clearTimeout,locked:false,loading:false,recoveryL
  currentSources:()=>[{region:'workspace'}],search(){},nodeByID:new Map(),invalidateView(){},refreshView(){},ensureCosmicView(){},
  cosmos:{find:k=>k==='root'||k==='deep'},enterCosmic(k){sky.entered=k},interruptCamera(){sky.cameraTween=null;sky.wheelZoom=null},
  clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),skyFloat:{x:0,y:0},motionReduced:()=>false,syncMotion(){},syncCodeView(){},syncGraphChrome(){},syncCosmicNav(){},redraw(){}});
-vm.runInContext(source.slice(source.indexOf('function persistSkyView(active=()=>!locked){'),source.indexOf('function scheduleSkyRecovery()')),sky);
-vm.runInContext(source.slice(source.indexOf('function restoreSkyView(value){'),source.indexOf("addEventListener('scroll'")),sky);
+vm.runInContext(source.slice(sourceIndex(source,'function persistSkyView(active=()=>!locked){'),sourceIndex(source,'function scheduleSkyRecovery()')),sky);
+vm.runInContext(source.slice(sourceIndex(source,'function restoreSkyView(value){'),sourceIndex(source,"addEventListener('scroll'")),sky);
 vm.runInContext('persistSkyView()',sky);
 assert.deepEqual(snapshot.camera,{yaw:1.2,pitch:-.25,zoom:2.1});
 assert.equal(snapshot.scroll.detailText,870,'save the independently scrolling node text, not just its outer panel');
@@ -130,7 +131,7 @@ sky.cosmos.find=k=>k==='root';vm.runInContext('restoreSkyView(saved)',sky);asser
 console.log('Star map tab-scoped snapshot, camera/wheel targets, motion phase, panel scroll and ancestor fallback PASS (source VM)');
 
 const retry=createUiContext(vm, {liveTimer:1,liveReady:()=>true,scheduleLive(){},liveAbort:null,graph:{},recoveryScopeLoaded:'',load(){retry.loads=(retry.loads||0)+1}});
-vm.runInContext(source.slice(source.indexOf('async function pollLive(){'),source.indexOf('const retrievalMode=')),retry);
+vm.runInContext(source.slice(sourceIndex(source,'async function pollLive(){'),sourceIndex(source,'const retrievalMode=')),retry);
 (async()=>{
  await vm.runInContext('pollLive()',retry);assert.equal(retry.loads,1);
  retry.graph={workspace:'W'};await vm.runInContext('pollLive()',retry);assert.equal(retry.loads,2);

@@ -1,7 +1,8 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
-const block=source.slice(source.indexOf('let pathAbort='),source.indexOf('// Store navigation metadata'));
+const block=source.slice(sourceIndex(source,'let pathAbort='),sourceIndex(source,'// Store navigation metadata'));
 const elements=new Map();
 const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:false,children:[],disabled:false,textContent:'',append(...children){this.children.push(...children)},replaceChildren(){this.children=[]},addEventListener(){}});return elements.get(id)};
 const node={id:'a',name:'入口',path:'main.go',root:'workspace',line:2,endLine:3,contentHash:'hash',origin:'origin'};
@@ -35,7 +36,7 @@ assert.equal(layer.levels.get('b6'),6,'call/request view dropped part of the HTT
  const boundSpec=JSON.parse(decodeURIComponent(boundLink.href.split('=')[1]));assert.equal(boundSpec.indexedTextHash,'c'.repeat(64));assert.equal(boundSpec.indexedTextBytes,8192);assert.equal(boundSpec.codeHash,undefined);assert.equal(boundSpec.line,2);
  c.nodeByID.set('a',node);
  vm.runInContext(`renderEvidencePath(${JSON.stringify(answer)})`,c);
- c.api=async()=>answer;const reconcile=source.slice(source.indexOf(' if(initial||update.workspace!==graph.workspace)'),source.indexOf(' const differentWorkspace=!!graph.workspace'));
+ c.api=async()=>answer;const reconcile=source.slice(sourceIndex(source,' if(initial||update.workspace!==graph.workspace)'),sourceIndex(source,' const differentWorkspace=!!graph.workspace'));
  c.initial=false;c.liveWireNodes=new Map([['a',JSON.stringify(node)]]);c.edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);
  c.update={workspace:'w',revision:'r2',nodes:[node],edges:[],reset:true};vm.runInContext(reconcile,c);assert.equal(el('path-steps').children.length,1,'unchanged coverage must preserve route');
  c.update={workspace:'w',revision:'r3',nodes:[],edges:[],reset:true};vm.runInContext(reconcile,c);assert.equal(el('path-steps').children.length,0,'reset omission must invalidate route');

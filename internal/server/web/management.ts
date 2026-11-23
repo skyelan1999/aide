@@ -1,6 +1,7 @@
 interface Window {
   AideManagement?: { refresh: () => Promise<void> };
 }
+// @ts-ignore -- 独立页面脚本的全局 api，与星图页面函数同名但不同页
 declare var state: any, lockScreen: any, api: any, t: any, action: any, refreshConfig: any, toast: any;
 /* Management proposals are server-owned. No generated code runs in this view. */
 (() => {

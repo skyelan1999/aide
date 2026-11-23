@@ -3,21 +3,22 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+const {sourceIndex,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const context = { window: {} };
 vm.runInNewContext(fs.readFileSync('internal/server/web/starmap-physics.js', 'utf8'), context);
 const physics = context.window.AideCosmicPhysics;
 const starmap = fs.readFileSync('internal/server/web/starmap.js', 'utf8');
-const blackHoleRenderer = starmap.match(/function drawBlackHole\(hole,now,fade=1\)\{[\s\S]*?\n\}/)?.[0] || '';
+const blackHoleRenderer = starmap.slice(sourceIndex(starmap,'function drawBlackHole('),sourceIndex(starmap,'function drawBlackHoleLensOverlay('));
 assert.ok(blackHoleRenderer, 'black-hole renderer exists');
-assert.match(blackHoleRenderer, /ctx\.scale\(1,view\)[\s\S]*?ctx\.restore\(\);ctx\.save\(\);ctx\.translate\(p\.x,p\.y\)/,
+sourceMatch(blackHoleRenderer, /ctx\.scale\(1,view\)[\s\S]*?ctx\.restore\(\);ctx\.save\(\);ctx\.translate\(p\.x,p\.y\)/,
  'only the accretion disk is inclination-flattened; shadow and photon glow use circular screen space');
-assert.match(blackHoleRenderer, /const bands=\[\[3,3\.8\],\[3\.8,5\.1\],\[5\.1,6\.8\],\[6\.8,9\]\],segments=112/,
+sourceMatch(blackHoleRenderer, /const bands=\[\[3,3\.8\],\[3\.8,5\.1\],\[5\.1,6\.8\],\[6\.8,9\]\],segments=112/,
  'the thin disk is drawn as a continuous, finely segmented annulus rather than separated arc strokes');
-assert.match(blackHoleRenderer, /ctx\.arc\(0,0,rs\*outer,a,b\);ctx\.lineTo\(Math\.cos\(b\)\*rs\*inner,Math\.sin\(b\)\*rs\*inner\);ctx\.arc\(0,0,rs\*inner,b,a,true\);ctx\.closePath\(\);ctx\.fill\(\)/,
+sourceMatch(blackHoleRenderer, /ctx\.arc\(0,0,rs\*outer,a,b\);ctx\.lineTo\(Math\.cos\(b\)\*rs\*inner,Math\.sin\(b\)\*rs\*inner\);ctx\.arc\(0,0,rs\*inner,b,a,true\);ctx\.closePath\(\);ctx\.fill\(\)/,
  'each disk wedge closes across its inner and outer radii to avoid dotted concentric rings');
-assert.match(blackHoleRenderer, /createRadialGradient\(0,0,shadowR\*\.99,0,0,shadowR\*1\.12\)/,
+sourceMatch(blackHoleRenderer, /createRadialGradient\(0,0,shadowR\*\.99,0,0,shadowR\*1\.12\)/,
  'photon glow is a separate radial optical layer around the computed shadow');
-assert.match(blackHoleRenderer, /for\(let i=0;i<segments;i\+\+\)[\s\S]*?ctx\.arc\(0,0,shadowR\*1\.035,a,b\);ctx\.stroke\(\)/,
+sourceMatch(blackHoleRenderer, /for\(let i=0;i<segments;i\+\+\)[\s\S]*?ctx\.arc\(0,0,shadowR\*1\.035,a,b\);ctx\.stroke\(\)/,
  'the near-critical photon ring is segmented by orbital Doppler brightness');
 assert.doesNotMatch(blackHoleRenderer, /arc\(0,0,shadowR,-2\.72|arc\(0,0,shadowR,\.18/,
  'black-hole appearance has no arbitrary broken highlight arcs');

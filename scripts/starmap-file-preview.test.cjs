@@ -1,6 +1,7 @@
 const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {sourceIndex,sourceIncludes,sourceMatch}=require('./fixtures/starmap-source.cjs');
 const c=createUiContext(vm, {window:{},URL,URLSearchParams});vm.runInContext(fs.readFileSync('internal/server/web/starmap-preview.js','utf8'),c);
 const spec={root:'context',source:'ssh-reference',path:'docs/guide.md',origin:'origin-1',readOnly:true,knowledgeWorkspace:'work-1',format:'.md',line:42,endLine:46,codeHash:'hash-1'};
 const href=spec=>'/#file='+encodeURIComponent(JSON.stringify(spec));let locked=false,workspace='work-1',opened=[],notes=[],blocked=false,pending=false;
@@ -17,9 +18,9 @@ blocked=true;assert.equal(owner.open(href(spec)),false);assert.match(notes.at(-1
 for(const invalid of [href({...spec,readOnly:false}),href({...spec,origin:''}),href({...spec,knowledgeWorkspace:'other'}),'https://other.test/'+href(spec),'javascript:alert(1)'])assert.equal(owner.open(invalid),false);
 locked=true;assert.equal(owner.open(href(spec)),false);locked=false;workspace='other';assert.equal(owner.open(href(spec)),false);
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8'),html=fs.readFileSync('internal/server/web/starmap.html','utf8');
-assert.match(html,/id="node-open" data-file-preview/);assert.match(source,/if\(ref\.hit\)selectDocument\(ref\.hit\);else select\(node\);openNodePreview\(ref\.hit\?/);assert.match(source,/if\(id==='ai-found'\)openNodePreview\(hit\.file\)/);
+assert.match(html,/id="node-open" data-file-preview/);sourceMatch(source,/if\(ref\.hit\)selectDocument\(ref\.hit\);else select\(node\);openNodePreview\(ref\.hit\?/);sourceMatch(source,/if\(id==='ai-found'\)openNodePreview\(hit\.file\)/);
 // The actual locator builder must preserve origin, source, format and line data.
-const locator=createUiContext(vm, {graph:{workspace:'work-1'}});vm.runInContext(source.slice(source.indexOf('function pathSourceLink('),source.indexOf('function renderEvidencePath(')),locator);
+const locator=createUiContext(vm, {graph:{workspace:'work-1'}});vm.runInContext(source.slice(sourceIndex(source,'function pathSourceLink('),sourceIndex(source,'function renderEvidencePath(')),locator);
 const built=vm.runInContext(`pathSourceLink(${JSON.stringify({id:'C1',kind:'symbol',...spec,contentHash:spec.codeHash})},43)`,locator),actual=JSON.parse(decodeURIComponent(built.split('=')[1]));assert.equal(actual.source,spec.source);assert.equal(actual.origin,spec.origin);assert.equal(actual.line,43);assert.equal(actual.endLine,43);assert.equal(actual.codeHash,spec.codeHash);assert.equal(actual.readOnly,true);
 assert.equal(vm.runInContext('pathSourceLink({kind:"directory",path:"docs"})',locator),null);
 
@@ -27,7 +28,7 @@ assert.equal(vm.runInContext('pathSourceLink({kind:"directory",path:"docs"})',lo
 // the map, and later files reuse the one owned preview tab.
 const mapOpened=[],mapNotes=[];
 const wiring=createUiContext(vm, {window:{AideStarmapPreview:c.window.AideStarmapPreview,open(url,target){assert.equal(target,'_blank');const win=makeWindow(url);mapOpened.push({url,win});return win;}},location:{origin:'https://aide.test',assign(){throw Error('map must not navigate');}},graph:{workspace:'work-1'},locked:false,crypto:{randomUUID:()=> 'map-owned'},say:message=>mapNotes.push(message)});
-vm.runInContext(source.slice(source.indexOf('const filePreview='),source.indexOf('function openNodePreview(')),wiring);
+vm.runInContext(source.slice(sourceIndex(source,'const filePreview='),sourceIndex(source,'function openNodePreview(')),wiring);
 assert.equal(vm.runInContext('filePreview.open('+JSON.stringify(href(spec))+')',wiring),true);
 assert.equal(mapOpened.length,1);assert.deepEqual(JSON.parse(new URLSearchParams(new URL(mapOpened[0].url).hash.slice(1)).get('file')),spec);
 assert.equal(new URL(mapOpened[0].url).searchParams.has('starmapReturn'),false,'new tab does not replace itself with another copy of the map on return');
@@ -44,7 +45,7 @@ for(const [value,expected] of [['/starmap.html?channel=owned&code=1&access_token
 // Document text locations use the server's structured line and raw-file hash,
 // never infer a line from translated page/paragraph/cell locator text.
 const elements=new Map();locator.$=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};locator.select=file=>{locator.selected={...file,connectionCount:3,stellarLevel:2,stellarBand:'金色星',nextStellarThreshold:7};};locator.syncNodeSourceChrome=()=>{};
-vm.runInContext(source.slice(source.indexOf('function selectDocument('),source.indexOf('function renderDocumentResults(')),locator);
+vm.runInContext(source.slice(sourceIndex(source,'function selectDocument('),sourceIndex(source,'function renderDocumentResults(')),locator);
 const plainFile={id:'Fdoc',kind:'file',root:'context',source:'ssh-reference',path:'docs/guide.md',origin:'origin-1',format:'.md',contentHash:'indexed-prefix'};
 vm.runInContext('selectDocument('+JSON.stringify({file:plainFile,line:51,locator:'text line 51',offset:0,hash:'a'.repeat(64),text:'exact excerpt'})+')',locator);
 assert.equal(locator.selected.stellarBand,'金色星','selecting original-text hit preserves computed star metadata');assert.equal(locator.selected.connectionCount,3);assert.equal(locator.selected.nextStellarThreshold,7);
