@@ -144,9 +144,26 @@
   - DOM 标准类型不含的动态属性（如 `PerformanceEntry.type` 仅存在于
     navigation entry），在该 const 语句上一行加 `@ts-expect-error` 保留原动态
     访问；验证时 removeComments 归一化，注释不影响等价。
-- **批 4h（待做）**：其余中小模块（voip、file-autosave、project-workflows、
-  plugin-plans、drawio-preview-safety、starmap-physics、highlight-grammar-fixes、
-  session-review、continuity、settings-init、workbench-background、
+- **批 4h（已完成）**：八个中小模块——`voip`、`file-autosave`、`project-workflows`、
+  `plugin-plans`、`drawio-preview-safety`（UMD）、`starmap-physics`、
+  `highlight-grammar-fixes`（UMD，`hljs` 以 declare var any 声明）、
+  `session-review`（UMD）；严格等价全过，相关测试全过（file-autosave-retry、
+  plugin-plans、session-review、drawio preview bounds、highlight grammar review、
+  drawio layout fixes + 22 个 starmap 套件）。drawio-preview-safety 与
+  highlight-grammar-fixes 由服务端注入，无 html cache buster。
+  附带修复：`scripts/session-review.test.cjs` 中对 html 引用硬编码
+  `app.js?v=257` 的断言在改造前已失败（HEAD 已 v294），改为版本号无关的
+  `v=\d+` 断言，消除此类既有脆弱断言。
+  新经验：
+  - `Object.assign(document.createElement('input'), {value: 5060})` 的交叉类型
+    会使 `.value` 变成 `string & number = never`，整个 const 标注 any 即可。
+  - **Window 声明唯一权威不可违反**：file-autosave 曾重复声明
+    `LockCluster?: any`，与 lock-cluster.ts 的 `LockClusterApi` 冲突并导致
+    多个文件回调参数失去上下文类型（TS7006）。引用方一律不重复声明，
+    直接用权威文件的类型。
+  - `new Map(arr.map(x => cond ? [k,v] : null).filter(Boolean))` 用
+    `new Map<any, any>(... as any)` 断言构造参数，不影响产物。
+- **批 4i（待做）**：其余中小模块（continuity、settings-init、workbench-background、
   plugin-workbench、message-center、experience、urdf-preview、session-plan、
   avatar-player、starmap 等）、两个 AudioWorklet（独立 lib 配置）、
   `locales/en.js` 与 scripts 桥接（Node/CommonJS 脚本使用独立
