@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 /* 锁屏集群：跨标签页（主界面 ↔ 从界面）锁定状态层级联动。
  *
  * 三条硬规则（不变）：
@@ -26,411 +26,552 @@
  * 无 BroadcastChannel 时仍读取服务端权威状态；可见页面每 5 秒复核，恢复前台立即复核。
  */
 (function () {
-  const CHANNEL = 'aide-lock-v1';
-  const JOIN_WINDOW_MS = 600;     // 加入窗口期：显示中性“正在确认安全状态…”
-  const HEARTBEAT_MS = 1500;      // master 心跳（assert）间隔
-  const WATCHDOG_MS = 3000;       // slave 收不到心跳 → 重选
-  const ELECTION_MS = 400;        // 选举发出后等待反超的时间
-  const PING_THROTTLE_MS = 1000;  // slave 活动 ping 节流
-  const JOIN_HARD_TIMEOUT_MS = 2500; // joining veil 硬上限：不得卡死在“正在确认安全状态”
-  const BACKEND_FETCH_TIMEOUT_MS = 1500; // 后端权威状态读取超时
-  // 后端不可达且集群内无已知锁态时保持遮罩；恢复连接后自动复核。
-  const DEFAULT_LOCK_WHEN_UNKNOWN = true;
-
-  // 每 tab 启动生成稳定身份
-  const tabId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-    ? crypto.randomUUID()
-    : 'tab-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-  const bootTs = Date.now();
-  // role：文件查看器（#file=…）为 slave 优先角色；其余 ws 为主界面
-  const role = ((location.hash || '').indexOf('#file=') === 0 || location.pathname === '/starmap.html') ? 'file' : 'ws';
-  const ROLE_PRI = role === 'ws' ? 0 : 1;
-
-  const handlers = Object.create(null);
-  let bc = null;
-  const supported = (typeof BroadcastChannel !== 'undefined');
-  let phase = 'joining';            // joining | master | slave
-  let masterLocked = false;         // 仅 master 写入
-  let localDismiss = false;         // 仅 slave：本 tab 已单独解锁
-  let lastSeenMasterLocked = null;  // slave 从 welcome/assert 学到的集群锁态
-  let masterGen = 0;                // 当前 master 代际：slave 只接受单调递增
-  let masterFrom = null;
-  // 后端权威状态：null = 未取到/不可达；{ locked:bool, gen:number } = 已知
-  let backendState = null;
-  // Joining tabs keep the neutral veil until the persisted lock state is read.
-  // Peer heartbeats may describe a lock/unlock that is still being persisted.
-  let authorityPending = true;
-  let writeQueue = Promise.resolve(), pendingWrites = 0, syncTimer = null;
-  let dismissGen = -1, optimisticGen = null, lockIntent = 0, lastEffective = null;
-  let joinTimer = null, watchdogTimer = null, heartbeatTimer = null, electionTimer = null, hardJoinTimer = null;
-  let lastPingAt = 0;
-  let lastActivityAt = 0, activityTimer = null;
-  let onRemoteActivity = null;     // master 收到 slave ping 时回调（app.js 注入重置空闲表）
-  let readyResolve = null;
-  let readySettled = false;
-  const readyPromise = new Promise(res => { readyResolve = res; });
-
-  function emit(ev, data) {
-    if(ev==='effective'){if(authorityPending||phase==='joining'&&!readySettled)return;if(data===lastEffective)return;lastEffective=data;}
-    const list = handlers[ev];
-    if (!list) return;
-    for (const fn of list) { try { fn(data); } catch (_) {} }
-  }
-  function on(ev, fn) { (handlers[ev] = handlers[ev] || []).push(fn); }
-
-  function myPri() { return [ROLE_PRI, bootTs, tabId]; }
-  // 元组 a 是否比 b 优先级高（小者胜）
-  function priBeats(a, b) {
-    for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] < b[i];
-    return false;
-  }
-  function send(type, extra) {
-    if (!bc) return;
-    const msg = Object.assign({ type, gen: masterGen, from: tabId, role, bootTs, pri: myPri(), server: backendState }, extra);
-    try { bc.postMessage(msg); } catch (_) {}
-  }
-
-  /* ── 后端权威状态 ── */
-  function authToken() {
-    try { return localStorage.getItem('aide-token') || ''; } catch (_) { return ''; }
-  }
-  // Server generations never move backwards, even when HTTP responses arrive out of order.
-  function acceptBackendState(data, confirmed = false) {
-    if (!data || typeof data.locked !== 'boolean' || !Number.isSafeInteger(data.gen) || data.gen < 0) throw new Error(uiTextLockCluster('锁屏状态响应无效'));
-    if (backendState && data.gen < backendState.gen) return backendState;
-    if(optimisticGen!==null&&data.gen>optimisticGen)optimisticGen=null;
-    const changed = !backendState || data.gen !== backendState.gen || data.locked !== backendState.locked;
-    backendState = {locked:data.locked, gen:data.gen};
-    const reconcile = phase !== 'joining' && !pendingWrites && (changed || (confirmed && authorityPending));
-    if(confirmed)authorityPending = false;
-    if (reconcile) {
-      masterLocked=data.locked; lastSeenMasterLocked=data.locked;
-      if(data.locked && data.gen !== dismissGen) localDismiss=false;
-      masterGen=Math.max(masterGen,data.gen);
-      if(phase==='master') send('assert',{masterLocked});
-      emit('effective',effectiveLocked());
-      settleReady();
-    }
-    return backendState;
-  }
-  async function fetchBackendState() {
-    if(typeof fetch!=='function')return null;
-    const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
-    const timer=setTimeout(()=>ctrl?.abort(),BACKEND_FETCH_TIMEOUT_MS);
-    try {
-      const resp=await fetch('/api/lock-state',{cache:'no-store',headers:{Authorization:'Bearer '+authToken()},signal:ctrl?.signal});
-      if(!resp.ok)throw new Error(uiTextLockCluster('锁屏状态读取失败'));
-      return acceptBackendState(await resp.json(), true);
-    } catch (_) { return null; } finally {clearTimeout(timer);}
-  }
-  function persistBackend(locked) {
-    pendingWrites++;
-    const write=writeQueue.catch(()=>{}).then(async()=>{
-      const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
-      try {
-        const resp=await fetch('/api/lock-state',{method:'PUT',headers:{Authorization:'Bearer '+authToken(),'Content-Type':'application/json'},body:JSON.stringify({locked:!!locked}),signal:ctrl.signal});
-        if(!resp.ok)throw new Error(uiTextLockCluster('锁屏状态保存失败，请重试'));
-        return await resp.json();
-      } finally {clearTimeout(timer);}
-    });
-    writeQueue=write.then(data=>{pendingWrites--;acceptBackendState(data,true);send('state');return data;},err=>{pendingWrites--;emit('error',err.message);throw err;});
-    writeQueue.catch(()=>{});
-    return writeQueue;
-  }
-  // 后端曾不可达：后台继续确认。确认锁定则补锁；确认未锁则维持现状。
-  function backgroundReconfirm() { setTimeout(()=>fetchBackendState(),800); }
-
-  function effectiveLocked() {
-    if(phase==='joining'&&!readySettled)return false;
-    const durable=backendState?backendState.locked:(phase==='master'?masterLocked:!!lastSeenMasterLocked);
-    return (durable||optimisticGen!==null)&&!localDismiss;
-  }
-  function settleReady() {
-    if (readySettled) return;
-    readySettled = true;
-    clearT(hardJoinTimer); hardJoinTimer = null;
-    readyResolve(effectiveLocked());
-  }
-  function clearT(t) { if (t) { clearTimeout(t); clearInterval(t); } }
-
-  function scheduleHeartbeat() {
-    clearT(heartbeatTimer);
-    heartbeatTimer = setInterval(() => { if(phase==='master') send('assert', { masterLocked }); }, HEARTBEAT_MS);
-  }
-  function scheduleWatchdog() {
-    clearT(watchdogTimer);
-    watchdogTimer = setTimeout(onWatchdog, WATCHDOG_MS);
-  }
-
-  function becomeMaster(inheritLocked) {
-    clearT(activityTimer); activityTimer=null;
-    phase = 'master';
-    masterGen++;
-    emit('role','master');
-    masterLocked = !!inheritLocked;
-    localDismiss = localDismiss && backendState?.gen === dismissGen;
-    masterFrom = tabId;
-    clearT(joinTimer); joinTimer = null;
-    clearT(electionTimer); electionTimer = null;
-    clearT(watchdogTimer); watchdogTimer = null;
-    scheduleHeartbeat();
-    send('assert', { masterLocked });
-    if(!authorityPending){emit('effective', effectiveLocked());settleReady();}
-  }
-  function becomeSlave(from, mLocked, gen) {
-    const wasJoining=phase==='joining';
-    if(wasJoining && backendState && !pendingWrites)mLocked=backendState.locked;
-    const keepDismiss=localDismiss && backendState?.gen===dismissGen;
-    phase = 'slave';
-    clearT(heartbeatTimer); heartbeatTimer=null;
-    emit('role','slave');
-    masterFrom = from;
-    masterGen = Number(gen) || 0;
-    lastSeenMasterLocked = !!mLocked;
-    localDismiss = keepDismiss;
-    clearT(joinTimer); joinTimer = null;
-    clearT(electionTimer); electionTimer = null;
-    scheduleWatchdog();
-    if(!authorityPending){emit('effective', effectiveLocked());settleReady();}
-  }
-  // 当选时继承锁态：后端权威优先，其次集群内见过的锁态，最后回退保守默认。
-  function inheritLockedDecision() {
-    if (backendState) return !!backendState.locked;
-    if (lastSeenMasterLocked !== null) return !!lastSeenMasterLocked;
-    return DEFAULT_LOCK_WHEN_UNKNOWN;
-  }
-  function startElection() {
-    clearT(joinTimer); joinTimer = null;
-    clearT(electionTimer);
-    send('election');
-    electionTimer = setTimeout(async () => {
-      await fetchBackendState();
-      if(phase!=='joining' || !electionTimer)return;
-      // 无更强者反超 → 当选。以后端持久状态为准（修复刷新误锁）；后端不可达才回退默认。
-      becomeMaster(inheritLockedDecision());
-    }, ELECTION_MS);
-  }
-  function onWatchdog() {
-    if (phase !== 'slave') return;
-    phase = 'joining'; // 临时回到竞选态
-    // 心跳短暂丢失（后台 tab 被节流/断连恢复）不应误判锁态：重选前先刷新后端权威。
-    fetchBackendState();
-    startElection();
-  }
-  // joining veil 硬超时：面纱不得卡死在“正在确认安全状态”。
-  function onJoinHardTimeout() {
-    if (readySettled) return;
-    // The server is unreachable; end the neutral wait with the existing conservative fallback.
-    authorityPending=false;
-    if (phase === 'joining') {
-      becomeMaster(inheritLockedDecision());
-    } else {
-      settleReady();
-    }
-    // 后端此前一直不可达：后台继续确认，确认真实锁定再补锁。
-    if (!backendState) backgroundReconfirm();
-  }
-
-  function onMessage(ev) {
-    const m = ev.data || {};
-    if (typeof m.type !== 'string' || m.from === tabId || !Array.isArray(m.pri) || m.pri.length!==3) return;
-    if(m.server && typeof m.server.locked==='boolean' && Number.isSafeInteger(m.server.gen) && (!backendState || m.server.gen>backendState.gen)) acceptBackendState(m.server);
-
-    if(['welcome','assert','lock','unlock'].includes(m.type) && backendState && m.server && m.server.gen<backendState.gen)return;
-    switch (m.type) {
-      case 'state': fetchBackendState(); break;
-      case 'hello':
-        if (phase === 'master') send('welcome', { masterLocked, gen: masterGen });
-        break;
-
-      case 'welcome':
-        if (phase === 'master') {
-          if (priBeats(m.pri, myPri())) becomeSlave(m.from, m.masterLocked, m.gen); // 分裂脑，强者上
-        } else if (priBeats(myPri(), m.pri)) {
-          if (phase === 'joining' && !electionTimer) startElection();
-        } else {
-          becomeSlave(m.from, m.masterLocked, m.gen);
+    const CHANNEL = 'aide-lock-v1';
+    const JOIN_WINDOW_MS = 600; // 加入窗口期：显示中性“正在确认安全状态…”
+    const HEARTBEAT_MS = 1500; // master 心跳（assert）间隔
+    const WATCHDOG_MS = 3000; // slave 收不到心跳 → 重选
+    const ELECTION_MS = 400; // 选举发出后等待反超的时间
+    const PING_THROTTLE_MS = 1000; // slave 活动 ping 节流
+    const JOIN_HARD_TIMEOUT_MS = 2500; // joining veil 硬上限：不得卡死在“正在确认安全状态”
+    const BACKEND_FETCH_TIMEOUT_MS = 1500; // 后端权威状态读取超时
+    // 后端不可达且集群内无已知锁态时保持遮罩；恢复连接后自动复核。
+    const DEFAULT_LOCK_WHEN_UNKNOWN = true;
+    // 每 tab 启动生成稳定身份
+    const tabId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'tab-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    const bootTs = Date.now();
+    // role：文件查看器（#file=…）为 slave 优先角色；其余 ws 为主界面
+    const role = ((location.hash || '').indexOf('#file=') === 0 || location.pathname === '/starmap.html') ? 'file' : 'ws';
+    const ROLE_PRI = role === 'ws' ? 0 : 1;
+    const handlers = Object.create(null);
+    let bc = null;
+    const supported = (typeof BroadcastChannel !== 'undefined');
+    let phase = 'joining'; // joining | master | slave
+    let masterLocked = false; // 仅 master 写入
+    let localDismiss = false; // 仅 slave：本 tab 已单独解锁
+    let lastSeenMasterLocked = null; // slave 从 welcome/assert 学到的集群锁态
+    let masterGen = 0; // 当前 master 代际：slave 只接受单调递增
+    let masterFrom = null;
+    // 后端权威状态：null = 未取到/不可达；{ locked:bool, gen:number } = 已知
+    let backendState = null;
+    // Joining tabs keep the neutral veil until the persisted lock state is read.
+    // Peer heartbeats may describe a lock/unlock that is still being persisted.
+    let authorityPending = true;
+    let writeQueue = Promise.resolve(), pendingWrites = 0, syncTimer = null;
+    let dismissGen = -1, optimisticGen = null, lockIntent = 0, lastEffective = null;
+    let joinTimer = null, watchdogTimer = null, heartbeatTimer = null, electionTimer = null, hardJoinTimer = null;
+    let lastPingAt = 0;
+    let lastActivityAt = 0, activityTimer = null;
+    let onRemoteActivity = null; // master 收到 slave ping 时回调（app.js 注入重置空闲表）
+    let readyResolve = null;
+    let readySettled = false;
+    const readyPromise = new Promise(res => { readyResolve = res; });
+    function emit(ev, data) {
+        if (ev === 'effective') {
+            if (authorityPending || phase === 'joining' && !readySettled)
+                return;
+            if (data === lastEffective)
+                return;
+            lastEffective = data;
         }
-        break;
-
-      case 'assert': // master 心跳
-        if(backendState && m.server && m.server.gen<backendState.gen) break;
-        if (phase === 'master') {
-          if (priBeats(m.pri, myPri())) becomeSlave(m.from, m.masterLocked, m.gen);
-          break;
+        const list = handlers[ev];
+        if (!list)
+            return;
+        for (const fn of list) {
+            try {
+                fn(data);
+            }
+            catch (_) { }
         }
+    }
+    function on(ev, fn) { (handlers[ev] = handlers[ev] || []).push(fn); }
+    function myPri() { return [ROLE_PRI, bootTs, tabId]; }
+    // 元组 a 是否比 b 优先级高（小者胜）
+    function priBeats(a, b) {
+        for (let i = 0; i < 3; i++)
+            if (a[i] !== b[i])
+                return a[i] < b[i];
+        return false;
+    }
+    function send(type, extra) {
+        if (!bc)
+            return;
+        const msg = Object.assign({ type, gen: masterGen, from: tabId, role, bootTs, pri: myPri(), server: backendState }, extra);
+        try {
+            bc.postMessage(msg);
+        }
+        catch (_) { }
+    }
+    /* ── 后端权威状态 ── */
+    function authToken() {
+        try {
+            return localStorage.getItem('aide-token') || '';
+        }
+        catch (_) {
+            return '';
+        }
+    }
+    // Server generations never move backwards, even when HTTP responses arrive out of order.
+    function acceptBackendState(data, confirmed = false) {
+        if (!data || typeof data.locked !== 'boolean' || !Number.isSafeInteger(data.gen) || data.gen < 0)
+            throw new Error(uiTextLockCluster('锁屏状态响应无效'));
+        if (backendState && data.gen < backendState.gen)
+            return backendState;
+        if (optimisticGen !== null && data.gen > optimisticGen)
+            optimisticGen = null;
+        const changed = !backendState || data.gen !== backendState.gen || data.locked !== backendState.locked;
+        backendState = { locked: data.locked, gen: data.gen };
+        const reconcile = phase !== 'joining' && !pendingWrites && (changed || (confirmed && authorityPending));
+        if (confirmed)
+            authorityPending = false;
+        if (reconcile) {
+            masterLocked = data.locked;
+            lastSeenMasterLocked = data.locked;
+            if (data.locked && data.gen !== dismissGen)
+                localDismiss = false;
+            masterGen = Math.max(masterGen, data.gen);
+            if (phase === 'master')
+                send('assert', { masterLocked });
+            emit('effective', effectiveLocked());
+            settleReady();
+        }
+        return backendState;
+    }
+    async function fetchBackendState() {
+        if (typeof fetch !== 'function')
+            return null;
+        const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = setTimeout(() => ctrl?.abort(), BACKEND_FETCH_TIMEOUT_MS);
+        try {
+            const resp = await fetch('/api/lock-state', { cache: 'no-store', headers: { Authorization: 'Bearer ' + authToken() }, signal: ctrl?.signal });
+            if (!resp.ok)
+                throw new Error(uiTextLockCluster('锁屏状态读取失败'));
+            return acceptBackendState(await resp.json(), true);
+        }
+        catch (_) {
+            return null;
+        }
+        finally {
+            clearTimeout(timer);
+        }
+    }
+    function persistBackend(locked) {
+        pendingWrites++;
+        const write = writeQueue.catch(() => { }).then(async () => {
+            const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 5000);
+            try {
+                const resp = await fetch('/api/lock-state', { method: 'PUT', headers: { Authorization: 'Bearer ' + authToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ locked: !!locked }), signal: ctrl.signal });
+                if (!resp.ok)
+                    throw new Error(uiTextLockCluster('锁屏状态保存失败，请重试'));
+                return await resp.json();
+            }
+            finally {
+                clearTimeout(timer);
+            }
+        });
+        writeQueue = write.then(data => { pendingWrites--; acceptBackendState(data, true); send('state'); return data; }, (err) => { pendingWrites--; emit('error', err.message); throw err; });
+        writeQueue.catch(() => { });
+        return writeQueue;
+    }
+    // 后端曾不可达：后台继续确认。确认锁定则补锁；确认未锁则维持现状。
+    function backgroundReconfirm() { setTimeout(() => fetchBackendState(), 800); }
+    function effectiveLocked() {
+        if (phase === 'joining' && !readySettled)
+            return false;
+        const durable = backendState ? backendState.locked : (phase === 'master' ? masterLocked : !!lastSeenMasterLocked);
+        return (durable || optimisticGen !== null) && !localDismiss;
+    }
+    function settleReady() {
+        if (readySettled)
+            return;
+        readySettled = true;
+        clearT(hardJoinTimer);
+        hardJoinTimer = null;
+        readyResolve(effectiveLocked());
+    }
+    function clearT(t) { if (t) {
+        clearTimeout(t);
+        clearInterval(t);
+    } }
+    function scheduleHeartbeat() {
+        clearT(heartbeatTimer);
+        heartbeatTimer = setInterval(() => { if (phase === 'master')
+            send('assert', { masterLocked }); }, HEARTBEAT_MS);
+    }
+    function scheduleWatchdog() {
+        clearT(watchdogTimer);
+        watchdogTimer = setTimeout(onWatchdog, WATCHDOG_MS);
+    }
+    function becomeMaster(inheritLocked) {
+        clearT(activityTimer);
+        activityTimer = null;
+        phase = 'master';
+        masterGen++;
+        emit('role', 'master');
+        masterLocked = !!inheritLocked;
+        localDismiss = localDismiss && backendState?.gen === dismissGen;
+        masterFrom = tabId;
+        clearT(joinTimer);
+        joinTimer = null;
+        clearT(electionTimer);
+        electionTimer = null;
+        clearT(watchdogTimer);
+        watchdogTimer = null;
+        scheduleHeartbeat();
+        send('assert', { masterLocked });
+        if (!authorityPending) {
+            emit('effective', effectiveLocked());
+            settleReady();
+        }
+    }
+    function becomeSlave(from, mLocked, gen) {
+        const wasJoining = phase === 'joining';
+        if (wasJoining && backendState && !pendingWrites)
+            mLocked = backendState.locked;
+        const keepDismiss = localDismiss && backendState?.gen === dismissGen;
+        phase = 'slave';
+        clearT(heartbeatTimer);
+        heartbeatTimer = null;
+        emit('role', 'slave');
+        masterFrom = from;
+        masterGen = Number(gen) || 0;
+        lastSeenMasterLocked = !!mLocked;
+        localDismiss = keepDismiss;
+        clearT(joinTimer);
+        joinTimer = null;
+        clearT(electionTimer);
+        electionTimer = null;
+        scheduleWatchdog();
+        if (!authorityPending) {
+            emit('effective', effectiveLocked());
+            settleReady();
+        }
+    }
+    // 当选时继承锁态：后端权威优先，其次集群内见过的锁态，最后回退保守默认。
+    function inheritLockedDecision() {
+        if (backendState)
+            return !!backendState.locked;
+        if (lastSeenMasterLocked !== null)
+            return !!lastSeenMasterLocked;
+        return DEFAULT_LOCK_WHEN_UNKNOWN;
+    }
+    function startElection() {
+        clearT(joinTimer);
+        joinTimer = null;
+        clearT(electionTimer);
+        send('election');
+        electionTimer = setTimeout(async () => {
+            await fetchBackendState();
+            if (phase !== 'joining' || !electionTimer)
+                return;
+            // 无更强者反超 → 当选。以后端持久状态为准（修复刷新误锁）；后端不可达才回退默认。
+            becomeMaster(inheritLockedDecision());
+        }, ELECTION_MS);
+    }
+    function onWatchdog() {
+        if (phase !== 'slave')
+            return;
+        phase = 'joining'; // 临时回到竞选态
+        // 心跳短暂丢失（后台 tab 被节流/断连恢复）不应误判锁态：重选前先刷新后端权威。
+        fetchBackendState();
+        startElection();
+    }
+    // joining veil 硬超时：面纱不得卡死在“正在确认安全状态”。
+    function onJoinHardTimeout() {
+        if (readySettled)
+            return;
+        // The server is unreachable; end the neutral wait with the existing conservative fallback.
+        authorityPending = false;
         if (phase === 'joining') {
-          // 工作台优先接管文件页；较弱页面的心跳不能终止竞选。
-          if (priBeats(myPri(), m.pri)) {
-            if (!electionTimer) startElection();
-          } else becomeSlave(m.from, m.masterLocked, m.gen);
-        } else if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
-          masterGen = Math.max(masterGen, Number(m.gen) || 0);
-          lastSeenMasterLocked = !!m.masterLocked;
-          scheduleWatchdog();
-          emit('effective', effectiveLocked());
+            becomeMaster(inheritLockedDecision());
         }
-        break;
-
-      case 'lock':
-        if(backendState && m.server && m.server.gen<backendState.gen) break;
-        if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
-          masterGen = Number(m.gen) || 0;
-          lastSeenMasterLocked = true;
-          optimisticGen=backendState?.gen??0;lockIntent++;
-          localDismiss = false; // master 重新升锁 → slave 本地解锁标记失效
-          scheduleWatchdog();
-          emit('effective', effectiveLocked());
+        else {
+            settleReady();
         }
-        break;
-
-      case 'unlock':
-        if(backendState && (!m.server || m.server.gen<backendState.gen || m.server.locked)) break;
-        if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
-          masterGen = Number(m.gen) || 0;
-          lastSeenMasterLocked = false;
-          scheduleWatchdog();
-          emit('effective', effectiveLocked());
+        // 后端此前一直不可达：后台继续确认，确认真实锁定再补锁。
+        if (!backendState)
+            backgroundReconfirm();
+    }
+    function onMessage(ev) {
+        const m = ev.data || {};
+        if (typeof m.type !== 'string' || m.from === tabId || !Array.isArray(m.pri) || m.pri.length !== 3)
+            return;
+        if (m.server && typeof m.server.locked === 'boolean' && Number.isSafeInteger(m.server.gen) && (!backendState || m.server.gen > backendState.gen))
+            acceptBackendState(m.server);
+        if (['welcome', 'assert', 'lock', 'unlock'].includes(m.type) && backendState && m.server && m.server.gen < backendState.gen)
+            return;
+        switch (m.type) {
+            case 'state':
+                fetchBackendState();
+                break;
+            case 'hello':
+                if (phase === 'master')
+                    send('welcome', { masterLocked, gen: masterGen });
+                break;
+            case 'welcome':
+                if (phase === 'master') {
+                    if (priBeats(m.pri, myPri()))
+                        becomeSlave(m.from, m.masterLocked, m.gen); // 分裂脑，强者上
+                }
+                else if (priBeats(myPri(), m.pri)) {
+                    if (phase === 'joining' && !electionTimer)
+                        startElection();
+                }
+                else {
+                    becomeSlave(m.from, m.masterLocked, m.gen);
+                }
+                break;
+            case 'assert': // master 心跳
+                if (backendState && m.server && m.server.gen < backendState.gen)
+                    break;
+                if (phase === 'master') {
+                    if (priBeats(m.pri, myPri()))
+                        becomeSlave(m.from, m.masterLocked, m.gen);
+                    break;
+                }
+                if (phase === 'joining') {
+                    // 工作台优先接管文件页；较弱页面的心跳不能终止竞选。
+                    if (priBeats(myPri(), m.pri)) {
+                        if (!electionTimer)
+                            startElection();
+                    }
+                    else
+                        becomeSlave(m.from, m.masterLocked, m.gen);
+                }
+                else if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
+                    masterGen = Math.max(masterGen, Number(m.gen) || 0);
+                    lastSeenMasterLocked = !!m.masterLocked;
+                    scheduleWatchdog();
+                    emit('effective', effectiveLocked());
+                }
+                break;
+            case 'lock':
+                if (backendState && m.server && m.server.gen < backendState.gen)
+                    break;
+                if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
+                    masterGen = Number(m.gen) || 0;
+                    lastSeenMasterLocked = true;
+                    optimisticGen = backendState?.gen ?? 0;
+                    lockIntent++;
+                    localDismiss = false; // master 重新升锁 → slave 本地解锁标记失效
+                    scheduleWatchdog();
+                    emit('effective', effectiveLocked());
+                }
+                break;
+            case 'unlock':
+                if (backendState && (!m.server || m.server.gen < backendState.gen || m.server.locked))
+                    break;
+                if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
+                    masterGen = Number(m.gen) || 0;
+                    lastSeenMasterLocked = false;
+                    scheduleWatchdog();
+                    emit('effective', effectiveLocked());
+                }
+                break;
+            case 'election':
+                if (priBeats(m.pri, myPri())) {
+                    // 对方更强：退让，等对方 assert
+                    if (phase === 'master') {
+                        phase = 'slave';
+                        masterFrom = m.from;
+                        clearT(heartbeatTimer);
+                        heartbeatTimer = null;
+                        emit('role', 'slave');
+                    }
+                    clearT(electionTimer);
+                    electionTimer = null;
+                    scheduleWatchdog();
+                }
+                else {
+                    send('election'); // 我更强：反发
+                }
+                break;
+            case 'ping':
+                if (phase === 'master' && onRemoteActivity) {
+                    try {
+                        onRemoteActivity(m.activityAt);
+                    }
+                    catch (_) { }
+                }
+                break;
+            case 'req-lock':
+                if (phase === 'master')
+                    requestLock('remote');
+                break;
+            case 'bye':
+                if (phase === 'slave' && m.from === masterFrom)
+                    onWatchdog();
+                break;
         }
-        break;
-
-      case 'election':
-        if (priBeats(m.pri, myPri())) {
-          // 对方更强：退让，等对方 assert
-          if (phase === 'master') { phase = 'slave'; masterFrom = m.from; clearT(heartbeatTimer); heartbeatTimer=null; emit('role','slave'); }
-          clearT(electionTimer); electionTimer = null;
-          scheduleWatchdog();
-        } else {
-          send('election'); // 我更强：反发
+    }
+    /* ── 对外 API ── */
+    function requestLock(reason) {
+        clearT(activityTimer);
+        activityTimer = null;
+        // Any tab may lock the server; acknowledgement precedes durable peer notification.
+        optimisticGen = backendState?.gen ?? 0;
+        lockIntent++;
+        localDismiss = false;
+        masterLocked = true;
+        lastSeenMasterLocked = true;
+        masterGen++;
+        emit('effective', true);
+        if (phase === 'master')
+            send('lock', { masterLocked: true, reason: reason || 'manual' });
+        return persistBackend(true);
+    }
+    async function prepareUnlock() {
+        await writeQueue.catch(() => { });
+        const current = await fetchBackendState();
+        if (!current)
+            throw new Error(uiTextLockCluster('无法确认锁屏状态，请重试'));
+        return { global: phase === 'master' || !bc, gen: current.gen, intent: lockIntent };
+    }
+    async function handleUnlockSuccess(scope, verifiedState) {
+        await writeQueue.catch(() => { });
+        if (scope?.intent !== undefined && scope.intent !== lockIntent)
+            throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
+        let current;
+        if (verifiedState) {
+            const expectedGen = scope?.gen + (scope?.global ? 1 : 0);
+            if (verifiedState.gen !== expectedGen || (scope?.global && verifiedState.locked !== false))
+                throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
+            current = acceptBackendState(verifiedState, true);
+            // Reconcile subsequent locks in the background; an unavailable follow-up
+            // GET must not turn an already committed identity verification into failure.
+            fetchBackendState();
         }
-        break;
-
-      case 'ping':
-        if (phase === 'master' && onRemoteActivity) { try { onRemoteActivity(m.activityAt); } catch (_) {} }
-        break;
-
-      case 'req-lock':
-        if (phase === 'master') requestLock('remote');
-        break;
-
-      case 'bye':
-        if (phase === 'slave' && m.from === masterFrom) onWatchdog();
-        break;
+        else
+            current = await fetchBackendState(); // Compatibility with older servers.
+        if (!current)
+            throw new Error(uiTextLockCluster('无法确认锁屏状态，请重试'));
+        if (scope?.global) {
+            if (current.locked)
+                throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
+            optimisticGen = null;
+            masterLocked = false;
+            lastSeenMasterLocked = false;
+            localDismiss = false;
+            masterGen = Math.max(masterGen + 1, current.gen);
+            send('unlock', { masterLocked: false });
+            send('state');
+            emit('effective', false);
+        }
+        else {
+            // The server verified this generation. A leader election during password
+            // hashing changes the tab role, not the validity of the identity receipt.
+            if (current.gen !== scope?.gen)
+                throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
+            // A peer may still advertise a lock whose persistence failed. The
+            // verified server receipt also dismisses that veil at this generation.
+            optimisticGen = null;
+            localDismiss = true;
+            dismissGen = current.gen;
+            emit('effective', effectiveLocked());
+        }
     }
-  }
-
-  /* ── 对外 API ── */
-  function requestLock(reason) {
-    clearT(activityTimer); activityTimer=null;
-    // Any tab may lock the server; acknowledgement precedes durable peer notification.
-    optimisticGen=backendState?.gen??0;lockIntent++;
-    localDismiss=false; masterLocked=true; lastSeenMasterLocked=true; masterGen++;
-    emit('effective',true);
-    if(phase==='master')send('lock',{masterLocked:true,reason:reason||'manual'});
-    return persistBackend(true);
-  }
-  async function prepareUnlock() {
-    await writeQueue.catch(()=>{});
-    const current=await fetchBackendState();
-    if(!current)throw new Error(uiTextLockCluster('无法确认锁屏状态，请重试'));
-    return {global:phase==='master'||!bc,gen:current.gen,intent:lockIntent};
-  }
-  async function handleUnlockSuccess(scope, verifiedState) {
-    await writeQueue.catch(()=>{});
-    if(scope?.intent!==undefined&&scope.intent!==lockIntent)throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
-    let current;
-    if(verifiedState) {
-      const expectedGen=scope?.gen+(scope?.global?1:0);
-      if(verifiedState.gen!==expectedGen || (scope?.global&&verifiedState.locked!==false))throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
-      current=acceptBackendState(verifiedState,true);
-      // Reconcile subsequent locks in the background; an unavailable follow-up
-      // GET must not turn an already committed identity verification into failure.
-      fetchBackendState();
-    } else current=await fetchBackendState(); // Compatibility with older servers.
-    if(!current)throw new Error(uiTextLockCluster('无法确认锁屏状态，请重试'));
-    if(scope?.global) {
-      if(current.locked)throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
-      optimisticGen=null;masterLocked=false;lastSeenMasterLocked=false;localDismiss=false;
-      masterGen=Math.max(masterGen+1,current.gen);
-      send('unlock',{masterLocked:false});send('state');
-      emit('effective',false);
-    } else {
-      // The server verified this generation. A leader election during password
-      // hashing changes the tab role, not the validity of the identity receipt.
-      if(current.gen!==scope?.gen)throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
-      // A peer may still advertise a lock whose persistence failed. The
-      // verified server receipt also dismisses that veil at this generation.
-      optimisticGen=null;localDismiss=true;dismissGen=current.gen;
-      emit('effective',effectiveLocked());
+    function sendActivity() {
+        activityTimer = null;
+        if (phase !== 'slave' || effectiveLocked())
+            return;
+        lastPingAt = Date.now();
+        send('ping', { activityAt: lastActivityAt });
     }
-  }
-  function sendActivity() {
-    activityTimer=null;
-    if(phase!=='slave'||effectiveLocked())return;
-    lastPingAt=Date.now();
-    send('ping',{activityAt:lastActivityAt});
-  }
-  function noteActivity() {
-    if (!supported || effectiveLocked() || phase==='joining') return;
-    if (phase === 'master') {
-      if (onRemoteActivity) { try { onRemoteActivity(Date.now()); } catch (_) {} }
-    } else if (phase === 'slave') {
-      const now = Date.now();
-      lastActivityAt=now;
-      if (now - lastPingAt >= PING_THROTTLE_MS) {
-        clearT(activityTimer); activityTimer=null;
-        sendActivity();
-      } else if(!activityTimer) activityTimer=setTimeout(sendActivity,PING_THROTTLE_MS-(now-lastPingAt));
+    function noteActivity() {
+        if (!supported || effectiveLocked() || phase === 'joining')
+            return;
+        if (phase === 'master') {
+            if (onRemoteActivity) {
+                try {
+                    onRemoteActivity(Date.now());
+                }
+                catch (_) { }
+            }
+        }
+        else if (phase === 'slave') {
+            const now = Date.now();
+            lastActivityAt = now;
+            if (now - lastPingAt >= PING_THROTTLE_MS) {
+                clearT(activityTimer);
+                activityTimer = null;
+                sendActivity();
+            }
+            else if (!activityTimer)
+                activityTimer = setTimeout(sendActivity, PING_THROTTLE_MS - (now - lastPingAt));
+        }
     }
-  }
-
-  function boot() {
-    // 降级：无 BroadcastChannel 时退化为现状（各 tab 独立锁）。
-    // onReady 直接 resolve true，让 app 走“加载即锁”的旧本地路径。
-    if (!supported) { fetchBackendState().then(()=>{authorityPending=false;becomeMaster(inheritLockedDecision());}); return; }
-    try { bc = new BroadcastChannel(CHANNEL); }
-    catch (_) { bc = null; fetchBackendState().then(()=>{authorityPending=false;becomeMaster(inheritLockedDecision());}); return; }
-    bc.onmessage = onMessage;
-    send('hello');
-    // 并发拉取后端权威状态：选举/veil 超时决策时通常已就绪；不阻塞选举。
-    fetchBackendState();
-    joinTimer = setTimeout(startElection, JOIN_WINDOW_MS);
-    hardJoinTimer = setTimeout(onJoinHardTimeout, JOIN_HARD_TIMEOUT_MS);
-    window.addEventListener('beforeunload', () => { try { send('bye'); } catch (_) {} });
-  }
-
-  window.LockCluster = {
-    on,
-    onReady: () => readyPromise,
-    requestLock,
-    handleUnlockSuccess,
-    prepareUnlock,
-    noteActivity,
-    setRemoteActivityHook: fn => { onRemoteActivity = fn; },
-    isMaster: () => phase === 'master',
-    isSlave: () => phase === 'slave',
-    effectiveLocked,
-    // 供 app.js initialize 预判：已收敛且明确未锁时跳过 joining 面纱，尽量不闪。
-    snapshot: () => (readySettled ? { settled: true, locked: effectiveLocked() } : { settled: false, locked: false }),
-    get tabId() { return tabId; },
-    get role() { return role; },
-    get supported() { return supported; }
-  };
-  boot();
-  // A bounded server check covers sleeping/background tabs, lost BroadcastChannel messages,
-  // and host aliases. Same-state replies do not reset idle timers or reload the star map.
-  syncTimer=setInterval(()=>{if(!document.hidden)fetchBackendState();},5000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchBackendState();});
-  window.addEventListener('pageshow',()=>{
-    clearT(syncTimer);syncTimer=setInterval(()=>{if(!document.hidden)fetchBackendState();},5000);
-    if(phase==='master')scheduleHeartbeat();else if(phase==='slave')scheduleWatchdog();else if(bc){
-      clearT(joinTimer);joinTimer=null;clearT(electionTimer);electionTimer=null;
-      startElection();if(!readySettled){clearT(hardJoinTimer);hardJoinTimer=setTimeout(onJoinHardTimeout,JOIN_HARD_TIMEOUT_MS);}
+    function boot() {
+        // 降级：无 BroadcastChannel 时退化为现状（各 tab 独立锁）。
+        // onReady 直接 resolve true，让 app 走“加载即锁”的旧本地路径。
+        if (!supported) {
+            fetchBackendState().then(() => { authorityPending = false; becomeMaster(inheritLockedDecision()); });
+            return;
+        }
+        try {
+            bc = new BroadcastChannel(CHANNEL);
+        }
+        catch (_) {
+            bc = null;
+            fetchBackendState().then(() => { authorityPending = false; becomeMaster(inheritLockedDecision()); });
+            return;
+        }
+        bc.onmessage = onMessage;
+        send('hello');
+        // 并发拉取后端权威状态：选举/veil 超时决策时通常已就绪；不阻塞选举。
+        fetchBackendState();
+        joinTimer = setTimeout(startElection, JOIN_WINDOW_MS);
+        hardJoinTimer = setTimeout(onJoinHardTimeout, JOIN_HARD_TIMEOUT_MS);
+        window.addEventListener('beforeunload', () => { try {
+            send('bye');
+        }
+        catch (_) { } });
     }
-    fetchBackendState();
-  });
-  window.addEventListener('pagehide',()=>{clearT(syncTimer);clearT(heartbeatTimer);clearT(watchdogTimer);clearT(electionTimer);clearT(joinTimer);clearT(hardJoinTimer);clearT(activityTimer);activityTimer=null;});
-
+    window.LockCluster = {
+        on,
+        onReady: () => readyPromise,
+        requestLock,
+        handleUnlockSuccess,
+        prepareUnlock,
+        noteActivity,
+        setRemoteActivityHook: fn => { onRemoteActivity = fn; },
+        isMaster: () => phase === 'master',
+        isSlave: () => phase === 'slave',
+        effectiveLocked,
+        // 供 app.js initialize 预判：已收敛且明确未锁时跳过 joining 面纱，尽量不闪。
+        snapshot: () => (readySettled ? { settled: true, locked: effectiveLocked() } : { settled: false, locked: false }),
+        get tabId() { return tabId; },
+        get role() { return role; },
+        get supported() { return supported; }
+    };
+    boot();
+    // A bounded server check covers sleeping/background tabs, lost BroadcastChannel messages,
+    // and host aliases. Same-state replies do not reset idle timers or reload the star map.
+    syncTimer = setInterval(() => { if (!document.hidden)
+        fetchBackendState(); }, 5000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden)
+        fetchBackendState(); });
+    window.addEventListener('pageshow', () => {
+        clearT(syncTimer);
+        syncTimer = setInterval(() => { if (!document.hidden)
+            fetchBackendState(); }, 5000);
+        if (phase === 'master')
+            scheduleHeartbeat();
+        else if (phase === 'slave')
+            scheduleWatchdog();
+        else if (bc) {
+            clearT(joinTimer);
+            joinTimer = null;
+            clearT(electionTimer);
+            electionTimer = null;
+            startElection();
+            if (!readySettled) {
+                clearT(hardJoinTimer);
+                hardJoinTimer = setTimeout(onJoinHardTimeout, JOIN_HARD_TIMEOUT_MS);
+            }
+        }
+        fetchBackendState();
+    });
+    window.addEventListener('pagehide', () => { clearT(syncTimer); clearT(heartbeatTimer); clearT(watchdogTimer); clearT(electionTimer); clearT(joinTimer); clearT(hardJoinTimer); clearT(activityTimer); activityTimer = null; });
 })();
-
 function uiTextLockCluster(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

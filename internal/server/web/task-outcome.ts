@@ -93,7 +93,6 @@ interface AideTaskOutcomeApi {
   refreshSession: (sessionId?: string) => Promise<void> | undefined;
 }
 interface Window {
-  LockCluster?: { on: (event: string, cb: (value: boolean) => void) => void };
   AideTaskOutcome?: AideTaskOutcomeApi;
 }
 

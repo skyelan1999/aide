@@ -22,27 +22,37 @@
    `catch(e)` 中的 `(e as Error)`、必要的 `??''` 等等价守卫。
 2. `window.AideXxx` 全局 API 在文件顶层用 `interface Window { ... }` 合并声明；
    调用方（app.js 等未改造文件）不受影响。
+   **同一全局 API 的 Window 声明只保留在权威实现文件**（如 `LockCluster` 仅在
+   `lock-cluster.ts`），其他文件引用即可——重复声明不同类型会报合并冲突。
 3. DOM 创建辅助函数用泛型 `node<K extends keyof HTMLElementTagNameMap>`，
    保留元素专有属性（href/type/disabled）的类型检查。
 4. API 响应数据可先显式 `any` 并在后续批次收紧为接口；函数边界（参数、返回值、
    暴露到 window 的 API）必须类型化。
 5. **禁止顺手改行为**：包括看似无害的 `return x` → `void x`（返回值可能被
-   测试或其他调用方 await）、文案、时序、轮询条件。等价性存疑时保留原写法。
+   测试或其他调用方 await）、`x.foo()` → `x?.foo()`、`clearTimeout(t)` → 加判空、
+   `n.textContent=text` → `String(text)`、文案、时序、轮询条件。
+   类型不通过时用非空断言（`event!.preventDefault()`、`clearTimeout(timer!)`、
+   `readyResolve!(...)`）保留原始表达式，而不是改写成"更安全"的版本。
 6. 编译后递增 `index.html` 中该脚本的 `?v=` 版本号。
+7. **文件头注释必须放在 interface 声明之前**（或紧贴首个运行时语句）：
+   注释与首个输出语句之间夹 interface 时，tsc 会把注释随声明一起擦除。
 
 ## 每批验收标准
 
 - `tsc` 零错误；产物 `node --check` 通过。
-- 空白归一化 diff 仅含已逐条审查的等价改写（类型擦除、`??''`、显式 undefined 分支）。
+- **严格等价验证**（批 2 起）：改造前 `cp` 原 `.js` 到 /tmp 备份，编译后用
+  `ts.transpileModule`（removeComments）同时转译原文件与新产物，归一化空白、
+  引号、顶层严格模式 prologue、单参箭头括号后比较，必须完全一致。
 - 相关 `scripts/*.test.cjs` / `*.test.js` 与 Go 侧相关测试全过。
 - 不新增运行时依赖、不改加载方式。
 
 ## 批次计划
 
 - **批 1（已完成）**：基础设施 + `task-outcome.ts`（279 行，3 个 outcome 回归测试全过）。
-- **批 2**：有 node 测试覆盖的模块优先：`lock-cluster`、`session-plan`、
-  markdown 导出/图片路径相关（对应 `scripts/*test.*`）。
-- **批 3**：markdown 系列与中小模块（review、pdf-appearance、media、code、
+- **批 2（已完成）**：`async-action.ts`、`account-balance-pool.ts`（UMD）、
+  `lock-cluster.ts`（选举/权威状态，436 行）；双侧同转译严格等价验证通过，
+  6 个相关 node 测试全过；task-outcome 的 LockCluster 声明移交 lock-cluster.ts。
+- **批 3**：markdown 系列与中小模块（session-plan、review、pdf-appearance、media、code、
   diagrams、message-center、plugin-workbench 等）。
 - **批 4**：中型模块与 scripts 桥接（starmap、avatar-player、urdf-preview、
   computer-bridge 等；Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
