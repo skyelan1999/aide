@@ -163,11 +163,25 @@
     直接用权威文件的类型。
   - `new Map(arr.map(x => cond ? [k,v] : null).filter(Boolean))` 用
     `new Map<any, any>(... as any)` 断言构造参数，不影响产物。
-- **批 4i（待做）**：其余中小模块（continuity、settings-init、workbench-background、
-  plugin-workbench、message-center、experience、urdf-preview、session-plan、
-  avatar-player、starmap 等）、两个 AudioWorklet（独立 lib 配置）、
-  `locales/en.js` 与 scripts 桥接（Node/CommonJS 脚本使用独立
-  `module: commonjs` 配置）。
+- **批 4i（已完成）**：六个中大型模块——`continuity`、`settings-init`、
+  `workbench-background`、`plugin-workbench`、`message-center`、`experience`；
+  严格等价全过，11 个相关测试套件全过（continuity-isolation/lock-write/
+  retention、experience-runtime、message-center、message-notifications、
+  plugin-workbench（含 client/tabs）、workbench-background、settings-navigation）。
+  新经验：
+  - `Object.entries(any)` / `Object.values(any)` 的元素被推断为 unknown，
+    用显式泛型 `Object.entries<any>(...)` / `Object.values<any>(...)` 保留
+    原表达式并恢复 any 元素类型。
+  - `new Date(a)-new Date(b)` 这类日期算术用 `(new Date(a) as any)-(new Date(b) as any)`
+    保留原表达式，禁止顺手改成 `.getTime()`（会改变源码表达式）。
+  - 可选链比较后的第二次访问不 narrow（如 `previousView?.key===k&&!previousView.bottom`），
+    后续访问用 `previousView!.bottom` 非空断言，运行时不变。
+  - `document.createElementNS(ns,'path')` 返回 Element 无 style/animate，
+    结果常量标 any；`document.activeElement` 需要表单属性时同样标 any。
+  - `iframe.contentWindow` 可能为 null，整 frame 常量标 any 比逐处断言更简洁。
+- **批 4j（待做）**：urdf-preview、session-plan、avatar-player、starmap、
+  两个 AudioWorklet（独立 lib 配置）、`locales/en.js` 与 scripts 桥接
+  （Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

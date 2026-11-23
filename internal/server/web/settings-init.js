@@ -1,3 +1,4 @@
+"use strict";
 'use strict';
 /* aide 设置存储 · 唯一事实源（FR-58~FR-60 / LIM-21）
  *
@@ -24,262 +25,282 @@
  *        documentElement.dataset.themePref = 用户偏好（light | dark | system）
  */
 (function () {
-  var KEY = 'aide.ui';
-  var LEGACY_KEY = 'aide.theme';
-  var VERSION = 1;
-  var PALETTE_VERSION = 3;
-  var VALID_THEME = ['light', 'dark', 'system']; // 主题枚举唯一来源
-  var DEFAULT_PREF = 'system';
-  function normalizeLanguage(value) { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; }                   // 缺省偏好
-  var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'modern' };
-  var motionMedia = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-  var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
-
-  var root = document.documentElement;
-  var media = window.matchMedia ? window.matchMedia(SYSTEM_QUERY) : null;
-  var uiSubscribers = [];
-  var themeSubscribers = [];
-
-  /* ── 存储基础操作：全部静默降级（隐私模式等不抛错） ── */
-  function rawGet(key) {
-    try {
-      return window.localStorage.getItem(key);
-    } catch (err) {
-      return null;
-    }
-  }
-  function rawSet(key, value) {
-    try {
-      window.localStorage.setItem(key, value);
-    } catch (err) {
-      /* 忽略：持久化失败不应阻塞设置应用 */
-    }
-  }
-  function rawRemove(key) {
-    try {
-      window.localStorage.removeItem(key);
-    } catch (err) {
-      /* 忽略 */
-    }
-  }
-
-  /* ── 校验 ── */
-  function isTheme(value) {
-    return VALID_THEME.indexOf(value) >= 0;
-  }
-  function normalizeTheme(value) {
-    return isTheme(value) ? value : DEFAULT_PREF;
-  }
-  function normalizePalette(value, version) {
-    if (value === 'modern') return version >= 2 ? 'modern' : 'professional';
-    if (value === 'blue') return 'modern';
-    return ['comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'modern';
-  }
-  function normalizeBackground(value) {
-    return ['off', 'aurora', 'studio', 'modern', 'eye-comfort', 'local'].indexOf(value) >= 0 ? value : 'studio';
-  }
-  function normalizeBackgroundStrength(value) {
-    return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;
-  }
-
-  /* ── 读取：旧键迁移 → JSON 解析 → 字段校验 → 回写规范化文档 ── */
-  function readDoc() {
-    var legacy = rawGet(LEGACY_KEY);
-    if (legacy !== null) rawRemove(LEGACY_KEY); // 迁移后删除旧键
-    var stored = rawGet(KEY);
-    var parsed = null;
-    if (stored !== null) {
-      try {
-        parsed = JSON.parse(stored);
-      } catch (err) {
-        parsed = null; // 损坏 JSON → 按缺省处理
-      }
-    }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) parsed = {};
-    var theme = typeof parsed.theme === 'string' ? normalizeTheme(parsed.theme) : DEFAULT_PREF;
-    if (legacy !== null && typeof parsed.theme !== 'string') theme = normalizeTheme(legacy);
-    // 保留未知字段（向前兼容），规范 version、theme、palette；兼容旧 classic 偏好
-    var doc = {};
-    for (var key in parsed) {
-      if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
-    }
-    doc.version = VERSION;
-    doc.language = normalizeLanguage(parsed.language);
-    doc.motion = 'system';
-    doc.startupAnimation = 'on';
-    doc.background = normalizeBackground(parsed.background);
-    doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
-    doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-    doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
-    doc.paletteVersion = PALETTE_VERSION;
-    var normalized = JSON.stringify(doc);
-    if (stored !== normalized) rawSet(KEY, normalized);
-    return doc;
-  }
-
-  var doc = readDoc();
-
-  /* ── 主题应用：生效主题与用户偏好分别写到 <html>（仅此一处写 DOM） ── */
-  function effectiveOf(pref) {
-    if (pref === 'light' || pref === 'dark') return pref;
-    return media && media.matches ? 'dark' : 'light';
-  }
-  function applyTheme() {
-    root.setAttribute('data-theme', effectiveOf(doc.theme));
-    root.setAttribute('data-theme-pref', doc.theme);
-    root.setAttribute('data-palette', doc.palette);
-    root.setAttribute('data-motion', motionMedia && motionMedia.matches ? 'reduced' : 'full');
-    window.dispatchEvent(new Event('aide:motion'));
-    root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
-  }
-
-  /* ── 通知：单个订阅者异常不得影响设置本身 ── */
-  function snapshot() {
-    var copy = {};
-    for (var key in doc) {
-      if (Object.prototype.hasOwnProperty.call(doc, key)) copy[key] = doc[key];
-    }
-    return copy;
-  }
-  function notifyAll() {
-    var uiSnapshot = null;
-    for (var i = 0; i < themeSubscribers.length; i++) {
-      try {
-        themeSubscribers[i](doc.theme);
-      } catch (err) {
-        /* 忽略订阅者异常 */
-      }
-    }
-    for (var j = 0; j < uiSubscribers.length; j++) {
-      try {
-        if (uiSnapshot === null) uiSnapshot = snapshot();
-        uiSubscribers[j](uiSnapshot);
-      } catch (err) {
-        /* 忽略订阅者异常 */
-      }
-    }
-  }
-  function persist() {
-    rawSet(KEY, JSON.stringify(doc));
-  }
-
-  /* ── 首次应用：同步执行，早于首次内容绘制 ── */
-  applyTheme();
-
-  /* ── 跟随系统外观：仅当偏好为 system 时响应 ── */
-  if (media) {
-    var onSystemChange = function () {
-      if (doc.theme !== DEFAULT_PREF) return; // 用户已显式选择，忽略系统变化
-      applyTheme();
-      notifyAll();
-    };
-    if (media.addEventListener) media.addEventListener('change', onSystemChange);
-    else if (media.addListener) media.addListener(onSystemChange); // 旧内核兜底
-  }
-
-  if (motionMedia) {
-    if (motionMedia.addEventListener) motionMedia.addEventListener('change', applyTheme);
-    else if (motionMedia.addListener) motionMedia.addListener(applyTheme);
-  }
-
-  /* ── 跨标签页同步：JSON 键与旧键都吸收 ── */
-  window.addEventListener('storage', function (event) {
-    if (event.key === KEY) {
-      var parsed = null;
-      if (event.newValue !== null) {
+    var KEY = 'aide.ui';
+    var LEGACY_KEY = 'aide.theme';
+    var VERSION = 1;
+    var PALETTE_VERSION = 3;
+    var VALID_THEME = ['light', 'dark', 'system']; // 主题枚举唯一来源
+    var DEFAULT_PREF = 'system';
+    function normalizeLanguage(value) { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; } // 缺省偏好
+    var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'modern' };
+    var motionMedia = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
+    var root = document.documentElement;
+    var media = window.matchMedia ? window.matchMedia(SYSTEM_QUERY) : null;
+    var uiSubscribers = [];
+    var themeSubscribers = [];
+    /* ── 存储基础操作：全部静默降级（隐私模式等不抛错） ── */
+    function rawGet(key) {
         try {
-          parsed = JSON.parse(event.newValue);
-        } catch (err) {
-          parsed = null;
+            return window.localStorage.getItem(key);
         }
-      }
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) parsed = {};
-      var theme = typeof parsed.theme === 'string' ? normalizeTheme(parsed.theme) : DEFAULT_PREF;
-      doc = {};
-      for (var key in parsed) {
-        if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
-      }
-      doc.version = VERSION;
-      doc.language = normalizeLanguage(parsed.language);
-      doc.motion = 'system';
-      doc.startupAnimation = 'on';
-      doc.background = normalizeBackground(parsed.background);
-      doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
-      doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-      doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
-      doc.paletteVersion = PALETTE_VERSION;
-      applyTheme();
-      notifyAll();
-    } else if (event.key === LEGACY_KEY) {
-      if (event.newValue !== null && !isTheme(event.newValue)) rawRemove(LEGACY_KEY);
-      doc.theme = normalizeTheme(event.newValue);
-      persist();
-      applyTheme();
-      notifyAll();
+        catch (err) {
+            return null;
+        }
     }
-  });
-
-  /* ── JSON 设置门面（FR-59）：面板只允许通过此处操作设置 ── */
-  window.aideUI = {
-    key: KEY,
-    version: VERSION,
-    get: function (name) {
-      if(name==='fileMarkdownEditing')return doc[name]==='text'?'text':'split';
-      return ['workRecovery','fileLineNumbers','fileSyntaxHighlight','fileMarkdownPreview','fileMarkdownOutline','fileMarkdownMedia','fileCsvPreview'].indexOf(name) >= 0 ? doc[name] !== false : doc[name];
-    },
-    getAll: snapshot,
-    setAppearance: function (palette, theme) {
-      doc.palette = ['comfort', 'green', 'professional', 'modern'].indexOf(palette) >= 0 ? palette : 'modern';
-      doc.paletteVersion = PALETTE_VERSION;
-      doc.theme = normalizeTheme(theme);
-      persist();
-      applyTheme();
-      notifyAll();
-    },
-    set: function (name, value) {
-      if (name === 'eyeRestReminder') value = value !== false;
-      if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'modern') : name === 'background' ? normalizeBackground(value) : name === 'startupAnimation' ? 'on' : value;
-      if (name === 'palette') doc.paletteVersion = PALETTE_VERSION;
-      persist();
-      if (name === 'theme' || name === 'language' || name === 'motion' || name === 'palette') applyTheme();
-      notifyAll();
-      return doc[name];
-    },
-    subscribe: function (fn) {
-      if (typeof fn !== 'function') {
-        return function () {};
-      }
-      uiSubscribers.push(fn);
-      return function () {
-        var index = uiSubscribers.indexOf(fn);
-        if (index >= 0) uiSubscribers.splice(index, 1);
-      };
+    function rawSet(key, value) {
+        try {
+            window.localStorage.setItem(key, value);
+        }
+        catch (err) {
+            /* 忽略：持久化失败不应阻塞设置应用 */
+        }
     }
-  };
-
-  /* ── 主题门面（兼容旧契约）：内部已改走 JSON 文档 ── */
-  window.aideTheme = {
-    key: KEY,
-    valid: VALID_THEME.slice(),
-    pref: function () {
-      return doc.theme;
-    },
-    effective: function () {
-      return effectiveOf(doc.theme);
-    },
-    set: function (next) {
-      return window.aideUI.set('theme', next);
-    },
-    subscribe: function (fn) {
-      if (typeof fn !== 'function') {
-        return function () {};
-      }
-      themeSubscribers.push(fn);
-      return function () {
-        var index = themeSubscribers.indexOf(fn);
-        if (index >= 0) themeSubscribers.splice(index, 1);
-      };
+    function rawRemove(key) {
+        try {
+            window.localStorage.removeItem(key);
+        }
+        catch (err) {
+            /* 忽略 */
+        }
     }
-  };
+    /* ── 校验 ── */
+    function isTheme(value) {
+        return VALID_THEME.indexOf(value) >= 0;
+    }
+    function normalizeTheme(value) {
+        return isTheme(value) ? value : DEFAULT_PREF;
+    }
+    function normalizePalette(value, version) {
+        if (value === 'modern')
+            return version >= 2 ? 'modern' : 'professional';
+        if (value === 'blue')
+            return 'modern';
+        return ['comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'modern';
+    }
+    function normalizeBackground(value) {
+        return ['off', 'aurora', 'studio', 'modern', 'eye-comfort', 'local'].indexOf(value) >= 0 ? value : 'studio';
+    }
+    function normalizeBackgroundStrength(value) {
+        return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;
+    }
+    /* ── 读取：旧键迁移 → JSON 解析 → 字段校验 → 回写规范化文档 ── */
+    function readDoc() {
+        var legacy = rawGet(LEGACY_KEY);
+        if (legacy !== null)
+            rawRemove(LEGACY_KEY); // 迁移后删除旧键
+        var stored = rawGet(KEY);
+        var parsed = null;
+        if (stored !== null) {
+            try {
+                parsed = JSON.parse(stored);
+            }
+            catch (err) {
+                parsed = null; // 损坏 JSON → 按缺省处理
+            }
+        }
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+            parsed = {};
+        var theme = typeof parsed.theme === 'string' ? normalizeTheme(parsed.theme) : DEFAULT_PREF;
+        if (legacy !== null && typeof parsed.theme !== 'string')
+            theme = normalizeTheme(legacy);
+        // 保留未知字段（向前兼容），规范 version、theme、palette；兼容旧 classic 偏好
+        var doc = {};
+        for (var key in parsed) {
+            if (Object.prototype.hasOwnProperty.call(parsed, key))
+                doc[key] = parsed[key];
+        }
+        doc.version = VERSION;
+        doc.language = normalizeLanguage(parsed.language);
+        doc.motion = 'system';
+        doc.startupAnimation = 'on';
+        doc.background = normalizeBackground(parsed.background);
+        doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
+        doc.theme = parsed.theme === 'classic' ? 'light' : theme;
+        doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
+        doc.paletteVersion = PALETTE_VERSION;
+        var normalized = JSON.stringify(doc);
+        if (stored !== normalized)
+            rawSet(KEY, normalized);
+        return doc;
+    }
+    var doc = readDoc();
+    /* ── 主题应用：生效主题与用户偏好分别写到 <html>（仅此一处写 DOM） ── */
+    function effectiveOf(pref) {
+        if (pref === 'light' || pref === 'dark')
+            return pref;
+        return media && media.matches ? 'dark' : 'light';
+    }
+    function applyTheme() {
+        root.setAttribute('data-theme', effectiveOf(doc.theme));
+        root.setAttribute('data-theme-pref', doc.theme);
+        root.setAttribute('data-palette', doc.palette);
+        root.setAttribute('data-motion', motionMedia && motionMedia.matches ? 'reduced' : 'full');
+        window.dispatchEvent(new Event('aide:motion'));
+        root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
+    }
+    /* ── 通知：单个订阅者异常不得影响设置本身 ── */
+    function snapshot() {
+        var copy = {};
+        for (var key in doc) {
+            if (Object.prototype.hasOwnProperty.call(doc, key))
+                copy[key] = doc[key];
+        }
+        return copy;
+    }
+    function notifyAll() {
+        var uiSnapshot = null;
+        for (var i = 0; i < themeSubscribers.length; i++) {
+            try {
+                themeSubscribers[i](doc.theme);
+            }
+            catch (err) {
+                /* 忽略订阅者异常 */
+            }
+        }
+        for (var j = 0; j < uiSubscribers.length; j++) {
+            try {
+                if (uiSnapshot === null)
+                    uiSnapshot = snapshot();
+                uiSubscribers[j](uiSnapshot);
+            }
+            catch (err) {
+                /* 忽略订阅者异常 */
+            }
+        }
+    }
+    function persist() {
+        rawSet(KEY, JSON.stringify(doc));
+    }
+    /* ── 首次应用：同步执行，早于首次内容绘制 ── */
+    applyTheme();
+    /* ── 跟随系统外观：仅当偏好为 system 时响应 ── */
+    if (media) {
+        var onSystemChange = function () {
+            if (doc.theme !== DEFAULT_PREF)
+                return; // 用户已显式选择，忽略系统变化
+            applyTheme();
+            notifyAll();
+        };
+        if (media.addEventListener)
+            media.addEventListener('change', onSystemChange);
+        else if (media.addListener)
+            media.addListener(onSystemChange); // 旧内核兜底
+    }
+    if (motionMedia) {
+        if (motionMedia.addEventListener)
+            motionMedia.addEventListener('change', applyTheme);
+        else if (motionMedia.addListener)
+            motionMedia.addListener(applyTheme);
+    }
+    /* ── 跨标签页同步：JSON 键与旧键都吸收 ── */
+    window.addEventListener('storage', function (event) {
+        if (event.key === KEY) {
+            var parsed = null;
+            if (event.newValue !== null) {
+                try {
+                    parsed = JSON.parse(event.newValue);
+                }
+                catch (err) {
+                    parsed = null;
+                }
+            }
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+                parsed = {};
+            var theme = typeof parsed.theme === 'string' ? normalizeTheme(parsed.theme) : DEFAULT_PREF;
+            doc = {};
+            for (var key in parsed) {
+                if (Object.prototype.hasOwnProperty.call(parsed, key))
+                    doc[key] = parsed[key];
+            }
+            doc.version = VERSION;
+            doc.language = normalizeLanguage(parsed.language);
+            doc.motion = 'system';
+            doc.startupAnimation = 'on';
+            doc.background = normalizeBackground(parsed.background);
+            doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
+            doc.theme = parsed.theme === 'classic' ? 'light' : theme;
+            doc.palette = parsed.theme === 'classic' ? 'green' : normalizePalette(parsed.palette, parsed.paletteVersion);
+            doc.paletteVersion = PALETTE_VERSION;
+            applyTheme();
+            notifyAll();
+        }
+        else if (event.key === LEGACY_KEY) {
+            if (event.newValue !== null && !isTheme(event.newValue))
+                rawRemove(LEGACY_KEY);
+            doc.theme = normalizeTheme(event.newValue);
+            persist();
+            applyTheme();
+            notifyAll();
+        }
+    });
+    /* ── JSON 设置门面（FR-59）：面板只允许通过此处操作设置 ── */
+    window.aideUI = {
+        key: KEY,
+        version: VERSION,
+        get: function (name) {
+            if (name === 'fileMarkdownEditing')
+                return doc[name] === 'text' ? 'text' : 'split';
+            return ['workRecovery', 'fileLineNumbers', 'fileSyntaxHighlight', 'fileMarkdownPreview', 'fileMarkdownOutline', 'fileMarkdownMedia', 'fileCsvPreview'].indexOf(name) >= 0 ? doc[name] !== false : doc[name];
+        },
+        getAll: snapshot,
+        setAppearance: function (palette, theme) {
+            doc.palette = ['comfort', 'green', 'professional', 'modern'].indexOf(palette) >= 0 ? palette : 'modern';
+            doc.paletteVersion = PALETTE_VERSION;
+            doc.theme = normalizeTheme(theme);
+            persist();
+            applyTheme();
+            notifyAll();
+        },
+        set: function (name, value) {
+            if (name === 'eyeRestReminder')
+                value = value !== false;
+            if (name === 'backgroundStrength')
+                value = normalizeBackgroundStrength(value);
+            doc[name] = name === 'fileMarkdownEditing' ? (value === 'text' ? 'text' : 'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['comfort', 'green', 'professional', 'modern'].indexOf(value) >= 0 ? value : 'modern') : name === 'background' ? normalizeBackground(value) : name === 'startupAnimation' ? 'on' : value;
+            if (name === 'palette')
+                doc.paletteVersion = PALETTE_VERSION;
+            persist();
+            if (name === 'theme' || name === 'language' || name === 'motion' || name === 'palette')
+                applyTheme();
+            notifyAll();
+            return doc[name];
+        },
+        subscribe: function (fn) {
+            if (typeof fn !== 'function') {
+                return function () { };
+            }
+            uiSubscribers.push(fn);
+            return function () {
+                var index = uiSubscribers.indexOf(fn);
+                if (index >= 0)
+                    uiSubscribers.splice(index, 1);
+            };
+        }
+    };
+    /* ── 主题门面（兼容旧契约）：内部已改走 JSON 文档 ── */
+    window.aideTheme = {
+        key: KEY,
+        valid: VALID_THEME.slice(),
+        pref: function () {
+            return doc.theme;
+        },
+        effective: function () {
+            return effectiveOf(doc.theme);
+        },
+        set: function (next) {
+            return window.aideUI.set('theme', next);
+        },
+        subscribe: function (fn) {
+            if (typeof fn !== 'function') {
+                return function () { };
+            }
+            themeSubscribers.push(fn);
+            return function () {
+                var index = themeSubscribers.indexOf(fn);
+                if (index >= 0)
+                    themeSubscribers.splice(index, 1);
+            };
+        }
+    };
 })();
