@@ -100,9 +100,19 @@
     类型化时只给 key 加联合字面量 `as` 断言，括号位置原样保留。
   - `new Map(any.map(...))` 需显式 `new Map<any, any>`，否则 value 推断为 {}。
   - 三元表达式分支后的 `.filter()/.slice()` 调用链不得擅自加括号改变作用域。
-- **批 4d（待做）**：其余小模块（remote-access、session-timeline、management、
-  plugin-*、file-* 等）与 scripts 桥接（Node/CommonJS 脚本使用独立
-  `module: commonjs` 配置）。
+- **批 4d（已完成）**：八个小模块——`remote-access`、`session-timeline`（UMD）、
+  `local-mounts`、`i18n`、`plugin-upgrade`、`management`、`git-history`、
+  `model-token-chart`（UMD）；严格等价全过，9 个相关测试全过（含 i18n 两个套件）。
+  `aideI18n` 的 Window 声明由 lock-cluster.ts 移交权威实现 i18n.ts（完整含
+  language/schema/applyStatic/sourceName）；`AideGitHistory` 声明由
+  markdown-history.ts 移交 git-history.ts；`aideUI`/`aideEnglish` 暂在 i18n.ts
+  以 any 声明，待 app.js/locales 改造时移交。i18n.js 在 index/mobile-capture/
+  starmap 三个 html 各自递增。
+  新经验：对 any 调用 `.then(data=>...)` 时回调参数无上下文类型，必须显式
+  `(data: any)`，否则 TS7006。
+- **批 4e（待做）**：其余小模块（plugin-guide、docx-style-bridge、drawio-layout-fixes、
+  assistant-call、recovery-manager、file-diff、starmap-logbook、session-model-selection
+  等）与 scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

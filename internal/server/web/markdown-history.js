@@ -82,7 +82,7 @@
             const spec = { ...getContext() }, markdown = /\.(md|markdown)$/i.test(spec.path || '');
             button.hidden = !markdown;
             if (!markdown && spec.path && window.AideGitHistory && !blocked())
-                window.AideGitHistory.detect({ spec, api }).then(data => { if (request === epoch && !blocked() && !['path', 'source', 'wsId', 'root'].some(k => (spec[k] || '') !== (getContext()?.[k] || '')))
+                window.AideGitHistory.detect({ spec, api }).then((data) => { if (request === epoch && !blocked() && !['path', 'source', 'wsId', 'root'].some(k => (spec[k] || '') !== (getContext()?.[k] || '')))
                     button.hidden = !data.available; }).catch(() => { });
         }
         button.onclick = async () => {

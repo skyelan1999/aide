@@ -1,57 +1,147 @@
+"use strict";
 /* Online plugin replacement; all installation and validation stays server-side. */
 (() => {
- 'use strict';
- const busyPlugins=new Set();
- function setBusy(id,value,t){
-  if(value)busyPlugins.add(id);else busyPlugins.delete(id);
-  for(const button of document.querySelectorAll('[data-plugin-upgrade]')){
-   if(button.dataset.pluginUpgrade!==id)continue;
-   button.disabled=value;button.textContent=t(value?'升级中…':'升级');
-  }
- }
- async function upgrade(plugin,services,options={}){
-  if(busyPlugins.has(plugin.id))return false;
-  const {api,refresh,toast,t}=services;
-  setBusy(plugin.id,true,t);
-  try{
-   let body=JSON.stringify(options);
-   if(options.bundle){body=new FormData();body.append('bundle',options.bundle);body.append('sha256',options.sha256||'');}
-   const result=await api('/plugins/'+encodeURIComponent(plugin.id)+'/upgrade',{method:'POST',body});
-   try{await refresh();}catch(_){toast(t('插件已升级，列表刷新失败，请手动刷新'));return true;}
-   toast(result.unchanged?t('插件已是最新版本'):result.version===plugin.version?t('插件内容已更新，版本 {0}',result.version):t('插件已升级：{0} → {1}',plugin.version||'—',result.version||'—'));
-   return true;
-  }catch(error){
-   if(!error.status)error.message=t('升级请求未完成，请刷新列表核对状态');
-   toast(error.message||t('插件升级失败'));throw error;
-  }finally{setBusy(plugin.id,false,t);}
- }
- function openSource(plugin,services){
-  if(busyPlugins.has(plugin.id))return;
-  const {el,t}=services;
-  let existing=document.getElementById('plugin-upgrade-dialog');if(existing){existing.close();existing.remove();}
-  const dialog=el('dialog','plugin-settings-dialog');dialog.id='plugin-upgrade-dialog';
-  const form=el('form'),heading=el('div','dialog-heading'),title=el('h2','',t('插件升级：{0}',plugin.name));title.id='plugin-upgrade-title';dialog.setAttribute('aria-labelledby',title.id);
-  const close=el('button','icon-button','×');close.type='button';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();heading.append(title,close);
-  const hint=el('p','muted',t('选择本地 ZIP 升级包，或填写 HTTPS ZIP 地址。升级保留原设置和可恢复备份。'));
-  const label=el('label','',t('升级来源')),input=el('input');input.type='url';input.required=true;input.value=plugin.updateURL||'';input.placeholder='https://…/plugin.zip';input.autocomplete='off';input.maxLength=2048;label.append(input);
-  const localLabel=el('label','',t('本地 ZIP 升级包')),local=el('input');local.type='file';local.accept='.zip,application/zip';localLabel.append(local);local.onchange=()=>{input.required=!local.files?.length;input.disabled=!!local.files?.length;};
-  const details=el('details'),summary=el('summary','',t('SHA-256 校验（可选）')),hashLabel=el('label','',t('发布方提供的 SHA-256')),hash=el('input');hash.type='text';hash.pattern='[a-fA-F0-9]{64}';hash.maxLength=64;hash.autocomplete='off';hashLabel.append(hash);details.append(summary,hashLabel);
-  const status=el('p','muted');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-  const actions=el('div','dialog-actions'),cancel=el('button','quiet',t('取消')),submit=el('button','primary',t('保存来源并升级'));cancel.type='button';cancel.onclick=()=>dialog.close();submit.type='submit';actions.append(cancel,submit);
-  form.append(heading,hint,localLabel,label,details,status,actions);dialog.append(form);document.body.append(dialog);
-  form.onsubmit=async event=>{
-   event.preventDefault();if(busyPlugins.has(plugin.id))return;const selected=local.files?.[0];if(selected&&selected.size>23*1024*1024){status.textContent=t('本地升级包超过23 MiB');return;}submit.disabled=true;input.disabled=true;hash.disabled=true;local.disabled=true;
-   status.textContent=t('正在下载、校验并替换插件…');
-   try{if(await upgrade(plugin,services,selected?{bundle:selected,sha256:hash.value.trim()}:{url:input.value.trim(),sha256:hash.value.trim()}))dialog.close();}
-   catch(error){status.textContent=error.message||t('插件升级失败');}
-   finally{submit.disabled=false;input.disabled=!!local.files?.length;hash.disabled=false;local.disabled=false;}
-  };
-  dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();input.focus();
- }
- function button(plugin,services){
-  const busy=busyPlugins.has(plugin.id),b=services.el('button','plugin-upgrade-button',services.t(busy?'升级中…':'升级'));b.type='button';b.dataset.pluginUpgrade=plugin.id;b.disabled=busy;
-  b.title=plugin.updateURL?services.t('从已配置来源在线升级'):services.t('设置来源并在线升级');
-  b.onclick=()=>{if(!plugin.updateURL){openSource(plugin,services);return;}upgrade(plugin,services).catch(()=>{});};return b;
- }
- window.AidePluginUpgrade=Object.freeze({button,openSource,upgrade});
+    'use strict';
+    const busyPlugins = new Set();
+    function setBusy(id, value, t) {
+        if (value)
+            busyPlugins.add(id);
+        else
+            busyPlugins.delete(id);
+        for (const button of document.querySelectorAll('[data-plugin-upgrade]')) {
+            if (button.dataset.pluginUpgrade !== id)
+                continue;
+            button.disabled = value;
+            button.textContent = t(value ? '升级中…' : '升级');
+        }
+    }
+    async function upgrade(plugin, services, options = {}) {
+        if (busyPlugins.has(plugin.id))
+            return false;
+        const { api, refresh, toast, t } = services;
+        setBusy(plugin.id, true, t);
+        try {
+            let body = JSON.stringify(options);
+            if (options.bundle) {
+                body = new FormData();
+                body.append('bundle', options.bundle);
+                body.append('sha256', options.sha256 || '');
+            }
+            const result = await api('/plugins/' + encodeURIComponent(plugin.id) + '/upgrade', { method: 'POST', body });
+            try {
+                await refresh();
+            }
+            catch (_) {
+                toast(t('插件已升级，列表刷新失败，请手动刷新'));
+                return true;
+            }
+            toast(result.unchanged ? t('插件已是最新版本') : result.version === plugin.version ? t('插件内容已更新，版本 {0}', result.version) : t('插件已升级：{0} → {1}', plugin.version || '—', result.version || '—'));
+            return true;
+        }
+        catch (error) {
+            if (!error.status)
+                error.message = t('升级请求未完成，请刷新列表核对状态');
+            toast(error.message || t('插件升级失败'));
+            throw error;
+        }
+        finally {
+            setBusy(plugin.id, false, t);
+        }
+    }
+    function openSource(plugin, services) {
+        if (busyPlugins.has(plugin.id))
+            return;
+        const { el, t } = services;
+        let existing = document.getElementById('plugin-upgrade-dialog');
+        if (existing) {
+            existing.close();
+            existing.remove();
+        }
+        const dialog = el('dialog', 'plugin-settings-dialog');
+        dialog.id = 'plugin-upgrade-dialog';
+        const form = el('form'), heading = el('div', 'dialog-heading'), title = el('h2', '', t('插件升级：{0}', plugin.name));
+        title.id = 'plugin-upgrade-title';
+        dialog.setAttribute('aria-labelledby', title.id);
+        const close = el('button', 'icon-button', '×');
+        close.type = 'button';
+        close.setAttribute('aria-label', t('关闭'));
+        close.onclick = () => dialog.close();
+        heading.append(title, close);
+        const hint = el('p', 'muted', t('选择本地 ZIP 升级包，或填写 HTTPS ZIP 地址。升级保留原设置和可恢复备份。'));
+        const label = el('label', '', t('升级来源')), input = el('input');
+        input.type = 'url';
+        input.required = true;
+        input.value = plugin.updateURL || '';
+        input.placeholder = 'https://…/plugin.zip';
+        input.autocomplete = 'off';
+        input.maxLength = 2048;
+        label.append(input);
+        const localLabel = el('label', '', t('本地 ZIP 升级包')), local = el('input');
+        local.type = 'file';
+        local.accept = '.zip,application/zip';
+        localLabel.append(local);
+        local.onchange = () => { input.required = !local.files?.length; input.disabled = !!local.files?.length; };
+        const details = el('details'), summary = el('summary', '', t('SHA-256 校验（可选）')), hashLabel = el('label', '', t('发布方提供的 SHA-256')), hash = el('input');
+        hash.type = 'text';
+        hash.pattern = '[a-fA-F0-9]{64}';
+        hash.maxLength = 64;
+        hash.autocomplete = 'off';
+        hashLabel.append(hash);
+        details.append(summary, hashLabel);
+        const status = el('p', 'muted');
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        const actions = el('div', 'dialog-actions'), cancel = el('button', 'quiet', t('取消')), submit = el('button', 'primary', t('保存来源并升级'));
+        cancel.type = 'button';
+        cancel.onclick = () => dialog.close();
+        submit.type = 'submit';
+        actions.append(cancel, submit);
+        form.append(heading, hint, localLabel, label, details, status, actions);
+        dialog.append(form);
+        document.body.append(dialog);
+        form.onsubmit = async (event) => {
+            event.preventDefault();
+            if (busyPlugins.has(plugin.id))
+                return;
+            const selected = local.files?.[0];
+            if (selected && selected.size > 23 * 1024 * 1024) {
+                status.textContent = t('本地升级包超过23 MiB');
+                return;
+            }
+            submit.disabled = true;
+            input.disabled = true;
+            hash.disabled = true;
+            local.disabled = true;
+            status.textContent = t('正在下载、校验并替换插件…');
+            try {
+                if (await upgrade(plugin, services, selected ? { bundle: selected, sha256: hash.value.trim() } : { url: input.value.trim(), sha256: hash.value.trim() }))
+                    dialog.close();
+            }
+            catch (error) {
+                status.textContent = error.message || t('插件升级失败');
+            }
+            finally {
+                submit.disabled = false;
+                input.disabled = !!local.files?.length;
+                hash.disabled = false;
+                local.disabled = false;
+            }
+        };
+        dialog.addEventListener('close', () => dialog.remove(), { once: true });
+        dialog.showModal();
+        input.focus();
+    }
+    function button(plugin, services) {
+        const busy = busyPlugins.has(plugin.id), b = services.el('button', 'plugin-upgrade-button', services.t(busy ? '升级中…' : '升级'));
+        b.type = 'button';
+        b.dataset.pluginUpgrade = plugin.id;
+        b.disabled = busy;
+        b.title = plugin.updateURL ? services.t('从已配置来源在线升级') : services.t('设置来源并在线升级');
+        b.onclick = () => { if (!plugin.updateURL) {
+            openSource(plugin, services);
+            return;
+        } upgrade(plugin, services).catch(() => { }); };
+        return b;
+    }
+    window.AidePluginUpgrade = Object.freeze({ button, openSource, upgrade });
 })();

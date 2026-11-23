@@ -45,7 +45,6 @@ interface LockClusterApi {
 }
 interface Window {
   LockCluster?: LockClusterApi;
-  aideI18n?: { t: (key: string, ...values: unknown[]) => string };
 }
 type LockPhase = 'joining' | 'master' | 'slave';
 type LockPri = [number, number, string];

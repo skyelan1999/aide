@@ -11,7 +11,6 @@ interface MarkdownHistoryBindOptions {
 }
 interface Window {
   AideMarkdownHistory?: { bind: (options: MarkdownHistoryBindOptions) => { refresh: () => void } };
-  AideGitHistory?: { detect: (options: { spec: any; api: MarkdownHistoryBindOptions['api'] }) => Promise<any>; mount: (options: any) => void };
 }
 /* Revision inspection is separate from explicit, hash-guarded restoration. */
 (() => {
@@ -46,7 +45,7 @@ interface Window {
   const query=(spec: any): URLSearchParams=>{const q=new URLSearchParams({path:spec.path});if(spec.source)q.set('source',spec.source);else if(spec.wsId)q.set('workspaceId',spec.wsId);return q;};
   function refresh(): void{
    const request=++epoch;activeDialog?.close();const spec: any={...getContext()},markdown=/\.(md|markdown)$/i.test(spec.path||'');button.hidden=!markdown;
-   if(!markdown&&spec.path&&window.AideGitHistory&&!blocked())window.AideGitHistory.detect({spec,api}).then(data=>{if(request===epoch&&!blocked()&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))button.hidden=!data.available;}).catch(()=>{});
+   if(!markdown&&spec.path&&window.AideGitHistory&&!blocked())window.AideGitHistory.detect({spec,api}).then((data: any)=>{if(request===epoch&&!blocked()&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))button.hidden=!data.available;}).catch(()=>{});
   }
   button.onclick=async()=>{
    const spec: any={...getContext()},currentText=editor.value;if(!spec.path||blocked())return;activeDialog?.close();const request=++epoch;button.disabled=true;
