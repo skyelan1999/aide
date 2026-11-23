@@ -149,6 +149,16 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		}
 		return finalizeAssistantApprovalQuery(decision, heard), nil
 	}
+	// MixSoul未启用时，允许一个声明assistantAgent的插件接管决策循环；失败同样不回落。
+	if provider, err := a.selectedAssistantAgent(); err != nil {
+		return assistantDecision{}, fmt.Errorf("%w: %v", errAssistantAgentActive, err)
+	} else if provider != nil {
+		decision, agentErr := a.runPluginAssistantAgent(ctx, cfg, *provider, heard, inputSource)
+		if agentErr != nil {
+			return decision, fmt.Errorf("%w: %v", errAssistantAgentActive, agentErr)
+		}
+		return finalizeAssistantApprovalQuery(decision, heard), nil
+	}
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
 	// 注意：va 可能为 nil（未初始化/降级路径），必须先判空再解引用 va.memory。

@@ -468,7 +468,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
 	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, source, in.AvatarFeedback)
 	if err != nil {
-		if a.mixSoulEnabled() || errors.Is(err, errMixSoulActive) {
+		if a.mixSoulEnabled() || errors.Is(err, errMixSoulActive) || a.hasAssistantAgent() || errors.Is(err, errAssistantAgentActive) {
 			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
 			return
 		}

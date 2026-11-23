@@ -1234,6 +1234,7 @@ func New(work, reference, data string) (*App, error) {
 	a.background(func() { a.mixSoulPulseLoop(a.bgCtx) })
 	a.background(func() { a.assistantResultLoop(a.bgCtx) })
 	a.background(func() { a.pageBalanceLoop(a.bgCtx) })
+	a.background(func() { a.assistantAgentPulseLoop(a.bgCtx) })
 	a.startMessagesIfEnabled()
 	stage("ready")
 	return a, nil
@@ -2742,6 +2743,12 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
 		fail(w, 503, errors.New("助理模型尚未配置，未执行或转交任务"))
+		return
+	}
+	// #62 修复：语音输入与文字消息走同一把密码门（assistantUnlocked），与 unlockAssistantSession 一致。
+	// voice-history 的加密锁定（va.encStatus）仅用于设置页历史查看，与此处独立。
+	if as == nil || !a.isAssistantUnlocked(as.ID) {
+		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
 		return
 	}
 

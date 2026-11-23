@@ -196,6 +196,16 @@ func (a *App) assistantRealtimeSocketWithWork(w http.ResponseWriter, r *http.Req
 	if sipScope.CallbackID != "" {
 		agentBinding, agentErr = nil, nil
 	}
+	if agentBinding == nil {
+		if _, pluginErr := a.selectedAssistantAgent(); pluginErr != nil {
+			fail(w, 503, pluginErr)
+			return
+		} else if a.hasAssistantAgent() {
+			// 通用插件agent当前仅覆盖文字/语音决策循环；原生实时通话明确拒绝而非静默回落内置。
+			fail(w, 503, errors.New("plugin assistant agent does not support native realtime calls yet"))
+			return
+		}
+	}
 	if agentErr != nil {
 		fail(w, 503, agentErr)
 		return
