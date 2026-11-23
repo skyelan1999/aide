@@ -110,8 +110,13 @@
   starmap 三个 html 各自递增。
   新经验：对 any 调用 `.then(data=>...)` 时回调参数无上下文类型，必须显式
   `(data: any)`，否则 TS7006。
-- **批 4e（待做）**：其余小模块（plugin-guide、docx-style-bridge、drawio-layout-fixes、
-  assistant-call、recovery-manager、file-diff、starmap-logbook、session-model-selection
+- **批 4e（已完成）**：八个小模块——`plugin-guide`、`docx-style-bridge`（CSSOM
+  rule 用 any）、`drawio-layout-fixes`（UMD factory，原型方法 `function(this: any)`）、
+  `assistant-call`、`recovery-manager`、`file-diff`（UMD）、`starmap-logbook`、
+  `session-model-selection`；严格等价全过，8 个相关测试全过。
+  drawio-layout-fixes 由服务端注入，无 html cache buster。
+- **批 4f（待做）**：其余小模块（text-editor、parallel-chat、plugin-market、
+  file-transfers、keybindings、preview-safety、recovery-transfer、message-notifications
   等）与 scripts 桥接（Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。
 
