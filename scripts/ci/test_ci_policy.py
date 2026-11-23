@@ -1,5 +1,6 @@
 """The lightweight daily path must never implicitly enter full publication."""
 import os
+import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -20,6 +21,23 @@ class CIPolicyTests(unittest.TestCase):
         self.assertNotIn('test_go_snapshot.py', ci)
         self.assertNotIn('launcher_clean_environment', ci)
         self.assertTrue(any(command[:2] == ['go', 'test'] and './...' in command for command in basic_go.COMMANDS))
+
+    def test_typescript_dependencies_and_generated_assets_are_release_gates(self):
+        delivery = (ROOT / '.github/workflows/aide-delivery.yml').read_text()
+        source = delivery.split('  source:', 1)[1].split('  native:', 1)[0]
+        native = delivery.split('  native:', 1)[1].split('  launcher:', 1)[0]
+        for stage in (source, native):
+            self.assertIn('npm ci --ignore-scripts --no-audit --no-fund', stage)
+        self.assertLess(source.index('npm ci'), source.index('scripts/agent-route.py verify quick'))
+        self.assertLess(native.index('npm ci'), native.index('scripts/ci/build_candidate.py'))
+
+        ci = (ROOT / '.github/workflows/aide-ci.yml').read_text()
+        self.assertIn('npm run build:ts', ci)
+        self.assertLess(ci.index('npm run build:ts'), ci.index("git diff --exit-code -- '*.js'"))
+        self.assertIn("git ls-files --others --exclude-standard -- '*.js'", ci)
+        package = json.loads((ROOT / 'package.json').read_text())
+        self.assertEqual(package['scripts']['typecheck'].count('tsc -p'), 6)
+        self.assertEqual(package['scripts']['build:ts'].count('tsc -p'), 6)
 
     def test_delivery_is_explicit_and_every_gate_is_required(self):
         delivery = (ROOT / '.github/workflows/aide-delivery.yml').read_text()

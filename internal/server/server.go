@@ -40,7 +40,10 @@ import (
 	"time"
 )
 
-//go:embed web/*
+// Embed runtime assets only. TypeScript sources, tsconfig files and migration
+// notes remain build-time inputs and must not inflate the shipped binary.
+//
+//go:embed web/*.js web/*.css web/*.html web/*.svg web/settings-schema.json web/locales/*.js web/themes web/avatars web/vendor
 var assets embed.FS
 
 type ModelRef struct {

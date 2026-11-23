@@ -9,8 +9,9 @@
   Go embed、`index.html` 的 `<script src>`、启动脚本完全不改，不引入 bundler/framework。
 - 根 `package.json` 只含 `typescript` devDependency（`node_modules/` 已在 .gitignore）。
 - 命令（仓库根）：
-  - `npm run build:web`：编译 `internal/server/web/tsconfig.json` 覆盖的 `.ts`。
-  - `npm run typecheck`：仅类型检查不产出，依次覆盖主 web、AudioWorklet 与四个独立 CommonJS 桥接配置。
+  - `npm run build:web`：仅编译 `internal/server/web/tsconfig.json` 覆盖的 `.ts`。
+  - `npm run build:ts`：重新生成主 web、AudioWorklet 与四个独立 CommonJS 桥接配置的全部 JS。
+  - `npm run typecheck`：仅类型检查不产出，覆盖与 `build:ts` 相同的六套配置。
 - `tsconfig` 要点：`target: ES2021`（保留 `||=` 等原语法，避免 downlevel helper 改变行为）、
   `lib: ES2022+DOM`（Object.hasOwn 等仅类型层面）、`module: ES2020`（非模块经典脚本
   不产生模块标记，禁止仅为隔离类型而引入 import/export）、`strict: true`。
@@ -277,6 +278,9 @@
   通过逐文件/逐声明完整诊断与回滚验证，安全移除 352 处冗余显式 `any`，并删除 app 中
   79 处 `!?.` 冗余组合；动态 API、THREE 和页面全局仍保留必要动态类型，不做无依据强转。
   `npm run typecheck` 与 quick CI 现统一覆盖六套 TypeScript 配置，防止桥接或 worklet 回流。
+  quick CI 还执行 `npm run build:ts` 并要求入库 JS 无差异；delivery 的 source/native
+  独立 runner 均先执行锁定 `npm ci`，避免干净环境缺少 TypeScript。Go embed 仅包含
+  运行时资产，不打包 TS、tsconfig 或本迁移说明。
   本轮统计：100 个 TS 文件、0 个 `@ts-ignore`、19 个有边界的 `@ts-expect-error`。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

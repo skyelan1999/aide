@@ -24,7 +24,8 @@ class CodeLayoutTests(unittest.TestCase):
 
     def test_package_and_embedded_ui_boundaries_match_the_map(self):
         self.assertRegex((ROOT / 'internal/server/server.go').read_text(), r'(?m)^package server\b')
-        self.assertIn('//go:embed web/*', (ROOT / 'internal/server/server.go').read_text())
+        self.assertIn('//go:embed web/*.js web/*.css web/*.html web/*.svg web/settings-schema.json web/locales/*.js web/themes web/avatars web/vendor', (ROOT / 'internal/server/server.go').read_text())
+        self.assertNotRegex((ROOT / 'internal/server/server.go').read_text(), r'(?m)^//go:embed web/\*$')
         self.assertTrue((ROOT / 'internal/server/web/index.html').is_file())
         self.assertTrue((ROOT / 'internal/server/web/locales').is_dir())
         self.assertTrue((ROOT / 'internal/server/web/themes').is_dir())

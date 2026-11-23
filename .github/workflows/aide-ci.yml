@@ -35,6 +35,11 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: TypeScript diagnostics
         run: npm run typecheck
+      - name: Require committed TypeScript-generated JavaScript
+        run: |
+          npm run build:ts
+          git diff --exit-code -- '*.js'
+          test -z "$(git ls-files --others --exclude-standard -- '*.js')"
       - name: Repository quick gate and CI contracts
         run: |
           python3 scripts/test_workflow_action_pins.py

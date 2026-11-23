@@ -4,7 +4,8 @@
   "description": "TypeScript toolchain for the progressive JS-to-TS migration. Runtime still loads the compiled .js artifacts; no bundler, no framework.",
   "scripts": {
     "typecheck": "tsc -p internal/server/web/tsconfig.json --noEmit && tsc -p internal/server/web/tsconfig.worklets.json --noEmit && tsc -p scripts/tsconfig.computer-bridge.json --noEmit && tsc -p scripts/tsconfig.computer-bridge-linux.json --noEmit && tsc -p scripts/tsconfig.headless-browser-bridge.json --noEmit && tsc -p scripts/tsconfig.safari-bridge.json --noEmit",
-    "build:web": "tsc -p internal/server/web/tsconfig.json"
+    "build:web": "tsc -p internal/server/web/tsconfig.json",
+    "build:ts": "tsc -p internal/server/web/tsconfig.json && tsc -p internal/server/web/tsconfig.worklets.json && tsc -p scripts/tsconfig.computer-bridge.json && tsc -p scripts/tsconfig.computer-bridge-linux.json && tsc -p scripts/tsconfig.headless-browser-bridge.json && tsc -p scripts/tsconfig.safari-bridge.json"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

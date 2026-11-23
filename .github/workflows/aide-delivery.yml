@@ -38,6 +38,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
+      - name: Install locked Node.js test dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Validate trusted main source and requested tag
         id: identity
         env:
@@ -78,6 +80,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
+      - name: Install locked Node.js test dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Free disposable hosted runner SDK space
         run: |
           test "$GITHUB_ACTIONS" = true
