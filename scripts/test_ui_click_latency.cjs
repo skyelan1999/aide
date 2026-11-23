@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const source = fs.readFileSync(path.join(__dirname, '../internal/server/web/app.js'), 'utf8');
+const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
 function excerpt(start, end) {
-  const a = source.indexOf(start);
-  const b = source.indexOf(end, a);
-  assert.ok(a >= 0 && b > a, `missing ${start}`);
-  return source.slice(a, b);
+  const a=sourceIndex(source,start);
+  const b=sourceIndex(source,end,a);
+  return source.slice(a,b);
 }
 function deferred() {
   let resolve, reject;

@@ -1,10 +1,10 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {environment}=require('./lock-cluster-state.test.js');
-const app=require('./fixtures/app-source.cjs').readAppSource();
-const timerCode=app.slice(app.indexOf('const lockScreen ='),app.indexOf('function refreshLockStatus()'));
-const inputCode=app.slice(app.indexOf('const lockActivityEvents ='),app.indexOf('setInterval(() => { if (lockScreen.locked) refreshLockStatus();'));
-const remoteHook=app.match(/LockCluster\.setRemoteActivityHook\([^\n]+/)[0];
+const {readAppSource,sourceIndex,sourceStatement}=require('./fixtures/app-source.cjs'),app=readAppSource();
+const timerCode=app.slice(sourceIndex(app,'const lockScreen ='),sourceIndex(app,'function refreshLockStatus()'));
+const inputCode=app.slice(sourceIndex(app,'const lockActivityEvents ='),sourceIndex(app,'setInterval(() => { if (lockScreen.locked) refreshLockStatus();'));
+const remoteHook=sourceStatement(app,'LockCluster.setRemoteActivityHook');
 function install(tab,seconds=2){
  const c=tab.context,handlers={},queued=[];let locks=0,leases=0;
  const add=c.window.addEventListener,set=c.setTimeout;

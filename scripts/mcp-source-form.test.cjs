@@ -2,7 +2,8 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = require('./fixtures/app-source.cjs').readAppSource();
+const {readAppSource,sourceFunction,sourceIndex,sourceStatement}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
 const registry = new Map();
 function element(tag) {
   const node = {tag,children:[],value:'',checked:false,hidden:false,dataset:{}, append(...children) { for (const child of children) {this.children.push(child);if (child && typeof child === 'object') child.parentNode=this;} if (tag==='select' && !this.value) this.value=children[0]?.value||'';},replaceChildren(){this.children=[];},close(){},reset(){}};
@@ -13,11 +14,11 @@ for(const id of ['src-type','src-rw','src-fields','src-name','source-form','sour
 registry.get('src-type').value='mcp';registry.get('src-type').options=[{value:'mcp',dataset:{}}];
 const submitted=[];
 const context=vm.createContext({console,URL,Math,$:id=>registry.get(id),el:(tag)=>element(tag),t:s=>s,document:{createTextNode:s=>s},editingSourceID:'',state:{sources:[],config:{}},action:fn=>fn,api:async(path,options)=>{submitted.push(JSON.parse(options.body));},sourceUpdatePayload:change=>[change],loadSourcesList:async()=>{},loadFiles:async()=>{},toast:()=>{}});
-const start=source.indexOf('function renderSourceFields()');const end=source.indexOf("$('src-type').addEventListener",start);
-vm.runInContext(source.match(/function sourceCanSetRW\(src\) \{[^\n]+/)[0],context);
+const start=sourceIndex(source,'function renderSourceFields()');const end=sourceIndex(source,"$('src-type').addEventListener",start);
+vm.runInContext(sourceFunction(source,'sourceCanSetRW'),context);
 assert(start>=0&&end>start);vm.runInContext(source.slice(start,end),context);
-const submitStart=source.indexOf("$('source-form').onsubmit = action(async event => {");const submitEnd=source.indexOf('/* ── Markdown 渲染',submitStart);
-assert(submitStart>=0&&submitEnd>submitStart);vm.runInContext(source.slice(submitStart,submitEnd),context);
+const submit=sourceStatement(source,"$('source-form').onsubmit");
+assert(start>=0&&end>start);vm.runInContext(submit,context);
 (async()=>{
   context.renderSourceFields();
   assert.equal(registry.get('src-command').parentNode.hidden,false);

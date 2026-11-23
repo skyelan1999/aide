@@ -1,9 +1,8 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 function popupSource(){
- const app=fs.readFileSync('internal/server/web/app.js','utf8');
- const start=app.indexOf('  async function checkDuePopups() {'),end=app.indexOf('\n  button.onclick',start);
- assert.ok(start>=0&&end>start,'reminder popup product function found');return app.slice(start,end);
+ const {readAppSource,sourceFunction}=require('./fixtures/app-source.cjs');
+ return sourceFunction(readAppSource(),'checkDuePopups');
 }
 function fixture(options={}){
  const due=[{id:'owned-a',title:'Fixture A',priority:'high',dueAt:'2026-10-26'},{id:'owned-b',title:'Fixture B',priority:'normal',dueAt:'2026-10-26'},{id:'owned-c',title:'Fixture C',priority:'low',dueAt:'2026-10-26'}];

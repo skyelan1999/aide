@@ -1,7 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync(process.argv[2]||'internal/server/web/app.js','utf8');
-const start=source.includes('let fileOpenRequest=0;')?source.indexOf('let fileOpenRequest=0;'):source.indexOf('async function openFile(path) {');
-const code=source.slice(start,source.indexOf('function sourceIsRW()',start));
+const {readAppSource,sourceIndex,sourceIncludes,sourceFunction,sourceStatement}=require('./fixtures/app-source.cjs');
+const source=process.argv[2]?fs.readFileSync(process.argv[2],'utf8'):readAppSource();
+const start=sourceIndex(source,sourceIncludes(source,'let fileOpenRequest=0;')?'let fileOpenRequest=0;':'async function openFile(path) {');
+const code=source.slice(start,sourceIndex(source,'function sourceIsRW()',start));
 function fixture(){
   const pending=[],shown=[],scenes=[],state={root:'workspace',source:'',config:{workspaceId:'A'},workspaceId:'A',file:null,token:'local-test'};
   const dialog={open:false,addEventListener(type,fn){this[type]=fn;}};
@@ -9,8 +10,8 @@ function fixture(){
     api:query=>new Promise((resolve,reject)=>pending.push({query,resolve,reject})),showEditor:()=>shown.push({...state.file}),persistWorkspaceScene:async scene=>scenes.push(scene)};
   for(const type of ['Image','Stl','Step','Pdf','CadDrawing','Docx','Xlsx','Sqlite','Zip'])context['is'+type+'Path']=path=>type==='Image'&&path.endsWith('.png');
   context.effectiveFileTypePath=require('../internal/server/web/file-types.js').effectiveTypePath;
-  vm.createContext(context);vm.runInContext(source.split('\n').find(line=>line.startsWith('function isPresentationPath(')),context);vm.runInContext(code,context);
-  const closeHook=source.split('\n').find(line=>line.startsWith("$('editor-dialog').addEventListener('close'"));
+  vm.createContext(context);vm.runInContext(sourceFunction(source,'isPresentationPath'),context);vm.runInContext(code,context);
+  const closeHook=sourceStatement(source,"$('editor-dialog').addEventListener('close'");
   if(closeHook)vm.runInContext(closeHook,context);
   return {context,state,pending,shown,scenes,dialog,open:path=>context.openFile(path)};
 }
@@ -25,8 +26,8 @@ async function gridResponseOwnership(){
   const context=vm.createContext({document:{createElement:element},el:element,t:x=>x,URLSearchParams,AbortController,
     bindViewerTeardown:(host,fn)=>{host.cleanup=fn;},addKnowledgeViewerIdentity:()=>false,isBackupPath:()=>false,
     api:query=>new Promise((resolve,reject)=>pending.push({query,resolve,reject}))});
-  const begin=source.indexOf('async function setupXlsxGrid(');
-  vm.runInContext(source.slice(begin,source.indexOf('function isDocPath(',begin)),context);
+  const begin=sourceIndex(source,'async function setupXlsxGrid(');
+  vm.runInContext(source.slice(begin,sourceIndex(source,'function isDocPath(',begin)),context);
   const page=value=>({sheets:['A','B'],sheet:'A',hash:'H',workspaceId:'W',maxRow:1,maxCol:1,rows:[[{ref:'A1',value}]]});
   const host=element('div'),ready=context.setupXlsxGrid(host,'book.xlsx','workspace','');
   pending[0].resolve(page('initial'));await ready;

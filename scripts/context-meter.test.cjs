@@ -1,12 +1,9 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = require('./fixtures/app-source.cjs').readAppSource();
-function fn(name) {
-  const start = source.search(new RegExp('^(?:async )?function '+name+'\\(', 'm'));
-  assert.ok(start >= 0, name);
-  return source.slice(start, source.indexOf('\n}', start) + 2);
-}
+const {readAppSource,sourceFunction,sourceMatch}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
+function fn(name) { return sourceFunction(source, name); }
 function setup() {
   const nodes = new Map();
   const $ = id => {
@@ -56,7 +53,7 @@ const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000
   assert.equal(debounce.state.contextPreview,undefined,'reschedule invalidates response before debounce runs');
   const unconfigured=setup();unconfigured.sandbox.estimateContext();unconfigured.state.config.configured=false;unconfigured.sandbox.estimateContext();
   unconfigured.requests[0].resolve(data(444));await new Promise(setImmediate);assert.equal(unconfigured.state.contextMeter,null);
-  assert.match(source,/if \(!sameSession && typeof resetContextMeter === 'function'\) resetContextMeter\(\)/);
+  sourceMatch(source,/if \(!sameSession && typeof resetContextMeter === 'function'\) resetContextMeter\(\)/);
   const parallel=setup();
   parallel.state.session={id:'parallel',messages:[],sessionUsage:{prompt:500000,completion:12000,total:512000},runs:[{id:'ten',parallelism:10,parallel:{plannerContext:{inputEstimate:900,contextWindow:65536,usage:{prompt:1000}},parts:Array.from({length:10},(_,i)=>({context:{inputEstimate:2000+i,contextWindow:65536}})),mainContext:{inputEstimate:3000,contextWindow:65536,usage:{prompt:4000}}}}]};
   parallel.sandbox.renderContextMeter(data(2500),false);

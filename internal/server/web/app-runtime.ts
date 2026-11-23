@@ -1,7 +1,4 @@
-interface Window { AideNativeBiometrics?: any; }
-declare function touchIdAvailable(): any;
-declare function requestPlatformAssertion(start: any): any;
-declare function updatePhaseHint(): void;
+interface Window { [key: string]: any; AideNativeBiometrics?: any; }
 // State changes and listener cleanup remain immediate; experience retains only
 // short-lived inert paint, and falls back to immediate cleanup without motion.
 function leaveUISurface(node: any, close: any, remove: any = false) {

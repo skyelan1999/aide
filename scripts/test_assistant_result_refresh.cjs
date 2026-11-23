@@ -1,6 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/app.js','utf8');
-const code=source.slice(source.indexOf('let assistantResultRefreshBusy=false;'),source.indexOf('function setupGlobalEvents()'));
+const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
+const code=source.slice(sourceIndex(source,'let assistantResultRefreshBusy=false;'),sourceIndex(source,'function setupGlobalEvents()'));
 (async()=>{
  let renders=0;const draft='正在输入的草稿';let resolve;
  const loaded={id:'assistant-a',kind:'assistant',messages:[{role:'assistant',content:'测试结果已返回'}]};

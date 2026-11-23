@@ -126,7 +126,7 @@ test('closing the settings sheet clears unsaved RAM fields',async()=>{
  const f=fixture(async path=>({supported:true,providerId:'provider',keyId:new URLSearchParams(path.split('?')[1]).get('keyId'),billingCredentialsRequired:true,balance_infos:[]}));
  await f.start();const inputs=f.cards()[0].querySelectorAll('input');inputs[0].value='synthetic-id';inputs[1].value='synthetic-secret';
  f.sheet.open=false;f.observers[1]();assert.equal(inputs[0].value,'');assert.equal(inputs[1].value,'');
- const app=require('./fixtures/app-source.cjs').readAppSource();assert.match(app,/active:\(\)=>!lockScreen.locked && !!\$\('settings-sheet'\)\?\.classList.contains\('open'\)/);
+ const {readAppSource,sourceMatch}=require('./fixtures/app-source.cjs'),app=readAppSource();sourceMatch(app,/active:\(\)=>!lockScreen.locked && !!\$\('settings-sheet'\)\?\.classList.contains\('open'\)/);
 });
 
 test('plugin quota windows render as percentages without currency amounts or pricing controls',async()=>{

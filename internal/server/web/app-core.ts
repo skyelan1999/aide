@@ -1,6 +1,3 @@
-declare const sessionDrafts: Map<any, any>;
-declare function renderAttachments(): void;
-declare function scheduleContextPreview(): void;
 'use strict';
 // @ts-ignore -- independent page scripts share the historical global helper name.
 const t = (key: any, ...args: any) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m: any, i: any) => args[i] ?? m);

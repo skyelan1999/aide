@@ -11,9 +11,9 @@
 - 命令（仓库根）：
   - `npm run build:web`：编译 `internal/server/web/tsconfig.json` 覆盖的 `.ts`。
   - `npm run typecheck`：仅类型检查不产出。
-- `tsconfig` 要点：`target: ES2020`（避免 downlevel helper 改变行为）、
-  `lib: ES2022+DOM`（Object.hasOwn 等仅类型层面）、`module: none`（经典全局脚本，
-  禁止 import/export，防止产物变成模块）、`strict: true`。
+- `tsconfig` 要点：`target: ES2021`（保留 `||=` 等原语法，避免 downlevel helper 改变行为）、
+  `lib: ES2022+DOM`（Object.hasOwn 等仅类型层面）、`module: ES2020`（非模块经典脚本
+  不产生模块标记，禁止仅为隔离类型而引入 import/export）、`strict: true`。
 - tsconfig 默认输出到源文件旁；**不要设置 outDir=out 源目录**（会把输入排除，TS18003）。
 
 ## 每文件改造约定
@@ -253,8 +253,19 @@
   core → sidebar → runtime → config → app，config v1、app v297。
   58 个 app 套件中 lock-entry 的源码边界改为空白不敏感后全部通过，
   session-review 同步通过。
-- **批 5d+（待做）**：继续按职责拆分并 TS 化 app 余下脚本；每扩展一个
-  拆分模块同步维护 app-source 的原始顺序视图，最终核对自有 JS 是否全部
-  完成 TS 化。
+- **批 5d（已完成）**：app 剩余 13508 行整体 TS 化，保留 core → sidebar →
+  runtime → config → app 五个经典脚本及原加载顺序，app cache buster v298。
+  以只插入类型的 codemod 标注参数、动态 DOM/对象、Promise 与 Map/Set；少数
+  宽松调用、跨页面全局和动态索引以局部 `@ts-ignore` 保留。`highlightJSON`
+  的 JS 非 Unicode 模式身份转义 `\u` 改为同义字面量 `u`，经独立样例验证
+  匹配行为不变；除这一等价正则写法归一化外，原 app 与最终产物经双侧
+  ES2021 转译后严格等价，`node --check` 通过。
+  `app-source.cjs` 新增 AST 函数/赋值/属性/语句提取，并复用空白不敏感断言；
+  仅调整受 tsc printer 影响的测试切片与断言，不改测试语义。最终 58 个 app
+  套件 99/99、24 个星图与共享锁套件 24/24 通过；126 个自包含 Node 套件
+  239/239 通过，快速 CI 354 项全部通过；Docker 内 Go race 24/24 分片
+  （1957 个测试/fuzz seed/example，无遗漏）及其余 Go、vet、契约检查通过。
+  主 web、worklet 和四个 CommonJS 配置全部编译通过。至此既定范围内的
+  100 个模块均已完成 TS 化。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

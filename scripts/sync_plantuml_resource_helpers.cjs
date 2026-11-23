@@ -7,5 +7,9 @@ let after;
 if(body.includes(start)){const a=body.indexOf(start),b=body.indexOf(end,a)+end.length;assert(b>=end.length);after=body.slice(0,a)+generated+body.slice(b);}
 else after=prefix+generated+body.slice(prefix.length);
 after=notice+after;
-if(process.argv.includes('--check'))assert(source===after,'PlantUML resource helper prefix is stale');else fs.writeFileSync(file,after);
+if(process.argv.includes('--check')){
+ const ts=require('../node_modules/typescript');
+ function printed(value){const tree=ts.createSourceFile('plantuml.js',value,ts.ScriptTarget.ES2021,true,ts.ScriptKind.JS);return ts.createPrinter().printFile(tree).replace(/["']use strict["'];\s*/g,'');}
+ assert(source===after||printed(source)===printed(after),'PlantUML resource helper prefix is stale');
+}else fs.writeFileSync(file,after);
 console.log('PASS PlantUML private resource helper/payload sync');

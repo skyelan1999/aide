@@ -1,7 +1,8 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync(process.argv[2]||'internal/server/web/app.js','utf8');
-function excerpt(start,end){const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a,start);return source.slice(a,b);}
+const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs');
+const source=process.argv[2]?fs.readFileSync(process.argv[2],'utf8'):readAppSource();
+function excerpt(start,end){const a=sourceIndex(source,start),b=sourceIndex(source,end,a);return source.slice(a,b);}
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
 function node(tag='div',cls='',text=''){
  const classes=new Set(cls.split(' '));return {tag,children:[],dataset:{},attributes:{},textContent:text,classList:{contains:c=>classes.has(c),toggle(c,value){if(value===undefined)value=!classes.has(c);if(value)classes.add(c);else classes.delete(c);return value;}},
@@ -20,7 +21,7 @@ async function settings(){
 async function sessions(){
  const list=node(),requests=[];let scope='A';const state={token:'test',session:{id:'main'},pendingSessionId:''};
  const c={state,recoveryScope:()=>scope,subGroupState:{},$:()=>list,el:node,t:(s,n)=>s.replace('{0}',n),renderAssistantEntry(){},action:fn=>fn,document:{documentElement:{lang:'zh-CN'},createDocumentFragment:()=>node('fragment')},api:url=>{const d=deferred();requests.push({url,...d});return d.promise;}};vm.createContext(c);
- vm.runInContext(excerpt(source.includes('let sessionListRequest=')?'let sessionListRequest=':'async function loadSessions() {','// 全局 SSE（#60）'),c);
+ vm.runInContext(excerpt('let sessionListRequest=','// 全局 SSE（#60）'),c);
  const active=[{id:'main',title:'Main',status:'completed',checked:true}],archived=Array.from({length:5},(_,i)=>({id:'sub'+i,parentId:'main',title:'Child '+i,autoArchived:true}));
  const first=c.loadSessions();requests[0].resolve(active);requests[1].resolve(archived);await first;
  const toggle=()=>list.children.find(n=>n.children.some(child=>child.textContent.startsWith('子会话'))),more=()=>list.children.find(n=>n.children.some(child=>child.textContent.startsWith('展开全部')));

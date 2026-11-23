@@ -1,5 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const src=require('./fixtures/app-source.cjs').readAppSource(),start=src.indexOf('const stopRequests=new Set();'),end=src.indexOf('// ── 全局提醒中心',start);
+const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs'),src=readAppSource(),start=sourceIndex(src,'const stopRequests=new Set();'),end=sourceIndex(src,'// ── 全局提醒中心',start);
 assert(start>=0&&end>start);
 const motions=[],calls=[],toasts=[],ctx={window:{aideExperience:{beginStop(){const m={landed:0,cancelled:0,land(){this.landed++},cancel(){this.cancelled++}};motions.push(m);return m;}}},$:()=>null,state:{session:{id:'A',runs:[{id:'rA',status:'running'}]},config:{workspaceId:'one'}},sessionSeq:{value:1},lockScreen:{locked:false},recoveryScope:()=>ctx.state.config.workspaceId,t:s=>s,toast:s=>toasts.push(s),setSendMode(){},refreshSessionSoon:()=>ctx.refreshes++,schedulePoll:()=>ctx.polls++,refreshes:0,polls:0,api:path=>new Promise((resolve,reject)=>calls.push({path,resolve,reject}))};vm.createContext(ctx);vm.runInContext(src.slice(start,end),ctx);
 (async()=>{

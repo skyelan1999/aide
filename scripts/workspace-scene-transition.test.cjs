@@ -1,5 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=require('./fixtures/app-source.cjs').readAppSource();
+const {readAppSource,sourceIncludes}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
 const helper=source.slice(source.indexOf('async function restoreWorkspaceScene() {'),source.indexOf('async function saveWorkspaceConfig() {'));
 const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'A draft',classList:{toggle(){}}});return elements.get(id);};
 const records=new Map([['B:scene', {root:'workspace',dir:'child',fileDirs:{workspace:'child'},openFile:{root:'workspace',source:'',path:'child/notes.md'}}],['B:chat',{text:'B draft',attachments:[{path:'b.txt'}],start:2,end:4,scroll:22}]]);
@@ -9,6 +10,6 @@ const context={state,recoveryReady:true,recoveryTimer:0,sessionSeq:{value:1},cle
 vm.createContext(context);vm.runInContext(source.slice(source.indexOf('function fileListRequestKey()'),source.indexOf('function filePathPrefix()')) + source.slice(source.indexOf('async function loadInitialFilePanel()'),source.indexOf('async function loadFiles(auto, navigation)')) + source.slice(source.indexOf('function fileLocationKey()'),source.indexOf('function rememberFileLocation()')) + helper,context);
 (async()=>{await context.restoreWorkspaceScene();assert.equal($('prompt').value,'B draft');assert.equal(state.attachments[0].path,'b.txt');assert.equal(state.session,null);assert.equal(state.file,null);assert.equal(state.dir,'child');assert.equal(state.fileSelection.size,0);assert.equal(context.recoveryReady,true);assert(scopes.every(x=>x==='B'));assert.equal(context.selection.start,2);assert.deepEqual(opened,[{root:'workspace',source:'',path:'child/notes.md'}]);
  state.config.workspaceId='C';await context.restoreWorkspaceScene();assert.equal($('prompt').value,'');assert.equal(state.attachments.length,0);assert.equal(state.dir,'.');
- assert(source.includes('sessionDrafts.get(chatDraftKey(id))'));assert(source.includes('if(scope!==recoveryScope())return;'));assert(source.includes("if(recovered?.openFile?.path"));assert(source.includes("persistWorkspaceScene({openFile:null})"));
+ assert(sourceIncludes(source,'sessionDrafts.get(chatDraftKey(id))'));assert(sourceIncludes(source,'if(scope!==recoveryScope())return;'));assert(sourceIncludes(source,"if(recovered?.openFile?.path"));assert(sourceIncludes(source,"persistWorkspaceScene({openFile:null})"));
  console.log('Workspace scene transition PASS (source VM fixture; browser acceptance separate)');
 })().catch(e=>{console.error(e);process.exitCode=1;});

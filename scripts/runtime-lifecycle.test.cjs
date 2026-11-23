@@ -28,10 +28,8 @@ for (const helperFailure of [false, true]) {
   const window = {AideRuntimeLifecycle:{shutdown(dispose){dispose();called.push('erase');}},
     aideAssistantCall:{end(){called.push('call');}},aideAssistantLive:{stop(){called.push('live');}}};
   const storage = new Map([['aide-token','synthetic'],['draft','preserved']]);
-  const source = require('./fixtures/app-source.cjs').readAppSource();
-  const start = source.indexOf('function setupGlobalEvents() {');
-  const end = source.indexOf('\n\n/*',start);
-  vm.runInNewContext('let sessionsEv=null;'+source.slice(start,end)+'\nsetupGlobalEvents();', {
+  const {readAppSource,sourceFunction}=require('./fixtures/app-source.cjs'),source=readAppSource();
+  vm.runInNewContext('let sessionsEv=null;'+sourceFunction(source,'setupGlobalEvents')+'\nsetupGlobalEvents();', {
     state,window,localStorage:{removeItem(key){storage.delete(key);}},
     voiceHardStop(){called.push('voice');},
     EventSource:class {constructor(url){assert.match(url,/access_token=synthetic$/);}addEventListener(name,fn){listeners[name]=fn;}close(){called.push('events');}},

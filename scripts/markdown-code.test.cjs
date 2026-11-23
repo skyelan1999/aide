@@ -42,8 +42,8 @@ function fixture(clipboard, copied = true) {
  assert.equal(f.api.highlight('ordinary words for a plain paragraph'),null);
  assert.equal(f.api.highlight('x'.repeat(65537),'javascript'),null);
  const unsafe=f.api.highlight('const html = "<img src=x onerror=alert(1)>";','javascript');assert(!unsafe.value.includes('<img'));assert(unsafe.value.includes('&lt;img'));
- const app=require('./fixtures/app-source.cjs').readAppSource();const render=app.slice(app.indexOf('function renderMarkdown('),app.indexOf('const fileView ='));
- assert(render.includes('AideMarkdownCode?.decorate(body, {live, t})'));assert(!render.includes('copy.onclick'),'serialized Markdown must not rely on discarded event handlers');
+ const {readAppSource,sourceIndex,sourceIncludes}=require('./fixtures/app-source.cjs'),app=readAppSource();const render=app.slice(sourceIndex(app,'function renderMarkdown('),sourceIndex(app,'const fileView ='));
+ assert(sourceIncludes(render,'AideMarkdownCode?.decorate(body, {live, t})'));assert(!render.includes('copy.onclick'),'serialized Markdown must not rely on discarded event handlers');
  assert(fs.readFileSync('internal/server/web/index.html','utf8').indexOf('/markdown-code.js?')<fs.readFileSync('internal/server/web/index.html','utf8').indexOf('/app.js?'));
  console.log('PASS: dynamic copy delegation, exact original text, modal fallback after clipboard rejection, focus/selection restoration, honest failure, real local language inference, explicit/plaintext priority, highlight budget and escaped HTML');
 })().catch(error=>{console.error(error);process.exitCode=1;});

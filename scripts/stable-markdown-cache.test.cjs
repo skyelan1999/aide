@@ -2,9 +2,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const source = require('./fixtures/app-source.cjs').readAppSource();
-const start = source.indexOf('const originalMarkdownRender=renderMarkdown;');
-const end = source.indexOf('/* ── 语音小秘', start);
+const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
+const start=sourceIndex(source,'const originalMarkdownRender=renderMarkdown;');
+const end=sourceIndex(source,'/* ── 语音小秘', start);
 assert(start >= 0 && end > start, 'stable Markdown cache wrapper should be present');
 
 const rendered = [];

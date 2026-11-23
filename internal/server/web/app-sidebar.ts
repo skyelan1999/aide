@@ -1,5 +1,5 @@
 // @ts-ignore -- classic page scripts expose their own element helper.
-function el(tag: any, cls?: any, text?: any) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function el(tag: any, cls?: any, text?: any): any { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 const SIDEBAR_WIDTHS_KEY = 'aide-sidebar-widths-v1';
 const sidebarWidths: any = { left: null, right: null };
 function defaultSidebarWidth(side: any) {

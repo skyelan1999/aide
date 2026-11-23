@@ -2,9 +2,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const source = require('./fixtures/app-source.cjs').readAppSource();
-const start = source.indexOf('function bindMarkdownLivePreview(');
-const end = source.indexOf('\nfor(const [editorId,previewId,panelId,getSpec]', start);
+const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs');
+const source=readAppSource();
+const start = sourceIndex(source,'function bindMarkdownLivePreview(');
+const end = sourceIndex(source,'for(const [editorId,previewId,panelId,getSpec]', start);
 assert(start >= 0 && end > start, 'actual live-preview function must exist');
 function fixture(panelId = 'file-view') {
   const listeners = {}, hidden = new Set(), timers = new Map(), renders = [];

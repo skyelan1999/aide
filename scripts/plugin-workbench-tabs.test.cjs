@@ -48,7 +48,7 @@ test('deep link parser rejects traversal, bad selections and missing workspace',
  for(const hash of ['','#pluginWorkbench=compare','#pluginWorkbench=../other&workspace=valid','#pluginWorkbench=compare&workspace=../foreign','#pluginWorkbench=compare&workspace=valid&selection=%7Bbad','#pluginWorkbench=compare&workspace=valid&selection='+encodeURIComponent(JSON.stringify({left:{path:'../outside'}}))])assert.equal(f.tabs.read(hash),null,hash);
 });
 test('routed page rechecks workspace, current enabled plugin and lock before creating a bridge',async()=>{
- const app=require('./fixtures/app-source.cjs').readAppSource(),start=app.indexOf('let pluginPageOpening='),end=app.indexOf('async function loadPluginsPanel()',start);
+ const {readAppSource,sourceIndex}=require('./fixtures/app-source.cjs'),app=readAppSource(),start=sourceIndex(app,'let pluginPageOpening='),end=sourceIndex(app,'async function loadPluginsPanel()',start);
  const calls=[],guides=[],errors=[],state={token:'fixture',plugins:[]},lockScreen={locked:false};let scope='local|/Users/test/工作区 with spaces|';
  const route={id:'compare',workspace:scope,selection:undefined};
  const context={window:{AidePluginGuide:{fileFirst:id=>id==='video-preview',open:async p=>guides.push(p.id)},AidePluginWorkbenchTabs:{read:()=>route},AidePluginWorkbench:{open:async(p,s)=>(calls.push({p,s}),true)}},state,lockScreen,recoveryScope:()=>scope,chatRecoveryEpoch:0,
@@ -62,7 +62,7 @@ test('routed page rechecks workspace, current enabled plugin and lock before cre
  route.id='video-preview';context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,id:'video-preview'}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.deepEqual(guides,['compare','video-preview']);
 });
 test('manual login resumes a plugin deep link after authentication and closes the login dialog',async()=>{
- const app=require('./fixtures/app-source.cjs').readAppSource();const line=app.split('\n').find(s=>s.startsWith("$('login-form').onsubmit ="));
+ const {readAppSource,sourceStatement}=require('./fixtures/app-source.cjs'),app=readAppSource();const line=sourceStatement(app,"$('login-form').onsubmit");
  const calls=[],nodes={'login-form':{},'access-token':{value:'fixture-only'},'login-dialog':{open:true,close(){this.open=false;calls.push('close');}},'login-error':{}};
  const context={$:id=>nodes[id],state:{},initialize:async()=>calls.push('initialize'),localStorage:{setItem:(k,v)=>calls.push(k)},openRoutedPluginWorkbench:async()=>{assert.equal(nodes['login-dialog'].open,false);calls.push('route');}};
  vm.runInNewContext(line,context);await nodes['login-form'].onsubmit({preventDefault(){}});

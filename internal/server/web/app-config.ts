@@ -1,15 +1,3 @@
-declare function renderMarkdown(...args: any[]): any;
-declare function openFile(...args: any[]): any;
-declare const sessionSeq: any;
-declare const settingsPanel: any;
-declare function renderCommandWorkspaceStatus(): void;
-declare function refreshApprovalPolicy(): any;
-declare function refreshStrategyUI(): any;
-declare function lockScreenNow(): any;
-declare function restoreWorkspaceScene(): any;
-declare function estimateContext(): any;
-declare let assistantEntrySession: any;
-
 /* ── 问题分析历史报告：读索引、渲染 Markdown，并校验 draw.io 图存在 ── */
 const RCA_DIR = '.cache/system-docs/problem-reports';
 const RCA_INDEX = RCA_DIR + '/problem-reports-index.md';

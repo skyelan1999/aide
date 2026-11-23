@@ -2,7 +2,8 @@
 
 const fs = require("fs"), vm = require("vm"), assert = require("assert/strict"), THREE = require("../internal/server/web/vendor/three.min.js");
 
-const s = fs.readFileSync(process.env.AIDE_URDF_REVIEW_BASELINE || "internal/server/web/urdf-preview.js", "utf8"), a = s.indexOf("    const track=object=>{"), b = s.indexOf("    function teardown()", a);
+const {sourceIndex}=require('./fixtures/starmap-source.cjs');
+const s = fs.readFileSync(process.env.AIDE_URDF_REVIEW_BASELINE || "internal/server/web/urdf-preview.js", "utf8"), a = sourceIndex(s,"const track="), b = sourceIndex(s,"function teardown()", a);
 
 assert(a >= 0 && b > a);
 
