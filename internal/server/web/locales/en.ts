@@ -3952,6 +3952,7 @@ window.aideEnglish = {
   "静域为轻量原生背景，随明暗主题自适应。自选素材支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB，仅保存在当前浏览器。后台、锁屏及减少动态效果时暂停。": "Studio is lightweight and adapts to light and dark themes. Local media supports MP4, WebM, GIF, PNG, JPEG and WebP up to 30 MiB, stored in this browser only. Motion pauses in the background, while locked, or with reduced motion.",
   "加载失败：": "Loading failed:",
   "管理提案": "Management proposals",
+  "管理提案存储已损坏，原文件仍保留；请备份后修复或移走该文件。": "Management proposal storage is damaged. The original file was preserved; back it up before repairing or removing it.",
   "安装 / 升级插件": "Install / update plugin",
   "删除引用": "Remove reference",
   "配置引用": "Configure reference",
