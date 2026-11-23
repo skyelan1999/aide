@@ -62,8 +62,17 @@
   `markdown-diagrams`（Mermaid/CSSOM）、`markdown-media`（附件/模板/drawio）、
   `markdown-outline`（目录 + 阅读器缩放双 IIFE）；严格等价验证全过，
   8 个 markdown 相关测试全过（markdown-history-writable 切片锚点已适配产物格式）。
-- **批 3b（进行中）**：markdown 大模块——`markdown-pdf-style`(271)、
-  `markdown-review`(342)、`markdown-pdf-appearance`(754)、`markdown-export`(869)。
+- **批 3b（已完成）**：markdown 大模块——`markdown-pdf-style`(271)、
+  `markdown-review`(342)、`markdown-pdf-appearance`(754)、`markdown-export`(869)；
+  严格等价验证全过，14 个 markdown 相关 node 测试全过。
+  `AideMarkdownReview` 的 Window 声明由 markdown-outline.ts 移交 markdown-review.ts。
+  download-export / inline-image / template-icons 三个测试的源码锚点适配产物格式
+  （等号/逗号空格、跨行语句改 `\s*` 正则、vm 注入锚点）。
+  新经验：
+  - 等价归一化需再归一 `=>` 周围空白并 trim 首尾（tsc 对 `: T=>` 保留原空格）。
+  - 不要用 `as` 断言包裹三元/数组表达式（产物保留括号）；改为变量类型注解。
+  - TS2774（方法恒存在）与"看似 bug"的原始属性访问（如 fence.char）用
+    `as any` 逐字保留，禁止顺手修复。
 - **批 4**：中型模块与 scripts 桥接（starmap、avatar-player、urdf-preview、
   computer-bridge 等；Node/CommonJS 脚本使用独立 `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。

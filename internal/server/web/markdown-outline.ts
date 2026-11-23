@@ -6,7 +6,6 @@ interface MdReaderLabels {
 interface Window {
   AideMarkdownOutline?: { mount: (host: HTMLElement, labels?: MdOutlineLabels) => void; dispose: (host: HTMLElement) => void };
   AideMarkdownReader?: { mount: (host: HTMLElement, labels?: MdReaderLabels, review?: any) => void; dispose: (host: HTMLElement) => void };
-  AideMarkdownReview?: { mount: (host: HTMLElement, article: HTMLElement, toolbar: HTMLElement, review: any) => void; dispose: (host: HTMLElement) => void };
 }
 /* Shared outline for file previews. Index the rendered document, never fenced code. */
 (() => {

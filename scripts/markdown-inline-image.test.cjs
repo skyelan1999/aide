@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const source=fs.readFileSync('internal/server/web/markdown-export.js','utf8').replace('window.AideMarkdownExport={','window.ownedInlineImage=inlineImageBlob;window.ownedImageDataURL=imageDataURL;window.AideMarkdownExport={');
+const source=fs.readFileSync('internal/server/web/markdown-export.js','utf8').replace('window.AideMarkdownExport = {','window.ownedInlineImage=inlineImageBlob;window.ownedImageDataURL=imageDataURL;window.AideMarkdownExport={');
 const context={window:{addEventListener(){}},Blob,Uint8Array,URL,TextEncoder,atob,DOMException};vm.createContext(context);vm.runInContext(source,context);
 (async()=>{
  const inputs=[
