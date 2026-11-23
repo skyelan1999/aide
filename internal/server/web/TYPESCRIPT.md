@@ -128,13 +128,27 @@
   新经验：
   - 只含 `resolve()` 无参调用的 Promise 必须显式 `new Promise<void>`，否则 TS2794。
   - `new Promise` 内 resolve 恒带参时用 `new Promise<any>` 保持 result 类型灵活。
-- **批 4g（待做）**：其余中小模块（assistant-live、assistant-realtime、cad-measure、
-  starmap-lensing、starmap-cosmos、crash-monitor、project-records、voip、
-  file-autosave、project-workflows、plugin-plans、drawio-preview-safety、
-  starmap-physics、highlight-grammar-fixes、session-review、continuity、
-  settings-init、workbench-background、plugin-workbench、message-center、
-  experience、urdf-preview、session-plan、avatar-player、starmap、
-  plantuml-resource-helpers 等）、两个 AudioWorklet（独立 lib 配置）、
+- **批 4g（已完成）**：八个中小模块——`plantuml-resource-helpers`（全局
+  var/function 脚本，`AidePlantUmlRE2` 以 declare var any 声明，无 html cache
+  buster）、`assistant-live`、`assistant-realtime`、`cad-measure`（UMD）、
+  `starmap-lensing`、`starmap-cosmos`、`crash-monitor`、`project-records`；
+  严格等价全过，28 个相关测试全过（assistant-live/assistant-realtime/
+  crash-monitor/cad-measure/plantuml/starmap-lensing 单测 + 22 个 starmap 套件）。
+  crash-monitor 与 starmap-lensing/starmap-cosmos 的 cache buster 在 starmap.html，
+  其余在 index.html（crash-monitor 两处各自递增）。
+  新经验：
+  - 原函数单参定义但存在双参调用时，用**重载声明**（`function f(a,b?): void;`
+    + 实现 `function f(a): void`）保留运行时签名；重载声明在产物中被擦除，
+    严格等价不受影响，优于 `@ts-expect-error`（该指令只对下一行生效，长单行
+    内联调用无法精准标注）。
+  - DOM 标准类型不含的动态属性（如 `PerformanceEntry.type` 仅存在于
+    navigation entry），在该 const 语句上一行加 `@ts-expect-error` 保留原动态
+    访问；验证时 removeComments 归一化，注释不影响等价。
+- **批 4h（待做）**：其余中小模块（voip、file-autosave、project-workflows、
+  plugin-plans、drawio-preview-safety、starmap-physics、highlight-grammar-fixes、
+  session-review、continuity、settings-init、workbench-background、
+  plugin-workbench、message-center、experience、urdf-preview、session-plan、
+  avatar-player、starmap 等）、两个 AudioWorklet（独立 lib 配置）、
   `locales/en.js` 与 scripts 桥接（Node/CommonJS 脚本使用独立
   `module: commonjs` 配置）。
 - **批 5**：`app.js`（约 14k 行）先按职责拆分再改造；`locales/en.js` 等收尾。

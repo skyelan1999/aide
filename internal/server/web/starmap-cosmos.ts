@@ -1,0 +1,157 @@
+interface Window {
+  AideStarCosmos?: any;
+}
+'use strict';
+
+// Celestial scale describes established groups, never accumulated leaf volume.
+// One permanent universe contains the real snapshot. Missing scales are skipped.
+window.AideStarCosmos = Object.freeze({build(nodes: any, edges: any): any {
+ const levels=Object.freeze([uiTextStarmapCosmos('知识宇宙'),uiTextStarmapCosmos('超星系团'),uiTextStarmapCosmos('星系团'),uiTextStarmapCosmos('本星系群'),uiTextStarmapCosmos('银河系'),uiTextStarmapCosmos('旋臂'),uiTextStarmapCosmos('恒星系统'),uiTextStarmapCosmos('节点行星')]);
+ // A parent needs this many distinct established units of the immediately lower
+ // scale, within an actual source boundary. The universe itself is a container.
+ const thresholds=Object.freeze([null,2,2,2,2,3,4,null]);
+ const byID=new Map<any, any>(),byKey=new Map<any, any>(),rawByKey=new Map<any, any>(),paths=new Map<any, any>(),owners=new Map<any, any>(),out=new Map<any, any>(),back=new Map<any, any>();
+ const union=new Map<any, any>(),rank=new Map<any, any>(),minimum=new Map<any, any>(),localIncident=new Set<any>(),scopeByID=new Map<any, any>();
+ for(const node of nodes||[])if(node&&typeof node.id==='string'&&!byID.has(node.id)){byID.set(node.id,node);union.set(node.id,node.id);rank.set(node.id,0);minimum.set(node.id,node.id);}
+ const validEdges=[];
+ for(const edge of edges||[]){if(!edge||!byID.has(edge.from)||!byID.has(edge.to))continue;validEdges.push(edge);
+  if(edge.kind==='defines'){const old=owners.get(edge.to);if(!old||edge.from<old)owners.set(edge.to,edge.from);}
+ }
+ function declarationFor(node: any): any{const owner=byID.get(owners.get(node.id));return node.kind==='symbol'&&owner&&owner.kind==='symbol'?'owner:'+owner.id:'kind:'+(node.kind==='symbol'?node.symbolKind||'symbol':node.kind);}
+ for(const node of byID.values()){const file=node.kind==='symbol'&&byID.has(node.parentFile)?byID.get(node.parentFile):node;scopeByID.set(node.id,JSON.stringify([file.id,declarationFor(node)]));}
+ function representative(id: any): any{let root=id;while(union.get(root)!==root)root=union.get(root);while(id!==root){const next=union.get(id);union.set(id,root);id=next;}return root;}
+ function join(a: any,b: any): void{a=representative(a);b=representative(b);if(a===b)return;if(rank.get(a)<rank.get(b))[a,b]=[b,a];union.set(b,a);minimum.set(a,minimum.get(a)<minimum.get(b)?minimum.get(a):minimum.get(b));if(rank.get(a)===rank.get(b))rank.set(a,rank.get(a)+1);}
+ for(const edge of validEdges){if(!['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(edge.kind))continue;
+  if(!out.has(edge.from)){out.set(edge.from,new Set<any>());back.set(edge.from,new Set<any>());}
+  if(!out.has(edge.to)){out.set(edge.to,new Set<any>());back.set(edge.to,new Set<any>());}
+  out.get(edge.from).add(edge.to);back.get(edge.to).add(edge.from);
+  // Local components are genuine induced call graphs inside file/owner scope.
+  // A global component's visual slices must not invent several global systems.
+  if(scopeByID.get(edge.from)===scopeByID.get(edge.to)){join(edge.from,edge.to);localIncident.add(edge.from);localIncident.add(edge.to);}
+ }
+ // Global SCC flags retain cross-file recursion candidates. No runtime is run.
+ const seen=new Set<any>(),order: any[]=[],components=new Map<any, any>(),cyclic=new Set<any>();
+ for(const id of out.keys()){if(seen.has(id))continue;seen.add(id);const stack: any[]=[[id,out.get(id).values()]];
+  while(stack.length){const top=stack[stack.length-1],next=top[1].next();if(next.done){order.push(top[0]);stack.pop();}else if(!seen.has(next.value)){seen.add(next.value);stack.push([next.value,out.get(next.value).values()]);}}
+ }
+ for(let i=order.length-1;i>=0;i--){const id=order[i];if(components.has(id))continue;const members: any[]=[],stack=[id];components.set(id,id);
+  while(stack.length){const member=stack.pop()!;members.push(member);for(const previous of back.get(member))if(!components.has(previous)){components.set(previous,id);stack.push(previous);}}
+  if(members.length>1||out.get(id).has(id))for(const member of members)cyclic.add(member);
+ }
+ const callGroups=new Map<any, any>();
+ for(const id of localIncident){const key=minimum.get(representative(id));if(!callGroups.has(key))callGroups.set(key,{key,members:[],edges:0});callGroups.get(key).members.push(id);}
+ for(const edge of validEdges)if(['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(edge.kind)&&scopeByID.get(edge.from)===scopeByID.get(edge.to))callGroups.get(minimum.get(representative(edge.from))).edges++;
+ const normalized=(value: any): string=>String(value||'').replace(/\\/g,'/').split('/').filter(part=>part&&part!=='.').join('/');
+ const dirname=(value: any): any=>{const parts=value.split('/');parts.pop();return parts.join('/')||'.';};
+ const base=(value: any): any=>value.split('/').filter(Boolean).pop()||value;
+ const kindNames: Record<string, string>={function:uiTextStarmapCosmos('函数'),method:uiTextStarmapCosmos('方法'),type:uiTextStarmapCosmos('类型'),class:uiTextStarmapCosmos('类'),interface:uiTextStarmapCosmos('接口'),closure:uiTextStarmapCosmos('闭包'),variable:uiTextStarmapCosmos('变量'),constant:uiTextStarmapCosmos('常量'),property:uiTextStarmapCosmos('属性')};
+ const roles=['snapshot','source','project','directory','file','declaration','local-call-component','node'];
+ const regionColor=(region: any): string=>region==='workspace'?'#a7caff':region==='sessions'?'#f3d19b':'#89d7c8';
+ function create(parent: any,metadataDepth: any,identity: any,label: any,region: any,description: any,evidence: any,metadata: any={}): any{
+  const key=parent?parent.key+'/'+metadataDepth+':'+encodeURIComponent(identity):'cosmos:0';let group=rawByKey.get(key);
+  if(!group){group={key,unitID:key,depth:metadataDepth,metadataDepth,label,region,color:regionColor(region),description,evidence,members:[],children:[],parent:parent||null,cyclic:false,connections:[],sourceMetadata:{role:roles[metadataDepth],classificationKey:key,label,evidence,...metadata}};rawByKey.set(key,group);if(parent)parent.children.push(group);}return group;
+ }
+ const root=create(null,0,'universe',uiTextStarmapCosmos('全部已索引知识'),'', uiTextStarmapCosmos('永久知识宇宙容器。其他天体只有在真实下一级分组达到门槛时成立；单个银河不能因节点多而变成星系团。'),uiTextStarmapCosmos('真实索引快照'));
+ const sourceNames=new Map<any, any>();
+ for(const node of byID.values()){const scope=JSON.stringify([node.region||node.root||'workspace',node.root||'',node.source||'']);if(node.kind==='directory'&&(!node.path||node.path==='.'))sourceNames.set(scope,node.name||node.region);}
+ for(const node of byID.values()){
+  const region=node.region||node.root||'workspace',scope=JSON.stringify([region,node.root||'',node.source||'']);
+  const path=normalized(node.path),fileNode=node.kind==='symbol'&&byID.has(node.parentFile)?byID.get(node.parentFile):node;
+  const filePath=normalized(fileNode.path)||path,parts=filePath.split('/').filter(Boolean);
+  const directory=node.kind==='directory'?(filePath||'.'):dirname(filePath),project=node.kind==='session'?'sessions':parts.length>1||node.kind==='directory'&&parts.length?parts[0]:'.';
+  const sourceLabel=sourceNames.get(scope)||(region==='workspace'?uiTextStarmapCosmos('工作区'):region==='sessions'?uiTextStarmapCosmos('会话'):node.source||node.root||region);
+  const source=create(root,1,scope,sourceLabel,region,uiTextStarmapCosmos('实际索引来源；须有至少两个已成立星系团才显示为超星系团。'),'region / root / source',{region,root:node.root||'',source:node.source||''});
+  const projectGroup=create(source,2,project,project==='sessions'?uiTextStarmapCosmos('会话集合'):project==='.'?uiTextStarmapCosmos('根目录项目'):project,region,uiTextStarmapCosmos('实际路径首段项目；须有至少两个已成立星系群才显示为星系团。'),uiTextStarmapCosmos('path 首段'),{project});
+  const directoryGroup=create(projectGroup,3,node.kind==='session'?'sessions':directory,node.kind==='session'?uiTextStarmapCosmos('会话记录区'):directory==='.'?uiTextStarmapCosmos('根目录'):directory,region,uiTextStarmapCosmos('实际完整包含目录；须有至少两个已成立银河才显示为本星系群。'),uiTextStarmapCosmos('完整 containing directory'),{directory});
+  const fileIdentity=fileNode.id,fileLabel=fileNode.name||(node.kind==='session'?uiTextStarmapCosmos('会话 #')+node.number:base(filePath)||node.id);
+  const fileGroup=create(directoryGroup,4,fileIdentity,fileLabel,region,uiTextStarmapCosmos('实际 parentFile 或文件节点；须有至少两个已成立旋臂才显示为银河。'),node.kind==='symbol'?'parentFile '+fileIdentity:uiTextStarmapCosmos('真实节点 ')+fileIdentity,{fileID:fileIdentity,path:filePath});
+  const owner=byID.get(owners.get(node.id)),symbolOwner=node.kind==='symbol'&&owner&&owner.kind==='symbol'?owner:null;
+  const declarationIdentity=declarationFor(node),declarationLabel=symbolOwner?symbolOwner.name:node.kind==='symbol'?(kindNames[node.symbolKind]||node.symbolKind||uiTextStarmapCosmos('代码'))+uiTextStarmapCosmos('声明'):node.kind==='session'?uiTextStarmapCosmos('会话原文'):node.kind==='directory'?uiTextStarmapCosmos('目录索引'):uiTextStarmapCosmos('文件正文');
+  const declarationGroup=create(fileGroup,5,declarationIdentity,declarationLabel,region,uiTextStarmapCosmos('实际 defines 所属对象或声明种类；须有至少三个不同已成立恒星系统才显示为旋臂。'),symbolOwner?'defines '+symbolOwner.id:'symbolKind / kind',{ownerID:symbolOwner?.id||'',symbolKind:node.symbolKind||node.kind});
+  const callKey=localIncident.has(node.id)?minimum.get(representative(node.id)):null,callGroup=callKey?callGroups.get(callKey):null;
+  const orbitIdentity=callKey?'calls:'+callKey:'node:'+node.id;
+  const orbit=create(declarationGroup,6,orbitIdentity,(node.name||node.id)+uiTextStarmapCosmos(' · 调用单元'),region,callGroup?uiTextStarmapCosmos('同一真实 file/owner 范围内的局部静态调用联通分量；至少四个不同真实节点才成立恒星系统。'):uiTextStarmapCosmos('此范围没有已解析的局部调用联通分量，单节点保留行星；跨范围调用仍保留真实关系。'),callGroup?uiTextStarmapCosmos('局部静态调用联通分量'):uiTextStarmapCosmos('不推断未使用或不存在运行时调用'),{scope:scopeByID.get(node.id),componentKey:callKey||''});
+  if(callGroup){orbit.unitID='local-calls:'+scopeByID.get(node.id)+':'+callKey;orbit.componentKey=callKey;orbit.componentMemberCount=callGroup.members.length;orbit.componentEdgeCount=callGroup.edges;
+   if(!orbit.localCenterID||node.id<orbit.localCenterID){orbit.localCenterID=node.id;orbit.label=(node.name||node.id)+uiTextStarmapCosmos(' · 调用单元');}}
+  const leaf=create(orbit,7,node.id,node.name||node.id,region,uiTextStarmapCosmos('真实知识节点；编号、原文位置和会话回调保持不变。'),'node '+node.id,{nodeID:node.id});leaf.nodeID=node.id;leaf.unitID='node:'+node.id;
+  leaf.sourceMetadata.classifications=[source,projectGroup,directoryGroup,fileGroup,declarationGroup,orbit].map(group=>group.sourceMetadata);
+  for(const group of [root,source,projectGroup,directoryGroup,fileGroup,declarationGroup,orbit,leaf]){group.members.push(node.id);if(cyclic.has(node.id))group.cyclic=true;}
+ }
+ // Classification boundaries are evidence, not mandatory celestial wrappers.
+ // Count distinct established direct child units of the immediately lower scale.
+ function collapse(group: any): any{
+  if(group.nodeID){group.nextThreshold=thresholds[6];group.qualifyingChildCount=0;group.sourceMetadata.qualified=true;return [group];}
+  const children=[];for(const child of group.children)for(const established of collapse(child))children.push(established);
+  const distinct=new Set<any>(children.filter(child=>child.depth===group.metadataDepth+1).map(child=>child.unitID));
+  const required=thresholds[group.metadataDepth],qualified=group===root||distinct.size>=required!;
+  group.qualifyingChildCount=distinct.size;group.requiredChildCount=required;group.sourceMetadata.qualified=qualified;group.sourceMetadata.qualifyingChildCount=distinct.size;group.sourceMetadata.requiredChildCount=required;
+  if(!qualified)return children;
+  group.children=children;group.nextThreshold=group.depth>1?thresholds[group.depth-1]:null;
+  return [group];
+ }
+ collapse(root);
+ const scaleCounts=Array(8).fill(0),stack: any[]=[[root,null,[]]];
+ while(stack.length){const [group,parent,ancestors]=stack.pop();group.parent=parent;group.depth=group.metadataDepth;byKey.set(group.key,group);scaleCounts[group.depth]++;
+  const route=[...ancestors,group];if(group.nodeID)paths.set(group.nodeID,route);
+  const counts=Array(8).fill(0);for(const child of group.children){counts[child.depth]++;stack.push([child,group,route]);}
+  group.directScaleCounts=counts;group.nodeCount=group.members.length;group.establishedChildCount=group.children.length;
+ }
+ // Recompute connections over variable-length retained paths. Every edge goes
+ // to the visible direct children of its lowest common ancestor, without twins.
+ const connectionMaps=new Map<any, any>(),systemByNode=new Map<any, any>(),gatesBySystem=new Map<any, any>();
+ // A star gate is only proposed when an indexed edge truly crosses between
+ // two established stellar systems. These are navigational affordances, not
+ // a claim that the indexed relationship is a physical wormhole.
+ for(const [id,path] of paths){const system=path.find((group: any)=>group.depth===6);if(system)systemByNode.set(id,system);}
+ // In the story model, each system's available stellar energy follows the
+ // distinct indexed relationships of its real member stars. Log scaling keeps
+ // a single high-degree node from overwhelming a whole system.
+ const systemResourceRaw=new Map<any, any>();for(const system of new Set<any>(systemByNode.values())){
+  let total=0;for(const id of system.members){const node=byID.get(id);total+=Math.log2(1+(node?.connectionCount||0));}
+  systemResourceRaw.set(system.key,total);
+ }
+ let maxSystemResource=1;for(const value of systemResourceRaw.values())maxSystemResource=Math.max(maxSystemResource,value);
+ for(const system of new Set<any>(systemByNode.values()))system.resourceStrength=Math.sqrt((systemResourceRaw.get(system.key)||0)/maxSystemResource);
+ for(const edge of validEdges){if(['contains','defines'].includes(edge.kind))continue;const from=systemByNode.get(edge.from),to=systemByNode.get(edge.to);if(!from||!to||from.key===to.key)continue;
+  const a=byID.get(edge.from),b=byID.get(edge.to),dx=(b?.x||0)-(a?.x||0),dy=(b?.y||0)-(a?.y||0),length=Math.hypot(dx,dy)||1;
+  for(const [owner,target,nodeID,vx,vy] of [[from,to,edge.from,dx/length,dy/length],[to,from,edge.to,-dx/length,-dy/length]]){
+   if(!gatesBySystem.has(owner.key))gatesBySystem.set(owner.key,new Map<any, any>());const gates=gatesBySystem.get(owner.key),old=gates.get(target.key);
+   if(old){old.count++;old.nodes.add(nodeID);old.kinds.add(edge.kind||'relation');old.directionX+=vx;old.directionY+=vy;}
+   else gates.set(target.key,{targetKey:target.key,targetLabel:target.label,count:1,nodes:new Set<any>([nodeID]),kinds:new Set<any>([edge.kind||'relation']),directionX:vx,directionY:vy});
+  }
+ }
+ for(const [ownerKey,gates] of gatesBySystem)for(const gate of gates.values()){
+  const ownerResource=byKey.get(ownerKey)?.resourceStrength||0,targetResource=byKey.get(gate.targetKey)?.resourceStrength||0;
+  const routeStrength=Math.min(1,Math.log2(gate.count+1)/4);
+  // Both systems must contribute. The weaker endpoint caps usable capacity;
+  // a geometric blend models route stability without implying real physics.
+  gate.ownerResource=ownerResource;gate.targetResource=targetResource;
+  gate.stability=Math.cbrt(ownerResource*targetResource*routeStrength);
+  gate.capacity=Math.min(ownerResource,targetResource)*routeStrength;
+  gate.brightness=Math.sqrt(gate.stability*gate.capacity);
+  let directionLength=Math.hypot(gate.directionX,gate.directionY);
+  if(directionLength<1e-6){const center=(key: any): any=>{const members=byKey.get(key)?.members||[];let x=0,y=0,count=0;for(const id of members){const n=byID.get(id);if(Number.isFinite(n?.x)&&Number.isFinite(n?.y)){x+=n.x;y+=n.y;count++;}}return count?{x:x/count,y:y/count}:null;},a=center(ownerKey),b=center(gate.targetKey);
+   if(a&&b){gate.directionX=b.x-a.x;gate.directionY=b.y-a.y;directionLength=Math.hypot(gate.directionX,gate.directionY);}}
+  if(directionLength<1e-6){gate.directionX=1;gate.directionY=0;directionLength=1;}
+  gate.directionX/=directionLength;gate.directionY/=directionLength;
+  gate.directionSector=Math.floor((Math.atan2(gate.directionY,gate.directionX)+Math.PI+Math.PI/24)/(Math.PI/12))%24;
+  gate.anchorNodeID=[...gate.nodes].sort((a: any,b: any)=>(byID.get(b)?.connectionCount||0)-(byID.get(a)?.connectionCount||0)||a.localeCompare(b))[0];
+  gate.nodes=undefined;gate.kinds=[...gate.kinds].sort();
+ }
+ for(const gates of gatesBySystem.values()){const ranks=new Map<any, any>();for(const gate of [...gates.values()].sort((a: any,b: any)=>a.targetKey.localeCompare(b.targetKey))){const ring=ranks.get(gate.directionSector)||0;gate.clearanceRing=ring;ranks.set(gate.directionSector,ring+1);}}
+ for(const edge of validEdges){const from=paths.get(edge.from),to=paths.get(edge.to);let common=0;
+  while(common<from.length&&common<to.length&&from[common]===to[common])common++;
+  if(common===0||common===from.length||common===to.length)continue;
+  const parent=from[common-1],a=from[common],b=to[common];if(!connectionMaps.has(parent.key))connectionMaps.set(parent.key,new Map<any, any>());
+  const map=connectionMaps.get(parent.key),key=JSON.stringify([a.key,b.key,edge.kind||'relation']);let connection=map.get(key);
+  if(!connection){connection={from:a.key,to:b.key,kind:edge.kind||'relation',count:0,evidence:edge.evidence||'indexed edge'};map.set(key,connection);}connection.count++;
+ }
+ for(const [key,map]of connectionMaps)byKey.get(key).connections=[...map.values()];
+ rawByKey.clear();
+ function find(key: any): any{return byKey.get(key)||null;}
+ function pathFor(id: any): any{return paths.get(id)||[];}
+ function scene(key: any): any{const group=find(key)||root,system=group.depth===7?group.parent:group;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold,gates:[...(gatesBySystem.get(system?.key)?.values()||[])]};}
+ return Object.freeze({root,byKey,paths,scene,pathFor,find,levels,thresholds,scaleCounts:Object.freeze(scaleCounts)});
+}});
+
+function uiTextStarmapCosmos(key: string, ...values: unknown[]): string { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }
