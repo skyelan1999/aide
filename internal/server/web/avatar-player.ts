@@ -25,7 +25,7 @@ interface Window {
     record.dispose?.();
   }
 
-  function trimCache(cache: any, maxEntries: any, pixelBudget: any = Infinity): void {
+  function trimCache(cache: any, maxEntries: any, pixelBudget = Infinity): void {
     let pixels = [...cache.values()].reduce((sum: any, item: any) => sum + (item.pixels || 0), 0);
     for (const [key, item] of cache) {
       if (cache.size <= maxEntries && pixels <= pixelBudget) break;
@@ -35,7 +35,7 @@ interface Window {
     }
   }
 
-  function acquire(cache: any, key: any, create: any): any {
+  function acquire(cache: any, key: any, create: any) {
     let record = cache.get(key);
     if (record) { cache.delete(key); cache.set(key, record); }
     else {
@@ -63,7 +63,7 @@ interface Window {
     trimCache(cache, cache === images ? MAX_CACHED_IMAGES : 8, cache === images ? MAX_CACHED_PIXELS : Infinity);
   }
 
-  function loadImage(url: any): any {
+  function loadImage(url: any) {
     return acquire(images, url, (record: any) => new Promise((resolve, reject) => {
       if (!record.refs) { reject(new Error('Avatar image no longer requested')); return; }
       const image = new Image();
@@ -90,9 +90,9 @@ interface Window {
     }));
   }
 
-  function normalizeManifest(raw: any, base: any): any {
+  function normalizeManifest(raw: any, base: any) {
     if (!raw || raw.version !== 1 || !raw.sheets || !raw.clips) throw new Error('Invalid avatar manifest');
-    const sheets: any = Object.create(null), clips: any = Object.create(null), scenes: any = Object.create(null);
+    const sheets = Object.create(null), clips = Object.create(null), scenes = Object.create(null);
     for (const [id, sheet] of Object.entries<any>(raw.sheets).slice(0, 256)) {
       if (!sheet?.src) continue;
       const columns = Math.max(1, Math.min(128, Math.floor(Number(sheet.columns) || 1)));
@@ -122,7 +122,7 @@ interface Window {
     return { label: String(raw.label || '虚拟形象').slice(0, 200), poster: raw.poster ? assetURL(raw.poster, base) : '', clips, scenes };
   }
 
-  function candidatesFor(manifest: any, motion: any): any {
+  function candidatesFor(manifest: any, motion: any) {
     const { clips, scenes } = manifest;
     const scene = scenes[motion] || Object.values<any>(scenes).find((ids: any) => ids.includes(motion)) || [];
     const ids = [...(clips[motion] ? [motion] : []), ...scene,
@@ -130,7 +130,7 @@ interface Window {
     return [...new Set(ids)].map(id => clips[id]).filter(Boolean);
   }
 
-  function nextVariant(player: any): any {
+  function nextVariant(player: any) {
     if (!player.clip || !player.manifest) return null;
     const { clips, scenes } = player.manifest;
     if (player.deferredMotion) return candidatesFor(player.manifest, player.deferredMotion).find((clip: any) => !player.failedSheets.has(clip.sheet.src));
@@ -181,7 +181,7 @@ interface Window {
     }
   }
 
-  function frameAt(clip: any, elapsed: any): any {
+  function frameAt(clip: any, elapsed: any) {
     let remaining = clip.loop ? elapsed % clip.total : Math.min(elapsed, clip.total - 1);
     for (let i = 0; i < clip.frames.length; i++) {
       if (remaining < clip.durations[i]) {
@@ -254,7 +254,7 @@ interface Window {
       const { sheet } = player.clip;
       const sourceWidth = player.image.naturalWidth / sheet.columns;
       const sourceHeight = player.image.naturalHeight / sheet.rows;
-      const rectangle = (index: any): any => {
+      const rectangle = (index: any) => {
         const rect = sheet.frameRects?.[index] || [index % sheet.columns * sourceWidth, Math.floor(index / sheet.columns) * sourceHeight, sourceWidth, sourceHeight];
         if (rect[0] + rect[2] > player.image.naturalWidth + 0.5 || rect[1] + rect[3] > player.image.naturalHeight + 0.5) throw new Error('Avatar frame outside sheet');
         return rect;
@@ -457,7 +457,7 @@ interface Window {
     schedule();
   }
 
-  function mount(slot: any, manifestURL: any, motion = 'idle', options: any = {}): any {
+  function mount(slot: any, manifestURL: any, motion = 'idle', options: any = {}) {
     if (!slot?.replaceChildren) throw new TypeError('Avatar slot must be an element');
     const url = assetURL(manifestURL, document.baseURI);
     const previous = slots.get(slot);

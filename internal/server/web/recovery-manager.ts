@@ -6,7 +6,7 @@ interface Window {
 /* Local recovery inventory is deliberately separate from configuration backups. */
 (() => {
   'use strict';
-  function render({t,error,isActive=()=>true}: any): any {
+  function render({t,error,isActive=()=>true}: any) {
     const node=<K extends keyof HTMLElementTagNameMap>(tag: K,cls?: string | null,text?: string | null): HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;};
     const wrap=node('div','settings-control recovery-manager');
     wrap.append(node('h3','',t('本地恢复存储')),

@@ -1,7 +1,7 @@
 'use strict';
-// @ts-ignore -- independent page scripts share the historical global helper name.
+// @ts-expect-error -- independent page scripts share the historical global helper name.
 const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m, i) => args[i] ?? m);
-// @ts-ignore -- independent page scripts share the historical global DOM helper name.
+// @ts-expect-error -- independent page scripts share the historical global DOM helper name.
 const $ = (id) => document.getElementById(id);
 function updateFavicon() {
     const icon = $('app-favicon');
@@ -16,9 +16,9 @@ function updateFavicon() {
 updateFavicon();
 if (window.aideUI?.subscribe)
     window.aideUI.subscribe(updateFavicon);
-// @ts-ignore -- app state is global to the classic scripts loaded after this file.
+// @ts-expect-error -- app state is global to the classic scripts loaded after this file.
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: true, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false, contextCompactions: new Map() };
-// @ts-ignore -- starmap has an independent page-local timer with the same global name.
+// @ts-expect-error -- starmap has an independent page-local timer with the same global name.
 let recoveryReady = false, recoveryTimer = 0, recoveryNotice = false, chatRecoveryEpoch = 0;
 let workspaceSceneRestoring = false;
 const recoveryScope = () => state.config?.workspaceId || '';

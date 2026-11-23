@@ -4,7 +4,7 @@ interface Window {
 'use strict';
 
 // Graph-only stellar accents. None of these scores represent physical mass.
-window.AideStarGravity = Object.freeze({ analyze(nodes: any[] = [], edges: any[] = [], groups: any[] = []): any {
+window.AideStarGravity = Object.freeze({ analyze(nodes: any[] = [], edges: any[] = [], groups: any[] = []) {
  const byID = new Map(nodes.filter(node => node && typeof node.id === 'string').map(node => [node.id, node]));
  const neighbors = new Map([...byID.keys()].map(id => [id, new Set<any>()]));
  const membership = new Map<any, any>();

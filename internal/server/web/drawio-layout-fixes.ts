@@ -49,7 +49,7 @@ interface Window {
       if (!Graph.lineJumpsEnabled || !points || !edges || !state.style ||
           root.mxUtils.getValue(state.style, 'jumpStyle', 'none') === 'none') return jumps.apply(this, arguments);
       if (this.aideLineJumpWork == null) this.aideLineJumpWork = workLimit;
-      const degrade = (): any => {
+      const degrade = () => {
         this.aideLineJumpWork = 0;this.aideLineJumpsLimited = true;
         const changed = state.routedPoints != null;state.routedPoints = null;return changed;
       };

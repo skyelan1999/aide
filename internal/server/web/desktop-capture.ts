@@ -5,9 +5,9 @@ interface Window {
 'use strict';
 (function(){
  let client: any=null,ticket: any=null;
- const native=(): any=>window.AideNativeCapture;
+ const native=()=>window.AideNativeCapture;
  const request=async (body: any): Promise<any>=>{if(!native())throw Error('native-unavailable');const value=await native()(body);if(value.error)throw Error(value.error);return value;};
- function prepare(): any{
+ function prepare(){
   ticket=null;if(!client?.available())return null;
   ticket={id:crypto.randomUUID(),scope:client.scope(),at:Date.now()};return ticket.id;
  }
@@ -28,7 +28,7 @@ interface Window {
    return active()&&result?.added===2;
   }catch(error: any){client.notify(error.message);return false;}
  }
- function render({t,onCleanup}: any): any{
+ function render({t,onCleanup}: any){
   const create=<K extends keyof HTMLElementTagNameMap>(tag: K,text?: string | null): HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
   const wrap=create('div');wrap.className='desktop-capture-settings';
   const title=create('h4',t('全局截屏到 Aide')),description=create('p',t('双击修饰键截取前台应用窗口，附带应用名、窗口标题和时间，再唤起 Aide 加入待发送附件。不会自动发送。'));description.className='section-desc';

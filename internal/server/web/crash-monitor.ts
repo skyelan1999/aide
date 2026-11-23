@@ -104,7 +104,7 @@ interface Window {
     list.value = selected?.id || ''; detail.textContent = selected ? text(selected) : t('尚无异常记录'); copy.disabled = !selected; copy.textContent = t('复制诊断');
     if (!dialog.open) dialog.showModal();
   }
-  function record(code: any, data: any = {}): any {
+  function record(code: any, data: any = {}) {
     try {
       const message = clean(data.message), stack = clean(data.stack), file = filename(data.file);
       const last = reports.at(-1);
@@ -131,9 +131,8 @@ interface Window {
   function mark(active: any): void { try { sessionStorage.setItem(TAB,JSON.stringify({active,at:new Date().toISOString()})); } catch (_) {} }
   // A newly opened tab can inherit sessionStorage from its opener. Only a
   // reload/history return provides evidence of this same tab returning.
-  // @ts-expect-error PerformanceEntry 基类无 type，原代码按 navigation entry 动态读取
-  const navigationType: any=window.performance?.getEntriesByType?.('navigation')?.[0]?.type;
-  try { const previous = JSON.parse(sessionStorage.getItem(TAB) || 'null'); if (previous?.active && ['reload','back_forward'].includes(navigationType)) record('AIDE-WEB-UNCLEAN',{message:t('最后记录时间')+': '+String(previous.at).slice(0,40)}); } catch (_) {}
+  const navigationType = (window.performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming | undefined)?.type;
+  try { const previous = JSON.parse(sessionStorage.getItem(TAB) || 'null'); if (previous?.active && ['reload','back_forward'].includes(navigationType as string)) record('AIDE-WEB-UNCLEAN',{message:t('最后记录时间')+': '+String(previous.at).slice(0,40)}); } catch (_) {}
   mark(true);
   async function probe(): Promise<void> {
     if (busy || disposed || document.hidden || locked()) return;

@@ -1,7 +1,7 @@
 interface Window { [key: string]: any; AideNativeBiometrics?: any; }
 // State changes and listener cleanup remain immediate; experience retains only
 // short-lived inert paint, and falls back to immediate cleanup without motion.
-function leaveUISurface(node: any, close: any, remove: any = false) {
+function leaveUISurface(node: any, close: any, remove = false) {
   if (window.aideExperience?.leave) window.aideExperience.leave(node, close, { remove });
   else { close?.(); if (remove) node?.remove(); }
 }
@@ -9,7 +9,7 @@ function changeSidePanelState(update: any) { if (window.aideExperience?.changePa
 // passwordPrompt(title) 通用密文密码弹窗：替代浏览器原生 prompt（输入时密码在屏幕上明文可见）。
 // 用 <dialog> + <input type=password>，回车确认 / Esc 或点遮罩取消。
 // 返回 Promise<string|null>：确定为输入串（不 trim，由调用方决定），取消为 null。样式复用全局 dialog/label/button 主题变量。
-// @ts-ignore -- independent classic pages keep their own password prompt.
+// @ts-expect-error -- independent classic pages keep their own password prompt.
 function passwordPrompt(title: any) {
   return new Promise<any>((resolve: any) => {
     const dlg = el('dialog', 'pw-prompt');
@@ -124,7 +124,7 @@ function requestMasterAuth({ reason, assistantSessionId }: any = {}) {
     input.focus();
   });
 }
-// @ts-ignore -- independent classic pages keep their own API helper.
+// @ts-expect-error -- independent classic pages keep their own API helper.
 async function api(path: any, options: any = {}) {
   const {raw = false, ...requestOptions} = options;
   const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -177,7 +177,7 @@ async function api(path: any, options: any = {}) {
   }
   return data;
 }
-// @ts-ignore -- independent classic pages keep their own action wrapper.
+// @ts-expect-error -- independent classic pages keep their own action wrapper.
 function action(fn: any, options?: any) { return window.AideAsyncAction!.wrap(fn, (e: any) => toast(e.message), options); }
 function setMode(mode: any) {
   if (mode==='pw' && (!state.config?.professionalWorkflow || state.session?.kind==='assistant')) return;

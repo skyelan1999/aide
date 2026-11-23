@@ -4,7 +4,7 @@ interface Window {
 (function () {
   'use strict';
   const key = 'aide.chat.parallelism';
-  const choices: any = Object.freeze([[1, '标准速度'], [2, '轻度'], [3, '中度'], [4, '高'], [5, '极高'], [10, '极致']].map(Object.freeze));
+  const choices = Object.freeze([[1, '标准速度'], [2, '轻度'], [3, '中度'], [4, '高'], [5, '极高'], [10, '极致']].map(Object.freeze));
   const normalize = (value: any): number => /^(?:[1-5]|10)$/.test(String(value)) ? Number(value) : 1;
   let selected = 1;
   try { selected = normalize(localStorage.getItem(key)); } catch (_) {}
@@ -29,8 +29,8 @@ interface Window {
     });
     sync();
   }
-  function value(mode: any, assistant: any): any { return mode === 'chat' && !assistant ? selected : 1; }
-  function render(run: any, {el, t, open, initial = false}: any): any {
+  function value(mode: any, assistant: any) { return mode === 'chat' && !assistant ? selected : 1; }
+  function render(run: any, {el, t, open, initial = false}: any) {
     const environments = run.environments;
     if (environments && run.parallelism > 1) {
       const jobs = environments.results || [];
@@ -71,7 +71,7 @@ interface Window {
     }
     return panel;
   }
-  function renderRoutes(run: any, {el, t, open}: any): any {
+  function renderRoutes(run: any, {el, t, open}: any) {
     if (!run.modelRoutes?.length) return null;
     const panel = el('details', 'parallel-progress model-route-progress');
     panel.dataset.key = run.id + ':model-routes'; panel.open = !!open?.has(panel.dataset.key);

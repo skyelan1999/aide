@@ -4,13 +4,13 @@ interface Window {
 /* Preserve a standalone file route across in-document anchors and tab restoration. */
 (() => {
   'use strict';
-  function parse(value: any): any {
+  function parse(value: any) {
     for (const raw of [value, (()=>{try{return decodeURIComponent(value||'');}catch{return '';}})()]) {
       try {const spec=JSON.parse(raw||'');if(spec && typeof spec.path==='string' && spec.path)return spec;}catch{}
     }
     return null;
   }
-  function read(): any {
+  function read() {
     const value=new URLSearchParams(location.hash.slice(1)).get('file');
     return parse(value) || (history.state?.aideFileRoute?.path ? history.state.aideFileRoute : null);
   }

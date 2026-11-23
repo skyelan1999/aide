@@ -4,8 +4,8 @@ interface Window {
 /* A local observing journal. Entries describe UI/index events, never invented travel. */
 'use strict';
 window.AideStellarLogbook = {
-  create({ root = document, now = () => new Date() }: any = {}): any {
-    const $ = (id: string): any => root.getElementById(id);
+  create({ root = document, now = () => new Date() } = {}) {
+    const $ = (id: string) => root.getElementById(id);
     let workspace: any = null, signature = '', entries: any[] = [], sequence = 0;
     const number = (n: any): string => Math.max(0, Number(n) || 0).toLocaleString();
     const text = (id: string, value: any): void => { $(id).textContent = value; };
@@ -41,7 +41,7 @@ window.AideStellarLogbook = {
       text('logbook-dispatch', uiTextStarmapLogbook('观测舱待命。连接星图后，这里将记下本次探索的第一束星光。'));
       status('waiting', uiTextStarmapLogbook('等待星图信号'));
     }
-    function observe(graph: any, { code = false, region = '' }: any = {}): void {
+    function observe(graph: any, { code = false, region = '' } = {}): void {
       if (!graph.workspace) return;
       if (workspace !== graph.workspace) { clear(); workspace = graph.workspace; }
       const sources = Array.isArray(graph.sources) ? graph.sources : [];

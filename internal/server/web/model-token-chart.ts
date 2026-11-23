@@ -16,7 +16,7 @@ interface Window {
     if (unit && Number(scaled.toFixed(1)) >= 1000 && unit < units.length - 1) { scaled /= 1000; unit++; }
     return unit ? scaled.toFixed(1) + units[unit] : String(Math.round(scaled));
   }
-  function shares(perModel: any): any {
+  function shares(perModel: any) {
     const entries = Object.entries(perModel || {}).map(([model, stats]: [string, any]) => ({model, total:Number(stats?.total)}))
       .filter(row => Number.isFinite(row.total) && row.total > 0).sort((a, b) => b.total - a.total || a.model.localeCompare(b.model));
     const total = entries.reduce((sum, row) => sum + row.total, 0);
@@ -34,8 +34,8 @@ interface Window {
   }
   function render(host: any, perModel: any, {t, format}: any): void {
     const doc = host.ownerDocument, NS = 'http://www.w3.org/2000/svg';
-    const node = (tag: string, cls: string, text?: string): any => { const n = doc.createElement(tag); n.className = cls; if (text !== undefined) n.textContent = text; return n; };
-    const svgNode = (tag: string, attrs: any): any => { const n = doc.createElementNS(NS, tag); for (const [key, value] of Object.entries(attrs)) n.setAttribute(key, value as string); return n; };
+    const node = (tag: string, cls: string, text?: string) => { const n = doc.createElement(tag); n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+    const svgNode = (tag: string, attrs: any) => { const n = doc.createElementNS(NS, tag); for (const [key, value] of Object.entries(attrs)) n.setAttribute(key, value as string); return n; };
     const data = shares(perModel);
     host.replaceChildren(node('div', 'model-pie-title', t('模型 Token 占比')));
     if (!data.rows.length) { host.append(node('div', 'model-pie-empty', t('暂无模型调用数据'))); return; }

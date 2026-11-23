@@ -2,7 +2,7 @@ interface Window {
   AideKnowledgeTopics?: { create: (options: any) => any };
 }
 'use strict';
-window.AideKnowledgeTopics={create({request,onSaved=()=>{}}: any): any{
+window.AideKnowledgeTopics={create({request,onSaved=()=>{}}: any){
  const host: any=document.getElementById('timeline-topics');if(!host)return {sync(){}};
  const make=<K extends keyof HTMLElementTagNameMap>(tag: K,text?: string | null,cls?: string | null): HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);if(text)n.textContent=text;if(cls)n.className=cls;return n;};
  let scope: any=null,generation=0,controller: any=null,busy=false,revision: any=null,topics: any[]=[],candidates: any={before:[],after:[]};
@@ -13,7 +13,7 @@ window.AideKnowledgeTopics={create({request,onSaved=()=>{}}: any): any{
  const reload=make('button',uiTextStarmapTopics('读取主题与历史片段'));reload.type='button';
  const form=make('form'),topic=make('select'),name=make('input'),save=make('button',uiTextStarmapTopics('保存主题对齐')),disable=make('button',uiTextStarmapTopics('停用此主题（保留标记）'));
  topic.setAttribute('aria-label',uiTextStarmapTopics('人工主题'));name.setAttribute('aria-label',uiTextStarmapTopics('主题名称'));name.maxLength=80;name.placeholder=uiTextStarmapTopics('例如：定位方案的取舍');save.type='submit';disable.type='button';
- const label=(text: string,control: HTMLElement): any=>{const n=make('label',text);n.append(control);return n;};
+ const label=(text: string,control: HTMLElement)=>{const n=make('label',text);n.append(control);return n;};
  form.append(label(uiTextStarmapTopics('人工主题'),topic),label(uiTextStarmapTopics('主题名称'),name));
  const pickers=make('div',null,'topic-pickers'),fields: any={};
  for(const [side,title] of [['before',uiTextStarmapTopics('此前')],['after',uiTextStarmapTopics('之后')]]){

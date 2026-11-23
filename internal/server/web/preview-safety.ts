@@ -4,10 +4,10 @@ declare var module: any;
   const MiB = 1024 * 1024;
   const limits = Object.freeze({dxfBytes: 4 * MiB, dxfLines: 100000, dwgDxfBytes: 16 * MiB, dwgDxfLines: 2000000, dxfEntities: 50000, dxfDepth: 32, dxfNodes: 50000, dxfPoints: 200000, dxfTextChars: MiB, dxfTextEntityChars: 16384,
     docxBytes: 16 * MiB, docxPartBytes: 8 * MiB, docxExpandedBytes: 32 * MiB, docxEntries: 512, docxMs: 10000, zipBytes: 64 * MiB, zipEntries: 1000, zipPageRows: 100});
-  function limit(key: any): any {
+  function limit(key: any) {
     const error: any = new Error(root.aideI18n?.t(key) || key);error.code = 'AIDE_PREVIEW_LIMIT';return error;
   }
-  const oversized = (): any => limit('文件超过预览大小限制，请下载后查看。');
+  const oversized = () => limit('文件超过预览大小限制，请下载后查看。');
   async function readBytes(response: any, maxBytes: any): Promise<Uint8Array> {
     const declared = response.headers?.get('Content-Length');
     if (declared && /^\d+$/.test(declared) && Number(declared) > maxBytes) {
@@ -37,7 +37,7 @@ declare var module: any;
       if (lines > (dwg ? limits.dwgDxfLines : limits.dxfLines)) throw limit('DXF 内容超过预览限制，请下载后查看。');
     }
   }
-  function createDxfBudget(doc: any): any {
+  function createDxfBudget(doc: any) {
     let sourceEntities = doc?.entities?.length || 0;
     for (const block of Object.values(doc?.blocks || {})) {
       sourceEntities += (block as any)?.entities?.length || 0;
@@ -45,23 +45,23 @@ declare var module: any;
     }
     if (sourceEntities > limits.dxfEntities) throw limit('DXF 内容超过预览限制，请下载后查看。');
     const active = new Set<any>();let entities = 0, nodes = 0, points = 0, textChars = 0;
-    const exceeded = (): any => limit('DXF 内容超过预览限制，请下载后查看。');
+    const exceeded = () => limit('DXF 内容超过预览限制，请下载后查看。');
     return {
       visit(): void {if (++entities > limits.dxfEntities) throw exceeded();},
       node(): void {if (++nodes > limits.dxfNodes) throw exceeded();},
       point(): void {if (++points > limits.dxfPoints) throw exceeded();},
       text(value: any): void {textChars += value.length;if (value.length > limits.dxfTextEntityChars || textChars > limits.dxfTextChars) throw exceeded();},
-      block(name: any, draw: any): any {
+      block(name: any, draw: any) {
         if (active.has(name) || active.size >= limits.dxfDepth) throw limit('DXF 块引用存在循环或层级过深。');
         active.add(name);try {return draw();} finally {active.delete(name);}
       }
     };
   }
-  const badZip = (): any => limit('DOCX 包无效或使用不支持的 ZIP 格式。');
-  const largeZip = (): any => limit('DOCX 解压内容超过安全预览限制，请下载后查看。');
+  const badZip = () => limit('DOCX 包无效或使用不支持的 ZIP 格式。');
+  const largeZip = () => limit('DOCX 解压内容超过安全预览限制，请下载后查看。');
   function checkZipDirectory(bytes: any, options?: any): void {
     const bounds = options || {bytes: limits.docxBytes, entries: limits.docxEntries, partBytes: limits.docxPartBytes, expandedBytes: limits.docxExpandedBytes};
-    const invalid = options ? (): any => limit('压缩包加载失败') : badZip;
+    const invalid = options ? () => limit('压缩包加载失败') : badZip;
     const tooLarge = options ? oversized : largeZip;
     if (bytes.byteLength > bounds.bytes) throw oversized();
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);let end = -1;

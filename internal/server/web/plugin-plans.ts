@@ -10,7 +10,7 @@ interface Window {
   const text = (value: any): string => typeof value === 'string' ? value : '';
   const checks: Record<string, string> = {effect_observed:'观察到效果', no_effect_observed:'未观察到效果', inconclusive:'仍无法判断'};
   const excerptLimit = 4096;
-  function render(run: any, {el, t, open = new Set(), seen = new Set(), onEvidence, onCheck}: any): any {
+  function render(run: any, {el, t, open = new Set(), seen = new Set(), onEvidence, onCheck}: any) {
     const plans = Array.isArray(run?.pluginPlans) ? run.pluginPlans.filter((p: any) => p && typeof p === 'object') : [];
     if (!plans.length) return null;
     const host = el('section', 'plugin-plans');
@@ -30,7 +30,7 @@ interface Window {
         el('span', '', ' · ' + t('已结束 {0}/{1}', ended, nodes.length)));
       if (uncertain) summary.append(el('span', 'plugin-plan-alert', ' · ' + t('待核实 {0}', uncertain)));
       panel.append(summary);
-      const multiplier = (value: any): any => Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 5 ? Number(value) : null;
+      const multiplier = (value: any) => Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 5 ? Number(value) : null;
       const requested = multiplier(plan.requested) ?? multiplier(plan.limit) ?? '—';
       const limit = multiplier(plan.limit) ?? '—';
       panel.append(el('p', 'plugin-plan-policy', t('请求 {0}x · 执行上限 {1}x', requested, limit)),
@@ -106,7 +106,7 @@ interface Window {
   }
   let checkDialog: any = null;
   function closeCheck(): void { checkDialog?.(); }
-  function openCheck({el, t, plan, node, active, submit, saved}: any): any {
+  function openCheck({el, t, plan, node, active, submit, saved}: any) {
     closeCheck();
     if (!active()) return;
     const dialog = el('dialog', 'plugin-effect-dialog');
@@ -143,7 +143,7 @@ interface Window {
     timer = setInterval(() => { if (!active()) close(); }, 250);
     return dialog;
   }
-  function openRecovery({el,t,review,active,submit,saved}: any): any {
+  function openRecovery({el,t,review,active,submit,saved}: any) {
     closeCheck(); if (!active()) return;
     const dialog=el('dialog','plugin-effect-dialog');
     const heading=el('h2','',t('核查后继续任务'));heading.id='plugin-recovery-heading';dialog.setAttribute('aria-labelledby',heading.id);

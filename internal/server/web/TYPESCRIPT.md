@@ -10,7 +10,7 @@
 - 根 `package.json` 只含 `typescript` devDependency（`node_modules/` 已在 .gitignore）。
 - 命令（仓库根）：
   - `npm run build:web`：编译 `internal/server/web/tsconfig.json` 覆盖的 `.ts`。
-  - `npm run typecheck`：仅类型检查不产出。
+  - `npm run typecheck`：仅类型检查不产出，依次覆盖主 web、AudioWorklet 与四个独立 CommonJS 桥接配置。
 - `tsconfig` 要点：`target: ES2021`（保留 `||=` 等原语法，避免 downlevel helper 改变行为）、
   `lib: ES2022+DOM`（Object.hasOwn 等仅类型层面）、`module: ES2020`（非模块经典脚本
   不产生模块标记，禁止仅为隔离类型而引入 import/export）、`strict: true`。
@@ -267,5 +267,16 @@
   （1957 个测试/fuzz seed/example，无遗漏）及其余 Go、vet、契约检查通过。
   主 web、worklet 和四个 CommonJS 配置全部编译通过。至此既定范围内的
   100 个模块均已完成 TS 化。
+
+- **批 5e（类型债清理）**：在不改变 classic-script 加载方式、不引入 import/export
+  或 bundler 的前提下，展开并逐项处理迁移期 suppression 隐藏的诊断。补齐动态字典、
+  DOM 泛型、附件队列、EventSource、FileReader、WebAuthn 与 Node/CommonJS 局部类型；
+  清除全部 `@ts-ignore`，仅对独立页面全局重名、浏览器运行时 vendor 动态导入和
+  intentional runtime wrapper 保留带原因的 `@ts-expect-error`。英文语言包删除六个
+  永远不会生效的前置重复键；URDF 删除三个被后续同名实现覆盖的函数，均保留原实际生效项。
+  通过逐文件/逐声明完整诊断与回滚验证，安全移除 352 处冗余显式 `any`，并删除 app 中
+  79 处 `!?.` 冗余组合；动态 API、THREE 和页面全局仍保留必要动态类型，不做无依据强转。
+  `npm run typecheck` 与 quick CI 现统一覆盖六套 TypeScript 配置，防止桥接或 worklet 回流。
+  本轮统计：100 个 TS 文件、0 个 `@ts-ignore`、19 个有边界的 `@ts-expect-error`。
 
 vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。

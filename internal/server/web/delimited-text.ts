@@ -4,7 +4,7 @@ interface Window {
 'use strict';
 // CSV/TSV values stay strings: no formula evaluation or numeric coercion.
 window.AideDelimitedText = (() => {
-  function parse(text: string, delimiter?: string): any {
+  function parse(text: string, delimiter?: string) {
     const bom=text.startsWith('\ufeff');
     const input=bom?text.slice(1):text;
     const newline=input.includes('\r\n')?'\r\n':input.includes('\r')?'\r':'\n';

@@ -7,21 +7,21 @@ interface Window {
   const drafts = new Map<any, any>(), saved = new Map<any, any>(), pending = new Map<any, any>(), queues = new Map<any, any>(), epochs = new Map<any, any>();
   function scope(): string { return config?.state.config?.workspaceId || ''; }
   function key(session: any): string { return scope() + ':' + (session?.id || 'draft'); }
-  function defaults(): any {
+  function defaults() {
     const state = config.state;
     return {strategy:state.profiles?.strategy || 'auto', profile:state.profiles?.activeProfile || 'default', model:state.config?.activeModel || state.config?.model || '', reasoningEffort:state.config?.reasoningEffort || 'auto'};
   }
-  function reasoningOptions(model: any): any {
+  function reasoningOptions(model: any) {
     return config?.state.config?.models?.find((item: any) => item.id === model)?.reasoningEfforts || ['auto','off','low','medium','high'];
   }
-  function adapt(choice: any): any {
+  function adapt(choice: any) {
     if (!choice) return choice;
     return {...choice, reasoningEffort:reasoningOptions(choice.model).includes(choice.reasoningEffort) ? choice.reasoningEffort : 'auto'};
   }
-  function current(session = config?.state.session): any {
+  function current(session = config?.state.session) {
     return adapt(rawCurrent(session));
   }
-  function rawCurrent(session = config?.state.session): any {
+  function rawCurrent(session = config?.state.session) {
     if (!config) return null;
     const base = defaults();
     if (session?.kind === 'assistant') return base;
@@ -71,7 +71,7 @@ interface Window {
     queues.set(id, result);
     try { return await result; } finally { if (queues.get(id) === result) queues.delete(id); }
   }
-  function flush(session = config.state.session): any { return queues.get(key(session)); }
+  function flush(session = config.state.session) { return queues.get(key(session)); }
   async function applyDraft(session: any, choice: any): Promise<void> {
     // Called by submission with the original draft snapshot, even if the user
     // has switched chats while the server created the new session.

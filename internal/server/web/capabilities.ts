@@ -4,7 +4,7 @@ interface Window {
 /* Explicit read and write probes. Never treat configured permissions as tested capabilities. */
 (()=>{'use strict';
  const node=<K extends keyof HTMLElementTagNameMap>(tag: K,cls='',text?: string | null): HTMLElementTagNameMap[K]=>{const e=document.createElement(tag);e.className=cls;if(text!=null)e.textContent=text;return e;};
- window.aideCapabilities={render({api,t=(x: string)=>x,blocked=()=>false,active=()=>true}: any): any{
+ window.aideCapabilities={render({api,t=(x: string)=>x,blocked=()=>false,active=()=>true}: any){
   const wrap=node('div','settings-control capability-dashboard');
   const toolbar=node('div','capability-toolbar'),refresh=node('button','quiet',t('重读能力状态')),status=node('p','muted');refresh.type='button';
   const list=node('div','capability-list'),failure=node('p','task-error');failure.setAttribute('role','alert');failure.hidden=true;toolbar.append(refresh);wrap.append(toolbar,status,failure,list);

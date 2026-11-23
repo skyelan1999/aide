@@ -19,11 +19,11 @@ interface Window {
     element.dataset.count=String(n);
   }
   function canRead({visible,active,locked,bottom,connected}: any): boolean { return !!(visible && active && !locked && bottom && connected); }
-  function channels(config: any,key: any,kind='chats',now=Date.now()): any {
+  function channels(config: any,key: any,kind='chats',now=Date.now()) {
     const s=config?.settings||{};
     return mode(config,key,now)==='default' ? {popup:!!s.popup,sound:!!s.sound,desktop:!!s.desktop} : {};
   }
-  function batches(config: any,events: any,readingKey=''): any {
+  function batches(config: any,events: any,readingKey='') {
     const grouped=new Map<any, any>();
     for(const event of events){
       if(event.key===readingKey)continue;
@@ -78,7 +78,7 @@ interface Window {
     form.append(make('p',tr('关闭角标不会清除未读；查看提醒不会自动完成事项。声音和桌面通知默认关闭。'),'message-empty'));
     const error=make('p',null,'message-empty');error.setAttribute('role','alert');
     const status=make('p',null,'message-empty');status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.hidden=error.hidden=true;form.append(status,error);
-    let accepted=JSON.parse(JSON.stringify(s)),revision=config.revision,queue: any=Promise.resolve(),edit=0,conflictEpoch=0,permissionEpoch=0;
+    let accepted=JSON.parse(JSON.stringify(s)),revision=config.revision,queue=Promise.resolve(),edit=0,conflictEpoch=0,permissionEpoch=0;
     let desktopAllowed=!!s.desktop;
     const restore=(): void=>{for(const[name,input]of Object.entries(fields)){
       if(name==='badge'||name==='reminderScope')input.value=accepted[name];

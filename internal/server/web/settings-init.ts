@@ -44,7 +44,7 @@ interface Window {
   var themeSubscribers: any[] = [];
 
   /* ── 存储基础操作：全部静默降级（隐私模式等不抛错） ── */
-  function rawGet(key: any): any {
+  function rawGet(key: any) {
     try {
       return window.localStorage.getItem(key);
     } catch (err) {
@@ -86,7 +86,7 @@ interface Window {
   }
 
   /* ── 读取：旧键迁移 → JSON 解析 → 字段校验 → 回写规范化文档 ── */
-  function readDoc(): any {
+  function readDoc() {
     var legacy = rawGet(LEGACY_KEY);
     if (legacy !== null) rawRemove(LEGACY_KEY); // 迁移后删除旧键
     var stored = rawGet(KEY);
@@ -137,7 +137,7 @@ interface Window {
   }
 
   /* ── 通知：单个订阅者异常不得影响设置本身 ── */
-  function snapshot(): any {
+  function snapshot() {
     var copy: any = {};
     for (var key in doc) {
       if (Object.prototype.hasOwnProperty.call(doc, key)) copy[key] = doc[key];
@@ -145,7 +145,7 @@ interface Window {
     return copy;
   }
   function notifyAll(): void {
-    var uiSnapshot: any = null;
+    var uiSnapshot = null;
     for (var i = 0; i < themeSubscribers.length; i++) {
       try {
         themeSubscribers[i](doc.theme);
@@ -226,7 +226,7 @@ interface Window {
   window.aideUI = {
     key: KEY,
     version: VERSION,
-    get: function (name: any): any {
+    get: function (name: any) {
       if(name==='fileMarkdownEditing')return doc[name]==='text'?'text':'split';
       return ['workRecovery','fileLineNumbers','fileSyntaxHighlight','fileMarkdownPreview','fileMarkdownOutline','fileMarkdownMedia','fileCsvPreview'].indexOf(name) >= 0 ? doc[name] !== false : doc[name];
     },
@@ -239,7 +239,7 @@ interface Window {
       applyTheme();
       notifyAll();
     },
-    set: function (name: any, value: any): any {
+    set: function (name: any, value: any) {
       if (name === 'eyeRestReminder') value = value !== false;
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
       doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'palette' ? (['comfort','green','professional','modern'].indexOf(value)>=0 ? value : 'modern') : name === 'background' ? normalizeBackground(value) : name === 'startupAnimation' ? 'on' : value;
@@ -249,7 +249,7 @@ interface Window {
       notifyAll();
       return doc[name];
     },
-    subscribe: function (fn: any): any {
+    subscribe: function (fn: any) {
       if (typeof fn !== 'function') {
         return function () {};
       }
@@ -265,16 +265,16 @@ interface Window {
   window.aideTheme = {
     key: KEY,
     valid: VALID_THEME.slice(),
-    pref: function (): any {
+    pref: function () {
       return doc.theme;
     },
     effective: function (): string {
       return effectiveOf(doc.theme);
     },
-    set: function (next: any): any {
+    set: function (next: any) {
       return window.aideUI.set('theme', next);
     },
-    subscribe: function (fn: any): any {
+    subscribe: function (fn: any) {
       if (typeof fn !== 'function') {
         return function () {};
       }

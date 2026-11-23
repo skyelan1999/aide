@@ -5,7 +5,7 @@ interface Window {
 // Keep the map in its tab and own one reusable, read-only preview tab.
 // A changed query forces document navigation:
 // the existing file viewer intentionally ignores file-to-file hash changes.
-window.AideStarmapPreview={create({origin,workspace,locked,openWindow,note,key}: any): any{
+window.AideStarmapPreview={create({origin,workspace,locked,openWindow,note,key}: any){
  let viewer: any=null,sequence=0,pending=false;
  const owns=(): boolean=>{
   try{

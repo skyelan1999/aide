@@ -4,10 +4,10 @@ interface Window {
 /* Host directory configuration. This module never receives Docker credentials. */
 (() => {
  'use strict';
- function render({api,t,el,blocked}: any): any {
+ function render({api,t,el,blocked}: any) {
   const box=el('section','local-mount-settings'),intro=el('p','muted',t('添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。工作区与资料可使用这些目录，缓存保留在 Aide 数据区。'));
   const notice=el('p','local-mount-notice'),list=el('div','local-mount-list'),actions=el('div','local-mount-actions');notice.setAttribute('role','status');
-  const button=(text: string,fn: any,cls='quiet'): any=>{const b=el('button',cls,t(text));b.type='button';b.onclick=fn;return b;};
+  const button=(text: string,fn: any,cls='quiet')=>{const b=el('button',cls,t(text));b.type='button';b.onclick=fn;return b;};
   let snapshot: any=null,entries: any[]=[],busy=false,serial=0;
   const live=(): boolean=>box.isConnected&&!blocked();
   const refresh=button('刷新',()=>run(load)),add=button('添加目录',()=>{entries.push({id:'dir-'+Date.now().toString(36)+'-'+(++serial),name:t('本地目录'),path:'',readOnly:true});paint();});

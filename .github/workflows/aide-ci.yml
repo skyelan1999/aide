@@ -33,6 +33,8 @@ jobs:
           .agent-state/actionlint/actionlint -shellcheck= -pyflakes= .github/workflows/*.yml
       - name: Install locked Node.js test dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript diagnostics
+        run: npm run typecheck
       - name: Repository quick gate and CI contracts
         run: |
           python3 scripts/test_workflow_action_pins.py

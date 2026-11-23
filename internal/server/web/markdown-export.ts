@@ -293,7 +293,7 @@ interface Window {
   vLineWidth:()=>0,
   paddingLeft:()=>6,paddingRight:()=>6,paddingTop:()=>5,paddingBottom:()=>5
  };
- function customPdfTableLayout(table: any,headers: number): any{
+ function customPdfTableLayout(table: any,headers: number){
   const {mode,border,borderColor,padding}=table;
   return {
    hLineWidth:(row: number)=>mode!=='minimal'||(headers>0&&row===headers)?border:0,
@@ -458,7 +458,7 @@ interface Window {
    }
   }
  }
- function vectorPdfDefinition(body: HTMLElement,attachments: any[]=[],pdfImages: Map<any, string> | null,appearance: any={},topMargin=PDF_MARGIN,headings: any[] | null=null,bottomMargin=PDF_MARGIN): any{
+ function vectorPdfDefinition(body: HTMLElement,attachments: any[]=[],pdfImages: Map<any, string> | null,appearance: any={},topMargin=PDF_MARGIN,headings: any[] | null=null,bottomMargin=PDF_MARGIN){
   trimPdfBlockWhitespace(body);
   const tables=[...body.querySelectorAll('table')];
   const {landscape,width,height}=pdfPage(tables);
@@ -626,7 +626,7 @@ interface Window {
    job.frame=null;
   }
  }
- function pdfContentsDefinition(entries: any[],landscape: boolean,bands: any,appearance: any,pageNumber: (entry: any) => number): any{
+ function pdfContentsDefinition(entries: any[],landscape: boolean,bands: any,appearance: any,pageNumber: (entry: any) => number){
   const color=appearance.color?readablePdfColor(appearance.color):'#243448';
   const width=(landscape?PDF_A4.height:PDF_A4.width)-2*PDF_MARGIN;
   const level=entries.reduce((min,entry)=>Math.min(min,entry.level),6);

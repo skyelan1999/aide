@@ -1,7 +1,7 @@
 declare var AidePlantUmlRE2: any;
 /* Private helpers embedded in the existing offline PlantUML converter. */
 var aidePlantUmlWork: any = null;
-function aideWithBudget(run: any): any {
+function aideWithBudget(run: any) {
   var previous = aidePlantUmlWork;
   if (!previous) aidePlantUmlWork = {regexWork:0, regexParts:0, regexCache:new Map<any, any>(), depths:Object.create(null), stateSizes:new WeakMap<any, any>(), stateLayouts:new WeakMap<any, any>()};
   try { return run(aidePlantUmlWork); }
@@ -11,7 +11,7 @@ function aidePlantUmlLimit(detail: any): void {
   var error: any = new Error('PlantUML conversion limit: '+detail+'; split or simplify the diagram.');
   error.code = 'AIDE_PLANTUML_LIMIT'; throw error;
 }
-function aideNested(kind: any, run: any): any {
+function aideNested(kind: any, run: any) {
   return aideWithBudget(function(work: any) {
     var depth = work.depths[kind] || 0;
     if (depth >= 128) aidePlantUmlLimit('diagram nesting');
@@ -19,7 +19,7 @@ function aideNested(kind: any, run: any): any {
     try { return run(); } finally { work.depths[kind] = depth; }
   });
 }
-function aideMemoState(kind: any, state: any, measure: any): any {
+function aideMemoState(kind: any, state: any, measure: any) {
   return aideWithBudget(function(work: any) {
     var cache = kind === 'size' ? work.stateSizes : work.stateLayouts;
     if (cache.has(state)) return cache.get(state);
@@ -83,7 +83,7 @@ function aideRegexEndAnchor(pattern: any): boolean {
   }
   return false;
 }
-function aideSafeRegexSplit(input: any, pattern: any): any {
+function aideSafeRegexSplit(input: any, pattern: any) {
   return aideWithBudget(function(work: any) {
     input = String(input); pattern = String(pattern);
     if (input.length > 16384 || pattern.length > 256) aidePlantUmlLimit('regular expression input');

@@ -1,5 +1,5 @@
 "use strict";
-// @ts-ignore -- classic page scripts expose their own element helper.
+// @ts-expect-error -- classic page scripts expose their own element helper.
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls)
     e.className = cls; if (text != null)
     e.textContent = text; return e; }
@@ -117,7 +117,7 @@ function initSidebarResizers() {
     updateVisibility();
 }
 initSidebarResizers();
-// @ts-ignore -- classic page scripts expose their own toast helper.
+// @ts-expect-error -- classic page scripts expose their own toast helper.
 function toast(text) {
     const host = document.querySelector('dialog[open]') || document.body;
     let notice = $('toast');

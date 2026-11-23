@@ -21,7 +21,7 @@ interface Window {
     if (value < 60000) return `${(value / 1000).toFixed(1)} s`;
     return `${Math.floor(value / 60000)} min ${Math.round(value % 60000 / 1000)} s`;
   };
-  function timing(record: any, index: any, source: any): any {
+  function timing(record: any, index: any, source: any) {
     const start = timeOf(source === 'snapshot' ? record.at : record.startedAt);
     const end = timeOf(record.completedAt);
     const elapsed = Number(record.elapsedMillis);
@@ -35,10 +35,10 @@ interface Window {
         start != null && end != null ? Math.max(0, end - start) : null,
     };
   }
-  function build(session: any, journals: any = {}): any {
+  function build(session: any, journals: any = {}) {
     const runs = Array.isArray(session?.runs) ? session.runs.filter(Boolean) : [];
     const total = Number.isInteger(session?.runsTotal) ? session.runsTotal : runs.length;
-    const turns = runs.map((run: any, index: number): any => {
+    const turns = runs.map((run: any, index: number) => {
       const ledger = Array.isArray(run.orchestrationEvents) ? run.orchestrationEvents : [];
       // Snapshot bodies may include provider secrets or full prompts; only timing metadata is read.
       const journal = journals[run.id] || {};

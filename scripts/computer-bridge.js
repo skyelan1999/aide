@@ -6,8 +6,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-// @ts-ignore -- CommonJS dependency shadows the DOM crypto global in this standalone process.
-const crypto = require('node:crypto');
+const nodeCrypto = require('node:crypto');
 const PORT = Number(process.env.AIDE_COMPUTER_BRIDGE_PORT || 17778);
 const TOKEN = process.env.AIDE_COMPUTER_BRIDGE_TOKEN || '';
 const BODY_LIMIT = 16 * 1024;
@@ -84,7 +83,7 @@ async function route(req, res) {
     try {
         const app = await assertApp(input.allowedApps);
         if (pathname === '/v1/snapshot') {
-            const file = path.join(os.tmpdir(), `aide-screen-${crypto.randomUUID()}.png`);
+            const file = path.join(os.tmpdir(), `aide-screen-${nodeCrypto.randomUUID()}.png`);
             try {
                 await run('/usr/sbin/screencapture', ['-x', file]);
                 const bytes = await fs.readFile(file);
@@ -111,8 +110,7 @@ async function route(req, res) {
         if (!keyAllowed(input.key))
             throw new Error('不支持该按键');
         const key = KEYS[String(input.key).toUpperCase()];
-        // @ts-ignore -- key is restricted by keyAllowed before this dynamic lookup.
-        const script = `tell application "System Events" to key code ${({ Return: 36, tab: 48, Escape: 53, delete: 51, 'forward delete': 117, 'up arrow': 126, 'down arrow': 125, 'left arrow': 123, 'right arrow': 124, space: 49 })[key]}`;
+        const script = `tell application "System Events" to key code ${{ Return: 36, tab: 48, Escape: 53, delete: 51, 'forward delete': 117, 'up arrow': 126, 'down arrow': 125, 'left arrow': 123, 'right arrow': 124, space: 49 }[key]}`;
         await run('/usr/bin/osascript', ['-e', script]);
         return reply(res, 200, { ok: true, app, key: input.key });
     }

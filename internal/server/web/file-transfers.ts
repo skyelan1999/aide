@@ -10,7 +10,7 @@ interface Window {
  const bytes=(n: any): string=>{if(n<1024)return n+' B';const units=['KiB','MiB','GiB','TiB','PiB'];let u=-1;do{n/=1024;u++;}while(n>=1024&&u<units.length-1);return n.toFixed(1)+' '+units[u];};
  const hash=async(b: any): Promise<string>=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),n=>n.toString(16).padStart(2,'0')).join('');
  const valid=(scope: any): boolean=>!services.blocked()&&scope===services.scope();
- function database(): any{if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const q=indexedDB.open('aide-file-transfer-handles',2);q.onupgradeneeded=()=>{for(const name of ['files','downloads','chunks'])if(!q.result.objectStoreNames.contains(name))q.result.createObjectStore(name);};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});return dbPromise;}
+ function database(){if(!dbPromise)dbPromise=new Promise((resolve,reject)=>{const q=indexedDB.open('aide-file-transfer-handles',2);q.onupgradeneeded=()=>{for(const name of ['files','downloads','chunks'])if(!q.result.objectStoreNames.contains(name))q.result.createObjectStore(name);};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});return dbPromise;}
  async function idb(name: any,mode: any,fn: any): Promise<any>{const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction(name,mode),q=fn(tx.objectStore(name));let result: any;if(q)q.onsuccess=()=>result=q.result;tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
  async function save(j: any): Promise<void>{const {chunks,...record}=j;await idb('downloads','readwrite',(store: any)=>store.put(record,j.id));}
  async function chunkRecords(j: any,remove=false): Promise<any>{const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction('chunks',remove?'readwrite':'readonly'),q=tx.objectStore('chunks').openCursor(IDBKeyRange.bound(j.id+':',j.id+':\uffff')),chunks: Record<string, any>={};q.onsuccess=()=>{const c=q.result;if(c){if(remove)c.delete();else chunks[c.value.index]=c.value.digest;c.continue();}};tx.oncomplete=()=>resolve(chunks);tx.onerror=()=>reject(tx.error);});}
@@ -75,7 +75,7 @@ interface Window {
  function native(url: any,name: any): void{const link=node('a');link.href='/api'+url+(url.includes('?')?'&':'?')+'access_token='+encodeURIComponent(services.token());link.download=name;document.body.append(link);link.click();link.remove();}
  async function startDownload(url: any,name: any,handlePromise: any): Promise<any>{
   if(!handlePromise){native(url,name);services.notice(tr('请在浏览器下载列表管理或继续此下载'));return;}
-  const scope=services.scope(),handle=await handlePromise;if(!valid(scope))throw Error(tr('工作区已切换'));const j: any={id:'download-'+crypto.randomUUID(),local:true,workspace:scope,name,url,size:0,etag:'',chunks:{},completed:0,status:'paused'};await dbHandle(j.id,handle);downloads.push(j);await save(j);open();await resumeDownload(j,handle);
+  const scope=services.scope(),handle=await handlePromise;if(!valid(scope))throw Error(tr('工作区已切换'));const j={id:'download-'+crypto.randomUUID(),local:true,workspace:scope,name,url,size:0,etag:'',chunks:{},completed:0,status:'paused'};await dbHandle(j.id,handle);downloads.push(j);await save(j);open();await resumeDownload(j,handle);
  }
  async function resumeDownload(j: any,provided?: any): Promise<void>{
   if(active.has(j.id))return;if(!valid(j.workspace))throw Error(tr('工作区已切换'));const handle=provided||await dbHandle(j.id);if(!handle)throw Error(tr('下载目标不可用，请重新下载'));
@@ -93,7 +93,7 @@ interface Window {
   }catch(e: any){controller.abort();if(j.status!=='cancelled')j.status=e.name==='AbortError'?'paused':'failed';j.error=e.name==='AbortError'?'':e.message;}
   finally{if(writable)await writable.close().catch(()=>{});active.delete(j.id);await save(j);paint();schedule();}
  }
- function picker(name: any): any{return window.showSaveFilePicker?window.showSaveFilePicker({suggestedName:name}):null;}
+ function picker(name: any){return window.showSaveFilePicker?window.showSaveFilePicker({suggestedName:name}):null;}
  async function savePrepared(j: any): Promise<any>{const name=j.tops.length===1?j.tops[0].source.split('/').pop()+(j.rawDownload?'':'.zip'):'download.zip';return startDownload('/file/stream?job='+encodeURIComponent(j.id),name,picker(name));}
  function download(file: any,archive: any,target: any): any{
   const name=file.name+(archive?'.zip':'');const handle=picker(name);const scope=services.scope();

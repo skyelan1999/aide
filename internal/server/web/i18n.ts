@@ -47,7 +47,7 @@ interface Window {
       }
     });
   }
-  function sourceName(source: any): any {
+  function sourceName(source: any) {
     const defaults: Record<string, string> = {sessions:'会话', workspace:'工作区', context:'引用目录', 'system-docs':'自动系统文档'};
     const key = defaults[source?.id || source?.root || source?.region];
     return key && source?.name === key ? t(key) : source?.name;

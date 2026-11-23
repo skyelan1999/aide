@@ -1,6 +1,6 @@
 'use strict';
 (function(root: any){
- function create(opts: any): any{
+ function create(opts: any){
   const t=opts.translate||((x: string)=>x),make=<K extends keyof HTMLElementTagNameMap>(tag: K,text?: string | null,cls?: string | null): HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);if(text)n.textContent=text;if(cls)n.className=cls;return n;};
   const element=make('section',null,'assistant-memory'),entry=make('button',null,'assistant-memory-start assistant-composer-action voice-btn');entry.innerHTML='<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 18V5a3 3 0 0 0-5.8-1A4 4 0 0 0 3 10a4 4 0 0 0 .5 7.7A4 4 0 0 0 12 18Zm0 0V5a3 3 0 0 1 5.8-1A4 4 0 0 1 21 10a4 4 0 0 1-.5 7.7A4 4 0 0 1 12 18ZM8 8a3 3 0 0 1-3 3m14 0a3 3 0 0 1-3-3M7 16a3 3 0 0 1 5 2m5-2a3 3 0 0 0-5 2"/></svg>';entry.title=t('记忆管理');entry.setAttribute('aria-label',t('记忆管理'));entry.type='button';entry.hidden=true;element.hidden=true;element.append(entry);
   const dialog=make('dialog',null,'assistant-memory-dialog');dialog.setAttribute('aria-label',t('记忆管理'));const header=make('header'),title=make('h2',t('记忆管理')),close=make('button',t('关闭'));close.type='button';header.append(title,close);

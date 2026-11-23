@@ -4,7 +4,7 @@ interface Window {
 'use strict';
 // Presentation routes keep the existing section/child IDs used by shortcuts.
 (function () {
-  function build(schema: any): any {
+  function build(schema: any) {
     const pages = (schema.sections || []).flatMap((section: any) => section.children?.length
       ? section.children.map((child: any) => ({...child, sectionId:section.id, childId:child.id}))
       : [{...section, sectionId:section.id, childId:''}]);
@@ -18,7 +18,7 @@ interface Window {
     for (const page of pages) if (!seen.has(page.id)) groups.push({id:page.id,title:page.title,pages:[page]});
     return {groups,pages};
   }
-  function resolve(model: any, sectionId: any, childId: any): any {
+  function resolve(model: any, sectionId: any, childId: any) {
     return model.pages.find((page: any) => page.sectionId === sectionId && page.childId === childId)
       || model.pages.find((page: any) => page.id === sectionId)
       || model.pages.find((page: any) => page.sectionId === sectionId)

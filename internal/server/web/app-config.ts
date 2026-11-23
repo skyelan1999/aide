@@ -33,7 +33,7 @@ function rcaExtractDiagramPath(content: any) {
 function rcaResolveDiagram(ref: any) {
   ref = (ref || '').trim();
   if (!ref) return null;
-  let drawio = ref, exportRef: any = null;
+  let drawio = ref, exportRef = null;
   if (/\.drawio\.(svg|png)$/i.test(ref)) { drawio = ref.replace(/\.(svg|png)$/i, ''); exportRef = ref; }
   return { drawio, exportRef };
 }
@@ -130,8 +130,8 @@ async function openRcaReport(entry: any) {
   }
   if (warnings.length) { warn.innerHTML = warnings.join('<br>'); warn.classList.remove('hidden'); }
 }
-// @ts-ignore -- independent settings pages expose their own config refresh helper.
-async function refreshConfig({ modelConnectionsSaved = false }: any = {}) {
+// @ts-expect-error -- independent settings pages expose their own config refresh helper.
+async function refreshConfig({ modelConnectionsSaved = false } = {}) {
   const previousScope=recoveryScope(),[nextConfig,assistantModel]=await Promise.all([api('/config'),api('/xiaomi/model').catch(()=>null)]);
   const workspaceChanged=!!previousScope&&previousScope!==nextConfig.workspaceId;
   if(workspaceChanged){await persistChatDraft();recoveryReady=false;clearTimeout(recoveryTimer);++sessionSeq.value;}

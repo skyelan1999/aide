@@ -82,7 +82,7 @@ interface Window {
  }
  // Logical close happens now; this retains the same inert node's paint for at
  // most 200 ms, without a DOM clone or an active button/focus gate underneath.
- function leave(node: any,close: any,{remove=false,kind='menu',snapshot=null}: any={}): any {
+ function leave(node: any,close: any,{remove=false,kind='menu',snapshot=null}: any={}) {
   if(!node){close?.();return ()=>{};}
   if(exits.has(node)){close?.();return exits.get(node);}
   const shown=!!snapshot||visible(node),style=snapshot||(shown?getComputedStyle(node):null);
@@ -110,7 +110,7 @@ interface Window {
   running.set(node,animation);animation.finished.then(finish,()=>{});timer=setTimeout(finish,200);
   return finish;
  }
- function activePanel(): any {
+ function activePanel() {
   const body=document.body;
   if(body.classList.contains('plugins-mode'))return document.getElementById('plugin-panel');
   if(body.classList.contains('reminders-mode'))return document.getElementById('reminder-center');
@@ -156,7 +156,7 @@ interface Window {
  }
  function bindSegment(node: any): void {
   let scheduled=0;
-  const selected=(): any=>node.querySelector('button[aria-selected="true"]')||node.querySelector('button[aria-pressed="true"]')||node.querySelector('button.active');
+  const selected=()=>node.querySelector('button[aria-selected="true"]')||node.querySelector('button[aria-pressed="true"]')||node.querySelector('button.active');
   const sync=(): void=>{
    scheduled=0;
    if(!node.isConnected||!visible(node))return;
@@ -184,7 +184,7 @@ interface Window {
  }
  // Short overlapping strokes produce a tapered tail along the curve itself,
  // including the turn. No animated blur or per-frame path reconstruction.
- function lightComet(layer: any): any {
+ function lightComet(layer: any) {
   const ns='http://www.w3.org/2000/svg',group: any=document.createElementNS(ns,'g');
   const bands=[[168,.055],[132,.07],[98,.1],[68,.14],[40,.22],[16,.45]];
   const paths=bands.map(([tail,opacity])=>{
@@ -192,7 +192,7 @@ interface Window {
    path.style.opacity=opacity;group.append(path);return {path,tail};
   });
   layer.append(group);
-  return {run(d: any,duration: any,{enter=true,exit=true,turn=0}: any={}){
+  return {run(d: any,duration: any,{enter=true,exit=true,turn=0}={}){
    for(const {path} of paths)path.setAttribute('d',d);
    const length=paths[0].path.getTotalLength(),start=enter?0:16,end=length+(exit?168:0);
    const travel=turn>0?[[start,0],[turn,.6],[end,1]]:[[start,0],[end,1]];
@@ -204,7 +204,7 @@ interface Window {
    return {finished:Promise.all(animations.map(a=>a.finished)),cancel(){for(const a of animations)a.cancel();}};
   }};
  }
- function beginSend(button: any): any {
+ function beginSend(button: any) {
   const composer=button?.closest?.('.composer');
   if(!allowed()||!composer||!visible(composer)||!button?.isConnected||typeof button.animate!=='function')return {cancel(){},land(){}};
   const from=button.getBoundingClientRect();
@@ -213,7 +213,7 @@ interface Window {
   const ns='http://www.w3.org/2000/svg';
   const layer: any=document.createElementNS(ns,'svg');layer.classList.add('send-light-route');layer.setAttribute('aria-hidden','true');
   layer.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
-  const rail: any=document.createElementNS(ns,'path');rail.classList.add('send-light-rail');
+  const rail=document.createElementNS(ns,'path');rail.classList.add('send-light-rail');
   layer.append(rail);const comet=lightComet(layer);document.body.append(layer);button.classList.add('send-beaming');
   let active=true,landed=false,phase: any=null,finishTimer: any=0,followFrame=0;
   const stop=(): void=>{if(!active)return;active=false;clearTimeout(finishTimer);if(followFrame)cancelAnimationFrame(followFrame);phase?.cancel();button.classList.remove('send-beaming');layer.remove();sendEffects.delete(stop);};
@@ -247,7 +247,7 @@ interface Window {
    const first=`M ${origin.x} ${origin.y} H ${turnX+radius} Q ${turnX} ${origin.y} ${turnX} ${origin.y-radius} V ${topY+radius} Q ${turnX} ${topY} ${turnX-radius} ${topY} H ${end.x}`;
    rail.setAttribute('d',`M ${end.x} ${topY} H ${turnX}`);
    // Keep the light on one continuous path through the soft left-hand turn.
-   const measure: any=document.createElementNS(ns,'path');measure.setAttribute('d',first);
+   const measure=document.createElementNS(ns,'path');measure.setAttribute('d',first);
    const turn=measure.getTotalLength();
    const finishPath=landing===stopButton?` C ${end.x-16} ${topY} ${end.x-16} ${topY+6} ${end.x} ${topY+6} H ${destination.x-16} Q ${destination.x} ${topY+6} ${destination.x} ${destination.y}`:` Q ${end.x-24} ${Math.min(end.y-20,destination.y+22)} ${destination.x} ${destination.y}`;
    phase=comet.run(first+finishPath,3800,{turn});
@@ -261,7 +261,7 @@ interface Window {
    });
   }};
  }
- function beginStop(button: any,composer: any): any {
+ function beginStop(button: any,composer: any) {
   const strip=button?.closest?.('.composer-run-controls');
   if(!allowed()||!strip||!composer||!visible(button)||!visible(composer)||typeof button.animate!=='function')return {cancel(){},land(){}};
   const sendButton=document.getElementById('send');

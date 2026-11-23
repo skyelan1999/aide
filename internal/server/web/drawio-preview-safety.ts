@@ -3,7 +3,7 @@ declare var module: any;
 (function (root: any, factory: any) {
   if (typeof module === 'object' && module.exports) module.exports = factory;
   else root.AideDrawioSafety = factory(root);
-})(typeof window !== 'undefined' ? window : globalThis, function (root: any): any {
+})(typeof window !== 'undefined' ? window : globalThis, function (root: any) {
   'use strict';
   const limits = Object.freeze({bytes: 8 * 1024 * 1024, expandedTotal: 16 * 1024 * 1024,
     pages: 64, nodes: 50000, xmlDepth: 128, cells: 10000, cellDepth: 128});
@@ -105,7 +105,7 @@ declare var module: any;
       for (let i = 0; i < count; i++) stack.push([current.getChildAt(i), depth + 1]);
     }
   }
-  function decompress(text: any, inflate?: any, checked?: any): any {
+  function decompress(text: any, inflate?: any, checked?: any) {
     if (text == null || text.length === 0) return text;
     byteLength(text);
     const input = root.Graph.stringToArrayBuffer(root.atob(text));
@@ -123,8 +123,8 @@ declare var module: any;
     const result = decodeURIComponent(new root.TextDecoder('utf-8', {fatal: true}).decode(output));
     return checked ? result : root.Graph.zapGremlins(result);
   }
-  function notify(fn: any): any {
-    return function (this: any, ...args: any[]): any {
+  function notify(fn: any) {
+    return function (this: any, ...args: any[]) {
       try {return fn.apply(this, args);}
       catch (error: any) {
         if (error.code === 'AIDE_DRAWIO_LIMIT' && !error.aideNotified) {
@@ -145,7 +145,7 @@ declare var module: any;
       decode = root.mxObjectCodec.prototype.decode;
     let decodeDepth = 0;
     root.Graph.decompress = notify(decompress);
-    root.mxUtils.parseXml = notify(function (this: any, text: any): any {
+    root.mxUtils.parseXml = notify(function (this: any, text: any) {
       checkXml(text);const doc = parse.apply(this, arguments);checkDom(doc);
       // Inspect inactive pages too, before any page is decoded by mxCodec.
       if (doc.documentElement && doc.documentElement.nodeName === 'mxfile') {
@@ -164,13 +164,13 @@ declare var module: any;
       }
       return doc;
     });
-    root.mxCodec.prototype.updateElements = notify(function (this: any): any {
+    root.mxCodec.prototype.updateElements = notify(function (this: any) {
       if (this.elements == null) checkDom(this.document);
       return update.apply(this, arguments);
     });
-    root.mxGraphModel.prototype.setRoot = notify(function (this: any, cell: any): any {checkRoot(cell);return setRoot.apply(this, arguments);});
+    root.mxGraphModel.prototype.setRoot = notify(function (this: any, cell: any) {checkRoot(cell);return setRoot.apply(this, arguments);});
     // Also bound lazy cross-model/source/target references, which need not follow one model's parent table.
-    root.mxObjectCodec.prototype.decode = notify(function (this: any): any {
+    root.mxObjectCodec.prototype.decode = notify(function (this: any) {
       if (decodeDepth >= limits.cellDepth) fail();
       decodeDepth++;
       try {return decode.apply(this, arguments);} finally {decodeDepth--;}

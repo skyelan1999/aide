@@ -17,9 +17,9 @@ window.AideStarCosmos = Object.freeze({build(nodes: any, edges: any): any {
  for(const edge of edges||[]){if(!edge||!byID.has(edge.from)||!byID.has(edge.to))continue;validEdges.push(edge);
   if(edge.kind==='defines'){const old=owners.get(edge.to);if(!old||edge.from<old)owners.set(edge.to,edge.from);}
  }
- function declarationFor(node: any): any{const owner=byID.get(owners.get(node.id));return node.kind==='symbol'&&owner&&owner.kind==='symbol'?'owner:'+owner.id:'kind:'+(node.kind==='symbol'?node.symbolKind||'symbol':node.kind);}
+ function declarationFor(node: any){const owner=byID.get(owners.get(node.id));return node.kind==='symbol'&&owner&&owner.kind==='symbol'?'owner:'+owner.id:'kind:'+(node.kind==='symbol'?node.symbolKind||'symbol':node.kind);}
  for(const node of byID.values()){const file=node.kind==='symbol'&&byID.has(node.parentFile)?byID.get(node.parentFile):node;scopeByID.set(node.id,JSON.stringify([file.id,declarationFor(node)]));}
- function representative(id: any): any{let root=id;while(union.get(root)!==root)root=union.get(root);while(id!==root){const next=union.get(id);union.set(id,root);id=next;}return root;}
+ function representative(id: any){let root=id;while(union.get(root)!==root)root=union.get(root);while(id!==root){const next=union.get(id);union.set(id,root);id=next;}return root;}
  function join(a: any,b: any): void{a=representative(a);b=representative(b);if(a===b)return;if(rank.get(a)<rank.get(b))[a,b]=[b,a];union.set(b,a);minimum.set(a,minimum.get(a)<minimum.get(b)?minimum.get(a):minimum.get(b));if(rank.get(a)===rank.get(b))rank.set(a,rank.get(a)+1);}
  for(const edge of validEdges){if(!['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(edge.kind))continue;
   if(!out.has(edge.from)){out.set(edge.from,new Set<any>());back.set(edge.from,new Set<any>());}
@@ -47,7 +47,7 @@ window.AideStarCosmos = Object.freeze({build(nodes: any, edges: any): any {
  const kindNames: Record<string, string>={function:uiTextStarmapCosmos('函数'),method:uiTextStarmapCosmos('方法'),type:uiTextStarmapCosmos('类型'),class:uiTextStarmapCosmos('类'),interface:uiTextStarmapCosmos('接口'),closure:uiTextStarmapCosmos('闭包'),variable:uiTextStarmapCosmos('变量'),constant:uiTextStarmapCosmos('常量'),property:uiTextStarmapCosmos('属性')};
  const roles=['snapshot','source','project','directory','file','declaration','local-call-component','node'];
  const regionColor=(region: any): string=>region==='workspace'?'#a7caff':region==='sessions'?'#f3d19b':'#89d7c8';
- function create(parent: any,metadataDepth: any,identity: any,label: any,region: any,description: any,evidence: any,metadata: any={}): any{
+ function create(parent: any,metadataDepth: any,identity: any,label: any,region: any,description: any,evidence: any,metadata={}){
   const key=parent?parent.key+'/'+metadataDepth+':'+encodeURIComponent(identity):'cosmos:0';let group=rawByKey.get(key);
   if(!group){group={key,unitID:key,depth:metadataDepth,metadataDepth,label,region,color:regionColor(region),description,evidence,members:[],children:[],parent:parent||null,cyclic:false,connections:[],sourceMetadata:{role:roles[metadataDepth],classificationKey:key,label,evidence,...metadata}};rawByKey.set(key,group);if(parent)parent.children.push(group);}return group;
  }
@@ -148,9 +148,9 @@ window.AideStarCosmos = Object.freeze({build(nodes: any, edges: any): any {
  }
  for(const [key,map]of connectionMaps)byKey.get(key).connections=[...map.values()];
  rawByKey.clear();
- function find(key: any): any{return byKey.get(key)||null;}
- function pathFor(id: any): any{return paths.get(id)||[];}
- function scene(key: any): any{const group=find(key)||root,system=group.depth===7?group.parent:group;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold,gates:[...(gatesBySystem.get(system?.key)?.values()||[])]};}
+ function find(key: any){return byKey.get(key)||null;}
+ function pathFor(id: any){return paths.get(id)||[];}
+ function scene(key: any){const group=find(key)||root,system=group.depth===7?group.parent:group;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold,gates:[...(gatesBySystem.get(system?.key)?.values()||[])]};}
  return Object.freeze({root,byKey,paths,scene,pathFor,find,levels,thresholds,scaleCounts:Object.freeze(scaleCounts)});
 }});
 

@@ -9,7 +9,7 @@ interface Window {
   const same=(a: any,b: any): boolean=>JSON.stringify(a??null)===JSON.stringify(b??null);
   const operationKey=(id: any): string=>JSON.stringify(['',operationKind,id]);
   const retentionKey=JSON.stringify(['','recovery-policy','undo-retention']);
-  function validate(backup: any): any{
+  function validate(backup: any){
     if(!backup||backup.format!=='aide-local-recovery'||backup.schema!==1||!Array.isArray(backup.records)||backup.count!==backup.records.length||bytes(backup)>LIMIT)throw Error(uiTextRecoveryTransfer('恢复备份格式、数量或大小无效'));
     const keys=new Set<any>(),kinds=new Set<any>(['chat','scene','file','file-view','file-branches','chat-branches']);
     const check=(value: any,depth=0): void=>{if(depth>64)throw Error(uiTextRecoveryTransfer('恢复备份内容嵌套过深'));if(value&&typeof value==='object')for(const k of Object.keys(value)){if(['__proto__','constructor','prototype'].includes(k))throw Error(uiTextRecoveryTransfer('恢复备份包含不支持的字段'));check(value[k],depth+1);}};
@@ -24,10 +24,10 @@ interface Window {
     }
     return backup.records.map((r: any)=>({key:r.key,value:structuredClone(r.value),updated:r.updated}));
   }
-  function create({open}: any): any{
+  function create({open}: any){
     async function collect(): Promise<any>{const db=await open();return new Promise<any>((resolve,reject)=>{const tx=db.transaction('records','readonly'),req=tx.objectStore('records').openCursor(),all=new Map<any, any>();req.onsuccess=()=>{const c=req.result;if(c){all.set(c.value.key,c.value);c.continue();}};tx.oncomplete=()=>resolve(all);tx.onerror=tx.onabort=()=>reject(tx.error||Error(uiTextRecoveryTransfer('恢复存储事务中断')));});}
     async function previewImport(backup: any): Promise<any>{const records=validate(backup),all=await collect(),entries=records.map((record: any)=>({record,before:all.get(record.key)||null}));return {entries,added:entries.filter((e: any)=>!e.before).length,identical:entries.filter((e: any)=>e.before&&same(e.record.value,e.before.value)).length,conflicts:entries.filter((e: any)=>e.before&&!same(e.record.value,e.before.value)).map((e: any)=>e.record.key)};}
-    async function importRecovery(plan: any,{replace=false,active=()=>true}: any={}): Promise<any>{
+    async function importRecovery(plan: any,{replace=false,active=()=>true}={}): Promise<any>{
       const records=validate({format:'aide-local-recovery',schema:1,count:plan.entries.length,records:plan.entries.map((e: any)=>e.record)});
       const db=await open();return new Promise<any>((resolve,reject)=>{
         const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');let failure: any,result: any,pending=records.length;const changes: any[]=[];
@@ -51,7 +51,7 @@ interface Window {
       validate({format:'aide-local-recovery',schema:1,count:records.length,records});
       return {scope,entries:records.map((before: any)=>({key:before.key,before})),count:records.length,bytes:bytes(records)};
     }
-    async function archiveRecovery(plan: any,{active=()=>true}: any={}): Promise<any>{
+    async function archiveRecovery(plan: any,{active=()=>true}={}): Promise<any>{
       if(!plan||!Array.isArray(plan.entries)||!plan.scope||plan.entries.some((e: any)=>e.key!==e.before?.key||JSON.parse(e.key)[0]!==plan.scope))throw Error(uiTextRecoveryTransfer('恢复归档预览无效'));
       validate({format:'aide-local-recovery',schema:1,count:plan.entries.length,records:plan.entries.map((e: any)=>e.before)});
       const db=await open();return new Promise<any>((resolve,reject)=>{
@@ -85,7 +85,7 @@ interface Window {
       const expired=days?entries.filter((r: any)=>Number.isFinite(r.updated)&&r.updated<cutoff):[];
       return {days,beforePolicy:all.get(retentionKey)||null,entries,expired:expired.map((r: any)=>r.key),bytes:expired.reduce((n: number,r: any)=>n+bytes(r),0)};
     }
-    async function applyRecoveryRetention(plan: any,{active=()=>true}: any={}): Promise<any>{
+    async function applyRecoveryRetention(plan: any,{active=()=>true}={}): Promise<any>{
       if(!Number.isInteger(plan?.days)||plan.days<0||plan.days>3650||!Array.isArray(plan.entries)||!Array.isArray(plan.expired))throw Error(uiTextRecoveryTransfer('保留策略预览无效'));
       const expected=new Map<any, any>(plan.entries.map((r: any)=>{const parts=JSON.parse(r.key);if(parts?.[0]!==''||parts?.[1]!==operationKind||r.key!==operationKey(r.value?.id))throw Error(uiTextRecoveryTransfer('保留策略预览无效'));return [r.key,r];}));
       if(expected.size!==plan.entries.length)throw Error(uiTextRecoveryTransfer('保留策略预览无效'));
@@ -104,18 +104,18 @@ interface Window {
         tx.oncomplete=()=>resolve({count:plan.expired.length,days:plan.days});tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error(uiTextRecoveryTransfer('恢复存储事务中断')));
       });
     }
-    async function pruneExpiredRecoveryOperations({active=()=>true}: any={}): Promise<any>{const policy=await recoveryRetention();if(!policy.days||!active())return {count:0};const plan=await previewRecoveryRetention(policy.days);if(!plan.expired.length)return {count:0};return applyRecoveryRetention(plan,{active});}
+    async function pruneExpiredRecoveryOperations({active=()=>true}={}): Promise<any>{const policy=await recoveryRetention();if(!policy.days||!active())return {count:0};const plan=await previewRecoveryRetention(policy.days);if(!plan.expired.length)return {count:0};return applyRecoveryRetention(plan,{active});}
     async function listRecoveryOperations(): Promise<any>{return [...(await collect()).values()].filter((r: any)=>{try{return JSON.parse(r.key)[1]===operationKind;}catch(_e){return false;}}).map((r: any)=>({id:r.value.id,type:r.value.type,scope:r.value.scope||'',updated:r.updated,count:r.value.changes.length,bytes:bytes(r)})).sort((a: any,b: any)=>b.updated-a.updated);}
     // Discard only the undo journal. Live drafts and server files are untouched.
     // Requiring the displayed timestamp prevents deleting a changed operation.
-    async function discardRecoveryOperation(id: any,updated: any,{active=()=>true}: any={}): Promise<any>{
+    async function discardRecoveryOperation(id: any,updated: any,{active=()=>true}={}): Promise<any>{
       const db=await open();return new Promise<any>((resolve,reject)=>{
         const tx=db.transaction('records','readwrite'),store=tx.objectStore('records'),req=store.get(operationKey(id));let failure: any;
         req.onsuccess=()=>{try{if(!active())throw Error(uiTextRecoveryTransfer('恢复操作已取消'));const r=req.result;if(!r||r.updated!==updated||r.value.id!==id)throw Error(uiTextRecoveryTransfer('恢复操作记录已变化，请重新加载'));store.delete(r.key);}catch(e){failure=e;tx.abort();}};
         tx.oncomplete=()=>resolve({discarded:id});tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error(uiTextRecoveryTransfer('恢复存储事务中断')));
       });
     }
-    async function undoRecovery(id: any,{active=()=>true}: any={}): Promise<any>{
+    async function undoRecovery(id: any,{active=()=>true}={}): Promise<any>{
       const db=await open();return new Promise<any>((resolve,reject)=>{
         const tx=db.transaction('records','readwrite'),store=tx.objectStore('records'),request=store.get(operationKey(id));let failure: any,count=0;
         const fail=(e: any): void=>{failure=e;tx.abort();};

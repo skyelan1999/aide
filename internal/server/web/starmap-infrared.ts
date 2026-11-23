@@ -13,7 +13,7 @@ window.AideInfrared={
  energy(degree: any,distance=1): number{const d=Number.isFinite(degree)?Math.max(0,degree):0,z=Number.isFinite(distance)?Math.max(.4,distance):1;return (.06+Math.pow(Math.log2(1+d),2))/(z*z);},
  kernel(r: number,sigma: number): number{return Math.exp(-r/(sigma*6))/(1+(r/sigma)**2);},
  density(r: number,sigma: number): number{if(!Number.isFinite(r)||!Number.isFinite(sigma)||r<0||sigma<=0||r>6*sigma)return 0;return this.kernel(r,sigma)/(2*Math.PI*sigma*sigma*infraredKernelIntegral);},
- create({button,note,redraw,onChange,motionEnabled}: any): any{
+ create({button,note,redraw,onChange,motionEnabled}: any){
  let enabled=false,mix=0,from=0,started=0,last=-Infinity,gw=0,gh=0,field: any;
  const surface=document.createElement('canvas'),c: any=surface.getContext('2d');
  function set(value: any,announce=true): void{enabled=!!value;from=mix;started=performance.now();last=-Infinity;if(!motionEnabled())mix=enabled?1:0;button.setAttribute('aria-pressed',String(enabled));note.hidden=!enabled;button.querySelector('span').textContent=enabled?uiTextStarmapInfrared('红外 · 开'):uiTextStarmapInfrared('红外');redraw();if(announce)onChange(enabled);}

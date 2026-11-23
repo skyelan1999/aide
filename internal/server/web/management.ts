@@ -1,7 +1,7 @@
 interface Window {
   AideManagement?: { refresh: () => Promise<void> };
 }
-// @ts-ignore -- 独立页面脚本的全局 api，与星图页面函数同名但不同页
+// @ts-expect-error -- 独立页面脚本的全局 api，与星图页面函数同名但不同页
 declare var state: any, lockScreen: any, api: any, t: any, action: any, refreshConfig: any, toast: any;
 /* Management proposals are server-owned. No generated code runs in this view. */
 (() => {
@@ -11,9 +11,9 @@ declare var state: any, lockScreen: any, api: any, t: any, action: any, refreshC
   const text=<K extends keyof HTMLElementTagNameMap>(tag: K,cls: string,value: string | null): HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);n.className=cls;n.textContent=value;return n;};
   const tr=(zh: string,en: string): string=>window.aideI18n?.language?.() === 'en' ? en : t(zh);
   const available=(): boolean=>!!state.config&&!!state.token&&!lockScreen.locked;
-  function host(): any{let n: any=document.getElementById('management-proposals');if(!n){n=text('section','management-proposals','');n.id='management-proposals';n.setAttribute('aria-label',tr('管理提案','Management proposals'));document.querySelector('.composer-wrap')?.prepend(n);}return n;}
-  function operation(p: any): any{return ({prepare:tr('安装 / 升级插件','Install / upgrade plugin'),enable:tr('启用插件','Enable plugin'),disable:tr('停用插件','Disable plugin'),remove:p.kind==='plugins'?tr('删除插件','Remove plugin'):tr('删除引用','Remove reference'),upsert:tr('配置引用','Configure reference')})[p.action as 'prepare'|'enable'|'disable'|'remove'|'upsert']||p.action;}
-  function button(label: string,fn: any): any{const b=text('button','quiet',label);b.type='button';b.onclick=action(fn);return b;}
+  function host(){let n=document.getElementById('management-proposals');if(!n){n=text('section','management-proposals','');n.id='management-proposals';n.setAttribute('aria-label',tr('管理提案','Management proposals'));document.querySelector('.composer-wrap')?.prepend(n);}return n;}
+  function operation(p: any){return ({prepare:tr('安装 / 升级插件','Install / upgrade plugin'),enable:tr('启用插件','Enable plugin'),disable:tr('停用插件','Disable plugin'),remove:p.kind==='plugins'?tr('删除插件','Remove plugin'):tr('删除引用','Remove reference'),upsert:tr('配置引用','Configure reference')})[p.action as 'prepare'|'enable'|'disable'|'remove'|'upsert']||p.action;}
+  function button(label: string,fn: any){const b=text('button','quiet',label);b.type='button';b.onclick=action(fn);return b;}
   async function decide(p: any,action: string,button: any): Promise<void>{
     if(!available())return;button.disabled=true;
     const scope=state.config.workspaceId;
@@ -21,7 +21,7 @@ declare var state: any, lockScreen: any, api: any, t: any, action: any, refreshC
     catch(e: any){if(scope===state.config?.workspaceId)toast(e.message);}
     finally{button.disabled=false;}
   }
-  function card(p: any,epoch: number,scope: any): any{
+  function card(p: any,epoch: number,scope: any){
     const item=text('article','management-proposal',''),head=text('div','management-proposal-head','');
     head.append(text('strong','',operation(p)+' · '+p.target),text('span','management-actor',p.actor==='assistant'?tr('助理','Assistant'):'aide'));
     item.append(head);

@@ -1,5 +1,5 @@
 'use strict';
-// @ts-ignore -- app and starmap are independent classic-script pages.
+// @ts-expect-error -- app and starmap are independent classic-script pages.
 const $ = (id) => document.getElementById(id), canvas = $('sky'), ctx = canvas.getContext('2d');
 const logbook = $('limits'), logbookToggle = $('logbook-toggle');
 const stellarLogbook = window.AideStellarLogbook.create();
@@ -168,7 +168,7 @@ function drawEvidencePath() {
     ctx.restore();
 }
 // Store navigation metadata only: no document excerpts, model answers or tokens.
-// @ts-ignore -- app and starmap own independent recovery timers.
+// @ts-expect-error -- app and starmap own independent recovery timers.
 let recoveryTimer = 0, recoveryLoading = false, recoveryScopeLoaded = '', pendingRecoveredView = null, recoveryInput = 0, recoveryWarning = false, recoveryAttempt = null;
 function persistSkyView(active = () => !locked) {
     clearTimeout(recoveryTimer);
@@ -601,7 +601,7 @@ function settlePanels() { for (const [el, a] of panelAnimations) {
 } panelAnimations.clear(); }
 function openAI() { revealPanel($('ai-body'), true); $('ai-toggle').setAttribute('aria-expanded', 'true'); }
 function say(s) { $('status').textContent = s; }
-// @ts-ignore -- 独立页面脚本；api 仅在星图页面加载，与 mobile-capture 不同页
+// @ts-expect-error -- 独立页面脚本；api 仅在星图页面加载，与 mobile-capture 不同页
 async function api(p, options = {}) { const r = await fetch('/api/knowledge-map' + p, { ...options, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' } }); const d = await r.json(); if (!r.ok) {
     window.AideCrash?.reportServer(d);
     throw Error(d.error || uiTextStarmap('读取失败，请回到工作台登录'));

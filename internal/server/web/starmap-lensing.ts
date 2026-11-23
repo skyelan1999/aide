@@ -5,7 +5,7 @@ interface Window {
 
 let schwarzschildTable: any = null;
 
-function schwarzschildDeflectionSample(rs: any, impactParameter: any): any {
+function schwarzschildDeflectionSample(rs: any, impactParameter: any) {
  const massRadius = Number.isFinite(rs) ? Math.max(0, rs) : 0;
  const impact = Number.isFinite(impactParameter) ? Math.max(0, impactParameter) : 0;
  if (!massRadius || !impact) return { angle: 0, derivative: 0 };
@@ -31,11 +31,11 @@ window.AideStarLensing = Object.freeze({
  // dimensionless lookup table from the exact turning-point integral, then
  // interpolate it for screen rays. This keeps frame-time lensing cheap while
  // retaining the logarithmic strong-deflection rise at the photon sphere.
- schwarzschildDeflection(rs: any, impactParameter: any): any {
+ schwarzschildDeflection(rs: any, impactParameter: any) {
   // The first two weak-field terms provide a smooth asymptotic tail.
   return schwarzschildDeflectionSample(rs, impactParameter).angle;
  },
- _schwarzschildTable(): any {
+ _schwarzschildTable() {
   if (schwarzschildTable) return schwarzschildTable;
   const critical = 1.5 * Math.sqrt(3), minOffset = 1e-5, maxRatio = 96, count = 1024, steps = 256;
   const minRatio = critical * (1 + minOffset), maxOffset = maxRatio / critical - 1;
@@ -62,7 +62,7 @@ window.AideStarLensing = Object.freeze({
   schwarzschildTable = Object.freeze({ critical, minOffset, minRatio, maxRatio, logStep, values });
   return schwarzschildTable;
  },
- schwarzschildImages(betaX: any, betaY: any, rs: any, observerDistance: any, sourceDistance: any, pixelsPerRadian: any, maxWindingOrder = 0): any {
+ schwarzschildImages(betaX: any, betaY: any, rs: any, observerDistance: any, sourceDistance: any, pixelsPerRadian: any, maxWindingOrder = 0) {
   const sourceRadius = Math.hypot(betaX, betaY), massRadius = Number.isFinite(rs) ? Math.max(0, rs) : 0;
   const dl = Number.isFinite(observerDistance) ? Math.max(0, observerDistance) : 0;
   const ds = Number.isFinite(sourceDistance) ? Math.max(0, sourceDistance) : 0;
@@ -74,13 +74,13 @@ window.AideStarLensing = Object.freeze({
   const maximum = Math.min(pixels * .35, Math.max(sourceRadius + weakEinstein * 8, minimum * 32, 24));
   if (!(maximum > minimum)) return [];
   const distanceWeight = pixels * (ds - dl) / ds, directionX = betaX / sourceRadius, directionY = betaY / sourceRadius;
-  const deflectionAt = (radiusPx: any): any => {
+  const deflectionAt = (radiusPx: any) => {
    const angle = radiusPx / pixels, tangent = Math.tan(angle), cosine = Math.cos(angle), sample = schwarzschildDeflectionSample(rsRadius, dl * tangent);
    return { angle: sample.angle, derivative: sample.derivative / rsRadius * dl / pixels / (cosine * cosine) };
   };
   const windingLimit = Number.isFinite(maxWindingOrder) ? Math.max(0, Math.min(1, Math.floor(maxWindingOrder))) : 1;
-  const solve = (sign: any, windingOrder: any): any => {
-   const residual = (radiusPx: any): any => { const ray = deflectionAt(radiusPx), effectiveDeflection = ray.angle - windingOrder * 2 * Math.PI; return { value: sign * radiusPx - sign * distanceWeight * effectiveDeflection - sourceRadius, derivative: sign * (1 - distanceWeight * ray.derivative) }; };
+  const solve = (sign: any, windingOrder: any) => {
+   const residual = (radiusPx: any) => { const ray = deflectionAt(radiusPx), effectiveDeflection = ray.angle - windingOrder * 2 * Math.PI; return { value: sign * radiusPx - sign * distanceWeight * effectiveDeflection - sourceRadius, derivative: sign * (1 - distanceWeight * ray.derivative) }; };
    let left = minimum, right = maximum, fLeft = residual(left).value, fRight = residual(right).value;
    if (!Number.isFinite(fLeft) || !Number.isFinite(fRight) || fLeft * fRight > 0) return null;
    // The weak-field image gives Newton a close first guess. Keep a bracket at
@@ -118,7 +118,7 @@ window.AideStarLensing = Object.freeze({
   }
   return images.filter(Boolean);
  },
- visibleSchwarzschildImages(betaX: any, betaY: any, rs: any, observerDistance: any, sourceDistance: any, pixelsPerRadian: any, innerRadius = 0, outerRadius = Infinity, maxWindingOrder = 0): any {
+ visibleSchwarzschildImages(betaX: any, betaY: any, rs: any, observerDistance: any, sourceDistance: any, pixelsPerRadian: any, innerRadius = 0, outerRadius = Infinity, maxWindingOrder = 0) {
   const inner = Number.isFinite(innerRadius) ? Math.max(0, innerRadius) : 0;
   const outer = Number.isFinite(outerRadius) ? Math.max(inner, outerRadius) : Infinity;
   return this.schwarzschildImages(betaX, betaY, rs, observerDistance, sourceDistance, pixelsPerRadian, maxWindingOrder).filter((image: any) => {
@@ -126,7 +126,7 @@ window.AideStarLensing = Object.freeze({
    return radius >= inner && radius <= outer;
   });
  },
- pointMassImages(betaX: any, betaY: any, einsteinRadius: any): any {
+ pointMassImages(betaX: any, betaY: any, einsteinRadius: any) {
   const beta = Math.hypot(betaX, betaY), thetaE = Math.max(0, einsteinRadius);
   if (!Number.isFinite(beta) || !Number.isFinite(thetaE) || thetaE === 0 || beta < 1e-6) return [];
   const root = Math.sqrt(beta * beta + 4 * thetaE * thetaE), unitX = betaX / beta, unitY = betaY / beta;
@@ -136,7 +136,7 @@ window.AideStarLensing = Object.freeze({
    { x: unitX * secondary, y: unitY * secondary, branch: 'secondary', magnification: Math.max(0, (beta * beta + 2 * thetaE * thetaE) / (2 * beta * root) - .5) }
   ];
  },
- visiblePointMassImages(betaX: any, betaY: any, einsteinRadius: any, innerRadius = 0, outerRadius = Infinity): any {
+ visiblePointMassImages(betaX: any, betaY: any, einsteinRadius: any, innerRadius = 0, outerRadius = Infinity) {
   const inner = Number.isFinite(innerRadius) ? Math.max(0, innerRadius) : 0;
   const outer = Number.isFinite(outerRadius) ? Math.max(inner, outerRadius) : Infinity;
   return this.pointMassImages(betaX, betaY, einsteinRadius).filter((image: any) => {
@@ -144,7 +144,7 @@ window.AideStarLensing = Object.freeze({
    return radius >= inner && radius <= outer;
   });
  },
- deflection(betaX: any, betaY: any, einsteinRadius: any): any {
+ deflection(betaX: any, betaY: any, einsteinRadius: any) {
   const beta2 = betaX * betaX + betaY * betaY, thetaE2 = einsteinRadius * einsteinRadius;
   if (!Number.isFinite(beta2) || beta2 < 1e-8 || !Number.isFinite(thetaE2)) return { x: 0, y: 0 };
   return { x: thetaE2 * betaX / beta2, y: thetaE2 * betaY / beta2 };

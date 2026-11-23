@@ -5,7 +5,6 @@
     let session = params.get('session') || '', invite = params.get('invite') || '', invitation = params.get('secret') || '', token = '', state = null, pending = null, controls = null, stream = null, detector = null, scanning = false, timer = null, polling = false;
     history.replaceState(null, '', location.pathname);
     const notice = (s, error = false) => { $('notice').textContent = s; $('notice').classList.toggle('error', error); };
-    // @ts-ignore -- 独立页面脚本；api 仅在本页加载
     async function api(action, args = {}) { const r = await fetch('/mobile-capture/api', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Capture ' + token } : {}) }, body: JSON.stringify({ session, action, ...args }), cache: 'no-store', credentials: 'omit', redirect: 'error' }); const d = await r.json(); if (!r.ok)
         throw Object.assign(Error(d.error || uiTextMobileCapture('请求失败')), { status: r.status }); return d; }
     function stop() { scanning = false; controls?.stop(); controls = null; if (stream)

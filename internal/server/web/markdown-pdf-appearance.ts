@@ -204,7 +204,7 @@ ${cell('参考','{{reference}}')}
   }
   parent.append(doc.createTextNode(text.slice(start)));
  }
- function buildHtml(doc: Document,profile: any,region='header',context: any={}): HTMLElement | null{
+ function buildHtml(doc: Document,profile: any,region='header',context={}): HTMLElement | null{
   if(!profile[region]?.trim())return null;
   const template=doc.createElement('template');
   template.innerHTML=profile[region];

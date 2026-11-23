@@ -22,7 +22,7 @@ window.AideCosmicPhysics = Object.freeze({
   const a = Number.isFinite(semiMajorAxis) ? Math.max(.25, semiMajorAxis) : 1;
   return Math.sqrt(m / (a * a * a));
  },
- keplerOrbit(meanAnomaly: any, eccentricity: any, mass: any, semiMajorAxis: any): any {
+ keplerOrbit(meanAnomaly: any, eccentricity: any, mass: any, semiMajorAxis: any) {
   const e = Math.max(0, Math.min(.72, Number.isFinite(eccentricity) ? eccentricity : 0));
   const a = Number.isFinite(semiMajorAxis) ? Math.max(.25, semiMajorAxis) : 1;
   const mean = Number.isFinite(meanAnomaly) ? meanAnomaly : 0;
@@ -64,7 +64,7 @@ window.AideCosmicPhysics = Object.freeze({
   const denominator = Math.max(1e-9, 1 + g * g - 2 * g * cosine);
   return (1 - g * g) / (4 * Math.PI * Math.pow(denominator, 1.5));
  },
- scatteringCosine(source: any, scatterer: any, observerDirection: any = { x: 0, y: 0, z: -1 }): number {
+ scatteringCosine(source: any, scatterer: any, observerDirection = { x: 0, y: 0, z: -1 }): number {
   // Vectors are normalized graph-scene coordinates. The incoming direction
   // points from the source to the scatterer; the outgoing one points toward
   // the observer. This exposes the forward/back-scattering geometry without
@@ -76,7 +76,7 @@ window.AideCosmicPhysics = Object.freeze({
   if (incomingLength < 1e-9 || observerLength < 1e-9) return 0;
   return Math.max(-1, Math.min(1, (incoming.x * observerDirection.x + incoming.y * observerDirection.y + incoming.z * observerDirection.z) / (incomingLength * observerLength)));
  },
- dustTransfer(incidentRadiance: any, opticalDepth: any, singleScatteringAlbedo = .55, cosScatteringAngle = 0, anisotropy = .65): any {
+ dustTransfer(incidentRadiance: any, opticalDepth: any, singleScatteringAlbedo = .55, cosScatteringAngle = 0, anisotropy = .65) {
   // Single-scattering radiative transfer through a homogeneous screen.
   // The graph supplies dimensionless radiance and optical-depth proxies.
   const incident = Number.isFinite(incidentRadiance) ? Math.max(0, incidentRadiance) : 0;
@@ -135,7 +135,7 @@ window.AideCosmicPhysics = Object.freeze({
   const reflectivity = Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
   return this.inverseSquareFlux(hostPower, radius) * this.lambertPhase(phaseAngle) * reflectivity;
  },
- planetIllumination(hostPower: any, orbitRadius: any, phaseAngle: any, albedo = .3): any {
+ planetIllumination(hostPower: any, orbitRadius: any, phaseAngle: any, albedo = .3) {
   const incident = this.inverseSquareFlux(hostPower, orbitRadius);
   const reflected = incident * this.lambertPhase(phaseAngle) * Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
   // Filmic display mapping preserves a visible night side while retaining
@@ -173,7 +173,7 @@ window.AideCosmicPhysics = Object.freeze({
   if (!Number.isFinite(rs) || !Number.isFinite(radius) || rs <= 0 || radius < 3 * rs) return 0;
   return Math.sqrt(rs / (2 * (radius - rs)));
  },
- accretionEmission(rs: any, radius: any, lineOfSightCosine: any): any {
+ accretionEmission(rs: any, radius: any, lineOfSightCosine: any) {
   if (!Number.isFinite(rs) || rs <= 0 || !Number.isFinite(radius) || radius < 3 * rs) {
    return { shift: 0, intensity: 0, beta: 0, temperature: 0 };
   }

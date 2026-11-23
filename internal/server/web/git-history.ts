@@ -6,7 +6,7 @@ interface Window {
  'use strict';
  const exceedsLines=(text: string): boolean=>{let count=0;for(let i=0;i<text.length;i++)if(text[i]==='\n'&&++count>6000)return true;return false;};
  const query=(spec: any): URLSearchParams=>{const q=new URLSearchParams({path:spec.path,root:spec.root||'workspace'});if(spec.source)q.set('source',spec.source);else if(spec.wsId)q.set('workspaceId',spec.wsId);return q;};
- const detect=({spec,api}: any): any=>{const q=query(spec);q.set('probe','1');return api('/file/git-history?'+q);};
+ const detect=({spec,api}: any)=>{const q=query(spec);q.set('probe','1');return api('/file/git-history?'+q);};
  function mount({dialog,snapshotPanel,hasSnapshots,spec,editor,api,t,isActive,onTabChange,lineDiff,renderDiff,syncComparison}: any): void {
   const el=<K extends keyof HTMLElementTagNameMap>(tag: K,cls?: string | null,text?: string | null): HTMLElementTagNameMap[K]=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;};
   const tabs=el('div','git-history-tabs'),snap=el('button','quiet',t('Aide 快照')),git=el('button','quiet',t('Git 比较'));

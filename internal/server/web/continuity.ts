@@ -8,7 +8,7 @@ interface Window {
   'use strict';
   let database: any;
   const enabled=(): boolean=>window.aideUI?.get('workRecovery')!==false;
-  const open=(): any=>database||(database=new Promise<any>((resolve,reject)=>{
+  const open=()=>database||(database=new Promise<any>((resolve,reject)=>{
     const request=indexedDB.open('aide-recovery',1);
     request.onupgradeneeded=()=>request.result.createObjectStore('records',{keyPath:'key'});
     request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
@@ -65,7 +65,7 @@ interface Window {
     const branches=await read(scope,'file-branches',id)||[],legacy=await readTab(scope,'file',id);
     if(legacy&&typeof legacy.text==='string'&&!branches.some((b: any)=>b.text===legacy.text&&b.hash===legacy.hash))branches.push({...legacy,branch:'legacy',updated:0});
     return branches.sort((a: any,b: any)=>{
-      const own=(d: any): any=>legacy&&d.text===legacy.text&&d.hash===legacy.hash;
+      const own=(d: any)=>legacy&&d.text===legacy.text&&d.hash===legacy.hash;
       return Number(own(b))-Number(own(a))||b.updated-a.updated;
     });
   }
@@ -89,7 +89,7 @@ interface Window {
   // Chat identity includes attachments: equal text with different task sources
   // is still a divergent draft. Positions travel with the selected branch.
   const chatBranches=new Map<any,any>();
-  const chatBranchFor=(scope: any,id: any): any=>{const k=key(scope,'chat',id);if(!chatBranches.has(k))chatBranches.set(k,crypto.randomUUID());return chatBranches.get(k);};
+  const chatBranchFor=(scope: any,id: any)=>{const k=key(scope,'chat',id);if(!chatBranches.has(k))chatBranches.set(k,crypto.randomUUID());return chatBranches.get(k);};
   const sameChat=(a: any,b: any): boolean=>a?.text===b?.text&&JSON.stringify(a?.attachments||[])===JSON.stringify(b?.attachments||[]);
   async function chatTransaction(scope: any,id: any,change: any,active?: any): Promise<any> {
     const db=await open();return new Promise<any>((resolve,reject)=>{
@@ -169,8 +169,8 @@ interface Window {
   // copy becomes independent on the first edit. IndexedDB remains the shared
   // fallback for a newly opened tab; it must not overwrite a live tab on reload.
   const tabKey=(scope: any,kind: any,id: any): string=>'aide-recovery-tab:'+key(scope,kind,id);
-  function readTabCache(cacheKey: any): any {try{return {available:true,value:sessionStorage.getItem(cacheKey)};}catch(error){return {available:false,value:null,error};}}
-  function writeTabCache(cacheKey: any,serialized: any,{required=false}: any = {}): boolean {try{sessionStorage.setItem(cacheKey,serialized);return true;}catch(error){if(required)throw error;return false;}}
+  function readTabCache(cacheKey: any) {try{return {available:true,value:sessionStorage.getItem(cacheKey)};}catch(error){return {available:false,value:null,error};}}
+  function writeTabCache(cacheKey: any,serialized: any,{required=false} = {}): boolean {try{sessionStorage.setItem(cacheKey,serialized);return true;}catch(error){if(required)throw error;return false;}}
   // Keep the newest editable text and view position in the tab-local
   // synchronous store. IndexedDB still owns durable, shared branches; this
   // fast path closes the debounce window if a tab is killed before its
@@ -183,7 +183,7 @@ interface Window {
     writeTabCache(tabKey(scope,kind,id),serialized,{required:true});
     return true;
   }
-  function parseTabSnapshot(raw: any): any {
+  function parseTabSnapshot(raw: any) {
     try{return {ok:true,value:JSON.parse(raw)};}catch(error){return {ok:false,error};}
   }
   async function readTab(scope: any,kind: any,id: any): Promise<any> {

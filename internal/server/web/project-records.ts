@@ -15,7 +15,7 @@ interface Window {
   }
   function button(text: any, t: any): any { const b = el('button', 'quiet', t(text)); b.type = 'button'; return b; }
   function errorBox(host: any): any { const n = el('p', 'project-error'); n.setAttribute('role', 'alert'); host.append(n); return n; }
-  function retainDraft(form: any, key: any, snapshot: any, save: any, t: any): any {
+  function retainDraft(form: any, key: any, snapshot: any, save: any, t: any) {
     const fields = (): any[] => [...form.querySelectorAll('[name]')];
     const initial = Object.fromEntries(fields().map(n => [n.name, n.value]));
     let stored = drafts.get(key), ready = !stored || stored.snapshot === snapshot;

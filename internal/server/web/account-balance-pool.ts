@@ -129,8 +129,8 @@ interface Window {
     function pageControls(account: BalanceAccount,page: any): void {
       account.pagePanel.replaceChildren();account.pagePanel.hidden=!page;
       if(!page)return;
-      const post=async(action: string,extra: any={}): Promise<any>=>api('/provider-page-balance',{method:'POST',body:JSON.stringify({providerId:account.provider.id,keyId:account.key.id,action,...extra}),signal:controller.signal});
-      const perform=async(action: string,extra: any={}): Promise<void>=>{try{await post(action,extra);if(live())await load(account);}catch{if(live())account.error.textContent=t('官网余额操作失败，请检查解锁与桥接状态');}};
+      const post=async(action: string,extra={}): Promise<any>=>api('/provider-page-balance',{method:'POST',body:JSON.stringify({providerId:account.provider.id,keyId:account.key.id,action,...extra}),signal:controller.signal});
+      const perform=async(action: string,extra={}): Promise<void>=>{try{await post(action,extra);if(live())await load(account);}catch{if(live())account.error.textContent=t('官网余额操作失败，请检查解锁与桥接状态');}};
       const help=node('details','') as HTMLDetailsElement,summary=node('summary','',t('官网同步说明'));help.open=!!account.pageExpanded;
       help.ontoggle=()=>{if(help.isConnected)account.pageExpanded=help.open;};help.append(summary);
       help.append(node('p','balance-pool-caption',t('复用 Safari 登录；首次确认后每 5 分钟自动查询。请保持专用官网窗口打开。')));

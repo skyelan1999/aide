@@ -4,7 +4,7 @@ interface Window {
 (() => {
   'use strict';
   // A page-owned call view over the shared assistant speech lifecycle.
-  function create(hooks: any): any {
+  function create(hooks: any) {
     const t=hooks.translate||((text: any)=>text), now=hooks.now||Date.now;
     const root=document.createElement('section');root.className='assistant-call';
     const entry=document.createElement('button');entry.type='button';entry.className='assistant-call-start assistant-composer-action voice-btn';entry.innerHTML='<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1Z"/></svg>';entry.title=t('语音通话');entry.setAttribute('aria-label',t('语音通话'));
@@ -24,7 +24,7 @@ interface Window {
     reviewHint.textContent=t('审阅后说“批准本次审批”或“拒绝本次审批”。');
     review.append(reviewTitle,reviewDetail,reviewHint);
     controls.append(mute,hangup);body.append(title,status,detail);panel.append(orb,body,clock,controls);root.append(entry,panel,review);
-    let active=false,muted=false,started=0,timer: any=0,requestAt: number | null=null,approvalExpires=0;
+    let active=false,muted=false,started=0,timer=0,requestAt: number | null=null,approvalExpires=0;
     const labels: Record<string, string>={requesting:'正在连接语音',listening:'正在听你说',thinking:'正在思考',speaking:'助理正在说话',watching:'等待你开口',recovering:'正在恢复连接',paused:'通话已中断'};
     function approval(value: any): void{
       approvalExpires=value?.expiresAt||0;

@@ -62,7 +62,7 @@ interface Window {
   if(conflict)return {conflict:conflict.label};
   const stored=window.aideUI?.get('keybindings');window.aideUI?.set('keybindings',{...(stored&&typeof stored==='object'&&!Array.isArray(stored)?stored:{}),[id]:binding});return {};
  }
- function hint(t: any): any{const binding=getAll().send;return binding?t('{0} 发送 · {1} 换行',format(binding),binding==='Enter'?'Shift + Enter':'Enter'):t('发送快捷键已禁用 · Enter 换行');}
+ function hint(t: any){const binding=getAll().send;return binding?t('{0} 发送 · {1} 换行',format(binding),binding==='Enter'?'Shift + Enter':'Enter'):t('发送快捷键已禁用 · Enter 换行');}
  function render({t,onCleanup}: any): any{
   const make=(tag: string,cls?: string,text?: string): any=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;};
   const wrap=make('div','keybindings-settings'),intro=make('p','section-desc',t('点击快捷键后按下新组合键，立即保存到当前设备。Esc 取消录入；系统和编辑器内置快捷键保留。'));

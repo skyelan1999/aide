@@ -33,7 +33,7 @@ function safeURL(raw: any, rules: any) {
   return url.href;
 }
 
-async function driver(path: any, method: any = 'GET', body?: any) {
+async function driver(path: any, method = 'GET', body?: any) {
   const response = await fetch(`http://127.0.0.1:${DRIVER_PORT}${path}`, {
     method,
     headers: { 'Content-Type': 'application/json' },

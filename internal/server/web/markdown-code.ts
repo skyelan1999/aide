@@ -21,7 +21,7 @@ interface Window {
   let installed = false, translate = (value: string): string => value, onError = (): void => {};
   const resets = new WeakMap<HTMLButtonElement, number>();
 
-  function highlight(text: string, declared = '', engine: any = window.hljs): MdCodeHighlightResult | null {
+  function highlight(text: string, declared = '', engine = window.hljs): MdCodeHighlightResult | null {
     if (!engine || !text.trim() || text.length > MAX_HIGHLIGHT) return null;
     const lang = declared.toLowerCase();
     if (/^(text|txt|plain|plaintext|none|nohighlight)$/.test(lang)) return null;
@@ -62,7 +62,7 @@ interface Window {
   function fallbackCopy(text: string, anchor?: HTMLElement | null): void {
     const active = document.activeElement as HTMLInputElement | null, selection = window.getSelection?.();
     const ranges = selection ? Array.from({length:selection.rangeCount}, (_, i) => selection.getRangeAt(i).cloneRange()) : [];
-    const inputSelection: any = active && typeof active.selectionStart === 'number'
+    const inputSelection = active && typeof active.selectionStart === 'number'
       ? [active.selectionStart, active.selectionEnd, active.selectionDirection] : null;
     const field = document.createElement('textarea'); field.value = text; field.readOnly = true;
     field.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px';

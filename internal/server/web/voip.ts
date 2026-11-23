@@ -4,9 +4,9 @@ interface Window {
 (() => {
   'use strict';
 
-  function open({mode, token, permission, context, onStatus, onEnd}: any): any {
+  function open({mode, token, permission, context, onStatus, onEnd}: any) {
     const ownsContext = !context;
-    const AudioContext: any = window.AudioContext || window.webkitAudioContext;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
     context ||= new AudioContext();
     let socket: any, node: any, microphone: any, clock: any, closed = false, answered = false;
     const sources = new Map<any, any>();
@@ -107,12 +107,12 @@ interface Window {
     };
   }
 
-  function settings(api: any, t: any): any {
+  function settings(api: any, t: any) {
     const form = document.createElement('form');
     form.className = 'settings-control voip-control';
     const title = document.createElement('h4');
     title.textContent = t('VoIP 话机接管');
-    const line = (label: any, field: any): any => {
+    const line = (label: any, field: any) => {
       const row = document.createElement('label');
       row.className = 'voice-reply-row';
       const text = document.createElement('span');
@@ -120,7 +120,7 @@ interface Window {
       row.append(text, field);
       return row;
     };
-    const box = (): any => Object.assign(document.createElement('input'), {type: 'checkbox'});
+    const box = () => Object.assign(document.createElement('input'), {type: 'checkbox'});
     const messages = box(), assistant = box();
     const ip = Object.assign(document.createElement('input'), {placeholder: '192.168.1.50', inputMode: 'decimal', maxLength: 15});
     const port: any = Object.assign(document.createElement('input'), {type: 'number', value: 5060, min: 1, max: 65535});
@@ -134,7 +134,7 @@ interface Window {
       line('SIP 端口', port), line('SIP 用户', user), save, status);
     const controls = [messages, assistant, ip, port, user, save];
     const disabled = (value: any): void => controls.forEach((field: any) => { field.disabled = value; });
-    function apply(config: any): any {
+    function apply(config: any) {
       messages.checked = config.messages;
       assistant.checked = config.assistant;
       ip.value = config.target.ip;

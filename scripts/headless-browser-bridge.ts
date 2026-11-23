@@ -10,7 +10,7 @@ const { validateURL: safeURL } = require('./browser-url-policy.cjs');
 const token = process.env.AIDE_BROWSER_BRIDGE_TOKEN || '';
 const port = Number(process.env.AIDE_HEADLESS_BRIDGE_PORT || 17779);
 let browser: any, context: any, page: any, requestScope: any;
-let queue: any = Promise.resolve();
+let queue = Promise.resolve();
 
 async function launch() {
   if (!browser?.isConnected()) browser = await chromium.launch({ headless: true });
@@ -22,7 +22,7 @@ function validateSocketURL(raw: any, rules: any) {
   url.protocol = url.protocol === 'wss:' ? 'https:' : 'http:';
   return safeURL(url.href, rules);
 }
-async function closeScopedSocket(scope: any, socket: any, code: any = 4003, reason: any = 'Website scope changed') {
+async function closeScopedSocket(scope: any, socket: any, code = 4003, reason = 'Website scope changed') {
   if (!scope.sockets.delete(socket)) return;
   // Playwright closes the upstream through the browser WebSocket API, which
   // only permits 1000 or application codes 3000–4999 (not protocol code 1008).

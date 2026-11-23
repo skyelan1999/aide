@@ -4,7 +4,7 @@ interface Window {
 (function () {
   'use strict';
   const segments = (step: any): any[] => Array.isArray(step?.outputSegments) ? step.outputSegments.filter((s: any) => s?.id && typeof s.content === 'string' && s.content.trim()) : [];
-  function pending(step: any, text: any): any {
+  function pending(step: any, text: any) {
     const parts = segments(step);
     return parts.length && parts[parts.length - 1].content === text ? '' : (text || '');
   }
@@ -19,7 +19,7 @@ interface Window {
   }
   // A GET started before the SSE acknowledgement must not remove a saved part.
   // Scope the merge to the same session/run/step, and retain server ordering.
-  function merge(previous: any, next: any): any {
+  function merge(previous: any, next: any) {
     if (!previous?.id || previous.id !== next?.id) return next;
     for (const run of next.runs || []) {
       const old = previous.runs?.find((r: any) => r.id === run.id);
@@ -29,7 +29,7 @@ interface Window {
     }
     return next;
   }
-  function render(step: any, {el, t, renderMarkdown}: any): any {
+  function render(step: any, {el, t, renderMarkdown}: any) {
     const parts = segments(step);
     if (!parts.length) return null;
     const group = el('div', 'stage-outputs');

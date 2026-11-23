@@ -6,12 +6,12 @@ interface Window {
 (() => {
  'use strict';
  const outputRate=24000, scheduleAhead=0.35, maxQueuedSamples=90*outputRate;
- function create(hooks: any): any {
+ function create(hooks: any) {
   let enabled=false,microphone=false,phase='off',epoch=0,stream: any=null,context: any=null,node: any=null,source: any=null,gain: any=null,ws: any=null,ping: any=0,muted=false,inputSerial=0;
   let nextTime=0,queuedSamples=0,ignoreAudio=false,responding=false,caption='',responseID='',itemID='';
   const players=new Map<any, any>(),pendingAudio: any[]=[],receivedSamples=new Map<any, any>(),discarded=new Set<any>();
   let metadata: any={},inputRate=16000,phone: any=null,speaker: any=null;
-  const snapshot=(): any=>({enabled,microphone,paused:false,phase,...metadata});
+  const snapshot=()=>({enabled,microphone,paused:false,phase,...metadata});
   const state=(value: string): void=>{phase=value;hooks.state?.(snapshot());};
   const send=(event: any): void=>{if(ws?.readyState===1){if(ws.bufferedAmount>256000){hooks.error('实时音频网络拥堵，通话已结束');stop();return;}ws.send(JSON.stringify(event));}};
   function clearAudio(): void{

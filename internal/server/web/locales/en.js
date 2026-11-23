@@ -178,7 +178,6 @@ window.aideEnglish = {
     '正在读取电话网关状态…': 'Loading phone gateway status…',
     '刷新网关状态': 'Refresh gateway status',
     'SIP 服务器': 'SIP server',
-    'SIP 端口': 'SIP port',
     '话机账号': 'Phone account',
     '助理分机': 'Assistant extension',
     '允许接入的话机': 'Allowed phone address',
@@ -448,16 +447,11 @@ window.aideEnglish = {
     '模型默认音色': 'Model default voice',
     '自动识别': 'Detect automatically',
     '语音接口': 'Voice API',
-    '语音接口（自动识别不准时设置）': 'Voice API (override if automatic detection is incorrect)',
-    '原助理模型无法调用工具，当前使用 {0}。': 'The original assistant model cannot call tools. Currently using {0}.',
-    '默认音色': 'Default voice',
-    '审阅后说“批准本次审批”或“拒绝本次审批”。': 'After reviewing, say “批准本次审批” to approve or “拒绝本次审批” to reject.',
     '原有语音连接与密钥': 'Legacy voice connections and keys',
     '沿用原有通话配置': 'Use legacy call configuration',
     '千问 · 原有语音配置': 'Qwen · legacy voice configuration',
     'OpenAI · 原有语音配置': 'OpenAI · legacy voice configuration',
     '等待保存…': 'Waiting to save…',
-    '正在保存…': 'Saving…',
     '保存失败：{0}': 'Could not save: {0}',
     '使用模型设置中已配置的厂商与密钥，不影响工作台当前模型。': 'Uses the provider and key in model settings without changing the workbench model.',
     '模型回复按所选语音模型与音色朗读。简要概括抓结论和数字，完整朗读不删减。': 'Replies use the selected voice model and voice. Brief mode highlights conclusions and numbers; full mode reads everything.',
@@ -757,7 +751,6 @@ window.aideEnglish = {
     "接管消息语音": "Use handset for message calls",
     "接管助理电话": "Use handset for assistant calls",
     "话机 IPv4 地址": "Handset IPv4 address",
-    // @ts-ignore -- duplicate catalog keys are intentional: last value wins.
     "SIP 端口": "SIP port",
     "SIP 用户": "SIP user",
     "可留空": "Optional",
@@ -3248,7 +3241,6 @@ window.aideEnglish = {
     "恢复未完成，操作记录：": "Restore incomplete. Operation record: ",
     "✓ 历史版本已恢复": "✓ Revision restored",
     "自动保存": "Auto-save",
-    // @ts-ignore -- duplicate catalog keys are intentional: last value wins.
     "正在保存…": "Saving…",
     "保存失败，自动保存已暂停": "Save failed; auto-save paused",
     "重试保存": "Retry save",
@@ -5153,13 +5145,9 @@ window.aideEnglish = {
     '此格式的本地编辑器暂不可用，请更新完整 Aide 安装包。': 'The local editor is unavailable for this format. Update the complete Aide package.',
     '正在启动本地 Office 编辑器…': 'Starting the local Office editor…',
     "重新检索模型": "Refresh model list",
-    // @ts-ignore -- duplicate catalog keys are intentional: last value wins.
     "语音接口（自动识别不准时设置）": "Voice API override",
-    // @ts-ignore -- duplicate catalog keys are intentional: last value wins.
     "原助理模型无法调用工具，当前使用 {0}。": "The previous assistant model does not support tools. Now using {0}.",
-    // @ts-ignore -- duplicate catalog keys are intentional: last value wins.
     "默认音色": "Default voice",
-    // @ts-ignore -- duplicate catalog keys are intentional: last value wins.
     "审阅后说“批准本次审批”或“拒绝本次审批”。": "After reviewing, say “批准本次审批” to approve or “拒绝本次审批” to decline.",
     "仅使用本机语音": "Local voice only",
     "正在检索朗读模型…": "Finding read-aloud models…",

@@ -3,8 +3,8 @@ declare var AideContinuity: any;
 declare var AideStarCosmos: any;
 declare var aideI18n: any;
 declare var LockCluster: LockClusterApi;
-// @ts-ignore -- app and starmap are independent classic-script pages.
-const $=(id: any): any=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
+// @ts-expect-error -- app and starmap are independent classic-script pages.
+const $=(id: any)=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
 const logbook=$('limits'),logbookToggle=$('logbook-toggle');
 const stellarLogbook=window.AideStellarLogbook!.create();
 const knowledgeTimeline=window.AideKnowledgeTimeline!.create({request:(path: any,options: any)=>api(path,options)});
@@ -23,7 +23,7 @@ let liveCursor='',liveTimer=0,liveAbort: any=null,liveEpoch=0,liveFailures=0,liv
 let liveReconcile=false,liveWireNodes=new Map<any, any>(),liveStableScenes=new Map<any, any>(),liveGhosts: any=[];
 let pathAbort: any=null,pathGeneration=0,pathResult: any=null;
 function evidenceConfidenceLabel(value: any){return ({type_binding:uiTextStarmap('快照类型绑定'),name_candidate:uiTextStarmap('静态名称候选'),dom_selector_candidate:uiTextStarmap('DOM选择器候选'),source_binding:uiTextStarmap('词法绑定'),source_template:uiTextStarmap('静态URL模板'),http_route_candidate:uiTextStarmap('方法与路径候选'),source_declaration:uiTextStarmap('源声明'),source_path:uiTextStarmap('路径匹配'),explicit_reference:uiTextStarmap('显式引用')})[value as 'type_binding'|'name_candidate'|'dom_selector_candidate'|'source_binding'|'source_template'|'http_route_candidate'|'source_declaration'|'source_path'|'explicit_reference']||'';}
-function clearEvidencePath(message: any=uiTextStarmap('路径基于当前索引，不等于运行轨迹。'),clearInputs: any=false){
+function clearEvidencePath(message: any=uiTextStarmap('路径基于当前索引，不等于运行轨迹。'),clearInputs=false){
  pathGeneration++;pathAbort?.abort();pathAbort=null;pathResult=null;$('path-run').disabled=false;$('path-steps').replaceChildren();$('path-status').textContent=message;
  if(clearInputs){$('path-from').value='';$('path-to').value='';}redraw();
 }
@@ -73,7 +73,7 @@ function drawEvidencePath(){
 
 
 // Store navigation metadata only: no document excerpts, model answers or tokens.
-// @ts-ignore -- app and starmap own independent recovery timers.
+// @ts-expect-error -- app and starmap own independent recovery timers.
 let recoveryTimer=0,recoveryLoading=false,recoveryScopeLoaded='',pendingRecoveredView: any=null,recoveryInput=0,recoveryWarning=false,recoveryAttempt: any=null;
 function persistSkyView(active: any=()=>!locked){
  clearTimeout(recoveryTimer);
@@ -175,7 +175,7 @@ function progressiveDelay(g: any,duration: any=0){
  const scanning=(g.sources||[]).some((s: any)=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
  return scanning?Math.max(350,Math.min(1500,Math.round(duration*.5))):2000;
 }
-function scheduleLive(delay: any=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||pageLeaving)return;liveTimer=setTimeout(pollLive,document.hidden?Math.max(2000,delay):delay);}
+function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||pageLeaving)return;liveTimer=setTimeout(pollLive,document.hidden?Math.max(2000,delay):delay);}
 function scheduleGraphCache(){
  // Coalesce to the latest graph at a bounded deadline. Debouncing each live
  // update starves persistence while a progressive scan keeps adding nodes.
@@ -318,7 +318,7 @@ function revealPanel(el: any,shown: any){
 function settlePanels(){for(const [el,a]of panelAnimations){a.cancel();if(el.inert)el.hidden=true;}panelAnimations.clear();}
 function openAI(){revealPanel($('ai-body'),true);$('ai-toggle').setAttribute('aria-expanded','true');}
 function say(s: any){$('status').textContent=s;}
-// @ts-ignore -- 独立页面脚本；api 仅在星图页面加载，与 mobile-capture 不同页
+// @ts-expect-error -- 独立页面脚本；api 仅在星图页面加载，与 mobile-capture 不同页
 async function api(p: any,options: any={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok){window.AideCrash?.reportServer(d);throw Error(d.error||uiTextStarmap('读取失败，请回到工作台登录'));}return d;}
 function seeded(s: any){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}h ^= h >>> 16; h = Math.imul(h, 0x7feb352d); h ^= h >>> 15; h = Math.imul(h, 0x846ca68b); h ^= h >>> 16; return (h>>>0)/4294967296;}
 function skyHash(x: any,y: any){let h=Math.imul(x|0,0x45d9f3b)^Math.imul(y|0,0x119de1f3);h=Math.imul(h^(h>>>16),0x45d9f3b);return ((h^(h>>>16))>>>0)/4294967296;}
@@ -455,7 +455,7 @@ function cosmicData(key: any){
  // Precompute inter-region illumination once per cached scene. Only sources
  // behind the dust contribute; the source-to-dust vector and camera direction
  // set the Henyey–Greenstein scattering angle. Scene distances remain proxies.
- const physics=window.AideCosmicPhysics,observerDirection: any={x:0,y:0,z:-1},backgroundSources=[...gas.values()].filter((source: any)=>source.luminosity>0).sort((a: any,b: any)=>b.luminosity-a.luminosity||a.key.localeCompare(b.key)).slice(0,64);
+ const physics=window.AideCosmicPhysics,observerDirection={x:0,y:0,z:-1},backgroundSources=[...gas.values()].filter((source: any)=>source.luminosity>0).sort((a: any,b: any)=>b.luminosity-a.luminosity||a.key.localeCompare(b.key)).slice(0,64);
  for(const zone of gas.values()){let incident=0,angleMoment=0;
   for(const source of backgroundSources){if(source===zone||source.z<=zone.z||!source.luminosity)continue;
    const distance=Math.hypot(zone.x-source.x,zone.y-source.y,zone.z-source.z),flux=physics?.inverseSquareFlux(source.luminosity,distance)||0;
@@ -478,7 +478,7 @@ function syncCosmicNav(){
  $('cosmic-meta').textContent=(units.length?units.join(' · ')+' · ':'')+cosmicScene.members.length+uiTextStarmap(' 个真实节点 · ')+(hasCalls?uiTextStarmap('星色按关联数 · 星等按调用层'):uiTextStarmap('星色与光晕按有效关联数'));
  canvas.setAttribute('aria-label',uiTextStarmap('知识星域。拖动环顾，滚轮靠近；恒星系统近景可点击跃迁门前往已连接星域。双击进入，滚轮远离或 Alt 加左方向键返回。'));
 }
-function enterCosmic(key: any,animateFlight: any=true,keepSelection: any=false){
+function enterCosmic(key: any,animateFlight: any=true,keepSelection=false){
  if(!cosmos||locked)return;const data=cosmicData(key);if(!data)return;if(key===cosmicKey){syncCosmicNav();return;}
  const oldScene=cosmicScene,anchor=cosmicRecords.find((r: any)=>r.group.key===key)?.p,now=performance.now(),inward=oldScene&&cosmicPath(data.scene.group).some((g: any)=>g.key===oldScene.group.key);
  if(animateFlight&&motionEnabled()&&oldScene&&canvas.width){const snapshot: any=document.createElement('canvas');snapshot.width=canvas.width;snapshot.height=canvas.height;snapshot.getContext('2d').drawImage(canvas,0,0);cosmicFlight={canvas:snapshot,start:now,duration:760,direction:inward?1:-1,anchor:{x:anchor?.x??width*.57,y:anchor?.y??height*.5}};}else cosmicFlight=null;
@@ -568,7 +568,7 @@ function drawBlackHoleLensOverlay(hole: any,stars: any,edges: any,fade: any=1){
  }
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
-function drawCosmicGate(gate: any,cx: any,cy: any,zoom: any,fade: any=1,orbitScale: any=1){
+function drawCosmicGate(gate: any,cx: any,cy: any,zoom: any,fade: any=1,orbitScale=1){
  // The indexed endpoint vector sets the gate bearing. The aperture is turned
  // across that route; gates on one bearing use deterministic clearance lanes.
  const bearing=Math.atan2((gate.directionY||0)*height,(gate.directionX||1)*width);
@@ -857,7 +857,7 @@ function draw(now: any=performance.now()){
   ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'18':'30');ctx.lineWidth=.55;ctx.setLineDash(batch.dashed?[3,5]:[]);ctx.beginPath();
   for(const e of batch.edges){if(selected&&(e.from===selected.id||e.to===selected.id)||!edgeInView(e)||birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}ctx.stroke();
  }
- let particles=0,lastDash: any=null;
+ let particles=0,lastDash=null;
  for(const e of renderEdges){if(!edgeInView(e)||birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;const a=e.a,b=e.b,activeEdge=!!selected&&(e.from===selected.id||e.to===selected.id);
   if(renderNodes.length>120&&!activeEdge&&e.hierarchy)continue;
   if(activeEdge||e.directed&&renderNodes.length<120){ctx.strokeStyle=mapPalette.star+(activeEdge?'90':'30');ctx.lineWidth=activeEdge?1.2:.55;
@@ -884,7 +884,7 @@ function nodeOutlineMatch(n: any,terms: any){
  if(n.readState==='pending'||n.readState==='unavailable'||!terms.length)return null;
  return (n.outline?.entries||[]).slice(0,32).filter((e: any)=>Number.isInteger(e.line)&&e.line>0&&typeof e.text==='string').map((e: any)=>({entry:e,hits:terms.filter((t: any)=>e.text.toLowerCase().includes(t)).length})).filter((e: any)=>e.hits).sort((a: any,b: any)=>b.hits-a.hits||a.entry.line-b.entry.line)[0]?.entry||null;
 }
-function nodeResults(announce: any=true){
+function nodeResults(announce=true){
  const q=$('search').value.trim().toLowerCase(),terms=q.split(/\s+/).filter(Boolean);searchQuery=q;
  results=graph.nodes.filter((n: any)=>n.kind!=='directory'&&(!region||region===n.region)).map((n: any)=>({n,score:terms.reduce((score: any,k: any)=>score+(n.id.toLowerCase()===k?100:n.name.toLowerCase().includes(k)?15:n.signature?.toLowerCase().includes(k)?12:n.path?.toLowerCase().includes(k)?10:n.text?.toLowerCase().includes(k)?2:nodeOutlineMatch(n,[k])?4:0),0)})).filter((v: any)=>!q||v.score>0).sort((a: any,b: any)=>b.score-a.score||a.n.id.localeCompare(b.n.id)).map((v: any)=>v.n);
  resultIDs=new Set<any>(results.map((n: any)=>n.id));invalidateView();
@@ -909,7 +909,7 @@ function renderCodeInsight(n: any){
  $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):uiTextStarmap('文件 / 模块视角');
  $('code-open').hidden=!n.path||n.kind==='directory';const spec: any={root:n.root,path:n.path,readOnly:true,origin:n.origin||'',knowledgeWorkspace:graph.workspace};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
  const byID=nodeByID,edges=graph.edges;
- function list(id: any,title: any,items: any){const box=$(id);box.replaceChildren();const h: any=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b: any=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence=evidenceConfidenceLabel(edge?.confidence);if(confidence){const tag: any=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p: any=document.createElement('p');p.textContent=uiTextStarmap('仅显示前24项，可用函数名继续搜索。');box.append(p);}if(!items.length){const p: any=document.createElement('p');p.textContent=uiTextStarmap('当前索引内未发现；不代表项目中不存在。');box.append(p);}}
+ function list(id: any,title: any,items: any){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b: any=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence=evidenceConfidenceLabel(edge?.confidence);if(confidence){const tag=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p: any=document.createElement('p');p.textContent=uiTextStarmap('仅显示前24项，可用函数名继续搜索。');box.append(p);}if(!items.length){const p: any=document.createElement('p');p.textContent=uiTextStarmap('当前索引内未发现；不代表项目中不存在。');box.append(p);}}
  const mapped=(es: any,dir: any)=>es.map((e: any)=>({node:byID.get(e[dir]),edge:e})).filter((x: any)=>x.node);
  const hierarchy=[...mapped(edges.filter((e: any)=>['defines','contains'].includes(e.kind)&&e.to===n.id),'from').map((x: any)=>({...x,label:uiTextStarmap('上级 / ')})),...mapped(edges.filter((e: any)=>['defines','contains'].includes(e.kind)&&e.from===n.id),'to').map((x: any)=>({...x,label:uiTextStarmap('声明 / ')}))];
  list('code-hierarchy',uiTextStarmap('代码层级'),hierarchy);list('code-callers',uiTextStarmap('调用关系 ←'),mapped(edges.filter((e: any)=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.to===n.id),'from'));list('code-callees',uiTextStarmap('调用关系 →'),mapped(edges.filter((e: any)=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.from===n.id),'to'));
@@ -1000,7 +1000,7 @@ function applyLiveUpdate(update: any,initial: any=false){
  }
  const incoming=new Map<any, any>(update.nodes.map((n: any)=>[n.id,n])),removed=new Set<any>(update.removedNodes||[]),oldNodes=new Map<any, any>(graph.nodes.map((n: any)=>[n.id,n]));
  if(update.reset)for(const id of oldNodes.keys())if(!incoming.has(id))removed.add(id);
- const changed: any=[],added: any=[];let layoutChanged=removed.size>0;
+ const changed: any=[],added=[];let layoutChanged=removed.size>0;
  for(const raw of update.nodes){if(liveWireNodes.get(raw.id)===JSON.stringify(raw))continue;changed.push(raw);const old=oldNodes.get(raw.id);if(!old){added.push(raw);layoutChanged=true;}else if(nodeLayoutFields.some((field: any)=>old[field]!==raw[field]))layoutChanged=true;}
  const oldEdges=new Map<any, any>(graph.edges.map((e: any)=>[edgeKey(e),e])),nextEdges=update.reset?new Map<any, any>(update.edges.map((e: any)=>[edgeKey(e),oldEdges.get(edgeKey(e))||e])):new Map<any, any>(oldEdges);
  if(!update.reset){for(const e of update.removedEdges||[])nextEdges.delete(edgeKey(e));for(const e of update.edges)nextEdges.set(edgeKey(e),oldEdges.get(edgeKey(e))||e);}
@@ -1153,7 +1153,7 @@ if(channel){channel.onmessage=(e: any)=>{
   if(locked)return;
   if(e.data.error){say(e.data.error);return;}
   insertionSessions=Array.isArray(e.data.sessions)?e.data.sessions:[];
-  $('insert-sessions').replaceChildren(...insertionSessions.map((s: any)=>{const option: any=document.createElement('option');option.value=s.id;option.label='#'+s.number+' · '+s.title;return option;}));
+  $('insert-sessions').replaceChildren(...insertionSessions.map((s: any)=>{const option=document.createElement('option');option.value=s.id;option.label='#'+s.number+' · '+s.title;return option;}));
   const original=insertionSessions.find((s: any)=>s.id===e.data.originalSession);
   $('insert-target-note').textContent=(original?uiTextStarmap('默认原会话 #')+original.number+'；':'')+uiTextStarmap('支持完整 ID 或 #编号，仅插入草稿。');
  }
@@ -1194,7 +1194,7 @@ function selectDocument(hit: any){
  $('document-locator').textContent=hit.id+' · '+hit.locator+uiTextStarmap(' · 段内字符偏移 ')+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;
  $('document-open').href=pathSourceLink(selected);
 }
-function renderDocumentResults(data: any,id: any='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b: any=document.createElement('button');b.type='button';b.className='result document-result';const title: any=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet: any=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code: any=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>{selectDocument(hit);if(id==='ai-found')openNodePreview(hit.file);};box.append(b);}if(!(data.hits||[]).length){const p: any=document.createElement('p');p.textContent=uiTextStarmap('未检索到匹配原文；请检查关键词、来源范围与提取诊断。');box.append(p);}}
+function renderDocumentResults(data: any,id: any='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b: any=document.createElement('button');b.type='button';b.className='result document-result';const title: any=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code: any=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>{selectDocument(hit);if(id==='ai-found')openNodePreview(hit.file);};box.append(b);}if(!(data.hits||[]).length){const p: any=document.createElement('p');p.textContent=uiTextStarmap('未检索到匹配原文；请检查关键词、来源范围与提取诊断。');box.append(p);}}
 async function searchDocuments(continuing: any=false){
  if(locked||loading)return;
  const mode=retrievalMode(),query=$('search').value,workspace=graph.workspace;

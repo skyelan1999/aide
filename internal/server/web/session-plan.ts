@@ -10,7 +10,7 @@ interface Window {
   // Page-local, project/session-scoped drafts survive parent panel remounts.
   const drafts = new Map<any, any>();
 
-  const node = (tag: any, cls?: any, text?: any): any => {
+  const node = (tag: any, cls?: any, text?: any) => {
     const n = document.createElement(tag);
     if (cls) n.className = cls;
     if (text !== undefined && text !== null) n.textContent = text;
@@ -34,14 +34,14 @@ interface Window {
     if (typeof window.toast === 'function') window.toast(message);
   }
 
-  function sessionOverview(host: any, ctx: any): any {
+  function sessionOverview(host: any, ctx: any) {
     close();
     const gen = ++generation;
-    const { session, t = (key: any): any => key, api, workspaceId, blocked, selectRun, launchTask } = ctx || {};
+    const { session, t = (key: any) => key, api, workspaceId, blocked, selectRun, launchTask } = ctx || {};
     const draftKey = JSON.stringify([workspaceId || "", session?.id || ""]);
     let current = session;
     let hostRef = host;
-    const panelHost = (): any => (hostRef.isConnected ? hostRef : (document.querySelector('.traj-outcome-content') || hostRef));
+    const panelHost = () => (hostRef.isConnected ? hostRef : (document.querySelector('.traj-outcome-content') || hostRef));
     let pollTimer: any = null;
     let polling = false;
     let pendingRefresh = false;
@@ -68,24 +68,24 @@ interface Window {
       }
     }
 
-    function planOf(value: any): any {
+    function planOf(value: any) {
       return Array.isArray(value && value.plan) ? value.plan : [];
     }
 
-    function runsOf(value: any): any {
+    function runsOf(value: any) {
       return Array.isArray(value && value.runs) ? value.runs : [];
     }
 
-    function runFor(item: any): any {
+    function runFor(item: any) {
       if (!item || !item.runId) return null;
       return runsOf(current).find((r: any) => r.id === item.runId) || null;
     }
 
-    function approvalList(run: any): any {
+    function approvalList(run: any) {
       return Array.isArray(run && run.approvalReviews) ? run.approvalReviews : [];
     }
 
-    function itemRow(item: any, depth: any): any {
+    function itemRow(item: any, depth: any) {
       const row = node('div', 'plan-row plan-depth-' + Math.min(depth, 2));
       const head = node('div', 'plan-row-head');
       const status = item.status === 'in_progress' ? 'live' : (STATUS_CLASS[item.status] || 'idle');
@@ -361,7 +361,7 @@ interface Window {
       if (savedDraft?.busy) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = true;
       hostRef.append(node('p', 'outcome-boundary', t('规划只描述意图与进度，不代表文件已落盘；实际结果以工具记录和审批记录为准。导出 JSON 可用于在其它会话中复用这套工作流。')));
 
-      const needsPolling = (value: any): any => runsOf(value).some((run: any) => run && run.status === 'running');
+      const needsPolling = (value: any) => runsOf(value).some((run: any) => run && run.status === 'running');
       function syncPolling(): void {
         if (api && valid() && needsPolling(current)) {
           if (pollTimer === null) pollTimer = setInterval(poll, 2500);
@@ -419,7 +419,7 @@ interface Window {
           current = next;
           syncPolling();
           if (nextRevision !== lastRevision || structural !== previous) {
-            const focused: any = document.activeElement;
+            const focused = document.activeElement;
             if (hostRef.querySelector('form[data-dirty="true"]') || (focused && hostRef.contains(focused) && focused.matches('textarea,input,select'))) { patchStatuses(planOf(next)); return; }
             lastRevision = nextRevision;
             draw();
@@ -435,7 +435,7 @@ interface Window {
       void refresh();
     }
 
-    const signature = (value: any): any => JSON.stringify([
+    const signature = (value: any) => JSON.stringify([
       (value.plan || []).map((i: any) => [i.id, i.title, i.status, i.runId, i.parentId, i.updated]),
       (value.runs || []).map((r: any) => [r.id, r.status, r.approvalState, r.approvalReviews]),
     ]);

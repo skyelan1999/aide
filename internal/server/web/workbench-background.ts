@@ -21,7 +21,7 @@ interface Window {
   let pageActive = true, eyeTimer: any, activeSince: any = null, workRemaining = WORK_INTERVAL, restEnds = 0;
   let notice: any, noticeStatus: any, noticeAction: any, noticeSnooze: any, previousFocus: any;
 
-  function db(): any {
+  function db() {
     if (!database) database = new Promise<any>((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error(uiTextWorkbenchBackground('本地背景存储不可用')));
       const request = indexedDB.open('aide.workbench-background', 1);
@@ -205,7 +205,7 @@ interface Window {
       if (ticket === generation) { message = '本地背景存储不可用'; refreshPanels(); }
     }
   }
-  function renderSettings({t = (text: any): any => text}: any = {}): any {
+  function renderSettings({t = (text: any) => text} = {}) {
     refreshPanels(); // Retire detached settings nodes on every visit, even without a preference change.
     const node = document.createElement('div'); node.className = 'settings-control background-control';
     const label = document.createElement('div'); label.className = 'control-label'; label.textContent = t('工作台背景');

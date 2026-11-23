@@ -6,7 +6,7 @@ declare var AideContinuity: any;
 /* Debounced saves share one queue with the manual button. Never bypass file hashes. */
 (() => {
   'use strict';
-  function bind({editor,button,manual,getContext,save,onSaved,readLatest,onConflict,blocked,viewVisible=()=>true,t,error}: any): any {
+  function bind({editor,button,manual,getContext,save,onSaved,readLatest,onConflict,blocked,viewVisible=()=>true,t,error}: any) {
     let activeKey='', generation=0, baseline=editor.value, timer=0, inFlight: any=null, suspended=false,historyPending=false, composing=false,recoveryTimer=0,recoveryBanner: any=null,activeDialog: any=null,viewChanges=0,emergencyDraftTimer=0,emergencyViewTimer=0,emergencyDraftFailure='',emergencyViewFailure='';
     let baselineHash: any,baselineConfirmed=false,savePendingVerification=false,saveAcknowledged=false;
     const label=document.createElement('span'); label.textContent=t('自动保存');
@@ -16,12 +16,12 @@ declare var AideContinuity: any;
     button.replaceChildren(label,rail); button.after(status);status.after(retry);button.setAttribute('role','switch');
     let retryMode='',retryContext: any=null,retryDraft: any=null;
     const enabled=()=>window.aideUI?.get('editorAutoSave')===true;
-    const identity=(c: any): any=>JSON.stringify([c?.root,c?.source,c?.path,c?.wsId]);
-    const scope=(c: any): any=>c?.recoveryScope||c?.wsId||'';
+    const identity=(c: any)=>JSON.stringify([c?.root,c?.source,c?.path,c?.wsId]);
+    const scope=(c: any)=>c?.recoveryScope||c?.wsId||'';
     let lastVisibleView: any=null;
-    const position=(): any=>({start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
+    const position=()=>({start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
     function rememberView(c=getContext()): void {if(viewVisible())lastVisibleView={key:identity(c),hash:c.hash,...position()};}
-    function draftPosition(c: any): any {
+    function draftPosition(c: any) {
       if(viewVisible()){rememberView(c);return position();}
       const v=lastVisibleView;
       return v&&v.key===identity(c)&&v.hash===c.hash?{start:v.start,end:v.end,scrollTop:v.scrollTop,scrollLeft:v.scrollLeft}:position();

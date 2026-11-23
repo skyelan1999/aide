@@ -26,7 +26,7 @@ interface Window {
 
  const nodeKeys=['id','name','kind','region','path','root','source','sourceName','sourceType','origin','format','session','number','text','readState','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
  const edgeKeys=['from','to','kind','line','column','evidence','confidence'];
- const wire=(value: any,keys: string[]): any=>Object.fromEntries(keys.filter(k=>value[k]!==undefined).map(k=>[k,value[k]]));
+ const wire=(value: any,keys: string[])=>Object.fromEntries(keys.filter(k=>value[k]!==undefined).map(k=>[k,value[k]]));
  async function write(mode: any,identity: any,graph: any,revision: any): Promise<any>{
   if(!revision||!Array.isArray(graph?.nodes)||!Array.isArray(graph?.edges))return false;
   // Rendered nodes/edges contain cyclic cluster/projected references. Persist

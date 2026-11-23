@@ -1,5 +1,5 @@
-// @ts-ignore -- classic page scripts expose their own element helper.
-function el(tag: any, cls?: any, text?: any): any { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+// @ts-expect-error -- classic page scripts expose their own element helper.
+function el(tag: any, cls?: any, text?: any) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 const SIDEBAR_WIDTHS_KEY = 'aide-sidebar-widths-v1';
 const sidebarWidths: any = { left: null, right: null };
 function defaultSidebarWidth(side: any) {
@@ -26,7 +26,7 @@ function updateSidebarHandle(handle: any, side: any) {
 function saveSidebarWidths() {
   try { localStorage.setItem(SIDEBAR_WIDTHS_KEY, JSON.stringify({ left: currentSidebarWidth('left'), right: currentSidebarWidth('right') })); } catch (_: any) {}
 }
-function setSidebarWidth(side: any, value: any, persist: any = true) {
+function setSidebarWidth(side: any, value: any, persist = true) {
   const bounds = sidebarWidthBounds(side);
   sidebarWidths[side] = Math.round(Math.min(bounds.max, Math.max(bounds.min, value)));
   document.documentElement.style.setProperty(side === 'left' ? '--aide-left-sidebar-width' : '--aide-right-sidebar-width', `${sidebarWidths[side]}px`);
@@ -42,7 +42,7 @@ function resetSidebarWidths() {
   document.querySelectorAll('.sidebar-resizer').forEach((handle: any) => updateSidebarHandle(handle, handle.dataset.side));
 }
 function initSidebarResizers() {
-  let stored: any = null;
+  let stored = null;
   try { stored = JSON.parse(localStorage.getItem(SIDEBAR_WIDTHS_KEY) || 'null'); } catch (_: any) {}
   for (const side of ['left', 'right']) {
     const handle = el('div', `sidebar-resizer sidebar-resizer-${side}`);
@@ -88,7 +88,7 @@ function initSidebarResizers() {
   updateVisibility();
 }
 initSidebarResizers();
-// @ts-ignore -- classic page scripts expose their own toast helper.
+// @ts-expect-error -- classic page scripts expose their own toast helper.
 function toast(text: any) {
   const host = document.querySelector('dialog[open]') || document.body;
   let notice = $('toast');

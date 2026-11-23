@@ -4,11 +4,11 @@ interface Window {
 'use strict';
 // Requests own their UI lifetime; background indexing owns a different lifetime.
 window.AideStarmapAssist={
- create({busy,scope}: any): any{
+ create({busy,scope}: any){
   let active: any=null,shown: any=null;
   const describe=(job: any): string=>job.label+(job.updated?uiTextStarmapAssist(' · 索引已有更新，回答依据本次读取的资料，可重新探索核对。'):'');
   return {
-   start(label: string): any{
+   start(label: string){
     active?.controller.abort();
     const job={controller:new AbortController(),label,updated:false};
     active=shown=job;busy(true);scope(describe(job));
@@ -21,8 +21,8 @@ window.AideStarmapAssist={
    updated(): void{if(shown){shown.updated=true;scope(describe(shown));}}
   };
  },
- selection({find,docs,selected,results,question,search}: any): any{
-  const nodes: any=find?[]:(selected?[selected]:docs?[]:results).filter((n: any)=>n.kind!=='directory').slice(0,8);
+ selection({find,docs,selected,results,question,search}: any){
+  const nodes=find?[]:(selected?[selected]:docs?[]:results).filter((n: any)=>n.kind!=='directory').slice(0,8);
   let query=(question||'').trim()||(search||'').trim();
   if(!query&&!find&&nodes.length)query=uiTextStarmapAssist('请解释这些资料如何协作，列出关键结论、关联和证据缺口，并引用编号。');
   if(!query)throw Error(uiTextStarmapAssist('请先输入要探索的问题。'));
@@ -41,7 +41,7 @@ window.AideStarmapAssist={
     else parent.append(doc.createTextNode(part));
    }
   };
-  let paragraph: any=null,list: any=null,code: any=null;
+  let paragraph=null,list=null,code=null;
   for(const line of String(text||'').split('\n')){
    if(/^\s*```/.test(line)){paragraph=list=null;if(code){code=null;}else{const pre=doc.createElement('pre');code=doc.createElement('code');pre.append(code);target.append(pre);}continue;}
    if(code){code.append(doc.createTextNode(line+'\n'));continue;}

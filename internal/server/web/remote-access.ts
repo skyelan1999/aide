@@ -1,7 +1,7 @@
 interface Window {
   AideLANAccess?: { render: (cfg: any, onUpdate: any) => any; activity: () => void; update: (wrap: any, cfg: any) => void };
 }
-// @ts-ignore -- 独立页面脚本的全局 api，与星图页面函数同名但不同页
+// @ts-expect-error -- 独立页面脚本的全局 api，与星图页面函数同名但不同页
 declare var state: any, api: any, lockScreen: any, el: any, t: any, action: any, passwordPrompt: any, refreshConfig: any, resetIdleTimer: any, toast: any;
 'use strict';
 // Account setting and user-activity lease. No credential is placed in a QR URL.
@@ -14,7 +14,7 @@ window.AideLANAccess = (() => {
   if(Date.now()-lastActivity<gap)return;lastActivity=Date.now();
   api('/remote-access/activity',{method:'POST',body:'{}'}).catch(()=>{});
  }
- function render(cfg: any,onUpdate: any): any{
+ function render(cfg: any,onUpdate: any){
   const box=el('section','lan-access');box.append(el('h3','',t('局域网访问授权')));
   if(cfg.remoteSession){box.append(el('p','muted',t('请在本机管理访问授权；当前设备使用密码会话登录。')));const logout=el('button','quiet',t('退出当前设备'));logout.type='button';logout.onclick=action(async()=>{await api('/remote-access/logout',{method:'POST',body:'{}'});localStorage.removeItem('aide-token');location.replace('/lan-login.html');});box.append(logout);return box;}
   const row=el('label','checkbox'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!cfg.remoteAccessEnabled;toggle.setAttribute('aria-label',t('允许局域网设备访问'));toggle.disabled=!cfg.hasPassword;row.append(toggle,document.createTextNode(t('允许局域网设备访问')));box.append(row);

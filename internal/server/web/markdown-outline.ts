@@ -129,7 +129,7 @@ interface Window {
     window.AideMarkdownReview?.dispose(host);
     host.style.removeProperty('--md-reader-toolbar-height');
   }
-  function mount(host: HTMLElement, labels: MdReaderLabels = {}, review: any = null): void {
+  function mount(host: HTMLElement, labels: MdReaderLabels = {}, review = null): void {
     dispose(host);
     let reader = host.querySelector<HTMLElement>(':scope > .md-reader');
     let article = reader?.querySelector<HTMLElement>(':scope > .md-reader-content') as HTMLElement;

@@ -230,7 +230,6 @@
     catch (_) { } }
     // A newly opened tab can inherit sessionStorage from its opener. Only a
     // reload/history return provides evidence of this same tab returning.
-    // @ts-expect-error PerformanceEntry 基类无 type，原代码按 navigation entry 动态读取
     const navigationType = window.performance?.getEntriesByType?.('navigation')?.[0]?.type;
     try {
         const previous = JSON.parse(sessionStorage.getItem(TAB) || 'null');

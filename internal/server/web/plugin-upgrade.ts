@@ -51,7 +51,7 @@ interface Window {
   };
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();input.focus();
  }
- function button(plugin: any,services: any): any{
+ function button(plugin: any,services: any){
   const busy=busyPlugins.has(plugin.id),b=services.el('button','plugin-upgrade-button',services.t(busy?'升级中…':'升级'));b.type='button';b.dataset.pluginUpgrade=plugin.id;b.disabled=busy;
   b.title=plugin.updateURL?services.t('从已配置来源在线升级'):services.t('设置来源并在线升级');
   b.onclick=()=>{if(!plugin.updateURL){openSource(plugin,services);return;}upgrade(plugin,services).catch(()=>{});};return b;

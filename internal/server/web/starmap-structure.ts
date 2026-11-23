@@ -3,11 +3,11 @@ interface Window {
 }
 'use strict';
 // Visual layers describe indexed static relationships, never runtime stack depth.
-window.AideStarStructure = Object.freeze({build(nodes: any, edges: any): any {
+window.AideStarStructure = Object.freeze({build(nodes: any, edges: any) {
  const byID=new Map(nodes.map((n: any)=>[n.id,n])),graphs=new Map<any, any>(),globalViews=new Map<any, any>(),localViews=new Map<any, any>();
  const kinds: Record<string, Set<string>>={calls:new Set(['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler']),imports:new Set(['imports']),hierarchy:new Set(['contains','defines'])};
- const resolve=(mode: any): any=>mode!=='all'&&kinds[mode]?mode:edges.some((e: any)=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind))?'calls':edges.some((e: any)=>e.kind==='imports')?'imports':'hierarchy';
- function adjacency(mode: any): any{
+ const resolve=(mode: any)=>mode!=='all'&&kinds[mode]?mode:edges.some((e: any)=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind))?'calls':edges.some((e: any)=>e.kind==='imports')?'imports':'hierarchy';
+ function adjacency(mode: any){
   if(graphs.has(mode))return graphs.get(mode);
   const out=new Map<any, any>(),back=new Map<any, any>();
   for(const e of edges){if(!kinds[mode].has(e.kind)||!byID.has(e.from)||!byID.has(e.to))continue;
@@ -17,7 +17,7 @@ window.AideStarStructure = Object.freeze({build(nodes: any, edges: any): any {
   }
   const data={out,back};graphs.set(mode,data);return data;
  }
- function entry(mode='all'): any{
+ function entry(mode='all'){
   mode=resolve(mode);if(globalViews.has(mode))return globalViews.get(mode);
   const {out,back}=adjacency(mode),seen=new Set<any>(),order: any[]=[];
   // Iterative Kosaraju keeps deeply nested projects off the JavaScript call stack.
@@ -38,7 +38,7 @@ window.AideStarStructure = Object.freeze({build(nodes: any, edges: any): any {
   const levels=new Map<any, any>();groups.forEach((group,index)=>{for(const id of group)levels.set(id,depth[index]);});
   const view={levels,rootIDs,cycles,incoming:new Set<any>(),maxDepth:depth.length?Math.max(...depth):0,mode,selectedID:null};globalViews.set(mode,view);return view;
  }
- function describe(selectedID: any,mode='all'): any{
+ function describe(selectedID: any,mode='all'){
   mode=resolve(mode);if(!selectedID)return entry(mode);
   const key=mode+'|'+selectedID;if(localViews.has(key))return localViews.get(key);
   const {out,back}=adjacency(mode),global=entry(mode),levels=new Map<any, any>([[selectedID,0]]),pending=[selectedID];let maxDepth=0;

@@ -44,11 +44,11 @@ interface Window {
   window.LockCluster?.on('effective',(value: boolean)=>{if(value){epoch++;activeDialog?.close();}});
   const query=(spec: any): URLSearchParams=>{const q=new URLSearchParams({path:spec.path});if(spec.source)q.set('source',spec.source);else if(spec.wsId)q.set('workspaceId',spec.wsId);return q;};
   function refresh(): void{
-   const request=++epoch;activeDialog?.close();const spec: any={...getContext()},markdown=/\.(md|markdown)$/i.test(spec.path||'');button.hidden=!markdown;
+   const request=++epoch;activeDialog?.close();const spec={...getContext()},markdown=/\.(md|markdown)$/i.test(spec.path||'');button.hidden=!markdown;
    if(!markdown&&spec.path&&window.AideGitHistory&&!blocked())window.AideGitHistory.detect({spec,api}).then((data: any)=>{if(request===epoch&&!blocked()&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))button.hidden=!data.available;}).catch(()=>{});
   }
   button.onclick=async()=>{
-   const spec: any={...getContext()},currentText=editor.value;if(!spec.path||blocked())return;activeDialog?.close();const request=++epoch;button.disabled=true;
+   const spec={...getContext()},currentText=editor.value;if(!spec.path||blocked())return;activeDialog?.close();const request=++epoch;button.disabled=true;
    try {
     const markdown=/\.(md|markdown)$/i.test(spec.path);const data=markdown?await api('/file/history?'+query(spec)):{enabled:false,versions:[]};if(blocked()||request!==epoch||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
     const dialog=document.createElement('dialog');activeDialog=dialog;dialog.className='md-history-dialog';

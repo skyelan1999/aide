@@ -33,73 +33,11 @@ declare const THREE: any;
     for(const node of candidates)node.raycast(ray,nearest);
     return {limited:false,hit,triangles};
   }
-  // @ts-ignore -- legacy duplicate helper variant retained verbatim.
   function textureSize(width: any,height: any): any {
     if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1)throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));
     if(width>LIMITS.textureEdge||height>LIMITS.textureEdge||width*height>LIMITS.texturePixels)throw Error(uiTextUrdfPreview('纹理像素超出预览预算'));
     return {width,height,pixels:width*height};
   }
-  // @ts-ignore -- legacy duplicate helper variant retained verbatim.
-  function textureDimensions(data: any,extension: any): any {
-    const invalid=(): never=>{throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));};
-    const animated=(): never=>{throw Error(uiTextUrdfPreview('不预览动画纹理'));};
-    if(!data||!Number.isSafeInteger(data.byteLength)||data.byteLength>LIMITS.texture)invalid();
-    const bytes=data instanceof Uint8Array?data:new Uint8Array(data),view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),length=bytes.length;
-    const ascii=(offset: any,count: any): string=>String.fromCharCode(...bytes.subarray(offset,offset+count));
-    const bounds=(offset: any,count: any): void=>{if(offset<0||offset+count>length)invalid();};
-    if(extension==='png'){
-      bounds(0,33);if(ascii(0,8)!=='\x89PNG\r\n\x1a\n'||view.getUint32(8)!==13||ascii(12,4)!=='IHDR')invalid();
-      const size=textureSize(view.getUint32(16),view.getUint32(20));let cursor=8,chunks=0;
-      while(cursor<length){bounds(cursor,12);if(++chunks>65536)invalid();const count=view.getUint32(cursor),type=ascii(cursor+4,4);bounds(cursor,count+12);
-        if(type==='acTL')animated();if(type==='IHDR'&&cursor!==8)invalid();cursor+=count+12;if(type==='IEND'){if(count!==0||cursor!==length)invalid();return size;}}
-      invalid();
-    }
-    if(extension==='jpg'||extension==='jpeg'){
-      bounds(0,2);if(bytes[0]!==255||bytes[1]!==216)invalid();let cursor=2,segments=0,size: any=null;
-      while(cursor<length){if(++segments>65536)invalid();if(bytes[cursor++]!==255)invalid();while(bytes[cursor]===255)cursor++;bounds(cursor,1);const marker=bytes[cursor++];
-        if(marker===217)invalid();if(marker===1||marker>=208&&marker<=215)continue;
-        bounds(cursor,2);const count=view.getUint16(cursor);if(count<2)invalid();bounds(cursor,count);
-        if(marker===218){if(!size)invalid();return size;}
-        if([192,193,194].includes(marker)){const components=bytes[cursor+7];if(size||bytes[cursor+2]!==8||![1,3,4].includes(components)||count!==8+components*3)invalid();for(let i=0;i<components;i++){const sampling=bytes[cursor+9+i*3];if((sampling>>4)<1||(sampling>>4)>4||(sampling&15)<1||(sampling&15)>4)invalid();}size=textureSize(view.getUint16(cursor+5),view.getUint16(cursor+3));}
-        cursor+=count;}
-      invalid();
-    }
-    if(extension==='gif'){
-      bounds(0,13);if(!['GIF87a','GIF89a'].includes(ascii(0,6)))invalid();const size=textureSize(view.getUint16(6,true),view.getUint16(8,true));let cursor=13,frames=0,blocks=0;
-      if(bytes[10]&128){const count=3*2**((bytes[10]&7)+1);bounds(cursor,count);cursor+=count;}
-      const skipBlocks=(): void=>{for(;;){bounds(cursor,1);if(++blocks>65536)invalid();const count=bytes[cursor++];if(!count)return;bounds(cursor,count);cursor+=count;}};
-      while(cursor<length){const marker=bytes[cursor++];if(marker===59){if(frames!==1||cursor!==length)invalid();return size;}
-        if(marker===33){bounds(cursor,1);cursor++;skipBlocks();continue;}
-        if(marker!==44)invalid();if(++frames>1)animated();bounds(cursor,9);const left=view.getUint16(cursor,true),top=view.getUint16(cursor+2,true),width=view.getUint16(cursor+4,true),height=view.getUint16(cursor+6,true),flags=bytes[cursor+8];textureSize(width,height);if(left+width>size.width||top+height>size.height)invalid();cursor+=9;
-        if(flags&128){const count=3*2**((flags&7)+1);bounds(cursor,count);cursor+=count;}bounds(cursor,1);cursor++;skipBlocks();}
-      invalid();
-    }
-    if(extension==='webp'){
-      bounds(0,12);if(ascii(0,4)!=='RIFF'||ascii(8,4)!=='WEBP'||view.getUint32(4,true)+8!==length)invalid();
-      let cursor=12,canvas: any=null,frame: any=null,chunks=0;
-      const u24=(offset: any): number=>bytes[offset]+bytes[offset+1]*256+bytes[offset+2]*65536;
-      while(cursor<length){bounds(cursor,8);if(++chunks>65536)invalid();const type=ascii(cursor,4),count=view.getUint32(cursor+4,true),start=cursor+8;bounds(start,count+(count&1));
-        if(type==='ANIM'||type==='ANMF')animated();
-        if(type==='VP8X'){if(canvas||count<10)invalid();if(bytes[start]&2)animated();canvas=textureSize(u24(start+4)+1,u24(start+7)+1);}
-        if(type==='VP8 '){if(frame||count<10||(bytes[start]&1)||ascii(start+3,3)!=='\x9d\x01\x2a'||(view.getUint16(start+6,true)&49152)||(view.getUint16(start+8,true)&49152))invalid();frame=textureSize(view.getUint16(start+6,true),view.getUint16(start+8,true));}
-        if(type==='VP8L'){if(frame||count<5||bytes[start]!==47)invalid();const bits=view.getUint32(start+1,true);if(bits>>>29)invalid();frame=textureSize((bits&16383)+1,(bits>>>14&16383)+1);}
-        cursor=start+count+(count&1);}
-      if(!frame||canvas&&(canvas.width!==frame.width||canvas.height!==frame.height))invalid();return canvas||frame;
-    }
-    invalid();
-  }
-  // @ts-ignore -- legacy duplicate helper variant retained verbatim.
-  function createTextureBudget(): any {
-    let used=0;
-    return Object.freeze({reserve(info: any){const size=textureSize(info.width,info.height);if(used+size.pixels>LIMITS.textureTotalPixels)throw Error(uiTextUrdfPreview('纹理累计像素超出预览预算'));used+=size.pixels;},get usedPixels(){return used;}});
-  }
-  // @ts-ignore -- legacy file intentionally keeps a second variant of this helper.
-  function textureSize(width: any,height: any): any {
-    if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1)throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));
-    if(width>LIMITS.textureEdge||height>LIMITS.textureEdge||width*height>LIMITS.texturePixels)throw Error(uiTextUrdfPreview('纹理像素超出预览预算'));
-    return {width,height,pixels:width*height};
-  }
-  // @ts-ignore -- legacy file intentionally keeps a second variant of this helper.
   function textureDimensions(data: any,extension: any): any {
     const invalid=(): never=>{throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));};
     const animated=(): never=>{throw Error(uiTextUrdfPreview('不预览动画纹理'));};
@@ -147,7 +85,6 @@ declare const THREE: any;
     }
     invalid();
   }
-  // @ts-ignore -- legacy file intentionally keeps a second variant of this helper.
   function createTextureBudget(): any {
     let used=0;
     return Object.freeze({reserve(info: any){const size=textureSize(info.width,info.height);if(used+size.pixels>LIMITS.textureTotalPixels)throw Error(uiTextUrdfPreview('纹理累计像素超出预览预算'));used+=size.pixels;},get usedPixels(){return used;}});
@@ -178,7 +115,7 @@ declare const THREE: any;
     if(robot?.localName!=='robot')throw Error(uiTextUrdfPreview('文件必须包含 robot 根节点'));
     const links=direct(robot,'link'),joints=direct(robot,'joint');
     if(!links.length||links.length>LIMITS.links||joints.length>LIMITS.links)throw Error(uiTextUrdfPreview('机器人连杆数量为空或超出预览预算'));
-    const named=(items: any): any=>{const map=new Map<any,any>();for(const item of items){const name=item.getAttribute('name');if(!name||name in Object.prototype||/["\\]/.test(name)||map.has(name))throw Error(uiTextUrdfPreview('连杆或关节名称缺失／重复'));map.set(name,item);}return map;};
+    const named=(items: any)=>{const map=new Map<any,any>();for(const item of items){const name=item.getAttribute('name');if(!name||name in Object.prototype||/["\\]/.test(name)||map.has(name))throw Error(uiTextUrdfPreview('连杆或关节名称缺失／重复'));map.set(name,item);}return map;};
     named(direct(robot,'material'));
     const geometryNodes=[...robot.getElementsByTagName('geometry')];let primitiveBudget=0,meshCount=0;
     if(geometryNodes.length>LIMITS.geometries)throw Error(uiTextUrdfPreview('几何元素数量超出预览预算'));
@@ -215,7 +152,7 @@ declare const THREE: any;
   }
   function applyJointValue(joint: any,value: any): void {
     if(!Number.isFinite(value))throw Error(uiTextUrdfPreview('关节值必须为有限数字'));
-    const clamp=(item: any,v: any): any=>['revolute','prismatic'].includes(item.jointType)?Math.max(item.limit.lower,Math.min(item.limit.upper,v)):v;
+    const clamp=(item: any,v: any)=>['revolute','prismatic'].includes(item.jointType)?Math.max(item.limit.lower,Math.min(item.limit.upper,v)):v;
     joint.setJointValue(clamp(joint,value));
     // The compatible upstream loader propagates mimic before its own limit clamp.
     // Reconcile descendants from the actual clamped parent position.
@@ -287,7 +224,7 @@ declare const THREE: any;
       if(sceneLights>LIMITS.colladaLights)throw Error(uiTextUrdfPreview('DAE 场景灯光数量超出预览预算'));
     }
     let total=0;
-    const numbers=(text: any): any=>{const result: any[]=[];for(const match of String(text||'').matchAll(/\S+/g)){const n=Number(match[0]);if(!Number.isSafeInteger(n)||n<0)throw Error(uiTextUrdfPreview('DAE 索引无效'));result.push(n);if(result.length>LIMITS.triangles*3)throw Error(uiTextUrdfPreview('DAE 索引超出预览预算'));}return result;};
+    const numbers=(text: any)=>{const result: any[]=[];for(const match of String(text||'').matchAll(/\S+/g)){const n=Number(match[0]);if(!Number.isSafeInteger(n)||n<0)throw Error(uiTextUrdfPreview('DAE 索引无效'));result.push(n);if(result.length>LIMITS.triangles*3)throw Error(uiTextUrdfPreview('DAE 索引超出预览预算'));}return result;};
     for(const tag of ['triangles','polylist'])for(const primitive of doc.getElementsByTagName(tag)){
       const count=Number(primitive.getAttribute('count'));if(!Number.isSafeInteger(count)||count<0||count>LIMITS.triangles)throw Error(uiTextUrdfPreview('DAE 面数超出预览预算'));
       const offsets=direct(primitive,'input').map((n: any)=>Number(n.getAttribute('offset')||0));if(!offsets.length||offsets.some((v: any)=>!Number.isSafeInteger(v)||v<0||v>16))throw Error(uiTextUrdfPreview('DAE 索引步长无效'));const stride=Math.max(...offsets)+1;
@@ -327,7 +264,7 @@ declare const THREE: any;
     let disposed=false,renderer: any=null,controls: any=null,observer: any=null,lockObserver: any=null,contextLost: any=null,frame=0,robot: any=null,scene: any=null,camera: any=null,triangles=0,bytesUsed=0,finished=0,expected=0;
     const current=(): boolean=>!disposed&&options.isCurrent?.()!==false;
     const textureBudget=createTextureBudget(),textureDimensionsByURL=new Map<any,any>(),textureBudgetWarned=new Set<any>();
-    const abort=new AbortController(),blobURLs=new Set<any>(),objects=new Set<any>(),importedLights=new Set<any>(),geometries=new Set<any>(),materials=new Set<any>(),textures=new Set<any>(),cache=new Map<any,any>(),textureCache=new Map<any,any>(),packageRoots: any=Object.create(null),pending: any[]=[],jobs: any[]=[];let active=0;
+    const abort=new AbortController(),blobURLs=new Set<any>(),objects=new Set<any>(),importedLights=new Set<any>(),geometries=new Set<any>(),materials=new Set<any>(),textures=new Set<any>(),cache=new Map<any,any>(),textureCache=new Map<any,any>(),packageRoots=Object.create(null),pending: any[]=[],jobs: any[]=[];let active=0;
     const viewer=el('section','urdf-viewer'),toolbar=el('div','urdf-toolbar'),meta=el('span','urdf-meta',t('正在读取 URDF…')),body=el('div','urdf-body'),canvas=el('div','urdf-canvas'),side=el('aside','urdf-side'),jointHost=el('div','urdf-joints'),linkHost=el('details','urdf-links'),warnings=el('details','urdf-warnings'),warningTitle=el('summary','',t('资源问题')),warningList=el('ul'),packageBox=el('details','urdf-packages'),packageFields=el('div');
     meta.setAttribute('role','status');meta.setAttribute('aria-live','polite');canvas.setAttribute('aria-label',t('机器人三维预览'));
     const button=(text: any,fn: any): any=>{const b=el('button','stl-ctrl',t(text));b.type='button';b.onclick=fn;return b;};
@@ -346,7 +283,7 @@ declare const THREE: any;
     side.hidden=true;inspectorButton.setAttribute('aria-expanded','false');
     const poseButton=toggle('标注',(value: any)=>{showAnnotations=value;calloutPage=0;if(value&&!selectedNode&&poseNodes.length){selectedNode=poseNodes[Number(poseSelect.value)||0];refreshHighlight();}updatePose();});poseSelect.onchange=(): void=>selectNode(poseNodes[Number(poseSelect.value)],true);poseFrame.onchange=(): void=>draw();
     const nameLayer=el('div','urdf-name-layer'),nameNotice=el('span','urdf-name-notice'),calloutNav=el('div','urdf-callout-nav'),pageStatus=el('span');nameLayer.hidden=true;nameNotice.hidden=true;
-    const svgNS='http://www.w3.org/2000/svg',leaders: any=document.createElementNS(svgNS,'svg');leaders.setAttribute('class','urdf-callout-lines');leaders.setAttribute('aria-hidden','true');nameLayer.append(leaders,calloutNav);canvas.append(nameLayer);
+    const svgNS='http://www.w3.org/2000/svg',leaders=document.createElementNS(svgNS,'svg');leaders.setAttribute('class','urdf-callout-lines');leaders.setAttribute('aria-hidden','true');nameLayer.append(leaders,calloutNav);canvas.append(nameLayer);
     const previous=button('上一组标注',()=>{calloutPage--;draw();}),next=button('下一组标注',()=>{calloutPage++;draw();});previous.setAttribute('aria-label',t('上一组标注'));next.setAttribute('aria-label',t('下一组标注'));previous.title=t('上一组标注');next.title=t('下一组标注');previous.textContent='‹';next.textContent='›';calloutNav.append(previous,pageStatus,next);
     const download=el('a','stl-download',t('下载 URDF'));download.href=fileRawUrl(filePath,root,source,viewerSpec);download.download=filePath.split('/').pop();
     const displayTools=el('details','urdf-display-tools'),displaySummary=el('summary','',t('显示')),displayMenu=el('div','urdf-display-menu');displayMenu.append(collision,axisButton,wire,zero,download);displayTools.append(displaySummary,displayMenu);viewer.addEventListener('keydown',(event: any)=>{if(event.key==='Escape'&&displayTools.open){displayTools.open=false;displaySummary.focus();event.preventDefault();event.stopPropagation();}});
@@ -450,7 +387,7 @@ declare const THREE: any;
       if(!side.hidden&&!selectedNode&&poseNodes.length){selectedNode=poseNodes[0];refreshHighlight();}
       syncJointValues();if(!jointInputs.length)jointHost.append(el('p','urdf-help',t('此模型没有可调节关节')));
       for(const pkg of info.packages){const label=el('label','urdf-package-field'),input=el('input');input.placeholder=t('自动查找');input.value=Object.prototype.hasOwnProperty.call(options.packageRoots||{},pkg)?(options.packageRoots[pkg]||'.'):'';input.setAttribute('aria-label',pkg);label.append(el('span','',pkg),input);packageFields.append(label);}
-      const applyPackages=button('应用资源包路径',(): void=>{try{const next: any=Object.create(null);for(const input of packageFields.querySelectorAll('input')){if(input.value.trim())next[input.getAttribute('aria-label')]=normalizePath(input.value.trim());}options={...options,packageRoots:next};setup(options);}catch(error){warn(t('ROS 资源包路径'),error);}});packageFields.append(applyPackages);packageBox.hidden=!info.packages.length;
+      const applyPackages=button('应用资源包路径',(): void=>{try{const next=Object.create(null);for(const input of packageFields.querySelectorAll('input')){if(input.value.trim())next[input.getAttribute('aria-label')]=normalizePath(input.value.trim());}options={...options,packageRoots:next};setup(options);}catch(error){warn(t('ROS 资源包路径'),error);}});packageFields.append(applyPackages);packageBox.hidden=!info.packages.length;
       const w=Math.max(canvas.clientWidth,1),h=Math.max(canvas.clientHeight,1);renderer.setSize(w,h);camera.aspect=w/h;fit();meta.textContent=info.links+' '+t('连杆')+' · '+info.joints+' '+t('关节')+' · '+t('网格加载')+' '+finished+'/'+expected;
       await Promise.all(jobs);cache.clear();textureCache.clear();manifestCache.clear();materialInstances.clear();if(disposed)return;robot.traverse((node: any)=>{for(const m of [].concat(node.material||[]) as any[])materials.add(m);});fit();cancel.hidden=true;meta.textContent=info.links+' '+t('连杆')+' · '+info.joints+' '+t('关节')+' · '+Math.round(triangles)+' '+t('三角面')+(warningList.children.length?' · '+t('部分资源未加载'):'');
     }catch(error){if(!disposed)fail(error);}

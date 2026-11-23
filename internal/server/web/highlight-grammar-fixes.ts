@@ -5,12 +5,12 @@ declare var module: any;
   const engine = typeof hljs !== 'undefined' ? hljs : root.hljs;
   if (engine) install(engine);
   else if (typeof module === 'object' && module.exports) module.exports = install;
-})(typeof globalThis !== 'undefined' ? globalThis : window, function install(engine: any): any {
+})(typeof globalThis !== 'undefined' ? globalThis : window, function install(engine: any) {
   'use strict';
   if (engine.__aideGrammarRepairs) return;
   Object.defineProperty(engine, '__aideGrammarRepairs', {value: true});
   const resets = new Map<any, any>();
-  const scope = (mode: any): any => mode.scope || mode.className;
+  const scope = (mode: any) => mode.scope || mode.className;
   const source = (regex: any): string => typeof regex === 'string' ? regex : regex?.source || '';
   function records(grammar: any): any[] {
     const seen = new Set<any>(), result: any[] = [];
@@ -83,7 +83,7 @@ declare var module: any;
     const interpolation: any = {className: 'subst', begin: /\\(#{4,})\(/, end: /\)/,
       keywords: grammar.keywords, contains: [],
       'on:begin': (match: any, response: any): void => { if (match[1].length !== stack[stack.length - 1]) response.ignoreMatch(); }};
-    const raw = (beginRegex: any, endRegex: any, scopeName: any): any => ({className: scopeName,
+    const raw = (beginRegex: any, endRegex: any, scopeName: any) => ({className: scopeName,
       begin: beginRegex, end: endRegex, contains: [interpolation],
       'on:begin': begin, 'on:end': end});
     const triple = raw(/(#{4,})"""/, /"""(#{4,})/, 'string');
@@ -137,7 +137,7 @@ declare var module: any;
       };
     }
   }
-  function patch(name: any, grammar: any): any {
+  function patch(name: any, grammar: any) {
     if (!new Set(['c','cpp','ini','javascript','typescript','kotlin','bash','vim','csharp','graphql','go','cmake','dart','makefile','lua','xml','elixir','erlang','fsharp','groovy','perl','r','ruby','swift','scala','scss']).has(name)) return grammar;
     if (grammar.__aideRepaired) return grammar;
     Object.defineProperty(grammar, '__aideRepaired', {value: true});
@@ -226,7 +226,7 @@ declare var module: any;
     }
     if (name === 'scss') {
       const variable = list.find(({scope: kind}) => kind === 'variable')?.mode;
-      const subst: any = {className: 'subst', begin: /#\{/, end: /\}/, contains: [variable, engine.NUMBER_MODE].filter(Boolean)};
+      const subst = {className: 'subst', begin: /#\{/, end: /\}/, contains: [variable, engine.NUMBER_MODE].filter(Boolean)};
       balanced(subst, subst.contains, /\{/, /\}/, grammar.keywords);
       for (const {mode} of list) if (mode.contains && !Object.isFrozen(mode)) {
         mode.contains = mode.contains.map((child: any) => ['"', "'"].includes(source(child?.begin)) && scope(child) === 'string'
@@ -237,7 +237,7 @@ declare var module: any;
     return grammar;
   }
   const register = engine.registerLanguage;
-  engine.registerLanguage = function (this: any, name: any, definition: any): any {
+  engine.registerLanguage = function (this: any, name: any, definition: any) {
     return register.call(this, name, (hl: any) => patch(name, definition(hl)));
   };
   for (const name of engine.listLanguages()) {
@@ -247,5 +247,5 @@ declare var module: any;
   const reset = (): void => { for (const clear of resets.values()) clear(); };
   engine.addPlugin({'before:highlight': reset, 'before:highlightElement': reset, 'after:highlight': reset});
   const auto = engine.highlightAuto;
-  engine.highlightAuto = function (this: any): any { reset(); return auto.apply(this, arguments); };
+  engine.highlightAuto = function (this: any) { reset(); return auto.apply(this, arguments); };
 });

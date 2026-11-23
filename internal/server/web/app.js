@@ -62,7 +62,6 @@ function renderSessionList(snapshot) {
         item.classList.toggle('loading', state.pendingSessionId === s.id);
         item.title = s.title;
         // 状态机：运行中=荧光绿闪烁、等待审批=黄常亮、失败=红常亮、完成=蓝；其余无点。
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         const dotClass = { running: 'dot-running', failed: 'dot-failed', awaiting_approval: 'dot-await', completed: 'dot-done' }[s.status] || '';
         // 完成且已查看：不显示蓝点；已自动归档的子会话用灰标签替代蓝点
         if (dotClass && !(s.status === 'completed' && s.checked) && !(isSub && s.autoArchived))
@@ -509,7 +508,6 @@ async function selectSession(id) {
             api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) })
                 .then(() => {
                 for (const item of document.querySelectorAll('.session-item[data-session-id]')) {
-                    // @ts-ignore -- preserve the original dynamic classic-script behavior.
                     if (item.dataset.sessionId !== id)
                         continue;
                     item.classList.remove('status-completed');
@@ -584,7 +582,6 @@ function openStream(run) {
         (ownerScope === null || recoveryScope() === ownerScope) &&
         (ownerEpoch === null || chatRecoveryEpoch === ownerEpoch) && !(typeof lockScreen !== 'undefined' && lockScreen.locked);
     const es = new EventSource('/api/sessions/' + state.session.id + '/runs/' + run.id + '/events?access_token=' + encodeURIComponent(state.token));
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     es._runId = run.id;
     state.stream = es;
     state.streamRetryAt = 0;
@@ -1253,7 +1250,6 @@ async function stopRunById(runId) {
     const badge = document.createElement('span');
     badge.className = 'reminder-count hidden';
     button.append(badge);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     document.querySelector('.panel-switch').insertBefore(button, $('plugins-toggle'));
     document.body.insertAdjacentHTML('beforeend', `
     <aside id="reminder-center" class="reminder-center-panel" aria-labelledby="reminder-center-title">
@@ -1435,7 +1431,6 @@ async function stopRunById(runId) {
             return;
         popupBusy = true;
         try {
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             const due = await api('/reminders/due');
             if (!due.length || document.visibilityState === 'hidden' || !center.messageUI?.allowReminderPopup()) {
                 popupBusy = false;
@@ -2492,7 +2487,6 @@ function renderAssistantMessage(msg) {
 function renderSession() {
     const isAssistantSess = state.session?.kind === 'assistant';
     document.body.classList.toggle('assistant-mode', !!isAssistantSess);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     const pluginPlanFocus = document.activeElement?.dataset?.pluginPlanFocus;
     const pluginPlanSessionId = state.session?.id;
     const selectionKey = JSON.stringify([state.session?.id, state.session?.modelSelection, state.session?.modelSelectionRevision]);
@@ -3148,7 +3142,6 @@ function resetFileNavigationGesture() {
 function fileNavigationDropTarget(x, y) {
     const node = document.elementFromPoint(x, y);
     const row = node?.closest('#files .file-item[data-file-dir="true"]');
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (row)
         return { type: 'folder', path: row.dataset.filePath, element: row };
     const parent = node?.closest('#parent-dir');
@@ -3757,14 +3750,12 @@ async function openProjectFileWorkbench(path, root, source, current) {
     return true;
 }
 async function openFile(path, options = {}) {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (!options.native && globalThis.AidePluginWorkbench?.prepareFileOpen?.() === false)
         return;
     const request = ++fileOpenRequest, root = state.root, source = root === 'context' ? state.source : '', scope = recoveryScope(), epoch = chatRecoveryEpoch, token = state.token, previous = state.file, loginOpen = $('login-dialog').open;
     const current = () => request === fileOpenRequest && scope === recoveryScope() && epoch === chatRecoveryEpoch && token === state.token && !lockScreen.locked && loginOpen === $('login-dialog').open && root === state.root && source === (state.root === 'context' ? state.source : '') && state.file === previous;
     if (!current())
         return;
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (!options.native && globalThis.AidePluginFilePreview) {
         const handled = await globalThis.AidePluginFilePreview.open({ path, root, source }, { ...pluginWorkbenchServices(), current, native: () => openFile(path, { native: true }) });
         if (handled) {
@@ -4370,7 +4361,6 @@ const COMPOSER_ATTACHMENT_DIR = '.cache/aide/attachments';
 // the same attachment state and send path as files selected from the file panel.
 let composerFileQueue = Promise.resolve();
 function composerUploadName(file) {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     const base = String(file.name || 'attachment').replace(/\\/g, '/').split('/').pop().replace(/[\x00-\x1f]/g, '_').trim();
     return base || 'attachment';
 }
@@ -4396,7 +4386,6 @@ function queueComposerFiles(files, { active = () => true, target = composerUploa
         return Promise.resolve({ added: 0, failed: 0 });
     const { workspaceId, token, current } = target;
     const canAttach = () => current() && active();
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     composerFileQueue = composerFileQueue.catch(() => { }).then(async () => {
         if (lockScreen.locked || !token || !workspaceId) {
             toast(t('请先解锁并连接工作区，再添加附件'));
@@ -4412,9 +4401,7 @@ function queueComposerFiles(files, { active = () => true, target = composerUploa
                 const query = new URLSearchParams({ path, workspaceId });
                 const response = await fetch('/api/file/upload?' + query, {
                     method: 'POST',
-                    // @ts-ignore -- preserve the original dynamic classic-script behavior.
                     headers: { Authorization: 'Bearer ' + token, 'Content-Type': file.type || 'application/octet-stream' },
-                    // @ts-ignore -- preserve the original dynamic classic-script behavior.
                     body: file
                 });
                 let result = {};
@@ -4530,8 +4517,7 @@ $('prompt').addEventListener('paste', (event) => {
     const attachments = files.map((blob, index) => {
         if (blob.name || !blob.type.startsWith('image/'))
             return blob;
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
-        const ext = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg', 'image/bmp': 'bmp' })[blob.type] || 'png';
+        const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg', 'image/bmp': 'bmp' }[blob.type] || 'png';
         return new File([blob], `pasted-image-${stamp}-${index + 1}.${ext}`, { type: blob.type || 'image/png', lastModified: Date.now() });
     });
     void queueComposerFiles(attachments);
@@ -5072,9 +5058,7 @@ function openSettings() {
 $('settings-button').onclick = openSettings;
 $('add-model-provider').onclick = () => {
     const preset = MODEL_PROVIDER_PRESETS.find((item) => item.id === $('provider-preset').value) || MODEL_PROVIDER_PRESETS.at(-1);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     const id = makeModelProviderID(preset.id);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     state.modelDraft.providers.push({ id, name: preset.name, baseURL: preset.baseURL, protocol: 'openai-compatible', keys: [], activeKeyId: '' });
     state.modelDraft.expandedProviders.add(id);
     renderModelList();
@@ -5143,8 +5127,7 @@ $('settings-form').onsubmit = action(async (event) => {
     ];
     const scenes = Object.fromEntries(sceneList.map(([id, name, variants]) => [id, { name, variants }]));
     const legacyMotion = { generating: 'eating', executing: 'working', completed: 'done', error: 'tantrum' };
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
-    const canonical = (motion) => ({ eating: 'generating', working: 'executing', done: 'completed', tantrum: 'error', failed: 'error', cancelled: 'paused', interrupted: 'paused', awaiting_approval: 'awaiting_user', awaiting_clarification: 'awaiting_user' })[motion] || motion;
+    const canonical = (motion) => ({ eating: 'generating', working: 'executing', done: 'completed', tantrum: 'error', failed: 'error', cancelled: 'paused', interrupted: 'paused', awaiting_approval: 'awaiting_user', awaiting_clarification: 'awaiting_user' }[motion] || motion);
     const builtinPack = () => ({ id: 'builtin-whale', name: '小鲸鱼 - 精致增强动态包', builtin: true, revision: 5, assets: [{ id: 'whale-enhanced-animation-pack', name: '小鲸', motion: 'idle', src: '/avatars/xiaomi-enhanced/idle-v1.webp', poster: '/avatars/xiaomi-enhanced/idle-v1-poster.webp', manifest: '/avatars/xiaomi-enhanced/manifest.json' }] });
     const builtinOriginalPack = () => ({ id: 'builtin-whale-original', name: '小鲸鱼 - 原画动态包', builtin: true, revision: 5, assets: [{ id: 'whale-original-animation-pack', name: '小鲸', motion: 'idle', src: '/avatars/xiaomi-original/idle-v1.webp', poster: '/avatars/xiaomi-original/idle-v1-poster.webp', manifest: '/avatars/xiaomi-original/manifest.json' }] });
     const normalizePlaybackRate = (value) => Number.isFinite(Number(value)) && Number(value) > 0 ? Math.max(0.25, Math.min(4, Number(value))) : 1;
@@ -5363,7 +5346,6 @@ $('settings-form').onsubmit = action(async (event) => {
             idleSince = Date.now();
             return 'listening';
         }
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         const waitingStatus = running?.[1]?.status || latest?.status;
         if (['awaiting_approval', 'awaiting_clarification', 'paused'].includes(waitingStatus)) {
             idleSince = Date.now();
@@ -5377,7 +5359,6 @@ $('settings-form').onsubmit = action(async (event) => {
             idleSince = Date.now();
             return 'speaking';
         }
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         if (running) {
             idleSince = Date.now();
             const phase = running[1];
@@ -5401,8 +5382,7 @@ $('settings-form').onsubmit = action(async (event) => {
             return 'sleeping';
         return 'idle';
     }
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
-    const moodFor = (scene) => ({ idle: '陪你呢', listening: '我在听～', thinking: '让我想想…', searching: '找找看…', reading: '认真读一读', creating: '灵感变成作品', executing: '认真干活！', generating: '嗯！token 好吃', speaking: '讲给你听', awaiting_user: '等你告诉我', waiting: '耐心等一会', completed: '做好啦！', error: '遇到问题了', paused: '先歇一歇', sleeping: '呼…再睡一会', notification: '有新提醒啦' })[scene];
+    const moodFor = (scene) => ({ idle: '陪你呢', listening: '我在听～', thinking: '让我想想…', searching: '找找看…', reading: '认真读一读', creating: '灵感变成作品', executing: '认真干活！', generating: '嗯！token 好吃', speaking: '讲给你听', awaiting_user: '等你告诉我', waiting: '耐心等一会', completed: '做好啦！', error: '遇到问题了', paused: '先歇一歇', sleeping: '呼…再睡一会', notification: '有新提醒啦' }[scene]);
     function choose(scene, preserveSelection = false) {
         const pack = activePack()?.id || '', choices = availableClips(scene), now = Date.now(), cue = cues.get(scene);
         // Account for time at the previous rate before accepting a newly saved multiplier.
@@ -5682,12 +5662,10 @@ $('settings-form').onsubmit = action(async (event) => {
                     toast(t('请添加 PNG、JPG、WebP 或 GIF；每张不超过 800 KB'));
                     return;
                 }
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 if (JSON.stringify(data).length + Math.ceil(picked.reduce((sum, file) => sum + file.size, 0) * 1.4) > 3.5 * 1024 * 1024) {
                     toast(t('浏览器形象素材空间即将不足，请删除不用的素材包'));
                     return;
                 }
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 try {
                     const assets = await Promise.all(picked.map((file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve({ id: crypto.randomUUID(), name: file.name, motion: modeFromName(file.name), ...(/-v[1-3]\.[^.]+$/.test(file.name) ? { variant: Number(file.name.match(/-v([1-3])\.[^.]+$/)[1]) } : {}), src: String(reader.result) }); reader.onerror = reject; reader.readAsDataURL(file); })));
                     assets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
@@ -5848,7 +5826,6 @@ $('command').addEventListener('keydown', (event) => {
             return;
         }
         if (event.ctrlKey && ['c', 'd', 'z', 'l'].includes(event.key.toLowerCase())) {
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             event.preventDefault();
             const control = { c: '\x03', d: '\x04', z: '\x1a', l: '\x0c' }[event.key.toLowerCase()];
             commandInput.value = '';
@@ -5922,7 +5899,6 @@ $('command-form').onsubmit = action(async (event) => {
         if (!response.ok)
             throw new Error((await response.json()).error);
         accepted = true;
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let pending = '';
@@ -7276,7 +7252,6 @@ function renderModelConnectionsControl(control) {
 const controlRenderers = { keybindings: () => { const onCleanup = (unsub) => settingsPanel.refreshers.push({ apply: () => { }, unsub }), wrap = window.AideKeybindings.render({ t, onCleanup }); wrap.append(window.AideDesktopCapture.render({ t, onCleanup })); return wrap; }, 'computer-control': renderComputerControlSettings, 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({ t, error: (e) => toast(e.message || String(e)), isActive: () => $('settings-sheet').classList.contains('open') }),
     "knowledge-index-policy": renderKnowledgeIndexPolicy,
     "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     "capabilities": () => window.aideCapabilities.render({ api, t, blocked: () => lockScreen.locked || !state.token, active: () => settingsPanel.active === 'accessibility' && settingsPanel.activeChild === 'interface-tests' && $('settings-sheet').classList.contains('open') }),
     "markdown-history": renderMarkdownHistoryControl,
     'workbench-background': () => window.AideBackground.renderSettings({ t }), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
@@ -7601,10 +7576,8 @@ function renderSettingsSheet() {
     const body = el('section', 'settings-page-body');
     body.setAttribute('aria-label', page.title);
     content.append(body);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (page.id === 'notifications')
         document.getElementById('reminder-center')?.messageUI?.renderNotifications(body);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     else if (page.id === 'messages')
         document.getElementById('reminder-center')?.messageUI?.renderSettings(body);
     else
@@ -8146,7 +8119,6 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
             await api('/settings', { method: 'PUT', body: JSON.stringify({ reasoningEffort: value }) });
             closeStrategyMenu();
             await refreshConfig();
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             const eff = ({ auto: t("自动"), off: t("关闭"), minimal: t("最小"), low: t("低"), medium: t("中"), high: t("高"), ultra: t("极高") }[value] || value);
             toast(t("已切换推理强度：{0}", eff));
             return;
@@ -8275,9 +8247,7 @@ function renderTokenStats(control) {
         if (Object.values(estimatedByCurrency).some((value) => Number(value) > 0))
             metrics.append(metric(t("刊例价估算"), moneyTotals(estimatedByCurrency), t("与已计价费用分开统计")));
         chips.replaceChildren();
-        chips.append(
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
-        el('span', 'token-chip', todayStats.priced !== false ? t("今日 {0} tokens · {1}", fmtStatTokens(todayStats.total || 0), moneyTotals(dayCost[Object.keys(days).sort().pop()])) : t("今日 {0} tokens · 未计价", fmtStatTokens(todayStats.total || 0))), el('span', 'token-chip', t("调用 {0} 次", totalsObj.calls || 0)));
+        chips.append(el('span', 'token-chip', todayStats.priced !== false ? t("今日 {0} tokens · {1}", fmtStatTokens(todayStats.total || 0), moneyTotals(dayCost[Object.keys(days).sort().pop()])) : t("今日 {0} tokens · 未计价", fmtStatTokens(todayStats.total || 0))), el('span', 'token-chip', t("调用 {0} 次", totalsObj.calls || 0)));
         const modelCostByCurrency = data.modelCostByCurrency || { CNY: data.modelCost || {} };
         Object.entries(modelCostByCurrency).forEach(([currency, models]) => Object.entries(models || {}).forEach(([model, value]) => {
             const chip = el('span', 'token-chip', model + ' ' + money(value, currency));
@@ -8359,7 +8329,6 @@ function renderTokenStats(control) {
                 }
                 cell.tabIndex = key === today.toISOString().slice(0, 10) ? 0 : -1;
                 cell.addEventListener('keydown', (event) => {
-                    // @ts-ignore -- preserve the original dynamic classic-script behavior.
                     const delta = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 }[event.key];
                     if (delta === undefined)
                         return;
@@ -9302,7 +9271,6 @@ function pluginSettingProperties(settings, schema) {
     const properties = {};
     for (const [key, value] of Object.entries(settings || {})) {
         const type = Array.isArray(value) ? 'array' : value === null ? 'string' : typeof value === 'number' ? Number.isInteger(value) ? 'integer' : 'number' : typeof value;
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         properties[key] = { type, items: type === 'array' && value.length ? { type: typeof value[0] } : { type: 'string' } };
     }
     Object.assign(properties, schema?.properties && typeof schema.properties === 'object' ? schema.properties : {});
@@ -9761,7 +9729,6 @@ function setWsAuth(auth) {
     $('ws-key-field').classList.toggle('hidden', auth !== 'key');
 }
 function syncWorkspaceLocationControls() {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     const ssh = document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode === 'ssh';
     for (const [field, location] of [['docs-path', 'docs-location'], ['cache-path', 'cache-location']]) {
         if (!ssh && $(location).value === 'workspace')
@@ -9865,9 +9832,7 @@ function fillWorkspaceSheet() {
     $('ws-test-status').textContent = '';
 }
 function collectWsConfig() {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     const mode = document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode || 'local';
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     const auth = document.querySelector('.ws-auth [data-auth].active')?.dataset.auth || 'password';
     const keyAuth = auth === 'key';
     return {
@@ -9877,7 +9842,6 @@ function collectWsConfig() {
         password: $('ws-password').value,
         key: $('ws-key').value,
         passphrase: $('ws-passphrase').value,
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         keyMode: keyAuth ? (document.querySelector('#ws-key-file [data-keymode].active')?.dataset.keymode || 'ref') : '',
         keyRefPath: keyAuth ? $('ws-key-refpath').value.trim() : '',
         vaultPassword: $('ws-vault-password').value,
@@ -10016,7 +9980,6 @@ $('workspace-sheet-close').onclick = closeWorkspaceSheet;
 $('ws-save').onclick = action(async () => { await saveWorkspaceConfig(); closeWorkspaceSheet(); toast(t("工作空间配置已保存")); });
 $('ws-test').onclick = action(async () => {
     const status = $('ws-test-status');
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if ((document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode || 'local') !== 'ssh') {
         status.textContent = t('仅 SSH/SFTP 工作空间需要测试连接');
         return;
@@ -10753,7 +10716,6 @@ $('source-form').onsubmit = action(async (event) => {
     const payload = previous
         ? { sources: sourceUpdatePayload(src) }
         : { sources: [...state.sources.filter((x) => !x.builtin), src] };
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (Object.keys(secrets).length)
         payload.secrets = secrets;
     await api('/sources', { method: 'PUT', body: JSON.stringify(payload) });
@@ -10846,10 +10808,8 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
             container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-dim);"><p>📐 ${t('draw.io 加载超时')}</p><p style="font-size:12px;margin-top:8px;">${t('本地 draw.io 加载失败，请刷新页面重试')}</p></div>`;
         }
     }, 15000);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (window[handlerKey])
         window.removeEventListener('message', window[handlerKey]);
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     window[handlerKey] = (ev) => {
         if (ev.source !== iframe.contentWindow || ev.origin !== window.location.origin)
             return;
@@ -10888,7 +10848,6 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
             // draw.io 请求关闭，忽略（由用户控制弹窗）
         }
     };
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     window.addEventListener('message', window[handlerKey]);
 }
 /* 图片预览器：缩放/平移/适应窗口/原始大小 */
@@ -11277,9 +11236,7 @@ async function setupZipPreview(container, filePath, root, source, viewerSpec) {
             list.replaceChildren();
             const start = page * safety.limits.zipPageRows;
             for (const entry of entries.slice(start, start + safety.limits.zipPageRows)) {
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 const row = el('div', 'zip-entry' + (entry.dir ? ' zip-entry-dir' : ''));
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 row.append(el('span', 'zip-entry-icon', entry.dir ? '▱' : '≡'), el('span', 'zip-entry-name', entry.name));
                 list.append(row);
             }
@@ -11313,7 +11270,7 @@ function ensurePdfJs() {
     if (_pdfjsPromise)
         return _pdfjsPromise;
     _pdfjsPromise = (async () => {
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
+        // @ts-expect-error -- same-origin vendor module is resolved by the browser at runtime, not by tsc.
         const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=13');
         pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=13';
         return pdfjs;
@@ -12166,7 +12123,6 @@ async function setupXlsxGrid(container, filePath, root, source, viewerSpec, onSa
 }
 function isDocPath(path) { return /\.doc$/i.test(effectiveFileTypePath(path)); }
 function codeLang(path) {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     var basename = String(path || '').split(/[\\/]/).pop().toLowerCase();
     if (basename === 'cmakelists.txt' || /\.cmake(?:\.|$)/i.test(basename))
         return 'cmake';
@@ -12832,9 +12788,7 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
             while (walker.nextNode()) {
                 const node = walker.currentNode;
                 const t = node.textContent;
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 for (let i = 0; i < t.length; i++) {
-                    // @ts-ignore -- preserve the original dynamic classic-script behavior.
                     const ch = t[i];
                     if (/\s/.test(ch)) {
                         if (prevWS)
@@ -12977,7 +12931,6 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
             if (isBackupPath(filePath))
                 return;
             const sel = window.getSelection();
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             const text = sel.toString().trim();
             if (!text || text.length < 2)
                 return;
@@ -12999,7 +12952,6 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
             try {
                 const preRange = document.createRange();
                 preRange.setStart(docxBody, 0);
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 preRange.setEnd(sel.anchorNode, sel.anchorOffset);
                 const prefix = preRange.toString().replace(/\s+/g, ' ');
                 let pos = 0;
@@ -13015,7 +12967,6 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
                 anchorIndex = 0;
             }
             const comment = prompt(t('添加批注：') + quote.slice(0, 40) + '…', '');
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             if (!comment) {
                 sel.removeAllRanges();
                 return;
@@ -13035,7 +12986,6 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
             catch (e) {
                 toast(e.message);
             }
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             sel.removeAllRanges();
         });
         await loadComments();
@@ -13436,7 +13386,6 @@ async function openFileViewMode(forceNative = false) {
     fileView.spec = spec;
     fileView.wsId = '';
     const openToken = state.token, openScope = recoveryScope(), openEpoch = chatRecoveryEpoch;
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     if (!forceNative && globalThis.AidePluginFilePreview) {
         const current = () => fileViewRouteCurrent(spec, openToken, openScope, openEpoch);
         if (await globalThis.AidePluginFilePreview.open(spec, { ...pluginWorkbenchServices(), current, native: () => openFileViewMode(true) }))
@@ -13652,13 +13601,11 @@ for (const [editorId, previewId, panelId, getSpec] of [['editor', 'editor-previe
     bindMarkdownLivePreview(editorId, previewId, panelId, getSpec);
     const exportButton = $(editorId === 'editor' ? 'editor-export-pdf' : 'file-view-export-pdf');
     window.AideMarkdownExport.bind({ button: exportButton, t, error: (e) => toast(e.message), options: () => {
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             const spec = getSpec();
             if (!spec)
                 return null;
             const scope = recoveryScope(), token = state.token;
             const appearanceKey = JSON.stringify([scope, spec.root || 'workspace', spec.source || '', spec.path, spec.origin || '', spec.knowledgeWorkspace || '']);
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             return { title: spec.path, appearanceKey, markdown: $(editorId).value, renderMarkdown: (markdown) => renderMarkdown(markdown, false, spec.path, spec), valid: () => getSpec() === spec && (panelId === 'editor-dialog' ? $(panelId).open : !$(panelId).classList.contains('hidden')) && !lockScreen.locked && !!token && token === state.token && scope === recoveryScope(),
                 load: ensureVendorScript, resolve: (ref) => resolveMarkdownImagePath(spec.path, ref), fetchResource: (path, signal) => fetch(fileRawUrl(path, spec.root, spec.source, spec), { signal }),
                 renderDiagrams: (host) => window.AideMarkdownDiagrams.render(host, { load: ensureVendorScript, dark: false, errorText: t('流程图渲染失败'), strict: true })
@@ -13986,7 +13933,6 @@ const CALL_TYPES = {
     subagent: ['spawn_subagent'],
 };
 function callTypeOf(tool) {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     for (const [t, tools] of Object.entries(CALL_TYPES)) {
         if (tools.includes(tool))
             return t;
@@ -14484,7 +14430,6 @@ window.addEventListener('aide:language', () => {
 let mermaidTimer = 0;
 function scheduleMermaid() { clearTimeout(mermaidTimer); mermaidTimer = setTimeout(renderMermaid, 80); }
 async function renderMermaid() {
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     await window.AideMarkdownDiagrams.render(document, { load: ensureVendorScript, errorText: t('流程图渲染失败') });
 }
 new MutationObserver(scheduleMermaid).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-palette'] });
@@ -14494,7 +14439,7 @@ let stableMarkdownCacheBytes = 0;
 let stableMarkdownRenderer = null;
 const STABLE_MARKDOWN_CACHE_MAX_BYTES = 2 * 1024 * 1024;
 function clearStableMarkdownCache() { stableMarkdownCache.clear(); stableMarkdownCacheBytes = 0; }
-// @ts-ignore -- preserve the original dynamic classic-script behavior.
+// @ts-expect-error -- intentional runtime wrapper around the global Markdown function.
 renderMarkdown = function (src, live, basePath, viewerSpec) {
     const text = String(src || '');
     const renderer = window.marked?.parse;
@@ -14515,7 +14460,6 @@ renderMarkdown = function (src, live, basePath, viewerSpec) {
             const bytes = (text.length + html.length) * 2;
             if (bytes <= STABLE_MARKDOWN_CACHE_MAX_BYTES) {
                 while (stableMarkdownCache.size && stableMarkdownCacheBytes + bytes > STABLE_MARKDOWN_CACHE_MAX_BYTES) {
-                    // @ts-ignore -- preserve the original dynamic classic-script behavior.
                     const [oldText, old] = stableMarkdownCache.entries().next().value;
                     stableMarkdownCache.delete(oldText);
                     stableMarkdownCacheBytes -= old.bytes;
@@ -15377,7 +15321,6 @@ function initAssistantLive() {
     if (window.AideAssistantCall) {
         window.aideAssistantCall = window.AideAssistantCall.create({
             translate: t, valid: () => valid() && state.session?.kind === 'assistant',
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             supported: () => !!(navigator.mediaDevices?.getUserMedia && (window.AudioContext || window.webkitAudioContext) && window.AudioWorkletNode && window.WebSocket),
             live: () => window.aideAssistantRealtime, unlockAudio: ttsUnlockAudio, cancelSpeech: ttsCancel, error: toast
         });
@@ -17272,13 +17215,13 @@ function renderPersonalityControl(control) {
 }
 controlRenderers['personality'] = renderPersonalityControl;
 /* ── 账户锁屏：空闲糊化遮罩（纯视觉层，不停止后端任务；小秘暂停听写/朗读） ── */
-// @ts-ignore -- preserve the original dynamic classic-script behavior.
+// @ts-expect-error -- app.ts and the standalone lock page intentionally own separate classic-script globals.
 const lockScreen = { resume: null, resumeTimer: null, timer: null, locked: false, wasVoiceListening: false, lastActivity: Date.now(), unlocking: false };
 function lockTimeoutActive() {
     return !!(state.config && state.config.hasPassword && (state.config.lockTimeoutSec || 0) > 0);
 }
 // 空闲定时器只在 master 持有；slave 的活动经 ping 续 master 的表。
-// @ts-ignore -- preserve the original dynamic classic-script behavior.
+// @ts-expect-error -- same classic-script global name is used by the independent lock page.
 function resetIdleTimer(activity = false, activityAt = Date.now()) {
     if (activity && !lockScreen.locked) {
         const at = Number.isFinite(activityAt) ? Math.min(Date.now(), activityAt) : Date.now();
@@ -17603,9 +17546,7 @@ async function createPlatformCredential(start) {
             excludeCredentials: (start.excludeCredentials || []).map((c) => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
             timeout: 120000, attestation: start.attestation || 'none',
         } });
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     return cred ? { id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type, response: {
-            // @ts-ignore -- preserve the original dynamic classic-script behavior.
             attestationObject: bufToB64u(cred.response.attestationObject), clientDataJSON: bufToB64u(cred.response.clientDataJSON),
         } } : null;
 }
@@ -18015,7 +17956,6 @@ function renderBackupControl() {
         const rd = new FileReader();
         rd.onload = () => {
             try {
-                // @ts-ignore -- preserve the original dynamic classic-script behavior.
                 parsed = JSON.parse(rd.result);
                 if (parsed.format !== 'aide-config-backup') {
                     toast(t('不是有效的 aide 配置备份文件'));
@@ -18183,7 +18123,6 @@ function openFactoryResetDialog() {
         const anyScope = Object.values(boxes).some((b) => b.checked);
         exec.disabled = !(anyScope && ack.checked && confirmInput.value.trim() === resetConfirmation);
     };
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     for (const b of Object.values(boxes))
         b.onchange = refresh;
     ack.onchange = refresh;
@@ -18414,14 +18353,11 @@ function renderAgentManagementControl() {
     }
     wrap.append(el('small', 'muted', t('管理变更先生成提案，由你审阅确认后执行。关闭权限后，尚未执行的提案也会被阻止。')));
     const autosave = settingsAutosave(wrap, () => ({ agentManagement: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, v.checked])) }), {
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         rollback: () => { for (const [key, input] of Object.entries(values))
             input.checked = !!state.config?.agentManagement?.[key]; },
-        // @ts-ignore -- preserve the original dynamic classic-script behavior.
         accepted: () => { for (const [key, input] of Object.entries(values))
             input.checked = !!state.config?.agentManagement?.[key]; }
     });
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     for (const input of Object.values(values))
         input.onchange = () => autosave.change();
     return wrap;
@@ -18450,7 +18386,6 @@ function setupBrowseMountSelector(root, field) {
 function renderPWRun(run) {
     const panel = el('section', 'parallel-progress');
     panel.append(el('strong', '', 'PW · ' + run.pw.definition.name));
-    // @ts-ignore -- preserve the original dynamic classic-script behavior.
     for (const n of run.pw.definition.nodes) {
         const info = run.pw.nodes[n.id] || {};
         const row = el('details', 'parallel-part');

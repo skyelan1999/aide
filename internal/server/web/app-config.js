@@ -186,7 +186,7 @@ async function openRcaReport(entry) {
         warn.classList.remove('hidden');
     }
 }
-// @ts-ignore -- independent settings pages expose their own config refresh helper.
+// @ts-expect-error -- independent settings pages expose their own config refresh helper.
 async function refreshConfig({ modelConnectionsSaved = false } = {}) {
     const previousScope = recoveryScope(), [nextConfig, assistantModel] = await Promise.all([api('/config'), api('/xiaomi/model').catch(() => null)]);
     const workspaceChanged = !!previousScope && previousScope !== nextConfig.workspaceId;

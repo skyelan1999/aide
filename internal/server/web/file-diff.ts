@@ -40,7 +40,7 @@ interface Window {
     return ops;
   }
 
-  function compute(before: any, after: any): any {
+  function compute(before: any, after: any) {
     const a = splitLines(before), b = splitLines(after);
     let start = 0;
     while (start < a.length && start < b.length && a[start] === b[start]) start++;

@@ -5,13 +5,13 @@ declare var module: any;
   const NS = 'http://www.w3.org/2000/svg';
   const distance = (a: any, b: any): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
   const apply = (m: any, p: any): any => [m[0]*p[0]+m[2]*p[1]+m[4], m[1]*p[0]+m[3]*p[1]+m[5]];
-  function inverse(m: any): any {
+  function inverse(m: any) {
     if (!Array.isArray(m) || m.length !== 6 || !m.every(Number.isFinite)) throw Error('Invalid CAD transform');
     const d = m[0]*m[3]-m[1]*m[2];
     if (!Number.isFinite(d) || Math.abs(d) < 1e-20) throw Error('Invalid CAD transform');
     return [m[3]/d,-m[1]/d,-m[2]/d,m[0]/d,(m[2]*m[5]-m[3]*m[4])/d,(m[1]*m[4]-m[0]*m[5])/d];
   }
-  function calculate(mode: any, p: any): any {
+  function calculate(mode: any, p: any) {
     if (!p.length || !p.every((v: any) => v.length === 2 && v.every(Number.isFinite))) return null;
     if (mode === 'coordinate') return {x:p[0][0], y:p[0][1]};
     if (mode === 'distance' && p.length === 2) return {length:distance(p[0],p[1]), dx:Math.abs(p[1][0]-p[0][0]), dy:Math.abs(p[1][1]-p[0][1])};
@@ -86,7 +86,7 @@ declare var module: any;
     const factor=(): any=>unit.value==='model'||!known?1:known/({mm:1,cm:10,m:1000,in:25.4,ft:304.8}[unit.value as 'mm'|'cm'|'m'|'in'|'ft']||1);
     const suffix=(): any=>unit.value==='model'?(known?({1:'in',2:'ft',4:'mm',5:'cm',6:'m'}[units as 1|2|4|5|6]||t('图纸单位')):t('图纸单位')):unit.value;
     const fmt=(v: any): string=>Number(v.toFixed(4)).toLocaleString(undefined,{maximumFractionDigits:4});
-    function describe(result: any): any {
+    function describe(result: any) {
       const r=result.value,k=factor(),u=suffix(),len=(v: any): string=>fmt(v*k)+' '+u;
       if('angle'in r)return fmt(r.angle)+'°';
       if('area'in r)return t('面积')+' '+fmt(r.area*k*k)+' '+u+'² · '+t('周长')+' '+len(r.perimeter);

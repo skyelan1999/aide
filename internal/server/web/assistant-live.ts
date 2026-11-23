@@ -4,19 +4,19 @@ interface Window {
 (() => {
   'use strict';
   // Page-owned session: recognition and polling never survive stop, navigation or lock.
-  function create(hooks: any): any {
+  function create(hooks: any) {
     const later=hooks.setTimeout||setTimeout, clear=hooks.clearTimeout||clearTimeout;
     let enabled=false, microphone=false, paused=false, phase='off', epoch=0, rec: any=null, stream: any=null, controller: any=null;
     let pollTimer=0, speechTimer=0, restartTimer=0, finalText='', interim='', busy=false, polling=false;
     let speaking=false,spokenText='',echoUntil=0,opening=0,openSerial=0;
     const normalize=(text: any): string=>String(text).toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
-    const echo=(text: any): any=>{const value=normalize(text),spoken=normalize(spokenText);return value&&spoken&&spoken.includes(value);};
+    const echo=(text: any)=>{const value=normalize(text),spoken=normalize(spokenText);return value&&spoken&&spoken.includes(value);};
     let lastActivity=Date.now(),lastInitiativeCheck=0,initiativeController: any=null,autonomousAudio=false;
     const activity=(): void=>{lastActivity=Date.now();initiativeController?.abort();if(autonomousAudio&&speaking){autonomousAudio=false;speaking=false;notices=[];hooks.cancelSpeech?.();}};
     let baseline=false, seen=new Set<any>(), ended: number[]=[], failureCount=0, notices: string[]=[];
-    const snapshot=(): any=>({enabled,microphone,paused,phase,busy});
+    const snapshot=()=>({enabled,microphone,paused,phase,busy});
     const state=(value: string): void=>{phase=value;hooks.state?.(snapshot());};
-    const turnDelay=(): any=>hooks.turnDelay?hooks.turnDelay(finalText+interim,!!interim):1100;
+    const turnDelay=()=>hooks.turnDelay?hooks.turnDelay(finalText+interim,!!interim):1100;
     const armTurn=(): void=>{clear(speechTimer);speechTimer=later(()=>void submit(),turnDelay());};
     const allowed=(): boolean=>enabled&&!paused&&hooks.valid();
     function release(): void{

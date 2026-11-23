@@ -1,6 +1,6 @@
 declare var module: any;
 /* CORS rules come from the page URL. Never send them to a backtracking engine. */
-function createDrawioLinearRegex(engine: any, buildId?: string): any {
+function createDrawioLinearRegex(engine: any, buildId?: string) {
   const maxPattern = 512, maxInput = 8192, maxProgram = 4096;
   return Object.freeze({
     version: 're2js-2.9.1',
