@@ -243,7 +243,12 @@
   源码切片与断言改为格式不敏感。58 个 app 套件、相关边界套件及 22 个
   星图套件通过。starmap 仅为跨页面 `$`/recoveryTimer 声明补充 ts-ignore，
   cache buster v77。
-- **批 5b+（待做）**：继续按职责拆分并 TS 化 app 余下脚本；每扩展一个
+- **批 5b（已完成）**：`app-runtime`（通用弹层、密码/主认证、API 封装、
+  模式与助理控件，244 行）TS 化并严格等价；app 余下 13704 行。index 加载
+  顺序 core → sidebar → runtime → app，runtime v1、app v296。58 个 app
+  套件全部通过。动态认证 body/Error 扩展字段、原生生物识别和后置声明按
+  原结构补充类型，不改运行时流程。
+- **批 5c+（待做）**：继续按职责拆分并 TS 化 app 余下脚本；每扩展一个
   拆分模块同步维护 app-source 的原始顺序视图，最终核对自有 JS 是否全部
   完成 TS 化。
 
