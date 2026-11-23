@@ -1,0 +1,29 @@
+# 可选 brdplan 原生编辑器集成。默认 compose.yaml 仅传入环境变量（留空=禁用），
+# 本 override 提供外部凭证卷与网络。外部卷/网络须先由 brdplan/testbench 侧创建，
+# 因此必须显式启用，绝不并入默认启动：
+#   docker compose -f compose.yaml -f docker/compose.brdplan.yaml up -d
+# 同时在 .env 配置 AIDE_BRDPLAN_EDITOR_URL / SESSION / WORKSPACE。
+services:
+  aide:
+    environment:
+      AIDE_BRDPLAN_EDITOR_TOKEN_FILE: /run/brdplan/token
+    volumes:
+      - testbench-credentials:/run/testbench:ro
+      - brdplan-editor-secret:/run/brdplan:ro
+    networks: [default, testbench-private, brdplan-private]
+
+networks:
+  testbench-private:
+    external: true
+    name: aide_testbench-private
+  brdplan-private:
+    external: true
+    name: brdplan-private
+
+volumes:
+  testbench-credentials:
+    external: true
+    name: aide_testbench_credentials
+  brdplan-editor-secret:
+    external: true
+    name: brdplan-editor-secret
