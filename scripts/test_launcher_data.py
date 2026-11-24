@@ -424,6 +424,10 @@ sys.exit(90)
                 self.assertFalse(policy(mode,0,1))
         self.assertFalse(policy('start',1,0))
         self.assertFalse(policy('stop',0,0))
+    def test_non_start_modes_skip_startup_only_reuse_probe(self):
+        lines=(ROOT/'scripts/aide.sh').read_text().splitlines()
+        condition=next(line for line in lines if 'launcher_may_reuse_running "$MODE"' in line)
+        self.assertIn('[[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]] && launcher_may_reuse_running',condition)
     def test_installed_runtime_requires_platform_and_complete_metadata(self):
         for state,success in [('healthy',True),('missing',False),('wrong-platform',False),('incomplete',False)]:
             with self.subTest(state=state):self.assertEqual(self.probe('launcher_local_runtime_ready',state).returncode==0,success)

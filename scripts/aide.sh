@@ -117,7 +117,7 @@ fi
 
 # A healthy owned instance is reopened before archive imports, migration or
 # package-image selection, including when a Release marker has changed.
-if launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && { launcher_running_ready "$DOCKER_BIN" || launcher_running_owned_instance "$DOCKER_BIN"; }; then
+if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]] && launcher_may_reuse_running "$MODE" "$START_BUILT" "${AIDE_FORCE_IMAGE_ACTIVATION:-0}" && { launcher_running_ready "$DOCKER_BIN" || launcher_running_owned_instance "$DOCKER_BIN"; }; then
   MODE=start-image
 fi
 
