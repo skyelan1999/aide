@@ -3,7 +3,7 @@ interface MdCodeDecorateOptions { live?: boolean; t?: (key: string) => string }
 interface MdCodeInstallOptions { t?: (key: string) => string; onError?: () => void }
 interface Window {
   AideMarkdownCode?: {
-    decorate: (body: HTMLElement, options?: MdCodeDecorateOptions) => void;
+    decorate: (body: HTMLElement, options?: MdCodeDecorateOptions) => Promise<void>;
     highlight: (text: string, declared?: string, engine?: any) => MdCodeHighlightResult | null;
     copyText: (text: string, anchor?: HTMLElement | null) => Promise<void>;
     install: (options?: MdCodeInstallOptions) => void;
@@ -20,13 +20,44 @@ interface Window {
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>';
   let installed = false, translate = (value: string): string => value, onError = (): void => {};
   const resets = new WeakMap<HTMLButtonElement, number>();
+  const languageAlias: Record<string, string> = {clojurescript:'clojure'};
+  const languageLoads = new Map<string, Promise<boolean>>();
+  const languageFailures = new Set<string>();
+
+  function ensureLanguage(declared: string): Promise<boolean> {
+    const requested = declared.toLowerCase(), language = languageAlias[requested] || requested;
+    if (!/^[a-z0-9+-]+$/.test(language) || /^(text|txt|plain|plaintext|none|nohighlight)$/.test(language)) return Promise.resolve(false);
+    if (window.hljs?.getLanguage(language)) return Promise.resolve(true);
+    if (languageFailures.has(language)) return Promise.resolve(false);
+    const existing = languageLoads.get(language); if (existing) return existing;
+    const pending = new Promise<boolean>(resolve => {
+      const script = document.createElement('script');
+      script.src = '/vendor/highlight.js/languages/' + encodeURIComponent(language) + '.min.js?v=67'; script.async = true;
+      script.onload = () => resolve(!!window.hljs?.getLanguage(language));
+      script.onerror = () => { script.remove(); resolve(false); };
+      document.head.appendChild(script);
+    }).then(loaded => {
+      if (!loaded) languageFailures.add(language);
+      return loaded;
+    }).catch(() => { languageFailures.add(language); return false; });
+    languageLoads.set(language, pending); return pending;
+  }
+
+  function paint(code: HTMLElement, declared: string): boolean {
+    const result = highlight(code.textContent || '', declared);
+    if (!result) return false;
+    code.innerHTML = result.value;
+    code.classList.add('hljs');
+    code.dataset.highlightLanguage = result.language as string;
+    code.dataset.highlightMode = result.detected ? 'auto' : 'explicit';
+    return true;
+  }
 
   function highlight(text: string, declared = '', engine = window.hljs): MdCodeHighlightResult | null {
     if (!engine || !text.trim() || text.length > MAX_HIGHLIGHT) return null;
     const lang = declared.toLowerCase();
     if (/^(text|txt|plain|plaintext|none|nohighlight)$/.test(lang)) return null;
-    const alias: Record<string, string> = {clojurescript:'clojure'};
-    const known = engine.getLanguage(lang) ? lang : alias[lang];
+    const known = engine.getLanguage(lang) ? lang : languageAlias[lang];
     try {
       if (known && engine.getLanguage(known)) return {...engine.highlight(text, {language:known,ignoreIllegals:true}), detected:false};
       if (/^[{[]/.test(text.trim()) && engine.getLanguage('json')) {
@@ -40,15 +71,19 @@ interface Window {
       return {...result, detected:true};
     } catch (_) { return null; }
   }
-  function decorate(body: HTMLElement, {live = false, t = translate}: MdCodeDecorateOptions = {}): void {
+  function decorate(body: HTMLElement, {live = false, t = translate}: MdCodeDecorateOptions = {}): Promise<void> {
+    const pending: Promise<void>[] = [];
     if (!live) body.querySelectorAll<HTMLElement>('pre > code').forEach(code => {
       const declared = (code.className.match(/(?:^|\s)language-([\w+-]+)/) || [])[1] || '';
-      const result = highlight(code.textContent || '', declared);
-      if (!result) return;
-      code.innerHTML = result.value;
-      code.classList.add('hljs');
-      code.dataset.highlightLanguage = result.language as string;
-      code.dataset.highlightMode = result.detected ? 'auto' : 'explicit';
+      const canonical = languageAlias[declared.toLowerCase()] || declared.toLowerCase();
+      if (declared && !window.hljs?.getLanguage(canonical)) {
+        const original = code.textContent || '';
+        pending.push(ensureLanguage(declared).then(loaded => {
+          if (loaded && code.isConnected && code.textContent === original) paint(code, declared);
+        }));
+        return;
+      }
+      paint(code, declared);
     });
     body.querySelectorAll('pre').forEach(pre => {
       if (pre.parentElement?.classList.contains('md-code-copy-wrap')) return;
@@ -58,6 +93,7 @@ interface Window {
       button.title = t('复制代码'); button.setAttribute('aria-label', button.title); button.innerHTML = icon(false);
       wrap.append(button);
     });
+    return Promise.all(pending).then(() => {});
   }
   function fallbackCopy(text: string, anchor?: HTMLElement | null): void {
     const active = document.activeElement as HTMLInputElement | null, selection = window.getSelection?.();

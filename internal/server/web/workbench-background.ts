@@ -131,7 +131,7 @@ interface Window {
   function lifecycle(): void {
     const visible = pageAvailable();
     const resting = syncEyeRest(visible);
-    const paused = !visible || root.dataset.motion === 'reduced' || reduced?.matches || resting;
+    const paused = !visible || root.dataset.motion === 'reduced' || root.dataset.motionProfile === 'balanced' || root.dataset.motionProfile === 'minimal' || reduced?.matches || resting;
     root.toggleAttribute('data-background-paused', paused);
     if (!media) return;
     if (media.tagName === 'VIDEO') {

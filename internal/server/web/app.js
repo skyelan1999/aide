@@ -11258,14 +11258,16 @@ async function setupZipPreview(container, filePath, root, source, viewerSpec) {
     viewer.append(toolbar, list);
     container.append(viewer);
     try {
-        if (!window.JSZip)
-            throw new Error('JSZip unavailable');
+        const library = ensureVendorScript('/vendor/jszip.min.js?v=67', () => !!window.JSZip);
         const response = await fetch(fileRawUrl(filePath, root, source, viewerSpec));
         if (!response.ok)
             throw new Error('HTTP ' + response.status);
         const safety = window.AidePreviewSafety;
         const bytes = await safety.readBytes(response, safety.limits.zipBytes);
         safety.checkZipDirectory(bytes, { bytes: safety.limits.zipBytes, entries: safety.limits.zipEntries, partBytes: Infinity, expandedBytes: Infinity });
+        if (canceled)
+            return;
+        await library;
         if (canceled)
             return;
         const zip = await window.JSZip.loadAsync(bytes, { createFolders: false });
@@ -12766,10 +12768,17 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
     const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
     const knowledgeReadOnly = viewerSpec?.readOnly === true && !!viewerSpec.origin;
     try {
+        const libraries = Promise.all([
+            ensureVendorScript('/vendor/jszip.min.js?v=67', () => !!window.JSZip),
+            ensureVendorScript('/vendor/docx-preview/docx-preview.min.js?v=67', () => !!window.docx?.renderAsync),
+        ]);
         const r = await fetch(rawUrl);
         if (!r.ok)
             throw new Error('HTTP ' + r.status);
         const buf = await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.docxBytes);
+        await libraries;
+        if (canceled)
+            return;
         await window.AidePreviewSafety.checkDocx(buf, window.JSZip);
         if (canceled)
             return;

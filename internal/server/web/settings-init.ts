@@ -36,6 +36,14 @@ interface Window {
   function normalizeLanguage(value: any): string { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; }                   // 缺省偏好
   var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'modern' };
   var motionMedia = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  var capabilityNavigator: any = window.navigator || {};
+  var connection = capabilityNavigator.connection;
+  function motionProfile(): string {
+    var memory = Number(capabilityNavigator.deviceMemory), cores = Number(capabilityNavigator.hardwareConcurrency);
+    if ((connection && connection.saveData) || (memory > 0 && memory <= 2) || (cores > 0 && cores <= 2)) return 'minimal';
+    if ((memory > 0 && memory <= 4) || (cores > 0 && cores <= 4)) return 'balanced';
+    return 'full';
+  }
   var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
 
   var root = document.documentElement;
@@ -132,6 +140,7 @@ interface Window {
     root.setAttribute('data-theme-pref', doc.theme);
     root.setAttribute('data-palette', doc.palette);
     root.setAttribute('data-motion', motionMedia && motionMedia.matches ? 'reduced' : 'full');
+    root.setAttribute('data-motion-profile', motionProfile());
     window.dispatchEvent(new Event('aide:motion'));
     root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
   }
@@ -183,6 +192,10 @@ interface Window {
   if (motionMedia) {
     if (motionMedia.addEventListener) motionMedia.addEventListener('change', applyTheme);
     else if (motionMedia.addListener) motionMedia.addListener(applyTheme);
+  }
+  if (connection) {
+    if (connection.addEventListener) connection.addEventListener('change', applyTheme);
+    else if (connection.addListener) connection.addListener(applyTheme);
   }
 
   /* ── 跨标签页同步：JSON 键与旧键都吸收 ── */

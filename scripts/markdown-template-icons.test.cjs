@@ -6,6 +6,7 @@ const js = fs.readFileSync('internal/server/web/markdown-media.js', 'utf8');
 const css = fs.readFileSync('internal/server/web/macos.css', 'utf8');
 const en = fs.readFileSync('internal/server/web/locales/en.js', 'utf8');
 const html = fs.readFileSync('internal/server/web/index.html', 'utf8');
+const i18n = fs.readFileSync('internal/server/web/i18n.js', 'utf8');
 const templateSource = js.slice(js.indexOf('const templates = ['), js.indexOf('for (const [name, description'));
 assert.ok(templateSource.length > 0, 'template catalog must exist');
 const templates = [...templateSource.matchAll(/\['([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'/g)];
@@ -24,10 +25,12 @@ assert.ok(js.includes("item.addEventListener('focus'"), 'keyboard focus announce
 assert.ok(js.includes("editor.setSelectionRange(start, start + placeholder.length)"), 'insertion selects the editable example text');
 assert.match(css, /\.md-media-toolbar\{[^}]*overflow-x:auto/);
 assert.ok(css.includes('.md-template-tool{position:relative;flex:0 0 27px!important'), 'compact icons fit the row and remain reachable with toolbar scrolling');
-for (const [asset, minimum] of [['markdown-media.js',5], ['locales/en.js',111], ['task-outcome.js',9], ['macos.css',113]]) {
+for (const [asset, minimum] of [['markdown-media.js',5], ['task-outcome.js',9], ['macos.css',113]]) {
   const escaped=asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const version=html.match(new RegExp('/'+escaped+'\\?v=(\\d+)'));
   assert.ok(version && Number(version[1]) >= minimum, `updated UI asset must bypass the old browser cache: ${asset}`);
 }
+const englishVersion = i18n.match(/\/locales\/en\.js\?v=(\d+)/);
+assert.ok(englishVersion && Number(englishVersion[1]) >= 111, 'lazy English catalog must carry a cache-busting version');
 assert.match(html, /\/app\.js\?v=\d+/, 'app bundle carries a cache version');
 console.log('PASS: 26 first-level Markdown template icons, labels, guidance, insertion affordance and narrow-screen toolbar scrolling');

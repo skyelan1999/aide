@@ -27,7 +27,7 @@ async function renderFixture(bytes, response, zipImpl = JSZip) {
     closest() {return null;}
   }
   const context = {console, Response, Uint8Array, ArrayBuffer, DataView, TextDecoder, setTimeout, clearTimeout,
-    teardownViewer() {}, bindViewerTeardown() {}, isDocPath: () => false, isBackupPath: () => false, t: value => value, escapeHtml: value => value,
+    teardownViewer() {}, bindViewerTeardown() {}, ensureVendorScript: async () => {}, isDocPath: () => false, isBackupPath: () => false, t: value => value, escapeHtml: value => value,
     el: (...args) => new Element(...args), fileRawUrl: () => '/owned.docx', fetch: async () => response || new Response(bytes),
     document: {createElement: tag => new Element(tag), body: {classList: {contains: () => false}}}, history: {back() {}},
     window: {AideDocxStyles: {apply:()=>()=>{}}, JSZip: zipImpl, docx: {async renderAsync() {rendered++;}}}};

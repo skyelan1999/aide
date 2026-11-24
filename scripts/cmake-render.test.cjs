@@ -32,5 +32,8 @@ for (const token of ['hljs-keyword', 'hljs-string', 'hljs-variable', 'hljs-comme
   assert(rendered.includes(token), `CMake highlighting includes ${token}`);
 }
 const index = read('internal/server/web/index.html');
-assert(index.includes('/vendor/highlight.js/languages/cmake.min.js?v=1'), 'CMake grammar is included locally');
+const markdownCode = read('internal/server/web/markdown-code.js');
+assert(!index.includes('/vendor/highlight.js/languages/'), 'language grammars stay out of the initial document');
+assert(markdownCode.includes("'/vendor/highlight.js/languages/'"), 'Markdown owns the local on-demand grammar loader');
+assert(fs.existsSync('internal/server/web/vendor/highlight.js/languages/cmake.min.js'), 'CMake grammar remains bundled locally');
 console.log('PASS: CMakeLists.txt, .cmake, .cmake.in identification and local syntax highlighting');

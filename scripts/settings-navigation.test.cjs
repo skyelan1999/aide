@@ -76,6 +76,22 @@ test('modern palette persists and immediately changes the document theme attribu
  vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:legacyBrowser,document:{documentElement:{setAttribute:(k,v)=>legacyAttributes[k]=v}},Event:class{}});
  assert.equal(legacyAttributes['data-palette'],'modern');assert.equal(legacyBrowser.aideUI.get('palette'),'modern');
 });
+test('motion profile adapts to device capacity and Save-Data without overriding reduced motion',()=>{
+ const run=({memory=8,cores=8,saveData=false}={})=>{
+  const attributes={},values={};
+  const connection={saveData,addEventListener(type,fn){this[`on${type}`]=fn;}};
+  const navigator={deviceMemory:memory,hardwareConcurrency:cores,language:'en-US',connection};
+  const browser={navigator,localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},dispatchEvent(){},matchMedia:()=>({matches:false,addEventListener(){}}),addEventListener(){}};
+  vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:browser,navigator,document:{documentElement:{setAttribute:(k,v)=>attributes[k]=v}},Event:class{}});
+  return {attributes,connection};
+ };
+ assert.equal(run().attributes['data-motion-profile'],'full');
+ assert.equal(run({cores:4}).attributes['data-motion-profile'],'balanced');
+ assert.equal(run({memory:2}).attributes['data-motion-profile'],'minimal');
+ const constrained=run({saveData:true});assert.equal(constrained.attributes['data-motion-profile'],'minimal');
+ constrained.connection.saveData=false;constrained.connection.onchange();
+ assert.equal(constrained.attributes['data-motion-profile'],'full','disabling Save-Data restores the device profile');
+});
 test('opening voice settings never requests microphone permission; explicit refresh stops its temporary track',async()=>{
  const source=require('./fixtures/app-source.cjs').readAppSource();let permissions=0,stopped=0;
  function el(tag,className,text){return {tag,className,text,children:[],append(...nodes){this.children.push(...nodes)},replaceChildren(){this.children=[]}};}

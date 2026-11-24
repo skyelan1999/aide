@@ -9,14 +9,52 @@
         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>';
     let installed = false, translate = (value) => value, onError = () => { };
     const resets = new WeakMap();
+    const languageAlias = { clojurescript: 'clojure' };
+    const languageLoads = new Map();
+    const languageFailures = new Set();
+    function ensureLanguage(declared) {
+        const requested = declared.toLowerCase(), language = languageAlias[requested] || requested;
+        if (!/^[a-z0-9+-]+$/.test(language) || /^(text|txt|plain|plaintext|none|nohighlight)$/.test(language))
+            return Promise.resolve(false);
+        if (window.hljs?.getLanguage(language))
+            return Promise.resolve(true);
+        if (languageFailures.has(language))
+            return Promise.resolve(false);
+        const existing = languageLoads.get(language);
+        if (existing)
+            return existing;
+        const pending = new Promise(resolve => {
+            const script = document.createElement('script');
+            script.src = '/vendor/highlight.js/languages/' + encodeURIComponent(language) + '.min.js?v=67';
+            script.async = true;
+            script.onload = () => resolve(!!window.hljs?.getLanguage(language));
+            script.onerror = () => { script.remove(); resolve(false); };
+            document.head.appendChild(script);
+        }).then(loaded => {
+            if (!loaded)
+                languageFailures.add(language);
+            return loaded;
+        }).catch(() => { languageFailures.add(language); return false; });
+        languageLoads.set(language, pending);
+        return pending;
+    }
+    function paint(code, declared) {
+        const result = highlight(code.textContent || '', declared);
+        if (!result)
+            return false;
+        code.innerHTML = result.value;
+        code.classList.add('hljs');
+        code.dataset.highlightLanguage = result.language;
+        code.dataset.highlightMode = result.detected ? 'auto' : 'explicit';
+        return true;
+    }
     function highlight(text, declared = '', engine = window.hljs) {
         if (!engine || !text.trim() || text.length > MAX_HIGHLIGHT)
             return null;
         const lang = declared.toLowerCase();
         if (/^(text|txt|plain|plaintext|none|nohighlight)$/.test(lang))
             return null;
-        const alias = { clojurescript: 'clojure' };
-        const known = engine.getLanguage(lang) ? lang : alias[lang];
+        const known = engine.getLanguage(lang) ? lang : languageAlias[lang];
         try {
             if (known && engine.getLanguage(known))
                 return { ...engine.highlight(text, { language: known, ignoreIllegals: true }), detected: false };
@@ -41,16 +79,20 @@
         }
     }
     function decorate(body, { live = false, t = translate } = {}) {
+        const pending = [];
         if (!live)
             body.querySelectorAll('pre > code').forEach(code => {
                 const declared = (code.className.match(/(?:^|\s)language-([\w+-]+)/) || [])[1] || '';
-                const result = highlight(code.textContent || '', declared);
-                if (!result)
+                const canonical = languageAlias[declared.toLowerCase()] || declared.toLowerCase();
+                if (declared && !window.hljs?.getLanguage(canonical)) {
+                    const original = code.textContent || '';
+                    pending.push(ensureLanguage(declared).then(loaded => {
+                        if (loaded && code.isConnected && code.textContent === original)
+                            paint(code, declared);
+                    }));
                     return;
-                code.innerHTML = result.value;
-                code.classList.add('hljs');
-                code.dataset.highlightLanguage = result.language;
-                code.dataset.highlightMode = result.detected ? 'auto' : 'explicit';
+                }
+                paint(code, declared);
             });
         body.querySelectorAll('pre').forEach(pre => {
             if (pre.parentElement?.classList.contains('md-code-copy-wrap'))
@@ -67,6 +109,7 @@
             button.innerHTML = icon(false);
             wrap.append(button);
         });
+        return Promise.all(pending).then(() => { });
     }
     function fallbackCopy(text, anchor) {
         const active = document.activeElement, selection = window.getSelection?.();

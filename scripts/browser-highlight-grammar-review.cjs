@@ -92,7 +92,7 @@ async function main() {
                         article.append(title, pre);
                         main.append(article);
                     }
-                    AideMarkdownCode.decorate(main);
+                    await AideMarkdownCode.decorate(main);
                     const codes = [ ...main.querySelectorAll("pre > code") ];
                     for (let i = 0; i < cases.length; i++) {
                         const c = cases[i], element = codes[i];

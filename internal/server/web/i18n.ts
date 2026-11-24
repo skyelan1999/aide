@@ -7,17 +7,31 @@ interface Window {
     schema: (value: any) => any;
     applyStatic: () => void;
     sourceName: (source: any) => any;
+    ready: () => Promise<void>;
   };
 }
 'use strict';
 /* Explicit localization of product UI only. No DOM-wide text replacement. */
 (function () {
-  const catalog = window.aideEnglish || {};
+  let catalog = window.aideEnglish || {};
+  let englishLoad: Promise<void> | null = null;
   const supported = ['zh-CN', 'en'];
   function language(): string {
     const pref = window.aideUI?.get('language');
     if (supported.includes(pref)) return pref;
     return /^en(?:-|$)/i.test(navigator.language || '') ? 'en' : 'zh-CN';
+  }
+  function ensureEnglish(): Promise<void> {
+    if (language() !== 'en' || window.aideEnglish) { catalog = window.aideEnglish || catalog; return Promise.resolve(); }
+    if (englishLoad) return englishLoad;
+    englishLoad = new Promise(resolve => {
+      const script = document.createElement('script');
+      script.src = '/locales/en.js?v=206'; script.async = true;
+      script.onload = () => { catalog = window.aideEnglish || {}; resolve(); };
+      script.onerror = () => { englishLoad = null; resolve(); };
+      document.head.append(script);
+    });
+    return englishLoad;
   }
   function t(key: any, ...args: any[]): string {
     if (key == null) return '';
@@ -52,16 +66,20 @@ interface Window {
     const key = defaults[source?.id || source?.root || source?.region];
     return key && source?.name === key ? t(key) : source?.name;
   }
-  window.aideI18n = { t, language, schema, applyStatic, sourceName };
+  window.aideI18n = { t, language, schema, applyStatic, sourceName, ready: ensureEnglish };
   let previous = language();
   applyStatic();
+  if (previous === 'en') void ensureEnglish().then(() => { applyStatic(); window.dispatchEvent(new CustomEvent('aide:language')); });
   function changed(): void {
     const next = language();
-    applyStatic();
-    if (next !== previous) {
-      previous = next;
-      window.dispatchEvent(new CustomEvent('aide:language'));
-    }
+    void ensureEnglish().then(() => {
+      if (next !== language()) return;
+      applyStatic();
+      if (next !== previous) {
+        previous = next;
+        window.dispatchEvent(new CustomEvent('aide:language'));
+      }
+    });
   }
   window.aideUI?.subscribe(changed);
   window.addEventListener('languagechange', changed);

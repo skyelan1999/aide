@@ -5,7 +5,7 @@
     let intro = null, timer = 0, dismissal = null;
     const root = document.documentElement;
     const motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    function motionAllowed() { return !document.hidden && root.dataset.motion !== 'reduced' && !motionMedia?.matches; }
+    function motionAllowed() { return !document.hidden && root.dataset.motion !== 'reduced' && root.dataset.motionProfile !== 'minimal' && !motionMedia?.matches; }
     function remove() { clearTimeout(timer); dismissal?.cancel(); dismissal = null; if (intro) {
         intro.remove();
         intro = null;
@@ -32,14 +32,14 @@
         intro.setAttribute('aria-hidden', 'true');
         intro.innerHTML = '<div class="aide-intro-mark"><svg viewBox="0 0 260 260" aria-hidden="true"><circle class="aide-intro-register" cx="130" cy="130" r="121" stroke-dasharray="1 12"/><path class="aide-intro-register" d="M130 1v13m0 232v13M1 130h13m232 0h13"/><path class="aide-intro-halo" d="M65 65a92 92 0 0 1 150 91"/><ellipse class="aide-intro-ring" cx="130" cy="130" rx="112" ry="70"/><circle class="aide-intro-ring inner" cx="130" cy="130" r="76"/><circle class="aide-intro-ray" cx="130" cy="130" r="95"/><path class="aide-intro-star" d="M208 55l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg><span class="aide-intro-core">a<span>·</span></span></div>';
         document.body.appendChild(intro);
-        timer = setTimeout(remove, 980);
+        timer = setTimeout(remove, root.dataset.motionProfile === 'balanced' ? 520 : 980);
         document.addEventListener('pointerdown', dismiss, { once: true });
         document.addEventListener('keydown', dismiss, { once: true });
     }
     function visibility() { root.toggleAttribute('data-ui-paused', document.hidden); if (document.hidden)
         remove(); }
     document.addEventListener('visibilitychange', visibility);
-    window.addEventListener('aide:motion', () => { if (root.dataset.motion === 'reduced')
+    window.addEventListener('aide:motion', () => { if (root.dataset.motion === 'reduced' || root.dataset.motionProfile === 'minimal')
         remove(); });
     visibility();
     try {
@@ -56,6 +56,8 @@
    screens are deliberately outside this layer; visibility/focus changes stay immediate. */
 (function () {
     const root = document.documentElement;
+    const profile = () => root.dataset.motionProfile || 'full';
+    const motionDuration = (full, balanced) => profile() === 'balanced' ? balanced : full;
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const finePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)');
     const nativeDialogMotion = !!window.CSS?.supports('transition-behavior', 'allow-discrete');
@@ -66,7 +68,7 @@
     const dynamicSelector = '.session-menu,.file-ctx-menu';
     let scheduled = 0, panelTransition = null, resumeSamples = new WeakMap();
     function allowed() {
-        return !document.hidden && root.dataset.motion !== 'reduced' && !media?.matches &&
+        return !document.hidden && root.dataset.motion !== 'reduced' && profile() !== 'minimal' && !media?.matches &&
             !document.querySelector('#login-dialog[open],#lock-screen:not([hidden])');
     }
     function visible(node) {
@@ -111,7 +113,7 @@
             first.transform = current?.transform ?? (kind === 'side' ? 'translateX(8px)' : 'translateY(5px)');
             last.transform = 'none';
         }
-        const animation = node.animate([first, last], { duration: kind === 'side' ? 200 : 160, easing: 'cubic-bezier(.22,1,.36,1)' });
+        const animation = node.animate([first, last], { duration: kind === 'side' ? motionDuration(200, 130) : motionDuration(160, 110), easing: 'cubic-bezier(.22,1,.36,1)' });
         running.set(node, animation);
         animation.finished.then(() => { if (running.get(node) === animation)
             running.delete(node); }, () => { });
@@ -181,10 +183,10 @@
         }
         else
             delete from.transform;
-        const animation = node.animate([from, last], { duration: kind === 'side' ? 180 : 140, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+        const animation = node.animate([from, last], { duration: kind === 'side' ? motionDuration(180, 115) : motionDuration(140, 100), easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
         running.set(node, animation);
         animation.finished.then(finish, () => { });
-        timer = setTimeout(finish, 200);
+        timer = setTimeout(finish, motionDuration(200, 140));
         return finish;
     }
     function activePanel() {
@@ -197,7 +199,7 @@
         return !body.classList.contains('files-hidden') && (innerWidth > 950 || files?.classList.contains('mobile-open')) ? files : null;
     }
     function changePanels(update) {
-        const body = document.body, gridStart = getComputedStyle(body).gridTemplateColumns;
+        const body = document.body;
         const before = activePanel(), wasVisible = before && visible(before);
         const beforeStyle = wasVisible ? getComputedStyle(before) : null;
         const snapshot = beforeStyle ? { opacity: beforeStyle.opacity, transform: beforeStyle.transform, display: beforeStyle.display } : null;
@@ -218,7 +220,7 @@
         update(); // Mode, selected button, accessibility and focus state update immediately.
         for (const sync of segmentSyncs)
             sync();
-        const after = activePanel(), gridEnd = getComputedStyle(body).gridTemplateColumns;
+        const after = activePanel();
         if (before === after || !allowed()) {
             scan();
             return;
@@ -234,23 +236,9 @@
             if (next)
                 next.shown = visible(after);
         }
-        const start = gridStart.split(' '), end = gridEnd.split(' ');
-        if (innerWidth <= 950 || !body.animate || start.length > 3 || end.length > 3 || ![...start, ...end].every(value => /^\d+(?:\.\d+)?px$/.test(value)))
-            return;
-        // Desktop closes into a zero-width third grid track, not a floating screenshot.
-        // The node's contents are clipped inside that track; mobile has no grid resize.
-        while (start.length < 3)
-            start.push('0px');
-        while (end.length < 3)
-            end.push('0px');
-        let done = false, timer = 0;
-        const finish = () => { if (done)
-            return; done = true; clearTimeout(timer); panelTransition = null; cancel(body); finishExit(); };
-        panelTransition = finish;
-        const animation = body.animate([{ gridTemplateColumns: start.join(' ') }, { gridTemplateColumns: end.join(' ') }], { duration: 180, easing: 'cubic-bezier(.22,1,.36,1)' });
-        running.set(body, animation);
-        animation.finished.then(finish, () => { });
-        timer = setTimeout(finish, 200);
+        // Grid tracks update immediately. Animating gridTemplateColumns forced a full
+        // layout on every frame; side surfaces still get compositor-only transforms.
+        panelTransition = () => { panelTransition = null; finishExit(); };
     }
     function revealContent(node, direction = 1) {
         if (!node || !allowed() || !visible(node) || typeof node.animate !== 'function')
@@ -259,7 +247,7 @@
         const animation = node.animate([
             { opacity: .72, transform: `translate3d(${direction * 6}px,0,0)` },
             { opacity: 1, transform: 'translate3d(0,0,0)' }
-        ], { duration: 190, easing: 'cubic-bezier(.22,1,.36,1)' });
+        ], { duration: motionDuration(190, 120), easing: 'cubic-bezier(.22,1,.36,1)' });
         running.set(node, animation);
         animation.finished.then(() => { if (running.get(node) === animation)
             running.delete(node); }, () => { });
@@ -538,6 +526,30 @@
     if (login)
         new MutationObserver(() => { if (login.open)
             cancelAll(); }).observe(login, { attributes: true, attributeFilter: ['open'] });
+    // Event-driven pressure sampling avoids a permanent RAF monitor. Two long tasks
+    // reduce decorative work; sustained pressure disables it for this page session.
+    let pressureObserver = null, pressureSamples = [];
+    if (typeof PerformanceObserver === 'function' && PerformanceObserver.supportedEntryTypes?.includes('longtask')) {
+        pressureObserver = new PerformanceObserver((list) => {
+            if (profile() === 'minimal')
+                return;
+            const now = performance.now();
+            for (const entry of list.getEntries())
+                if (entry.duration >= 80)
+                    pressureSamples.push(entry.startTime);
+            pressureSamples = pressureSamples.filter(start => now - start <= 8000);
+            const needed = profile() === 'full' ? 2 : 3;
+            if (pressureSamples.length < needed)
+                return;
+            root.dataset.motionProfile = profile() === 'full' ? 'balanced' : 'minimal';
+            pressureSamples = [];
+            window.dispatchEvent(new Event('aide:motion'));
+            if (profile() === 'minimal')
+                pressureObserver?.disconnect();
+        });
+        pressureObserver.observe({ type: 'longtask', buffered: true });
+        window.addEventListener('pagehide', () => pressureObserver?.disconnect(), { once: true });
+    }
     function motionChanged() {
         if (!allowed()) {
             cancelAll();

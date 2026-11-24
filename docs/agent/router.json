@@ -282,6 +282,11 @@
       ],
       [
         "node",
+        "--test",
+        "scripts/i18n-lazy.test.cjs"
+      ],
+      [
+        "node",
         "scripts/test_i18n_coverage.cjs"
       ],
       [
@@ -473,6 +478,15 @@
       [
         "node",
         "scripts/markdown-code.test.cjs"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/markdown-lazy-languages.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/cmake-render.test.cjs"
       ],
       [
         "node",
@@ -1639,6 +1653,11 @@
       [
         "node",
         "scripts/experience-runtime.test.cjs"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/settings-navigation.test.cjs"
       ],
       [
         "node",
