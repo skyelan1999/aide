@@ -9011,26 +9011,85 @@ function renderParallelContextDetail(detail) {
 function paintContextUsage(data) {
     ensureContextMeterControls();
     const { usage, lifetime } = currentContextUsage();
-    const title = usage ? (lifetime ? (usage.estimated ? '会话消耗（含估算）' : '会话实际消耗') : (usage.estimated ? '最近任务消耗（估算）' : '最近任务实际消耗')) : '会话消耗';
-    $('context-card-label').textContent = t(title);
-    $('context-stat').textContent = usage ? formatUsageTokens(contextUsageTotal(usage)) : '—';
-    $('context-stat').title = usage ? t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), contextUsageTotal(usage).toLocaleString()) : t('等待上游用量回传');
-    $('context-usage-summary').textContent = usage ? t('输入 {0} · 输出 {1}', formatUsageTokens(usage.prompt), formatUsageTokens(usage.completion)) : t('等待上游用量回传');
     const run = state.session?.runs?.at(-1);
+    const parallelism = Math.max(1, Number(run?.parallelism) || 1);
+    const card = $('context-card');
+    card.classList.toggle('is-parallel', parallelism > 1);
+    const parallelBadge = $('context-parallel-badge');
+    parallelBadge.hidden = true;
+    parallelBadge.textContent = '';
+    $('context-card-label').textContent = t(lifetime || !usage ? '消耗' : '最近任务');
+    $('context-stat').textContent = usage ? formatUsageTokens(contextUsageTotal(usage)).replace(/\.0(?=[KMB])/, '') : '—';
+    const totalDetail = usage ? t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), contextUsageTotal(usage).toLocaleString()) : t('等待上游用量回传');
+    const totalHover = t('会话消耗') + ': ' + totalDetail;
+    $('context-stat').removeAttribute('title');
+    card.dataset.totalDetail = totalHover;
+    $('context-total-line').setAttribute('aria-label', totalHover);
+    $('context-usage-kind').textContent = usage?.estimated ? t('含估算') : '';
+    const usageSummary = $('context-usage-summary');
+    const usageRatio = $('context-usage-ratio');
+    usageSummary.replaceChildren();
+    usageRatio.replaceChildren();
+    usageRatio.hidden = !usage;
+    if (usage) {
+        const total = Math.max(1, contextUsageTotal(usage));
+        for (const [kind, label, value] of [['input', '输入', usage.prompt || 0], ['output', '输出', usage.completion || 0]]) {
+            const item = el('span', 'context-usage-part context-usage-' + kind);
+            item.append(el('i', 'context-usage-dot'), el('span', '', t(label)), el('strong', '', formatUsageTokens(value)));
+            usageSummary.append(item);
+            if (Number(value) > 0) {
+                const segment = el('span', 'context-usage-ratio-segment context-usage-ratio-' + kind);
+                segment.style.width = Math.max(0, Math.min(100, Number(value) / total * 100)) + '%';
+                segment.style.minWidth = '2px';
+                usageRatio.append(segment);
+            }
+        }
+        usageRatio.setAttribute('aria-label', t('输入 {0} · 输出 {1}', formatUsageTokens(usage.prompt), formatUsageTokens(usage.completion)));
+    }
+    else {
+        usageSummary.textContent = t('等待上游用量回传');
+        usageRatio.setAttribute('aria-label', t('等待上游用量回传'));
+    }
+    const runSummary = $('context-run-summary');
+    const runUsage = run?.usage;
+    runSummary.hidden = !(lifetime && contextUsageTotal(runUsage) > 0);
+    $('context-run-label').textContent = t('最近任务');
+    $('context-run-total').textContent = runSummary.hidden ? '' : formatUsageTokens(contextUsageTotal(runUsage)).replace(/\.0(?=[KMB])/, '');
+    const showParallel = false;
+    parallelBadge.hidden = !showParallel;
+    parallelBadge.textContent = showParallel ? parallelism + '×' : '';
+    parallelBadge.title = t('并行容量；不代表 Token 倍率或等比例提速');
+    if (!runSummary.hidden) {
+        const runDetail = t('最近任务') + ': ' + t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (runUsage.prompt || 0).toLocaleString(), (runUsage.completion || 0).toLocaleString(), contextUsageTotal(runUsage).toLocaleString()) + (parallelism > 1 ? ' · ' + t('并行 {0}×', parallelism) + ' · ' + t('并行容量；不代表 Token 倍率或等比例提速') : '');
+        runSummary.removeAttribute('title');
+        runSummary.setAttribute('aria-label', runDetail);
+        card.dataset.runDetail = runDetail;
+    }
     const request = latestRequestContext(data);
+    renderContextRuntime(run);
+    paintContextUsageRings(run, request);
     const bar = $('context-bar');
     const requestSummary = $('context-request-summary');
     bar.replaceChildren();
     bar.classList.remove('warn');
+    bar.hidden = !request;
+    requestSummary.replaceChildren();
     if (request) {
         const actual = !request.usage?.estimated && request.usage?.prompt > 0;
         const input = actual ? request.usage.prompt : request.inputEstimate || 0;
         const output = actual ? request.usage.completion || 0 : 0;
         const window = request.contextWindow || 65536;
         const occupied = input + output;
-        const label = t('{0} · {1}', t(request.label), t(actual ? '上游实际' : '估算'));
-        requestSummary.textContent = label + ' · ' + fmtTokens(occupied) + ' / ' + fmtTokens(window);
-        requestSummary.title = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
+        const requestLabel = el('span', 'context-request-label', t('上下文'));
+        requestLabel.append(el('small', '', t(actual ? '上游实际' : '估算')));
+        const metric = el('span', 'context-request-metric');
+        metric.append(el('strong', 'context-request-value', fmtTokens(occupied) + ' / ' + fmtTokens(window)), el('small', 'context-request-percent', Math.round(occupied / window * 100) + '%'));
+        requestSummary.append(requestLabel, metric);
+        const requestDetail = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
+        requestSummary.removeAttribute('title');
+        requestSummary.setAttribute('aria-label', requestDetail);
+        card.dataset.requestDetail = requestDetail;
+        card.style.setProperty('--context-progress', Math.min(100, Math.max(0, occupied / window * 100)) + '%');
         bar.setAttribute('aria-label', requestSummary.textContent);
         for (const [tokens, kind, name] of [[input, 'input', '请求输入'], [output, 'output', '请求输出']]) {
             if (!tokens)
@@ -9044,7 +9103,11 @@ function paintContextUsage(data) {
         bar.classList.toggle('warn', occupied > window * .9);
     }
     else {
-        requestSummary.textContent = t(run?.parallelism > 1 ? '并行各路独立计量 · 等待请求用量' : '尚无单次请求用量');
+        requestSummary.textContent = t(run?.parallelism > 1 ? '等待上下文' : '暂无上下文');
+        requestSummary.removeAttribute('title');
+        requestSummary.setAttribute('aria-label', requestSummary.textContent);
+        card.dataset.requestDetail = requestSummary.textContent;
+        card.style.setProperty('--context-progress', '0%');
         bar.setAttribute('aria-label', requestSummary.textContent);
     }
     const detail = $('context-card-detail');
@@ -9057,6 +9120,8 @@ function paintContextUsage(data) {
     const body = el('div', 'context-usage-detail-body');
     if (usage)
         body.append(el('p', 'context-card-actual', t('累计输入 {0} · 输出 {1} · {2}', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), t(usage.estimated ? '含估算' : '上游实际'))));
+    if (runUsage)
+        body.append(el('p', 'context-card-actual', t('最近任务') + ': ' + formatUsageTokens(runUsage.prompt || 0) + ' + ' + formatUsageTokens(runUsage.completion || 0) + ' = ' + formatUsageTokens(contextUsageTotal(runUsage)) + (parallelism > 1 ? ' · ' + t('并行 {0}×', parallelism) : '')));
     if (['running', 'queued'].includes(run?.status))
         body.append(el('p', 'context-card-actual', t('运行中，仅统计已回传用量；未完成请求稍后更新。')));
     renderParallelContextDetail(body);
@@ -9098,7 +9163,9 @@ function clearContextCompactionState(sessionID) {
     if (state.session?.id !== id)
         return;
     const card = $('context-card');
-    card?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled');
+    card?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled', 'is-compaction-failed');
+    if (card)
+        delete card.dataset.compactionDetail;
     renderContextCompactionState($('context-card-detail'));
 }
 function ensureContextCompactionWatch(sessionID) {
@@ -9208,7 +9275,9 @@ function showContextCompaction(event) {
             contextCompactionElapsedTimers.delete(targetSession);
             if (state.session?.id !== targetSession)
                 return;
-            $('context-card')?.classList.remove('was-compacted', 'is-compacting', 'is-compaction-stalled');
+            $('context-card')?.classList.remove('was-compacted', 'is-compacting', 'is-compaction-stalled', 'is-compaction-failed');
+            if ($('context-card'))
+                delete $('context-card').dataset.compactionDetail;
             renderContextCompactionState($('context-card-detail'));
             if (state.contextMeter && !state.contextMeterDraft)
                 renderContextMeter(state.contextMeter, false);
@@ -9237,9 +9306,26 @@ function renderContextCompactionState(detail) {
     const stalledForMs = inProgress ? Math.max(0, Date.now() - (event.updatedAt || event.startedAt || Date.now())) : 0;
     const stalled = inProgress && stalledForMs >= 180_000;
     const running = inProgress && !stalled;
+    const failed = !!event && !inProgress && event.phase !== 'completed';
     card?.classList.toggle('is-compacting', !!running);
     card?.classList.toggle('is-compaction-stalled', !!stalled);
+    card?.classList.toggle('is-compaction-failed', failed || stalled);
     card?.classList.toggle('was-compacted', event?.phase === 'completed');
+    if (card) {
+        if (!event)
+            delete card.dataset.compactionDetail;
+        else if (inProgress)
+            card.dataset.compactionDetail = ' · ◌ ' + t('上下文压缩中');
+        else if (event.phase === 'completed')
+            card.dataset.compactionDetail = ' · ✓ ' + t('压缩完成');
+        else
+            card.dataset.compactionDetail = ' · × ' + (event.text || t('压缩失败，原会话内容已保留'));
+    }
+    const retry = $('context-compaction-retry');
+    if (retry) {
+        retry.hidden = !(failed || stalled);
+        retry.disabled = !!inProgress && !stalled;
+    }
     detail.querySelectorAll('.context-compaction-status').forEach((row) => row.remove());
     if (!event)
         return;
@@ -9302,19 +9388,139 @@ function contextMeterScope() {
 function contextMeterTransitioning() {
     return !!state.pendingSessionId && state.pendingSessionId !== state.session?.id;
 }
+function contextOccupancyRatio(context) {
+    const actual = !!context?.usage && !context.usage.estimated && (context.usage.prompt || 0) > 0;
+    const input = actual ? context.usage.prompt || 0 : context?.inputEstimate || 0;
+    const output = actual ? context.usage.completion || 0 : 0;
+    const window = context?.contextWindow || 0;
+    return window > 0 ? Math.min(1, Math.max(0, (input + output) / window)) : 0;
+}
+function contextRunDuration(run) {
+    const started = Date.parse(run?.created || '');
+    if (!Number.isFinite(started))
+        return '';
+    const active = ['running', 'awaiting_clarification', 'awaiting_approval', 'queued'].includes(run?.status);
+    let ended = active ? Date.now() : 0;
+    if (!active) {
+        const records = [
+            ...(run?.orchestrationEvents || []),
+            ...(run?.requestSnapshots || []),
+            ...(run?.toolUses || []),
+            ...(run?.parallel?.parts || []),
+        ];
+        for (const record of records) {
+            const stamp = Date.parse(record?.completedAt || '');
+            if (Number.isFinite(stamp))
+                ended = Math.max(ended, stamp);
+        }
+    }
+    if (!ended || ended < started)
+        return '';
+    const seconds = Math.max(0, Math.floor((ended - started) / 1000));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const rest = seconds % 60;
+    return hours > 0
+        ? hours + ':' + String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0')
+        : minutes + ':' + String(rest).padStart(2, '0');
+}
+function renderContextRuntime(run) {
+    const node = $('context-runtime');
+    if (!node)
+        return;
+    const duration = contextRunDuration(run);
+    node.textContent = duration ? t('运行时间') + ' ' + duration : '';
+    node.title = duration ? t('运行时间') + ' ' + duration : '';
+}
+setInterval(() => {
+    const run = state.session?.runs?.at(-1);
+    if (['running', 'awaiting_clarification', 'awaiting_approval', 'queued'].includes(run?.status))
+        renderContextRuntime(run);
+}, 1000);
+function paintContextUsageRings(run, request) {
+    const host = $('context-parallel-rings');
+    if (!host)
+        return;
+    host.replaceChildren();
+    const card = $('context-card');
+    const count = Math.max(1, Math.min(10, run?.parallelism || 1));
+    for (let index = 0; index < count; index++) {
+        const part = count > 1 ? run?.parallel?.parts?.[index] : null;
+        const context = count > 1 ? part?.context : request;
+        const ratio = contextOccupancyRatio(context);
+        const percent = Math.round(ratio * 1000) / 10;
+        const ring = el('span', 'usage-ring');
+        ring.tabIndex = 0;
+        ring.setAttribute('role', 'listitem');
+        ring.style.setProperty('--ring-progress', percent + '%');
+        let detail = (count > 1 ? t('第 {0} 路', index + 1) : t('主请求')) + ' · ' + t('并行 {0}×', count);
+        if (context) {
+            const actual = !!context.usage && !context.usage.estimated && (context.usage.prompt || 0) > 0;
+            const input = actual ? context.usage.prompt || 0 : context.inputEstimate || 0;
+            const output = actual ? context.usage.completion || 0 : 0;
+            detail += ' · ' + t('输入') + ' ' + fmtTokens(input)
+                + ' · ' + t('输出') + ' ' + fmtTokens(output)
+                + ' · ' + t('窗口') + ' ' + fmtTokens(context.contextWindow || 0)
+                + ' · ' + percent + '%';
+            if (!actual && input > 0)
+                detail += ' · ' + t('估算');
+        }
+        else {
+            detail += ' · ' + t('暂无上下文');
+        }
+        const show = () => { if (card)
+            card.dataset.ringDetail = detail; };
+        const hide = () => { if (card?.dataset.ringDetail === detail)
+            delete card.dataset.ringDetail; };
+        ring.onpointerenter = show;
+        ring.onfocus = show;
+        ring.onpointerleave = hide;
+        ring.onblur = hide;
+        ring.setAttribute('aria-label', detail);
+        ring.append(el('span', 'usage-ring-center'));
+        host.append(ring);
+    }
+    renderContextCompactionState($('context-compaction-slot'));
+}
 function clearContextMeterDisplay() {
-    $('context-card-label').textContent = t('会话消耗');
+    $('context-card-label').textContent = t('消耗');
     $('context-stat').textContent = '—';
     $('context-stat').title = '';
+    $('context-usage-kind').textContent = '';
+    renderContextRuntime(null);
+    const parallelBadge = $('context-parallel-badge');
+    parallelBadge.hidden = true;
+    parallelBadge.textContent = '';
+    const usageRatio = $('context-usage-ratio');
+    usageRatio.replaceChildren();
+    usageRatio.hidden = true;
+    usageRatio.removeAttribute('aria-label');
+    const runSummary = $('context-run-summary');
+    runSummary.hidden = true;
+    $('context-run-label').textContent = t('最近任务');
+    $('context-run-total').textContent = '';
+    runSummary.title = '';
     const bar = $('context-bar');
     bar.replaceChildren();
+    bar.hidden = true;
     bar.removeAttribute('aria-label');
     bar.classList.remove('warn');
     $('context-card-detail')?.replaceChildren();
     $('context-usage-summary').textContent = '';
     $('context-request-summary').textContent = '';
     $('context-compaction-slot')?.replaceChildren();
-    $('context-card')?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled');
+    $('context-parallel-rings')?.replaceChildren();
+    const compactionRetry = $('context-compaction-retry');
+    if (compactionRetry) {
+        compactionRetry.hidden = true;
+        compactionRetry.disabled = false;
+    }
+    const contextCard = $('context-card');
+    if (contextCard) {
+        delete contextCard.dataset.ringDetail;
+        delete contextCard.dataset.compactionDetail;
+    }
+    contextCard?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled', 'is-compaction-failed', 'is-parallel');
     if ($('context-card-detail'))
         $('context-card-detail').title = '';
     hideCtxTooltip();
@@ -14477,7 +14683,9 @@ $('compact-button').onclick = action(async () => {
             state.contextCompactions.delete(sessionId);
             clearTimeout(contextCompactionTimers.get(sessionId));
             contextCompactionTimers.delete(sessionId);
-            $('context-card')?.classList.remove('is-compacting', 'was-compacted');
+            $('context-card')?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-failed');
+            if ($('context-card'))
+                delete $('context-card').dataset.compactionDetail;
             renderContextCompactionState($('context-card-detail'));
             toast(t("历史未超阈值，无需压缩"));
         }
@@ -14492,6 +14700,10 @@ $('compact-button').onclick = action(async () => {
         await stopCompactionWatch();
     }
 });
+$('context-compaction-retry').onclick = () => {
+    if (!$('context-compaction-retry').disabled)
+        $('compact-button').click();
+};
 async function initialize() {
     syncPanelButtons();
     await refreshConfig();

@@ -20,7 +20,7 @@
             return englishLoad;
         englishLoad = new Promise(resolve => {
             const script = document.createElement('script');
-            script.src = '/locales/en.js?v=206';
+            script.src = '/locales/en.js?v=210';
             script.async = true;
             script.onload = () => { catalog = window.aideEnglish || {}; resolve(); };
             script.onerror = () => { englishLoad = null; resolve(); };
