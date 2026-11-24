@@ -33,7 +33,6 @@ import (
 //go:embed relay/agent.py
 var sourceRelayAgent string
 
-const sourceRelayMaxFile = 64 << 20
 const sourceRelayMaxList = 1 << 20
 
 var relayHostname = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$`)
@@ -223,8 +222,8 @@ func (a *App) relayCallInner(ctx context.Context, src Source, mode string, reque
 	defer conn.Close()
 	stop := context.AfterFunc(ctx, func() { conn.Close() })
 	defer stop()
-	deadline := time.Now().Add(30 * time.Second)
-	if until, ok := ctx.Deadline(); ok && until.Before(deadline) {
+	var deadline time.Time
+	if until, ok := ctx.Deadline(); ok {
 		deadline = until
 	}
 	if err = conn.SetDeadline(deadline); err != nil {
@@ -288,7 +287,7 @@ func (a *App) relayCallInner(ctx context.Context, src Source, mode string, reque
 	if mode != "list" && mode != "read" && mode != "readat" {
 		return nil, response, nil
 	}
-	if response.Size < 0 || response.Size > limit {
+	if response.Size < 0 || limit > 0 && response.Size > limit {
 		return nil, empty, errors.New("中继文件或目录响应超过读取上限")
 	}
 	payload := make([]byte, int(response.Size))
@@ -337,8 +336,8 @@ func (a *App) relayReadSource(ctx context.Context, src Source, p string, limit i
 	if err := sourceRelayPath(p, false); err != nil {
 		return nil, err
 	}
-	if limit <= 0 || limit > sourceRelayMaxFile {
-		return nil, errors.New("中继文件读取上限为 64 MiB")
+	if limit < 0 {
+		return nil, errors.New("中继文件读取上限无效")
 	}
 	data, _, err := a.relayCall(ctx, src, "read", map[string]any{"path": p, "limit": limit}, nil, limit)
 	return data, err
@@ -349,9 +348,6 @@ func (a *App) relayWriteSource(src Source, p string, data []byte, exclusive bool
 func (a *App) relayWriteSourceContext(ctx context.Context, src Source, p string, data []byte, exclusive bool) error {
 	if err := sourceRelayPath(p, false); err != nil {
 		return err
-	}
-	if len(data) > sourceRelayMaxFile {
-		return errors.New("中继单文件上传上限为 64 MiB")
 	}
 	digest := sha256.Sum256(data)
 	_, _, err := a.relayCall(ctx, src, "write", map[string]any{"path": p, "size": len(data), "exclusive": exclusive, "sha256": hex.EncodeToString(digest[:])}, data, 0)

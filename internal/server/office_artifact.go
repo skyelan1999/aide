@@ -24,8 +24,8 @@ func checkOfficeArchive(b []byte) error {
 }
 
 func checkOfficeArchiveReader(r io.ReaderAt, size int64) error {
-	if size <= 0 || size > maxRawFile {
-		return errors.New("Office 文件为空或超过大小限制")
+	if size <= 0 {
+		return errors.New("Office 文件为空")
 	}
 	z, err := zip.NewReader(r, size)
 	if err != nil {
@@ -107,8 +107,8 @@ func officeRun(input []byte, op string, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(b) == 0 || len(b) > maxRawFile {
-		return nil, errors.New("Office 输出为空或超过文件大小限制")
+	if len(b) == 0 {
+		return nil, errors.New("Office 输出为空")
 	}
 	return b, nil
 }
@@ -130,8 +130,8 @@ func officeExtractText(b []byte, ext string) (string, error) {
 
 func officeExtractTextLimit(b []byte, ext string, outputLimit int) (string, error) {
 	if strings.EqualFold(ext, ".pdf") {
-		if len(b) == 0 || len(b) > maxRawFile {
-			return "", errors.New("PDF 文件为空或超过大小限制")
+		if len(b) == 0 {
+			return "", errors.New("PDF 文件为空")
 		}
 		if !bytes.HasPrefix(bytes.TrimSpace(b[:min(len(b), 1024)]), []byte("%PDF-")) {
 			return "", errors.New("文件不是有效的 PDF")

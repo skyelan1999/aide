@@ -95,8 +95,8 @@ func officeDocumentTransformPath(ctx context.Context, input, ext, operation stri
 		return nil, e
 	}
 	defer file.Close()
-	result, e := io.ReadAll(io.LimitReader(file, maxRawFile+1))
-	if e != nil || len(result) > maxRawFile {
+	result, e := io.ReadAll(file)
+	if e != nil || len(result) == 0 {
 		return nil, errors.New("Office 输出无效或过大")
 	}
 	if operation == "edit" {
@@ -164,10 +164,6 @@ func (a *App) officeDocumentRead(ctx context.Context, ar knowledgeArea, in offic
 	if err := a.checkOfficeDocumentRead(ctx, ar, ai, expectedWorkspace, generation); err != nil {
 		return nil, err
 	}
-	info, err := os.Stat(input)
-	if err != nil {
-		return nil, err
-	}
 	result, err := officeDocumentTransformPath(ctx, input, ext, "read", map[string]int{"offset": in.Offset})
 	if err != nil {
 		return nil, err
@@ -177,7 +173,7 @@ func (a *App) officeDocumentRead(ctx context.Context, ar knowledgeArea, in offic
 		return nil, errors.New("Office 解析结果无效")
 	}
 	out["hash"] = hex.EncodeToString(checksum.Sum(nil))
-	out["readOnly"] = in.ReadOnly || in.Origin != "" || !officeAreaWritable(ar) || info.Size() > maxRawFile
+	out["readOnly"] = in.ReadOnly || in.Origin != "" || !officeAreaWritable(ar)
 	out["path"] = in.Path
 	if err := a.checkOfficeDocumentRead(ctx, ar, ai, expectedWorkspace, generation); err != nil {
 		return nil, err
@@ -211,7 +207,7 @@ func (a *App) officeDocumentOperation(ctx context.Context, in officeDocumentRequ
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
-	b, e := a.knowledgeAreaRead(ctx, ar, in.Path, maxRawFile)
+	b, e := a.knowledgeAreaRead(ctx, ar, in.Path, 0)
 	if e != nil {
 		return nil, e
 	}

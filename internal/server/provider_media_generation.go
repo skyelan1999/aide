@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -356,7 +357,8 @@ func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, inpu
 		if err != nil {
 			return "", input, err
 		}
-		resp, err := client.Do(req)
+		downloadClient := &http.Client{CheckRedirect: client.CheckRedirect}
+		resp, err := downloadClient.Do(req)
 		if err != nil {
 			return "", input, errors.New("生成完成，下载失败；可继续原任务下载，不需要重新生成")
 		}
@@ -364,13 +366,17 @@ func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, inpu
 		if resp.StatusCode != 200 {
 			return "", input, fmt.Errorf("生成完成，下载 HTTP %d；未重新生成", resp.StatusCode)
 		}
-		limit := int64(20 << 20)
-		if state.Kind == "video" {
-			limit = 100 << 20
+		spool, header, err := spoolGeneratedAsset(resp.Body)
+		if err != nil {
+			return "", input, errors.New("生成文件下载不完整；未重新生成")
 		}
-		data, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
-		if err != nil || int64(len(data)) > limit || !mediaFileMatches(data, state.Format) {
-			return "", input, errors.New("生成文件编码无效或超过保存限制；未重新生成")
+		defer func() {
+			name := spool.Name()
+			_ = spool.Close()
+			_ = os.Remove(name)
+		}()
+		if !mediaFileMatches(header, state.Format) {
+			return "", input, errors.New("生成文件编码无效；未重新生成")
 		}
 		a.filesMu.Lock()
 		a.mu.Lock()
@@ -380,9 +386,16 @@ func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, inpu
 			return "", input, errors.New("工作区已变化或为远程工作区；请恢复原工作区后继续下载")
 		}
 		state.Asset = "generated/" + state.Kind + "/qwen-" + newID() + "." + state.Format
-		err = putText(a.workspace, state.Asset, data)
+		root, rootErr := os.OpenRoot(a.workspace.Name())
 		a.mu.Unlock()
 		a.filesMu.Unlock()
+		if rootErr != nil {
+			state.Asset = ""
+			return "", input, rootErr
+		}
+		fs := &transferFS{root: root}
+		err = writeStreamToTransferFSContext(ctx, fs, state.Asset, spool)
+		err = errors.Join(err, root.Close())
 		if err != nil {
 			state.Asset = ""
 			return "", input, err
@@ -414,14 +427,14 @@ func generatedMediaRawType(path string) (string, int64) {
 		return "", 0
 	}
 	if m[1] == "video" && m[2] == "mp4" {
-		return "video/mp4", 100 << 20
+		return "video/mp4", 0
 	}
 	if m[1] == "speech" {
 		if m[2] == "mp3" {
-			return "audio/mpeg", 20 << 20
+			return "audio/mpeg", 0
 		}
 		if m[2] == "wav" {
-			return "audio/wav", 20 << 20
+			return "audio/wav", 0
 		}
 	}
 	return "", 0

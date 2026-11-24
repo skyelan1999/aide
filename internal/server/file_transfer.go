@@ -212,9 +212,6 @@ func (a *App) transferRename(loc transferLocation, oldPath, newPath string) erro
 	return root.Rename(oldPath, newPath)
 }
 func (a *App) transferRemoveTree(loc transferLocation, p string, dir bool, depth int) error {
-	if depth > maxArchiveDepth {
-		return errors.New("目录层级超过限制")
-	}
 	if dir {
 		children, err := a.transferChildren(loc, p)
 		if err != nil {
@@ -340,23 +337,15 @@ func (a *App) legacyReferenceTransfer(w http.ResponseWriter, r *http.Request, re
 		}
 		planned = append(planned, item{old: p, target: target, dir: entry["dir"] == true})
 	}
-	totalBytes, totalEntries := 0, 0
 	for i := range planned {
 		p := &planned[i]
-		content, err := a.collectArchive(p.old, src.source, src.hasSource, p.dir)
+		content, err := a.collectArchiveContext(r.Context(), p.old, src.source, src.hasSource, p.dir)
 		if err != nil {
 			fail(w, 400, err)
 			return
 		}
+		defer cleanupArchiveItems(content)
 		p.content = content
-		totalEntries += len(content)
-		for _, part := range content {
-			totalBytes += len(part.data)
-		}
-		if totalEntries > maxArchiveFiles || totalBytes > maxRawFile {
-			fail(w, 400, errors.New("所选文件超过 1000 项或 64 MiB 上限"))
-			return
-		}
 	}
 	copied := 0
 	for _, p := range planned {
@@ -365,7 +354,7 @@ func (a *App) legacyReferenceTransfer(w http.ResponseWriter, r *http.Request, re
 		if p.dir {
 			err = a.transferMkdir(dst, stage)
 		} else {
-			err = a.transferWrite(dst, stage, p.content[0].data)
+			err = writeArchiveItemToLocation(r.Context(), a, dst, stage, p.content[0])
 		}
 		if err == nil && p.dir {
 			for _, part := range p.content[1:] {
@@ -374,7 +363,7 @@ func (a *App) legacyReferenceTransfer(w http.ResponseWriter, r *http.Request, re
 				if part.dir {
 					err = a.transferMkdir(dst, target)
 				} else {
-					err = a.transferWrite(dst, target, part.data)
+					err = writeArchiveItemToLocation(r.Context(), a, dst, target, part)
 				}
 				if err != nil {
 					break

@@ -2,18 +2,12 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"mime"
 	"net/http"
 	"os"
 	"path"
 	"strings"
-)
-
-var (
-	maxBatchFiles = 1000
-	maxBatchBytes = 256 << 20
 )
 
 type batchFileResult struct {
@@ -87,7 +81,6 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 		src = got
 		hasSource = true
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBatchBytes)+1)
 	mp, err := r.MultipartReader()
 	if err != nil {
 		fail(w, 400, err)
@@ -98,7 +91,6 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 		defer a.filesMu.Unlock()
 	}
 	results := []batchFileResult{}
-	fileCount := 0
 	for {
 		part, nerr := mp.NextPart()
 		if nerr == io.EOF {
@@ -116,14 +108,6 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 			_ = part.Close()
 			continue
 		}
-		fileCount++
-		if fileCount > maxBatchFiles {
-			_, _ = io.Copy(io.Discard, part)
-			_ = part.Close()
-			results = append(results, batchFileResult{Path: rawName, OK: false,
-				Error: fmt.Sprintf("\u6587\u4ef6\u6570\u91cf\u8d85\u8fc7 %d \u4e0a\u9650", maxBatchFiles)})
-			break
-		}
 		rel, perr := cleanBatchRel(rawName)
 		full := rawName
 		if perr == nil {
@@ -136,19 +120,29 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 			results = append(results, batchFileResult{Path: rawName, OK: false, Error: perr.Error()})
 			continue
 		}
-		b, rerr := io.ReadAll(io.LimitReader(part, maxRawFile+1))
+		tmp, rerr := os.CreateTemp("", "aide-batch-upload-*")
+		if rerr == nil {
+			_, rerr = io.Copy(tmp, part)
+		}
 		if rerr == nil {
 			_, rerr = io.Copy(io.Discard, part)
 		}
 		_ = part.Close()
+		if tmp != nil {
+			rerr = errors.Join(rerr, tmp.Close())
+		}
 		if rerr != nil {
-			results = append(results, batchFileResult{Path: full, OK: false,
-				Error: "\u6279\u6b21\u603b\u5927\u5c0f\u8d85\u8fc7\u9650\u5236"})
+			if tmp != nil {
+				_ = os.Remove(tmp.Name())
+			}
+			results = append(results, batchFileResult{Path: full, OK: false, Error: "文件上传读取失败: " + rerr.Error()})
 			break
 		}
-		if len(b) > maxRawFile {
-			results = append(results, batchFileResult{Path: full, OK: false,
-				Error: fmt.Sprintf("\u6587\u4ef6\u8d85\u8fc7 %d MiB \u9650\u5236", maxRawFile>>20)})
+		tmpPath := tmp.Name()
+		info, statErr := os.Stat(tmpPath)
+		if statErr != nil {
+			_ = os.Remove(tmpPath)
+			results = append(results, batchFileResult{Path: full, OK: false, Error: statErr.Error()})
 			continue
 		}
 		var werr error
@@ -157,23 +151,39 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 				werr = errors.New("\u540c\u540d\u6587\u4ef6\u5df2\u5b58\u5728")
 			} else if !errors.Is(e, os.ErrNotExist) {
 				werr = e
-			} else {
-				werr = a.writeSourceText(src, full, b)
 			}
-		} else {
-			// Remote directory listings fail when an ancestor does not exist yet.
-			// Treat that as a normal new nested path; sftpWrite creates parents.
-			if a.workspaceStatExists(full) {
-				werr = errors.New("\u540c\u540d\u6587\u4ef6\u5df2\u5b58\u5728")
+		} else if a.workspaceStatExists(full) {
+			werr = errors.New("\u540c\u540d\u6587\u4ef6\u5df2\u5b58\u5728")
+		}
+		if werr == nil {
+			sourceID := "workspace"
+			if hasSource {
+				sourceID = src.ID
+			}
+			if a.transferSourceStreaming(sourceID) {
+				var input *os.File
+				input, werr = os.Open(tmpPath)
+				if werr == nil {
+					werr = writeStreamToTransfer(r.Context(), a, sourceID, full, input)
+					werr = errors.Join(werr, input.Close())
+				}
 			} else {
-				werr = a.writeWorkspaceText(full, b)
+				// Non-random-access reference protocols retain their byte-slice API.
+				var data []byte
+				data, werr = os.ReadFile(tmpPath)
+				if werr == nil && hasSource {
+					werr = a.writeSourceText(src, full, data)
+				} else if werr == nil {
+					werr = a.writeWorkspaceText(full, data)
+				}
 			}
 		}
+		_ = os.Remove(tmpPath)
 		if werr != nil {
 			results = append(results, batchFileResult{Path: full, OK: false, Error: werr.Error()})
 			continue
 		}
-		results = append(results, batchFileResult{Path: full, Size: int64(len(b)), OK: true})
+		results = append(results, batchFileResult{Path: full, Size: info.Size(), OK: true})
 	}
 	if len(results) == 0 {
 		fail(w, 400, errors.New("\u672a\u6536\u5230\u4e0a\u4f20\u6587\u4ef6"))

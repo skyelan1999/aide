@@ -2,6 +2,7 @@ package server
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
@@ -9,13 +10,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"time"
 )
-
-const maxArchiveEncoded = 128 << 20
 
 func normalizeArchiveFormat(format string) (string, error) {
 	switch strings.ToLower(strings.TrimPrefix(strings.TrimSpace(format), ".")) {
@@ -52,20 +52,42 @@ func archiveDestinationName(p string) string {
 	return strings.TrimSuffix(name, path.Ext(name))
 }
 
-func encodeArchiveFormat(items []archiveItem, format string) ([]byte, error) {
-	format, err := normalizeArchiveFormat(format)
-	if err != nil {
-		return nil, err
-	}
-	if format == "zip" {
-		return encodeArchive(items)
-	}
-	var tarData bytes.Buffer
-	tw := tar.NewWriter(&tarData)
+func writeZipArchive(ctx context.Context, items []archiveItem, output io.Writer) error {
+	zw := zip.NewWriter(output)
 	for _, item := range items {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		hdr := &zip.FileHeader{Name: item.name, Method: zip.Deflate}
+		if item.dir {
+			hdr.SetMode(os.ModeDir | 0755)
+		}
+		out, err := zw.CreateHeader(hdr)
+		if err != nil {
+			return err
+		}
+		if err = copyArchiveItem(ctx, out, item); err != nil {
+			return err
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return errors.Join(zw.Close(), ctx.Err())
+}
+
+func writeTarArchive(ctx context.Context, items []archiveItem, output io.Writer) error {
+	tw := tar.NewWriter(output)
+	for _, item := range items {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		mode := int64(0644)
 		typ := byte(tar.TypeReg)
-		size := int64(len(item.data))
+		size := item.size
+		if item.filePath == "" {
+			size = int64(len(item.data))
+		}
 		if item.dir {
 			mode, typ, size = 0755, tar.TypeDir, 0
 		}
@@ -74,46 +96,79 @@ func encodeArchiveFormat(items []archiveItem, format string) ([]byte, error) {
 			name = strings.TrimSuffix(name, "/") + "/"
 		}
 		hdr := &tar.Header{Name: name, Mode: mode, Size: size, Typeflag: typ, ModTime: time.Unix(0, 0).UTC(), Format: tar.FormatPAX}
-		if err = tw.WriteHeader(hdr); err != nil {
-			return nil, err
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
 		}
-		if !item.dir {
-			if _, err = tw.Write(item.data); err != nil {
-				return nil, err
-			}
+		if err := copyArchiveItem(ctx, tw, item); err != nil {
+			return err
 		}
 	}
-	if err = tw.Close(); err != nil {
-		return nil, err
+	if err := ctx.Err(); err != nil {
+		return err
 	}
-	if format == "tar" {
-		return tarData.Bytes(), nil
+	return errors.Join(tw.Close(), ctx.Err())
+}
+
+// encodeArchiveFormatTo streams an archive directly to its destination. The
+// request context controls cancellation; no wall-clock or byte ceiling is used.
+func encodeArchiveFormatTo(ctx context.Context, items []archiveItem, format string, output io.Writer) error {
+	format, err := normalizeArchiveFormat(format)
+	if err != nil {
+		return err
 	}
-	if format == "tar.gz" {
-		var out bytes.Buffer
-		gz := gzip.NewWriter(&out)
-		if _, err = gz.Write(tarData.Bytes()); err == nil {
-			err = gz.Close()
-		} else {
-			_ = gz.Close()
+	if format == "zip" {
+		return writeZipArchive(ctx, items, output)
+	}
+	produce := func(w io.Writer) error { return writeTarArchive(ctx, items, w) }
+	switch format {
+	case "tar":
+		return produce(output)
+	case "tar.gz":
+		gz := gzip.NewWriter(output)
+		produceErr := produce(gz)
+		closeErr := gz.Close()
+		return errors.Join(produceErr, closeErr, ctx.Err())
+	case "tar.bz2", "tar.xz":
+		codec := "bz2"
+		if format == "tar.xz" {
+			codec = "xz"
 		}
-		if err != nil {
-			return nil, err
-		}
-		return out.Bytes(), nil
+		reader, writer := io.Pipe()
+		producerDone := make(chan error, 1)
+		go func() {
+			producerDone <- errors.Join(produce(writer), writer.Close())
+		}()
+		decodeErr := pythonArchiveCodecStream(ctx, "compress", codec, reader, output)
+		_ = reader.CloseWithError(decodeErr)
+		produceErr := <-producerDone
+		return errors.Join(decodeErr, produceErr, ctx.Err())
+	default:
+		return errors.New("压缩格式无效")
 	}
-	codec := "bz2"
-	if format == "tar.xz" {
-		codec = "xz"
-	}
-	return pythonArchiveCodec("compress", codec, tarData.Bytes())
+}
+
+func encodeArchiveFormat(items []archiveItem, format string) ([]byte, error) {
+	var out bytes.Buffer
+	err := encodeArchiveFormatTo(context.Background(), items, format, &out)
+	return out.Bytes(), err
+}
+
+func encodeArchive(items []archiveItem) ([]byte, error) {
+	return encodeArchiveFormat(items, "zip")
 }
 
 func pythonArchiveCodec(action, codec string, input []byte) ([]byte, error) {
+	var out bytes.Buffer
+	err := pythonArchiveCodecStream(context.Background(), action, codec, bytes.NewReader(input), &out)
+	return out.Bytes(), err
+}
+
+func pythonArchiveCodecStream(ctx context.Context, action, codec string, input io.Reader, output io.Writer) error {
 	if codec != "bz2" && codec != "xz" {
-		return nil, errors.New("压缩格式无效")
+		return errors.New("压缩格式无效")
 	}
-	// Stream in bounded chunks and reject output above the existing archive cap.
+	// Codec input and output stay bounded to small chunks. The request context,
+	// rather than a fixed timeout, determines how long a large archive may run.
 	script := `import bz2,lzma,sys
 mode,kind=sys.argv[1:3]
 src=sys.stdin.buffer
@@ -126,41 +181,30 @@ if mode=='compress':
  sys.stdout.buffer.write(c.flush())
 else:
  d=(bz2.BZ2Decompressor() if kind=='bz2' else lzma.LZMADecompressor())
- total=0
  while True:
   b=src.read(65536)
   if not b: break
   while b or not d.needs_input:
-   out=d.decompress(b,max_length=(67108864-total)+1)
+   out=d.decompress(b,max_length=1048576)
    b=b''
-   total+=len(out)
-   if total>67108864: raise ValueError('解压内容超过 64 MB 限制')
    sys.stdout.buffer.write(out)
    if d.eof: break
    if not out and d.needs_input: break
 `
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 	cmd := exec.CommandContext(ctx, "python3", "-I", "-c", script, action, codec)
-	cmd.Stdin = bytes.NewReader(input)
-	out := &archiveOutputBuffer{limit: maxArchiveEncoded}
-	cmd.Stdout = out
+	cmd.Stdin = input
+	cmd.Stdout = output
 	cmd.Stderr = &archiveOutputBuffer{limit: 4096}
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() != nil {
-			return nil, errors.New("压缩处理超时")
+			return fmt.Errorf("压缩处理已取消: %w", ctx.Err())
 		}
-		if out.exceeded {
-			return nil, fmt.Errorf("归档内容超过 %d MB 限制", maxArchiveEncoded>>20)
-		}
-		return nil, fmt.Errorf("压缩处理失败: %w", err)
+		return fmt.Errorf("压缩处理失败: %w", err)
 	}
-	if out.exceeded {
-		return nil, fmt.Errorf("归档内容超过 %d MB 限制", maxArchiveEncoded>>20)
-	}
-	return out.buf.Bytes(), nil
+	return nil
 }
 
+// archiveOutputBuffer is now used only for bounded subprocess diagnostics.
 type archiveOutputBuffer struct {
 	buf      bytes.Buffer
 	limit    int
@@ -168,22 +212,64 @@ type archiveOutputBuffer struct {
 }
 
 func (w *archiveOutputBuffer) Write(p []byte) (int, error) {
-	if len(p) > w.limit-w.buf.Len() {
+	originalLen := len(p)
+	remaining := w.limit - w.buf.Len()
+	if remaining <= 0 {
 		w.exceeded = true
-		return 0, errors.New("归档输出超出限制")
+		return originalLen, nil
 	}
-	return w.buf.Write(p)
+	if len(p) > remaining {
+		p = p[:remaining]
+		w.exceeded = true
+	}
+	_, _ = w.buf.Write(p)
+	return originalLen, nil
+}
+
+func spoolArchiveCodec(ctx context.Context, codec string, input io.Reader, spoolDir string) (*os.File, error) {
+	f, err := os.CreateTemp(spoolDir, "decoded-*")
+	if err != nil {
+		return nil, err
+	}
+	name := f.Name()
+	if err = pythonArchiveCodecStream(ctx, "decompress", codec, input, f); err == nil {
+		_, err = f.Seek(0, io.SeekStart)
+	}
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		_ = os.Remove(name)
+		return nil, err
+	}
+	return os.Open(name)
 }
 
 func readArchiveFilesForPath(data []byte, filePath string) ([]extractedArchiveFile, error) {
+	return readArchiveFilesFromReader(context.Background(), bytes.NewReader(data), int64(len(data)), filePath)
+}
+
+func readArchiveFilesFromReader(ctx context.Context, input io.ReaderAt, size int64, filePath string) (files []extractedArchiveFile, err error) {
+	spoolDir, err := os.MkdirTemp("", "aide-archive-output-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(spoolDir)
+		}
+	}()
 	ext := archiveExtension(filePath)
 	switch ext {
 	case ".zip":
-		return readArchiveFiles(data)
+		zr, zipErr := zip.NewReader(input, size)
+		if zipErr != nil {
+			return nil, errors.New("不是有效的 ZIP 文件")
+		}
+		return readZipArchive(ctx, zr, spoolDir)
 	case ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2", ".tbz", ".tar.xz", ".txz":
-		var reader io.Reader = bytes.NewReader(data)
+		var reader io.Reader = io.NewSectionReader(input, 0, size)
 		var closer io.Closer
-		var err error
 		switch ext {
 		case ".tar.gz", ".tgz":
 			var gz *gzip.Reader
@@ -195,71 +281,146 @@ func readArchiveFilesForPath(data []byte, filePath string) ([]extractedArchiveFi
 		case ".tar.bz2", ".tbz2", ".tbz":
 			reader = bzip2.NewReader(reader)
 		case ".tar.xz", ".txz":
-			decoded, e := pythonArchiveCodec("decompress", "xz", data)
-			if e != nil {
-				return nil, e
+			var decoded *os.File
+			decoded, err = spoolArchiveCodec(ctx, "xz", reader, spoolDir)
+			if err != nil {
+				return nil, err
 			}
-			reader = bytes.NewReader(decoded)
+			reader, closer = decoded, decoded
 		}
 		if closer != nil {
-			defer closer.Close()
+			defer func() { err = errors.Join(err, closer.Close()) }()
 		}
-		return readTarArchive(reader)
+		return readTarArchiveContext(ctx, reader, spoolDir)
 	case ".gz", ".bz2", ".xz":
-		var reader io.Reader = bytes.NewReader(data)
-		var err error
+		var reader io.Reader = io.NewSectionReader(input, 0, size)
+		var closer io.Closer
 		switch ext {
 		case ".gz":
-			gz, e := gzip.NewReader(reader)
-			if e != nil {
+			var gz *gzip.Reader
+			gz, err = gzip.NewReader(reader)
+			if err != nil {
 				return nil, errors.New("不是有效的 GZIP 文件")
 			}
-			defer gz.Close()
-			reader = gz
+			reader, closer = gz, gz
 		case ".bz2":
 			reader = bzip2.NewReader(reader)
 		case ".xz":
-			decoded, e := pythonArchiveCodec("decompress", "xz", data)
-			if e != nil {
-				return nil, e
+			var decoded *os.File
+			decoded, err = spoolArchiveCodec(ctx, "xz", reader, spoolDir)
+			if err != nil {
+				return nil, err
 			}
-			reader = bytes.NewReader(decoded)
+			reader, closer = decoded, decoded
 		}
-		var content []byte
-		content, err = io.ReadAll(io.LimitReader(reader, maxRawFile+1))
-		if err != nil {
-			return nil, fmt.Errorf("解压失败: %w", err)
+		if closer != nil {
+			defer func() { err = errors.Join(err, closer.Close()) }()
 		}
-		if len(content) > maxRawFile {
-			return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
+		contentPath, contentSize, spoolErr := spoolArchiveReaderContext(ctx, spoolDir, reader)
+		if spoolErr != nil {
+			return nil, fmt.Errorf("解压失败: %w", spoolErr)
 		}
 		name := path.Base(filePath)
 		name = strings.TrimSuffix(name, filePath[len(filePath)-len(ext):])
-		clean, err := cleanArchiveEntryPath(name, false)
-		if err != nil || clean == "" {
+		clean, cleanErr := cleanArchiveEntryPath(name, false)
+		if cleanErr != nil || clean == "" {
 			return nil, errors.New("压缩文件名无效")
 		}
-		return []extractedArchiveFile{{path: clean, data: content}}, nil
+		return []extractedArchiveFile{{path: clean, filePath: contentPath, size: contentSize, spoolDir: spoolDir}}, nil
 	default:
 		return nil, errors.New("支持 ZIP、TAR、TAR.GZ、TAR.BZ2 和 TAR.XZ")
 	}
 }
 
-func readTarArchive(r io.Reader) ([]extractedArchiveFile, error) {
-	tr := tar.NewReader(io.LimitReader(r, maxArchiveEncoded+1))
+func readArchiveFiles(data []byte) (files []extractedArchiveFile, err error) {
+	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return nil, errors.New("不是有效的 ZIP 文件")
+	}
+	spoolDir, err := os.MkdirTemp("", "aide-archive-output-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(spoolDir)
+		}
+	}()
+	return readZipArchive(context.Background(), zr, spoolDir)
+}
+
+func readZipArchive(ctx context.Context, zr *zip.Reader, spoolDir string) ([]extractedArchiveFile, error) {
+	if len(zr.File) == 0 {
+		return nil, errors.New("ZIP 文件为空")
+	}
+	files := make([]extractedArchiveFile, 0, len(zr.File))
+	seen := map[string]bool{}
+	for _, entry := range zr.File {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		isDir := entry.FileInfo().IsDir() || strings.HasSuffix(entry.Name, "/") || strings.HasSuffix(entry.Name, "\\")
+		name, pathErr := cleanArchiveEntryPath(entry.Name, isDir)
+		if pathErr != nil {
+			return nil, pathErr
+		}
+		if name == "" && isDir {
+			continue
+		}
+		if seen[name] {
+			return nil, errors.New("ZIP 包含重复路径")
+		}
+		seen[name] = true
+		if entry.Mode()&os.ModeSymlink != 0 {
+			return nil, errors.New("ZIP 不支持符号链接")
+		}
+		f := extractedArchiveFile{path: name, dir: isDir, spoolDir: spoolDir}
+		if !isDir {
+			rc, err := entry.Open()
+			if err != nil {
+				return nil, err
+			}
+			f.filePath, f.size, err = spoolArchiveReaderContext(ctx, spoolDir, rc)
+			closeErr := rc.Close()
+			if err = errors.Join(err, closeErr); err != nil {
+				return nil, err
+			}
+		}
+		files = append(files, f)
+	}
+	if err := validateArchiveLayout(files); err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+func readTarArchive(r io.Reader) (files []extractedArchiveFile, err error) {
+	spoolDir, err := os.MkdirTemp("", "aide-archive-output-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(spoolDir)
+		}
+	}()
+	return readTarArchiveContext(context.Background(), r, spoolDir)
+}
+
+func readTarArchiveContext(ctx context.Context, r io.Reader, spoolDir string) ([]extractedArchiveFile, error) {
+	tr := tar.NewReader(r)
 	files := make([]extractedArchiveFile, 0)
 	seen := map[string]bool{}
-	total := 0
 	for {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		hdr, err := tr.Next()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
 			return nil, errors.New("TAR 包损坏或格式不支持")
-		}
-		if len(files) >= maxArchiveFiles {
-			return nil, fmt.Errorf("归档最多包含 %d 个条目", maxArchiveFiles)
 		}
 		isDir := hdr.Typeflag == tar.TypeDir
 		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA && !isDir {
@@ -276,18 +437,14 @@ func readTarArchive(r io.Reader) ([]extractedArchiveFile, error) {
 			return nil, errors.New("归档包含重复路径")
 		}
 		seen[name] = true
-		f := extractedArchiveFile{path: name, dir: isDir}
+		f := extractedArchiveFile{path: name, dir: isDir, spoolDir: spoolDir}
 		if !isDir {
-			if hdr.Size < 0 || hdr.Size > int64(maxRawFile-total) {
-				return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
+			if hdr.Size < 0 {
+				return nil, errors.New("TAR 条目大小无效")
 			}
-			f.data, err = io.ReadAll(io.LimitReader(tr, int64(maxRawFile-total)+1))
+			f.filePath, f.size, err = spoolArchiveReaderContext(ctx, spoolDir, tr)
 			if err != nil {
 				return nil, err
-			}
-			total += len(f.data)
-			if total > maxRawFile {
-				return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
 			}
 		}
 		files = append(files, f)

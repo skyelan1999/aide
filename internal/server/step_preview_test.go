@@ -35,12 +35,8 @@ func TestStepLargeStreamingAndRange(t *testing.T) {
 	if !strings.HasPrefix(w.Header().Get("Content-Range"), "bytes 0-12/") {
 		t.Fatal(w.Header())
 	}
-	// The generic byte reader and other viewers keep their existing small cap.
-	if _, err := readRawBytes(a.workspace, "large.STP"); err == nil {
-		t.Fatal("generic read unexpectedly unbounded")
-	}
-	if rawViewerLimit("image.png") != maxRawFile {
-		t.Fatal("unrelated cap changed")
+	if rawViewerLimit("image.png") != 0 {
+		t.Fatal("raw viewer unexpectedly regained a fixed size cap")
 	}
 }
 
@@ -61,17 +57,27 @@ func TestStepStreamingSourceAndIdentity(t *testing.T) {
 	requireStatus(t, request(a, "GET", "/api/file/raw?source=cad-source&path=model.step", nil), 400)
 }
 
-func TestStepStreamingLimitsAndPathSafety(t *testing.T) {
+func TestStepStreamingPathSafety(t *testing.T) {
 	a := testApp(t)
 	f, err := os.Create(filepath.Join(a.workPath, "over.step"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = f.Truncate(maxStepPreview + 1); err != nil {
+	if err = f.Truncate(385 << 20); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.WriteAt([]byte("ISO-10303-21;"), 0); err != nil {
 		t.Fatal(err)
 	}
 	f.Close()
-	requireStatus(t, request(a, "GET", "/api/file/raw?path=over.step", nil), 400)
+	req := httptest.NewRequest("GET", "/api/file/raw?path=over.step", nil)
+	req.Header.Set("Range", "bytes=0-12")
+	w := httptest.NewRecorder()
+	a.readFileRaw(w, req)
+	requireStatus(t, w, 206)
+	if w.Body.String() != "ISO-10303-21;" {
+		t.Fatalf("large STEP prefix changed: %q", w.Body.String())
+	}
 	if err = os.Symlink("over.step", filepath.Join(a.workPath, "link.step")); err != nil {
 		t.Fatal(err)
 	}

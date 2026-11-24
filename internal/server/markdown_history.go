@@ -84,9 +84,6 @@ func loadMarkdownIndex(dir, p string) (markdownHistoryIndex, error) {
 	return index, err
 }
 func storeHistoryObject(dir string, b []byte) (string, error) {
-	if len(b) > maxRawFile {
-		return "", errors.New("历史对象超过大小限制")
-	}
 	digest := hash(b)
 	objects := filepath.Join(dir, "objects")
 	if err := os.MkdirAll(objects, 0700); err != nil {
@@ -108,7 +105,7 @@ func storeHistoryObject(dir string, b []byte) (string, error) {
 		// Reuse is a backup guarantee, not merely a pathname existence check.
 		// Stream the digest so a repeated large document needs no second buffer.
 		h := sha256.New()
-		n, err := io.Copy(h, io.LimitReader(f, maxRawFile+1))
+		n, err := io.Copy(h, f)
 		if err != nil {
 			return "", err
 		}
@@ -158,9 +155,6 @@ func openHistoryObject(dir, digest string) (*os.File, os.FileInfo, error) {
 	}
 	if !info.Mode().IsRegular() {
 		return nil, nil, errors.New("历史对象不是普通文件")
-	}
-	if info.Size() > maxRawFile {
-		return nil, nil, errors.New("历史对象超过大小限制")
 	}
 	f, err := os.Open(name)
 	if err != nil {

@@ -125,7 +125,7 @@ func TestReferenceRelayDownloadedAgent(t *testing.T) {
 	if err != nil || string(data) != "edited" {
 		t.Fatal(string(data), err)
 	}
-	if _, err = a.relayReadSource(ctx, src, "relay-agent.py", sourceRelayMaxFile); err == nil {
+	if _, err = a.relayReadSource(ctx, src, "relay-agent.py", 0); err == nil {
 		t.Fatal("download script exposed")
 	}
 	if err = a.relayMutateSource(src, "rename", "目录/space name.md", "目录/renamed.md"); err != nil {
@@ -539,7 +539,7 @@ func TestReferenceRelayUntrustedPayloadAndCancellation(t *testing.T) {
 				relayReadHeader(reader, false)
 				switch mode {
 				case "oversize":
-					relaySendHeader(conn, map[string]any{"ok": true, "size": sourceRelayMaxFile + 1})
+					relaySendHeader(conn, map[string]any{"ok": true, "size": 101})
 				case "checksum":
 					relaySendHeader(conn, map[string]any{"ok": true, "size": 3})
 					conn.Write([]byte("bad"))

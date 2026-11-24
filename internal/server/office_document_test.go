@@ -117,7 +117,7 @@ func TestOfficeDocumentReadLargeArchiveAndPagination(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if large["hash"] != checksum || large["readOnly"] != true || regular["readOnly"] != false {
+		if large["hash"] != checksum || large["readOnly"] != false || regular["readOnly"] != false {
 			t.Fatal("file version or write eligibility changed", large["hash"], large["readOnly"], regular["readOnly"])
 		}
 		for _, field := range []string{"format", "blocks", "offset", "nextOffset", "truncated"} {

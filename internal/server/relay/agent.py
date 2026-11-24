@@ -28,7 +28,6 @@ import shutil
 import re
 
 CONFIG = json.loads(__CONFIG_JSON__)
-MAX_FILE = 64 * 1024 * 1024
 MAX_LIST = 2000
 MAX_LIST_BYTES = 1024 * 1024
 MODES = {'probe', 'list', 'read', 'write', 'mkdir', 'rename', 'remove', 'stat', 'space', 'openread', 'openwrite', 'readat', 'writeat', 'hstat', 'truncate', 'sync', 'close'}
@@ -300,7 +299,7 @@ class SharedRoot:
                 fd = os.open(components[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
             with os.fdopen(fd, 'rb') as source:
                 info = self.check(source.fileno())
-                if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+                if not stat.S_ISREG(info.st_mode) or limit > 0 and info.st_size > limit:
                     raise ValueError('file exceeds read limit or is not regular')
                 send(sock, {'ok': True, 'size': info.st_size})
                 digest = hashlib.sha256()
@@ -577,7 +576,7 @@ def client(raw, context, key, root, handles):
                     handle_operation(mode, request, sock, root, handles)
                 elif mode == 'write':
                     size = request.get('size')
-                    if type(size) is not int or not 0 <= size <= MAX_FILE or not re.fullmatch(r'[a-f0-9]{64}', str(request.get('sha256',''))):
+                    if type(size) is not int or size < 0 or not re.fullmatch(r'[a-f0-9]{64}', str(request.get('sha256',''))):
                         raise ValueError('upload exceeds limit')
                     root.write(request.get('path'), size, request.get('exclusive') is True, sock, request['sha256'])
                 else:
@@ -592,7 +591,7 @@ def client(raw, context, key, root, handles):
             send(sock, {'ok': True, 'sha256': hashlib.sha256(data).hexdigest()})
         elif mode == 'read':
             limit = request.get('limit')
-            if type(limit) is not int or not 0 < limit <= MAX_FILE:
+            if type(limit) is not int or limit < 0:
                 raise ValueError('invalid read limit')
             root.read(request.get('path'), limit, sock)
         else:

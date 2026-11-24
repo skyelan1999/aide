@@ -3,12 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
-	"time"
 )
 
 // Only the provider-owned object-storage origins used by DashScope may be
@@ -37,7 +36,7 @@ func (a *App) saveQwenImageAsset(ctx context.Context, markdown string, tasks ...
 	if err != nil {
 		return markdown, err
 	}
-	client := &http.Client{Timeout: 90 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	resp, err := client.Do(req)
 	if err != nil {
 		return markdown, fmt.Errorf("下载图片失败")
@@ -46,12 +45,17 @@ func (a *App) saveQwenImageAsset(ctx context.Context, markdown string, tasks ...
 	if resp.StatusCode != 200 {
 		return markdown, fmt.Errorf("下载图片返回 HTTP %d", resp.StatusCode)
 	}
-	data, err := io.ReadAll(io.LimitReader(resp.Body, (20<<20)+1))
-	if err != nil || len(data) > 20<<20 {
-		return markdown, fmt.Errorf("图片超过保存大小限制")
+	spool, header, err := spoolGeneratedAsset(resp.Body)
+	if err != nil {
+		return markdown, fmt.Errorf("图片下载不完整")
 	}
+	defer func() {
+		name := spool.Name()
+		_ = spool.Close()
+		_ = os.Remove(name)
+	}()
 	ext := ""
-	switch http.DetectContentType(data) {
+	switch http.DetectContentType(header) {
 	case "image/png":
 		ext = ".png"
 	case "image/jpeg":
@@ -63,13 +67,24 @@ func (a *App) saveQwenImageAsset(ctx context.Context, markdown string, tasks ...
 	}
 	filename := "generated/images/qwen-" + newID() + ext
 	a.filesMu.Lock()
-	defer a.filesMu.Unlock()
 	a.mu.Lock()
-	defer a.mu.Unlock()
 	if len(tasks) > 0 && (tasks[0].WorkspaceID != a.wsID() || tasks[0].WorkspaceRev != a.wsRevision) {
+		a.mu.Unlock()
+		a.filesMu.Unlock()
 		return markdown, fmt.Errorf("生成期间工作区已变化；原图片记录保留，未写入新工作区")
 	}
-	if err := putText(a.workspace, filename, data); err != nil {
+	root, err := os.OpenRoot(a.workspace.Name())
+	a.mu.Unlock()
+	a.filesMu.Unlock()
+	if err != nil {
+		return markdown, fmt.Errorf("保存图片失败")
+	}
+	fs := &transferFS{root: root}
+	if err = writeStreamToTransferFSContext(ctx, fs, filename, spool); err != nil {
+		_ = root.Close()
+		return markdown, fmt.Errorf("保存图片失败")
+	}
+	if err = root.Close(); err != nil {
 		return markdown, fmt.Errorf("保存图片失败")
 	}
 	return "![生成图片](" + filename + ")\n\n[下载图片](" + filename + ") · 已保存到工作区。", nil

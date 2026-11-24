@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http/httptest"
@@ -184,54 +185,52 @@ func TestBatchUploadConflictDoesNotAbort(t *testing.T) {
 	}
 }
 
-func TestBatchUploadCountCap(t *testing.T) {
+func TestBatchUploadHasNoFileCountCap(t *testing.T) {
 	a := testApp(t)
-	origFiles, origBytes := maxBatchFiles, maxBatchBytes
-	t.Cleanup(func() { maxBatchFiles, maxBatchBytes = origFiles, origBytes })
-	maxBatchFiles = 2
-	maxBatchBytes = 1 << 20
 	var parts []batchPart
-	for i := 0; i < 3; i++ {
-		parts = append(parts, batchPart{string(rune('A'+i)) + ".txt", "x"})
+	for i := 0; i < 1001; i++ {
+		parts = append(parts, batchPart{fmt.Sprintf("file-%04d.txt", i), "x"})
 	}
 	w := batchUploadParts(a, "/api/file/upload-batch", parts)
-	requireStatus(t, w, 207)
+	requireStatus(t, w, 201)
 	br := decodeBatch(t, w)
-	if br.Summary.Succeeded != 2 || br.Summary.Failed != 1 {
+	if br.Summary.Succeeded != 1001 || br.Summary.Failed != 0 {
 		t.Fatalf("summary: %+v body=%s", br.Summary, w.Body.String())
 	}
-	last := br.Results[len(br.Results)-1]
-	if last.OK || last.Error == "" {
-		t.Fatalf("overflow part should be rejected: %+v", last)
-	}
 }
 
-func TestBatchUploadTotalSizeCap(t *testing.T) {
+func TestBatchUploadHasNoTotalSizeCap(t *testing.T) {
 	a := testApp(t)
-	origFiles, origBytes := maxBatchFiles, maxBatchBytes
-	t.Cleanup(func() { maxBatchFiles, maxBatchBytes = origFiles, origBytes })
-	maxBatchFiles = 100
-	maxBatchBytes = 600
-	big := bytes.Repeat([]byte("z"), 1500)
-	parts := []batchPart{
-		{"first.txt", "small"},
-		{"second.txt", string(big)},
-	}
-	w := batchUploadParts(a, "/api/file/upload-batch", parts)
-	requireStatus(t, w, 207)
+	const size = int64(257 << 20)
+	reader, writer := io.Pipe()
+	mw := multipart.NewWriter(writer)
+	go func() {
+		part, err := mw.CreateFormFile("files", "large.bin")
+		if err == nil {
+			_, err = io.CopyN(part, zeroReader{}, size)
+		}
+		if closeErr := mw.Close(); err == nil {
+			err = closeErr
+		}
+		_ = writer.CloseWithError(err)
+	}()
+	r := httptest.NewRequest("POST", "/api/file/upload-batch", reader)
+	r.Header.Set("Content-Type", mw.FormDataContentType())
+	w := httptest.NewRecorder()
+	a.uploadBatchFile(w, r)
+	requireStatus(t, w, 201)
 	br := decodeBatch(t, w)
-	if br.Summary.Succeeded != 1 || br.Summary.Failed != 1 {
-		t.Fatalf("expected 1 ok + 1 size failure, got %+v body=%s", br.Summary, w.Body.String())
+	if br.Summary.Succeeded != 1 || br.Summary.Failed != 0 {
+		t.Fatalf("large upload summary: %+v body=%s", br.Summary, w.Body.String())
 	}
-	if got := readBatchFile(t, a, "first.txt"); got != "small" {
-		t.Fatalf("first.txt: %q", got)
+	info, err := os.Stat(filepath.Join(a.workPath, "large.bin"))
+	if err != nil || info.Size() != size {
+		t.Fatalf("large upload size = %v, err=%v", info, err)
 	}
 }
 
-func TestBatchUploadTruncatedNextPartHeaderIsReported(t *testing.T) {
+func TestBatchUploadTruncatedNextPartIsReported(t *testing.T) {
 	a := testApp(t)
-	original := maxBatchBytes
-	t.Cleanup(func() { maxBatchBytes = original })
 	const boundary = "header-truncation-boundary"
 	body := []byte("--" + boundary + "\r\n" +
 		"Content-Disposition: form-data; name=\"files\"; filename=\"first.txt\"\r\n" +
@@ -240,13 +239,13 @@ func TestBatchUploadTruncatedNextPartHeaderIsReported(t *testing.T) {
 		"Content-Disposition: form-data; name=\"files\"; filename=\"second.txt\"\r\n" +
 		"Content-Type: application/octet-stream\r\n\r\nsecond\r\n" +
 		"--" + boundary + "--\r\n")
-	secondHeader := bytes.Index(body, []byte("Content-Disposition: form-data; name=\"files\"; filename=\"second.txt\""))
-	if secondHeader < 0 {
-		t.Fatal("second part header not found")
+	closing := bytes.LastIndex(body, []byte("--"+boundary+"--"))
+	if closing < 0 {
+		t.Fatal("closing boundary not found")
 	}
-	// Leave enough bytes to fully commit first.txt, then cap the request in
-	// the second part's header so NextPart itself receives the size error.
-	maxBatchBytes = secondHeader + 24
+	// Omit the closing boundary after the second file's content. The first
+	// complete file remains committed while the truncated sibling is reported.
+	body = body[:closing]
 	r := httptest.NewRequest("POST", "/api/file/upload-batch", bytes.NewReader(body))
 	r.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	w := httptest.NewRecorder()

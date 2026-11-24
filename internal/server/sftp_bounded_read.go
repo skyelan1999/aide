@@ -42,8 +42,8 @@ func readSFTPFile(f transferFile) ([]byte, error) {
 	return readBoundedSFTPFile(f)
 }
 
-// Raw SFTP previews share the raw-file API's bounded lookahead. Workspace text
-// reads use readSFTPTextWindow instead and therefore have no whole-file cap.
+// Raw SFTP compatibility reads have no fixed byte ceiling. Streaming HTTP and
+// archive paths use transferFile directly and do not materialize the payload.
 func readBoundedSFTPFile(f transferFile) ([]byte, error) {
 	info, err := f.Stat()
 	if err != nil {
@@ -52,14 +52,7 @@ func readBoundedSFTPFile(f transferFile) ([]byte, error) {
 	if !info.Mode().IsRegular() || info.Size() < 0 {
 		return nil, errors.New("仅支持普通 SFTP 文件")
 	}
-	data, err := io.ReadAll(io.LimitReader(f, maxRawFile+1))
-	if err != nil {
-		return nil, err
-	}
-	if len(data) > maxRawFile {
-		return nil, errors.New("SFTP 文件超过原始文件预览上限")
-	}
-	return data, nil
+	return io.ReadAll(f)
 }
 
 // readSFTPTextWindow streams and fingerprints a workspace text file while

@@ -336,7 +336,7 @@ func TestHistoryObjectReuseVerifiesBytesAndKind(t *testing.T) {
 					t.Fatal(err)
 				}
 			case "oversized":
-				if err := os.Truncate(object, maxRawFile+1); err != nil {
+				if err := os.Truncate(object, int64(len(original)+1)); err != nil {
 					t.Fatal(err)
 				}
 			case "objects-directory-link":

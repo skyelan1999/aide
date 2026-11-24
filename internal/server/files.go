@@ -1,9 +1,9 @@
 package server
 
 import (
-	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -486,13 +486,9 @@ func readTextRange(root *os.Root, p string, off, limit int64) ([]byte, int64, er
 	return b, size, nil
 }
 
-// maxRawFile 为原始字节端点（图片/STL 等二进制查看器）的上限。
-const maxRawFile = 64 << 20
-
-const (
-	maxArchiveFiles = 1000
-	maxArchiveDepth = 32
-)
+// Raw file readers validate ordinary-file access but impose no fixed byte cap.
+// HTTP preview and transfer paths stream large files instead of using this
+// compatibility byte-slice helper.
 
 // readRawBytes 返回文件的原始字节，不做 UTF-8/文本校验（供 /api/file/raw 查看器使用）。
 func readRawBytes(root *os.Root, p string) ([]byte, error) {
@@ -515,20 +511,16 @@ func readRawBytesWithOpener(p string, openFile func(string) (*os.File, error)) (
 	if !info.Mode().IsRegular() {
 		return nil, errors.New("只支持普通文件")
 	}
-	b, err := io.ReadAll(io.LimitReader(f, maxRawFile+1))
-	if err != nil {
-		return nil, err
-	}
-	if len(b) > maxRawFile {
-		return nil, fmt.Errorf("文件超过 %d MB 限制", maxRawFile/(1<<20))
-	}
-	return b, nil
+	return io.ReadAll(f)
 }
 
 type archiveItem struct {
-	name string
-	data []byte
-	dir  bool
+	name     string
+	data     []byte // Compatibility for small in-memory producers and tests.
+	filePath string
+	size     int64
+	spoolDir string
+	dir      bool
 }
 
 func validArchivePath(p string) error {
@@ -567,9 +559,6 @@ func (a *App) sourceEntry(src Source, p string) (map[string]any, error) {
 }
 
 func checkedRaw(b []byte) ([]byte, error) {
-	if len(b) > maxRawFile {
-		return nil, fmt.Errorf("文件超过 %d MB 限制", maxRawFile/(1<<20))
-	}
 	return b, nil
 }
 
@@ -649,18 +638,41 @@ func (a *App) downloadChildren(p string, src Source, hasSource bool) ([]map[stri
 }
 
 func (a *App) collectArchive(p string, src Source, hasSource, dir bool) ([]archiveItem, error) {
-	items := make([]archiveItem, 0)
-	total := 0
-	var walk func(string, string, bool, int) error
-	walk = func(actual, entry string, isDir bool, depth int) error {
-		if depth > maxArchiveDepth {
-			return errors.New("压缩目录层级超过限制")
+	return a.collectArchiveContext(context.Background(), p, src, hasSource, dir)
+}
+
+func (a *App) collectArchiveContext(ctx context.Context, p string, src Source, hasSource, dir bool) (items []archiveItem, err error) {
+	spoolDir, err := os.MkdirTemp("", "aide-archive-input-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(spoolDir)
+		}
+	}()
+	sourceID := "workspace"
+	if hasSource {
+		sourceID = src.ID
+	}
+	var fs *transferFS
+	if a.transferSourceStreaming(sourceID) {
+		fs, err = a.streamTransferFS(ctx, sourceID, false)
+		if err != nil {
+			return nil, err
+		}
+		defer fs.Close()
+	}
+	var walk func(string, string, bool) error
+	walk = func(actual, entry string, isDir bool) error {
+		if err = ctx.Err(); err != nil {
+			return err
 		}
 		if isDir {
-			items = append(items, archiveItem{name: strings.TrimSuffix(entry, "/") + "/", dir: true})
-			children, err := a.downloadChildren(actual, src, hasSource)
-			if err != nil {
-				return err
+			items = append(items, archiveItem{name: strings.TrimSuffix(entry, "/") + "/", spoolDir: spoolDir, dir: true})
+			children, listErr := a.downloadChildren(actual, src, hasSource)
+			if listErr != nil {
+				return listErr
 			}
 			for _, child := range children {
 				childPath, ok := child["path"].(string)
@@ -669,31 +681,38 @@ func (a *App) collectArchive(p string, src Source, hasSource, dir bool) ([]archi
 				}
 				childName, _ := child["name"].(string)
 				childDir, _ := child["dir"].(bool)
-				if err := walk(childPath, path.Join(entry, childName), childDir, depth+1); err != nil {
-					return err
+				if walkErr := walk(childPath, path.Join(entry, childName), childDir); walkErr != nil {
+					return walkErr
 				}
 			}
 			return nil
 		}
-		if len(items) >= maxArchiveFiles {
-			return fmt.Errorf("压缩包最多包含 %d 个条目", maxArchiveFiles)
+		var filePath string
+		var size int64
+		if fs != nil {
+			var input transferFile
+			input, err = fs.Open(actual, os.O_RDONLY)
+			if err == nil {
+				filePath, size, err = spoolArchiveReaderContext(ctx, spoolDir, input)
+				err = errors.Join(err, input.Close())
+			}
+		} else {
+			// Legacy reference drivers expose byte slices rather than random-access
+			// files. Keep their protocol compatibility without imposing a byte cap.
+			var data []byte
+			data, err = a.downloadRaw(actual, src, hasSource)
+			if err == nil {
+				filePath, size, err = spoolArchiveReaderContext(ctx, spoolDir, bytes.NewReader(data))
+			}
 		}
-		b, err := a.downloadRaw(actual, src, hasSource)
 		if err != nil {
 			return err
 		}
-		total += len(b)
-		if total > maxRawFile {
-			return fmt.Errorf("压缩内容超过 %d MB 限制", maxRawFile/(1<<20))
-		}
-		items = append(items, archiveItem{name: entry, data: b})
+		items = append(items, archiveItem{name: entry, filePath: filePath, size: size, spoolDir: spoolDir})
 		return nil
 	}
-	if err := walk(p, archiveName(p), dir, 0); err != nil {
+	if err = walk(p, archiveName(p), dir); err != nil {
 		return nil, err
-	}
-	if len(items) > maxArchiveFiles {
-		return nil, fmt.Errorf("压缩包最多包含 %d 个条目", maxArchiveFiles)
 	}
 	return items, nil
 }
@@ -725,37 +744,34 @@ func (a *App) legacyReferenceDownload(w http.ResponseWriter, r *http.Request) {
 	name := archiveName(p)
 	var body []byte
 	if archive {
-		items, err := a.collectArchive(p, src, hasSource, dir)
+		items, err := a.collectArchiveContext(r.Context(), p, src, hasSource, dir)
 		if err != nil {
 			fail(w, 400, err)
 			return
 		}
-		var buf bytes.Buffer
-		zw := zip.NewWriter(&buf)
-		for _, item := range items {
-			hdr := &zip.FileHeader{Name: item.name, Method: zip.Deflate}
-			if item.dir {
-				hdr.SetMode(os.ModeDir | 0755)
-			}
-			out, e := zw.CreateHeader(hdr)
-			if e != nil {
-				fail(w, 500, e)
-				return
-			}
-			if !item.dir {
-				if _, e = out.Write(item.data); e != nil {
-					fail(w, 500, e)
-					return
-				}
-			}
-		}
-		if err := zw.Close(); err != nil {
+		defer cleanupArchiveItems(items)
+		tmp, err := os.CreateTemp("", "aide-archive-download-*")
+		if err != nil {
 			fail(w, 500, err)
 			return
 		}
-		body = buf.Bytes()
+		tmpPath := tmp.Name()
+		defer os.Remove(tmpPath)
+		defer tmp.Close()
+		if err = encodeArchiveFormatTo(r.Context(), items, "zip", tmp); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		if _, err = tmp.Seek(0, io.SeekStart); err != nil {
+			fail(w, 500, err)
+			return
+		}
 		name += ".zip"
 		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
+		_, _ = io.Copy(w, tmp)
+		return
 	} else {
 		body, err = a.downloadRaw(p, src, hasSource)
 		if err != nil {
@@ -767,30 +783,6 @@ func (a *App) legacyReferenceDownload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
 	w.Write(body)
-}
-
-func encodeArchive(items []archiveItem) ([]byte, error) {
-	var buf bytes.Buffer
-	zw := zip.NewWriter(&buf)
-	for _, item := range items {
-		hdr := &zip.FileHeader{Name: item.name, Method: zip.Deflate}
-		if item.dir {
-			hdr.SetMode(os.ModeDir | 0755)
-		}
-		out, err := zw.CreateHeader(hdr)
-		if err != nil {
-			return nil, err
-		}
-		if !item.dir {
-			if _, err := out.Write(item.data); err != nil {
-				return nil, err
-			}
-		}
-	}
-	if err := zw.Close(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
 }
 
 // createWorkspaceArchive writes the generated ZIP alongside its source instead of returning it as a download.
@@ -806,7 +798,7 @@ func (a *App) createWorkspaceArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body.Source != "" {
-		a.sourceFileActionFormat(w, body.Root, body.Source, body.Path, "archive", "", body.Format)
+		a.sourceFileActionFormatContext(r.Context(), w, body.Root, body.Source, body.Path, "archive", "", body.Format)
 		return
 	}
 	if body.Root != "workspace" || validArchivePath(body.Path) != nil {
@@ -821,61 +813,42 @@ func (a *App) createWorkspaceArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dir, _ := info["dir"].(bool)
-	items, err := a.collectArchive(body.Path, Source{}, false, dir)
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
 	format, err := normalizeArchiveFormat(body.Format)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	data, err := encodeArchiveFormat(items, format)
+	items, err := a.collectArchiveContext(r.Context(), body.Path, Source{}, false, dir)
 	if err != nil {
-		fail(w, 500, err)
+		fail(w, 400, err)
 		return
 	}
+	defer cleanupArchiveItems(items)
 	dest := archiveNameForFormat(body.Path, format)
-	if a.workspaceMode() == "ssh" {
-		remote := a.workspaceRemotePath(dest)
-		if a.sftpExists(remote) {
-			fail(w, 409, errors.New("压缩目标已存在"))
-			return
+	fs, err := a.streamTransferFS(r.Context(), "workspace", true)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	defer fs.Close()
+	if err = writeArchiveToTransferFS(r.Context(), fs, dest, items, format); err != nil {
+		status := 500
+		if errors.Is(err, os.ErrExist) {
+			status = 409
 		}
-		if err := a.sftpWrite(remote, data); err != nil {
-			fail(w, 500, err)
-			return
-		}
-	} else {
-		f, err := a.workspace.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
-		if err != nil {
-			if errors.Is(err, os.ErrExist) {
-				fail(w, 409, errors.New("压缩目标已存在"))
-			} else {
-				fail(w, 400, err)
-			}
-			return
-		}
-		if _, err := f.Write(data); err != nil {
-			f.Close()
-			_ = a.workspace.Remove(dest)
-			fail(w, 500, err)
-			return
-		}
-		if err := f.Close(); err != nil {
-			_ = a.workspace.Remove(dest)
-			fail(w, 500, err)
-			return
-		}
+		fail(w, status, err)
+		return
 	}
 	jsonOut(w, 200, map[string]string{"path": dest})
 }
 
 type extractedArchiveFile struct {
-	path string
-	data []byte
-	dir  bool
+	path     string
+	data     []byte // Compatibility for small in-memory producers and tests.
+	filePath string
+	size     int64
+	spoolDir string
+	dir      bool
 }
 
 func cleanArchiveEntryPath(raw string, isDir bool) (string, error) {
@@ -929,63 +902,6 @@ func availableArchiveDestination(base string, exists func(string) bool) (string,
 	return "", errors.New("找不到可用的解压目标目录")
 }
 
-func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
-	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return nil, errors.New("不是有效的 ZIP 文件")
-	}
-	if len(zr.File) == 0 {
-		return nil, errors.New("ZIP 文件为空")
-	}
-	if len(zr.File) > maxArchiveFiles {
-		return nil, fmt.Errorf("ZIP 最多包含 %d 个条目", maxArchiveFiles)
-	}
-	files := make([]extractedArchiveFile, 0, len(zr.File))
-	seen := map[string]bool{}
-	total := 0
-	for _, entry := range zr.File {
-		isDir := entry.FileInfo().IsDir() || strings.HasSuffix(entry.Name, "/") || strings.HasSuffix(entry.Name, "\\")
-		name, pathErr := cleanArchiveEntryPath(entry.Name, isDir)
-		if pathErr != nil {
-			return nil, pathErr
-		}
-		if name == "" && isDir {
-			continue
-		}
-		if seen[name] {
-			return nil, errors.New("ZIP 包含重复路径")
-		}
-		seen[name] = true
-		if entry.Mode()&os.ModeSymlink != 0 {
-			return nil, errors.New("ZIP 不支持符号链接")
-		}
-		f := extractedArchiveFile{path: name, dir: isDir}
-		if !isDir {
-			if entry.UncompressedSize64 > uint64(maxRawFile-total) {
-				return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
-			}
-			rc, e := entry.Open()
-			if e != nil {
-				return nil, e
-			}
-			f.data, e = io.ReadAll(io.LimitReader(rc, int64(maxRawFile-total)+1))
-			rc.Close()
-			if e != nil {
-				return nil, e
-			}
-			total += len(f.data)
-			if total > maxRawFile {
-				return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
-			}
-		}
-		files = append(files, f)
-	}
-	if err := validateArchiveLayout(files); err != nil {
-		return nil, err
-	}
-	return files, nil
-}
-
 func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Root   string `json:"root"`
@@ -997,23 +913,37 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body.Source != "" {
-		a.sourceFileAction(w, body.Root, body.Source, body.Path, "extract", "")
+		a.sourceFileActionContext(r.Context(), w, body.Root, body.Source, body.Path, "extract", "")
 		return
 	}
 	if body.Root != "workspace" || validArchivePath(body.Path) != nil || archiveExtension(body.Path) == "" {
 		fail(w, 400, errors.New("需要工作目录中的受支持归档文件"))
 		return
 	}
-	b, err := a.downloadRaw(body.Path, Source{}, false)
+	fs, err := a.streamTransferFS(r.Context(), "workspace", true)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	files, err := readArchiveFilesForPath(b, body.Path)
+	defer fs.Close()
+	input, err := fs.Open(body.Path, os.O_RDONLY)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
+	info, err := input.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		_ = input.Close()
+		fail(w, 400, errors.New("归档输入不是普通文件"))
+		return
+	}
+	files, err := readArchiveFilesFromReader(r.Context(), input, info.Size(), body.Path)
+	closeErr := input.Close()
+	if err = errors.Join(err, closeErr); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	defer cleanupExtractedArchive(files)
 	destBase := path.Join(path.Dir(body.Path), archiveDestinationName(body.Path))
 	if err := validArchivePath(destBase); err != nil {
 		fail(w, 400, err)
@@ -1021,12 +951,6 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
-	fs, err := a.streamTransferFS(r.Context(), "workspace", true)
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
-	defer fs.Close()
 	var lookupErr error
 	dest, err := availableArchiveDestination(destBase, func(candidate string) bool {
 		if lookupErr != nil {
@@ -1046,7 +970,7 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, err)
 		return
 	}
-	if err = writeExtractedArchive(fs, dest, files); err != nil {
+	if err = writeExtractedArchiveContext(r.Context(), fs, dest, files); err != nil {
 		status := 500
 		if fs.root == nil {
 			status = 400
@@ -1634,14 +1558,14 @@ func localDirItems(entries []os.DirEntry, p string) []map[string]any {
 	return items
 }
 func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
-	if ct, limit := generatedMediaRawType(r.URL.Query().Get("path")); ct != "" && a.streamViewerRaw(w, r, ct, limit) {
+	contentType, limit := generatedMediaRawType(r.URL.Query().Get("path"))
+	if contentType == "" {
+		contentType, limit = rawViewerContentType(r.URL.Query().Get("path")), 0
+	}
+	if a.streamViewerRaw(w, r, contentType, limit) {
 		return
 	}
-
-	if isStepRaw(r.URL.Query().Get("path")) && a.streamStepRaw(w, r) {
-		return
-	}
-	limit := rawViewerLimit(r.URL.Query().Get("path"))
+	limit = rawViewerLimit(r.URL.Query().Get("path"))
 	if isStepRaw(r.URL.Query().Get("path")) {
 		select {
 		case stepRemotePreviewGate <- struct{}{}:
@@ -1687,28 +1611,12 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if int64(len(b)) > limit {
+	if limit > 0 && int64(len(b)) > limit {
 		err = fmt.Errorf("文件超过 %d MiB 限制", limit>>20)
 		fail(w, 400, err)
 		return
 	}
-	ext := effectiveFileExt(r.URL.Query().Get("path"))
-	ct := map[string]string{
-		".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-		".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",
-		".ico": "image/x-icon", ".bmp": "image/bmp",
-		".mp3": "audio/mpeg", ".wav": "audio/wav", ".mp4": "video/mp4",
-		".pdf": "application/pdf", ".html": "text/html; charset=utf-8",
-		".css": "text/css; charset=utf-8", ".js": "application/javascript",
-		".json": "application/json", ".txt": "text/plain; charset=utf-8",
-		".csv": "text/csv; charset=utf-8", ".tsv": "text/tab-separated-values; charset=utf-8",
-		".md": "text/markdown; charset=utf-8", ".drawio": "application/xml; charset=utf-8",
-		".stl":  "model/stl",
-		".step": "application/step", ".stp": "application/step",
-	}[ext]
-	if ct == "" {
-		ct = "application/octet-stream"
-	}
+	ct := contentType
 	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Cache-Control", "no-store")
 	if strings.HasPrefix(ct, "audio/") || strings.HasPrefix(ct, "video/") {

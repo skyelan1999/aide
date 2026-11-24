@@ -1,13 +1,12 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path"
-	"sort"
-	"strings"
 )
 
 // Source actions use the same bounded adapters as file transfers. A source ID
@@ -17,6 +16,14 @@ func (a *App) sourceFileAction(w http.ResponseWriter, root, id, p, operation, ne
 }
 
 func (a *App) sourceFileActionFormat(w http.ResponseWriter, root, id, p, operation, newName, format string) {
+	a.sourceFileActionFormatContext(context.Background(), w, root, id, p, operation, newName, format)
+}
+
+func (a *App) sourceFileActionContext(ctx context.Context, w http.ResponseWriter, root, id, p, operation, newName string) {
+	a.sourceFileActionFormatContext(ctx, w, root, id, p, operation, newName, "")
+}
+
+func (a *App) sourceFileActionFormatContext(ctx context.Context, w http.ResponseWriter, root, id, p, operation, newName, format string) {
 	if root != "" && root != "context" || id == "workspace" || validTransferPath(p) != nil {
 		fail(w, 400, errors.New("引用来源或路径无效"))
 		return
@@ -97,22 +104,19 @@ func (a *App) sourceFileActionFormat(w http.ResponseWriter, root, id, p, operati
 			fail(w, 400, e)
 			return
 		}
-		items, e := a.collectArchive(p, loc.source, true, entry["dir"] == true)
+		items, e := a.collectArchiveContext(ctx, p, loc.source, true, entry["dir"] == true)
 		if e != nil {
 			fail(w, 400, e)
 			return
 		}
-		data, e := encodeArchiveFormat(items, format)
+		defer cleanupArchiveItems(items)
+		fs, e := a.streamTransferFS(ctx, id, true)
 		if e != nil {
-			fail(w, 500, e)
+			fail(w, 400, e)
 			return
 		}
-		stage := path.Join(path.Dir(dest), ".aide-archive-"+newID())
-		if e = a.transferWrite(loc, stage, data); e == nil {
-			e = a.transferRename(loc, stage, dest)
-		}
-		if e != nil {
-			_ = a.transferRemoveTree(loc, stage, false, 0)
+		defer fs.Close()
+		if e = writeArchiveToTransferFS(ctx, fs, dest, items, format); e != nil {
 			fail(w, 400, e)
 			return
 		}
@@ -121,16 +125,30 @@ func (a *App) sourceFileActionFormat(w http.ResponseWriter, root, id, p, operati
 			fail(w, 400, errors.New("不支持此归档格式"))
 			return
 		}
-		data, e := a.downloadRaw(p, loc.source, true)
+		fs, e := a.streamTransferFS(ctx, id, true)
 		if e != nil {
 			fail(w, 400, e)
 			return
 		}
-		files, e := readArchiveFilesForPath(data, p)
+		defer fs.Close()
+		input, e := fs.Open(p, os.O_RDONLY)
 		if e != nil {
 			fail(w, 400, e)
 			return
 		}
+		info, e := input.Stat()
+		if e != nil || !info.Mode().IsRegular() {
+			_ = input.Close()
+			fail(w, 400, errors.New("归档输入不是普通文件"))
+			return
+		}
+		files, e := readArchiveFilesFromReader(ctx, input, info.Size(), p)
+		closeErr := input.Close()
+		if e = errors.Join(e, closeErr); e != nil {
+			fail(w, 400, e)
+			return
+		}
+		defer cleanupExtractedArchive(files)
 		base := archiveBaseForPath(p)
 		// Fail on a listing/connection error instead of treating it as absence.
 		for n := 0; n < 1000; n++ {
@@ -156,47 +174,7 @@ func (a *App) sourceFileActionFormat(w http.ResponseWriter, root, id, p, operati
 			fail(w, 400, errors.New("解压目标路径无效"))
 			return
 		}
-		stage := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
-		if e = a.transferMkdir(loc, stage); e != nil {
-			fail(w, 400, e)
-			return
-		}
-		dirs := map[string]bool{}
-		for _, f := range files {
-			d := f.path
-			if !f.dir {
-				d = path.Dir(d)
-			}
-			for d != "." && d != "" {
-				dirs[d] = true
-				d = path.Dir(d)
-			}
-		}
-		ordered := make([]string, 0, len(dirs))
-		for d := range dirs {
-			ordered = append(ordered, d)
-		}
-		sort.Slice(ordered, func(i, j int) bool { return strings.Count(ordered[i], "/") < strings.Count(ordered[j], "/") })
-		for _, d := range ordered {
-			if e = a.transferMkdir(loc, path.Join(stage, d)); e != nil {
-				break
-			}
-		}
-		if e == nil {
-			for _, f := range files {
-				if !f.dir {
-					e = a.transferWrite(loc, path.Join(stage, f.path), f.data)
-					if e != nil {
-						break
-					}
-				}
-			}
-		}
-		if e == nil {
-			e = a.transferRename(loc, stage, dest)
-		}
-		if e != nil {
-			_ = a.transferRemoveTree(loc, stage, true, 0)
+		if e = writeExtractedArchiveContext(ctx, fs, dest, files); e != nil {
 			fail(w, 400, e)
 			return
 		}

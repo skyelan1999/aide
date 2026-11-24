@@ -275,7 +275,7 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 		defer root.Close()
 		return readText(root, p)
 	case "relay":
-		b, err := a.relayReadSource(context.Background(), src, p, sourceRelayMaxFile)
+		b, err := a.relayReadSource(context.Background(), src, p, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -318,7 +318,7 @@ func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
 		defer root.Close()
 		return readRawBytes(root, p)
 	case "relay":
-		return a.relayReadSource(context.Background(), src, p, sourceRelayMaxFile)
+		return a.relayReadSource(context.Background(), src, p, 0)
 	case "sftp":
 		if err := safePath(p); err != nil {
 			return nil, err
@@ -330,9 +330,7 @@ func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
 		}
 		return a.sftpRead(a.workspaceRemoteSourcePath(src.Config.Path, p))
 	case "link", "ftp", "ftps", "smb":
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		return a.knowledgeReadSource(ctx, src, p, 64<<20)
+		return a.knowledgeReadSource(context.Background(), src, p, 0)
 	case "mcp":
 		return nil, errors.New("MCP 引用工具没有原始文件内容")
 	}

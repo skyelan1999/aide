@@ -3,6 +3,8 @@ package server
 import (
 	"bytes"
 	"context"
+	"io"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -57,15 +59,15 @@ func TestIssue79SFTPReadBoundsAndBinaryControl(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = f.Truncate(maxRawFile + (8 << 20))
+			err = f.Truncate(72 << 20)
 			_ = f.Close()
 			if err != nil {
 				t.Fatal(err)
 			}
 			temp := t.TempDir()
 			t.Setenv("TMPDIR", temp)
-			if b, err := read("oversized.bin"); err == nil {
-				t.Fatalf("unbounded remote file accepted: %d bytes", len(b))
+			if b, err := read("oversized.bin"); err != nil || len(b) != 72<<20 {
+				t.Fatalf("large remote file rejected or truncated: %d bytes %v", len(b), err)
 			}
 			files, err := os.ReadDir(temp)
 			if err != nil || len(files) != 0 {
@@ -86,6 +88,70 @@ func TestIssue79SFTPReadBoundsAndBinaryControl(t *testing.T) {
 	}
 }
 
+type zeroReader struct{}
+
+func (zeroReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 0
+	}
+	return len(p), nil
+}
+
+func TestIssue79SFTPStreamWriteLarge(t *testing.T) {
+	a, _, _ := issue79SFTPFixture(t, true)
+	for i := range a.sourceRegistry.Sources {
+		if a.sourceRegistry.Sources[i].ID == "bounded-sftp" {
+			a.sourceRegistry.Sources[i].RW = true
+		}
+	}
+	fs, err := a.streamTransferFS(context.Background(), "bounded-sftp", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fs.Close()
+	const size = int64(65 << 20)
+	input := io.MultiReader(bytes.NewReader([]byte("head")), io.LimitReader(zeroReader{}, size-8), bytes.NewReader([]byte("tail")))
+	if err = writeStreamToTransferFS(fs, "large-write.bin", input); err != nil {
+		t.Fatal(err)
+	}
+	f, err := fs.Open("large-write.bin", os.O_RDONLY)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || info.Size() != size {
+		t.Fatalf("streamed size = %v, err=%v", info, err)
+	}
+	tail := make([]byte, 4)
+	if _, err = f.ReadAt(tail, size-4); err != nil || string(tail) != "tail" {
+		t.Fatalf("streamed tail = %q, err=%v", tail, err)
+	}
+}
+
+func TestIssue79SFTPRawPreviewStreamsLargeRange(t *testing.T) {
+	a, _, remote := issue79SFTPFixture(t, true)
+	f, err := os.Create(filepath.Join(remote, "range.bin"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = f.Truncate(65 << 20); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.WriteAt([]byte("stream-prefix"), 0); err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+	req := httptest.NewRequest("GET", "/api/file/raw?source=bounded-sftp&path=range.bin", nil)
+	req.Header.Set("Range", "bytes=0-12")
+	w := httptest.NewRecorder()
+	a.readFileRaw(w, req)
+	requireStatus(t, w, 206)
+	if w.Body.String() != "stream-prefix" {
+		t.Fatalf("streamed range mismatch: %q", w.Body.String())
+	}
+}
+
 type issue79StaleStatFile struct {
 	*os.File
 	info os.FileInfo
@@ -93,7 +159,7 @@ type issue79StaleStatFile struct {
 
 func (f issue79StaleStatFile) Stat() (os.FileInfo, error) { return f.info, nil }
 
-func TestIssue79SFTPReadLimitCatchesStaleOrFalseStat(t *testing.T) {
+func TestIssue79SFTPReadHandlesStaleStatWithoutTruncation(t *testing.T) {
 	f, err := os.Create(filepath.Join(t.TempDir(), "growing.bin"))
 	if err != nil {
 		t.Fatal(err)
@@ -103,15 +169,16 @@ func TestIssue79SFTPReadLimitCatchesStaleOrFalseStat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := f.Truncate(maxRawFile + (8 << 20)); err != nil {
+	if err := f.Truncate(72 << 20); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := readBoundedSFTPFile(issue79StaleStatFile{f, info}); err == nil {
-		t.Fatal("file growth after STAT bypassed the read limit")
+	data, err := readBoundedSFTPFile(issue79StaleStatFile{f, info})
+	if err != nil || len(data) != 72<<20 {
+		t.Fatalf("large file was not read in full: %d %v", len(data), err)
 	}
 	position, err := f.Seek(0, 1)
-	if err != nil || position != maxRawFile+1 {
-		t.Fatalf("read exceeded bounded lookahead: %d %v", position, err)
+	if err != nil || position != 72<<20 {
+		t.Fatalf("read did not consume the full file: %d %v", position, err)
 	}
 }
 func TestIssue79BatchOutputProcess(t *testing.T) {

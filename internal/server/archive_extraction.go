@@ -1,8 +1,8 @@
 package server
 
 import (
+	"context"
 	"errors"
-	"io"
 	"os"
 	"path"
 	"sort"
@@ -54,7 +54,11 @@ func removeArchiveStage(fs *transferFS, stage string) error {
 	return fs.Remove(stage, true)
 }
 
-func writeExtractedArchive(fs *transferFS, dest string, files []extractedArchiveFile) (err error) {
+func writeExtractedArchive(fs *transferFS, dest string, files []extractedArchiveFile) error {
+	return writeExtractedArchiveContext(context.Background(), fs, dest, files)
+}
+
+func writeExtractedArchiveContext(ctx context.Context, fs *transferFS, dest string, files []extractedArchiveFile) (err error) {
 	stage := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
 	if err = fs.Mkdir(stage); err != nil {
 		return err
@@ -66,6 +70,9 @@ func writeExtractedArchive(fs *transferFS, dest string, files []extractedArchive
 		}
 	}()
 	for _, file := range files {
+		if err = ctx.Err(); err != nil {
+			return err
+		}
 		target := path.Join(stage, file.path)
 		if file.dir {
 			if err = fs.MkdirAll(target); err != nil {
@@ -80,10 +87,7 @@ func writeExtractedArchive(fs *transferFS, dest string, files []extractedArchive
 		if openErr != nil {
 			return openErr
 		}
-		n, writeErr := out.WriteAt(file.data, 0)
-		if writeErr == nil && n != len(file.data) {
-			writeErr = io.ErrShortWrite
-		}
+		writeErr := writeExtractedFile(ctx, out, file)
 		if writeErr == nil && fs.root != nil {
 			if chmod, ok := out.(interface{ Chmod(os.FileMode) error }); ok {
 				writeErr = chmod.Chmod(0644)

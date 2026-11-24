@@ -50,7 +50,7 @@ func TestIssue77LegacyOfficeAdmission(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				err = f.Truncate(maxRawFile + 1)
+				err = f.Truncate(65 << 20)
 				_ = f.Close()
 				if err != nil {
 					t.Fatal(err)

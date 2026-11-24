@@ -126,7 +126,7 @@ func (a *App) proposalTargetLocked(f Change) (proposalTarget, error) {
 }
 func (a *App) readProposalTarget(t proposalTarget, p string) ([]byte, error) {
 	if t.source.Type == "relay" {
-		return a.relayReadSource(relayExpectedContext(context.Background(), t.relayCredential), t.source, p, sourceRelayMaxFile)
+		return a.relayReadSource(relayExpectedContext(context.Background(), t.relayCredential), t.source, p, 0)
 	}
 	if t.root != nil {
 		if t.noSymlinks {

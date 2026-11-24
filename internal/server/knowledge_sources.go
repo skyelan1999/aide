@@ -819,7 +819,7 @@ type knowledgeLimitWriter struct {
 }
 
 func (w *knowledgeLimitWriter) Write(p []byte) (int, error) {
-	if int64(w.buf.Len()+len(p)) > w.max {
+	if w.max > 0 && int64(w.buf.Len()+len(p)) > w.max {
 		w.overflow = true
 		w.stop()
 		return 0, fmt.Errorf("来源超过读取字节上限")
@@ -881,9 +881,14 @@ func (a *App) knowledgeSFTP(ctx context.Context, ar knowledgeArea, batch string,
 	// Limit temporary downloads in the child process as well as captured output.
 	// POSIX shells express -f in blocks; Linux dash uses 1KiB. On 512-byte
 	// implementations the cap is stricter. No source data is a shell command.
-	blocks := (max + 1023) / 1024
-	cmdArgs := append([]string{"-c", "ulimit -f " + strconv.FormatInt(blocks, 10) + " || exit 1; exec \"$@\"", "aide-knowledge-sftp", a.sftpBin}, args...)
-	cmd := exec.CommandContext(ctx, "/bin/sh", cmdArgs...)
+	var cmd *exec.Cmd
+	if max > 0 {
+		blocks := (max + 1023) / 1024
+		cmdArgs := append([]string{"-c", "ulimit -f " + strconv.FormatInt(blocks, 10) + " || exit 1; exec \"$@\"", "aide-knowledge-sftp", a.sftpBin}, args...)
+		cmd = exec.CommandContext(ctx, "/bin/sh", cmdArgs...)
+	} else {
+		cmd = exec.CommandContext(ctx, a.sftpBin, args...)
+	}
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.Stdin = strings.NewReader(batch)
 	diagnostic := &knowledgeLimitWriter{max: 64 * 1024, stop: func() {
@@ -900,7 +905,11 @@ func (a *App) knowledgeSFTP(ctx context.Context, ar knowledgeArea, batch string,
 }
 
 func (a *App) knowledgeCurl(ctx context.Context, ar knowledgeArea, p string, listing bool, max int64) ([]byte, error) {
-	cmd, err := a.knowledgeCurlCommand(ctx, ar, p, listing, []string{"--max-time", "15", "--max-filesize", strconv.FormatInt(max, 10)})
+	options := []string{}
+	if max > 0 {
+		options = []string{"--max-time", "15", "--max-filesize", strconv.FormatInt(max, 10)}
+	}
+	cmd, err := a.knowledgeCurlCommand(ctx, ar, p, listing, options)
 	if err != nil {
 		return nil, err
 	}
@@ -953,6 +962,13 @@ func (a *App) knowledgeCurlCommand(ctx context.Context, ar knowledgeArea, p stri
 	return exec.CommandContext(ctx, a.curlBin, append(transferOptions, args...)...), nil
 }
 
+func readAllOptionalLimit(r io.Reader, maxBytes int64) ([]byte, error) {
+	if maxBytes > 0 {
+		return io.ReadAll(io.LimitReader(r, maxBytes+1))
+	}
+	return io.ReadAll(r)
+}
+
 func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string, maxBytes int64) ([]byte, error) {
 	if ar.unavailableReason != "" {
 		return nil, fmt.Errorf("%s", ar.unavailableReason)
@@ -979,7 +995,7 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 			if info.Mode()&os.ModeSymlink != 0 {
 				return nil, fmt.Errorf("不索引符号链接")
 			}
-			if i == len(parts)-1 && (!info.Mode().IsRegular() || info.Size() > maxBytes) {
+			if i == len(parts)-1 && (!info.Mode().IsRegular() || maxBytes > 0 && info.Size() > maxBytes) {
 				return nil, fmt.Errorf("文件不是普通文件或超过读取上限")
 			}
 		}
@@ -989,10 +1005,10 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 		}
 		defer f.Close()
 		info, statErr := f.Stat()
-		if statErr != nil || !info.Mode().IsRegular() || info.Size() > maxBytes {
+		if statErr != nil || !info.Mode().IsRegular() || maxBytes > 0 && info.Size() > maxBytes {
 			return nil, fmt.Errorf("文件状态已变化或超过读取上限")
 		}
-		b, err = io.ReadAll(io.LimitReader(f, maxBytes+1))
+		b, err = readAllOptionalLimit(f, maxBytes)
 	case "relay":
 		b, err = a.relayReadSource(ctx, ar.src, p, maxBytes)
 	case "mcp":
@@ -1028,7 +1044,7 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 				if dir != (i < len(parts)-1) {
 					return nil, fmt.Errorf("来源文件路径类型已变化")
 				}
-				if !dir && knowledgeEntrySize(item) > maxBytes {
+				if !dir && maxBytes > 0 && knowledgeEntrySize(item) > maxBytes {
 					return nil, fmt.Errorf("来源文件超过读取字节上限")
 				}
 				found = true
@@ -1051,7 +1067,7 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 			if readErr != nil {
 				return nil, readErr
 			}
-			b, err = io.ReadAll(io.LimitReader(f, maxBytes+1))
+			b, err = readAllOptionalLimit(f, maxBytes)
 			f.Close()
 		}
 	default:
@@ -1060,7 +1076,7 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 	if err != nil {
 		return nil, err
 	}
-	if int64(len(b)) > maxBytes {
+	if maxBytes > 0 && int64(len(b)) > maxBytes {
 		return nil, fmt.Errorf("来源文件超过读取字节上限")
 	}
 	if ctx.Err() != nil {
@@ -1109,18 +1125,17 @@ func (a *App) knowledgeReadNode(ctx context.Context, n knowledgeNode, workspace 
 // A star-map viewer carries the graph's source identity into all content reads.
 // Ordinary SSH raw reads can omit it, but still pin the current connection.
 func (a *App) knowledgeReadViewer(ctx context.Context, rootName, sourceID, p, origin, workspace string, maxBytes int64) ([]byte, error) {
-	if maxBytes <= 0 || maxBytes > rawViewerLimit(p) || origin != "" && workspace == "" {
+	if maxBytes < 0 || rawViewerLimit(p) > 0 && maxBytes > rawViewerLimit(p) || origin != "" && workspace == "" {
 		return nil, fmt.Errorf("查看范围或来源身份无效")
 	}
 	ar, err := a.knowledgeViewerArea(rootName, sourceID, origin, workspace)
 	if err != nil {
 		return nil, err
 	}
-	timeout := 15 * time.Second
-	if rawViewerLimit(p) > maxRawFile {
-		timeout = 90 * time.Second
+	if maxBytes == 0 {
+		return a.knowledgeAreaRead(ctx, ar, p, 0)
 	}
-	bounded, cancel := context.WithTimeout(ctx, timeout)
+	bounded, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	return a.knowledgeAreaRead(bounded, ar, p, maxBytes)
 }
@@ -1165,7 +1180,7 @@ func (a *App) knowledgeViewerArea(rootName, sourceID, origin, workspace string) 
 // requiring membership of the bounded star-map catalogue. It is still pinned to
 // the supplied source configuration and to the current workspace revision.
 func (a *App) knowledgeReadSource(ctx context.Context, src Source, p string, maxBytes int64) ([]byte, error) {
-	if maxBytes <= 0 || maxBytes > rawViewerLimit(p) {
+	if maxBytes < 0 || rawViewerLimit(p) > 0 && maxBytes > rawViewerLimit(p) {
 		return nil, fmt.Errorf("来源读取范围无效")
 	}
 	a.mu.Lock()
@@ -1187,11 +1202,10 @@ func (a *App) knowledgeReadSource(ctx context.Context, src Source, p string, max
 		if !ar.enabled || !bytes.Equal(wanted, current) {
 			return nil, fmt.Errorf("引用来源已变化或停用")
 		}
-		timeout := 15 * time.Second
-		if rawViewerLimit(p) > maxRawFile {
-			timeout = 90 * time.Second
+		if maxBytes == 0 {
+			return a.knowledgeAreaRead(ctx, ar, p, 0)
 		}
-		bounded, cancel := context.WithTimeout(ctx, timeout)
+		bounded, cancel := context.WithTimeout(ctx, 15*time.Second)
 		defer cancel()
 		return a.knowledgeAreaRead(bounded, ar, p, maxBytes)
 	}
