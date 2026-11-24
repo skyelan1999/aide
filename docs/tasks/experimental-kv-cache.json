@@ -1,0 +1,78 @@
+{
+  "id": "experimental-kv-cache",
+  "request": "在设置中加入实验性功能，通过开辟本地内存空间或固定的硬盘路径做KV Cache的统一代理来减少token的消耗，做好生命周期管理，释放、溢出预防和回收，大小必须要固定；已确认云端前缀缓存、llama.cpp与vLLM真实KV均接入，直接修改Aide本体",
+  "baseline": "8c99a910193fec1b8c264b9830f18d1719277cb3",
+  "initial_status": "",
+  "acceptance": [
+    "实验开关默认关闭；关闭时所有模型请求体保持原样，既有设置与调用兼容。",
+    "内存或磁盘容量必须显式固定且不可无限增长；运行统计始终不超过配置容量，溢出时回收或回滚，不影响已完成模型回答。",
+    "云端仅对明确适配的提供商注入稳定 prompt_cache_key，节省量只采用上游 cached_tokens，不缓存或复用模型答案。",
+    "llama.cpp 仅在同源槽位上串行恢复前缀匹配的 KV；取消、失败、模型或工具链变化会废弃旧状态，保存、擦除、TTL 和 LRU 有契约回归。",
+    "vLLM 生成固定容量 LMCache 配置，禁用惰性内存扩张和远程脚本端点，真实 KV 由 LMCache/vLLM 持有并执行回收。",
+    "设置页可配置固定容量、固定路径、TTL 和引擎适配，可查看占用/命中/回收状态并执行安全清理；敏感提示词和 API Key 不进入清单或日志。",
+    "通过定向 Go/race、TypeScript、UI 契约和项目 full 验证；真实 llama.cpp/vLLM 硬件验收若环境不具备必须明确 NOT_RUN。"
+  ],
+  "scope": [
+    "internal/server KV Cache 配置、固定容量生命周期管理、模型请求适配和统计 API",
+    "llama.cpp slot save/restore/erase 与 LMCache/vLLM 固定容量配置生成",
+    "设置页实验功能、提供商缓存适配、状态与清理界面",
+    "任务文档、定向及完整回归；不包含提交、推送或发布"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "completed",
+      "summary": "用户明确选择云端前缀缓存与真实 KV 两层、llama.cpp 和 vLLM 双引擎、直接修改 Aide 本体；容量必须固定，并覆盖释放、溢出预防与回收。",
+      "evidence": ["本轮 interaction_ask 两次用户选择"]
+    },
+    "design": {
+      "status": "completed",
+      "summary": "云端只注入稳定前缀键并采用 cached_tokens；llama.cpp 使用同源槽位串行租用、消息链哈希前缀匹配、save/restore/erase；vLLM 使用 LMCache 固定 CPU/磁盘配置。Aide 仅保存哈希和生命周期元数据，容量/路径变化创建新代并清理旧代。",
+      "evidence": [
+        "https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md",
+        "https://docs.lmcache.ai/kv_cache/local_storage.html",
+        "https://docs.lmcache.ai/kv_cache/cpu_ram.html",
+        "https://docs.lmcache.ai/api_reference/configurations.html",
+        "https://platform.openai.com/docs/guides/prompt-caching"
+      ]
+    },
+    "implementation": {
+      "status": "completed",
+      "summary": "已接入设置 API、云端稳定前缀键与 cached_tokens 统计、llama.cpp 槽位串行租用和 save/restore/erase、vLLM/LMCache 固定配置。固定总预算在真实 KV 引擎间切分，独立 llama.cpp/vllm 子目录，条目/链/清单均有硬上限；TTL、LRU、溢出回滚、取消、关闭等待、配置代次与备份导入运行时同步已实现。",
+      "evidence": [
+        "internal/server/kv_cache.go",
+        "internal/server/kv_cache_llamacpp.go",
+        "internal/server/provider.go",
+        "internal/server/config_backup.go"
+      ]
+    },
+    "verification": {
+      "status": "completed",
+      "summary": "定向 Go/race、Go vet、全仓 go test ./...、TypeScript 构建及全量类型检查、9 项设置导航、4139 个显式 UI 翻译站点、Chromium 桌面/移动和中英文保存/清理均通过；提供商下拉已实测选择 vLLM 并随 PUT /settings 持久化。后续 llama.cpp 启动参数与内存 KV 修复已补做真实 b12675 两轮验收：第二轮 cachedTokens=16813，实际新求值 1805 Token，erase 返回 HTTP 200；该增量通过全部 KV/LMCache 定向测试、go vet 与源码构建，未再次运行全仓测试。真实 vLLM/LMCache 引擎仍为 NOT_RUN。llama.cpp 由外部进程写槽位文件，Aide 在保存后统计并回收/回滚，不能把该逻辑预算描述为文件系统级瞬时物理配额。",
+      "evidence": [
+        "internal/server/kv_cache_test.go",
+        ".agent-state/kv-cache-browser/report.json",
+        "scripts/browser-kv-cache-settings.cjs",
+        ".agent-state/local-llama/aide-erase-final-ram.json",
+        ".agent-state/local-llama/server-final-ram.log"
+      ]
+    },
+    "documentation": {
+      "status": "completed",
+      "summary": "设置页明确默认关闭、固定总预算共享、引擎重启、TTL 适用范围、vLLM 停止后清理及不伪造缓存命中的边界。",
+      "evidence": ["internal/server/web/app.ts", "internal/server/web/settings-schema.json"]
+    },
+    "cleanup": {
+      "status": "completed",
+      "summary": "过期浏览器任务和过期全仓回归已停止；无本轮后台任务需要保留，未提交或推送。",
+      "evidence": []
+    },
+    "release": {
+      "status": "requested",
+      "summary": "用户已明确要求“合并并推送”；本次提交包含实验性 KV Cache 功能及 llama.cpp 槽位与内存复用修复。",
+      "evidence": ["用户原话：合并并推送"]
+    }
+  },
+  "release_authorization": "合并并推送",
+  "rollback": "",
+  "handoff": "实现、设置 UI、提供商持久化、关闭生命周期及验证已完成。本地 llama.cpp b12675 已完成真实 erase 与两轮内存 KV 命中验收；最终增量通过 KV/LMCache 定向测试、go vet 和源码构建，未再次运行全仓测试。真实 vLLM/LMCache 仍为 NOT_RUN；llama.cpp 外部写盘的瞬时物理占用不由 Aide 的逻辑预算硬限制。用户已授权合并并推送。"
+}

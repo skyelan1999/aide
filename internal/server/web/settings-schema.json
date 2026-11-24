@@ -204,6 +204,13 @@
               "id": "model-profiles",
               "type": "profiles-manager",
               "label": "参数配置"
+            },
+            {
+              "id": "kv-cache",
+              "type": "kv-cache",
+              "label": "实验性 KV Cache",
+              "description": "固定内存或磁盘预算、云端前缀缓存与本地引擎真实 KV 生命周期管理",
+              "advanced": true
             }
           ]
         }

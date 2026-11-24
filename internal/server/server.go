@@ -67,6 +67,7 @@ type ModelProvider struct {
 	BaseURL               string             `json:"baseURL"`
 	Protocol              string             `json:"protocol,omitempty"`
 	ReasoningEffortFormat string             `json:"reasoningEffortFormat,omitempty"`
+	KVCacheEngine         string             `json:"kvCacheEngine,omitempty"` // auto/off/openai/llamacpp/vllm；真实 KV 必须显式选择引擎。
 	Keys                  []ModelProviderKey `json:"keys,omitempty"`
 	ActiveKeyID           string             `json:"activeKeyId,omitempty"`
 }
@@ -93,8 +94,9 @@ type Settings struct {
 	generationIntent string // Request-local output modality; never persisted as a setting.
 	generationError  string
 
-	billingIsolated bool           // A separate credential must never inherit the global provider key identity.
-	routedProfile   *routerProfile // Request-local plugin declaration; never serialized or saved.
+	billingIsolated bool            // A separate credential must never inherit the global provider key identity.
+	routedProfile   *routerProfile  // Request-local plugin declaration; never serialized or saved.
+	kvCache         *kvCacheManager // Request-local unified cache runtime; never serialized or saved.
 
 	AgentManagement        AgentManagementPermissions `json:"agentManagement"`
 	AssistantAutoReview    bool                       `json:"assistantAutoReview,omitempty"`
@@ -106,6 +108,7 @@ type Settings struct {
 	APIKey                 string                     `json:"apiKey,omitempty"`
 	Models                 []ModelRef                 `json:"models,omitempty"`
 	ModelProviders         []ModelProvider            `json:"modelProviders,omitempty"`
+	KVCache                KVCacheSettings            `json:"kvCache,omitempty"`
 	ActiveModel            string                     `json:"activeModel,omitempty"`
 	SandboxMode            string                     `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
 	ToolMaxRounds          int                        `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
@@ -276,6 +279,11 @@ func normalizeModelProviders(providers []ModelProvider) ([]ModelProvider, error)
 		if p.ReasoningEffortFormat != "" && p.ReasoningEffortFormat != "openai" && p.ReasoningEffortFormat != "codex-bridge" {
 			return nil, fmt.Errorf("提供商 %s 使用了不支持的推理强度格式", p.Name)
 		}
+		switch p.KVCacheEngine {
+		case "", "off", "openai", "llamacpp", "vllm":
+		default:
+			return nil, fmt.Errorf("提供商 %s 使用了不支持的 KV Cache 适配器", p.Name)
+		}
 		if len(p.Keys) > maxProviderKeys {
 			return nil, fmt.Errorf("提供商 %s 最多保存 %d 个密钥", p.Name, maxProviderKeys)
 		}
@@ -321,6 +329,7 @@ func defaultSettings() Settings {
 		TTSProvider:        "auto",
 		TTSRate:            1.0,
 		DebugAccessEnabled: false,
+		KVCache:            defaultKVCacheSettings(),
 	}
 }
 
@@ -364,6 +373,7 @@ func validateSettings(s *Settings) {
 	default:
 		s.VoiceInsertSensitivity = "conservative"
 	}
+	normalizeKVCacheDefaults(&s.KVCache)
 }
 
 // normalizeLoadedSettings 把从磁盘或备份读入的 Settings 收敛到运行态一致：
@@ -546,6 +556,7 @@ type App struct {
 	workspace, reference      *os.Root
 	workPath, dataPath, token string
 	settings                  Settings
+	kvCache                   *kvCacheManager
 	approvalPolicy            ApprovalPolicy
 	capabilityChecks          map[string]CapabilityCheck
 	capabilityChecking        bool
@@ -1002,6 +1013,12 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, fmt.Errorf("settings.json: %w", err)
 	}
+	a.kvCache = newKVCacheManager(data, a.settings.KVCache)
+	a.settings.kvCache = a.kvCache
+	if err := a.kvCache.Start(); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("kv-cache: %w", err)
+	}
 	if err := a.loadApprovalPolicy(); err != nil {
 		a.Close()
 		return nil, err
@@ -1295,6 +1312,9 @@ func (a *App) Close() {
 			a.daemons.StopAll() // Release in-flight plugin IPC before joining callers.
 		}
 		a.bgWg.Wait()
+		if a.kvCache != nil {
+			a.kvCache.Close()
+		}
 		a.mu.Lock()
 		for key, b := range a.pluginWorkbenchBridges {
 			disposePluginDocument(b.Document)
@@ -1646,6 +1666,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/system-logs", a.systemLogsHandler)
 	mux.HandleFunc("GET /api/diagnostics/incidents", a.incidentsHandler)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
+	mux.HandleFunc("/api/kv-cache", a.kvCacheAPI)
 	mux.HandleFunc("GET /api/xiaomi/model", a.xiaomiModelSettings)
 	mux.HandleFunc("PUT /api/xiaomi/model", a.updateXiaomiModelSettings)
 	mux.HandleFunc("GET /api/models", a.listModels)
@@ -2126,6 +2147,8 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	// 前端部分更新（如仅切换 activeModel）时，用已存值补全后再校验
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	in.Settings.KVCache = a.settings.KVCache
+	in.Settings.kvCache = a.kvCache
 	if in.BaseURL == "" {
 		in.BaseURL = a.settings.BaseURL
 	}
@@ -2603,6 +2626,13 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			a.personaKey = in.NewPassword
+		}
+	}
+	if kvCacheAdapterSignature(a.settings.ModelProviders) != kvCacheAdapterSignature(in.Settings.ModelProviders) {
+		engines := append(a.kvCacheEngineConfigsLocked(), a.kvCacheEngineConfigsForSettingsLocked(in.Settings)...)
+		if err := a.kvCache.Configure(r.Context(), a.settings.KVCache, engines); err != nil {
+			fail(w, 409, fmt.Errorf("KV Cache 适配器变更未能安全生效: %w", err))
+			return
 		}
 	}
 	if err := atomicJSON(SettingsPath(a.dataPath), in.Settings); err != nil {
@@ -3570,6 +3600,9 @@ func Run() error {
 
 // recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
 func (a *App) recordTokenUsage(u TokenUsage) {
+	if a.kvCache != nil {
+		a.kvCache.ObserveUsage(u)
+	}
 	now := time.Now()
 	quote := a.providerQuote(u.Provider, u.Model, u.Prompt, now)
 	a.tokenStatsMu.Lock()

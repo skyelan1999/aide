@@ -5140,7 +5140,7 @@ $('settings-form').onsubmit = action(async (event) => {
             if (apiKey)
                 providerKeyWrites.push({ providerId: provider.id, keyId: key.id, apiKey });
         }
-        return { id: provider.id, name: provider.name, baseURL: provider.baseURL.trim(), protocol: 'openai-compatible', reasoningEffortFormat: provider.reasoningEffortFormat || '', activeKeyId: provider.activeKeyId || '', keys: (provider.keys || []).map(({ id, label }) => ({ id, label })) };
+        return { id: provider.id, name: provider.name, baseURL: provider.baseURL.trim(), protocol: 'openai-compatible', reasoningEffortFormat: provider.reasoningEffortFormat || '', kvCacheEngine: provider.kvCacheEngine || '', activeKeyId: provider.activeKeyId || '', keys: (provider.keys || []).map(({ id, label }) => ({ id, label })) };
     });
     const active = draft.models.find((model) => model.id === draft.activeModel) || draft.models[0];
     try {
@@ -6251,6 +6251,155 @@ function renderComputerControlSettings() {
     wrap.append(permissions, enabledRow, executionHint, label, apps, hint, save);
     return wrap;
 }
+function renderKVCacheControl() {
+    const wrap = el('div', 'settings-control execution-policy-form kv-cache-control');
+    const intro = el('p', 'section-desc', t('实验性功能：以固定内存或固定磁盘总预算统一管理云端前缀缓存、llama.cpp 槽位 KV 与 vLLM / LMCache；同时启用真实 KV 引擎时共享该总预算。缓存失效只回退普通请求，不复用模型答案。'));
+    const warning = el('p', 'section-desc', t('真实 KV 由推理引擎持有。修改容量、路径或适配器会清理上一代缓存；引擎需要按下方配置重启。TTL 管理 Aide 的 llama.cpp 条目，LMCache 内部回收由引擎执行；物理清理前须停止 vLLM。配置写入成功不代表已经发生缓存命中。'));
+    const enabledRow = el('label', 'settings-file-checkbox'), enabled = document.createElement('input');
+    enabled.type = 'checkbox';
+    const enabledCopy = el('span', 'settings-file-copy');
+    enabledCopy.append(el('strong', '', t('启用实验性 KV Cache 统一代理')), el('span', '', t('默认关闭；只有显式适配的模型连接才会改变请求或绑定本地引擎槽位。')));
+    enabledRow.append(enabled, enabledCopy);
+    const form = el('div', 'execution-policy-fields');
+    const makeField = (label, input) => {
+        const row = el('label', 'execution-policy-field');
+        row.append(el('span', '', t(label)), input);
+        input.setAttribute('aria-label', t(label));
+        form.append(row);
+        return input;
+    };
+    const backend = makeField('缓存存储', document.createElement('select'));
+    for (const [value, label] of [['memory', '本地内存（固定上限）'], ['disk', '固定磁盘路径（固定上限）']]) {
+        const option = el('option', '', t(label));
+        option.value = value;
+        backend.append(option);
+    }
+    const capacity = makeField('固定容量（MiB）', document.createElement('input'));
+    capacity.type = 'number';
+    capacity.min = '16';
+    capacity.max = '1048576';
+    capacity.step = '1';
+    const diskPath = makeField('固定磁盘路径', document.createElement('input'));
+    diskPath.type = 'text';
+    diskPath.placeholder = t('必须是绝对路径；llama.cpp 与 Aide 需共享此目录');
+    const ttl = makeField('缓存生命周期（分钟）', document.createElement('input'));
+    ttl.type = 'number';
+    ttl.min = '1';
+    ttl.max = '43200';
+    ttl.step = '1';
+    const features = {};
+    const featureRows = el('div', 'kv-cache-features');
+    for (const [key, label] of [['cloudPrefix', '云端前缀缓存'], ['llamaCpp', 'llama.cpp 真实 KV'], ['vllm', 'vLLM / LMCache 真实 KV']]) {
+        const row = el('label', 'settings-file-checkbox'), input = document.createElement('input');
+        input.type = 'checkbox';
+        row.append(input, el('span', '', t(label)));
+        featureRows.append(row);
+        features[key] = input;
+    }
+    const syncBackend = () => { diskPath.closest('.execution-policy-field').hidden = backend.value !== 'disk'; };
+    backend.onchange = syncBackend;
+    const status = el('p', 'section-desc', t('正在读取缓存状态…'));
+    const stats = el('div', 'execution-policy-grid');
+    const engine = el('div', 'kv-cache-engine');
+    const buttons = el('div', 'execution-policy-actions');
+    const save = el('button', '', t('保存固定缓存配置'));
+    const clear = el('button', 'quiet', t('清空并释放缓存'));
+    const refresh = el('button', 'quiet', t('刷新状态'));
+    buttons.append(save, clear, refresh);
+    wrap.append(intro, warning, enabledRow, form, featureRows, status, stats, engine, buttons);
+    let busy = false;
+    const setBusy = (value) => { busy = value; save.disabled = clear.disabled = refresh.disabled = value; };
+    const fill = (result) => {
+        const cfg = result.config || {}, data = result.stats || {};
+        enabled.checked = cfg.enabled === true;
+        backend.value = cfg.backend || 'memory';
+        capacity.value = String(cfg.capacityMiB || 1024);
+        diskPath.value = cfg.diskPath || '';
+        ttl.value = String(cfg.ttlMinutes || 1440);
+        for (const key of Object.keys(features))
+            features[key].checked = cfg[key] === true;
+        syncBackend();
+        const used = Number(data.usedBytes || 0) / 1048576, total = Number(data.capacityBytes || 0) / 1048576;
+        status.textContent = result.lastError || data.lastError || t('固定总预算 {0} MiB，已观测 {1} MiB；代次 {2}。', total.toFixed(1), used.toFixed(2), data.generation || 0);
+        stats.replaceChildren();
+        const cards = [
+            ['缓存条目 / 活跃租用', `${data.entryCount || 0} / ${data.activeLeases || 0}`],
+            ['KV 恢复 / 复用 Token', `${data.restores || 0} / ${data.restoredTokens || 0}`],
+            ['上游 cached_tokens', String(data.cachedTokens || 0)],
+            ['LRU 回收 / TTL 释放', `${data.evictions || 0} / ${data.expirations || 0}`],
+            ['溢出回滚', String(data.overflowRollbacks || 0)],
+        ];
+        for (const [label, value] of cards) {
+            const card = el('div', 'execution-policy-stat');
+            card.append(el('strong', '', value), el('span', '', t(label)));
+            stats.append(card);
+        }
+        engine.replaceChildren();
+        if (result.engineRestartRequired)
+            engine.append(el('p', 'section-desc', t('引擎启动配置已生成，重启后生效；Aide 不伪造运行中引擎的命中状态。')));
+        if (Array.isArray(result.llamaLaunchArgs) && result.llamaLaunchArgs.length)
+            engine.append(el('p', 'section-desc', t('llama.cpp 启动参数：{0}', result.llamaLaunchArgs.join(' '))));
+        if (result.lmcacheConfigPath)
+            engine.append(el('p', 'section-desc', t('vLLM / LMCache 配置：{0}', result.lmcacheConfigPath)));
+        for (const note of result.notes || [])
+            engine.append(el('small', 'muted', t(note)));
+        if (state.config)
+            state.config.kvCache = cfg;
+    };
+    const payload = () => ({
+        enabled: enabled.checked, backend: backend.value, capacityMiB: Math.trunc(Number(capacity.value)),
+        diskPath: backend.value === 'disk' ? diskPath.value.trim() : '', ttlMinutes: Math.trunc(Number(ttl.value)),
+        cloudPrefix: features.cloudPrefix.checked, llamaCpp: features.llamaCpp.checked, vllm: features.vllm.checked,
+    });
+    const load = async () => { if (busy)
+        return; setBusy(true); try {
+        fill(await api('/kv-cache'));
+    }
+    catch (error) {
+        status.textContent = t('读取 KV Cache 状态失败：{0}', error.message);
+    }
+    finally {
+        setBusy(false);
+    } };
+    save.onclick = action(async () => {
+        if (busy)
+            return;
+        const body = payload();
+        if (!Number.isInteger(body.capacityMiB) || body.capacityMiB < 16 || body.capacityMiB > 1048576 || !Number.isInteger(body.ttlMinutes) || body.ttlMinutes < 1 || body.ttlMinutes > 43200) {
+            status.textContent = t('请输入有效的固定容量和生命周期。');
+            return;
+        }
+        setBusy(true);
+        try {
+            fill(await api('/kv-cache', { method: 'PUT', body: JSON.stringify(body) }));
+            toast(t('KV Cache 固定配置已保存'));
+        }
+        catch (error) {
+            status.textContent = t('KV Cache 配置保存失败：{0}', error.message);
+        }
+        finally {
+            setBusy(false);
+        }
+    });
+    clear.onclick = action(async () => {
+        if (busy || !confirm(t('清空并释放全部 KV Cache？进行中的 llama.cpp 租用完成后才会清理；须先停止 vLLM，之后的请求将重新建立缓存。')))
+            return;
+        setBusy(true);
+        try {
+            fill(await api('/kv-cache', { method: 'DELETE' }));
+            toast(t('KV Cache 已清空并释放'));
+        }
+        catch (error) {
+            status.textContent = t('KV Cache 清理失败：{0}', error.message);
+        }
+        finally {
+            setBusy(false);
+        }
+    });
+    refresh.onclick = action(load);
+    load();
+    return wrap;
+}
 function renderAboutProject(control) {
     const card = el('div', 'about-project');
     const hero = el('div', 'about-identity');
@@ -7305,7 +7454,7 @@ const controlRenderers = { keybindings: () => { const onCleanup = (unsub) => set
     "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
     "capabilities": () => window.aideCapabilities.render({ api, t, blocked: () => lockScreen.locked || !state.token, active: () => settingsPanel.active === 'accessibility' && settingsPanel.activeChild === 'interface-tests' && $('settings-sheet').classList.contains('open') }),
     "markdown-history": renderMarkdownHistoryControl,
-    'workbench-background': () => window.AideBackground.renderSettings({ t }), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+    'workbench-background': () => window.AideBackground.renderSettings({ t }), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, 'kv-cache': renderKVCacheControl, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 function renderSystemLogsControl() {
     const wrap = el('div', 'settings-control system-logs-control');
     const toolbar = el('div', 'system-logs-toolbar');
@@ -8552,6 +8701,19 @@ function renderModelList() {
             reasoningFormat.addEventListener('change', () => { provider.reasoningEffortFormat = reasoningFormat.value; });
             reasoningLabel.append(reasoningFormat);
             body.append(reasoningLabel);
+            const cacheLabel = el('label', 'model-provider-field', t('KV Cache 适配'));
+            const cacheFormat = el('select');
+            for (const [value, label] of [
+                ['', t('自动（仅官方 OpenAI 使用前缀键）')], ['off', t('关闭缓存适配')],
+                ['openai', t('OpenAI 兼容前缀缓存')], ['llamacpp', t('llama.cpp 槽位 KV')], ['vllm', t('vLLM / LMCache KV')],
+            ])
+                cacheFormat.add(new Option(label, value));
+            cacheFormat.value = provider.kvCacheEngine || '';
+            cacheFormat.setAttribute('aria-label', `${provider.name} ${t('KV Cache 适配')}`);
+            cacheFormat.addEventListener('change', () => { provider.kvCacheEngine = cacheFormat.value; });
+            cacheLabel.append(cacheFormat);
+            body.append(cacheLabel);
+            body.append(el('p', 'model-empty-note', t('真实 KV 必须显式选择本地引擎；自动模式不会把普通兼容服务误判为 llama.cpp 或 vLLM。')));
             const keySection = el('div', 'model-key-section');
             const keyHeader = el('div', 'model-subsection-head');
             keyHeader.append(el('strong', '', t('API 密钥')), el('span', 'model-provider-meta', t('本机加密保存 · {0}/{1}', (provider.keys || []).length, 12)));

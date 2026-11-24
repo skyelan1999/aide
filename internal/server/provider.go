@@ -318,6 +318,12 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		body = buildResponsesBody(cfg, messages, params, tools, false)
 		endpoint = "/responses"
 	}
+	cacheLease, err := prepareKVCacheRequest(ctx, cfg, messages, body)
+	if err != nil {
+		return "", nil, TokenUsage{}, err
+	}
+	cacheText, cacheCalls, cacheSuccess := "", []ToolCall(nil), false
+	defer func() { cacheLease.finish(cacheSuccess, cacheText, cacheCalls) }()
 	promptEstimate := estimateProviderPromptTokens(messages, tools)
 	b, err := json.Marshal(body)
 	if err != nil {
@@ -409,6 +415,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
 		return "", nil, usage, &emptyCompletionError{finish: out.Choices[0].FinishReason}
 	}
+	cacheText, cacheCalls, cacheSuccess = msg.Content, msg.ToolCalls, true
 	return msg.Content, msg.ToolCalls, usage, nil
 }
 
@@ -462,6 +469,12 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		body = buildResponsesBody(cfg, messages, params, tools, true)
 		endpoint = "/responses"
 	}
+	cacheLease, err := prepareKVCacheRequest(ctx, cfg, messages, body)
+	if err != nil {
+		return "", nil, TokenUsage{}, "", err
+	}
+	cacheText, cacheCalls, cacheSuccess := "", []ToolCall(nil), false
+	defer func() { cacheLease.finish(cacheSuccess, cacheText, cacheCalls) }()
 	streamCtx, cancelStream := context.WithCancel(ctx)
 	defer cancelStream()
 	promptEstimate := estimateProviderPromptTokens(messages, tools)
@@ -556,6 +569,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		if rec := tokenUsageRecorder.Load(); rec != nil {
 			rec.(func(TokenUsage))(usage)
 		}
+		cacheText, cacheCalls, cacheSuccess = msg.Content, msg.ToolCalls, true
 		return msg.Content, msg.ToolCalls, usage, out.Choices[0].FinishReason, nil
 	}
 
@@ -686,6 +700,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	if !streamEnded && finishReason == "" {
 		return text, nil, tu, "", fmt.Errorf("%w: %w，已保留部分正文；请从检查点继续", errIncompleteProviderStream, io.ErrUnexpectedEOF)
 	}
+	cacheText, cacheCalls, cacheSuccess = text, calls, true
 	return text, calls, tu, finishReason, nil
 }
 

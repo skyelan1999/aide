@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -238,9 +240,28 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		migratedKey = true
 	}
 	merged.APIKey = ""
+	previousSettings := a.settings
+	kvChanged := previousSettings.KVCache != merged.KVCache || kvCacheAdapterSignature(previousSettings.ModelProviders) != kvCacheAdapterSignature(merged.ModelProviders)
+	engines := append(a.kvCacheEngineConfigsLocked(), a.kvCacheEngineConfigsForSettingsLocked(merged)...)
+	if kvChanged {
+		if err := a.kvCache.Configure(r.Context(), merged.KVCache, engines); err != nil {
+			fail(w, 409, fmt.Errorf("备份中的 KV Cache 配置未能安全生效: %w", err))
+			return
+		}
+	}
+	merged.kvCache = a.kvCache
 	a.lan.revoke()
 	a.settings = merged
 	if err := atomicJSON(SettingsPath(a.dataPath), merged); err != nil {
+		a.settings = previousSettings
+		if kvChanged {
+			rollbackCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			rollbackErr := a.kvCache.Configure(rollbackCtx, previousSettings.KVCache, engines)
+			cancel()
+			if rollbackErr != nil {
+				err = fmt.Errorf("%w；KV Cache 运行时回滚失败: %v", err, rollbackErr)
+			}
+		}
 		fail(w, 500, err)
 		return
 	}

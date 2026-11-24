@@ -1108,7 +1108,7 @@ func (a *App) summarizeTopic(ctx context.Context, s *Session, task *Task, cfg Se
 	topicContext := requestContext(input, nil, summaryParams.MaxTokens, a.modelWindow(cfg.Model))
 	task.TopicContext = topicContext
 	a.mu.Unlock()
-	topic, _, usage, err := complete(ctx, cfg, input, summaryParams, nil, nil)
+	topic, _, usage, err := complete(withoutKVCache(ctx), cfg, input, summaryParams, nil, nil)
 	if err == nil {
 		a.mu.Lock()
 		task.Usage = addUsage(task.Usage, usage)

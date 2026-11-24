@@ -1900,3 +1900,18 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 @media (max-width: 500px) {
   .voip-control label.voice-reply-row:has(input:not([type="checkbox"])) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Experimental KV Cache uses the full settings surface, not a narrow single-control column. */
+.kv-cache-control{width:100%;max-width:760px;min-width:0;box-sizing:border-box}
+.kv-cache-control .execution-policy-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.kv-cache-control .execution-policy-field{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0}
+.kv-cache-control .execution-policy-field input,.kv-cache-control .execution-policy-field select{width:100%;min-width:0;box-sizing:border-box}
+.kv-cache-features{display:flex;flex-wrap:wrap;gap:4px 20px;margin:12px 0}
+.kv-cache-features .settings-file-checkbox{flex:1 1 190px;min-width:0}
+.kv-cache-control .execution-policy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:16px 0}
+.kv-cache-control .execution-policy-stat{display:flex;flex-direction:column;gap:4px;min-width:0;padding:10px;border:1px solid var(--line-faint);border-radius:8px;background:var(--surface)}
+.kv-cache-control .execution-policy-stat strong{font-size:17px;overflow-wrap:anywhere}
+.kv-cache-control .execution-policy-stat span{color:var(--text-dim);font-size:11px}
+.kv-cache-engine{overflow-wrap:anywhere}
+.kv-cache-control .execution-policy-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+@media (max-width:600px){.kv-cache-control .execution-policy-fields{grid-template-columns:minmax(0,1fr)}}
