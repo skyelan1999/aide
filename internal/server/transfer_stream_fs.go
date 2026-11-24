@@ -388,6 +388,46 @@ func (f *transferFS) Remove(p string, dir bool) error {
 	}
 	return f.client.Remove(v)
 }
+
+// transferRenameExclusiveFallback is for mounted filesystems which do not
+// implement the platform's atomic no-replace rename or hard-link operation.
+// The exclusive placeholder reserves the destination before the rename, so an
+// existing upload is never silently replaced.
+func transferRenameExclusiveFallback(root *os.Root, old, new string) error {
+	info, err := root.Stat(old)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		if _, err = root.Lstat(new); err == nil {
+			return os.ErrExist
+		} else if !os.IsNotExist(err) {
+			return err
+		}
+		return root.Rename(old, new)
+	}
+	marker, err := root.OpenFile(new, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	markerInfo, statErr := marker.Stat()
+	closeErr := marker.Close()
+	if statErr != nil || closeErr != nil {
+		_ = root.Remove(new)
+		if statErr != nil {
+			return statErr
+		}
+		return closeErr
+	}
+	if err = root.Rename(old, new); err != nil {
+		if current, statErr := root.Lstat(new); statErr == nil && os.SameFile(markerInfo, current) {
+			_ = root.Remove(new)
+		}
+		return err
+	}
+	return nil
+}
+
 func (f *transferFS) Publish(old, new string) error {
 	if f.relay != nil {
 		return f.relay.mutate("rename", old, new)

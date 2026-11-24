@@ -3,9 +3,7 @@
 package server
 
 import (
-	"errors"
 	"os"
-	"runtime"
 )
 
 func transferRenameExclusive(root *os.Root, old, new string) error {
@@ -13,19 +11,16 @@ func transferRenameExclusive(root *os.Root, old, new string) error {
 	if e != nil {
 		return e
 	}
-	if !info.IsDir() {
-		if e = root.Link(old, new); e != nil {
-			return e
-		}
+	if info.IsDir() {
+		return transferRenameExclusiveFallback(root, old, new)
+	}
+	if e = root.Link(old, new); e == nil {
 		return root.Remove(old)
 	}
-	if runtime.GOOS != "windows" {
-		return errors.New("此平台尚不支持目录的原子无覆盖发布")
-	}
-	if _, e = root.Lstat(new); e == nil {
-		return os.ErrExist
-	} else if !os.IsNotExist(e) {
+	if os.IsExist(e) {
 		return e
 	}
-	return root.Rename(old, new)
+	// FAT/exFAT and some Windows filesystem filters cannot create hard links.
+	// Preserve the no-overwrite contract with an exclusive destination marker.
+	return transferRenameExclusiveFallback(root, old, new)
 }
