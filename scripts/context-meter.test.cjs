@@ -16,7 +16,7 @@ function setup() {
   const state = {config:{configured:true,workspaceId:'one',model:'model'},session:{id:'A',messages:[]},contextCompactions:new Map(),contextMeterSeq:{value:0},previewSeq:{value:0}};
   const sandbox = {state, $, el:(tag,cls,text)=>({tag,className:cls,textContent:text,dataset:{},style:style(),setAttribute(){},children:[],append(...items){this.children.push(...items)}}), window:{}, AbortController, clearTimeout, setTimeout, fmtTokens:String,activeModel:()=>null, t:(s,...args)=>s.replace(/\{(\d+)\}/g,(_,n)=>args[n]), contextParts:()=>[], ensureContextMeterControls(){},hideCtxTooltip(){},updateSendEnabled(){},api:(path, options)=>new Promise((resolve,reject)=>requests.push({resolve,reject,body:JSON.parse(options.body),signal:options.signal}))};
   vm.createContext(sandbox);
-  for(const name of ['sessionModelPreferences','contextMeterKey','contextUsageTotal','formatUsageTokens','currentContextUsage','latestRequestContext','renderParallelContextDetail','paintContextUsage','renderContextMeter','cancelContextPreview','hideContextPreview','contextMeterScope','contextMeterTransitioning','contextOccupancyRatio','contextRunDuration','renderContextRuntime','paintContextUsageRings','renderContextCompactionState','clearContextMeterDisplay','resetContextMeter','refreshContextMeter','estimateContext','refreshContextPreview','scheduleContextPreview']) vm.runInContext(fn(name),sandbox);
+  for(const name of ['sessionModelPreferences','contextMeterKey','contextUsageTotal','formatUsageTokens','currentContextUsage','latestRequestContext','renderParallelContextDetail','paintContextRequestState','paintContextUsage','renderContextMeter','cancelContextPreview','hideContextPreview','contextMeterScope','contextMeterTransitioning','contextOccupancyRatio','contextRunDuration','renderContextRuntime','paintContextUsageRings','renderContextCompactionState','clearContextMeterDisplay','resetContextMeter','refreshContextMeter','estimateContext','refreshContextPreview','scheduleContextPreview']) vm.runInContext(fn(name),sandbox);
   return {sandbox,state,requests,$};
 }
 const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000});
@@ -75,6 +75,8 @@ const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000
   assert.match(parallel.$('context-card').dataset.ringDetail,/输入 1999 · 输出 120/,'tooltip reads actual per-lane prompt and completion usage');
   const text=node=>[node.textContent||'',...(node.children||[]).map(text)].join('\n');
   assert.match(text(parallel.$('context-request-summary')),/4000 \/ 65536/,'one request has its own window denominator');
+  assert.match(parallel.$('context-request-state').textContent,/实际 6%/,'compact card exposes actual context state');
+  assert.equal(parallel.$('context-request-state').dataset.state,'actual');
   assert.equal(parallel.$('context-card-detail').children[0].open,false,'long parallel details start collapsed');
   assert.match(parallel.$('context-run-label').textContent,/最近任务/);assert.equal(parallel.$('context-run-total').textContent,'490000');
   const details=text(parallel.$('context-card-detail'));
@@ -92,14 +94,22 @@ const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000
   parallel.state.contextCompactions.set('multiplier-10',{phase:'started',startedAt:Date.now(),updatedAt:Date.now()});
   parallel.sandbox.renderContextCompactionState(parallel.$('context-compaction-slot'));
   assert.equal(parallel.$('context-card').classList.contains('is-compacting'),true,'compaction spins the silver rings');
+  assert.match(parallel.$('context-request-state').textContent,/上下文压缩中/);
+  assert.equal(parallel.$('context-request-state').dataset.state,'compacting');
+  parallel.sandbox.paintContextUsage(data(900));
+  assert.equal(parallel.$('context-request-state').dataset.state,'compacting','meter refresh cannot overwrite compaction state');
   assert.equal(parallel.$('context-compaction-retry').hidden,true);
   parallel.state.contextCompactions.set('multiplier-10',{phase:'completed',beforeTokens:1000,afterTokens:400});
   parallel.sandbox.renderContextCompactionState(parallel.$('context-compaction-slot'));
   assert.equal(parallel.$('context-card').classList.contains('was-compacted'),true,'successful compaction shows green checks');
+  assert.match(parallel.$('context-request-state').textContent,/压缩完成/);
+  assert.equal(parallel.$('context-request-state').dataset.state,'completed');
   assert.equal(parallel.$('context-card').classList.contains('is-compacting'),false);
   parallel.state.contextCompactions.set('multiplier-10',{phase:'failed',text:'offline'});
   parallel.sandbox.renderContextCompactionState(parallel.$('context-compaction-slot'));
   assert.equal(parallel.$('context-card').classList.contains('is-compaction-failed'),true,'failed compaction shows X');
+  assert.match(parallel.$('context-request-state').textContent,/压缩失败/);
+  assert.equal(parallel.$('context-request-state').dataset.state,'failed');
   assert.equal(parallel.$('context-compaction-retry').hidden,false,'failure exposes the small manual retry button');
   assert.match(parallel.$('context-card').dataset.compactionDetail,/offline/);
   sourceMatch(source,/\$\('context-compaction-retry'\)\.onclick[\s\S]*?\$\('compact-button'\)\.click\(\)/);

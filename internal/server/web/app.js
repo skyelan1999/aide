@@ -9057,6 +9057,25 @@ function renderParallelContextDetail(detail) {
     if (!progress?.plannerContext && !progress?.mainContext && !contexts.length)
         detail.append(el('p', 'context-card-actual context-parallel-detail', t(['running', 'queued'].includes(run.status) ? '正在等待逐请求用量回传…' : '此历史任务未记录逐请求上下文，不能从累计用量反推。')));
 }
+function paintContextRequestState(request) {
+    const node = $('context-request-state');
+    if (!node)
+        return;
+    if (!request) {
+        node.textContent = t('暂无上下文');
+        node.dataset.state = 'empty';
+        node.title = t('暂无上下文');
+        return;
+    }
+    const actual = !request.usage?.estimated && request.usage?.prompt > 0;
+    const input = actual ? request.usage.prompt : request.inputEstimate || 0;
+    const output = actual ? request.usage.completion || 0 : 0;
+    const window = request.contextWindow || 65536;
+    const percent = Math.round((input + output) / window * 100);
+    node.textContent = t(actual ? '实际' : '估算') + ' ' + percent + '%';
+    node.dataset.state = actual ? 'actual' : 'estimated';
+    node.title = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
+}
 function paintContextUsage(data) {
     ensureContextMeterControls();
     const { usage, lifetime } = currentContextUsage();
@@ -9115,6 +9134,10 @@ function paintContextUsage(data) {
         card.dataset.runDetail = runDetail;
     }
     const request = latestRequestContext(data);
+    if (state.contextCompactions.has(state.session?.id || ''))
+        renderContextCompactionState();
+    else
+        paintContextRequestState(request);
     renderContextRuntime(run);
     paintContextUsageRings(run, request);
     const bar = $('context-bar');
@@ -9352,6 +9375,16 @@ function renderContextCompactionState(detail) {
     const event = state.contextCompactions.get(sessionID);
     const card = $('context-card');
     const inProgress = event?.phase === 'started' || event?.phase === 'folding';
+    const inlineState = $('context-request-state');
+    if (inlineState) {
+        if (!event)
+            paintContextRequestState(latestRequestContext(state.contextMeter));
+        else {
+            inlineState.textContent = inProgress ? t('上下文压缩中') : (event.phase === 'completed' ? t('压缩完成') : t('压缩失败'));
+            inlineState.dataset.state = inProgress ? 'compacting' : (event.phase === 'completed' ? 'completed' : 'failed');
+            inlineState.title = event.text || inlineState.textContent;
+        }
+    }
     const stalledForMs = inProgress ? Math.max(0, Date.now() - (event.updatedAt || event.startedAt || Date.now())) : 0;
     const stalled = inProgress && stalledForMs >= 180_000;
     const running = inProgress && !stalled;
@@ -9536,6 +9569,10 @@ function clearContextMeterDisplay() {
     $('context-stat').textContent = '—';
     $('context-stat').title = '';
     $('context-usage-kind').textContent = '';
+    const inlineRequestState = $('context-request-state');
+    inlineRequestState.textContent = '';
+    inlineRequestState.title = '';
+    delete inlineRequestState.dataset.state;
     renderContextRuntime(null);
     const parallelBadge = $('context-parallel-badge');
     parallelBadge.hidden = true;
