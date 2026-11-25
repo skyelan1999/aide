@@ -36,6 +36,7 @@ function element(id = '') {
 
 const card = element('context-card');
 const detail = element('context-card-detail');
+const inlineState = element('context-request-state');
 const sessionA = 'session-a';
 const sessionB = 'session-b';
 const sessionC = 'session-c';
@@ -53,7 +54,7 @@ const context = {
       return sessionItems;
     },
   },
-  $: id => ({ 'context-card': card, 'context-card-detail': detail })[id],
+  $: id => ({ 'context-card': card, 'context-card-detail': detail, 'context-request-state': inlineState })[id],
   api: async () => ({ active: false }),
   setInterval: () => 1,
   clearInterval() {},
@@ -67,6 +68,8 @@ const context = {
     setAttribute() {}, append(child) { (this.children ||= []).push(child); },
   }),
   renderContextMeter() {},
+  latestRequestContext: () => null,
+  paintContextRequestState() { inlineState.textContent = ''; inlineState.title = ''; },
 };
 vm.createContext(context);
 vm.runInContext(source.slice(begin, end), context);
@@ -136,6 +139,10 @@ context.renderContextCompactionState(detail);
 assert.equal(sessionItemB.classList.contains('compacting'), false, 'completion stops the session row spinner');
 assert.equal(detail.children.at(-1).children[2].textContent.includes('13,600 tokens → 5,400 tokens'), true, 'completion readback retains the correct session totals');
 assert.equal(card.classList.contains('was-compacted'), true, 'completed animation is visible when returning');
+context.showContextCompaction({ sessionId: sessionB, phase: 'completed', folded: 0, text: '历史未超阈值，无需压缩' });
+context.renderContextCompactionState(detail);
+assert.equal(inlineState.textContent, '历史未超阈值，无需压缩', 'no-op compaction stays inline without a popup');
+assert.match(card.dataset.compactionDetail, /无需压缩/);
 
 context.showContextCompaction({ sessionId: sessionB, phase: 'cancelled', text: '压缩已取消，原会话内容已保留' });
 context.renderContextCompactionState(detail);
@@ -154,5 +161,7 @@ assert.equal(pinned.children.at(-1).children.some(child=>child.className==='cont
 assert.match(style,/\.session-item\.compacting::after/,'session rows reuse the latest shared spinner');
 assert.doesNotMatch(style,/context-fold-sweep|context-compression-fold|context-card-breathe/,'legacy strip and card animations are removed');
 assert.doesNotMatch(workbench,/context-compaction-fill|context-usage-spin/,'legacy compaction meter and global ring spin are removed');
+const compactHandler = source.slice(source.indexOf("$('compact-button').onclick"), source.indexOf("$('context-compaction-retry').onclick"));
+assert.doesNotMatch(compactHandler,/toast\(t\("已压缩|toast\(t\("历史未超阈值|throw error/,'manual compaction never creates global result or error toasts');
 
-console.log('PASS: per-session compaction spinner, no legacy strips, active timing, stalled timing, and terminal states');
+console.log('PASS: per-session inline compaction without popups, spinner, timing, and terminal states');

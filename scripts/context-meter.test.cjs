@@ -81,6 +81,26 @@ const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000
   assert.match(parallel.$('context-run-label').textContent,/最近任务/);assert.equal(parallel.$('context-run-total').textContent,'490000');
   const details=text(parallel.$('context-card-detail'));
   assert.match(details,/并行各路独立计量/);assert.match(details,/子分析 10 路/);assert.match(details,/1999–2008（含估算）/);assert.match(details,/最近主汇总请求：输入 4000/);assert.match(details,/500,000/);
+  const environments=setup();
+  environments.state.session={id:'environments',messages:[],sessionUsage:{prompt:9000,completion:900,total:9900},runs:[{
+    id:'environment-run',status:'running',parallelism:10,model:'model',
+    contextAnchor:{usage:{prompt:1000,completion:100,total:1100},promptEstimate:900},
+    environments:{capacity:10,active:4,results:Array.from({length:9},(_,i)=>({id:'worker-'+(i+1),status:i<4?'running':'completed',usage:{prompt:500+i,completion:50,total:550+i},context:{inputEstimate:450+i,contextWindow:10000,usage:{prompt:500+i,completion:50,total:550+i}}}))},
+  }]};
+  environments.sandbox.renderContextMeter(data(1000),false);
+  assert.equal(environments.$('context-parallel-rings').children.length,10,'10X execution environments render ten rings');
+  assert.equal(environments.$('context-parallel-rings').children[0].dataset.contextState,'actual','main environment uses its latest request');
+  environments.$('context-parallel-rings').children[0].onfocus();
+  assert.match(environments.$('context-card').dataset.ringDetail,/主环境 · 并行 10× · 输入 1000 · 输出 100/);
+  environments.$('context-parallel-rings').children[9].onfocus();
+  assert.match(environments.$('context-card').dataset.ringDetail,/执行环境 10 · 并行 10× · completed · 输入 508 · 输出 50 · 窗口 10000 · 5.6%/,'worker ring uses that worker request instead of old parallel.parts');
+  assert.equal(environments.$('context-parallel-rings').children[9].style['--ring-progress'],'5.6%');
+  assert.match(text(environments.$('context-card-detail')),/子分析 9 路/,'environment contexts also appear in parallel details');
+  environments.state.session.runs[0].environments.results[8].context=null;
+  environments.sandbox.paintContextUsage(null);
+  environments.$('context-parallel-rings').children[9].onfocus();
+  assert.match(environments.$('context-card').dataset.ringDetail,/暂无上下文 · 累计消耗 558/,'missing historical context never reuses cumulative tokens as window occupancy');
+  assert.equal(environments.$('context-parallel-rings').children[9].style['--ring-progress'],'0%');
   parallel.state.session.runs=[{parallelism:10,status:'running'}];parallel.sandbox.renderContextMeter(data(2500),false);assert.match(text(parallel.$('context-card-detail')),/正在等待逐请求用量回传/);
   parallel.state.session.runs=[{parallelism:5}];parallel.sandbox.renderContextMeter(data(2500),false);assert.match(text(parallel.$('context-card-detail')),/未记录逐请求上下文/);
   parallel.state.session={id:'ordinary',messages:[]};parallel.sandbox.renderContextMeter(data(100),false);assert.doesNotMatch(text(parallel.$('context-card-detail')),/并行各路|子分析|主汇总/,'no parallel details leak across sessions');

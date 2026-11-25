@@ -26,25 +26,26 @@ type executionPoolKey struct{}
 type executionApprovalHeldKey struct{}
 
 type ExecutionEnvironmentResult struct {
-	ID                string     `json:"id"`
-	Assignment        string     `json:"assignment"`
-	Key               string     `json:"key,omitempty"`
-	DependsOn         []string   `json:"dependsOn,omitempty"`
-	Status            string     `json:"status"`
-	CreatedAt         string     `json:"createdAt,omitempty"`
-	StartedAt         string     `json:"startedAt,omitempty"`
-	FinishedAt        string     `json:"finishedAt,omitempty"`
-	Output            string     `json:"output,omitempty"`
-	Error             string     `json:"error,omitempty"`
-	Changes           []Change   `json:"changes,omitempty"`
-	Unsupported       []string   `json:"unsupported,omitempty"`
-	Tools             []ToolUse  `json:"tools,omitempty"`
-	Usage             TokenUsage `json:"usage"`
-	ArtifactDirectory string     `json:"artifactDirectory,omitempty"`
-	Released          bool       `json:"released"`
-	Collected         bool       `json:"collected"`
-	Merged            bool       `json:"merged"`
-	MergedPaths       []string   `json:"mergedPaths,omitempty"`
+	ID                string          `json:"id"`
+	Assignment        string          `json:"assignment"`
+	Key               string          `json:"key,omitempty"`
+	DependsOn         []string        `json:"dependsOn,omitempty"`
+	Status            string          `json:"status"`
+	CreatedAt         string          `json:"createdAt,omitempty"`
+	StartedAt         string          `json:"startedAt,omitempty"`
+	FinishedAt        string          `json:"finishedAt,omitempty"`
+	Output            string          `json:"output,omitempty"`
+	Error             string          `json:"error,omitempty"`
+	Changes           []Change        `json:"changes,omitempty"`
+	Unsupported       []string        `json:"unsupported,omitempty"`
+	Tools             []ToolUse       `json:"tools,omitempty"`
+	Usage             TokenUsage      `json:"usage"`
+	Context           *RequestContext `json:"context,omitempty"`
+	ArtifactDirectory string          `json:"artifactDirectory,omitempty"`
+	Released          bool            `json:"released"`
+	Collected         bool            `json:"collected"`
+	Merged            bool            `json:"merged"`
+	MergedPaths       []string        `json:"mergedPaths,omitempty"`
 }
 
 type ExecutionEnvironmentProgress struct {
@@ -402,6 +403,7 @@ func (p *executionPool) run(j *executionJob) {
 	result.Output = output
 	result.Tools = cloneExecutionValue(task.ToolUses)
 	result.Usage = task.Usage
+	result.Context = executionEnvironmentRequestContext(task, p.parent.modelWindow(p.cfg.Model))
 
 	if e != nil {
 		err = e
@@ -486,6 +488,19 @@ func (p *executionPool) newRuntime(dir, work string, j *executionJob) (*App, *Ta
 }
 
 func inputForEnvironment(prompt string) []Message { return []Message{{Role: "user", Content: prompt}} }
+
+func executionEnvironmentRequestContext(task *Task, window int) *RequestContext {
+	if task == nil || task.ContextAnchor == nil {
+		return nil
+	}
+	anchor := task.ContextAnchor
+	return &RequestContext{
+		InputEstimate: anchor.PromptEstimate,
+		OutputReserve: anchor.CompletionEstimate,
+		ContextWindow: window,
+		Usage:         anchor.Usage,
+	}
+}
 func environmentLocalTool(name string) bool {
 	switch name {
 	case "list_files", "read_file", "write_file", "run_shell", "semantic_search", "document_search", "office_document_search", "docx_structure", "docx_list_comments", "research_status", "record_research_finding", "update_plan", "environment_exchange", "environment_load_plugin", "environment_shared_tool":

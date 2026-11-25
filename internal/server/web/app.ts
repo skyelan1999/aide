@@ -6510,7 +6510,10 @@ function renderParallelContextDetail(detail?: any) {
   row('标题辅助请求', run.topicContext);
   for (const [index, context] of (progress?.plannerHistory || []).entries()) row(t('第 {0} 轮规划请求', index + 1), context);
   if (!progress?.plannerHistory?.length || JSON.stringify(progress.plannerHistory.at(-1)) !== JSON.stringify(progress.plannerContext)) row('规划请求', progress?.plannerContext);
-  const contexts = (progress?.parts || []).map((part?: any) => part.context).filter(Boolean);
+  const contexts = [
+    ...(progress?.parts || []).map((part?: any) => part.context),
+    ...(run.environments?.results || []).map((result?: any) => result.context),
+  ].filter(Boolean);
   if (contexts.length) {
     const actual = contexts.every((context?: any) => !context.usage?.estimated && context.usage?.prompt > 0);
     const inputs = contexts.map((context?: any) => !context.usage?.estimated && context.usage?.prompt > 0 ? context.usage.prompt : context.inputEstimate || 0);
@@ -6519,6 +6522,24 @@ function renderParallelContextDetail(detail?: any) {
   }
   row('最近主汇总请求', progress?.mainContext);
   if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual context-parallel-detail', t(['running', 'queued'].includes(run.status) ? '正在等待逐请求用量回传…' : '此历史任务未记录逐请求上下文，不能从累计用量反推。')));
+}
+function paintContextRequestState(request: any) {
+  const node = $('context-request-state');
+  if (!node) return;
+  if (!request) {
+    node.textContent = t('暂无上下文');
+    node.dataset.state = 'empty';
+    node.title = t('暂无上下文');
+    return;
+  }
+  const actual = !request.usage?.estimated && request.usage?.prompt > 0;
+  const input = actual ? request.usage.prompt : request.inputEstimate || 0;
+  const output = actual ? request.usage.completion || 0 : 0;
+  const window = request.contextWindow || 65536;
+  const percent = Math.round((input + output) / window * 100);
+  node.textContent = t(actual ? '实际' : '估算') + ' ' + percent + '%';
+  node.dataset.state = actual ? 'actual' : 'estimated';
+  node.title = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
 }
 function paintContextUsage(data?: any) {
   ensureContextMeterControls();
@@ -6615,6 +6636,7 @@ function paintContextUsage(data?: any) {
     card.style.setProperty('--context-progress', '0%');
     bar.setAttribute('aria-label', requestSummary.textContent);
   }
+  if (!state.contextCompactions.get(state.session?.id || '')) paintContextRequestState(request);
   const detail = $('context-card-detail');
   const wasOpen = !!detail.querySelector?.('details')?.open;
   const scrollTop = detail.querySelector?.('.context-usage-detail-body')?.scrollTop || 0;
@@ -6787,6 +6809,15 @@ function renderContextCompactionState(detail?: any) {
   const event = state.contextCompactions.get(sessionID);
   const card = $('context-card');
   const inProgress = event?.phase === 'started' || event?.phase === 'folding';
+  const inlineState = $('context-request-state');
+  if (inlineState) {
+    if (!event) paintContextRequestState(latestRequestContext(state.contextMeter));
+    else {
+      inlineState.textContent = inProgress ? t('上下文压缩中') : (event.phase === 'completed' ? (event.text || t('压缩完成')) : t('压缩失败'));
+      inlineState.dataset.state = inProgress ? 'compacting' : (event.phase === 'completed' ? 'completed' : 'failed');
+      inlineState.title = event.text || inlineState.textContent;
+    }
+  }
   const stalledForMs = inProgress ? Math.max(0, Date.now() - (event.updatedAt || event.startedAt || Date.now())) : 0;
   const stalled = inProgress && stalledForMs >= 180_000;
   const running = inProgress && !stalled;
@@ -6798,7 +6829,7 @@ function renderContextCompactionState(detail?: any) {
   if (card) {
     if (!event) delete card.dataset.compactionDetail;
     else if (inProgress) card.dataset.compactionDetail = ' · ◌ ' + t('上下文压缩中');
-    else if (event.phase === 'completed') card.dataset.compactionDetail = ' · ✓ ' + t('压缩完成');
+    else if (event.phase === 'completed') card.dataset.compactionDetail = ' · ✓ ' + (event.text || t('压缩完成'));
     else card.dataset.compactionDetail = ' · × ' + (event.text || t('压缩失败，原会话内容已保留'));
   }
   const retry = $('context-compaction-retry');
@@ -6902,16 +6933,20 @@ function paintContextUsageRings(run: any, request: any) {
   host.replaceChildren();
   const card = $('context-card');
   const count = Math.max(1, Math.min(10, run?.parallelism || 1));
+  const environmentJobs = count > 1 && run?.environments ? (run.environments.results || []).slice(-(count - 1)) : null;
   for (let index = 0; index < count; index++) {
-    const part = count > 1 ? run?.parallel?.parts?.[index] : null;
-    const context = count > 1 ? part?.context : request;
+    const environmentJob = environmentJobs && index > 0 ? environmentJobs[index - 1] : null;
+    const part = !environmentJobs && count > 1 ? run?.parallel?.parts?.[index] : null;
+    const context = environmentJobs ? (index === 0 ? request : environmentJob?.context) : (count > 1 ? part?.context : request);
     const ratio = contextOccupancyRatio(context);
     const percent = Math.round(ratio * 1000) / 10;
     const ring = el('span', 'usage-ring');
     ring.tabIndex = 0;
     ring.setAttribute('role', 'listitem');
     ring.style.setProperty('--ring-progress', percent + '%');
-    let detail = (count > 1 ? t('第 {0} 路', index + 1) : t('主请求')) + ' · ' + t('并行 {0}×', count);
+    const laneLabel = environmentJobs ? (index === 0 ? t('主环境') : t('执行环境 {0}', index + 1)) : (count > 1 ? t('第 {0} 路', index + 1) : t('主请求'));
+    let detail = laneLabel + ' · ' + t('并行 {0}×', count);
+    if (environmentJob) detail += ' · ' + (environmentJob.status || t('等待'));
     if (context) {
       const actual = !!context.usage && !context.usage.estimated && (context.usage.prompt || 0) > 0;
       const input = actual ? context.usage.prompt || 0 : context.inputEstimate || 0;
@@ -6921,8 +6956,11 @@ function paintContextUsageRings(run: any, request: any) {
         + ' · ' + t('窗口') + ' ' + fmtTokens(context.contextWindow || 0)
         + ' · ' + percent + '%';
       if (!actual && input > 0) detail += ' · ' + t('估算');
+      ring.dataset.contextState = actual ? 'actual' : 'estimated';
     } else {
-      detail += ' · ' + t('暂无上下文');
+      detail += ' · ' + t(environmentJobs && index > 0 && !environmentJob ? '未分配执行环境' : '暂无上下文');
+      if (contextUsageTotal(environmentJob?.usage) > 0) detail += ' · ' + t('累计消耗') + ' ' + fmtTokens(contextUsageTotal(environmentJob.usage));
+      ring.dataset.contextState = 'empty';
     }
     const show = () => { if (card) card.dataset.ringDetail = detail; };
     const hide = () => { if (card?.dataset.ringDetail === detail) delete card.dataset.ringDetail; };
@@ -10873,23 +10911,12 @@ $('compact-button').onclick = action(async () => {
   const stopCompactionWatch = ensureContextCompactionWatch(sessionId);
   try {
     const res = await api('/sessions/' + sessionId + '/compact', { method: 'POST', body: '{}' });
-    if (res.folded) {
-      showContextCompaction({ phase: 'completed', folded: res.folded, beforeTokens: res.beforeTokens, afterTokens: res.afterTokens, sessionId });
-      toast(t("已压缩 {0} 条历史消息", res.folded));
-    } else {
-      state.contextCompactions.delete(sessionId);
-      clearTimeout(contextCompactionTimers.get(sessionId));
-      contextCompactionTimers.delete(sessionId);
-      $('context-card')?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-failed');
-      if ($('context-card')) delete $('context-card').dataset.compactionDetail;
-      renderContextCompactionState($('context-card-detail'));
-      toast(t("历史未超阈值，无需压缩"));
-    }
+    if (res.folded) showContextCompaction({ phase: 'completed', folded: res.folded, beforeTokens: res.beforeTokens, afterTokens: res.afterTokens, sessionId });
+    else showContextCompaction({ phase: 'completed', folded: 0, text: t('历史未超阈值，无需压缩'), sessionId });
     await selectSession(sessionId);
     refreshCompactInfo();
   } catch (error: any) {
     showContextCompaction({ phase: 'failed', text: error?.message || t('压缩失败，原会话内容已保留'), sessionId });
-    throw error;
   } finally {
     await stopCompactionWatch();
   }

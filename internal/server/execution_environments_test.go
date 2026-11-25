@@ -406,6 +406,20 @@ func TestExecutionEnvironmentSingleCancelDoesNotCancelPool(t *testing.T) {
 	}
 }
 
+func TestExecutionEnvironmentRequestContextUsesLatestWorkerRequest(t *testing.T) {
+	worker := &Task{ContextAnchor: &ContextUsageAnchor{
+		PromptEstimate: 1200, CompletionEstimate: 80,
+		Usage: TokenUsage{Prompt: 1100, Completion: 75, Total: 1175},
+	}}
+	context := executionEnvironmentRequestContext(worker, 64000)
+	if context == nil || context.InputEstimate != 1200 || context.ContextWindow != 64000 || context.Usage.Prompt != 1100 || context.Usage.Completion != 75 {
+		t.Fatalf("unexpected worker request context: %#v", context)
+	}
+	if executionEnvironmentRequestContext(&Task{}, 64000) != nil || executionEnvironmentRequestContext(nil, 64000) != nil {
+		t.Fatal("missing request anchor must stay empty instead of reusing cumulative usage")
+	}
+}
+
 func TestExecutionEnvironmentDaemonInstancesArePrivate(t *testing.T) {
 	if err := execsandbox.Available(); err != nil {
 		t.Skip(err)
