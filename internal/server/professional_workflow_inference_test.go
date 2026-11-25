@@ -14,13 +14,15 @@ import (
 )
 
 func TestProfessionalWorkflowInferenceValidation(t *testing.T) {
-	for _, n := range []pwNode{{Type: "llm", Parallelism: 7}, {Type: "agent", ReasoningEffort: "extreme"}, {Type: "llm", MaxTokens: 65537}, {Type: "llm", Tools: []string{"read_file"}}, {Type: "agent", ModelRouter: "url"}, {Type: "template", Parallelism: 2}, {Type: "agent", Tools: []string{"run_shell"}, Bindings: []pwBinding{{Path: "output", Kind: "directory", Access: "write"}}}} {
+	for _, n := range []pwNode{{Type: "llm", Parallelism: 7}, {Type: "agent", ReasoningEffort: "extreme"}, {Type: "llm", MaxTokens: maxTokensCeiling + 1}, {Type: "llm", Tools: []string{"read_file"}}, {Type: "agent", ModelRouter: "url"}, {Type: "template", Parallelism: 2}, {Type: "agent", Tools: []string{"run_shell"}, Bindings: []pwBinding{{Path: "output", Kind: "directory", Access: "write"}}}} {
 		if validatePWInference(n) == nil {
 			t.Fatalf("accepted %+v", n)
 		}
 	}
-	if err := validatePWInference(pwNode{Type: "agent", ReasoningEffort: "high", Parallelism: 10, MaxTokens: 4096, Tools: []string{"read_file"}}); err != nil {
-		t.Fatal(err)
+	for _, maxTokens := range []int{4096, maxTokensCeiling} {
+		if err := validatePWInference(pwNode{Type: "agent", ReasoningEffort: "high", Parallelism: 10, MaxTokens: maxTokens, Tools: []string{"read_file"}}); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 func TestProfessionalWorkflowInferenceParallelAndOptions(t *testing.T) {

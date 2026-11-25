@@ -26,7 +26,7 @@ func validatePWInference(n pwNode) error {
 		return errors.New("节点倍速仅支持1、2、3、4、5、10")
 	}
 	if n.MaxTokens < 0 || n.MaxTokens > maxTokensCeiling {
-		return errors.New("节点输出预算须为1–65536，或0沿用策略")
+		return fmt.Errorf("节点输出预算须为1–%d，或0沿用策略", maxTokensCeiling)
 	}
 	if n.ModelRouter != "" && n.ModelRouter != "off" && n.ModelRouter != "auto" {
 		return errors.New("无效节点模型路由")

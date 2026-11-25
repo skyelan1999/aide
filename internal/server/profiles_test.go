@@ -40,6 +40,9 @@ func TestSystemProfilesImmutability(t *testing.T) {
 }
 
 func TestProfileValidation(t *testing.T) {
+	if maxTokensDefault != 8192 || maxTokensCeiling != 393216 {
+		t.Fatalf("unexpected token budgets: default=%d ceiling=%d", maxTokensDefault, maxTokensCeiling)
+	}
 	a := testApp(t)
 	makeBody := func(params map[string]any, strategy, active string) map[string]any {
 		return map[string]any{"strategy": strategy, "activeProfile": active, "profiles": []any{map[string]any{"id": "u1", "name": "自定义", "params": params}}}
@@ -47,7 +50,7 @@ func TestProfileValidation(t *testing.T) {
 	for _, extra := range []map[string]any{
 		{"temperature": 3},
 		{"top_p": 1.5},
-		{"max_tokens": 70000}, // 超过 maxTokensCeiling(65536) 才拒绝；9000 现在合法
+		{"max_tokens": maxTokensCeiling + 1}, // 超过 maxTokensCeiling 才拒绝；默认值仍保持 8192
 
 		{"frequency_penalty": -3},
 		{"presence_penalty": 3},
@@ -61,8 +64,9 @@ func TestProfileValidation(t *testing.T) {
 	// 非法策略与未知 activeProfile
 	requireStatus(t, request(a, "PUT", "/api/profiles", makeBody(map[string]any{}, "magic", "u1")), 400)
 	requireStatus(t, request(a, "PUT", "/api/profiles", makeBody(map[string]any{}, "manual", "ghost")), 400)
-	// 合法保存
+	// 合法保存，包含新的输出上限边界。
 	requireStatus(t, request(a, "PUT", "/api/profiles", makeBody(map[string]any{}, "manual", "u1")), 200)
+	requireStatus(t, request(a, "PUT", "/api/profiles", makeBody(map[string]any{"max_tokens": maxTokensCeiling}, "manual", "u1")), 200)
 }
 
 func TestUserProfilePersistence(t *testing.T) {

@@ -7936,7 +7936,7 @@ const profilesManager = { local: null, timer: null, host: null };
 const paramDefs = [
     { key: 'temperature', label: '温度 temperature', min: 0, max: 2, step: 0.1, placeholder: '1' },
     { key: 'top_p', label: 'Top P', min: 0, max: 1, step: 0.05, placeholder: '1' },
-    { key: 'max_tokens', label: '最大 Tokens', min: 1, max: 65536, step: 1, placeholder: '8192', integer: true },
+    { key: 'max_tokens', label: '最大 Tokens', min: 1, max: 393216, step: 1, placeholder: '8192', integer: true },
     { key: 'frequency_penalty', label: '频率惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' },
     { key: 'presence_penalty', label: '存在惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' }
 ];

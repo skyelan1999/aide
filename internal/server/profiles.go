@@ -28,9 +28,9 @@ var profileIDPattern = regexp.MustCompile(profileIDPatternSrc)
 // 8192 对两者都是安全的较大值，既够一次写出中等脚本，又不至于空耗预算。
 const maxTokensDefault = 8192
 
-// maxTokensCeiling 设置里允许的最大值。flash/pro 实测支持到 384K；这里取 65536
-// 作为“超长脚本”的可调上限，再长就靠 length 自动续写补全（workflow.go）兜底。
-const maxTokensCeiling = 65536
+// maxTokensCeiling 设置里允许的最大值。支持长输出的模型可使用到 384K；
+// 默认预算仍保持 8192，超长回答继续由 length 自动续写（workflow.go）兜底。
+const maxTokensCeiling = 384 * 1024
 
 // ProfileParams 是 DeepSeek Chat Completions 的可选采样参数。
 // 数值字段用指针区分「未设置」与 0；omitempty 保证未设置时不进入请求体。
