@@ -5287,6 +5287,8 @@ window.aideEnglish = {
   "真实 KV 必须显式选择本地引擎；自动模式不会把普通兼容服务误判为 llama.cpp 或 vLLM。": "Real KV requires an explicitly selected local engine. Automatic mode never treats a generic compatible service as llama.cpp or vLLM.",
   "实验性 KV Cache": "Experimental KV Cache",
   "固定内存或磁盘预算、云端前缀缓存与本地引擎真实 KV 生命周期管理": "Fixed memory or disk budgets, cloud prefix caching, and real-KV lifecycle management for local engines",
+  "数据分析": "Data Analysis",
+  "网络流量与存储占用": "Network traffic and storage usage",
   "流量消耗分析": "Network Usage",
   "按日查看 Aide 服务实际上传与下载的网络字节，不使用 Token 估算。": "Review actual daily upload and download bytes for the Aide service. No token-based estimates are used.",
   "网络流量": "Network traffic",

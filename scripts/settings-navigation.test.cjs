@@ -7,9 +7,9 @@ const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.jso
 const context=vm.createContext({window:{}});
 vm.runInContext(fs.readFileSync('internal/server/web/settings-navigation.js','utf8'),context);
 const navigation=context.window.AideSettingsNavigation;
-test('all settings remain reachable exactly once in nine ordered groups',()=>{
+test('all settings remain reachable exactly once in eight ordered groups',()=>{
  const model=navigation.build(schema),ids=model.groups.flatMap(group=>group.pages.map(page=>page.id));
- assert.deepEqual(model.groups.map(group=>group.id),['general','files','ai','assistant','communication','data','system','network-usage','storage-usage']);
+ assert.deepEqual(model.groups.map(group=>group.id),['general','files','ai','assistant','communication','data','system','data-analysis']);
  assert.equal(ids.length,model.pages.length);assert.equal(new Set(ids).size,ids.length);
  for(const section of schema.sections){
   const page=navigation.resolve(model,section.id,'');assert.equal(page.sectionId,section.id);
@@ -18,6 +18,7 @@ test('all settings remain reachable exactly once in nine ordered groups',()=>{
  assert.equal(model.groups.find(group=>group.id==='system').pages.find(page=>page.id==='interface-tests').sectionId,'accessibility');
  assert.equal(model.groups.find(group=>group.id==='general').pages.some(page=>page.id==='interface-tests'),false);
  assert.deepEqual(model.groups.find(group=>group.id==='ai').pages.map(page=>page.id),['model-profiles','execution-policy','permissions','agent-management','computer-control']);
+ assert.deepEqual(model.groups.find(group=>group.id==='data-analysis').pages.map(page=>page.id),['network-usage','storage-usage']);
 });
 test('search finds pages by title and control while retaining group mapping',()=>{
  const model=navigation.build(schema);

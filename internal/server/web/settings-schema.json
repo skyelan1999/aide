@@ -617,6 +617,15 @@
         "stats",
         "about"
       ]
+    },
+    {
+      "id": "data-analysis",
+      "title": "数据分析",
+      "description": "网络流量与存储占用",
+      "pages": [
+        "network-usage",
+        "storage-usage"
+      ]
     }
   ]
 }
