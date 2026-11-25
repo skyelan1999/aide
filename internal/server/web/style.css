@@ -1900,14 +1900,55 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 
 /* Office editor keeps the existing viewer surface and surrounding Aide layout. */
 
-.voip-control h4 { margin: 0 0 8px; font-size: 14px; }
-.voip-control label.voice-reply-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); }
-.voip-control label.voice-reply-row:has(input[type="checkbox"]) { grid-template-columns: minmax(0, 1fr) auto; }
-.voip-control label.voice-reply-row > span { white-space: normal; }
-.voip-control label.voice-reply-row > input:not([type="checkbox"]) { width: 100%; min-width: 0; box-sizing: border-box; }
-@media (max-width: 500px) {
-  .voip-control label.voice-reply-row:has(input:not([type="checkbox"])) { grid-template-columns: minmax(0, 1fr); }
+.voip-control{width:100%;max-width:720px;min-width:0;box-sizing:border-box;color:var(--text)}
+.voip-control h4{margin:0;font-size:16px;line-height:1.45;font-weight:650}
+.voip-header{padding:16px;border:1px solid var(--line-faint);border-radius:12px;background:var(--bg-inset)}
+.voip-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.voip-title-group{min-width:0}
+.voip-title-group .section-desc{margin:6px 0 0;max-width:540px}
+.voip-runtime-badge{display:inline-flex;align-items:center;gap:6px;flex:none;min-height:26px;box-sizing:border-box;padding:4px 9px;border:1px solid var(--line-soft);border-radius:999px;background:var(--surface);color:var(--text-dim);font-size:11px;line-height:1.5;white-space:nowrap}
+.voip-runtime-badge::before{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:currentColor}
+.voip-runtime-badge[data-state="ready"]{border-color:color-mix(in srgb,var(--success) 30%,transparent);background:var(--success-bg);color:var(--success)}
+.voip-runtime-badge[data-state="offline"],.voip-runtime-badge[data-state="error"]{border-color:var(--danger-line);background:var(--danger-soft);color:var(--danger)}
+.voip-runtime-badge[data-state="remote"]{border-color:color-mix(in srgb,var(--warn) 28%,transparent);background:color-mix(in srgb,var(--warn) 9%,transparent);color:var(--warn)}
+.voip-runtime-desc{margin:10px 0 0;color:var(--text-dim);font-size:12px;line-height:1.65}
+.voip-section{margin-top:12px;padding:16px;border:1px solid var(--line-faint);border-radius:12px;background:var(--surface)}
+.voip-section-heading{margin-bottom:10px}
+.voip-section-heading h5{margin:0;font-size:13px;line-height:1.5;font-weight:650}
+.voip-section-heading p{margin:4px 0 0;color:var(--text-dim);font-size:11px;line-height:1.65}
+.voip-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 0;cursor:pointer}
+.voip-toggle-row+.voip-toggle-row{border-top:1px solid var(--line-faint)}
+.voip-toggle-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.voip-toggle-copy strong{font-size:13px;line-height:1.5;font-weight:550}
+.voip-toggle-copy small{margin:0;color:var(--text-dim);font-size:11px;line-height:1.6}
+.voip-toggle-row .switch:has(input:disabled){opacity:.45;cursor:not-allowed}
+.voip-network-grid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:14px 12px}
+.voip-field{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0}
+.voip-field-label{font-size:12px;line-height:1.5;font-weight:550}
+.voip-field>input{width:100%;min-width:0;min-height:38px;box-sizing:border-box;margin:0}
+.voip-field>small{min-height:18px;margin:0;color:var(--text-dim);font-size:10px;line-height:1.6}
+.voip-user-field{grid-column:1/-1}
+.voip-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px}
+.voip-save-status{flex:1;min-width:0;margin:0;color:var(--text-dim);font-size:11px;line-height:1.65}
+.voip-save-status[data-state="dirty"],.voip-save-status[data-state="saving"]{color:var(--warn)}
+.voip-save-status[data-state="success"]{color:var(--success)}
+.voip-save-status[data-state="error"]{color:var(--danger)}
+.voip-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:none}
+.voip-actions button{white-space:nowrap}
+@media(max-width:600px){
+  .voip-header,.voip-section{padding:14px}
+  .voip-title-row{gap:10px}
+  .voip-network-grid{grid-template-columns:minmax(0,1fr) 110px;gap:12px 10px}
+  .voip-footer{align-items:stretch;flex-direction:column;gap:10px}
+  .voip-actions{width:100%}
+  .voip-actions button{flex:1}
 }
+@media(max-width:380px){
+  .voip-title-row{flex-direction:column}
+  .voip-network-grid{grid-template-columns:minmax(0,1fr)}
+  .voip-user-field{grid-column:auto}
+}
+@media(prefers-reduced-motion:reduce){.voip-control .switch-slider,.voip-control .switch-slider::before{transition:none}}
 
 /* Experimental KV Cache uses the full settings surface, not a narrow single-control column. */
 .kv-cache-control{width:100%;max-width:760px;min-width:0;box-sizing:border-box}
