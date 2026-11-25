@@ -3,7 +3,7 @@ function el(tag: any, cls?: any, text?: any) { const e = document.createElement(
 const SIDEBAR_WIDTHS_KEY = 'aide-sidebar-widths-v1';
 const sidebarWidths: any = { left: null, right: null };
 function defaultSidebarWidth(side: any) {
-  if (side === 'left') return innerWidth <= 950 ? 190 : (innerWidth <= 1150 ? 206 : 238);
+  if (side === 'left') return 238;
   if (innerWidth <= 600) return Math.min(360, innerWidth);
   return innerWidth <= 950 ? Math.min(290, Math.floor(innerWidth * .82)) : (innerWidth <= 1150 ? 235 : 286);
 }
@@ -11,7 +11,7 @@ function sidebarWidthBounds(side: any) {
   const narrow = innerWidth <= 950;
   const centerMin = narrow ? 350 : (innerWidth <= 1150 ? 380 : 420);
   const otherMin = 220;
-  if (side === 'left') return { min: 170, max: Math.max(170, Math.min(380, innerWidth - centerMin - otherMin)) };
+  if (side === 'left') return { min: 238, max: Math.max(238, Math.min(380, innerWidth - centerMin - otherMin)) };
   const max = narrow ? Math.floor(innerWidth * .88) : Math.max(220, Math.min(440, innerWidth - centerMin - (sidebarWidths.left || defaultSidebarWidth('left'))));
   return { min: 220, max };
 }
