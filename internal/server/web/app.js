@@ -747,14 +747,7 @@ function openStream(run) {
         if (ph) {
             ph.phase = 'reasoning';
             touchRunActivity(run.id);
-            const box = document.querySelector('#timeline .run[data-run="' + run.id + '"]');
-            const details = box?.querySelector('.rsp-thinking');
-            if (details?.open)
-                renderRunStatus(run.id);
-            else if (details)
-                updateThinkingSummary(details, state.liveReasoning[run.id], !ph.done);
-            else
-                renderRunStatus(run.id);
+            scheduleThinkingRender(run.id);
         }
     });
     es.addEventListener('heartbeat', (e) => {
@@ -943,6 +936,28 @@ function openStream(run) {
         refreshSessionSoon(); // 立即向持久化会话状态对账，避免只等下一轮 SSE。
         schedulePoll(); // 确保意外断流后的轮询兜底仍在运行。
     };
+}
+// Reasoning events may arrive between answer frames. Keep text accumulation
+// incremental, but query and update the DOM at most once per animation frame.
+const thinkingRenderScheduled = new Set();
+function scheduleThinkingRender(runId) {
+    if (thinkingRenderScheduled.has(runId))
+        return;
+    thinkingRenderScheduled.add(runId);
+    requestAnimationFrame(() => {
+        thinkingRenderScheduled.delete(runId);
+        const ph = state.runPhase[runId];
+        if (!ph)
+            return;
+        const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
+        const details = box?.querySelector('.rsp-thinking');
+        if (details?.open)
+            renderRunStatus(runId);
+        else if (details)
+            updateThinkingSummary(details, state.liveReasoning[runId], !ph.done);
+        else
+            renderRunStatus(runId);
+    });
 }
 // 流式渲染节流：delta 先累积，按动画帧批量渲染（每帧最多一次解析）。
 // 自适应兜底：活动块异常大（如超长未闭合代码块）时隔帧渲染，给主线程喘息，

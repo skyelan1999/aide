@@ -614,6 +614,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 
 	var content strings.Builder
 	toolCallsByIndex := map[int]*ToolCall{}
+	toolArgumentsByIndex := map[int]*strings.Builder{}
 	var finishReason string
 	streamEnded := false
 	var usage *providerUsage
@@ -684,6 +685,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			if !ok {
 				slot = &ToolCall{}
 				toolCallsByIndex[tc.Index] = slot
+				toolArgumentsByIndex[tc.Index] = &strings.Builder{}
 			}
 			if tc.ID != "" {
 				slot.ID = tc.ID
@@ -700,7 +702,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			}
 			markOutput(tc.Function.Arguments)
 			rateMeter.add(tc.Function.Arguments)
-			slot.Function.Arguments += tc.Function.Arguments
+			toolArgumentsByIndex[tc.Index].WriteString(tc.Function.Arguments)
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -720,7 +722,9 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	sort.Ints(callIndexes)
 	calls := make([]ToolCall, 0, len(callIndexes))
 	for _, i := range callIndexes {
-		calls = append(calls, *toolCallsByIndex[i])
+		call := *toolCallsByIndex[i]
+		call.Function.Arguments = toolArgumentsByIndex[i].String()
+		calls = append(calls, call)
 	}
 	text := content.String()
 	if strings.TrimSpace(text) == "" && len(calls) == 0 {

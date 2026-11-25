@@ -2456,8 +2456,8 @@ func (a *App) subscribeStream(taskID string) (<-chan streamEvent, func()) {
 // 保证不存在“向已关闭 channel 发送”的竞态；慢订阅者可能丢弃增量事件（缓冲 64），
 // 但终态通过 channel close 可靠送达，最终状态仍由会话轮询兜底。
 func (a *App) publishStream(taskID string, ev streamEvent) {
-	a.eventMu.Lock()
-	defer a.eventMu.Unlock()
+	a.eventMu.RLock()
+	defer a.eventMu.RUnlock()
 	for ch := range a.eventSubs[taskID] {
 		select {
 		case ch <- ev:
@@ -2526,8 +2526,8 @@ func (a *App) forgetLiveSessionLocked(sessionID string) {
 }
 
 func (a *App) publishLiveDelta(taskID, delta string) {
-	a.liveTaskMu.Lock()
-	defer a.liveTaskMu.Unlock()
+	a.liveTaskMu.RLock()
+	defer a.liveTaskMu.RUnlock()
 	if sessionID := a.liveTaskSess[taskID]; sessionID != "" {
 		a.liveBroker.Publish(sessionID, delta, "")
 	}
@@ -2535,8 +2535,8 @@ func (a *App) publishLiveDelta(taskID, delta string) {
 
 // liveSessionID 返回 taskID 所属会话 ID（进行中运行期间有效）。
 func (a *App) liveSessionID(taskID string) string {
-	a.liveTaskMu.Lock()
-	defer a.liveTaskMu.Unlock()
+	a.liveTaskMu.RLock()
+	defer a.liveTaskMu.RUnlock()
 	return a.liveTaskSess[taskID]
 }
 
@@ -2826,11 +2826,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			a.mu.Unlock()
 		}
-		onDelta := func(delta string) {
-			a.publishStream(task.ID, streamEvent{Event: "delta", Text: delta, Round: round})
-			// #35：把 aide 正文增量桥到会话维度的实时输出缓冲，供小秘拉取。
-			a.publishLiveDelta(task.ID, delta)
-		}
+		streamDeltas := newStreamDeltaCoalescer(a, task.ID, round)
+		onDelta := streamDeltas.delta
 		var reasoningBuffer strings.Builder
 		a.mu.Lock()
 		if stepIndex >= 0 && stepIndex < len(task.Steps) {
@@ -2857,7 +2854,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			lastReasoningFlush = now
 		}
 		onReasoning := func(rc string) {
-			a.publishStream(task.ID, streamEvent{Event: "reasoning", Reasoning: rc, Round: round})
+			streamDeltas.reasoning(rc)
 			reasoningBuffer.WriteString(rc)
 			flushReasoning(false)
 		}
@@ -2894,6 +2891,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		requestStarted := time.Now()
 		out, calls, usage, finish, err := completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
+		streamDeltas.close()
 		flushReasoning(true)
 		markSnapshotComplete(requestStarted, time.Now(), usage, err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 		if err != nil {

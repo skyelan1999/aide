@@ -17,8 +17,8 @@ import (
 // broadcastSessionsChanged 向所有全局 SSE 订阅者广播一次会话列表变更。
 // sessionID 为空表示全量刷新；非空时前端可做增量更新。仅取 eventMu，不持 a.mu。
 func (a *App) broadcastSessionsChanged(sessionID string) {
-	a.eventMu.Lock()
-	defer a.eventMu.Unlock()
+	a.eventMu.RLock()
+	defer a.eventMu.RUnlock()
 	if len(a.globalSubs) == 0 {
 		return
 	}
@@ -36,8 +36,8 @@ func (a *App) broadcastSessionsChanged(sessionID string) {
 // generation), it falls back to the session-level global event channel so the
 // final output is not lost merely because the primary answer has finished.
 func (a *App) publishSessionOutputRate(sessionID, taskID string, ev streamEvent) {
-	a.eventMu.Lock()
-	defer a.eventMu.Unlock()
+	a.eventMu.RLock()
+	defer a.eventMu.RUnlock()
 	runReceivers := 0
 	for ch := range a.eventSubs[taskID] {
 		runReceivers++

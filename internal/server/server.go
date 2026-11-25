@@ -645,13 +645,13 @@ type App struct {
 	updateHTTPClient          *http.Client
 	updateAPIBase             string
 	updatesMu                 sync.Mutex
-	eventMu                   sync.Mutex
+	eventMu                   sync.RWMutex
 	runtimeStopping           atomic.Bool
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
 	globalSubs                map[chan string]struct{}                 // #60 全局 SSE 订阅者（sessions-changed）
 	knowledgeUpdates          knowledgeUpdateState                     // bounded live star-map snapshots
 	liveBroker                *StreamBroker                            // #35：aide 主会话实时输出 → 小秘拉取
-	liveTaskMu                sync.Mutex
+	liveTaskMu                sync.RWMutex
 	liveTaskSess              map[string]string    // #35：taskID → sessionID（把 SSE 增量桥到会话维度）
 	personaKey                string               // 内存中的性格解密密码（= 账户密码），不持久化
 	personaCustom             map[string]string    // 解锁后：personaID -> 解密出的自定义性格明文
