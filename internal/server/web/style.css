@@ -236,10 +236,25 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .session-dot.dot-running { background: var(--success); box-shadow: 0 0 5px color-mix(in srgb, var(--success) 70%, transparent); animation: session-pulse 1.2s ease-in-out infinite; } /* 运行中：success 绿 + 同色微光晕 */
 @keyframes session-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 .session-item.active.status-completed .session-label { font-weight: 400; } /* 查看完成会话的瞬间：加粗消失 */
-.session-item.active.status-completed .session-dot { background: transparent !important; box-shadow: none !important; animation: none !important; } /* 查看完成会话的瞬间：蓝点消失 */
 .session-dot.dot-failed { background: var(--danger); }
 .session-dot.dot-await { background: var(--warn); }
 .session-dot.dot-done { background: var(--brand); }
+.session-status-badge,.session-activity-badge{display:inline-flex;align-items:center;justify-content:center;gap:3px;flex:0 0 auto;height:20px;max-width:78px;padding:0 5px;border:1px solid transparent;border-radius:5px;font-size:9px;font-weight:650;line-height:1;white-space:nowrap}
+.session-status-badge{color:var(--muted);background:var(--surface-alt);border-color:var(--line-soft)}
+.session-status-badge:hover{filter:brightness(.97);background:var(--selected)}
+.session-status-icon{display:inline-flex;align-items:center;justify-content:center;width:10px;height:10px;flex:0 0 10px;font-size:10px;font-weight:800}
+.session-status-text{overflow:hidden;text-overflow:ellipsis}
+.status-running{color:var(--success);background:color-mix(in srgb,var(--success) 9%,var(--surface));border-color:color-mix(in srgb,var(--success) 24%,transparent)}
+.status-running .session-status-icon{border:1.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:click-pending-spin .8s linear infinite}
+.status-queued,.status-paused{color:var(--muted);background:color-mix(in srgb,var(--muted) 8%,var(--surface));border-color:var(--line-soft)}
+.status-awaiting-clarification{color:var(--warn);background:color-mix(in srgb,var(--warn) 13%,var(--surface));border-color:color-mix(in srgb,var(--warn) 32%,transparent)}
+.status-awaiting-approval,.status-interrupted{color:color-mix(in srgb,var(--warn) 72%,var(--danger));background:color-mix(in srgb,var(--warn) 10%,var(--surface));border-color:color-mix(in srgb,var(--warn) 28%,transparent)}
+.status-failed{color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,var(--surface));border-color:color-mix(in srgb,var(--danger) 28%,transparent)}
+.status-completed-unread{color:var(--brand-text);background:color-mix(in srgb,var(--brand) 11%,var(--surface));border-color:color-mix(in srgb,var(--brand) 28%,transparent)}
+.status-completed,.status-cancelled{color:var(--muted);background:transparent;border-color:var(--line-soft)}
+.session-activity-badge{color:var(--brand-text);background:color-mix(in srgb,var(--brand) 6%,var(--surface));border-color:var(--line-soft);font-weight:550}
+.session-activity-badge[data-activity="stalled"]{color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
+.session-activity-badge[hidden]{display:none}
 .session-more { flex-shrink: 0; width: 22px; height: 22px; border: 0; background: transparent; color: inherit; opacity: .35; cursor: pointer; font-size: 15px; line-height: 1; border-radius: 4px; padding: 0; }
 .session-item:hover .session-more, .session-item:focus-within .session-more { opacity: .8; }
 .session-more:hover { opacity: 1 !important; background: rgba(128,128,128,.15); }
@@ -1131,12 +1146,12 @@ dialog.master-auth{width:min(380px,90vw)}
 .assistant-entry.active .assistant-entry-icon{color:var(--accent)}
 .assistant-mode #trajectory-toggle:disabled,.assistant-mode .mode-switch button:disabled,.assistant-mode #queue-toggle:disabled{opacity:.35;color:var(--muted);background:transparent;cursor:not-allowed}
 .assistant-mode #trajectory-toggle:disabled:hover,.assistant-mode .mode-switch button:disabled:hover,.assistant-mode #queue-toggle:disabled:hover{background:transparent;color:var(--muted)}
-.session-item.loading::after,.session-item.compacting::after,.assistant-entry.loading::after,.assistant-entry.compacting::after{content:"";width:10px;height:10px;flex:0 0 10px;margin-left:auto;border:2px solid var(--line-mid);border-top-color:var(--brand);border-radius:50%;animation:click-pending-spin .7s linear infinite}
+.assistant-entry.loading::after,.assistant-entry.compacting::after{content:"";width:10px;height:10px;flex:0 0 10px;margin-left:auto;border:2px solid var(--line-mid);border-top-color:var(--brand);border-radius:50%;animation:click-pending-spin .7s linear infinite}
 .conversation.session-switching{opacity:.55;pointer-events:none}
 #send.submitting,#send.submitting:hover{position:relative;background:var(--brand-hi);color:transparent!important;opacity:1}
 #send.submitting::after{content:"";position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-8px;border:2px solid color-mix(in srgb,var(--on-brand) 35%,transparent);border-top-color:var(--on-brand);border-radius:50%;animation:click-pending-spin .7s linear infinite}
 @keyframes click-pending-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.session-item.loading::after,.session-item.compacting::after,.assistant-entry.loading::after,.assistant-entry.compacting::after,#send.submitting::after{animation:none}}
+@media(prefers-reduced-motion:reduce){.status-running .session-status-icon,.assistant-entry.loading::after,.assistant-entry.compacting::after,#send.submitting::after{animation:none}}
 .assistant-entry-icon svg{width:1.35em;height:1.35em}
 .assistant-entry-name{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .assistant-entry-dot{width:7px;height:7px;border-radius:50%;background:var(--line-mid);flex:0 0 7px}

@@ -158,7 +158,8 @@ assert.equal(pinned.children.length,1,'compaction renders in the always-visible 
 assert.match(pinned.children[0].children[1].textContent,/上下文压缩中/);
 context.showContextCompaction({sessionId:sessionB,phase:'completed',folded:4,beforeTokens:9000,afterTokens:3000});
 assert.equal(pinned.children.at(-1).children.some(child=>child.className==='context-compaction-meter'),false,'legacy horizontal compaction meter is removed');
-assert.match(style,/\.session-item\.compacting::after/,'session rows reuse the latest shared spinner');
+assert.match(style,/\.session-activity-badge/,'session rows have an independent compaction activity badge');
+assert.doesNotMatch(style,/\.session-item\.compacting::after/,'compaction no longer reuses the session row spinner');
 assert.doesNotMatch(style,/context-fold-sweep|context-compression-fold|context-card-breathe/,'legacy strip and card animations are removed');
 assert.doesNotMatch(workbench,/context-compaction-fill|context-usage-spin/,'legacy compaction meter and global ring spin are removed');
 const compactHandler = source.slice(source.indexOf("$('compact-button').onclick"), source.indexOf("$('context-compaction-retry').onclick"));

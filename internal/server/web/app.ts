@@ -25,6 +25,26 @@ function renderAssistantEntry(s?: any) {
   entry.querySelector('.assistant-entry-dot').classList.toggle('live', running);
   entry.onclick = action(() => openAssistantGate(s.id, s.title));
 }
+function sessionStatusPresentation(s?: any, isSub = false): {key:string;label:string;icon:string}|null {
+  if (!s?.status) return null;
+  const status = s.status === 'resumed' ? 'running' : s.status;
+  if (status === 'completed') {
+    if (!s.checked) return {key:'completed-unread',label:'新结果',icon:'✓'};
+    if (isSub && s.autoArchived) return {key:'completed',label:'已完成',icon:'✓'};
+    return null;
+  }
+  const meta: Record<string,{key:string;label:string;icon:string}> = {
+    running:{key:'running',label:'运行中',icon:''},
+    queued:{key:'queued',label:'排队中',icon:'◷'},
+    awaiting_clarification:{key:'awaiting-clarification',label:'待回答',icon:'?'},
+    awaiting_approval:{key:'awaiting-approval',label:'待审批',icon:'!'},
+    paused:{key:'paused',label:'已暂停',icon:'Ⅱ'},
+    failed:{key:'failed',label:'失败',icon:'×'},
+    interrupted:{key:'interrupted',label:'已中断',icon:'!'},
+    cancelled:{key:'cancelled',label:'已停止',icon:'■'},
+  };
+  return meta[status] || null;
+}
 let sessionListRequest=0,sessionListPaintKey='';
 async function loadSessions() {
   const scope=recoveryScope(),token=state.token,sequence=++sessionListRequest;
@@ -52,17 +72,16 @@ function renderSessionList(snapshot?: any) {
   // 单个会话条目（主/子共用）：主会话原样；子会话加 sub-session 缩进类与 ↳ 前缀
   const buildItem = (s?: any, isSub?: any) => {
     const isActive = (state.pendingSessionId || state.session?.id) === s.id;
-    // 高亮（蓝点+加粗）只给“完成且未被查看”的会话；查看后由后端 checked 持久化清除
-    const highlight = s.status === 'completed' && !s.checked;
+    const status = sessionStatusPresentation(s, isSub);
+    // 未读与执行状态分离：新结果可以独立提醒，选中态不再抹掉执行状态。
+    const highlight = status?.key === 'completed-unread';
     const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : '') + (isSub ? ' sub-session' : ''));
     item.dataset.sessionId = s.id;
     item.dataset.sessionTitle = s.title;
+    item.dataset.status = s.status || 'idle';
     item.classList.toggle('loading', state.pendingSessionId === s.id);
-    item.title = s.title;
-    // 状态机：运行中=荧光绿闪烁、等待审批=黄常亮、失败=红常亮、完成=蓝；其余无点。
-    const dotClass = ({ running: 'dot-running', failed: 'dot-failed', awaiting_approval: 'dot-await', completed: 'dot-done' } as StringMap)[s.status] || '';
-    // 完成且已查看：不显示蓝点；已自动归档的子会话用灰标签替代蓝点
-    if (dotClass && !(s.status === 'completed' && s.checked) && !(isSub && s.autoArchived)) item.append(el('span', 'session-dot ' + dotClass, ''));
+    item.title = s.title + (status ? ' · ' + t(status.label) : '');
+    if (highlight) item.append(el('span', 'session-dot dot-done', ''));
     const label = el('span', 'session-label' + (isSub ? ' sub-session-label' : ''));
     if (s.pinned) {
       const pin = el('span', 'session-pin-icon');
@@ -72,7 +91,28 @@ function renderSessionList(snapshot?: any) {
     }
     label.append(el('span', 'session-title', s.number > 0 ? '#' + s.number + ' ' + s.title : s.title));
     label.onclick = action(() => selectSession(s.id));
-    if (isSub && s.autoArchived) label.append(el('span', 'sub-session-badge', t("已完成")));
+    item.append(label);
+    if (status) {
+      const badge = el('button', 'session-status-badge status-' + status.key);
+      badge.type = 'button';
+      badge.dataset.status = status.key;
+      badge.title = item.title;
+      badge.setAttribute('aria-label', item.title);
+      const icon = el('span', 'session-status-icon', status.icon);
+      icon.setAttribute('aria-hidden', 'true');
+      badge.append(icon, el('span', 'session-status-text', t(status.label)));
+      badge.onclick = action(async () => {
+        await selectSession(s.id);
+        if (['awaiting_clarification', 'awaiting_approval'].includes(s.status)) {
+          $('run-controls')?.scrollIntoView({block:'nearest'});
+          $('run-action-content')?.querySelector('button,summary,input')?.focus({preventScroll:true});
+        }
+      });
+      item.append(badge);
+    }
+    const activity = el('span', 'session-activity-badge');
+    activity.hidden = true;
+    activity.setAttribute('role', 'status');
     const more = el('button', 'session-more', '⋯');
     more.setAttribute('aria-label', t("会话操作"));
     more.onclick = (e?: any) => {
@@ -108,7 +148,7 @@ function renderSessionList(snapshot?: any) {
       menu.style.top = (btnRect.bottom + mh + 8 <= window.innerHeight ? btnRect.bottom + 4 : Math.max(8, btnRect.top - mh - 4)) + 'px';
       setTimeout(() => { const close = () => { closeMenu(); document.removeEventListener('click', close); }; document.addEventListener('click', close); }, 0);
     };
-    item.append(label, more);
+    item.append(activity, more);
     return item;
   };
 
@@ -6681,6 +6721,14 @@ function renderSessionCompactionIndicators() {
     item.classList.toggle('compaction-stalled', visual === 'stalled');
     if (visual) item.dataset.compactionState = visual;
     else delete item.dataset.compactionState;
+    const activity = item.querySelector?.('.session-activity-badge');
+    if (activity) {
+      const kind = item.classList.contains('loading') ? 'loading' : visual;
+      const labels: StringMap = {loading:'载入中',compacting:'整理中',stalled:'整理停滞'};
+      activity.hidden = !kind;
+      activity.dataset.activity = kind || '';
+      activity.textContent = kind ? t(labels[kind]) : '';
+    }
   });
 }
 const contextCompactionWatches = new Map<any, any>();

@@ -30,19 +30,19 @@ runOwnedUI({chromium, base: BASE, token: TOKEN, chrome: CHROME, label: 'queue'},
     const rect = btn.getBoundingClientRect();
     const ta = document.getElementById('prompt').getBoundingClientRect();
     const it = document.querySelector('#sessions .session-item.active');
-    const dot = it?.querySelector('.session-dot');
+    const icon = it?.querySelector('.status-running .session-status-icon');
     return {
       stopMode: btn.classList.contains('stop-mode') && btn.textContent.includes('■'),
       cornerRight: rect.right <= ta.right && rect.right >= ta.right - 120,
-      runningDotKept: !!it?.querySelector('.session-dot.dot-running'),
-      dotBlinking: dot ? getComputedStyle(dot).animationName !== 'none' : false,
+      runningBadgeKept: !!it?.querySelector('.session-status-badge.status-running'),
+      iconSpinning: icon ? getComputedStyle(icon).animationName !== 'none' : false,
     };
   });
   console.log('SEND_MODE_SWAP_RUNNING:', JSON.stringify(modeSwap));
   if (!modeSwap.stopMode) fail('运行中发送箭头未切换为停止图标');
   if (!modeSwap.cornerRight) fail('按钮不在输入框右下角');
-  if (!modeSwap.runningDotKept) fail('点击运行中会话后绿灯不应消失');
-  if (!modeSwap.dotBlinking) fail('运行中绿灯应保持闪烁');
+  if (!modeSwap.runningBadgeKept) fail('点击运行中会话后状态徽章不应消失');
+  if (!modeSwap.iconSpinning) fail('运行中状态图标应保持旋转');
 
   // 2) 排队发送（运行中按钮已是停止态：用 Enter 提交排队）
   await page.evaluate(() => { state.queueMode = true; });
@@ -96,25 +96,24 @@ runOwnedUI({chromium, base: BASE, token: TOKEN, chrome: CHROME, label: 'queue'},
   console.log('FINAL:', JSON.stringify(final));
   if (final.status !== 'completed') fail('任务终态异常：' + final.status);
   if (final.steers < 2) fail('插话记录缺失');
-  // 状态点与排序：完成后当前会话显示蓝点；点击后点无色、加粗取消；
+  // 未读提醒与排序：完成查看后移除“新结果”和未读点，标题恢复正常字重；
   // 非置顶会话中当前会话排最前（跟进/完成置顶；置顶不受影响）
   await page.waitForTimeout(600);
   const dot = await page.evaluate(() => {
     const it = document.querySelector('#sessions .session-item.active');
     const label = it?.querySelector('.session-label');
-    const d = it?.querySelector('.session-dot');
     const others = [...document.querySelectorAll('#sessions .session-item:not(.active)')];
-    const completedOthers = others.filter(o => o.querySelector('.session-dot.dot-done'));
+    const completedOthers = others.filter(o => o.querySelector('.session-status-badge.status-completed-unread'));
     const firstNonPinned = [...document.querySelectorAll('#sessions .session-item:not(.pinned)')][0];
     return {
-      activeNoDot: !it?.querySelector('.session-dot'), // 查看后高亮已持久清除
+      activeNoUnread: !it?.querySelector('.session-dot.dot-done') && !it?.querySelector('.status-completed-unread'),
       activeWeight: label ? getComputedStyle(label).fontWeight : null,
       othersCompletedBold: completedOthers.length === 0 || completedOthers.every(o => getComputedStyle(o.querySelector('.session-label')).fontWeight === '800'),
-      topAmongNonPinned: firstNonPinned === it, // 完成按时间置顶（与点击无关）
+      topAmongNonPinned: firstNonPinned === it,
     };
   });
-  console.log('STATUS_DOT:', JSON.stringify(dot));
-  if (!dot.activeNoDot) fail('查看后完成会话的高亮未持久清除');
+  console.log('STATUS_BADGE:', JSON.stringify(dot));
+  if (!dot.activeNoUnread) fail('查看后完成会话的未读提醒未持久清除');
   if (dot.activeWeight !== '400') fail('查看后标题应为正常字重');
   if (!dot.othersCompletedBold) fail('未查看的完成会话应加粗 800');
   if (!dot.topAmongNonPinned) fail('完成会话未按时间置顶');

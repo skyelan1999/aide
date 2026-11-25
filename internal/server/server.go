@@ -3142,6 +3142,37 @@ func (a *App) exportSessions(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(b)
 }
 
+func sessionDisplayStatus(s *Session) string {
+	if s == nil {
+		return ""
+	}
+	// A session can contain several runs. Show work that still needs attention
+	// before the latest historical terminal state; within one level, the newest
+	// run wins so simultaneous clarification and approval requests stay stable.
+	for i := len(s.Runs) - 1; i >= 0; i-- {
+		if s.Runs[i] == nil {
+			continue
+		}
+		switch s.Runs[i].Status {
+		case "awaiting_clarification", "awaiting_approval":
+			return s.Runs[i].Status
+		}
+	}
+	for _, active := range []string{"running", "queued", "paused"} {
+		for i := len(s.Runs) - 1; i >= 0; i-- {
+			if s.Runs[i] != nil && s.Runs[i].Status == active {
+				return active
+			}
+		}
+	}
+	for i := len(s.Runs) - 1; i >= 0; i-- {
+		if s.Runs[i] != nil && s.Runs[i].Status != "" {
+			return s.Runs[i].Status
+		}
+	}
+	return ""
+}
+
 func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -3157,13 +3188,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 		if sess.Archived != showArchived {
 			continue
 		}
-		status := ""
-		for i := len(sess.Runs) - 1; i >= 0; i-- {
-			if sess.Runs[i].Status != "" {
-				status = sess.Runs[i].Status
-				break
-			}
-		}
+		status := sessionDisplayStatus(sess)
 		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Number, sess.Kind, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived})
 	}
 	// #30：小秘系统会话永远最顶（先于普通置顶）；然后普通置顶；再按最近活动时间倒序
