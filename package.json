@@ -1,11 +1,12 @@
 {
   "name": "aide-web-typescript",
   "private": true,
-  "description": "TypeScript toolchain for the progressive JS-to-TS migration. Runtime still loads the compiled .js artifacts; no bundler, no framework.",
+  "description": "Native TypeScript sources and generated JavaScript runtime for the embedded Aide UI and host bridges; no bundler, no framework.",
   "scripts": {
-    "typecheck": "tsc -p internal/server/web/tsconfig.json --noEmit && tsc -p internal/server/web/tsconfig.worklets.json --noEmit && tsc -p scripts/tsconfig.computer-bridge.json --noEmit && tsc -p scripts/tsconfig.computer-bridge-linux.json --noEmit && tsc -p scripts/tsconfig.headless-browser-bridge.json --noEmit && tsc -p scripts/tsconfig.safari-bridge.json --noEmit",
+    "check:ts-sources": "node scripts/check-ts-sources.cjs",
+    "typecheck": "npm run check:ts-sources && tsc -p internal/server/web/tsconfig.json --noEmit && tsc -p internal/server/web/tsconfig.worklets.json --noEmit && tsc -p scripts/tsconfig.computer-bridge.json --noEmit && tsc -p scripts/tsconfig.computer-bridge-linux.json --noEmit && tsc -p scripts/tsconfig.headless-browser-bridge.json --noEmit && tsc -p scripts/tsconfig.safari-bridge.json --noEmit",
     "build:web": "tsc -p internal/server/web/tsconfig.json",
-    "build:ts": "tsc -p internal/server/web/tsconfig.json && tsc -p internal/server/web/tsconfig.worklets.json && tsc -p scripts/tsconfig.computer-bridge.json && tsc -p scripts/tsconfig.computer-bridge-linux.json && tsc -p scripts/tsconfig.headless-browser-bridge.json && tsc -p scripts/tsconfig.safari-bridge.json"
+    "build:ts": "npm run check:ts-sources && tsc -p internal/server/web/tsconfig.json && tsc -p internal/server/web/tsconfig.worklets.json && tsc -p scripts/tsconfig.computer-bridge.json && tsc -p scripts/tsconfig.computer-bridge-linux.json && tsc -p scripts/tsconfig.headless-browser-bridge.json && tsc -p scripts/tsconfig.safari-bridge.json"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

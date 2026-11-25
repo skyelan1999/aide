@@ -37,7 +37,7 @@ async function testSessionSelection() {
   const requests = [], gets = new Map();
   const state = {session: {id:'s1',title:'s1'}, sessionJSON:'', pendingSessionId:'', live:{}, liveStable:{}, liveRound:{}, liveTool:{}, liveReasoning:{}, runPhase:{}, attachments:[]};
   const context = {
-    state, $: id => nodes[id], window: {},
+    state, $: id => nodes[id], window: {addEventListener() {}},
     persistChatDraft() {}, refreshChatDraftChoices() {}, renderAttachments() {}, restoreChatSelection() {}, scheduleChatRecovery() {},
     document: {querySelectorAll: selector => {
       assert.equal(selector, '.session-item[data-session-id]'); return [s1,s2,s3];
@@ -146,7 +146,7 @@ async function testNavigationDraftPersistence() {
   };
   const context = {state, $:id=>nodes[id], recoveryScope:()=>scope, recoveryReady:true,
     chatRecoveryEpoch:0, lockScreen:{locked:false}, workspaceSceneRestoring:false,
-    window:{AideContinuity:recovery}, AideContinuity:recovery,
+    window:{addEventListener() {}, AideContinuity:recovery}, AideContinuity:recovery,
     recoveryFailure:e=>failures.push(e.message), document:{querySelectorAll:()=>[]},
     clearTimeout(){}, closeStream(){}, ttsCancel(){}, cancelContextPreview(){},
     renderAttachments(){context.scheduleChatRecovery();}, restoreChatSelection(){},
@@ -213,7 +213,7 @@ async function testSendSubmission() {
   let run = deferred();
   const context = {
     recoveryScope:()=> 'workspace', chatDraftKey:id=>id, sessionDrafts:new Map(), chatContent:d=>JSON.stringify([d?.text||'',d?.attachments||[]]), recoveryFailure(){},
-    state, $: id => nodes[id], window: {}, composerAutoReview: () => false, reconcileAvatarRun() {}, t: key => key, xiaomiDictation:{active:false,starting:false},
+    state, $: id => nodes[id], window: {addEventListener() {}}, composerAutoReview: () => false, reconcileAvatarRun() {}, t: key => key, xiaomiDictation:{active:false,starting:false},
     voice:{queuedOverride:null}, action: fn => fn, toast() {}, openSettings() {}, renderAttachments() {},
     cancelContextPreview() { cancels++; }, setSendMode() {},
     ensureContextCompactionWatch(sessionID) {

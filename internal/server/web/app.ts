@@ -576,14 +576,7 @@ function openStream(run?: any) {
       ? combined.slice(0, 2048) + '\n…（思考记录过长，显示首尾部分）…\n' + combined.slice(-(maxReasoningChars - 2100))
       : combined;
     const ph = state.runPhase[run.id];
-    if (ph) {
-      ph.phase = 'reasoning'; touchRunActivity(run.id);
-      const box: any = document.querySelector<HTMLElement>('#timeline .run[data-run="' + run.id + '"]');
-      const details = box?.querySelector('.rsp-thinking');
-      if (details?.open) renderRunStatus(run.id);
-      else if (details) updateThinkingSummary(details, state.liveReasoning[run.id], !ph.done);
-      else renderRunStatus(run.id);
-    }
+    if (ph) { ph.phase = 'reasoning'; touchRunActivity(run.id); scheduleThinkingRender(run.id); }
   });
   es.addEventListener('heartbeat', (e?: any) => {
     if (state.stream !== es) return;
@@ -688,6 +681,23 @@ function openStream(run?: any) {
     refreshSessionSoon(); // 立即向持久化会话状态对账，避免只等下一轮 SSE。
     schedulePoll();       // 确保意外断流后的轮询兜底仍在运行。
   };
+}
+// Reasoning events may arrive between answer frames. Keep text accumulation
+// incremental, but query and update the DOM at most once per animation frame.
+const thinkingRenderScheduled = new Set<any>();
+function scheduleThinkingRender(runId?: any) {
+  if (thinkingRenderScheduled.has(runId)) return;
+  thinkingRenderScheduled.add(runId);
+  requestAnimationFrame(() => {
+    thinkingRenderScheduled.delete(runId);
+    const ph = state.runPhase[runId];
+    if (!ph) return;
+    const box: any = document.querySelector<HTMLElement>('#timeline .run[data-run="' + runId + '"]');
+    const details = box?.querySelector('.rsp-thinking');
+    if (details?.open) renderRunStatus(runId);
+    else if (details) updateThinkingSummary(details, state.liveReasoning[runId], !ph.done);
+    else renderRunStatus(runId);
+  });
 }
 // 流式渲染节流：delta 先累积，按动画帧批量渲染（每帧最多一次解析）。
 // 自适应兜底：活动块异常大（如超长未闭合代码块）时隔帧渲染，给主线程喘息，
@@ -4316,12 +4326,21 @@ function commandWorkspaceRestriction() {
     ? t('SSH 工作区当前受沙箱限制，尚不能执行远程命令。请在权限设置中检查沙箱模式；完全访问会同时放开 AI 的执行范围。') : '';
 }
 function renderCommandWorkspaceStatus() {
+  const workspaceKey = JSON.stringify([wsState.config?.workspace?.mode || 'local', wsState.config?.workspace?.host || '', wsState.config?.workspace?.path || state.config?.workspaceDisplay || '']);
+  if (state.commandWorkspaceKey !== workspaceKey) {
+    state.commandWorkspaceKey = workspaceKey;
+    state.commandCwd = '.';
+  }
+  const cwd = state.commandCwd || '.';
   const reason = commandWorkspaceRestriction(), active = !!state.commandSessionID;
   $('command-policy').hidden = !reason;
   $('command-policy-text').textContent = reason;
+  const base = commandIsSSH() ? wsState.config?.workspace?.path || '.' : state.config?.workspaceDisplay || '/workspace';
+  const display = cwd === '.' ? base : base.replace(/\/+$/, '') + '/' + cwd;
   $('command-location').textContent = commandIsSSH()
-    ? t('远程目录：{0}', wsState.config?.workspace?.path || '.')
-    : t('本地目录：{0}', state.config?.workspaceDisplay || '/workspace');
+    ? t('远程目录：{0}', display)
+    : t('本地目录：{0}', display);
+  $('command-location').title = t('独立 cd 命令会保留到此目录；路径不能越过工作区');
   $('command-interactive').disabled = !commandIsSSH() || !!reason;
   $('command-run').disabled = !!reason || (!!state.commandAbort && !active);
   const label = $('command-run').querySelector('i18n-text');
@@ -4386,7 +4405,7 @@ $('command-form').onsubmit = action(async (event?: any) => {
   const abort = new AbortController(); state.commandAbort = abort; state.commandSessionID = ''; $('command-run').disabled = true; $('command-stop').classList.remove('hidden'); $('terminal-output').textContent += '\n\n❯ ' + command + '\n';
   let accepted = false;
   try {
-    const response = await fetch('/api/command', { method: 'POST', signal: abort.signal, headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ command, cwd: '.', interactive }) });
+    const response = await fetch('/api/command', { method: 'POST', signal: abort.signal, headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ command, cwd: state.commandCwd || '.', interactive }) });
     if (!response.ok) throw new Error((await response.json()).error);
     accepted = true;
     const reader = response.body!.getReader(); const decoder = new TextDecoder(); let pending = '';
@@ -4394,8 +4413,14 @@ $('command-form').onsubmit = action(async (event?: any) => {
       const { value, done } = await reader.read(); if (done) break; pending += decoder.decode(value, { stream: true });
       let index: any; while ((index = pending.indexOf('\n')) >= 0) {
         const line = pending.slice(0, index); pending = pending.slice(index + 1); if (!line) continue; const item = JSON.parse(line);
-        if (item.type === 'session') { state.commandSessionID = item.id; renderCommandWorkspaceStatus(); }
-        $('terminal-output').textContent += item.type === 'output' ? item.text : item.type === 'session' ? t("\n[交互终端已就绪；Enter 发送，Tab 补全，Ctrl+C 中断]\n") : t("\n[退出码 {0} · {1} ms] {2}\n", item.code, item.elapsedMS, item.error || '');
+        if (item.type === 'session') {
+          state.commandSessionID = item.id; renderCommandWorkspaceStatus();
+          $('terminal-output').textContent += t("\n[交互终端已就绪；Enter 发送，Tab 补全，Ctrl+C 中断]\n");
+        } else if (item.type === 'cwd') {
+          state.commandCwd = item.cwd || '.'; renderCommandWorkspaceStatus();
+          $('terminal-output').textContent += t("\n[当前目录：{0}]\n", item.display || item.cwd || '.');
+        } else if (item.type === 'output') $('terminal-output').textContent += item.text;
+        else if (item.type === 'exit') $('terminal-output').textContent += t("\n[退出码 {0} · {1} ms] {2}\n", item.code, item.elapsedMS, item.error || '');
         if ($('terminal-output').textContent.length > 180000) $('terminal-output').textContent = $('terminal-output').textContent.slice(-160000);
         $('terminal-output').scrollTop = $('terminal-output').scrollHeight;
       }
@@ -5698,7 +5723,7 @@ const profilesManager: any = { local: null, timer: null, host: null };
 const paramDefs = [
   { key: 'temperature', label: '温度 temperature', min: 0, max: 2, step: 0.1, placeholder: '1' },
   { key: 'top_p', label: 'Top P', min: 0, max: 1, step: 0.05, placeholder: '1' },
-  { key: 'max_tokens', label: '最大 Tokens', min: 1, max: 65536, step: 1, placeholder: '8192', integer: true },
+  { key: 'max_tokens', label: '最大 Tokens', min: 1, max: 393216, step: 1, placeholder: '8192', integer: true },
   { key: 'frequency_penalty', label: '频率惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' },
   { key: 'presence_penalty', label: '存在惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' }
 ];
@@ -6637,6 +6662,8 @@ function paintContextUsage(data?: any) {
     card.dataset.runDetail = runDetail;
   }
   const request = latestRequestContext(data);
+  if (state.contextCompactions.has(state.session?.id || '')) renderContextCompactionState();
+  else paintContextRequestState(request);
   renderContextRuntime(run);
   paintContextUsageRings(run, request);
   const bar = $('context-bar');
@@ -6676,7 +6703,6 @@ function paintContextUsage(data?: any) {
     card.style.setProperty('--context-progress', '0%');
     bar.setAttribute('aria-label', requestSummary.textContent);
   }
-  if (!state.contextCompactions.get(state.session?.id || '')) paintContextRequestState(request);
   const detail = $('context-card-detail');
   const wasOpen = !!detail.querySelector?.('details')?.open;
   const scrollTop = detail.querySelector?.('.context-usage-detail-body')?.scrollTop || 0;
@@ -7027,6 +7053,10 @@ function clearContextMeterDisplay() {
   $('context-stat').textContent = '—';
   $('context-stat').title = '';
   $('context-usage-kind').textContent = '';
+  const inlineRequestState = $('context-request-state');
+  inlineRequestState.textContent = '';
+  inlineRequestState.title = '';
+  delete inlineRequestState.dataset.state;
   renderContextRuntime(null);
   const parallelBadge = $('context-parallel-badge');
   parallelBadge.hidden = true;

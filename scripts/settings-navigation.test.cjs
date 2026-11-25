@@ -7,9 +7,9 @@ const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.jso
 const context=vm.createContext({window:{}});
 vm.runInContext(fs.readFileSync('internal/server/web/settings-navigation.js','utf8'),context);
 const navigation=context.window.AideSettingsNavigation;
-test('all settings remain reachable exactly once in seven ordered groups',()=>{
+test('all settings remain reachable exactly once in nine ordered groups',()=>{
  const model=navigation.build(schema),ids=model.groups.flatMap(group=>group.pages.map(page=>page.id));
- assert.deepEqual(model.groups.map(group=>group.id),['general','files','ai','assistant','communication','data','system']);
+ assert.deepEqual(model.groups.map(group=>group.id),['general','files','ai','assistant','communication','data','system','network-usage','storage-usage']);
  assert.equal(ids.length,model.pages.length);assert.equal(new Set(ids).size,ids.length);
  for(const section of schema.sections){
   const page=navigation.resolve(model,section.id,'');assert.equal(page.sectionId,section.id);

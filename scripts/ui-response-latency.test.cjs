@@ -20,7 +20,8 @@ async function settings(){
 }
 async function sessions(){
  const list=node(),requests=[];let scope='A';const state={token:'test',session:{id:'main'},pendingSessionId:''};
- const c={state,recoveryScope:()=>scope,subGroupState:{},$:()=>list,el:node,t:(s,n)=>s.replace('{0}',n),renderAssistantEntry(){},action:fn=>fn,document:{documentElement:{lang:'zh-CN'},createDocumentFragment:()=>node('fragment')},api:url=>{const d=deferred();requests.push({url,...d});return d.promise;}};vm.createContext(c);
+ const c={state,recoveryScope:()=>scope,subGroupState:{},$:()=>list,el:node,t:(s,n)=>s.replace('{0}',n),renderAssistantEntry(){},renderSessionCompactionIndicators(){},action:fn=>fn,document:{documentElement:{lang:'zh-CN'},createDocumentFragment:()=>node('fragment')},api:url=>{const d=deferred();requests.push({url,...d});return d.promise;}};vm.createContext(c);
+ vm.runInContext(excerpt('function sessionStatusPresentation','let sessionListRequest='),c);
  vm.runInContext(excerpt('let sessionListRequest=','// 全局 SSE（#60）'),c);
  const active=[{id:'main',title:'Main',status:'completed',checked:true}],archived=Array.from({length:5},(_,i)=>({id:'sub'+i,parentId:'main',title:'Child '+i,autoArchived:true}));
  const first=c.loadSessions();requests[0].resolve(active);requests[1].resolve(archived);await first;

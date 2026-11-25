@@ -389,6 +389,14 @@ class Launcher:
             # A healthy build remains successful; failed recycling is visible.
             print('AIDE: 自动回收未完成，现有服务和有引用的资源保留：' + str(error), file=sys.stderr, flush=True)
 
+    def compile_typescript(self):
+        if not shutil.which('npm'):
+            raise RuntimeError('TypeScript source builds require Node.js and npm on the host')
+        print('AIDE: 从 TypeScript 生成运行 JavaScript…', flush=True)
+        if not (self.root / 'node_modules/typescript/package.json').is_file():
+            self.call(['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund'], timeout=600)
+        self.call(['npm', 'run', 'build:ts'], timeout=600)
+
     def build(self):
         self.require_source()
         builder_mode = os.environ.get('AIDE_BUILDX_BUILDER', 'dedicated')
@@ -397,8 +405,9 @@ class Launcher:
         builder = 'default' if builder_mode == 'default' else self.builder
         if self.dry_run:
             print(json.dumps({'action': 'build', 'builder': builder, 'image': self.image,
-                              'steps': ['compile current source and embedded host components', 'verify image identity', 'start']}, indent=2))
+                              'steps': ['compile TypeScript sources', 'compile current source and embedded host components', 'verify image identity', 'start']}, indent=2))
             return
+        self.compile_typescript()
         print('AIDE: 检查 Docker 和可用磁盘空间…', flush=True)
         self.d('info', capture=True)
         disk_check = ['bash', '-ec', 'source scripts/resource-guard.sh; aide_check_disk build "$1"',

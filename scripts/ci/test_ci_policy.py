@@ -38,6 +38,12 @@ class CIPolicyTests(unittest.TestCase):
         package = json.loads((ROOT / 'package.json').read_text())
         self.assertEqual(package['scripts']['typecheck'].count('tsc -p'), 6)
         self.assertEqual(package['scripts']['build:ts'].count('tsc -p'), 6)
+        self.assertIn('npm run check:ts-sources', package['scripts']['typecheck'])
+        self.assertIn('npm run check:ts-sources', package['scripts']['build:ts'])
+        launcher = (ROOT / 'scripts/launcher.py').read_text()
+        local_build = launcher.split('    def build(self):', 1)[1].split('    def owned_containers', 1)[0]
+        self.assertIn('self.compile_typescript()', local_build)
+        self.assertLess(local_build.index('self.compile_typescript()'), local_build.index("'source-sha'"))
 
     def test_delivery_is_explicit_and_every_gate_is_required(self):
         delivery = (ROOT / '.github/workflows/aide-delivery.yml').read_text()

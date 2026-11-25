@@ -31,7 +31,7 @@ flowchart TB
     Storage --> Data[/data 持久卷]
 ```
 
-Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token 通过 SSE（`GET /api/sessions/{id}/runs/{run}/events`）增量推送到浏览器，最终任务状态仍由 `GET /sessions/{id}` 持久化兜底。前端使用原生 JS/CSS 和本地 vendor Markdown 库，由 `go:embed` 编入二进制。Node 插件宿主是可信代码执行器，不是权限沙箱。
+Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token 通过 SSE（`GET /api/sessions/{id}/runs/{run}/events`）增量推送到浏览器，最终任务状态仍由 `GET /sessions/{id}` 持久化兜底。前端使用原生 TypeScript/CSS、无框架和 bundler，使用本地 vendor Markdown 库；`npm run build:ts` 从 TS 统一生成浏览器与宿主桥接运行 JS，`./build.command` 在本地构建前自动执行该步骤，生成 JS 由 `go:embed` 编入二进制。运行 JS 是构建产物，不再手工双写；CI 会重建并阻止生成物漂移。Node 插件宿主是可信代码执行器，不是权限沙箱。
 
 ## 模块职责
 
