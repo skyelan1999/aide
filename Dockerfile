@@ -244,6 +244,10 @@ USER root
 COPY --from=dwg-converter /opt/aide/dwg /opt/aide/dwg
 COPY --from=build /opt/aide/licenses /opt/aide/licenses
 COPY --from=node /usr/local/LICENSE /opt/aide/licenses/platform/node-LICENSE
+# The command panel supports Go project debugging with the same pinned Go CLI
+# as the build toolchain; keep this late so dependency layers remain cached.
+COPY --from=toolchain /usr/local/go /usr/local/go
+COPY --from=toolchain /usr/local/go/LICENSE /opt/aide/licenses/platform/go-LICENSE
 COPY --from=host-helpers /usr/local/bin/aide-message-relay /usr/local/bin/aide-message-relay
 COPY --from=host-helpers /opt/aide-message-lan /opt/aide/message-lan
 COPY --from=codex-host /opt/aide-host-components /opt/aide/host-components

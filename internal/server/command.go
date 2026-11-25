@@ -7,7 +7,9 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -50,6 +52,142 @@ func (s *streamWriter) Write(b []byte) (int, error) {
 	}
 	return n, nil
 }
+
+// standaloneCD recognizes only a complete, literal cd builtin. Compound shell
+// commands and expansions retain normal shell behavior and do not change the
+// command panel's persistent working directory.
+func standaloneCD(command string) (string, bool) {
+	var args []string
+	var word strings.Builder
+	var quote rune
+	escaped, started, dynamic := false, false, false
+	flush := func() {
+		if started {
+			args = append(args, word.String())
+			word.Reset()
+			started = false
+		}
+	}
+	for _, r := range strings.TrimSpace(command) {
+		if escaped {
+			word.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if quote != 0 {
+			switch {
+			case r == quote:
+				quote = 0
+			case r == '\\' && quote == '"':
+				escaped = true
+			case r == '$' || r == '`':
+				dynamic = true
+			default:
+				word.WriteRune(r)
+			}
+			continue
+		}
+		switch r {
+		case '\'', '"':
+			quote, started = r, true
+		case '\\':
+			escaped, started = true, true
+		case ' ', '\t', '\r', '\n':
+			flush()
+		case '$', '`':
+			dynamic = true
+			word.WriteRune(r)
+			started = true
+		case ';', '&', '|', '<', '>', '(', ')':
+			return "", false
+		default:
+			word.WriteRune(r)
+			started = true
+		}
+	}
+	flush()
+	if escaped || quote != 0 || dynamic || len(args) == 0 || args[0] != "cd" {
+		return "", false
+	}
+	if len(args) == 1 {
+		return ".", true
+	}
+	if len(args) == 2 && args[1] != "-" && !strings.HasPrefix(args[1], "~") {
+		return args[1], true
+	}
+	if len(args) == 3 && args[1] == "--" && args[2] != "-" && !strings.HasPrefix(args[2], "~") {
+		return args[2], true
+	}
+	return "", false
+}
+
+func commandRelativePath(base, dir string) (string, error) {
+	rel, err := filepath.Rel(base, dir)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", errors.New("工作目录越界")
+	}
+	if err := safePath(rel); err != nil {
+		return "", err
+	}
+	return rel, nil
+}
+
+func localCommandDisplayTarget(target, display, base string) string {
+	if !filepath.IsAbs(target) || !filepath.IsAbs(display) {
+		return target
+	}
+	rel, err := filepath.Rel(filepath.Clean(display), filepath.Clean(target))
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return target
+	}
+	return filepath.Join(base, rel)
+}
+
+func resolveLocalCommandDir(base, current, target string) (string, string, error) {
+	candidate := target
+	if !filepath.IsAbs(candidate) {
+		candidate = filepath.Join(current, candidate)
+	}
+	dir, err := filepath.EvalSymlinks(filepath.Clean(candidate))
+	if err != nil {
+		return "", "", err
+	}
+	info, err := os.Stat(dir)
+	if err != nil || !info.IsDir() {
+		return "", "", errors.New("目标不是可访问目录")
+	}
+	rel, err := commandRelativePath(base, dir)
+	if err != nil {
+		return "", "", err
+	}
+	return dir, rel, nil
+}
+
+func resolveRemoteCommandDir(base, current, target string) (string, string, error) {
+	base = path.Clean("/" + strings.TrimPrefix(base, "/"))
+	candidate := target
+	if !path.IsAbs(candidate) {
+		candidate = path.Join(base, current, candidate)
+	}
+	dir := path.Clean(candidate)
+	if base != "/" && dir != base && !strings.HasPrefix(dir, base+"/") {
+		return "", "", errors.New("工作目录越界")
+	}
+	rel := strings.TrimPrefix(strings.TrimPrefix(dir, base), "/")
+	if rel == "" {
+		rel = "."
+	}
+	if err := safePath(rel); err != nil {
+		return "", "", err
+	}
+	return dir, rel, nil
+}
+
+func commandStreamHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("X-Accel-Buffering", "no")
+}
+
 func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Command     string `json:"command"`
@@ -69,6 +207,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	workspaceMode := a.workspaceMode()
 	commandTask := &Task{WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: workspaceMode, WorkspaceRemotePath: a.wsConfig.Workspace.Path}
 	wsRoot := a.workspace
+	workspaceDisplay := a.workspaceDisplay
 	cacheContainer := a.cacheContainer
 	a.mu.Unlock()
 	remoteMode := workspaceMode == "ssh"
@@ -79,6 +218,12 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	if in.Cwd == "" {
 		in.Cwd = "."
 	}
+	if err := safePath(in.Cwd); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	cdTarget, changeDir := standaloneCD(in.Command)
+	changeDir = changeDir && !in.Interactive
 	if remoteMode {
 		// R02/R03：远程模式不做本地 cwd 校验；命令进入绑定的远程目录
 		timeout := 60 * time.Second
@@ -94,13 +239,29 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		}
 		defer release()
 		remote := in.Command
+		commandDir, _, err := resolveRemoteCommandDir(session.directory, ".", in.Cwd)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		nextCwd := ""
+		if changeDir {
+			var nextDir string
+			nextDir, nextCwd, err = resolveRemoteCommandDir(session.directory, in.Cwd, cdTarget)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			commandDir = nextDir
+			remote = "cd " + shellQuote(nextDir)
+		}
 		if in.Interactive {
 			// Keep one login shell attached to the PTY. The first command is
 			// delivered through stdin below so subsequent input, sudo prompts,
 			// shell history and Tab completion all share the same shell state.
 			remote = sshInteractiveShellCommand()
 		}
-		if rp := strings.TrimSpace(session.directory); rp != "" {
+		if rp := strings.TrimSpace(commandDir); rp != "" && !changeDir {
 			remote = "cd " + shellQuote(rp) + " && " + remote
 		}
 		if cache := session.cache; cache != "" {
@@ -113,8 +274,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 			fail(w, 429, errors.New("同时最多运行 4 个命令"))
 			return
 		}
-		w.Header().Set("Content-Type", "application/x-ndjson")
-		w.Header().Set("X-Accel-Buffering", "no")
+		commandStreamHeaders(w)
 		stream := &streamWriter{w: w}
 		start := time.Now()
 		var code int
@@ -150,11 +310,10 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 				message = "命令已取消或超过 60 秒"
 			}
 		}
+		if changeDir && runErr == nil && code == 0 {
+			stream.event(map[string]string{"type": "cwd", "cwd": nextCwd, "display": commandDir})
+		}
 		stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
-		return
-	}
-	if err := safePath(in.Cwd); err != nil {
-		fail(w, 400, err)
 		return
 	}
 	if wsRoot == nil {
@@ -176,6 +335,19 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	base, _ = filepath.Abs(base)
 	if dir != base && !strings.HasPrefix(dir, base+string(filepath.Separator)) {
 		fail(w, 400, errors.New("工作目录越界"))
+		return
+	}
+	if changeDir {
+		target := localCommandDisplayTarget(cdTarget, workspaceDisplay, base)
+		nextDir, nextCwd, err := resolveLocalCommandDir(base, dir, target)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		commandStreamHeaders(w)
+		stream := &streamWriter{w: w}
+		stream.event(map[string]string{"type": "cwd", "cwd": nextCwd, "display": nextDir})
+		stream.event(map[string]any{"type": "exit", "code": 0, "error": "", "elapsedMS": 0})
 		return
 	}
 	select {
@@ -204,8 +376,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 	}
 	cmd.WaitDelay = 2 * time.Second
-	w.Header().Set("Content-Type", "application/x-ndjson")
-	w.Header().Set("X-Accel-Buffering", "no")
+	commandStreamHeaders(w)
 	stream := &streamWriter{w: w}
 	cmd.Stdout = stream
 	cmd.Stderr = stream
