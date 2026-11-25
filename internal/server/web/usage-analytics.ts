@@ -4,6 +4,7 @@ interface Window {
     renderStorage: (options: any) => any;
     formatBytes: (value: any) => string;
     selectNetworkDays: (days: any, range: string) => any[];
+    selectStorageDisks: (data: any) => any[];
   };
 }
 'use strict';
@@ -216,6 +217,34 @@ interface Window {
     sessions: '会话与运行记录', memory: '记忆数据', knowledge: '知识索引', config: '配置', stats: '统计数据', audit: '审计日志', plugins: '插件', messages: '消息与协作', market: '插件市场数据', assistant: '小秘数据', '_root': '根目录文件',
   };
   function storageGroup(id: string): string { const source = storageLabels[id] || id; return t(source); }
+  const storageColors = ['#4f7cff', '#20a77a', '#f59e42', '#a06ee1', '#e15b78', '#27a9c7', '#8b9a46', '#d67fbf'];
+  function selectStorageDisks(data: any): any[] {
+    if (Array.isArray(data?.disks)) return data.disks;
+    const capacity = data?.capacity || {};
+    const disks = [{ id: 'aide-data', logicalBytes: data?.data?.logicalBytes, files: data?.data?.files, errors: data?.data?.errors, availableBytes: capacity.dataAvailableBytes }];
+    if (data?.workspaceAudit?.reason !== 'ssh-source') disks.push({ id: 'current-workspace', logicalBytes: data?.workspace?.logicalBytes, files: data?.workspace?.files, errors: data?.workspace?.errors, availableBytes: capacity.workspaceAvailableBytes });
+    return disks;
+  }
+  function storagePercent(value: any, total: number): string {
+    const percent = total > 0 ? Math.max(0, Number(value) || 0) / total * 100 : 0;
+    return `${percent.toFixed(percent > 0 && percent < 1 ? 1 : 0)}%`;
+  }
+  function storageShareStrip(items: any[], className: string, label: string, labelFor: (item: any) => string = item => storageGroup(String(item.id))): HTMLElement {
+    const strip = document.createElement('div'); strip.className = `storage-share-strip ${className}`; strip.setAttribute('role', 'img'); strip.setAttribute('aria-label', label);
+    const total = items.reduce((sum, item) => sum + Math.max(0, Number(item.logicalBytes) || 0), 0);
+    items.forEach((item, index) => {
+      const bytes = Math.max(0, Number(item.logicalBytes) || 0);
+      if (!bytes || !total) return;
+      const segment = document.createElement('span'); segment.style.setProperty('--share-color', storageColors[index % storageColors.length]); segment.style.width = `${bytes / total * 100}%`;
+      segment.title = `${labelFor(item)} ${formatBytes(bytes)} ${storagePercent(bytes, total)}`; strip.append(segment);
+    });
+    return strip;
+  }
+  function storageDiskLabel(id: string): string {
+    if (id === 'aide-data') return t('Aide 数据磁盘');
+    if (id === 'current-workspace') return t('工作区磁盘');
+    return id;
+  }
 
   function renderStorage(options: any): HTMLElement {
     translate = options.t || translate;
@@ -230,41 +259,49 @@ interface Window {
       try {
         const data = await api('/storage-usage');
         content.replaceChildren();
-        const capacity = data.capacity || {};
+        const disks = selectStorageDisks(data);
+        const diskTotal = disks.reduce((sum, item) => sum + Math.max(0, Number(item.logicalBytes) || 0), 0);
+        const sshExcluded = data.workspaceAudit?.reason === 'ssh-source';
         const metrics = document.createElement('div'); metrics.className = 'analytics-metrics';
         metrics.append(
           metric(t('Aide 数据'), formatBytes(data.data?.logicalBytes), t('{0} 个文件', Number(data.data?.files) || 0), 'is-total'),
-          metric(t('当前工作区'), formatBytes(data.workspace?.logicalBytes), t('{0} 个文件', Number(data.workspace?.files) || 0)),
-          metric(t('磁盘可用空间'), Number(capacity.dataAvailableBytes) >= 0 ? formatBytes(capacity.dataAvailableBytes) : '—', t('Aide 数据所在磁盘')),
+          metric(t('当前工作区'), sshExcluded ? '—' : formatBytes(data.workspace?.logicalBytes), sshExcluded ? t('SSH 来源未计入审计') : t('{0} 个文件', Number(data.workspace?.files) || 0)),
+          metric(t('存储位置'), t('{0} 个磁盘', disks.length), t('按本地审计位置分别统计')),
         );
-        content.append(metrics, sectionTitle(t('Aide 数据构成')));
+        content.append(metrics, sectionTitle(t('多磁盘占比')));
+        content.append(storageShareStrip(disks, 'storage-disk-strip', t('各存储位置审计文件占比'), item => storageDiskLabel(String(item.id))));
+        const diskList = document.createElement('div'); diskList.className = 'storage-disk-list';
+        disks.forEach((item, index) => {
+          const row = document.createElement('div'); row.className = 'storage-disk-row'; row.style.setProperty('--share-color', storageColors[index % storageColors.length]);
+          const name = document.createElement('strong'); name.textContent = storageDiskLabel(String(item.id));
+          const share = document.createElement('span'); share.textContent = `${storagePercent(item.logicalBytes, diskTotal)} · ${t('{0} 个文件', Number(item.files) || 0)}`;
+          const size = document.createElement('b'); size.textContent = formatBytes(item.logicalBytes);
+          const available = document.createElement('small'); available.textContent = Number(item.availableBytes) >= 0 ? `${t('可用')} ${formatBytes(item.availableBytes)}` : t('容量不可用');
+          row.append(name, share, size, available); diskList.append(row);
+        });
+        content.append(diskList, sectionTitle(t('Aide 数据构成')));
         const children = Array.isArray(data.data?.children) ? data.data.children : [];
         if (!children.length) {
           const empty = document.createElement('p'); empty.className = 'analytics-empty'; empty.textContent = t('还没有可统计的 Aide 数据。'); content.append(empty);
         } else {
+          const dataTotal = children.reduce((sum: number, item: any) => sum + Math.max(0, Number(item.logicalBytes) || 0), 0);
+          content.append(storageShareStrip(children, 'storage-category-strip', t('Aide 数据分类占比')));
           const list = document.createElement('div'); list.className = 'storage-category-list';
-          const maximum = Math.max(1, ...children.map((item: any) => Number(item.logicalBytes) || 0));
-          children.forEach((item: any) => {
-            const row = document.createElement('div'); row.className = 'storage-category-row';
+          children.forEach((item: any, index: number) => {
+            const row = document.createElement('div'); row.className = 'storage-category-row'; row.style.setProperty('--share-color', storageColors[index % storageColors.length]);
             const head = document.createElement('div'); head.className = 'storage-category-head';
             const label = document.createElement('strong'); label.textContent = storageGroup(String(item.id));
-            const files = document.createElement('span'); files.textContent = t('{0} 个文件', Number(item.files) || 0);
+            const files = document.createElement('span'); files.textContent = `${storagePercent(item.logicalBytes, dataTotal)} · ${t('{0} 个文件', Number(item.files) || 0)}`;
             const size = document.createElement('b'); size.textContent = formatBytes(item.logicalBytes);
             head.append(label, files, size);
             const track = document.createElement('div'); track.className = 'storage-category-track'; track.setAttribute('aria-hidden', 'true');
-            const bar = document.createElement('span'); bar.style.width = `${Math.max(1, (Number(item.logicalBytes) || 0) / maximum * 100)}%`; track.append(bar);
+            const bar = document.createElement('span'); bar.style.width = `${Math.max(1, (Number(item.logicalBytes) || 0) / Math.max(1, dataTotal) * 100)}%`; track.append(bar);
             row.append(head, track); list.append(row);
           });
           content.append(list);
         }
-        content.append(sectionTitle(t('工作区与容量')));
-        const workspace = document.createElement('div'); workspace.className = 'storage-workspace-card';
-        const row = document.createElement('div'); row.className = 'storage-workspace-row';
-        const name = document.createElement('strong'); name.textContent = t('当前工作区文件');
-        const available = document.createElement('span'); available.textContent = Number(capacity.workspaceAvailableBytes) >= 0 ? `${t('可用')} ${formatBytes(capacity.workspaceAvailableBytes)}` : '';
-        const size = document.createElement('b'); size.textContent = formatBytes(data.workspace?.logicalBytes);
-        row.append(name, available, size); workspace.append(row); content.append(workspace);
-        const note = document.createElement('p'); note.className = 'analytics-note'; note.textContent = t('按文件逻辑大小统计，不跟随符号链接，不读取文件内容，也不会自动清理任何数据。工作区不重复计入 .aide-data；可用空间来自对应文件系统。'); content.append(note);
+        const note = document.createElement('p'); note.className = 'analytics-note'; note.textContent = t('按文件逻辑大小统计，不跟随符号链接，不读取文件内容，也不会自动清理任何数据。工作区不重复计入 .aide-data；可用空间来自对应文件系统。SSH 来源不计入本地存储审计。'); content.append(note);
+        if (sshExcluded) { const warning = document.createElement('p'); warning.className = 'analytics-warning'; warning.textContent = t('当前工作区来自 SSH，未扫描远端文件，也未将无关的本地工作区文件计入。'); content.append(warning); }
         const errors = (Number(data.data?.errors) || 0) + (Number(data.workspace?.errors) || 0);
         if (errors) { const warning = document.createElement('p'); warning.className = 'analytics-warning'; warning.textContent = t('有 {0} 个项目无法读取，未计入上述总量。', errors); content.append(warning); }
         status.textContent = `${t('扫描完成于')} ${formatTime(data.generatedAt)}`;
@@ -276,5 +313,5 @@ interface Window {
     return control;
   }
 
-  window.AideUsageAnalytics = { renderNetwork, renderStorage, formatBytes, selectNetworkDays };
+  window.AideUsageAnalytics = { renderNetwork, renderStorage, formatBytes, selectNetworkDays, selectStorageDisks };
 })();

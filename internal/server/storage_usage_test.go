@@ -60,10 +60,51 @@ func TestStorageUsageHandlerReturnsRealTotalsWithoutPaths(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if body["measurement"] != "logical-file-bytes" || body["data"] == nil || body["workspace"] == nil {
+	if body["measurement"] != "logical-file-bytes" || body["version"] != float64(2) || body["data"] == nil || body["workspace"] == nil {
 		t.Fatalf("storage response = %+v", body)
+	}
+	disks, ok := body["disks"].([]any)
+	if !ok || len(disks) != 2 {
+		t.Fatalf("storage disks = %+v", body["disks"])
+	}
+	audit, ok := body["workspaceAudit"].(map[string]any)
+	if !ok || audit["included"] != true {
+		t.Fatalf("workspace audit = %+v", body["workspaceAudit"])
 	}
 	if strings.Contains(response.Body.String(), a.dataPath) || strings.Contains(response.Body.String(), a.workPath) {
 		t.Fatalf("storage response exposed a local path: %s", response.Body.String())
+	}
+}
+
+func TestStorageUsageHandlerExcludesSSHWorkspaceAudit(t *testing.T) {
+	a := testApp(t)
+	writeSizedFile(t, filepath.Join(a.dataPath, "sessions", "active", "usage-fixture.json"), 33)
+	writeSizedFile(t, filepath.Join(a.workPath, "local-file-that-is-not-the-ssh-workspace.bin"), 4096)
+	a.wsConfig.Workspace.Mode = "ssh"
+	response := request(a, "GET", "/api/storage-usage", nil)
+	requireStatus(t, response, 200)
+	var body struct {
+		Workspace      StorageUsage      `json:"workspace"`
+		WorkspaceAudit map[string]any    `json:"workspaceAudit"`
+		Disks          []StorageDiskUsage `json:"disks"`
+		Capacity       map[string]int64  `json:"capacity"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Workspace.LogicalBytes != 0 || body.Workspace.Files != 0 {
+		t.Fatalf("SSH workspace was scanned: %+v", body.Workspace)
+	}
+	if body.WorkspaceAudit["included"] != false || body.WorkspaceAudit["reason"] != "ssh-source" {
+		t.Fatalf("workspace audit = %+v", body.WorkspaceAudit)
+	}
+	if len(body.Disks) != 1 || body.Disks[0].ID != "aide-data" {
+		t.Fatalf("disks = %+v", body.Disks)
+	}
+	if body.Capacity["workspaceAvailableBytes"] != -1 {
+		t.Fatalf("SSH workspace capacity = %+v", body.Capacity)
+	}
+	if strings.Contains(response.Body.String(), "local-file-that-is-not-the-ssh-workspace") {
+		t.Fatalf("response exposed an excluded local file: %s", response.Body.String())
 	}
 }

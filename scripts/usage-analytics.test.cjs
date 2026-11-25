@@ -27,6 +27,12 @@ assert.equal(seven.at(-1).day, today);
 assert.equal(seven.at(-1).downloadBytes, 400);
 assert.equal(analytics.selectNetworkDays(fixture, '30').length, 30);
 assert.deepEqual(Array.from(analytics.selectNetworkDays(fixture, 'all').map(item => item.day)), ['2026-01-01', today]);
+const disks = analytics.selectStorageDisks({ data: { logicalBytes: 10, files: 1 }, workspace: { logicalBytes: 30, files: 2 }, capacity: { dataAvailableBytes: 90, workspaceAvailableBytes: 70 } });
+assert.equal(disks.length, 2);
+assert.equal(disks[1].id, 'current-workspace');
+assert.equal(disks[1].availableBytes, 70);
+assert.equal(analytics.selectStorageDisks({ workspaceAudit: { included: false, reason: 'ssh-source' }, disks: [{ id: 'aide-data', logicalBytes: 10 }] }).length, 1);
+assert.equal(analytics.selectStorageDisks({ disks: [{ id: 'data' }, { id: 'workspace' }, { id: 'secondary' }] }).length, 3);
 
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'internal/server/web/settings-schema.json'), 'utf8'));
 const sections = schema.sections;
@@ -38,5 +44,8 @@ assert.match(app, /'storage-usage': \(\) => window\.AideUsageAnalytics\.renderSt
 assert.match(source, /const data = await api\('\/network-usage'\)/);
 assert.match(source, /const data = await api\('\/storage-usage'\)/);
 assert.doesNotMatch(source, /await api\('\/api\//);
+assert.match(source, /storageShareStrip\(disks, 'storage-disk-strip'/);
+assert.match(source, /data\.workspaceAudit\?\.reason === 'ssh-source'/);
+assert.match(source, /--share-color/);
 assert.doesNotMatch(source, /response\.json\(\)/);
-console.log('usage analytics: PASS (byte formatting, UTC ranges, settings registration, API paths)');
+console.log('usage analytics: PASS (byte formatting, UTC ranges, multi-disk colors, SSH exclusion, API paths)');

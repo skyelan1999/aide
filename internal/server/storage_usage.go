@@ -22,6 +22,14 @@ type StorageUsage struct {
 	Children     []StorageUsage `json:"children,omitempty"`
 }
 
+type StorageDiskUsage struct {
+	ID             string `json:"id"`
+	LogicalBytes   int64  `json:"logicalBytes"`
+	Files          int64  `json:"files"`
+	Errors         int64  `json:"errors"`
+	AvailableBytes int64  `json:"availableBytes"`
+}
+
 // scanStorageUsage measures logical file sizes and never follows symbolic
 // links. Data children are grouped by their top-level directory; root-level
 // files are aggregated so the API does not expose arbitrary file names.
@@ -126,21 +134,42 @@ func (a *App) storageUsageHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, errors.New("Aide 数据存储扫描失败"))
 		return
 	}
-	workspace, err := scanStorageUsage(r.Context(), a.workPath, false, ".aide-data")
-	if err != nil {
-		if !errors.Is(err, r.Context().Err()) {
-			log.Printf("当前工作区存储扫描失败: %v", err)
-		}
-		fail(w, 500, errors.New("当前工作区存储扫描失败"))
-		return
-	}
 	data.ID = "aide-data"
-	workspace.ID = "current-workspace"
+	dataAvailable := storageAvailableBytes(a.dataPath)
+	disks := []StorageDiskUsage{{
+		ID: data.ID, LogicalBytes: data.LogicalBytes, Files: data.Files, Errors: data.Errors, AvailableBytes: dataAvailable,
+	}}
+
+	a.mu.Lock()
+	workspaceMode := a.wsConfig.Workspace.Mode
+	a.mu.Unlock()
+	workspaceExcluded := strings.EqualFold(workspaceMode, "ssh")
+	workspace := StorageUsage{ID: "current-workspace"}
+	workspaceAvailable := int64(-1)
+	workspaceAudit := map[string]any{"included": true, "reason": ""}
+	if workspaceExcluded {
+		workspaceAudit = map[string]any{"included": false, "reason": "ssh-source"}
+	} else {
+		workspace, err = scanStorageUsage(r.Context(), a.workPath, false, ".aide-data")
+		if err != nil {
+			if !errors.Is(err, r.Context().Err()) {
+				log.Printf("当前工作区存储扫描失败: %v", err)
+			}
+			fail(w, 500, errors.New("当前工作区存储扫描失败"))
+			return
+		}
+		workspace.ID = "current-workspace"
+		workspaceAvailable = storageAvailableBytes(a.workPath)
+		disks = append(disks, StorageDiskUsage{
+			ID: workspace.ID, LogicalBytes: workspace.LogicalBytes, Files: workspace.Files, Errors: workspace.Errors, AvailableBytes: workspaceAvailable,
+		})
+	}
 	jsonOut(w, 200, map[string]any{
-		"version": 1, "generatedAt": time.Now().UTC(), "measurement": "logical-file-bytes",
-		"data": data, "workspace": workspace, "workspaceExclusions": []string{".aide-data"},
+		"version": 2, "generatedAt": time.Now().UTC(), "measurement": "logical-file-bytes",
+		"data": data, "workspace": workspace, "workspaceExclusions": []string{".aide-data"}, "workspaceAudit": workspaceAudit,
+		"disks": disks,
 		"capacity": map[string]any{
-			"dataAvailableBytes": storageAvailableBytes(a.dataPath), "workspaceAvailableBytes": storageAvailableBytes(a.workPath),
+			"dataAvailableBytes": dataAvailable, "workspaceAvailableBytes": workspaceAvailable,
 		},
 	})
 }
