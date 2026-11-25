@@ -7181,6 +7181,7 @@ async function loadPluginsPanel() {
   if(state.config) state.config.professionalWorkflow = !!data.professionalWorkflow;
 
   renderPluginList();
+  window.AidePluginWorkbenchLauncher?.refresh();
   const surface = await api('/plugin-surface');
   renderPluginSurface(surface.plugins || []);
   window.AidePluginMarket?.syncInstalled?.(state.plugins);
@@ -7402,6 +7403,7 @@ $('plugins-toggle').onclick = action(async () => {
   await window.AidePluginMarket!.open();
 });
 window.AidePluginMarket!.mount({api,raw:(path?: any,options: any={})=>fetch('/api'+path,{...options,headers:{Authorization:'Bearer '+state.token,...options.headers}}),t,el,refreshInstalled:loadPluginsPanel,paintInstalled:renderPluginList,blocked:()=>lockScreen.locked||!state.token});
+window.AidePluginWorkbenchLauncher!.mount({t,el,plugins:()=>state.plugins,displayName:trPlugin,fileFirst:(id: string)=>window.AidePluginGuide!.fileFirst(id),openGuide:(plugin: any)=>window.AidePluginGuide!.open(plugin,pluginGuideServices()),openWorkbench:(plugin: any)=>window.AidePluginWorkbench!.open(plugin,pluginWorkbenchServices()),blocked:()=>lockScreen.locked||!state.token,toast});
 $('refresh-plugins').onclick = action(()=>window.AidePluginMarket!.refresh());
 $('plugin-search').addEventListener('input', renderPluginList);
 $('plugin-settings-form').onsubmit = action(async (event?: any) => {
