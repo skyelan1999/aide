@@ -93,7 +93,7 @@ function renderSessionList(snapshot?: any) {
         if (!confirm(t("确定删除这个会话？此操作不可撤销。"))) return;
         await api(`/sessions/${s.id}`, { method: 'DELETE' });
         closeMenu();
-        if (state.session?.id === s.id) { clearTimeout(state.poll); closeStream(); state.session = null; state.sessionJSON = ''; renderSession(); }
+        if (state.session?.id === s.id) { clearTimeout(state.poll); closeStream(); composerOutputRate?.reset(); state.session = null; state.sessionJSON = ''; renderSession(); }
         await loadSessions();
       });
       menu.append(pinBtn, archBtn, delBtn);
@@ -172,6 +172,11 @@ function setupGlobalEvents() {
     sessionsEv.addEventListener('sessions-changed', (event?: any) => {
       scheduleSessionsRefresh();window.AideManagement?.refresh();
       try{const changed=JSON.parse(event.data);if(typeof changed.sessionId==='string'){window.AideTaskOutcome?.refreshSession(changed.sessionId);if(state.session?.kind==='assistant'&&changed.sessionId===state.session.id)void refreshAssistantResults();}}catch{}
+    });
+    sessionsEv.addEventListener('output-rate', (event?: any) => {
+      let d: any; try { d = JSON.parse(event.data); } catch { return; }
+      if (!d.sessionId || d.sessionId !== state.session?.id) return;
+      composerOutputRate?.record(String(d.runId || '') + ':' + String(d.streamId || ''), d.outputTokens);
     });
     sessionsEv.addEventListener('runtime-stopping', () => {
       window.AideRuntimeLifecycle?.shutdown(() => {
@@ -343,6 +348,7 @@ async function selectSession(id?: any) {
   // 离开小秘会话时收起聆听面板并硬停止识别，避免麦克风继续监听或把后续语音送到新会话。
   if (!sameSession && typeof voiceHardStop === 'function' && !$('voice-panel').classList.contains('hidden')) voiceHardStop();
   clearTimeout(state.poll); closeStream();
+  if (!sameSession) composerOutputRate?.reset();
   if (!sameSession || !window.aideAssistantLive?.snapshot().enabled) ttsCancel();
   if (!sameSession) {
     // live 文本按 run 归属：切换会话才失效；同会话刷新（排队/插话等）保留流式状态，
@@ -411,6 +417,11 @@ async function selectSession(id?: any) {
     }
   }
 }
+const composerOutputRate = window.AideOutputRate?.create({
+  element: $('output-rate'),
+  translate: (key: string, ...args: any[]) => t(key, ...args),
+});
+window.addEventListener('aide:language', () => composerOutputRate?.render());
 function closeStream() {
   if (state.stream) { try { state.stream.close(); } catch (e: any) {} state.stream = null; }
 }
@@ -562,6 +573,11 @@ function openStream(run?: any) {
     const ph = ensureRunPhase(run.id);
     if (ph.status === 'awaiting_clarification') ph.status = 'running';
     renderSession(); refreshSessionSoon();
+  });
+  es.addEventListener('output-rate', (e?: any) => {
+    if (state.stream !== es) return;
+    let d: any; try { d = JSON.parse(e.data); } catch (err: any) { return; }
+    composerOutputRate?.record(run.id + ':' + String(d.streamId || ''), d.outputTokens);
   });
   es.addEventListener('delta', (e?: any) => {
     if (state.stream !== es) return;
@@ -1376,7 +1392,7 @@ async function newSession() {
   state.historyLimit = SESSION_HISTORY_PAGE; state.historyScroll = false;
   cancelContextPreview();
   paintSessionSelection('', false);
-  clearTimeout(state.poll); closeStream(); state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
+  clearTimeout(state.poll); closeStream(); composerOutputRate?.reset(); state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
   persistWorkspaceScene();
   refreshChatDraftChoices();
   loadSessions().catch(() => {});
@@ -5275,7 +5291,7 @@ const controlRenderers: any = { keybindings: () => {const onCleanup=(unsub?: any
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
   "capabilities": () => window.aideCapabilities!.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='accessibility'&&settingsPanel.activeChild==='interface-tests'&&$('settings-sheet').classList.contains('open')}),
   "markdown-history": renderMarkdownHistoryControl,
-  'workbench-background': () => window.AideBackground!.renderSettings({t}), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, 'kv-cache': renderKVCacheControl, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+  'workbench-background': () => window.AideBackground!.renderSettings({t}), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, 'kv-cache': renderKVCacheControl, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'network-usage': () => window.AideUsageAnalytics!.renderNetwork({ api, t }), 'storage-usage': () => window.AideUsageAnalytics!.renderStorage({ api, t }), 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');
@@ -5409,7 +5425,7 @@ function renderSessionsManage() {
         await api(`/sessions/${it.id}`, { method: 'DELETE' });
         await renderArchivedList();
         await loadSessions();
-        if (state.session?.id === it.id) { clearTimeout(state.poll); closeStream(); state.session = null; state.sessionJSON = ''; renderSession(); }
+        if (state.session?.id === it.id) { clearTimeout(state.poll); closeStream(); composerOutputRate?.reset(); state.session = null; state.sessionJSON = ''; renderSession(); }
       });
       row.append(label, restore, del);
       list.append(row);
@@ -7405,7 +7421,7 @@ function collectWsConfig() {
 }
 async function restoreWorkspaceScene() {
   recoveryReady=false;workspaceSceneRestoring=true;clearTimeout(recoveryTimer);++sessionSeq.value;
-  clearTimeout(state.poll);closeStream();cancelContextPreview();ttsCancel();
+  clearTimeout(state.poll);closeStream();composerOutputRate?.reset();cancelContextPreview();ttsCancel();
   if($('editor-dialog')?.open)$('editor-dialog').close();
   state.pendingSessionId='';state.session=null;state.sessionJSON='';
   state.live={};state.liveStable={};state.liveRound={};state.liveTool={};state.liveReasoning={};state.runPhase={};

@@ -312,6 +312,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if params.ResponseFormat != "" && modelCapabilityStatus(cfg, "structured_output") == "unsupported" {
 		return "", nil, TokenUsage{}, fmt.Errorf("模型 %q 已标记为不支持结构化输出；请切换模型，或先核验并更新能力设置", cfg.Model)
 	}
+	rateMeter := newSessionRequestOutputMeter(ctx)
 	body := buildChatBody(cfg, messages, params, tools, false)
 	endpoint := "/chat/completions"
 	if usesOpenAIResponses(cfg) {
@@ -412,6 +413,8 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(usage)
 	}
+	rateMeter.addMessage(msg.Content, msg.ToolCalls)
+	rateMeter.finish(usage.Completion)
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
 		return "", nil, usage, &emptyCompletionError{finish: out.Choices[0].FinishReason}
 	}
@@ -463,6 +466,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
+	rateMeter := newSessionRequestOutputMeter(ctx)
 	body := buildChatBody(cfg, messages, params, tools, true)
 	endpoint := "/chat/completions"
 	if usesOpenAIResponses(cfg) {
@@ -569,6 +573,8 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		if rec := tokenUsageRecorder.Load(); rec != nil {
 			rec.(func(TokenUsage))(usage)
 		}
+		rateMeter.addMessage(msg.Content, msg.ToolCalls)
+		rateMeter.finish(usage.Completion)
 		cacheText, cacheCalls, cacheSuccess = msg.Content, msg.ToolCalls, true
 		return msg.Content, msg.ToolCalls, usage, out.Choices[0].FinishReason, nil
 	}
@@ -625,6 +631,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			finishReason = fr // 记录最后一个非空 finish_reason，空响应时据此给出可解释原因
 		}
 		if delta.ReasoningContent != "" {
+			rateMeter.add(delta.ReasoningContent)
 			// 思考链：只实时透传给前端折叠区，不并入最终正文 content
 			if onReasoning != nil {
 				onReasoning(delta.ReasoningContent)
@@ -632,6 +639,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		}
 		if delta.Content != "" {
 			content.WriteString(delta.Content)
+			rateMeter.add(delta.Content)
 			if onDelta != nil {
 				onDelta(delta.Content)
 			}
@@ -649,8 +657,12 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 				slot.Type = tc.Type
 			}
 			if tc.Function.Name != "" {
+				if slot.Function.Name == "" {
+					rateMeter.add(tc.Function.Name)
+				}
 				slot.Function.Name = tc.Function.Name
 			}
+			rateMeter.add(tc.Function.Arguments)
 			slot.Function.Arguments += tc.Function.Arguments
 		}
 	}
@@ -694,6 +706,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(tu)
 	}
+	rateMeter.finish(tu.Completion)
 	if streamCtx.Err() != nil {
 		return text, nil, tu, finishReason, streamCtx.Err()
 	}

@@ -15,6 +15,7 @@ import (
 // The workbench text/tool bridge uses the Realtime wire protocol. Microphone
 // duplex audio and camera streams are separate UI features, not chat payloads.
 func completeQwenRealtime(ctx context.Context, cfg Settings, messages []Message, tools []any, rec func([]byte), onDelta func(string)) (string, []ToolCall, TokenUsage, string, error) {
+	rateMeter := newSessionRequestOutputMeter(ctx)
 	if len(tools) > 0 && modelCapabilityStatus(cfg, "tool_calls") == "unsupported" {
 		return "", nil, TokenUsage{}, "", fmt.Errorf("所选模型已标记为不支持工具调用")
 	}
@@ -178,6 +179,7 @@ func completeQwenRealtime(ctx context.Context, cfg Settings, messages []Message,
 				return text.String(), nil, TokenUsage{}, "", fmt.Errorf("Realtime 文本超过大小限制")
 			}
 			text.WriteString(delta)
+			rateMeter.add(delta)
 			if onDelta != nil {
 				onDelta(delta)
 			}
@@ -209,6 +211,13 @@ func completeQwenRealtime(ctx context.Context, cfg Settings, messages []Message,
 				}
 			}
 			usage := TokenUsage{Prompt: response.Usage.Input, Completion: response.Usage.Output, Total: response.Usage.Total, Model: cfg.Model, Provider: cfg.BaseURL}
+			for _, call := range calls {
+				rateMeter.add(call.Function.Name)
+				rateMeter.add(call.Function.Arguments)
+			}
+			if usage.Completion > 0 || usage.Total > 0 {
+				rateMeter.finish(usage.Completion)
+			}
 			if text.Len() == 0 && len(calls) == 0 {
 				return "", nil, usage, "", fmt.Errorf("Realtime 没有返回文本或工具调用，未自动重复请求")
 			}

@@ -629,6 +629,7 @@ type App struct {
 	sourceSecrets             sourcesSecrets
 	tokenStats                map[string]TokenDay
 	tokenStatsMu              sync.Mutex
+	networkUsage              *networkUsageMonitor
 	mediaHealth               map[string]mediaHealth
 	wsRevision                uint64
 	compactingSessions        map[string]bool
@@ -966,6 +967,8 @@ func New(work, reference, data string) (*App, error) {
 	a.lazySessionMode = startupSessions.catalogue != nil
 	a.lazySessions = make(map[string]*lazySessionRecord)
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
+	a.networkUsage = newNetworkUsageMonitor(NetworkTrafficPath(data))
+	a.background(func() { a.networkUsage.run(a.bgCtx) })
 	a.assistantResultsWake = make(chan struct{}, 1)
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
 	_ = BuildBaseline(data)
@@ -1741,6 +1744,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sources/{id}/test", a.testMCPSource)
 	mux.HandleFunc("POST /api/sources/browse", a.browseSFTPSource)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
+	mux.HandleFunc("GET /api/network-usage", a.networkUsageHandler)
+	mux.HandleFunc("GET /api/storage-usage", a.storageUsageHandler)
 	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
 	mux.HandleFunc("POST /api/persona/unlock", a.personaUnlock)
 	mux.HandleFunc("POST /api/persona/save", a.personaSave)

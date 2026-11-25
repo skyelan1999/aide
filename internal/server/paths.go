@@ -90,6 +90,7 @@ const (
 	DebugAuditFileName       = "debug-audit.jsonl"
 	SecurityAuditFileName    = "security-audit.jsonl"
 	TokenStatsFileName       = "token-stats.json"
+	NetworkTrafficFileName   = "network-traffic.json"
 	TokenPricingFileName     = "token-pricing.json"
 	VaultFileName            = "vault.enc"
 	SourcesSecretsFile       = "sources-secrets.json"
@@ -180,6 +181,11 @@ func SecurityAuditPath(data string) string {
 
 // TokenStatsPath Token 消耗明细：stats/token-stats.json。
 func TokenStatsPath(data string) string { return filepath.Join(StatsDir(data), TokenStatsFileName) }
+
+// NetworkTrafficPath 网络接口流量：stats/network-traffic.json。
+func NetworkTrafficPath(data string) string {
+	return filepath.Join(StatsDir(data), NetworkTrafficFileName)
+}
 
 // TokenPricingPath 模型计价表：stats/token-pricing.json。
 func TokenPricingPath(data string) string { return filepath.Join(StatsDir(data), TokenPricingFileName) }

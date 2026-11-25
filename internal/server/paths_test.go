@@ -25,6 +25,7 @@ func TestPathsLayout(t *testing.T) {
 		{"DebugAudit", DebugAuditPath(data), "audit/debug-audit.jsonl"},
 		{"SecurityAudit", SecurityAuditPath(data), "audit/security-audit.jsonl"},
 		{"TokenStats", TokenStatsPath(data), "stats/token-stats.json"},
+		{"NetworkTraffic", NetworkTrafficPath(data), "stats/network-traffic.json"},
 		{"TokenPricing", TokenPricingPath(data), "stats/token-pricing.json"},
 		{"SourcesSecrets", SourcesSecretsPath(data), "secrets/sources-secrets.json"},
 		{"WorkspaceSecrets", WorkspaceSecretsPath(data), "secrets/workspace-secrets.json"},

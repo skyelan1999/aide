@@ -426,6 +426,18 @@
       ]
     },
     {
+      "id": "network-usage",
+      "title": "流量消耗分析",
+      "description": "按日查看 Aide 服务实际上传与下载的网络字节，不使用 Token 估算。",
+      "controls": [{ "id": "network-usage", "type": "network-usage", "label": "网络流量" }]
+    },
+    {
+      "id": "storage-usage",
+      "title": "存储使用分析",
+      "description": "查看 Aide 数据分类、当前工作区占用与磁盘可用空间。",
+      "controls": [{ "id": "storage-usage", "type": "storage-usage", "label": "存储占用" }]
+    },
+    {
       "id": "sessions-data",
       "title": "归档",
       "description": "归档会话管理与会话数据全部导出",

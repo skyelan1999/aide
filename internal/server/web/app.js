@@ -107,6 +107,7 @@ function renderSessionList(snapshot) {
                 if (state.session?.id === s.id) {
                     clearTimeout(state.poll);
                     closeStream();
+                    composerOutputRate?.reset();
                     state.session = null;
                     state.sessionJSON = '';
                     renderSession();
@@ -211,6 +212,18 @@ function setupGlobalEvents() {
                 }
             }
             catch { }
+        });
+        sessionsEv.addEventListener('output-rate', (event) => {
+            let d;
+            try {
+                d = JSON.parse(event.data);
+            }
+            catch {
+                return;
+            }
+            if (!d.sessionId || d.sessionId !== state.session?.id)
+                return;
+            composerOutputRate?.record(String(d.runId || '') + ':' + String(d.streamId || ''), d.outputTokens);
         });
         sessionsEv.addEventListener('runtime-stopping', () => {
             window.AideRuntimeLifecycle?.shutdown(() => {
@@ -444,6 +457,8 @@ async function selectSession(id) {
         voiceHardStop();
     clearTimeout(state.poll);
     closeStream();
+    if (!sameSession)
+        composerOutputRate?.reset();
     if (!sameSession || !window.aideAssistantLive?.snapshot().enabled)
         ttsCancel();
     if (!sameSession) {
@@ -530,6 +545,11 @@ async function selectSession(id) {
         }
     }
 }
+const composerOutputRate = window.AideOutputRate?.create({
+    element: $('output-rate'),
+    translate: (key, ...args) => t(key, ...args),
+});
+window.addEventListener('aide:language', () => composerOutputRate?.render());
 function closeStream() {
     if (state.stream) {
         try {
@@ -807,6 +827,18 @@ function openStream(run) {
             ph.status = 'running';
         renderSession();
         refreshSessionSoon();
+    });
+    es.addEventListener('output-rate', (e) => {
+        if (state.stream !== es)
+            return;
+        let d;
+        try {
+            d = JSON.parse(e.data);
+        }
+        catch (err) {
+            return;
+        }
+        composerOutputRate?.record(run.id + ':' + String(d.streamId || ''), d.outputTokens);
     });
     es.addEventListener('delta', (e) => {
         if (state.stream !== es)
@@ -1960,6 +1992,7 @@ async function newSession() {
     paintSessionSelection('', false);
     clearTimeout(state.poll);
     closeStream();
+    composerOutputRate?.reset();
     state.live = {};
     state.liveStable = {};
     state.liveRound = {};
@@ -7454,7 +7487,7 @@ const controlRenderers = { keybindings: () => { const onCleanup = (unsub) => set
     "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
     "capabilities": () => window.aideCapabilities.render({ api, t, blocked: () => lockScreen.locked || !state.token, active: () => settingsPanel.active === 'accessibility' && settingsPanel.activeChild === 'interface-tests' && $('settings-sheet').classList.contains('open') }),
     "markdown-history": renderMarkdownHistoryControl,
-    'workbench-background': () => window.AideBackground.renderSettings({ t }), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, 'kv-cache': renderKVCacheControl, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+    'workbench-background': () => window.AideBackground.renderSettings({ t }), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, 'kv-cache': renderKVCacheControl, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'network-usage': () => window.AideUsageAnalytics.renderNetwork({ api, t }), 'storage-usage': () => window.AideUsageAnalytics.renderStorage({ api, t }), 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 function renderSystemLogsControl() {
     const wrap = el('div', 'settings-control system-logs-control');
     const toolbar = el('div', 'system-logs-toolbar');
@@ -7640,6 +7673,7 @@ function renderSessionsManage() {
                 if (state.session?.id === it.id) {
                     clearTimeout(state.poll);
                     closeStream();
+                    composerOutputRate?.reset();
                     state.session = null;
                     state.sessionJSON = '';
                     renderSession();
@@ -10278,6 +10312,7 @@ async function restoreWorkspaceScene() {
     ++sessionSeq.value;
     clearTimeout(state.poll);
     closeStream();
+    composerOutputRate?.reset();
     cancelContextPreview();
     ttsCancel();
     if ($('editor-dialog')?.open)

@@ -31,6 +31,35 @@ func (a *App) broadcastSessionsChanged(sessionID string) {
 	}
 }
 
+// publishSessionOutputRate uses the active run stream while it exists. If a
+// background session request outlives that stream (for example title
+// generation), it falls back to the session-level global event channel so the
+// final output is not lost merely because the primary answer has finished.
+func (a *App) publishSessionOutputRate(sessionID, taskID string, ev streamEvent) {
+	a.eventMu.Lock()
+	defer a.eventMu.Unlock()
+	runReceivers := 0
+	for ch := range a.eventSubs[taskID] {
+		runReceivers++
+		select {
+		case ch <- ev:
+		default:
+		}
+	}
+	if runReceivers > 0 {
+		return
+	}
+	payload, _ := json.Marshal(map[string]any{
+		"event": ev.Event, "sessionId": sessionID, "runId": taskID, "streamId": ev.StreamID, "outputTokens": ev.OutputTokens,
+	})
+	for ch := range a.globalSubs {
+		select {
+		case ch <- "output-rate:" + string(payload):
+		default:
+		}
+	}
+}
+
 // beginRuntimeShutdown prioritizes the terminal privacy event over queued
 // refreshes and waits a bounded time for event writers to flush it. New work is
 // rejected as soon as runtimeStopping becomes true.
@@ -122,6 +151,11 @@ func (a *App) globalEvents(w http.ResponseWriter, r *http.Request) {
 				event = "runtime-stopping"
 			} else if parts[0] == "approval" {
 				event = "approval-policy-changed"
+			}
+			if parts[0] == "output-rate" {
+				fmt.Fprintf(w, "event: output-rate\ndata: %s\n\n", sid)
+				flusher.Flush()
+				continue
 			}
 			data, _ := json.Marshal(map[string]any{"event": event, "sessionId": sid})
 			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, data)

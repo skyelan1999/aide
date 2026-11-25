@@ -547,7 +547,15 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 		}
 	}
 	started := time.Now()
-	out, calls, usage, err := complete(ctx, cfg, input, params, nil, rec)
+	var out string
+	var calls []ToolCall
+	var usage TokenUsage
+	var err error
+	if isQwenRealtime(cfg.Model) {
+		out, calls, usage, _, err = completeQwenRealtime(ctx, cfg, input, nil, rec, nil)
+	} else {
+		out, calls, usage, _, err = completeStream(ctx, cfg, input, params, nil, rec, nil, nil)
+	}
 	completed := time.Now()
 	a.mu.Lock()
 	requestOutcome := "completed"

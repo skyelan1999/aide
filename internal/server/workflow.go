@@ -847,11 +847,14 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		a.finishStream(task.ID, task.Status, task.Error)
 		return
 	}
+	// All provider requests derived from this execution feed one session-scoped
+	// output meter, including background and parallel calls.
+	ctx = a.withSessionOutputRate(ctx, s.ID, task.ID)
 	// 主题总结改为并发执行：原先串行会阻塞首个回答 token（多一次完整模型调用延迟）。
 	// summarizeTopic 只读写 s.Title/task.Usage（均在 a.mu 内），与主流程无竞态。
 	// 标题总结用独立 ctx：不随主 run 结束被 cancel，否则短任务会把标题总结掐断
 	if len(task.Steps) == 0 {
-		a.background(func() { a.summarizeTopic(a.bgCtx, s, task, cfg, params) })
+		a.background(func() { a.summarizeTopic(context.WithoutCancel(ctx), s, task, cfg, params) })
 	}
 	defer func() {
 		a.mu.Lock()
@@ -2393,7 +2396,7 @@ func summarizeToolArgs(raw string) string {
 	return out
 }
 
-// streamEvent 推送给 SSE 订阅者的事件；event 包括 step | delta | segment | tool | status | done。
+// streamEvent 推送给 SSE 订阅者的事件；event 包括 step | delta | output-rate | segment | tool | status | done。
 // SSE 是实时增强层，最终任务状态仍由 GET /sessions/{id} 持久化兜底。
 type streamEvent struct {
 	Segment      *OutputSegment `json:"segment,omitempty"`
@@ -2406,7 +2409,9 @@ type streamEvent struct {
 	Tool         string         `json:"tool,omitempty"`
 	Preview      string         `json:"preview,omitempty"`
 	Error        string         `json:"error,omitempty"`
-	Round        int            `json:"round,omitempty"`     // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
+	Round        int            `json:"round,omitempty"` // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
+	StreamID     string         `json:"streamId,omitempty"`
+	OutputTokens int            `json:"outputTokens,omitempty"`
 	Question     string         `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
 	Reasoning    string         `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
 	Args         string         `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
