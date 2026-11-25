@@ -18,7 +18,7 @@
     }
     function close(force = false, reason = 'close') { if (!active)
         return; const item = active; if (item.documentDirty && !force && !window.confirm(item.services.t('插件中有未保存修改，仍要离开吗？')))
-        return false; active = null; item.stopTerminalOutput?.(); item.closeDetachedWindows?.(); item.pendingViewerPopup?.close(); item.stopSpeech?.(); clearInterval(item.timer); if (item.startupTimer)
+        return false; active = null; item.stopTerminalOutput?.(); item.closeDetachedWindows?.(); item.pendingViewerPopup?.close(); item.stopSpeech?.(); clearInterval(item.timer); clearTimeout(item.preloadTimer); if (item.startupTimer)
         clearTimeout(item.startupTimer); item.themeObserver?.disconnect(); if (item.themeFrame)
         cancelAnimationFrame(item.themeFrame); const release = () => { item.abort.abort(); if (item.bridge)
         item.services.api('/plugins/' + encodeURIComponent(item.plugin.id) + '/workbench/' + item.bridge.instanceId, { method: 'DELETE', keepalive: true }).catch(() => { }); }; if (!force && item.plugin.daemon && item.plugin.workbench.closeBehavior === 'detach' && item.inflight)
@@ -35,7 +35,9 @@
         URL.revokeObjectURL(item.download.url); if (item.listener)
         window.removeEventListener('message', item.listener); item.frame.src = 'about:blank'; item.host.remove(); item.reviewBack?.remove(); item.focus?.focus(); item.services.onClose?.(reason, !!item.documentDirty); return true; }
     async function open(plugin, services) {
-        if (!services.document && !services.inPage && services.openPage)
+        if (!services.preloading && !services.document && !services.inPage && active?.preloaded && active.plugin.id === plugin.id)
+            return reveal(plugin.id);
+        if (!services.preloading && !services.document && !services.inPage && services.openPage)
             return services.openPage(plugin, services.selection);
         if (close(false, 'replace') === false)
             return false;
@@ -44,6 +46,7 @@
         const focus = document.activeElement, scope = services.scope(), abort = new AbortController();
         const host = document.createElement('section');
         host.className = 'plugin-workbench' + (services.inPage ? ' plugin-workbench-page' : '');
+        host.hidden = !!services.preloading;
         host.setAttribute('role', 'dialog');
         host.setAttribute('aria-modal', 'true');
         host.setAttribute('aria-label', plugin.workbench.title);
@@ -123,8 +126,10 @@
         locationStart.textContent = services.t('获取当前位置');
         locationStart.title = services.t('向当前插件提供本次位置，用于查询');
         header.append(locationStart);
-        const item = { host, frame, abort, focus, timer: null, services, plugin, port: null, bridge: null, listener: null, download: null, toolReady: null };
+        const item = { host, frame, abort, focus, closeButton: button, preloaded: !!services.preloading, timer: null, preloadedTimer: null, services, plugin, port: null, bridge: null, listener: null, download: null, toolReady: null };
         active = item;
+        item.preloadTimer = services.preloading ? setTimeout(() => { if (active === item && item.preloaded)
+            close(true, 'preload-expired'); }, 45000) : null;
         item.reviewBack = reviewBack;
         const resumeReview = () => { if (invalid())
             return; item.reviewing = false; host.hidden = false; reviewBack.hidden = true; };
@@ -132,7 +137,8 @@
         if (services.document)
             item.startupTimer = setTimeout(() => { if (active === item && !item.port)
                 close(true, 'error'); }, 15000);
-        button.focus();
+        if (!services.preloading)
+            button.focus();
         const invalid = () => active !== item || services.blocked() || services.scope() !== scope || !services.enabled(plugin.id);
         const detachedWindows = new Map();
         item.closeDetachedWindows = () => {
@@ -749,6 +755,24 @@
             return false;
         }
     }
+    async function preload(plugin, services) {
+        if (services.blocked() || !plugin.enabled || plugin.error || plugin.workbench?.protocol !== 1)
+            return false;
+        if (active?.preloaded && active.plugin.id === plugin.id)
+            return true;
+        if (active)
+            return active.preloaded ? (close(true, 'preload'), open(plugin, { ...services, openPage: null, preloading: true })) : false;
+        return open(plugin, { ...services, openPage: null, preloading: true });
+    }
+    function reveal(id) {
+        if (!active?.preloaded || active.plugin.id !== id)
+            return false;
+        clearTimeout(active.preloadTimer);
+        active.preloaded = false;
+        active.host.hidden = false;
+        active.closeButton?.focus();
+        return true;
+    }
     document.addEventListener('keydown', (e) => { if (active && !active.reviewing && e.key === 'Escape' && !document.querySelector('dialog[open]')) {
         e.preventDefault();
         const page = active.services.inPage;
@@ -760,7 +784,7 @@
         event.returnValue = '';
     } });
     window.addEventListener('pagehide', () => close(true, 'unload'));
-    window.AidePluginWorkbench = { open, close, selection, isDirty: () => active?.documentDirty === true, prepareFileOpen() { if (!active?.services.document)
+    window.AidePluginWorkbench = { open, preload, reveal, close, selection, isDirty: () => active?.documentDirty === true, prepareFileOpen() { if (!active?.services.document)
             return true; return close(false, 'replace') !== false; } };
 })();
 function uiTextPluginWorkbench(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

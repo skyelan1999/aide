@@ -25,7 +25,7 @@ test('English catalog loads only when needed and shares one request', async () =
   pref = 'en';
   subscriber(); subscriber();
   assert.equal(scripts.length, 1, 'concurrent language changes share the request');
-  assert.equal(scripts[0].src, '/locales/en.js?v=219');
+  assert.equal(scripts[0].src, '/locales/en.js?v=220');
   window.aideEnglish = { '语言': 'Language' };
   scripts[0].onload();
   await api.ready();

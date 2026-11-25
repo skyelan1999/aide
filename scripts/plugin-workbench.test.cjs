@@ -148,6 +148,17 @@ test('daemon detach closes the view immediately and drains one dispatched call; 
 test('page exit revokes its own bridge and unloads the sandbox',async()=>{const f=fixture(bridgeResponse);const calls=[];const api=f.services.api;f.services.api=async(url,options)=>{calls.push({url,options});return api(url,options);};await f.controller.open(bridgePlugin,f.services);f.events.pagehide();assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');const deleted=calls.find(c=>c.url.endsWith('/'+ 'a'.repeat(64)));assert.equal(deleted.options.method,'DELETE');assert.equal(deleted.options.keepalive,true);});
 
 test('workbench stays embedded without new-tab controller',async()=>{const f=fixture();assert.equal(f.controller.openTab,undefined);await f.controller.open(plugin,f.services);assert(f.nodes.some(n=>n.tag==='iframe'));f.controller.close();});
+test('preload stays hidden, opens no page and the next click reveals the same sandbox',async()=>{
+ const f=fixture(),opened=[];let calls=0;const api=f.services.api;f.services.api=async(...args)=>{calls++;return api(...args);};f.services.openPage=(...args)=>opened.push(args);
+ assert.equal(await f.controller.preload(plugin,f.services),true);
+ const host=f.nodes.find(n=>n.tag==='section'&&n.className==='plugin-workbench'),frame=f.nodes.find(n=>n.tag==='iframe');
+ assert.equal(host.hidden,true);assert.equal(frame.src,'/plugin-workbench/'+'a'.repeat(64));assert.equal(opened.length,0);assert.equal(calls,1);
+ assert.equal(await f.controller.open(plugin,f.services),true);assert.equal(host.hidden,false);assert.equal(opened.length,0);assert.equal(calls,1);f.controller.close();assert.equal(frame.src,'about:blank');
+});
+test('preload never replaces a visible workbench or reveals a different plugin',async()=>{
+ const f=fixture();await f.controller.open(plugin,f.services);const host=f.nodes.find(n=>n.tag==='section'&&n.className==='plugin-workbench'),frame=f.nodes.find(n=>n.tag==='iframe'),src=frame.src;
+ assert.equal(await f.controller.preload({...plugin,id:'other'},f.services),false);assert.equal(host.hidden,false);assert.equal(frame.src,src);assert.equal(f.controller.reveal('other'),false);f.controller.close();
+});
 
 test('file selection hints contain only validated source paths and no credentials',async()=>{
  const f=fixture(bridgeResponse);f.services.selection={left:{source:'workspace',path:'docs/a.txt',directory:false,token:'secret'},right:{source:'source:ref',path:'b.txt',directory:false},settings:{password:'secret'}};

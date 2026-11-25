@@ -1,8 +1,7 @@
-#plugin-mode-tabs{grid-template-columns:minmax(0,1.55fr) minmax(0,.85fr) minmax(0,.7fr);gap:3px}
+#plugin-mode-tabs{grid-template-columns:32px minmax(0,1fr) minmax(0,1fr);gap:4px}
 #plugin-mode-tabs button{min-width:0;padding:6px 7px;font-size:11px}
-.plugin-workbench-entry{display:flex;align-items:center;justify-content:center;gap:5px}
-.plugin-workbench-entry svg{flex:none;width:14px;height:14px}
-.plugin-workbench-entry span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plugin-workbench-entry{display:flex;align-items:center;justify-content:center;width:30px;padding:6px 0!important}
+.plugin-workbench-entry svg{flex:none;width:15px;height:15px}
 .plugin-workbench-launcher{width:min(860px,calc(100vw - 32px));height:min(680px,calc(100dvh - 32px));max-width:none;max-height:none;box-sizing:border-box;padding:0;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);overflow:hidden}
 .plugin-workbench-launcher::backdrop{background:#0008;backdrop-filter:blur(8px)}
 .workbench-launcher-shell{display:flex;flex-direction:column;height:100%}
@@ -12,7 +11,8 @@
 .workbench-launcher-head h2{margin:0 0 6px;font-size:24px;letter-spacing:-.02em}
 .workbench-launcher-head p{margin:0;color:var(--muted);font-size:13px}
 .workbench-launcher-head .icon-button{flex:none;width:34px;height:34px}
-.plugin-workbench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;align-content:start;flex:1;min-height:0;padding:24px 28px 32px;overflow:auto}
+.workbench-launcher-body{display:flex;flex:1;min-height:0}
+.plugin-workbench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;align-content:start;flex:1;min-width:0;min-height:0;padding:24px 18px 32px 28px;overflow:auto;scroll-behavior:smooth}
 .workbench-plugin-item{--plugin-tone:#4f7cff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:158px;padding:18px 10px 14px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--text);text-align:center;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
 .workbench-plugin-item:hover:not(:disabled),.workbench-plugin-item:focus-visible{border-color:color-mix(in srgb,var(--plugin-tone) 28%,var(--line));background:color-mix(in srgb,var(--plugin-tone) 6%,var(--panel));transform:translateY(-2px)}
 .workbench-plugin-item:disabled{opacity:.45;cursor:not-allowed}
@@ -21,5 +21,20 @@
 .workbench-plugin-item small{max-width:100%;color:var(--muted);font-size:10px;line-height:1.35}
 .workbench-plugin-item.tone-1{--plugin-tone:#20a77a}.workbench-plugin-item.tone-2{--plugin-tone:#f59e42}.workbench-plugin-item.tone-3{--plugin-tone:#a06ee1}.workbench-plugin-item.tone-4{--plugin-tone:#e15b78}.workbench-plugin-item.tone-5{--plugin-tone:#27a9c7}
 .workbench-launcher-empty{grid-column:1/-1;margin:auto;padding:60px 0;color:var(--muted);text-align:center}
-@media(max-width:700px){.plugin-workbench-launcher{width:100vw;height:100dvh;border:0;border-radius:0}.workbench-launcher-head{padding:22px 18px 18px}.workbench-launcher-head h2{font-size:21px}.plugin-workbench-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:18px}.workbench-plugin-item{min-height:148px;padding-inline:8px}.workbench-plugin-glyph{width:58px;height:58px;border-radius:18px;font-size:24px}}
-@media(prefers-reduced-motion:reduce){.workbench-plugin-item{transition:none}.workbench-plugin-item:hover:not(:disabled),.workbench-plugin-item:focus-visible{transform:none}}
+.workbench-letter-heading{grid-column:1/-1;margin:14px 0 -2px;padding:0 4px 8px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;letter-spacing:.12em;scroll-margin-top:18px}
+.workbench-letter-heading:first-child{margin-top:0}
+.workbench-letter-rail{display:flex;flex-direction:column;justify-content:center;flex:none;width:30px;padding:8px 3px;border-left:1px solid var(--line);overflow-y:auto;scrollbar-width:none}
+.workbench-letter-rail::-webkit-scrollbar{display:none}
+.workbench-letter-rail button{flex:none;width:24px;height:17px;min-height:17px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:9px;line-height:17px;text-align:center;cursor:pointer}
+.workbench-letter-rail button:hover:not(:disabled),.workbench-letter-rail button[aria-pressed="true"]{background:var(--chip-bg);color:var(--brand-text);font-weight:700}
+.workbench-letter-rail button:disabled{opacity:.2;cursor:default}
+.workbench-plugin-preview{position:absolute;z-index:5;width:264px;box-sizing:border-box;padding:16px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--panel) 96%,var(--brand));box-shadow:0 18px 55px #0004;pointer-events:none}
+.workbench-plugin-preview[hidden]{display:none!important}
+.workbench-preview-heading{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.workbench-preview-heading strong{font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.workbench-preview-glyph{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:11px;background:var(--chip-bg);color:var(--brand-text);font-weight:700}
+.workbench-plugin-preview p{display:-webkit-box;margin:0 0 12px;overflow:hidden;color:var(--muted);font-size:12px;line-height:1.6;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow-wrap:anywhere}
+.workbench-preview-meta{display:block;margin-bottom:6px;color:var(--muted);font-size:10px}
+.workbench-preview-status{display:block;color:var(--brand-text);font-size:11px}
+@media(max-width:700px){.plugin-workbench-launcher{width:100vw;height:100dvh;border:0;border-radius:0}.workbench-launcher-head{padding:22px 18px 18px}.workbench-launcher-head h2{font-size:21px}.plugin-workbench-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:18px 12px 18px 18px}.workbench-plugin-item{min-height:148px;padding-inline:8px}.workbench-plugin-glyph{width:58px;height:58px;border-radius:18px;font-size:24px}.workbench-letter-rail{width:26px}.workbench-letter-rail button{width:20px}.workbench-plugin-preview{display:none!important}}
+@media(prefers-reduced-motion:reduce){.plugin-workbench-grid{scroll-behavior:auto}.workbench-plugin-item{transition:none}.workbench-plugin-item:hover:not(:disabled),.workbench-plugin-item:focus-visible{transform:none}}
