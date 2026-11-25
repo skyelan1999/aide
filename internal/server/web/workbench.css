@@ -259,13 +259,6 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
 .context-usage-detail-body{max-height:min(170px,20dvh);overflow:auto;overscroll-behavior:contain;padding:0 5px 3px 0;scrollbar-width:thin}
 .context-card .context-usage-detail-body .context-card-actual{white-space:normal;overflow-wrap:anywhere;font-size:9px;line-height:1.6;margin-top:5px}
 #context-compaction-slot{position:relative}.context-card .context-compaction-status strong{white-space:normal;overflow-wrap:anywhere}
-.context-compaction-meter{grid-column:1/-1;height:5px;overflow:hidden;background:var(--bg-inset);border-radius:4px;margin-top:3px}
-.context-compaction-fill{display:block;height:100%;transform-origin:left;background:var(--brand);border-radius:inherit}
-.context-compaction-status.running .context-compaction-fill{animation:context-compression-fold 1.5s ease-in-out infinite alternate}
-.context-compaction-status.completed .context-compaction-fill{animation:context-compression-result .65s ease-out}
-@keyframes context-compression-fold{to{transform:scaleX(.55);opacity:.55}}
-@keyframes context-compression-result{from{width:100%}}
-@media(prefers-reduced-motion:reduce){.context-compaction-fill{animation:none!important}}
 
 /* Keep routine run controls to one row and give the conversation more room. */
 .composer-wrap{padding-top:6px;padding-bottom:8px}
@@ -485,10 +478,8 @@ html[data-theme="light"] .sidebar-footer .context-card{--usage-silver:#8e99a8;--
 .sidebar-footer .usage-ring:is(:hover,:focus-visible){box-shadow:0 0 0 2px var(--selected),0 0 7px var(--usage-silver-soft)}
 .sidebar-footer .usage-ring-center{position:absolute;inset:0;z-index:1;display:grid;place-items:center;pointer-events:none}
 .sidebar-footer .usage-ring-center::before{font-size:9px;line-height:1;font-weight:800}
-.sidebar-footer .context-card.is-compacting .usage-ring{animation:context-usage-spin .85s linear infinite}
 .sidebar-footer .context-card.was-compacted .usage-ring-center::before{content:'✓';color:#34d399}
 .sidebar-footer .context-card.is-compaction-failed .usage-ring-center::before{content:'×';color:#fb7185;font-size:11px}
-@keyframes context-usage-spin{to{transform:rotate(360deg)}}
 .sidebar-footer .context-compaction-retry{flex:0 0 16px;width:16px;height:16px;padding:0;display:grid;place-items:center;border:1px solid var(--line-mid);border-radius:50%;background:transparent;color:var(--muted);font-size:11px;line-height:1;cursor:pointer}
 .sidebar-footer .context-compaction-retry:hover{color:var(--text);border-color:var(--usage-silver);background:var(--hover)}
 .sidebar-footer .context-compaction-retry[hidden]{display:none}

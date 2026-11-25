@@ -5,6 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../internal/server/web/app.js'), 'utf8');
+const style = fs.readFileSync(path.join(__dirname, '../internal/server/web/style.css'), 'utf8');
+const workbench = fs.readFileSync(path.join(__dirname, '../internal/server/web/workbench.css'), 'utf8');
 const begin = source.indexOf('const contextCompactionTimers = new Map();');
 const end = source.indexOf('async function refreshContextMeter()', begin);
 assert.ok(begin >= 0 && end > begin, 'context compaction UI functions must exist');
@@ -13,7 +15,7 @@ function element(id = '') {
   const classes = new Set();
   const children = [];
   return {
-    id, classes, children,
+    id, classes, children, dataset: {},
     classList: {
       add(name) { classes.add(name); },
       remove(name) { classes.delete(name); },
@@ -37,8 +39,20 @@ const detail = element('context-card-detail');
 const sessionA = 'session-a';
 const sessionB = 'session-b';
 const sessionC = 'session-c';
+const sessionItems = [sessionA, sessionB, sessionC].map(id => {
+  const item = element(id);
+  item.dataset = { sessionId: id };
+  return item;
+});
+const [sessionItemA, sessionItemB, sessionItemC] = sessionItems;
 const context = {
   state: { session: { id: sessionA }, contextCompactions: new Map() },
+  document: {
+    querySelectorAll(selector) {
+      assert.equal(selector, '.session-item[data-session-id], .assistant-entry[data-session-id]');
+      return sessionItems;
+    },
+  },
   $: id => ({ 'context-card': card, 'context-card-detail': detail })[id],
   api: async () => ({ active: false }),
   setInterval: () => 1,
@@ -65,6 +79,8 @@ assert.ok(/if\s*\(isTerminalContextCompaction\(d\.phase\)\)\s*refreshSessionSoon
 
 context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600 });
 assert.equal(context.state.contextCompactions.get(sessionB).phase, 'started', 'background progress is retained by session');
+assert.equal(sessionItemB.classList.contains('compacting'), true, 'the compressing session uses the shared row spinner');
+assert.equal(sessionItemA.classList.contains('compacting'), false, 'another session row does not spin');
 assert.equal(card.classList.contains('is-compacting'), false, 'another session must not animate the current card');
 assert.equal(detail.children.length, 0, 'another session must not render status in the current card');
 
@@ -100,6 +116,8 @@ assert.equal(context.state.contextCompactions.get(sessionC).updatedAt, staleUpda
 context.state.session = { id: sessionC };
 context.renderContextCompactionState(detail);
 assert.equal(card.classList.contains('is-compacting'), false, 'stale progress stops the active animation');
+assert.equal(sessionItemC.classList.contains('compacting'), false, 'stale progress stops the session row spinner');
+assert.equal(sessionItemC.classList.contains('compaction-stalled'), true, 'stale state remains attached to its own session');
 assert.equal(card.classList.contains('is-compaction-stalled'), true, 'stale progress gets a distinct card state');
 assert.equal(detail.children.at(-1).className.includes('stalled'), true, 'stale progress gets a warning status row');
 assert.equal(detail.children.at(-1).children[1].textContent.includes('最近 3 分钟无更新'), true, 'stale status shows its quiet interval');
@@ -115,6 +133,7 @@ assert.equal(detail.children.at(-1).children[1].textContent.includes('HTTP 503')
 context.showContextCompaction({ sessionId: sessionB, phase: 'completed', folded: 8, beforeTokens: 13600, afterTokens: 5400 });
 context.state.session = { id: sessionB };
 context.renderContextCompactionState(detail);
+assert.equal(sessionItemB.classList.contains('compacting'), false, 'completion stops the session row spinner');
 assert.equal(detail.children.at(-1).children[2].textContent.includes('13,600 tokens → 5,400 tokens'), true, 'completion readback retains the correct session totals');
 assert.equal(card.classList.contains('was-compacted'), true, 'completed animation is visible when returning');
 
@@ -123,6 +142,7 @@ context.renderContextCompactionState(detail);
 assert.equal(detail.children.at(-1).className.includes('cancelled'), true, 'cancelled compaction receives a terminal status row');
 assert.equal(detail.children.at(-1).children[1].textContent.includes('原会话内容已保留'), true, 'cancelled status explains that history was preserved');
 assert.equal(card.classList.contains('is-compacting'), false, 'cancelled progress stops its animation');
+assert.equal(sessionItemC.classList.contains('compaction-stalled'), false, 'cancellation clears the stalled session row state');
 
 const pinned = element('context-compaction-slot');
 context.$ = id => ({'context-card':card,'context-card-detail':detail,'context-compaction-slot':pinned})[id];
@@ -130,6 +150,9 @@ context.showContextCompaction({sessionId:sessionB,phase:'started',folded:4,befor
 assert.equal(pinned.children.length,1,'compaction renders in the always-visible slot outside usage details');
 assert.match(pinned.children[0].children[1].textContent,/上下文压缩中/);
 context.showContextCompaction({sessionId:sessionB,phase:'completed',folded:4,beforeTokens:9000,afterTokens:3000});
-assert.equal(pinned.children.at(-1).children.at(-1).children[0].style.width,'33.33333333333333%','completion fill reflects remaining active context');
+assert.equal(pinned.children.at(-1).children.some(child=>child.className==='context-compaction-meter'),false,'legacy horizontal compaction meter is removed');
+assert.match(style,/\.session-item\.compacting::after/,'session rows reuse the latest shared spinner');
+assert.doesNotMatch(style,/context-fold-sweep|context-compression-fold|context-card-breathe/,'legacy strip and card animations are removed');
+assert.doesNotMatch(workbench,/context-compaction-fill|context-usage-spin/,'legacy compaction meter and global ring spin are removed');
 
-console.log('PASS: compaction progress session scope, active timing, stalled timing, and terminal states');
+console.log('PASS: per-session compaction spinner, no legacy strips, active timing, stalled timing, and terminal states');

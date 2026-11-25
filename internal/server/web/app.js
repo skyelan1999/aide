@@ -13,6 +13,9 @@ function renderAssistantEntry(s) {
     entry.title = voiceAssistantDisplayName();
     entry.classList.toggle('active', (state.pendingSessionId || state.session?.id) === s.id);
     entry.classList.toggle('loading', state.pendingSessionId === s.id);
+    const compaction = sessionCompactionVisualState(s.id);
+    entry.classList.toggle('compacting', compaction === 'compacting');
+    entry.classList.toggle('compaction-stalled', compaction === 'stalled');
     const running = s.status === 'running' || !!window.aideAssistantLive?.snapshot().enabled;
     entry.querySelector('.assistant-entry-dot').classList.toggle('live', running);
     entry.onclick = action(() => openAssistantGate(s.id, s.title));
@@ -158,6 +161,7 @@ function renderSessionList(snapshot) {
             childrenOf[pid].forEach((c) => list.append(buildItem(c, true)));
     });
     $('sessions').replaceChildren(list);
+    renderSessionCompactionIndicators();
     sessionListPaintKey = paintKey();
 }
 // 全局 SSE（#60）：后端在会话创建/归档/置顶/状态变更时广播 sessions-changed，前端自动刷新侧栏。
@@ -9240,6 +9244,23 @@ const contextCompactionElapsedTimers = new Map();
 function isTerminalContextCompaction(phase) {
     return phase === 'completed' || phase === 'failed' || phase === 'cancelled';
 }
+function sessionCompactionVisualState(sessionID) {
+    const event = state.contextCompactions.get(sessionID);
+    if (!event || (event.phase !== 'started' && event.phase !== 'folding'))
+        return '';
+    return Date.now() - (event.updatedAt || event.startedAt || Date.now()) >= 180_000 ? 'stalled' : 'compacting';
+}
+function renderSessionCompactionIndicators() {
+    document.querySelectorAll('.session-item[data-session-id], .assistant-entry[data-session-id]').forEach((item) => {
+        const visual = sessionCompactionVisualState(item.dataset.sessionId);
+        item.classList.toggle('compacting', visual === 'compacting');
+        item.classList.toggle('compaction-stalled', visual === 'stalled');
+        if (visual)
+            item.dataset.compactionState = visual;
+        else
+            delete item.dataset.compactionState;
+    });
+}
 const contextCompactionWatches = new Map();
 function clearContextCompactionState(sessionID) {
     const id = sessionID || state.session?.id || '';
@@ -9250,6 +9271,7 @@ function clearContextCompactionState(sessionID) {
     contextCompactionTimers.delete(id);
     clearInterval(contextCompactionElapsedTimers.get(id));
     contextCompactionElapsedTimers.delete(id);
+    renderSessionCompactionIndicators();
     if (state.session?.id !== id)
         return;
     const card = $('context-card');
@@ -9344,6 +9366,7 @@ function showContextCompaction(event) {
     state.contextCompactions.set(targetSession, record);
     clearTimeout(contextCompactionTimers.get(targetSession));
     const running = event.phase === 'started' || event.phase === 'folding';
+    renderSessionCompactionIndicators();
     if (running && !contextCompactionElapsedTimers.has(targetSession)) {
         contextCompactionElapsedTimers.set(targetSession, setInterval(() => {
             if (state.session?.id === targetSession)
@@ -9363,6 +9386,7 @@ function showContextCompaction(event) {
             contextCompactionTimers.delete(targetSession);
             clearInterval(contextCompactionElapsedTimers.get(targetSession));
             contextCompactionElapsedTimers.delete(targetSession);
+            renderSessionCompactionIndicators();
             if (state.session?.id !== targetSession)
                 return;
             $('context-card')?.classList.remove('was-compacted', 'is-compacting', 'is-compaction-stalled', 'is-compaction-failed');
@@ -9386,6 +9410,7 @@ function showContextCompaction(event) {
         ensureContextCompactionWatch(targetSession);
 }
 function renderContextCompactionState(detail) {
+    renderSessionCompactionIndicators();
     detail = $('context-compaction-slot') || detail;
     if (!detail)
         return;
@@ -9470,15 +9495,6 @@ function renderContextCompactionState(detail) {
     else {
         row.append(el('span', 'context-compaction-check', ''));
         row.append(el('span', '', event.text || t('压缩未完成，原会话内容已保留')));
-    }
-    if (inProgress || event.phase === 'completed') {
-        const meter = el('div', 'context-compaction-meter');
-        const fill = el('span', 'context-compaction-fill');
-        const ratio = event.phase === 'completed' && event.beforeTokens > 0 ? Math.min(1, Math.max(0, (event.afterTokens || 0) / event.beforeTokens)) : 1;
-        fill.style.width = (ratio * 100) + '%';
-        meter.setAttribute('aria-hidden', 'true');
-        meter.append(fill);
-        row.append(meter);
     }
     detail.append(row);
 }
