@@ -17,6 +17,22 @@ type networkCounter struct {
 
 func networkCounterSourceName() string { return "linux-network-namespace" }
 
+func defaultNetworkInterface() string {
+	file, err := os.Open("/proc/net/route")
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) >= 2 && fields[1] == "00000000" {
+			return fields[0]
+		}
+	}
+	return ""
+}
+
 // /proc/self/net/dev is scoped to the caller's network namespace. In Aide's
 // service container this covers model HTTP(S), media, plugin downloads,
 // realtime sockets, SSH and protocol overhead from every process in that

@@ -3574,7 +3574,7 @@ func Run() error {
 	if err != nil {
 		return err
 	}
-	tlsLn, plainLn := splitProto(rawLn)
+	tlsLn, plainLn := splitProto(a.networkUsage.wrapServiceListener(rawLn))
 	redirectSrv := &http.Server{Handler: httpsRedirectHandler(), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 15 * time.Second}
 
 	serveErr := make(chan error, 2)

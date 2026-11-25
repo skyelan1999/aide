@@ -44,16 +44,20 @@ interface Window {
     const interfaces: Record<string, any> = {};
     let uploadBytes = 0;
     let downloadBytes = 0;
+    let localUploadBytes = 0;
+    let localDownloadBytes = 0;
     entries.forEach(entry => {
       uploadBytes += Number(entry.uploadBytes) || 0;
       downloadBytes += Number(entry.downloadBytes) || 0;
+      localUploadBytes += Number(entry.localUploadBytes) || 0;
+      localDownloadBytes += Number(entry.localDownloadBytes) || 0;
       Object.entries(entry.interfaces || {}).forEach(([name, value]: [string, any]) => {
         interfaces[name] ||= { uploadBytes: 0, downloadBytes: 0 };
         interfaces[name].uploadBytes += Number(value.uploadBytes) || 0;
         interfaces[name].downloadBytes += Number(value.downloadBytes) || 0;
       });
     });
-    return { uploadBytes, downloadBytes, interfaces };
+    return { uploadBytes, downloadBytes, localUploadBytes, localDownloadBytes, interfaces };
   }
   function metric(label: string, value: string, caption: string, className = ''): HTMLElement {
     const card = document.createElement('div');
@@ -118,7 +122,7 @@ interface Window {
       const uploadHeight = upload ? Math.max(1, plotHeight * upload / maximum) : 0;
       const downloadHeight = download ? Math.max(1, plotHeight * download / maximum) : 0;
       const group = document.createElementNS(svg.namespaceURI, 'g');
-      const tooltip = document.createElementNS(svg.namespaceURI, 'title'); tooltip.textContent = `${entry.day}\n${t('上传')} ${formatBytes(upload)}\n${t('下载')} ${formatBytes(download)}\n${t('总流量')} ${formatBytes(total)}`; group.append(tooltip);
+      const tooltip = document.createElementNS(svg.namespaceURI, 'title'); tooltip.textContent = `${entry.day}\n${t('上传')} ${formatBytes(upload)}\n${t('下载')} ${formatBytes(download)}\n${t('外部总流量')} ${formatBytes(total)}`; group.append(tooltip);
       if (downloadHeight) {
         const rect = document.createElementNS(svg.namespaceURI, 'rect'); rect.setAttribute('x', String(x)); rect.setAttribute('width', String(barWidth)); rect.setAttribute('y', String(top + plotHeight - downloadHeight)); rect.setAttribute('height', String(downloadHeight)); rect.setAttribute('rx', '2'); rect.classList.add('network-bar-download'); group.append(rect);
       }
@@ -157,9 +161,10 @@ interface Window {
       content.replaceChildren();
       const metrics = document.createElement('div'); metrics.className = 'analytics-metrics';
       metrics.append(
-        metric(t('总流量'), formatBytes(totalBytes(totals)), tools.range() === 'all' ? t('全部记录') : t('近 {0} 天', tools.range()), 'is-total'),
-        metric(t('上传'), formatBytes(totals.uploadBytes), t('Aide 发出的网络字节')),
-        metric(t('下载'), formatBytes(totals.downloadBytes), t('Aide 接收的网络字节')),
+        metric(t('外部总流量'), formatBytes(totalBytes(totals)), tools.range() === 'all' ? t('全部记录') : t('近 {0} 天', tools.range()), 'is-total'),
+        metric(t('上传'), formatBytes(totals.uploadBytes), t('Aide 对外发送（已扣除页面连接）')),
+        metric(t('下载'), formatBytes(totals.downloadBytes), t('Aide 从外部接收（已扣除页面连接）')),
+        metric(t('页面连接（已排除）'), formatBytes(totals.localUploadBytes + totals.localDownloadBytes), t('工作台 HTTP 收发，不计入外部流量')),
       );
       content.append(metrics, sectionTitle(t('每日流量趋势')), networkChart(entries));
       content.append(sectionTitle(t('网络接口')));
@@ -179,8 +184,11 @@ interface Window {
         content.append(list);
       }
       const note = document.createElement('p'); note.className = 'analytics-note';
-      note.textContent = t('统计 Aide 服务网络命名空间内除回环外的全部接口，包含模型、插件、媒体、实时连接、SSH 及协议开销。每 5 秒采样，按 UTC 日期归档；热点运营商计费可能与本页不同。');
+      note.textContent = t('按网卡增量估算 Aide 对外通信，并扣除工作台页面 HTTP 收发；包含模型、插件、媒体、实时连接和 SSH。每 5 秒采样，按 UTC 日期归档，不等于运营商计费。');
       content.append(note);
+      if (data.legacyExcluded) {
+        const warning = document.createElement('p'); warning.className = 'analytics-warning'; warning.textContent = t('旧版本混合了页面本机流量，已从当前趋势中排除；原始账本仍保留。'); content.append(warning);
+      }
       if (data.persistenceWarning) {
         const warning = document.createElement('p'); warning.className = 'analytics-warning'; warning.textContent = t('历史统计文件暂时无法保存，当前新增数据仅保留在内存中。'); content.append(warning);
       }

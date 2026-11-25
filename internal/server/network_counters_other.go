@@ -11,6 +11,8 @@ type networkCounter struct {
 
 func networkCounterSourceName() string { return "unsupported" }
 
+func defaultNetworkInterface() string { return "" }
+
 func readNetworkCounters() (map[string]networkCounter, error) {
 	return nil, errors.New("per-service network interface counters require Linux")
 }
