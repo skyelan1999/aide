@@ -137,12 +137,17 @@ def source_manifest():
     trees = shlex.split(re.search(r'^\s*find (.+?) -type d ', body, re.M)[1])
     line = next(line.strip() for line in body.splitlines() if line.strip().startswith('printf '))
     files = shlex.split(line)[2:]
-    extras = shlex.split(re.search(r'for extra in (.+?); do', body)[1])
+    extras = [name for group in re.findall(r'for extra in (.+?); do', body) for name in shlex.split(group)]
+    typed_line = "find scripts -maxdepth 1 -type f \\( -name '*.ts' -o -name 'tsconfig*.json' \\) -print0"
+    if not any(line.strip() == typed_line for line in body.splitlines()):
+        raise ValueError('Unsupported TypeScript source fingerprint inventory')
+    typed = sorted('scripts/' + path.name for path in (ROOT / 'scripts').iterdir()
+                   if path.is_file() and (path.suffix == '.ts' or path.name.startswith('tsconfig') and path.suffix == '.json'))
     plain = re.findall(r'then find ([A-Za-z0-9_./-]+) -type f -print0; fi', body)
     for name in trees + files + extras + plain:
         if not re.fullmatch(r'[A-Za-z0-9_./-]+', name) or name.startswith('/') or '..' in name.split('/'):
             raise ValueError('Unsupported source fingerprint inventory')
-    return dict(filteredTrees=trees, plainTrees=plain, files=files + extras)
+    return dict(filteredTrees=trees, plainTrees=plain, files=files + extras + typed)
 
 
 def helper_protocol_versions():
