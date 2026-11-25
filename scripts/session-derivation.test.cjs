@@ -8,14 +8,20 @@ const html = fs.readFileSync(path.join(root, 'internal/server/web/index.html'), 
 const code = source.slice(source.indexOf("let sessionDerivationKind = '';"), source.indexOf('async function newSession()'));
 function element() {
   const classes = new Set();
-  return { disabled:false, hidden:false, title:'', classList:{ toggle:(name,on)=>on?classes.add(name):classes.delete(name), contains:name=>classes.has(name) }, focus(){this.focused=true;} };
+  return { disabled:false, hidden:false, title:'', classList:{ toggle:(name,on)=>on?classes.add(name):classes.delete(name), contains:name=>classes.has(name) }, setAttribute(name,value){this[name]=value;}, focus(){this.focused=true;} };
 }
 const branch = element(), child = element(), prompt = element();
-const elements = {'branch-session':branch,'create-subagent':child,'prompt':prompt};
+const elements = {'prompt':prompt};
+const documentScope = {querySelectorAll(selector){
+  if(selector==='.msg-btn-branch-session')return[branch];
+  if(selector==='.msg-btn-create-subagent')return[child];
+  return[];
+}};
 const calls = [];
 const toasts = [];
 const context = {
   sessionDerivationKind:'',
+  document:documentScope,
   state:{session:null},
   $:id=>elements[id], t:s=>s, toast:s=>toasts.push(s), persistChatDraft(){calls.push(['draft']);},
   async api(url,options){calls.push(['api',url,JSON.parse(options.body)]);const child=JSON.parse(options.body).kind==='subagent';return{id:'derived',parentId:child?'source':''};},
@@ -48,6 +54,7 @@ assert.equal(branch.disabled,false);assert.equal(child.disabled,false);assert.eq
     await context.deriveCurrentSession('session');
     assert.equal(calls.filter(c=>c[0]==='api').length,before,status+' source request never reaches API');
   }
-  assert.match(html,/id="branch-session"/);assert.match(html,/id="create-subagent"/);
-  console.log('PASS: session derivation buttons, context actions, busy state, and nested-agent guard');
+  assert.doesNotMatch(html,/id="branch-session"|id="create-subagent"|id="session-create-actions"/);
+  assert.match(source,/mk\('branch'[\s\S]*?msg-btn-branch-session/);assert.match(source,/mk\('subagent'[\s\S]*?msg-btn-create-subagent/);
+  console.log('PASS: reply-action derivation buttons, context actions, busy state, and nested-agent guard');
 })().catch(err=>{console.error(err);process.exit(1);});

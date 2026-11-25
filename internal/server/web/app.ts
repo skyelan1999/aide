@@ -1391,19 +1391,26 @@ function schedulePoll() {
   }
 }
 let sessionDerivationKind = '';
-function syncSessionDerivationControls() {
-  const branch = $('branch-session') as HTMLButtonElement;
-  const child = $('create-subagent') as HTMLButtonElement;
-  if (!branch || !child) return;
+function syncSessionDerivationControls(root?: any) {
+  const scope = root || document;
   const session = state.session;
   const assistant = session?.kind === 'assistant';
   const active = !!(session?.runs || []).some((run?: any) => ['running', 'awaiting_approval', 'awaiting_clarification', 'paused'].includes(run.status));
   const unavailable = !session || assistant || active || !!sessionDerivationKind;
-  branch.disabled = unavailable;
-  branch.title = active ? t('当前任务结束后才能创建新会话') : t('从当前会话创建新会话');
-  child.classList.toggle('hidden', !session || assistant || !!session.parentId);
-  child.disabled = unavailable;
-  child.title = active ? t('当前任务结束后才能创建子 Agent') : t('从当前会话创建子 Agent');
+  scope.querySelectorAll('.msg-btn-branch-session').forEach((branch?: any) => {
+    const label = active ? t('当前任务结束后才能创建新会话') : t('从当前会话创建新会话');
+    branch.disabled = unavailable;
+    branch.classList.toggle('hidden', !session || assistant);
+    branch.title = label;
+    branch.setAttribute('aria-label', label);
+  });
+  scope.querySelectorAll('.msg-btn-create-subagent').forEach((child?: any) => {
+    const label = active ? t('当前任务结束后才能创建子 Agent') : t('从当前会话创建子 Agent');
+    child.classList.toggle('hidden', !session || assistant || !!session.parentId);
+    child.disabled = unavailable;
+    child.title = label;
+    child.setAttribute('aria-label', label);
+  });
 }
 async function deriveCurrentSession(kind?: any) {
   const source = state.session;
@@ -1460,7 +1467,9 @@ function setMessageActionIcon(button?: any, kind?: any, label?: any) {
     retry: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 12M4 12l2.3 6A7 7 0 0 0 18 17"/>',
     continue: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
     good: '<path d="M7 10v11H3V10h4Zm0 0 5-8c2 0 3 2 2 4l-1 4h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7"/>',
-    bad: '<path d="M7 14V3H3v11h4Zm0 0 5 8c2 0 3-2 2-4l-1-4h6a2 2 0 0 0 2-2l-2-7a2 2 0 0 0-2-2H7"/>'
+    bad: '<path d="M7 14V3H3v11h4Zm0 0 5 8c2 0 3-2 2-4l-1-4h6a2 2 0 0 0 2-2l-2-7a2 2 0 0 0-2-2H7"/>',
+    branch: '<path d="M8 7V4h12v12h-4"/><rect x="4" y="7" width="13" height="13" rx="2"/><path d="M10.5 10.5v6m-3-3h6"/>',
+    subagent: '<circle cx="8" cy="6" r="3"/><circle cx="17" cy="17" r="3"/><path d="M8 9v3a5 5 0 0 0 5 5h1"/>'
   };
   button.title = label;
   button.setAttribute('aria-label', label);
@@ -2015,6 +2024,15 @@ function renderSession() {
           }
           actions.append(mk('retry', t("重试"), () => retryRunById(run.id)));
           if (!(run.canResume && ['paused','interrupted'].includes(run.status))) actions.append(mk('continue', t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
+          const branch = mk('branch', t('从当前会话创建新会话'), action(() => deriveCurrentSession('session')));
+          branch.classList.add('msg-btn-branch-session');
+          actions.append(branch);
+          if (!state.session?.parentId) {
+            const child = mk('subagent', t('从当前会话创建子 Agent'), action(() => deriveCurrentSession('subagent')));
+            child.classList.add('msg-btn-create-subagent');
+            actions.append(child);
+          }
+          syncSessionDerivationControls(actions);
           if (text) {
             actions.append(mk('good', t("好"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'good' }) })
@@ -3048,7 +3066,7 @@ $('open-new-tab').onclick = () => {
   const spec: any = { root: state.file.source ? 'source' : state.file.root, source: state.file.source || '', path: state.file.path };
   window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
 };
-$('new-session').onclick = action(newSession); $('branch-session').onclick = action(() => deriveCurrentSession('session')); $('create-subagent').onclick = action(() => deriveCurrentSession('subagent')); $('refresh-sessions').onclick = action(loadSessions); $('refresh-files').onclick = action(loadFiles);
+$('new-session').onclick = action(newSession); $('refresh-sessions').onclick = action(loadSessions); $('refresh-files').onclick = action(loadFiles);
 document.querySelectorAll<HTMLElement>('.mode-switch button').forEach((b?: any) => b.onclick = () => setMode(b.dataset.mode));
 document.querySelectorAll<HTMLElement>('.starter').forEach((b?: any) => b.onclick = () => {
     $('prompt').value = b.dataset.prompt;
