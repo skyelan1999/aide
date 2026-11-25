@@ -73,6 +73,8 @@ func (w *streamIdleWatch) stop() {
 // TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
 type TokenUsage struct {
 	responseOutput *openAIResponse
+	firstOutputAt  time.Time
+	lastOutputAt   time.Time
 	ProviderID     string `json:"providerId,omitempty"`
 	KeyID          string `json:"keyId,omitempty"`
 	KeyLabel       string `json:"keyLabel,omitempty"`
@@ -87,6 +89,24 @@ type TokenUsage struct {
 	Estimated      bool   `json:"estimated,omitempty"`
 	Model          string `json:"model,omitempty"`
 	Provider       string `json:"provider,omitempty"` // R08：调用归属的 provider（baseURL 快照）
+}
+
+func applyProviderRequestTiming(snapshot *RequestSnapshot, started time.Time, usage TokenUsage) {
+	if snapshot == nil || usage.firstOutputAt.IsZero() {
+		return
+	}
+	first := usage.firstOutputAt
+	snapshot.FirstTokenAt = first.UTC().Format(time.RFC3339Nano)
+	if !first.Before(started) {
+		snapshot.TTFTMillis = first.Sub(started).Milliseconds()
+	}
+	if usage.Completion <= 1 || !usage.lastOutputAt.After(first) {
+		return
+	}
+	seconds := usage.lastOutputAt.Sub(first).Seconds()
+	tokens := float64(usage.Completion - 1)
+	snapshot.TPOTMillis = seconds * 1000 / tokens
+	snapshot.DecodeTokensPerSecond = tokens / seconds
 }
 
 // providerUsage carries both DeepSeek's explicit cache counters and the
@@ -410,6 +430,8 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		usage.Estimated = true
 	}
 	applyBillingIdentity(&usage, cfg)
+	completedAt := time.Now()
+	usage.firstOutputAt, usage.lastOutputAt = completedAt, completedAt
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(usage)
 	}
@@ -467,6 +489,17 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	rateMeter := newSessionRequestOutputMeter(ctx)
+	var firstOutputAt, lastOutputAt time.Time
+	markOutput := func(delta string) {
+		if delta == "" {
+			return
+		}
+		now := time.Now()
+		if firstOutputAt.IsZero() {
+			firstOutputAt = now
+		}
+		lastOutputAt = now
+	}
 	body := buildChatBody(cfg, messages, params, tools, true)
 	endpoint := "/chat/completions"
 	if usesOpenAIResponses(cfg) {
@@ -631,6 +664,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			finishReason = fr // 记录最后一个非空 finish_reason，空响应时据此给出可解释原因
 		}
 		if delta.ReasoningContent != "" {
+			markOutput(delta.ReasoningContent)
 			rateMeter.add(delta.ReasoningContent)
 			// 思考链：只实时透传给前端折叠区，不并入最终正文 content
 			if onReasoning != nil {
@@ -639,6 +673,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		}
 		if delta.Content != "" {
 			content.WriteString(delta.Content)
+			markOutput(delta.Content)
 			rateMeter.add(delta.Content)
 			if onDelta != nil {
 				onDelta(delta.Content)
@@ -658,10 +693,12 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			}
 			if tc.Function.Name != "" {
 				if slot.Function.Name == "" {
+					markOutput(tc.Function.Name)
 					rateMeter.add(tc.Function.Name)
 				}
 				slot.Function.Name = tc.Function.Name
 			}
+			markOutput(tc.Function.Arguments)
 			rateMeter.add(tc.Function.Arguments)
 			slot.Function.Arguments += tc.Function.Arguments
 		}
@@ -689,7 +726,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	if strings.TrimSpace(text) == "" && len(calls) == 0 {
 		return "", nil, TokenUsage{}, "", &emptyCompletionError{finish: finishReason}
 	}
-	tu := TokenUsage{Model: cfg.Model, Provider: cfg.BaseURL}
+	tu := TokenUsage{Model: cfg.Model, Provider: cfg.BaseURL, firstOutputAt: firstOutputAt, lastOutputAt: lastOutputAt}
 	if usage != nil {
 		tu.Prompt = usage.PromptTokens
 		tu.Completion = usage.CompletionTokens

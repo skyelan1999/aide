@@ -195,20 +195,24 @@ type ContextPreview struct {
 
 // RequestSnapshot 实际发出的 Provider 请求快照（含工具续跑轮次）。
 type RequestSnapshot struct {
-	Purpose       string          `json:"purpose"`
-	Model         string          `json:"model"`
-	MaxTokens     int             `json:"maxTokens,omitempty"`
-	Messages      []Message       `json:"messages"`
-	Tools         []any           `json:"tools,omitempty"`
-	Body          json.RawMessage `json:"body"`
-	SHA256        string          `json:"sha256"`
-	Outcome       string          `json:"outcome,omitempty"`
-	FailureCode   string          `json:"failureCode,omitempty"`
-	At            string          `json:"at"`
-	CompletedAt   string          `json:"completedAt,omitempty"`
-	ElapsedMillis int64           `json:"elapsedMillis,omitempty"`
-	bodyChunks    []*snapshotBodyChunk
-	bodySize      int
+	Purpose               string          `json:"purpose"`
+	Model                 string          `json:"model"`
+	MaxTokens             int             `json:"maxTokens,omitempty"`
+	Messages              []Message       `json:"messages"`
+	Tools                 []any           `json:"tools,omitempty"`
+	Body                  json.RawMessage `json:"body"`
+	SHA256                string          `json:"sha256"`
+	Outcome               string          `json:"outcome,omitempty"`
+	FailureCode           string          `json:"failureCode,omitempty"`
+	At                    string          `json:"at"`
+	FirstTokenAt          string          `json:"firstTokenAt,omitempty"`
+	CompletedAt           string          `json:"completedAt,omitempty"`
+	ElapsedMillis         int64           `json:"elapsedMillis,omitempty"`
+	TTFTMillis            int64           `json:"ttftMillis,omitempty"`
+	TPOTMillis            float64         `json:"tpotMillis,omitempty"`
+	DecodeTokensPerSecond float64         `json:"decodeTokensPerSecond,omitempty"`
+	bodyChunks            []*snapshotBodyChunk
+	bodySize              int
 }
 
 // contextTools 任务可用工具（与 toolLoop 使用的完全一致）；按设置过滤被禁用的工具。

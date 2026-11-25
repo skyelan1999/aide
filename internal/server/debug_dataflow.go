@@ -69,21 +69,25 @@ type debugDataflowUsage struct {
 }
 
 type debugDataflowProvider struct {
-	Index               int    `json:"index"`
-	Purpose             string `json:"purpose,omitempty"`
-	Step                string `json:"step,omitempty"`
-	Round               int    `json:"round,omitempty"`
-	Model               string `json:"model,omitempty"`
-	StartedAt           string `json:"startedAt,omitempty"`
-	CompletedAt         string `json:"completedAt,omitempty"`
-	ElapsedMillis       int64  `json:"elapsedMillis,omitempty"`
-	Status              string `json:"status"`
-	FailureCode         string `json:"failureCode,omitempty"`
-	MessageCount        int    `json:"messageCount"`
-	MessageContentBytes int64  `json:"messageContentBytes"`
-	ToolArgumentBytes   int64  `json:"toolArgumentBytes"`
-	ToolCount           int    `json:"toolCount"`
-	BodyBytes           int    `json:"bodyBytes"`
+	Index                 int     `json:"index"`
+	Purpose               string  `json:"purpose,omitempty"`
+	Step                  string  `json:"step,omitempty"`
+	Round                 int     `json:"round,omitempty"`
+	Model                 string  `json:"model,omitempty"`
+	StartedAt             string  `json:"startedAt,omitempty"`
+	CompletedAt           string  `json:"completedAt,omitempty"`
+	ElapsedMillis         int64   `json:"elapsedMillis,omitempty"`
+	FirstTokenAt          string  `json:"firstTokenAt,omitempty"`
+	TTFTMillis            int64   `json:"ttftMillis,omitempty"`
+	TPOTMillis            float64 `json:"tpotMillis,omitempty"`
+	DecodeTokensPerSecond float64 `json:"decodeTokensPerSecond,omitempty"`
+	Status                string  `json:"status"`
+	FailureCode           string  `json:"failureCode,omitempty"`
+	MessageCount          int     `json:"messageCount"`
+	MessageContentBytes   int64   `json:"messageContentBytes"`
+	ToolArgumentBytes     int64   `json:"toolArgumentBytes"`
+	ToolCount             int     `json:"toolCount"`
+	BodyBytes             int     `json:"bodyBytes"`
 }
 
 type debugDataflowStep struct {
@@ -309,6 +313,7 @@ func (a *App) debugSessionDataflowDump(w http.ResponseWriter, r *http.Request) {
 		entry := debugDataflowProvider{
 			Index: i + 1, Purpose: "call-" + strconv.Itoa(i+1), Step: stepLabel, Round: round, Model: debugDataflowLabel(snapshot.Model),
 			StartedAt: snapshot.At, CompletedAt: snapshot.CompletedAt, ElapsedMillis: snapshot.ElapsedMillis,
+			FirstTokenAt: snapshot.FirstTokenAt, TTFTMillis: snapshot.TTFTMillis, TPOTMillis: snapshot.TPOTMillis, DecodeTokensPerSecond: snapshot.DecodeTokensPerSecond,
 			MessageCount: len(snapshot.Messages), ToolCount: len(snapshot.Tools), BodyBytes: snapshot.bodyLength(),
 			Status:      "returned_legacy",
 			FailureCode: debugDataflowFailureCode(snapshot.FailureCode),

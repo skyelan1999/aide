@@ -569,6 +569,7 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 		snapshot := &task.RequestSnapshots[snapshotIndex]
 		snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
 		snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
+		applyProviderRequestTiming(snapshot, started, usage)
 		snapshot.Outcome = "completed"
 		snapshot.FailureCode = ""
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
+	"time"
 )
 
 // outputTokenMeter converts generated UTF-16 text units with the same local
@@ -46,10 +47,18 @@ func (a *App) withSessionOutputRate(ctx context.Context, sessionID, taskID strin
 	return context.WithValue(ctx, sessionOutputRateKey{}, &sessionOutputRate{app: a, sessionID: sessionID, taskID: taskID})
 }
 
+const (
+	sessionOutputRateFlushInterval = 75 * time.Millisecond
+	sessionOutputRateMaxPending    = 64
+)
+
 type sessionRequestOutputMeter struct {
-	session  *sessionOutputRate
-	streamID string
-	meter    outputTokenMeter
+	session     *sessionOutputRate
+	streamID    string
+	meter       outputTokenMeter
+	pending     int
+	lastPublish time.Time
+	now         func() time.Time
 }
 
 func newSessionRequestOutputMeter(ctx context.Context) *sessionRequestOutputMeter {
@@ -61,13 +70,16 @@ func newSessionRequestOutputMeter(ctx context.Context) *sessionRequestOutputMete
 		return nil
 	}
 	id := session.next.Add(1)
-	return &sessionRequestOutputMeter{session: session, streamID: fmt.Sprintf("session/request/%d", id)}
+	return &sessionRequestOutputMeter{session: session, streamID: fmt.Sprintf("session/request/%d", id), now: time.Now}
 }
 
-func (m *sessionRequestOutputMeter) publish(tokens int) {
-	if m == nil || tokens == 0 {
+func (m *sessionRequestOutputMeter) flush() {
+	if m == nil || m.pending == 0 {
 		return
 	}
+	tokens := m.pending
+	m.pending = 0
+	m.lastPublish = m.now()
 	m.session.app.publishSessionOutputRate(m.session.sessionID, m.session.taskID, streamEvent{Event: "output-rate", StreamID: m.streamID, OutputTokens: tokens})
 }
 
@@ -75,7 +87,17 @@ func (m *sessionRequestOutputMeter) add(delta string) {
 	if m == nil {
 		return
 	}
-	m.publish(m.meter.add(delta))
+	m.pending += m.meter.add(delta)
+	if m.pending == 0 {
+		return
+	}
+	pending := m.pending
+	if pending < 0 {
+		pending = -pending
+	}
+	if m.lastPublish.IsZero() || m.now().Sub(m.lastPublish) >= sessionOutputRateFlushInterval || pending >= sessionOutputRateMaxPending {
+		m.flush()
+	}
 }
 
 func (m *sessionRequestOutputMeter) addMessage(content string, calls []ToolCall) {
@@ -98,6 +120,7 @@ func (m *sessionRequestOutputMeter) finish(actualOutputTokens int) {
 	if m == nil {
 		return
 	}
-	m.publish(actualOutputTokens - m.meter.tokens)
+	m.pending += actualOutputTokens - m.meter.tokens
 	m.meter.tokens = actualOutputTokens
+	m.flush()
 }

@@ -2831,15 +2831,37 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			// #35：把 aide 正文增量桥到会话维度的实时输出缓冲，供小秘拉取。
 			a.publishLiveDelta(task.ID, delta)
 		}
-		onReasoning := func(rc string) {
-			a.publishStream(task.ID, streamEvent{Event: "reasoning", Reasoning: rc, Round: round})
+		var reasoningBuffer strings.Builder
+		a.mu.Lock()
+		if stepIndex >= 0 && stepIndex < len(task.Steps) {
+			reasoningBuffer.WriteString(task.Steps[stepIndex].Reasoning)
+		}
+		a.mu.Unlock()
+		reasoningFlushed := reasoningBuffer.Len()
+		lastReasoningFlush := time.Now()
+		flushReasoning := func(force bool) {
+			if reasoningBuffer.Len() == reasoningFlushed {
+				return
+			}
+			now := time.Now()
+			if !force && reasoningBuffer.Len()-reasoningFlushed < 4096 && now.Sub(lastReasoningFlush) < 100*time.Millisecond {
+				return
+			}
+			snapshot := reasoningBuffer.String()
 			a.mu.Lock()
 			if stepIndex >= 0 && stepIndex < len(task.Steps) {
-				task.Steps[stepIndex].Reasoning += rc
+				task.Steps[stepIndex].Reasoning = snapshot
 			}
 			a.mu.Unlock()
+			reasoningFlushed = reasoningBuffer.Len()
+			lastReasoningFlush = now
 		}
-		markSnapshotComplete := func(started, completed time.Time, requestErr error, emptyResponse bool) {
+		onReasoning := func(rc string) {
+			a.publishStream(task.ID, streamEvent{Event: "reasoning", Reasoning: rc, Round: round})
+			reasoningBuffer.WriteString(rc)
+			flushReasoning(false)
+		}
+		markSnapshotComplete := func(started, completed time.Time, usage TokenUsage, requestErr error, emptyResponse bool) {
 			a.mu.Lock()
 			outcome := "completed"
 			if requestErr != nil {
@@ -2852,6 +2874,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				snapshot := &task.RequestSnapshots[snapshotIndex]
 				snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
 				snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
+				applyProviderRequestTiming(snapshot, started, usage)
 				snapshot.Outcome = "completed"
 				snapshot.FailureCode = ""
 				if requestErr != nil {
@@ -2871,7 +2894,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		requestStarted := time.Now()
 		out, calls, usage, finish, err := completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
-		markSnapshotComplete(requestStarted, time.Now(), err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
+		flushReasoning(true)
+		markSnapshotComplete(requestStarted, time.Now(), usage, err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 		if err != nil {
 			a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
 		}
@@ -2934,7 +2958,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			requestStarted = time.Now()
 			out, calls, usage, finish, err = completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
-			markSnapshotComplete(requestStarted, time.Now(), err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
+			flushReasoning(true)
+			markSnapshotComplete(requestStarted, time.Now(), usage, err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
 			if err != nil {
 				a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
 			}

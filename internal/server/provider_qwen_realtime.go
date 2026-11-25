@@ -163,6 +163,17 @@ func completeQwenRealtime(ctx context.Context, cfg Settings, messages []Message,
 		return fail(err)
 	}
 	var text strings.Builder
+	var firstOutputAt, lastOutputAt time.Time
+	markOutput := func(delta string) {
+		if delta == "" {
+			return
+		}
+		now := time.Now()
+		if firstOutputAt.IsZero() {
+			firstOutputAt = now
+		}
+		lastOutputAt = now
+	}
 	for {
 		e, err := read()
 		if err != nil {
@@ -179,6 +190,7 @@ func completeQwenRealtime(ctx context.Context, cfg Settings, messages []Message,
 				return text.String(), nil, TokenUsage{}, "", fmt.Errorf("Realtime 文本超过大小限制")
 			}
 			text.WriteString(delta)
+			markOutput(delta)
 			rateMeter.add(delta)
 			if onDelta != nil {
 				onDelta(delta)
@@ -210,11 +222,14 @@ func completeQwenRealtime(ctx context.Context, cfg Settings, messages []Message,
 					calls = append(calls, call)
 				}
 			}
-			usage := TokenUsage{Prompt: response.Usage.Input, Completion: response.Usage.Output, Total: response.Usage.Total, Model: cfg.Model, Provider: cfg.BaseURL}
+			usage := TokenUsage{Prompt: response.Usage.Input, Completion: response.Usage.Output, Total: response.Usage.Total, Model: cfg.Model, Provider: cfg.BaseURL, firstOutputAt: firstOutputAt, lastOutputAt: lastOutputAt}
 			for _, call := range calls {
+				markOutput(call.Function.Name)
+				markOutput(call.Function.Arguments)
 				rateMeter.add(call.Function.Name)
 				rateMeter.add(call.Function.Arguments)
 			}
+			usage.firstOutputAt, usage.lastOutputAt = firstOutputAt, lastOutputAt
 			if usage.Completion > 0 || usage.Total > 0 {
 				rateMeter.finish(usage.Completion)
 			}

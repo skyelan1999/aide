@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestOutputTokenMeterIsChunkInvariant(t *testing.T) {
@@ -182,5 +183,80 @@ func TestSessionOutputRateFallsBackToSessionEventsAfterRunCloses(t *testing.T) {
 	}
 	if event["sessionId"] != "session-late" || event["runId"] != task.ID || event["streamId"] != "session/request/9" || event["outputTokens"] != float64(7) {
 		t.Fatalf("unexpected session output event: %#v", event)
+	}
+}
+
+func TestSessionOutputRateBatchesAndFlushes(t *testing.T) {
+	a, _, task := parallelFixture(t, 0)
+	events, cancel := a.subscribeStream(task.ID)
+	defer cancel()
+	ctx := a.withSessionOutputRate(context.Background(), "parallel-session", task.ID)
+	meter := newSessionRequestOutputMeter(ctx)
+	now := time.Unix(100, 0)
+	meter.now = func() time.Time { return now }
+	drain := func() (int, int) {
+		count, tokens := 0, 0
+		for {
+			select {
+			case event := <-events:
+				count++
+				tokens += event.OutputTokens
+			default:
+				return count, tokens
+			}
+		}
+	}
+	meter.add("abcd")
+	if count, tokens := drain(); count != 1 || tokens != 1 {
+		t.Fatalf("first output was not published immediately: count=%d tokens=%d", count, tokens)
+	}
+	meter.add("efgh")
+	meter.add("ijkl")
+	if count, tokens := drain(); count != 0 || tokens != 0 {
+		t.Fatalf("unchanged window unexpectedly published: count=%d tokens=%d", count, tokens)
+	}
+	now = now.Add(sessionOutputRateFlushInterval)
+	meter.add("mnop")
+	if count, tokens := drain(); count != 1 || tokens != 3 {
+		t.Fatalf("window flush mismatch: count=%d tokens=%d", count, tokens)
+	}
+	meter.add("qrst")
+	meter.finish(5)
+	if count, tokens := drain(); count != 1 || tokens != 1 {
+		t.Fatalf("final flush mismatch: count=%d tokens=%d", count, tokens)
+	}
+}
+
+func TestProviderRequestTimingComputesTTFTAndTPOT(t *testing.T) {
+	started := time.Unix(1000, 0)
+	usage := TokenUsage{Completion: 11, firstOutputAt: started.Add(250 * time.Millisecond), lastOutputAt: started.Add(1250 * time.Millisecond)}
+	var snapshot RequestSnapshot
+	applyProviderRequestTiming(&snapshot, started, usage)
+	if snapshot.FirstTokenAt == "" || snapshot.TTFTMillis != 250 || snapshot.TPOTMillis != 100 || snapshot.DecodeTokensPerSecond != 10 {
+		t.Fatalf("unexpected request timing: %+v", snapshot)
+	}
+}
+
+func TestToolLoopBatchesReasoningWithoutLosingContent(t *testing.T) {
+	a, _, task := parallelFixture(t, 0)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		for i := 0; i < 128; i++ {
+			fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"abcd\"}}]}\n\n")
+		}
+		fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"done\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":200,\"total_tokens\":210}}\n\n")
+		fmt.Fprint(w, "data: [DONE]\n\n")
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "fixture"}
+	out, _, err := a.toolLoop(context.Background(), cfg, []Message{{Role: "user", Content: "test"}}, ProfileParams{}, nil, task, nil, 0)
+	if err != nil || out != "done" {
+		t.Fatalf("toolLoop output=%q err=%v", out, err)
+	}
+	if got, want := task.Steps[0].Reasoning, strings.Repeat("abcd", 128); got != want {
+		t.Fatalf("reasoning length=%d, want %d", len(got), len(want))
+	}
+	if len(task.RequestSnapshots) != 1 || task.RequestSnapshots[0].FirstTokenAt == "" {
+		t.Fatalf("missing provider request timing: %+v", task.RequestSnapshots)
 	}
 }
