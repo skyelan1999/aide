@@ -15,6 +15,9 @@ func taskHarnessConfig(task *Task) HarnessConfig {
 	return defaultHarnessConfig()
 }
 func taskToolDenied(task *Task, name string) bool {
+	if name == "spawn_subagent" && task.ParentSessionID != "" {
+		return true
+	}
 	for _, tool := range taskHarnessConfig(task).DenyTools {
 		if tool == name {
 			return true

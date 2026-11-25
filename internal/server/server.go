@@ -1811,6 +1811,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/events", a.globalEvents) // #60 全局 SSE：会话列表变更广播
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)
+	mux.HandleFunc("POST /api/sessions/{id}/derive", a.deriveSession)
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
 	mux.HandleFunc("GET /api/sessions/{id}/compaction-progress", a.contextCompactionProgressHandler)
 	mux.HandleFunc("GET /api/export", a.exportSessions)

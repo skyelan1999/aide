@@ -2000,6 +2000,50 @@ function schedulePoll() {
         closeStream();
     }
 }
+let sessionDerivationKind = '';
+function syncSessionDerivationControls() {
+    const branch = $('branch-session');
+    const child = $('create-subagent');
+    if (!branch || !child)
+        return;
+    const session = state.session;
+    const assistant = session?.kind === 'assistant';
+    const active = !!(session?.runs || []).some((run) => ['running', 'awaiting_approval', 'awaiting_clarification', 'paused'].includes(run.status));
+    const unavailable = !session || assistant || active || !!sessionDerivationKind;
+    branch.disabled = unavailable;
+    branch.title = active ? t('当前任务结束后才能创建新会话') : t('从当前会话创建新会话');
+    child.classList.toggle('hidden', !session || assistant || !!session.parentId);
+    child.disabled = unavailable;
+    child.title = active ? t('当前任务结束后才能创建子 Agent') : t('从当前会话创建子 Agent');
+}
+async function deriveCurrentSession(kind) {
+    const source = state.session;
+    if (!source || source.kind === 'assistant' || sessionDerivationKind)
+        return;
+    if (kind === 'subagent' && source.parentId) {
+        toast(t('子 Agent 不能再次创建子 Agent'));
+        syncSessionDerivationControls();
+        return;
+    }
+    if ((source.runs || []).some((run) => ['running', 'awaiting_approval', 'awaiting_clarification', 'paused'].includes(run.status))) {
+        toast(t('请等待当前任务结束后再派生会话'));
+        return;
+    }
+    sessionDerivationKind = kind;
+    syncSessionDerivationControls();
+    try {
+        persistChatDraft();
+        const derived = await api('/sessions/' + encodeURIComponent(source.id) + '/derive', { method: 'POST', body: JSON.stringify({ kind }) });
+        await loadSessions();
+        await selectSession(derived.id);
+        toast(kind === 'subagent' ? t('已创建子 Agent，并保留当前会话上下文') : t('已创建新会话，并保留当前会话上下文'));
+        $('prompt').focus();
+    }
+    finally {
+        sessionDerivationKind = '';
+        syncSessionDerivationControls();
+    }
+}
 async function newSession() {
     persistChatDraft();
     $('prompt').value = '';
@@ -2561,6 +2605,7 @@ function renderSession() {
     const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map((d) => d.dataset.key));
     window.aideAssistantLiveUI?.();
     syncAssistantModeControls(!!isAssistantSess);
+    syncSessionDerivationControls();
     syncComposerApproval();
     $('prompt').placeholder = isAssistantSess ? t('对{0}说点什么…', voiceAssistantDisplayName()) : '';
     $('session-title').textContent = state.session?.title || t("开始新的探索");
@@ -4132,6 +4177,8 @@ $('open-new-tab').onclick = () => {
     window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
 };
 $('new-session').onclick = action(newSession);
+$('branch-session').onclick = action(() => deriveCurrentSession('session'));
+$('create-subagent').onclick = action(() => deriveCurrentSession('subagent'));
 $('refresh-sessions').onclick = action(loadSessions);
 $('refresh-files').onclick = action(loadFiles);
 document.querySelectorAll('.mode-switch button').forEach((b) => b.onclick = () => setMode(b.dataset.mode));

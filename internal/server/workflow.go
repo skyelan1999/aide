@@ -612,6 +612,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), PlanTaskID: in.PlanTaskID, PlanContext: a.planContextLocked(s, in.PlanTaskID, 6), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	bindTaskToSessionLineage(s, task)
 	if item := a.findPlanItemLocked(s, in.PlanTaskID); item != nil && item.Contract != nil {
 		raw, _ := json.Marshal(item.Contract)
 		_ = json.Unmarshal(raw, &task.GoalContract)
@@ -810,6 +811,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 202, task)
 }
 func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings, messages []Message, firstInput []Message, versions map[string]Change, params ProfileParams) {
+	bindTaskToSessionLineage(s, task)
 	runTimeout := taskExecutionTimeout(task)
 	// 模型 API Key 从加密 vault 解密注入 cfg。已配置 key 但 vault 未解锁时明确失败，
 	// 不静默发空 Authorization 让上游回 401。
@@ -3571,6 +3573,10 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string, agent
 	if parentSess == nil {
 		a.mu.Unlock()
 		return "", "", errors.New("找不到父会话")
+	}
+	if parentSess.ParentID != "" {
+		a.mu.Unlock()
+		return "", "", errors.New("子 Agent 不能再次创建子 Agent")
 	}
 	parentID := parentSess.ID
 	harness := taskHarnessConfig(parentTask)
