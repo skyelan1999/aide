@@ -24,13 +24,14 @@ const el=(_tag,_class,text)=>({dataset:{},textContent:text});
  const failedB=assert.rejects(activeB,/other upgrade failed/);const errorB=Error('other upgrade failed');errorB.status=400;failB(errorB);await failedB;assert.equal(otherButton.disabled,false);assert.equal(otherButton.textContent,'升级');assert.equal(button.textContent,'升级');
  // Batch source checks are independent and cap work to installed external plugins.
  const batchPlugins=[{id:'a/b',name:'A',installed:true},{id:'other',name:'Other',installed:true},{id:'bundled',name:'Bundled',installed:true,installedSource:'bundled'}];
- const checked=[];let batchRefresh=0;
+ const checked=[];let batchRefresh=0,marketRefreshes=0;
  const batchServices={t,el,toast:()=>{},refresh:async()=>{batchRefresh++;},api:async(path,options)=>{
+   if(path==='/plugin-market?refresh=1'){marketRefreshes++;return{stale:false};}
    if(path.endsWith('/source/sync')){checked.push(path);if(path.includes('/other/'))throw Error('offline');return{updateAvailable:true,update:{version:'2.0.0'}};}
    if(path.endsWith('/upgrade')){assert.equal(options.method,'POST');if(path.includes('/other/'))throw Error('upgrade offline');return{version:'2.0.0'};}
    throw Error('unexpected route');
  }};
- const checkedResult=await api.checkAll(batchPlugins,batchServices);assert.equal(checkedResult.updates.length,1);assert.equal(checkedResult.failures.length,1);assert.equal(checked.length,2);assert.equal(batchRefresh,0);
+ const checkedResult=await api.checkAll(batchPlugins,batchServices);assert.equal(checkedResult.updates.length,1);assert.equal(checkedResult.failures.length,1);assert.equal(checked.length,2);assert.equal(marketRefreshes,1);assert.equal(batchRefresh,0);
  const batchResult=await api.upgradeAll([{id:'a/b',name:'A'},{id:'other',name:'Other'}],batchServices);assert.equal(batchResult.succeeded.length,1);assert.equal(batchResult.failures.length,1);assert.equal(batchRefresh,1);
  batchServices.refresh=async()=>{throw Error('refresh offline');};const refreshFailure=await api.upgradeAll([{id:'a/b',name:'A'}],batchServices);assert.equal(refreshFailure.succeeded.length,1);assert.equal(refreshFailure.refreshError,'refresh offline');
  const {readAppSource,sourceIncludes}=require('./fixtures/app-source.cjs'),app=readAppSource(),index=fs.readFileSync('internal/server/web/index.html','utf8');assert(sourceIncludes(app,'window.AidePluginUpgrade.button(p,pluginUpgradeServices())'));assert(index.indexOf('/plugin-upgrade.js')<index.indexOf('/app.js'));

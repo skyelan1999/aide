@@ -3,8 +3,8 @@
 .plugin-workbench-entry{display:flex;align-items:center;justify-content:center;width:30px;padding:6px 0!important}
 .plugin-workbench-entry svg{flex:none;width:15px;height:15px}
 .plugin-workbench-launcher{width:min(860px,calc(100vw - 32px));height:min(680px,calc(100dvh - 32px));max-width:none;max-height:none;box-sizing:border-box;padding:0;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);overflow:hidden}
-.plugin-workbench-launcher::backdrop{background:#0008;backdrop-filter:blur(8px)}
-.workbench-launcher-shell{display:flex;flex-direction:column;height:100%}
+.plugin-workbench-launcher::backdrop{background:#0009}
+.workbench-launcher-shell{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
 .workbench-launcher-head{display:flex;align-items:flex-start;gap:16px;padding:28px 28px 22px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--brand) 4%,var(--panel))}
 .workbench-launcher-head>div{flex:1;min-width:0}
 .workbench-launcher-head .eyebrow{margin-bottom:8px}
@@ -12,7 +12,7 @@
 .workbench-launcher-head p{margin:0;color:var(--muted);font-size:13px}
 .workbench-launcher-head .icon-button{flex:none;width:34px;height:34px}
 .workbench-launcher-body{display:flex;flex:1;min-height:0}
-.plugin-workbench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;align-content:start;flex:1;min-width:0;min-height:0;padding:24px 18px 32px 28px;overflow:auto;scroll-behavior:smooth}
+.plugin-workbench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;align-content:start;flex:1;min-width:0;min-height:0;padding:24px 18px 32px 28px;overflow:auto;scroll-behavior:auto}
 .workbench-plugin-item{--plugin-tone:#4f7cff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:158px;padding:18px 10px 14px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--text);text-align:center;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
 .workbench-plugin-item:hover:not(:disabled),.workbench-plugin-item:focus-visible{border-color:color-mix(in srgb,var(--plugin-tone) 28%,var(--line));background:color-mix(in srgb,var(--plugin-tone) 6%,var(--panel));transform:translateY(-2px)}
 .workbench-plugin-item:disabled{opacity:.45;cursor:not-allowed}
@@ -28,7 +28,7 @@
 .workbench-letter-rail button{flex:none;width:24px;height:17px;min-height:17px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:9px;line-height:17px;text-align:center;cursor:pointer}
 .workbench-letter-rail button:hover:not(:disabled),.workbench-letter-rail button[aria-pressed="true"]{background:var(--chip-bg);color:var(--brand-text);font-weight:700}
 .workbench-letter-rail button:disabled{opacity:.2;cursor:default}
-.workbench-plugin-preview{position:absolute;z-index:5;width:264px;box-sizing:border-box;padding:16px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--panel) 96%,var(--brand));box-shadow:0 18px 55px #0004;pointer-events:none}
+.workbench-plugin-preview{position:absolute;z-index:20;width:264px;max-width:calc(100% - 24px);box-sizing:border-box;padding:16px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--panel) 96%,var(--brand));box-shadow:0 18px 55px #0004;pointer-events:none}
 .workbench-plugin-preview[hidden]{display:none!important}
 .workbench-preview-heading{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .workbench-preview-heading strong{font-size:14px;line-height:1.4;overflow-wrap:anywhere}
@@ -47,7 +47,7 @@
 .workbench-update-count[hidden]{display:none}
 .workbench-autostart-button[data-count]:not([data-count="0"])::after{content:"";position:absolute;right:5px;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--success,#25a97b)}
 .plugin-autostart-dialog{width:min(560px,calc(100vw - 32px));max-height:min(680px,calc(100dvh - 32px));padding:0;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--text);overflow:auto}
-.plugin-autostart-dialog::backdrop{background:#0008;backdrop-filter:blur(6px)}
+.plugin-autostart-dialog::backdrop{background:#0009}
 .plugin-autostart-shell{padding:24px}
 .plugin-autostart-shell>.muted{margin:14px 0 20px;font-size:12px;line-height:1.65}
 .plugin-autostart-list{display:flex;flex-direction:column;gap:8px}

@@ -473,7 +473,10 @@ func (a *App) syncPluginUpdateSource(w http.ResponseWriter, r *http.Request) {
 	update := map[string]any{"id": id, "name": old.Name, "currentVersion": old.Version, "source": source}
 	available := false
 	if source == marketUpdatePrefix+id {
-		snapshot, _, err := a.loadMarket(ctx, true)
+		// Batch checks refresh the catalog once through /api/plugin-market?refresh=1.
+		// Reuse that validated snapshot here instead of downloading it again for
+		// every installed plugin while holding marketMu.
+		snapshot, _, err := a.loadMarket(ctx, false)
 		if err != nil {
 			fail(w, 502, err)
 			return

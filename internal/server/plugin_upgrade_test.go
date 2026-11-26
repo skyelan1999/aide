@@ -156,6 +156,27 @@ func TestPluginSourceSyncChecksWithoutInstalling(t *testing.T) {
 	}
 }
 
+func TestPluginSourceSyncReusesFreshMarketCatalog(t *testing.T) {
+	a, snapshot, _ := marketFixture(t, "2.0.0")
+	id := snapshot.Catalog.Plugins[0].ID
+	a.pluginRegistry.Plugins = []PluginManifest{{ID: id, Name: "Market fixture", Version: "1.0.0", Enabled: true, UpdateURL: marketUpdatePrefix + id}}
+	requests := 0
+	a.pluginUpdateClient = &http.Client{Transport: pluginUpgradeTransport(func(r *http.Request) (*http.Response, error) {
+		requests++
+		return nil, errors.New("fresh market cache must not trigger network")
+	})}
+	for range 2 {
+		w := request(a, "POST", "/api/plugins/"+id+"/source/sync", map[string]any{})
+		requireStatus(t, w, 200)
+		if !strings.Contains(w.Body.String(), `"updateAvailable":true`) {
+			t.Fatalf("cached source sync response: %s", w.Body.String())
+		}
+	}
+	if requests != 0 {
+		t.Fatalf("source checks downloaded the market catalog %d times instead of sharing its fresh snapshot", requests)
+	}
+}
+
 func TestPluginUpgradePreservesDisabledState(t *testing.T) {
 	a, id := upgradeFixture(t)
 	requireStatus(t, request(a, "PUT", "/api/plugins/"+id, map[string]any{"enabled": false}), 200)

@@ -58,6 +58,10 @@ interface Window {
  }
  async function checkAll(plugins: any[],services: any): Promise<any>{
   const candidates=plugins.filter((plugin: any)=>plugin&&typeof plugin.id==='string'&&plugin.id&&plugin.installed!==false&&plugin.installedSource!=='bundled'),updates: any[]=[],failures: any[]=[];let cursor=0;
+  if(candidates.length){
+   try{const market=await services.api('/plugin-market?refresh=1');if(market?.refreshError)failures.push({id:'plugin-market',name:services.t('官方插件市场'),message:market.refreshError});}
+   catch(error: any){failures.push({id:'plugin-market',name:services.t('官方插件市场'),message:error.message});}
+  }
   async function worker(): Promise<void>{while(cursor<candidates.length){const plugin=candidates[cursor++];try{const result=await services.api('/plugins/'+encodeURIComponent(plugin.id)+'/source/sync',{method:'POST',body:'{}'});if(result.updateAvailable&&result.update)updates.push({...result.update,name:plugin.name});}catch(error: any){failures.push({id:plugin.id,name:plugin.name,message:error.message});}}}
   await Promise.all(Array.from({length:Math.min(3,candidates.length)},worker));updates.sort((a: any,b: any)=>String(a.name||a.id).localeCompare(String(b.name||b.id)));return {updates,failures};
  }

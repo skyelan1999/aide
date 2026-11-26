@@ -7,11 +7,23 @@ class Element {
     this.tag = tag; this.className = cls; this.textContent = text; this.children = [];
     this.attributes = {}; this.dataset = {}; this.listeners = {}; this.disabled = false; this.open = false;
     this.hidden = false; this.style = {}; this.type = '';
+    this.replaceChildrenCalls = 0; this.scrollRequests = [];
     this.classList = { add: (...names) => { this.className += ' ' + names.join(' '); }, toggle: (name, force) => { const present = this.className.split(/\s+/).includes(name); if (force === true || (force === undefined && !present)) this.className += ' ' + name; if (force === false || (force === undefined && present)) this.className = this.className.split(/\s+/).filter(item => item && item !== name).join(' '); } };
   }
   append(...nodes) { this.children.push(...nodes); }
-  replaceChildren(...nodes) { this.children = []; this.append(...nodes); }
+  replaceChildren(...nodes) { this.replaceChildrenCalls++; this.children = []; this.append(...nodes); }
   setAttribute(key, value) { this.attributes[key] = value; }
+  getAttribute(key) { return this.attributes[key]; }
+  querySelector(selector) {
+    const letter = selector.match(/^\[data-letter-heading="([A-Z#])"\]$/)?.[1];
+    const search = node => {
+      if (letter && node.dataset?.letterHeading === letter) return node;
+      for (const child of node.children || []) { const found = search(child); if (found) return found; }
+      return null;
+    };
+    return search(this);
+  }
+  scrollIntoView(options) { this.scrollRequests.push(options); }
   addEventListener(key, fn) { this.listeners[key] = fn; }
   showModal() { this.open = true; }
   close() { this.open = false; }
@@ -61,7 +73,9 @@ class Element {
   assert.equal(ids['plugin-workbench-panel'].open, true);
   assert.equal(ids['plugin-workbench-update-count'].hidden, false);
   assert.equal(ids['plugin-workbench-update-count'].textContent, '1');
-  const items = ids['plugin-workbench-grid'].children;
+  const grid = ids['plugin-workbench-grid'];
+  assert.equal(grid.replaceChildrenCalls, 1, 'opening and update checks must not rebuild unchanged cards');
+  const items = grid.children;
   assert.equal(items.length, 4);
   assert.deepEqual(items.map(item => item.dataset.pluginId), ['normal', 'pp-labs', 'disabled', 'broken']);
   assert.equal(ids['plugin-workbench-panel'].dataset.order, 'default');
@@ -78,18 +92,40 @@ class Element {
   assert.deepEqual(ids['plugin-workbench-grid'].children.filter(item => item.dataset.pluginId).map(item => item.dataset.pluginId), ['broken', 'disabled', 'normal', 'pp-labs']);
   assert.deepEqual(ids['plugin-workbench-grid'].children.filter(item => item.dataset.letterHeading).map(item => item.dataset.letterHeading), ['B', 'D', 'N', 'P']);
   assert.equal(rail.children.find(button => button.dataset.letter === 'P').attributes['aria-pressed'], 'true');
-  rail.children.find(button => button.dataset.letter === 'P').onclick();
+  const groupedChildren = grid.children;
+  const groupedRenderCount = grid.replaceChildrenCalls;
+  rail.children.find(button => button.dataset.letter === 'B').onclick();
+  assert.equal(grid.replaceChildrenCalls, groupedRenderCount, 'letter navigation must keep the existing card DOM');
+  assert.equal(grid.children, groupedChildren);
+  assert.equal(rail.children.find(button => button.dataset.letter === 'B').attributes['aria-pressed'], 'true');
+  assert.equal(rail.children.find(button => button.dataset.letter === 'P').attributes['aria-pressed'], 'false');
+  const headingB = grid.children.find(item => item.dataset.letterHeading === 'B');
+  assert.equal(headingB.scrollRequests[0].block, 'start');
+  assert.equal(headingB.scrollRequests[0].behavior, 'auto');
+  rail.children.find(button => button.dataset.letter === 'B').onclick();
   assert.equal(ids['plugin-workbench-panel'].dataset.order, 'default');
   assert.deepEqual(ids['plugin-workbench-grid'].children.filter(item => item.dataset.pluginId).map(item => item.dataset.pluginId), ['normal', 'pp-labs', 'disabled', 'broken']);
 
   const normal = ids['plugin-workbench-grid'].children[0];
+  const panel = ids['plugin-workbench-panel'], preview = ids['plugin-workbench-preview'];
+  panel.getBoundingClientRect = () => ({ left: 100, top: 50, right: 960, bottom: 730, width: 860, height: 680 });
+  grid.getBoundingClientRect = () => ({ left: 128, top: 184, right: 930, bottom: 730, width: 802, height: 546 });
+  preview.getBoundingClientRect = () => ({ width: 264, height: 190 });
+  normal.getBoundingClientRect = () => ({ left: 700, right: 820, top: 600, bottom: 758, width: 120, height: 158 });
   normal.onmouseenter(); await flush();
   assert.deepEqual(preloaded, []);
-  assert.equal(ids['plugin-workbench-preview'].hidden, false);
-  assert.equal(ids['plugin-workbench-preview'].dataset.preloaded, undefined);
-  assert.equal(ids['plugin-workbench-preview'].children.at(-1).textContent, '点击打开');
+  assert.equal(preview.hidden, false);
+  assert.equal(preview.dataset.preloaded, undefined);
+  assert.equal(preview.children.at(-1).textContent, '点击打开');
+  assert.equal(preview.style.left, '326px', 'right-side cards must open details toward the dialog interior');
+  assert.equal(preview.style.top, '482px', 'bottom-side details must move above the clipping boundary');
   normal.onmouseleave();
-  assert.equal(ids['plugin-workbench-preview'].hidden, true);
+  assert.equal(preview.hidden, true);
+  normal.getBoundingClientRect = () => ({ left: 130, right: 250, top: 100, bottom: 258, width: 120, height: 158 });
+  normal.onmouseenter(); await flush();
+  assert.equal(preview.style.left, '160px', 'left-side cards should open details to the right');
+  assert.equal(preview.style.top, '142px', 'details must not overlap the dialog header');
+  normal.onmouseleave();
   const fileFirst = ids['plugin-workbench-grid'].children[1];
   fileFirst.onmouseenter(); await flush();
   assert.deepEqual(preloaded, []);
@@ -132,5 +168,9 @@ class Element {
   assert.match(html, /id="plugin-autostart-dialog"/);
   assert.match(html, /id="plugin-autostart-enabled"/);
   assert.ok(html.indexOf('/plugin-workbench-launcher.js') < html.indexOf('/app.js'));
-  console.log('PASS launcher safe hover, update badge/upgrade-all, autostart management and opening states');
+  const css = fs.readFileSync('internal/server/web/plugin-workbench-launcher.css', 'utf8');
+  assert.ok(!css.includes('backdrop-filter'), 'modal scrolling must not continuously reblur the application behind it');
+  assert.ok(!css.includes('scroll-behavior:smooth'), 'letter navigation must not start a long smooth-scroll animation');
+  assert.match(css, /\.workbench-plugin-preview\{position:absolute;z-index:20;/, 'details must stay above card and heading layers');
+  console.log('PASS launcher safe hover, stable letter navigation, update badge/upgrade-all, autostart management and opening states');
 })().catch(error => { console.error(error); process.exitCode = 1; });

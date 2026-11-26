@@ -37,6 +37,8 @@ interface Window {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
     const letterButtons: Record<string, HTMLButtonElement> = {};
     let activeLetter = '';
+    let renderedKey = '';
+    let renderedAlphabetical = false;
     let previewTimer: any = 0;
     let previewToken = 0;
     let updateBusy = false, autostartBusy = false, updateCheckedAt = 0;
@@ -45,21 +47,26 @@ interface Window {
 
     function hidePreview(): void {
       previewToken++;
-      clearTimeout(previewTimer);
-      preview.hidden = true;
+      if (previewTimer) clearTimeout(previewTimer);
+      previewTimer = 0;
+      if (!preview.hidden) preview.hidden = true;
     }
     function positionPreview(item: HTMLElement): void {
       if (typeof item.getBoundingClientRect !== 'function') return;
-      const rect = item.getBoundingClientRect(), host = dialog.getBoundingClientRect();
-      const left = rect.right + 276 < window.innerWidth ? rect.right - host.left + 10 : rect.left - host.left - 274;
-      preview.style.left = Math.max(12, left) + 'px';
-      preview.style.top = Math.max(76, Math.min(rect.top - host.top - 8, host.height - 205)) + 'px';
+      const rect = item.getBoundingClientRect(), host = dialog.getBoundingClientRect(), content = grid.getBoundingClientRect(), size = preview.getBoundingClientRect();
+      const width = size.width || 264, height = size.height || 190, margin = 12, gap = 10;
+      const preferredLeft = rect.right + gap + width <= host.right - margin ? rect.right - host.left + gap : rect.left - host.left - width - gap;
+      const maxLeft = Math.max(margin, host.width - width - margin);
+      const minTop = content.top - host.top + 8, maxTop = Math.max(minTop, content.bottom - host.top - height - 8);
+      preview.style.left = Math.max(margin, Math.min(preferredLeft, maxLeft)) + 'px';
+      preview.style.top = Math.max(minTop, Math.min(rect.top - host.top - 8, maxTop)) + 'px';
     }
     function showPreview(plugin: any, item: HTMLButtonElement): void {
       if (item.disabled) return;
       hidePreview();
       const token = previewToken;
       previewTimer = setTimeout(() => {
+        previewTimer = 0;
         if (token !== previewToken || !dialog.open) return;
         const name = services.displayName ? services.displayName(plugin.name) : plugin.name;
         const fileFirst = services.fileFirst(plugin.id);
@@ -79,34 +86,38 @@ interface Window {
         // workbenches, which was the launcher's main source of intermittent jank.
       }, 180);
     }
-    function animateOrder(previous: Map<string, DOMRect>): void {
-      if (!previous.size || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || typeof grid.querySelectorAll !== 'function') return;
-      for (const item of Array.from(grid.querySelectorAll('.workbench-plugin-item')) as HTMLElement[]) {
-        const before = previous.get(item.dataset.pluginId || '');
-        if (!before || typeof item.animate !== 'function') continue;
-        const after = item.getBoundingClientRect(), x = before.left - after.left, y = before.top - after.top;
-        if (Math.abs(x) < 1 && Math.abs(y) < 1) continue;
-        item.animate([{ transform: `translate(${x}px, ${y}px)`, opacity: .65 }, { transform: 'translate(0, 0)', opacity: 1 }], { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' });
-      }
-    }
-
-    function refresh(animate = false, scrollToLetter = false): void {
-      const previous = new Map<string, DOMRect>();
-      if (animate && typeof grid.querySelectorAll === 'function') {
-        for (const item of Array.from(grid.querySelectorAll('.workbench-plugin-item')) as HTMLElement[]) previous.set(item.dataset.pluginId || '', item.getBoundingClientRect());
-      }
-      hidePreview();
-      const items = supported(services.plugins());
-      const ordered = activeLetter ? [...items].sort((a, b) => letterOf(a).localeCompare(letterOf(b)) || String(services.displayName(a.name)).localeCompare(String(services.displayName(b.name)), 'zh-Hans-CN-u-co-pinyin') || a.id.localeCompare(b.id)) : items;
-      grid.replaceChildren();
-      dialog.dataset.pluginCount = String(items.length);
-      dialog.dataset.order = activeLetter ? 'alphabetical' : 'default';
+    function updateRail(items: any[]): void {
+      const available = new Set(items.map(letterOf));
       for (const letter of letters) {
         const button = letterButtons[letter];
-        const available = items.some(plugin => letterOf(plugin) === letter);
-        button.disabled = !available;
-        button.setAttribute('aria-pressed', String(activeLetter === letter));
+        const disabled = !available.has(letter);
+        const pressed = String(activeLetter === letter);
+        if (button.disabled !== disabled) button.disabled = disabled;
+        if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
       }
+    }
+    function scrollToActiveLetter(): void {
+      if (!activeLetter || typeof grid.querySelector !== 'function') return;
+      const target = grid.querySelector('[data-letter-heading="' + activeLetter + '"]');
+      target?.scrollIntoView?.({ block: 'start', behavior: 'auto' });
+    }
+
+    function refresh(scrollToLetter = false): void {
+      const items = supported(services.plugins());
+      const alphabetical = !!activeLetter;
+      const ordered = alphabetical ? [...items].sort((a, b) => letterOf(a).localeCompare(letterOf(b)) || String(services.displayName(a.name)).localeCompare(String(services.displayName(b.name)), 'zh-Hans-CN-u-co-pinyin') || a.id.localeCompare(b.id)) : items;
+      const key = JSON.stringify(ordered.map(plugin => [plugin.id, services.displayName(plugin.name), !!plugin.enabled, !!plugin.error, plugin.version, services.fileFirst(plugin.id)]));
+      dialog.dataset.pluginCount = String(items.length);
+      dialog.dataset.order = alphabetical ? 'alphabetical' : 'default';
+      updateRail(items);
+      if (key === renderedKey && alphabetical === renderedAlphabetical) {
+        if (scrollToLetter) scrollToActiveLetter();
+        return;
+      }
+      hidePreview();
+      renderedKey = key;
+      renderedAlphabetical = alphabetical;
+      grid.replaceChildren();
       if (!items.length) {
         grid.append(node('p', 'workbench-launcher-empty', t('暂无支持工作台的插件。')));
         return;
@@ -114,7 +125,7 @@ interface Window {
       let group = '';
       for (const plugin of ordered) {
         const letter = letterOf(plugin);
-        if (activeLetter && letter !== group) {
+        if (alphabetical && letter !== group) {
           group = letter;
           const heading = node('h3', 'workbench-letter-heading', letter);
           heading.dataset.letterHeading = letter;
@@ -152,11 +163,7 @@ interface Window {
         };
         grid.append(item);
       }
-      animateOrder(previous);
-      if (scrollToLetter && activeLetter && typeof grid.querySelector === 'function') {
-        const target = grid.querySelector('[data-letter-heading="' + activeLetter + '"]');
-        target?.scrollIntoView?.({ block: 'start', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-      }
+      if (scrollToLetter) scrollToActiveLetter();
     }
 
     function paintUpdates(): void {
@@ -178,7 +185,7 @@ interface Window {
         updates = result.updates; updateCheckedAt = Date.now();
         if (result.failures.length) services.toast(t('{0} 个插件升级检查失败，可稍后重试', result.failures.length));
       } catch (error: any) { services.toast(error.message || t('插件升级检查失败')); }
-      finally { updateBusy = false; paintUpdates(); refresh(); }
+      finally { updateBusy = false; paintUpdates(); }
     }
     async function applyUpdates(): Promise<void> {
       if (updateBusy || services.blocked()) return;
@@ -191,7 +198,7 @@ interface Window {
         if (result.refreshError) services.toast(t('插件已升级，列表刷新失败，请手动刷新'));
         if (result.failures.length) services.toast(t('{0} 个插件升级失败，请单独重试', result.failures.length));
       } catch (error: any) { services.toast(error.message || t('插件升级失败')); }
-      finally { updateBusy = false; paintUpdates(); refresh(); }
+      finally { updateBusy = false; paintUpdates(); }
     }
     function renderAutostart(): void {
       const plugins = services.plugins().filter((plugin: any) => plugin.daemon);
@@ -227,7 +234,7 @@ interface Window {
       button.setAttribute('aria-pressed', 'false');
       button.onclick = () => {
         activeLetter = activeLetter === letter ? '' : letter;
-        refresh(true, true);
+        refresh(true);
       };
       letterButtons[letter] = button;
       rail.append(button);
@@ -246,7 +253,7 @@ interface Window {
     autostartClose.onclick = () => autostartDialog.close();
     autostartDialog.addEventListener('click', (event: MouseEvent) => { if (event.target === autostartDialog) autostartDialog.close(); });
     close.onclick = () => dialog.close();
-    grid.addEventListener('scroll', hidePreview);
+    grid.addEventListener('scroll', () => { if (!preview.hidden || previewTimer) hidePreview(); });
     dialog.addEventListener('close', hidePreview);
     dialog.addEventListener('click', (event: MouseEvent) => {
       if (event.target === dialog) dialog.close();

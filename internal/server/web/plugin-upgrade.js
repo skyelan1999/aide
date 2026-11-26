@@ -146,6 +146,16 @@
     async function checkAll(plugins, services) {
         const candidates = plugins.filter((plugin) => plugin && typeof plugin.id === 'string' && plugin.id && plugin.installed !== false && plugin.installedSource !== 'bundled'), updates = [], failures = [];
         let cursor = 0;
+        if (candidates.length) {
+            try {
+                const market = await services.api('/plugin-market?refresh=1');
+                if (market?.refreshError)
+                    failures.push({ id: 'plugin-market', name: services.t('官方插件市场'), message: market.refreshError });
+            }
+            catch (error) {
+                failures.push({ id: 'plugin-market', name: services.t('官方插件市场'), message: error.message });
+            }
+        }
         async function worker() { while (cursor < candidates.length) {
             const plugin = candidates[cursor++];
             try {
