@@ -144,7 +144,6 @@ async function refreshConfig({ modelConnectionsSaved = false } = {}) {
   renderCommandWorkspaceStatus();
   window.AideManagement?.refresh();
   await refreshApprovalPolicy();
-  $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
   $('settings-sheet-version').textContent = ' · aide ' + versionText;

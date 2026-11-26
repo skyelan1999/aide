@@ -41,6 +41,7 @@ type ExecutionEnvironmentResult struct {
 	Tools             []ToolUse       `json:"tools,omitempty"`
 	Usage             TokenUsage      `json:"usage"`
 	Context           *RequestContext `json:"context,omitempty"`
+	Compaction        *streamEvent    `json:"compaction,omitempty"`
 	ArtifactDirectory string          `json:"artifactDirectory,omitempty"`
 	Released          bool            `json:"released"`
 	Collected         bool            `json:"collected"`
@@ -118,7 +119,7 @@ func environmentTool(name, description string, properties map[string]any, requir
 }
 
 var executionEnvironmentTools = []any{
-	environmentTool("environment_run_queue", "Run a work batch using ALL X work slots. During this synchronous tool the main model pauses inference, so no slot is reserved for a manager. Code dispatches ready assignments, refills slots and collects results without per-job model polling. order defaults to random among ready jobs; fifo is available. Optional jobs uses the same atomic batch validation and batch-local keys as environment_submit_batch; omitted jobs drains the existing queue. merge=true registers ordinary pending proposals only. Dependencies order execution, not copy predecessor edits. Cancellation cancels/joins the pool before returning the borrowed slot. Returns a compact manifest; independently verify integration and inspect retained evidence as needed, without re-reading every original file solely to remember progress.", map[string]any{"jobs": map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{"key": map[string]any{"type": "string"}, "assignment": map[string]any{"type": "string"}, "dependsOn": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}, "required": []string{"assignment"}}}, "order": map[string]any{"type": "string", "enum": []string{"random", "fifo"}}, "merge": map[string]any{"type": "boolean"}}),
+	environmentTool("environment_run_queue", "Run a work batch using at most X-1 temporary work slots. During this synchronous tool the main model pauses inference, and its slot remains reserved. Code dispatches ready assignments, refills slots and collects results without per-job model polling. order defaults to random among ready jobs; fifo is available. Optional jobs uses the same atomic batch validation and batch-local keys as environment_submit_batch; omitted jobs drains the existing queue. merge=true registers ordinary pending proposals only. Dependencies order execution, not copy predecessor edits. Cancellation cancels/joins the pool before returning to main inference. Returns a compact manifest; independently verify integration and inspect retained evidence as needed, without re-reading every original file solely to remember progress.", map[string]any{"jobs": map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{"key": map[string]any{"type": "string"}, "assignment": map[string]any{"type": "string"}, "dependsOn": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}, "required": []string{"assignment"}}}, "order": map[string]any{"type": "string", "enum": []string{"random", "fifo"}}, "merge": map[string]any{"type": "boolean"}}),
 	environmentTool("environment_submit_batch", "Atomically enqueue small, independently verifiable assignments. jobs may outnumber slots; an idle slot automatically starts the next ready job without another model turn. Each optional key is unique within this batch; dependsOn may name batch keys (including later jobs) or existing job IDs. Rejects missing dependencies/cycles before any job starts. Dependencies order execution only: they do NOT apply or copy predecessor candidates. Keep integration of edits on main. Choose useful granularity, not a fixed job count; do not split trivial/sequential work. Returns stable IDs for every accepted job.", map[string]any{"jobs": map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{"key": map[string]any{"type": "string"}, "assignment": map[string]any{"type": "string"}, "dependsOn": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}, "required": []string{"assignment"}}}}, "jobs"),
 	environmentTool("environment_queue", "Read task-local job states without loading source or worker history. limit controls presentation only (default 32); pass nextAfter as after to continue. Counts cover ALL jobs, including omitted rows. queued dependencies do not occupy worker slots. completed is not independently verified; mergedAsPending is not applied.", map[string]any{"after": map[string]any{"type": "string"}, "limit": map[string]any{"type": "integer"}}),
 	environmentTool("environment_collect_ready", "Collect whichever jobs have finished, rather than waiting for a specific slow job. wait=true waits cancelably for ANY completion; limit defaults to 8 receipts. merge=true uses the same ordinary pending-proposal version/conflict checks, never applies files. Each result has its own error so one conflict cannot hide other results. Resolve conflicts with environment_collect paths/detail; do not blindly repeat a failed merge. Collect all jobs before final response.", map[string]any{"wait": map[string]any{"type": "boolean"}, "merge": map[string]any{"type": "boolean"}, "limit": map[string]any{"type": "integer"}}),
@@ -220,6 +221,34 @@ func (p *executionPool) publishLocked() {
 	}
 	p.parent.mu.Unlock()
 	p.parent.publishStream(p.task.ID, streamEvent{Event: "parallel", Text: "environments"})
+}
+
+func (p *executionPool) publishCompaction(environmentID string, event streamEvent) {
+	if p == nil || environmentID == "" {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.closed {
+		return
+	}
+	j := p.jobs[environmentID]
+	if j == nil {
+		return
+	}
+	if previous := j.result.Compaction; previous != nil && event.StartedAt == 0 {
+		event.StartedAt = previous.StartedAt
+	}
+	if event.StartedAt == 0 && (event.Phase == "started" || event.Phase == "folding") {
+		event.StartedAt = time.Now().UnixMilli()
+	}
+	if event.UpdatedAt == 0 {
+		event.UpdatedAt = time.Now().UnixMilli()
+	}
+	event.Event = "compaction"
+	event.EnvironmentID = environmentID
+	j.result.Compaction = cloneExecutionValue(&event)
+	p.publishLocked()
 }
 
 func (p *executionPool) close() {
@@ -343,6 +372,9 @@ func (p *executionPool) run(j *executionJob) {
 			}
 		}
 		result.FinishedAt = time.Now().UTC().Format(time.RFC3339Nano)
+		// Compaction events arrive through the child callback while this local
+		// execution result is being assembled; preserve the latest independent state.
+		result.Compaction = cloneExecutionValue(j.result.Compaction)
 		j.result = result
 		b, _ := json.Marshal(map[string]any{"status": result.Status, "output": result.Output, "artifactDirectory": result.ArtifactDirectory, "verified": false})
 		old := p.exchange["result:"+result.ID]
@@ -827,7 +859,7 @@ func (a *App) executeEnvironmentTool(ctx context.Context, call ToolCall, task *T
 	switch call.Function.Name {
 	case "environment_run_queue":
 		if author != "main" {
-			err = errors.New("only main can pause itself and lend its slot")
+			err = errors.New("only main can run the synchronous queue")
 		} else if !executionBlockingQueueEnabled(task) {
 			err = errors.New("blocking queue is not enabled for this task; use environment_submit_batch and continue useful main work, then environment_collect_ready")
 		} else {
@@ -1174,7 +1206,7 @@ func executionSchedulerInstruction(task *Task) string {
 	}
 	instruction := fmt.Sprintf("[execution environment scheduler] Asynchronous collaboration. Capacity is %dX including this actively working main runtime and up to %d private worker environments. Default to environment_submit_batch for useful independent assignments, or environment_submit for one assignment; both return immediately. While workers run, use ordinary main tools to implement an independent part, prepare integration or run useful validation. Do not turn main into a polling-only manager or wait for the entire batch before doing main work. Use environment_collect_ready(wait=false, merge=true for code candidates) at useful boundaries to integrate whichever jobs finish first; wait=true only when no useful main work remains. The queue refills free worker slots automatically. Decomposition and occupancy are task-dependent, with no fixed engineering roles or requirement to fill slots. Performance sizing: start with roughly %d–%d substantial assignments for %dX capacity (about 1–2 per work slot), keeping useful main work outside the worker batch. Group tiny related items; create a larger backlog only when uneven task duration justifies refill. Do not split modules into microtasks merely to occupy slots: prior 5X/18-task and 10X all-slot samples were slower than their 1X comparisons, while separate async 5X samples were faster. These are noisy single-sample results, so treat the range as a starting heuristic, not a cap or speed guarantee. Avoid ceremonial planning and repeated full-project discovery inside scoped jobs. Assign concrete nonoverlapping outputs; workers inspect their own scopes. Dependencies only order execution, not copy predecessor edits; integrate dependent code explicitly. Queue and collection receipts are bounded and unverified; environment_queue pages retained IDs and environment_collect(detail=true, paths=...) inspects chosen evidence/candidates. Independently test integration, collect every job before the final response, and do not reconstruct already completed work by re-reading every original stub. All candidates use ordinary proposal/version/conflict/approval rules. Shared memory is task-local unverified reference data; external resources retain normal coordination. Simple/sequential and 1X work keep ordinary main tools.", task.Parallelism, task.Parallelism-1, task.Parallelism, task.Parallelism*2, task.Parallelism)
 	if executionBlockingQueueEnabled(task) {
-		instruction += " This scoped agent explicitly enables environment_run_queue as an optional blocking alternative: it pauses main inference and loans the main slot until the batch is fully joined; asynchronous collaboration remains the default when main has useful work."
+		instruction += " This scoped agent explicitly enables environment_run_queue as an optional blocking alternative: it pauses main inference while keeping the main slot reserved, so at most X-1 temporary environments run; asynchronous collaboration remains the default when main has useful work."
 	}
 	return instruction
 }

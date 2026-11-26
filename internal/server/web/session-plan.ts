@@ -1,9 +1,9 @@
 interface Window {
   AideSessionPlan?: any;
 }
-// 任务与规划：会话级计划面板。数据源是 session.plan：用户用自然语言添加的
-// 任务，以及 aide 通过 update_plan 拆解并被后端镜像进来的步骤。面板同时承担
-// 编排（新增、关闭、依赖、导入导出）与过程留痕（审批记录、所属 run）。
+// 任务与规划：只展示用户明确创建的任务，以及这些任务启动 run 后产生的
+// 执行步骤。普通 run 的 update_plan 仅属于运行轨迹，不进入会话级任务列表。
+// 面板同时承担编排（新增、关闭、依赖、导入导出）与过程留痕（审批记录、所属 run）。
 (function () {
   let generation = 0;
   let active: any = null;
@@ -69,7 +69,9 @@ interface Window {
     }
 
     function planOf(value: any) {
-      return Array.isArray(value && value.plan) ? value.plan : [];
+      const items = Array.isArray(value && value.plan) ? value.plan : [];
+      const userTasks = new Set<any>(items.filter((item: any) => item.source === 'user').map((item: any) => item.id));
+      return items.filter((item: any) => item.source === 'user' || item.source === 'aide' && userTasks.has(item.parentId));
     }
 
     function runsOf(value: any) {
@@ -93,7 +95,6 @@ interface Window {
       icon.title = t(LABEL[item.status] || '待执行');
       const title = node('span', 'plan-title', item.title);
       const tags = node('span', 'plan-tags');
-      tags.append(node('span', 'plan-tag plan-tag-' + (item.source === 'aide' ? 'aide' : 'user'), item.source === 'aide' ? 'aide' : t('自然语言')));
       if (item.status && item.status !== 'pending' && item.status !== 'in_progress') tags.append(node('span', 'plan-tag plan-tag-state plan-state-' + status, t(LABEL[item.status])));
       head.append(icon, title, tags);
       row.dataset.planId = item.id;
@@ -199,30 +200,33 @@ interface Window {
       const plan = planOf(current);
       const runs = runsOf(current);
       const intro = node('div', 'outcome-intro plan-intro');
-      intro.append(node('h3', '', t('会话任务与规划')));
-      intro.append(node('p', 'muted', '#' + (session.number || '?') + ' · ' + (session.title || '')));
-      intro.append(node('p', 'muted', t('aide 每轮都会读到这份列表：未完成项、依赖和最近审批记录都会进入上下文，避免遗漏。')));
+      intro.append(node('span', 'plan-eyebrow', t('明确目标 · 持续跟踪')));
+      intro.append(node('h3', '', t('任务与规划')));
+      intro.append(node('p', 'muted', t('只展示你明确创建的任务。日常对话和模型自我规划留在运行轨迹，不会出现在这里。')));
       hostRef.append(intro);
 
       const navigatorHost = node('div', 'project-flow-guides'); hostRef.append(navigatorHost);
       function renderNavigator(): void { navigatorHost.replaceChildren(); if (window.AideProjectWorkflows) window.AideProjectWorkflows.navigator(navigatorHost, { plan: planOf(current), runs: runsOf(current), t, api, sessionId: current.id, valid, changed: reload, launchTask, selectRun }); }
       renderNavigator();
-      const open = plan.filter((i: any) => i.status !== 'closed');
+      const tracked = plan.filter((i: any) => i.source === 'user');
+      const open = tracked.filter((i: any) => i.status !== 'closed');
       const totals: any = {
         total: open.length,
-        done: plan.filter((i: any) => i.status === 'completed').length,
-        live: plan.filter((i: any) => i.status === 'in_progress').length,
-        failed: plan.filter((i: any) => i.status === 'failed' || i.status === 'blocked').length,
+        done: tracked.filter((i: any) => i.status === 'completed').length,
+        live: tracked.filter((i: any) => i.status === 'in_progress').length,
+        failed: tracked.filter((i: any) => i.status === 'failed' || i.status === 'blocked').length,
       };
-      const metrics = node('div', 'outcome-metrics plan-metrics');
-      for (const [key, label] of [['total', '待办任务'], ['done', '已完成'], ['live', '进行中'], ['failed', '失败/受阻']]) {
-        const cell = node('div', 'plan-metric plan-metric-' + key);
+      const metrics = node('div', 'plan-summary');
+      for (const [key, label] of [['total', '全部任务'], ['done', '已完成'], ['live', '进行中'], ['failed', '异常']]) {
+        const cell = node('span', 'plan-summary-item plan-metric-' + key);
         cell.append(node('strong', '', String(totals[key])), node('span', '', t(label)));
         metrics.append(cell);
       }
       hostRef.append(metrics);
 
       const toolbar = node('div', 'plan-toolbar');
+      const addBox = node('details', 'plan-add-box');
+      addBox.append(node('summary', '', t('＋ 新建任务')));
       const addForm = node('form', 'plan-add');
       const input = node('textarea', 'plan-add-input');
       input.rows = 2;
@@ -238,10 +242,11 @@ interface Window {
       addForm.append(contractBox);
       const rememberDraft = (): void => {
         if (!valid() || !addForm.isConnected) return;
-        drafts.set(draftKey, { values: Array.from(addForm.querySelectorAll('textarea'), (n: any) => [n.name || 'title', n.value]), expanded: contractBox.open, busy: !!drafts.get(draftKey)?.busy });
+        drafts.set(draftKey, { values: Array.from(addForm.querySelectorAll('textarea'), (n: any) => [n.name || 'title', n.value]), expanded: contractBox.open, composerOpen: addBox.open, busy: !!drafts.get(draftKey)?.busy });
       };
       addForm.addEventListener('input', rememberDraft);
       contractBox.addEventListener('toggle', rememberDraft);
+      addBox.addEventListener('toggle', rememberDraft);
       addForm.onsubmit = async (event: any): Promise<void> => {
         event.preventDefault();
         if (!valid() || drafts.get(draftKey)?.busy) return;
@@ -263,7 +268,8 @@ interface Window {
           if (valid()) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = false;
         }
       };
-      toolbar.append(addForm);
+      addBox.append(addForm);
+      toolbar.append(addBox);
 
       const io = node('div', 'plan-io');
       const exportBtn = node('button', 'quiet', t('导出 JSON'));
@@ -302,50 +308,44 @@ interface Window {
         finally { importBtn.disabled = false; importInput.value = ''; }
       };
       io.append(importBtn, importInput, exportBtn);
-      toolbar.append(io);
       hostRef.append(toolbar);
-      if (window.AideProjectRecords) window.AideProjectRecords.knowledgePanel(hostRef, { api, t, valid });
-      if (window.AideProjectWorkflows) window.AideProjectWorkflows.panel(hostRef, { api, sessionId: current.id, workspaceId, t, valid, changed: reload });
 
       const board = node('div', 'plan-board');
       const userItems = plan.filter((i: any) => i.source === 'user');
-      if (!plan.length) {
+      const openUserItems = userItems.filter((i: any) => i.status !== 'closed');
+      if (!openUserItems.length) {
         const empty = node('div', 'plan-empty');
-        empty.append(node('p', '', t('还没有任务。添加一条自然语言任务，或导入一份 aide.plan/v1 JSON 开始编排。')));
+        empty.append(node('strong', '', t('还没有明确任务')));
+        empty.append(node('p', '', t('添加需要持续跟踪的目标。普通对话和模型内部步骤不会进入这里。')));
         board.append(empty);
       }
-      for (const item of userItems) {
-        if (item.status === 'closed') continue;
-        board.append(itemRow(item, 0));
-        for (const child of plan.filter((i: any) => i.parentId === item.id && i.source === 'aide' && i.status !== 'closed')) {
-          board.append(itemRow(child, 1));
+      for (const item of openUserItems) {
+        const task = node('section', 'plan-task');
+        task.append(itemRow(item, 0));
+        const children = plan.filter((i: any) => i.parentId === item.id && i.source === 'aide' && i.status !== 'closed');
+        if (children.length) {
+          const steps = node('details', 'plan-steps');
+          steps.append(node('summary', '', t('执行步骤 · {0}', children.length)));
+          const list = node('div', 'plan-step-list');
+          for (const child of children) list.append(itemRow(child, 1));
+          steps.append(list);
+          task.append(steps);
         }
-      }
-      // 没有关联到用户任务的 aide 步骤按 run 归组，保证历史执行也能被复盘。
-      const orphan = plan.filter((i: any) => i.source === 'aide' && i.status !== 'closed' && !(i.parentId && plan.some((x: any) => x.id === i.parentId)));
-      const byRun = new Map<any, any>();
-      for (const item of orphan) {
-        const key = item.runId || 'unknown';
-        if (!byRun.has(key)) byRun.set(key, []);
-        byRun.get(key).push(item);
-      }
-      for (const [runId, items] of byRun) {
-        const run = runs.find((r: any) => r.id === runId);
-        const group = node('section', 'plan-run-group');
-        const head = node('header', 'plan-run-head');
-        head.append(node('strong', '', t('会话执行 · {0}', run ? '#' + (run.number || '') : t('未关联任务'))));
-        if (run) head.append(node('span', 'muted', (run.prompt || '').slice(0, 90)));
-        const detail = node('button', 'plan-link', t('查看本轮'));
-        detail.type = 'button';
-        if (selectRun && runId !== 'unknown') detail.onclick = (): void => selectRun(runId);
-        head.append(detail);
-        group.append(head);
-        for (const item of items) group.append(itemRow(item, 1));
-        board.append(group);
+        board.append(task);
       }
       hostRef.append(board);
 
-      const closedItems = plan.filter((i: any) => i.status === 'closed');
+      const advanced = node('details', 'plan-advanced');
+      advanced.append(node('summary', '', t('高级管理')));
+      const advancedBody = node('div', 'plan-advanced-body');
+      advancedBody.append(io);
+      if (window.AideProjectRecords) window.AideProjectRecords.knowledgePanel(advancedBody, { api, t, valid });
+      if (window.AideProjectWorkflows) window.AideProjectWorkflows.panel(advancedBody, { api, sessionId: current.id, workspaceId, t, valid, changed: reload });
+      advancedBody.append(node('p', 'outcome-boundary', t('任务进度以实际执行记录为准。JSON 导入导出、项目知识和业务流程集中在这里。')));
+      advanced.append(advancedBody);
+      hostRef.append(advanced);
+
+      const closedItems = userItems.filter((i: any) => i.status === 'closed');
       if (closedItems.length) {
         const folded = node('details', 'plan-closed');
         folded.append(node('summary', '', t('已关闭的任务 · {0}', closedItems.length)));
@@ -358,8 +358,8 @@ interface Window {
       if (knowledge && knowledgeOpen) knowledge.open = true;
       for (const n of hostRef.querySelectorAll('.plan-add textarea')) if (draftFields.has(n.name || 'title')) n.value = draftFields.get(n.name || 'title');
       contractBox.open = !!savedDraft?.expanded;
+      addBox.open = savedDraft?.composerOpen ?? !openUserItems.length;
       if (savedDraft?.busy) for (const control of addForm.querySelectorAll('textarea,button')) control.disabled = true;
-      hostRef.append(node('p', 'outcome-boundary', t('规划只描述意图与进度，不代表文件已落盘；实际结果以工具记录和审批记录为准。导出 JSON 可用于在其它会话中复用这套工作流。')));
 
       const needsPolling = (value: any) => runsOf(value).some((run: any) => run && run.status === 'running');
       function syncPolling(): void {
@@ -393,13 +393,14 @@ interface Window {
           const run = (current.runs || []).find((r: any) => r.id === item.runId);
           if (run && ref.runStatus) ref.runStatus.textContent = t('执行：{0}', t(RUN_STATUS[run.status] || run.status || ''));
         }
-        const metrics = hostRef.querySelectorAll('.plan-metric strong');
+        const metrics = hostRef.querySelectorAll('.plan-summary-item strong');
         if (metrics.length >= 4) {
-          const open = plan.filter((i: any) => i.status !== 'closed');
+          const tracked = plan.filter((i: any) => i.source === 'user');
+          const open = tracked.filter((i: any) => i.status !== 'closed');
           metrics[0].textContent = String(open.length);
-          metrics[1].textContent = String(plan.filter((i: any) => i.status === 'completed').length);
-          metrics[2].textContent = String(plan.filter((i: any) => i.status === 'in_progress').length);
-          metrics[3].textContent = String(plan.filter((i: any) => i.status === 'failed' || i.status === 'blocked').length);
+          metrics[1].textContent = String(tracked.filter((i: any) => i.status === 'completed').length);
+          metrics[2].textContent = String(tracked.filter((i: any) => i.status === 'in_progress').length);
+          metrics[3].textContent = String(tracked.filter((i: any) => i.status === 'failed' || i.status === 'blocked').length);
         }
       }
       function poll(): void {

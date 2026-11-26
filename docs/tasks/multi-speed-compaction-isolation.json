@@ -1,0 +1,69 @@
+{
+  "id": "multi-speed-compaction-isolation",
+  "request": "处理多倍速独立上下文压缩状态显示错误，并核对修复10X最多9个派生上下文的容量边界",
+  "baseline": "dc12ee49b3156c9e73142e59384ae708a3f5d603",
+  "initial_status": "main",
+  "acceptance": [
+    "主会话压缩只改变主环境圆环，不再让所有圆环一起打勾、旋转或显示失败。",
+    "各临时环境的压缩进度独立回传并随任务结果持久化，实时事件和会话刷新使用同一状态。",
+    "10X 显示 1 个主环境和最多 9 个临时环境圆环；所有调度入口的临时环境并发峰值均不超过 9。",
+    "排队任务和历史结果可以超过 9 个，但只有运行中的临时环境占用容量。",
+    "相关 Go、Node 回归、TypeScript 检查和真实页面验收通过，既有项目问题不冒充本轮通过。"
+  ],
+  "scope": [
+    "internal/server/web/app.ts",
+    "internal/server/web/workbench.css",
+    "internal/server/execution_environments.go",
+    "internal/server/execution_work_queue.go",
+    "internal/server/execution_queue_drain.go",
+    "internal/server/workflow.go",
+    "相关执行环境、压缩 UI 测试和边界文档",
+    "https://github.com/skyelan1999/aide/issues/992"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "completed",
+      "summary": "用户明确各上下文独立压缩；10X 统一为 1 个主环境加最多 9 个并发临时环境，队列长度不等于容量。",
+      "evidence": [
+        "docs/requirements/execution-environments-20261101.md",
+        "https://github.com/skyelan1999/aide/issues/992"
+      ]
+    },
+    "design": {
+      "status": "completed",
+      "summary": "临时环境事件写入各自 ExecutionEnvironmentResult.compaction；前端按 lane 读取主会话或 worker 状态并设置圆环 class。同步排空不再借用主槽位。",
+      "evidence": [
+        "修前 context-meter 与 compaction UI 回归均失败",
+        "修前后端测试确认 ExecutionEnvironmentResult 尚无 Compaction"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "实现独立压缩状态回传、圆环样式和 9 个临时环境硬上限。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

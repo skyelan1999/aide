@@ -10,10 +10,9 @@ import (
 	"time"
 )
 
-// PlanItem 是会话级「任务与规划」的一项：要么是用户用自然语言添加的任务
-// （source=user），要么是 aide 在执行中用 update_plan 拆解出来的步骤
-// （source=aide，runId/step 指回所属 run）。它是编排视图的唯一数据源，
-// 也是 aide 后续轮次理解背景与历史的上下文来源。
+// PlanItem 是会话级「任务与规划」的一项：用户明确创建的任务（source=user），
+// 或该任务启动 run 后由 aide 拆解的执行步骤（source=aide，runId/step 指回所属 run）。
+// 普通 run 的模型自我规划只保留在轨迹中，不进入会话任务列表或后续任务上下文。
 type PlanItem struct {
 	Flow            *PlanFlowStage        `json:"flow,omitempty"`
 	WorkspaceID     string                `json:"workspaceId,omitempty"`
@@ -60,6 +59,28 @@ func (a *App) findPlanItemLocked(s *Session, id string) *PlanItem {
 		}
 	}
 	return nil
+}
+
+// explicitPlanItemsLocked 只返回用户明确创建的任务及其执行步骤。
+// 旧版本会把普通 run 的 update_plan 镜像成无父任务的 aide 项；这些记录仍保留
+// 在 session JSON 中用于兼容，但不再进入任务面板、导出或后续模型上下文。
+func explicitPlanItemsLocked(s *Session) []PlanItem {
+	if s == nil {
+		return nil
+	}
+	userTasks := map[string]bool{}
+	for _, item := range s.Plan {
+		if item.Source == "user" {
+			userTasks[item.ID] = true
+		}
+	}
+	items := make([]PlanItem, 0, len(s.Plan))
+	for _, item := range s.Plan {
+		if item.Source == "user" || item.Source == "aide" && userTasks[item.ParentID] {
+			items = append(items, item)
+		}
+	}
+	return items
 }
 
 func planStepKey(runID string, step int) string { return runID + ":" + strconv.Itoa(step) }
@@ -234,7 +255,7 @@ func (a *App) exportPlan(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
-	doc := planDocument{Schema: planSchema, SessionTitle: s.Title, ExportedAt: time.Now().UTC().Format(time.RFC3339Nano), Tasks: append([]PlanItem(nil), s.Plan...)}
+	doc := planDocument{Schema: planSchema, SessionTitle: s.Title, ExportedAt: time.Now().UTC().Format(time.RFC3339Nano), Tasks: explicitPlanItemsLocked(s)}
 	a.mu.Unlock()
 	if doc.Tasks == nil {
 		doc.Tasks = []PlanItem{}
@@ -351,10 +372,14 @@ func (a *App) importPlan(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{"imported": len(added), "items": added})
 }
 
-// syncAgentPlanLocked 把 update_plan 的计划镜像进会话规划。按标题保留
-// 已完成/已关闭状态，避免模型重复下发同一计划时把进度清零。
+// syncAgentPlanLocked 只镜像用户明确创建的任务所启动 run 的 update_plan。
+// 普通对话和普通执行中的模型自我规划仅留在该 run 的轨迹里，不进入会话任务列表。
 func (a *App) syncAgentPlanLocked(s *Session, task *Task) {
-	if s == nil || task == nil || task.AgentPlan == nil {
+	if s == nil || task == nil || task.AgentPlan == nil || task.PlanTaskID == "" {
+		return
+	}
+	parent := a.findPlanItemLocked(s, task.PlanTaskID)
+	if parent == nil || parent.Source != "user" {
 		return
 	}
 	existing := map[string]PlanItem{}
@@ -445,7 +470,7 @@ func (a *App) planContextLocked(s *Session, focusID string, approvalLimit int) s
 		return ""
 	}
 	var lines []string
-	items := append([]PlanItem(nil), s.Plan...)
+	items := explicitPlanItemsLocked(s)
 	if focusID != "" {
 		for i, item := range items {
 			if item.ID == focusID {

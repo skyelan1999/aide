@@ -63,6 +63,58 @@ func TestExecutionEnvironmentLazyCapacityAndExchange(t *testing.T) {
 	}
 }
 
+func TestExecutionEnvironmentCompactionProgressIsIndependent(t *testing.T) {
+	_, task, p := environmentFixture(t, 10)
+	for _, id := range []string{"worker-a", "worker-b"} {
+		j := &executionJob{result: ExecutionEnvironmentResult{ID: id, Status: "running"}, done: make(chan struct{})}
+		close(j.done)
+		p.jobs[id] = j
+	}
+	child := &App{executionEnvironment: &executionEnvironment{pool: p, id: "worker-a"}, contextCompactionProgress: map[string]contextCompactionProgress{}}
+	events, unsubscribe := p.parent.subscribeStream(task.ID)
+	defer unsubscribe()
+	child.setContextCompactionProgress("child-a", streamEvent{Event: "compaction", Phase: "started", BeforeTokens: 1200})
+	find := func(id string) ExecutionEnvironmentResult {
+		for _, result := range task.Environments.Results {
+			if result.ID == id {
+				return result
+			}
+		}
+		t.Fatalf("missing environment %s", id)
+		return ExecutionEnvironmentResult{}
+	}
+	if got := find("worker-a").Compaction; got == nil || got.Phase != "started" || got.StartedAt == 0 || got.UpdatedAt == 0 {
+		t.Fatalf("worker compaction was not forwarded: %+v", got)
+	}
+	forwarded := false
+	for !forwarded {
+		select {
+		case event := <-events:
+			if event.Event == "compaction" {
+				forwarded = true
+				if event.EnvironmentID != "worker-a" || event.SessionID != "child-a" {
+					t.Fatalf("compaction event lost its environment identity: %+v", event)
+				}
+			}
+		case <-time.After(time.Second):
+			t.Fatal("worker compaction was not published to the main run")
+		}
+	}
+	if len(child.contextCompactionProgress) != 0 {
+		t.Fatalf("temporary environment polluted the main-session compaction state: %+v", child.contextCompactionProgress)
+	}
+	if got := find("worker-b").Compaction; got != nil {
+		t.Fatalf("sibling inherited compaction: %+v", got)
+	}
+	child.setContextCompactionProgress("child-a", streamEvent{Event: "compaction", Phase: "completed", BeforeTokens: 1200, AfterTokens: 400})
+	if got := find("worker-a").Compaction; got == nil || got.Phase != "completed" || got.AfterTokens != 400 || got.StartedAt == 0 {
+		t.Fatalf("worker terminal compaction was not retained: %+v", got)
+	}
+	if got := find("worker-b").Compaction; got != nil {
+		t.Fatalf("terminal compaction leaked to sibling: %+v", got)
+	}
+}
+
 func TestExecutionEnvironmentScratchAndMergeConflicts(t *testing.T) {
 	a, task, p := environmentFixture(t, 3)
 	if err := a.workspace.WriteFile("one.txt", []byte("original"), 0600); err != nil {

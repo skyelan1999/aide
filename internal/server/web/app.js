@@ -878,7 +878,12 @@ function openStream(run) {
         catch (_) {
             return;
         }
-        showContextCompaction(d);
+        if (d.environmentId) {
+            if (!showEnvironmentCompaction(d))
+                refreshSessionSoon();
+        }
+        else
+            showContextCompaction(d);
         if (isTerminalContextCompaction(d.phase))
             refreshSessionSoon();
     });
@@ -9373,6 +9378,7 @@ function renderContextMeter(data, isDraft) {
     paintContextUsage(data);
 }
 const contextCompactionTimers = new Map();
+const environmentCompactionTimers = new Map();
 const contextCompactionElapsedTimers = new Map();
 function isTerminalContextCompaction(phase) {
     return phase === 'completed' || phase === 'failed' || phase === 'cancelled';
@@ -9489,6 +9495,35 @@ function startContextCompactionWatch(sessionID) {
     contextCompactionWatches.set(sessionID, stop);
     return stop;
 }
+function showEnvironmentCompaction(event) {
+    const environmentId = String(event?.environmentId || '');
+    if (!environmentId)
+        return false;
+    const run = [...(state.session?.runs || [])].reverse().find((item) => item?.environments?.results?.some((result) => result?.id === environmentId));
+    const result = run?.environments?.results?.find((item) => item?.id === environmentId);
+    if (!result)
+        return false;
+    const previous = result.compaction;
+    const record = {
+        ...event,
+        startedAt: Number(event.startedAt) || Number(previous?.startedAt) || Date.now(),
+        updatedAt: Number(event.updatedAt) || Date.now(),
+    };
+    result.compaction = record;
+    clearTimeout(environmentCompactionTimers.get(environmentId));
+    const terminal = isTerminalContextCompaction(record.phase);
+    const timer = setTimeout(() => {
+        if (result.compaction?.updatedAt !== record.updatedAt)
+            return;
+        if (terminal)
+            result.compaction = null;
+        environmentCompactionTimers.delete(environmentId);
+        paintContextCompactionRings();
+    }, terminal ? 10000 : 180000);
+    environmentCompactionTimers.set(environmentId, timer);
+    paintContextCompactionRings();
+    return true;
+}
 function showContextCompaction(event) {
     if (!event || !event.phase)
         return;
@@ -9593,6 +9628,7 @@ function renderContextCompactionState(detail) {
         retry.disabled = !!inProgress && !stalled;
     }
     detail.querySelectorAll('.context-compaction-status').forEach((row) => row.remove());
+    paintContextCompactionRings();
     if (!event || (inProgress && !stalled))
         return;
     const row = el('div', 'context-compaction-status ' + (stalled ? 'stalled' : (running ? 'running' : event.phase)));
@@ -9679,6 +9715,33 @@ setInterval(() => {
     if (['running', 'awaiting_clarification', 'awaiting_approval', 'queued'].includes(run?.status))
         renderContextRuntime(run);
 }, 1000);
+function contextCompactionForLane(lane) {
+    if (lane?.main)
+        return state.session?.id ? state.contextCompactions.get(state.session.id) : null;
+    return lane?.result?.compaction || lane?.part?.compaction || null;
+}
+function paintContextCompactionRing(ring, lane) {
+    const compaction = contextCompactionForLane(lane);
+    const phase = compaction?.phase || '';
+    const active = phase === 'started' || phase === 'folding';
+    const updatedAt = Number(compaction?.updatedAt) || 0;
+    const age = updatedAt > 0 ? Math.max(0, Date.now() - updatedAt) : 0;
+    const compacting = active && (!updatedAt || age <= 180000);
+    const completed = phase === 'completed' && (!updatedAt || age <= 10000);
+    const failed = phase === 'failed' && (!updatedAt || age <= 10000);
+    ring.classList.toggle('is-compacting', compacting);
+    ring.classList.toggle('was-compacted', completed);
+    ring.classList.toggle('is-compaction-failed', failed);
+    ring.classList.toggle('is-compaction-stalled', active && !compacting);
+    ring.dataset.compactionState = compacting ? 'compacting' : completed ? 'completed' : failed ? 'failed' : active ? 'stalled' : '';
+}
+function paintContextCompactionRings() {
+    const host = $('context-parallel-rings');
+    if (!host)
+        return;
+    for (const ring of host.children)
+        paintContextCompactionRing(ring, ring._aideContextLane);
+}
 function paintContextUsageRings(run, request) {
     const host = $('context-parallel-rings');
     if (!host)
@@ -9729,6 +9792,8 @@ function paintContextUsageRings(run, request) {
         ring.onblur = hide;
         ring.setAttribute('aria-label', detail);
         ring.append(el('span', 'usage-ring-center'));
+        ring._aideContextLane = { main: index === 0, result: environmentJob, part };
+        paintContextCompactionRing(ring, ring._aideContextLane);
         host.append(ring);
     }
     renderContextCompactionState($('context-compaction-slot'));
@@ -14354,11 +14419,10 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
         ev.append(bodyNode);
     return ev;
 }
-let trajView = "history"; // history | review | calls | outcome（一级）
+let trajView = "review"; // review | history | calls | outcome（一级）
 let trajOutcomeRun = null;
 let trajectoryGeneration = 0;
 const trajectoryJournalCache = new Map();
-let trajFmt = "md"; // md | json（历史视图格式，二级）
 let trajectoryViewAnimation = null;
 function syncTrajectorySelection(seg) {
     if (!seg || !seg.offsetWidth)
@@ -14393,10 +14457,8 @@ function renderTrajectory() {
     ++trajectoryGeneration;
     window.AideTaskOutcome?.close();
     host.replaceChildren();
-    const fmtSeg = $('traj-fmt-seg');
-    fmtSeg?.classList.toggle('hidden', trajView !== 'history');
-    $('trajectory-export').classList.toggle('hidden', trajView === 'outcome' || trajView === 'review');
-    $('compact-button').classList.toggle('hidden', trajView !== 'history');
+    $('trajectory-export').classList.toggle('hidden', trajView === 'outcome');
+    $('compact-button').classList.toggle('hidden', trajView !== 'history' && trajView !== 'review');
     const session = state.session;
     if (trajView === 'review' && session) {
         const generation = trajectoryGeneration;
@@ -14459,26 +14521,15 @@ function renderTrajectory() {
         return;
     }
     if (trajView === 'calls') {
-        if (fmtSeg)
-            fmtSeg.classList.add('hidden');
         if (session.kind === 'assistant')
             host.append(el('p', 'muted', t('小秘会话记录的是对话历史，没有工作台工具调用记录。')));
         else
             renderCallsAnalysis(host, session);
         return;
     }
-    if (fmtSeg)
-        fmtSeg.classList.remove('hidden');
-    if (trajFmt === 'json') {
-        const pre = el('pre', 'traj-raw-view json-view');
-        pre.innerHTML = highlightJSON(buildTrajectoryJSON(session)); // JSON 语法高亮
-        host.append(pre);
-    }
-    else {
-        const md = el('div', 'traj-md-view md-body');
-        md.innerHTML = renderMarkdown(buildTrajectoryMarkdown(session)); // Markdown 渲染为 HTML（含 mermaid）
-        host.append(md);
-    }
+    const md = el('div', 'traj-md-view md-body');
+    md.innerHTML = renderMarkdown(buildTrajectoryMarkdown(session)); // 原始记录固定使用 Markdown，减少顶部操作。
+    host.append(md);
 }
 function renderTrajectoryOutcome(host, session) {
     if (session.kind === 'assistant') {
@@ -14572,45 +14623,6 @@ function buildTrajectoryMarkdown(s) {
         md += "---\n\n";
     }
     return md;
-}
-function buildTrajectoryJSON(s) {
-    const subs = (state.sessions || []).filter((x) => x.parentId === s.id);
-    const data = {
-        exportedAt: new Date().toISOString(),
-        session: { id: s.id, title: s.title, created: s.created, updated: s.updated, parentId: s.parentId, kind: s.kind },
-        messages: (s.messages || []).map((m) => ({ role: m.role, type: m.type, content: m.content })),
-        runs: (s.runs || []).map((r) => ({
-            id: r.id, created: r.created, prompt: r.prompt, mode: r.mode, model: r.model,
-            status: r.status, error: r.error, usage: r.usage,
-            steps: r.steps, toolUses: r.toolUses, files: r.files, commands: r.commands
-        })),
-        subSessions: subs.map((sub) => ({ id: sub.id, title: sub.title, created: sub.created, runs: sub.runs })),
-        timeline: []
-    };
-    if (s.kind === 'assistant')
-        data.timeline = (s.messages || []).map((m, index) => ({ index, type: m.role, messageType: m.type, content: m.content }));
-    for (const r of (s.runs || [])) {
-        data.timeline.push({ time: r.created, type: 'user', content: r.prompt });
-        for (const st of (r.steps || []))
-            data.timeline.push({ time: r.created, type: 'step', name: st.name, status: st.status });
-        for (const tu of (r.toolUses || []))
-            data.timeline.push({ time: r.created, type: 'tool', tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
-    }
-    return JSON.stringify(data, null, 2);
-}
-// JSON 语法高亮：先转义防 XMS/破坏，再给 key/string/number/boolean/null 上色
-function highlightJSON(json) {
-    const esc = String(json).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return esc.replace(/("(?:u[a-fA-F0-9]{4}|\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g, (m) => {
-        let cls = 'json-number';
-        if (m.startsWith('"'))
-            cls = /:\s*$/.test(m) ? 'json-key' : 'json-string';
-        else if (/true|false/.test(m))
-            cls = 'json-boolean';
-        else if (/null/.test(m))
-            cls = 'json-null';
-        return '<span class="' + cls + '">' + m + '</span>';
-    });
 }
 let callFilter = { tool: '', agent: 'all', type: 'all', time: 'all' };
 const CALL_TYPES = {
@@ -14720,7 +14732,6 @@ function openTrajectory() {
     $('settings-backdrop').classList.add('open');
     requestAnimationFrame(() => {
         syncTrajectorySelection(document.querySelector('.traj-main-seg'));
-        syncTrajectorySelection($('traj-fmt-seg'));
     });
 }
 function openRunOutcome(runId, sessionId) {
@@ -14749,7 +14760,6 @@ $('trajectory-toggle').onclick = () => { if ($('trajectory-sheet').classList.con
 else
     openTrajectory(); };
 $('trajectory-sheet-close').onclick = closeTrajectory;
-let exportFormat = 'md';
 $('trajectory-export').onclick = action(() => {
     if (!state.session)
         return toast(t("没有可导出的会话"));
@@ -14758,27 +14768,15 @@ $('trajectory-export').onclick = action(() => {
         return toast(t('小秘历史当前不可用，请先解锁会话'));
     const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
     const base = (s.title || "session").slice(0, 30).replace(/[\/:*?"<>|]/g, "_");
-    const fmt = (trajView === 'history' && trajFmt === 'json') ? 'json' : 'md';
-    if (fmt === 'json') {
-        const blob = new Blob([buildTrajectoryJSON(s)], { type: "application/json;charset=utf-8" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = base + "_" + ts + ".json";
-        a.click();
-        URL.revokeObjectURL(a.href);
-        toast(t("已导出会话为 JSON"));
-    }
-    else {
-        const blob = new Blob([buildTrajectoryMarkdown(s)], { type: "text/markdown;charset=utf-8" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = base + "_" + ts + ".md";
-        a.click();
-        URL.revokeObjectURL(a.href);
-        toast(t("已导出会话为 Markdown"));
-    }
+    const blob = new Blob([buildTrajectoryMarkdown(s)], { type: "text/markdown;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + "_" + ts + ".md";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(t("已导出会话为 Markdown"));
 });
-// 轨迹一级视图：历史 / 会话评审 / 调用记录 / 任务与规划；历史二级格式：Markdown / JSON
+// 轨迹一级视图：运行轨迹 / 工具调用 / 任务与规划 / 原始记录；原始记录固定 Markdown。
 function ensureTrajectoryTabs() {
     const mainSeg = document.querySelector('.traj-main-seg');
     if (mainSeg && !mainSeg.dataset.bound) {
@@ -14794,26 +14792,6 @@ function ensureTrajectoryTabs() {
                 mainSeg.querySelectorAll('.traj-seg-btn').forEach((b) => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
                 trajView = btn.dataset.view;
                 syncTrajectorySelection(mainSeg);
-                renderTrajectory();
-                animateTrajectorySwitch(Math.sign(buttons.indexOf(btn) - oldIndex) || 1);
-                requestAnimationFrame(() => syncTrajectorySelection($('traj-fmt-seg')));
-            };
-        });
-    }
-    const fmtSeg = $('traj-fmt-seg');
-    if (fmtSeg && !fmtSeg.dataset.bound) {
-        fmtSeg.dataset.bound = '1';
-        if (window.ResizeObserver)
-            new ResizeObserver(() => syncTrajectorySelection(fmtSeg)).observe(fmtSeg);
-        fmtSeg.querySelectorAll('.traj-seg-btn').forEach((btn) => {
-            btn.onclick = () => {
-                if (trajFmt === btn.dataset.fmt)
-                    return;
-                const buttons = [...fmtSeg.querySelectorAll('.traj-seg-btn')];
-                const oldIndex = buttons.findIndex((b) => b.classList.contains('active'));
-                buttons.forEach((b) => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
-                trajFmt = btn.dataset.fmt;
-                syncTrajectorySelection(fmtSeg);
                 renderTrajectory();
                 animateTrajectorySwitch(Math.sign(buttons.indexOf(btn) - oldIndex) || 1);
             };
@@ -14837,6 +14815,38 @@ function searchMayShow(seq, query) {
     const focused = document.activeElement === $('global-search');
     return searchResultsWanted && seq === searchSeq && query === $('global-search').value.trim() && focused;
 }
+function renderGlobalSearchResults(data, mySeq, q, pendingBody) {
+    if (!searchMayShow(mySeq, q))
+        return;
+    const host = $('search-results');
+    window.aideExperience?.reopen(host);
+    host.replaceChildren();
+    const results = data.results || [];
+    if (!results.length && !pendingBody)
+        host.append(el('p', 'muted', t("没有匹配的聊天")));
+    results.forEach((res) => {
+        const row = el('button', 'search-result', '');
+        row.type = 'button';
+        const badge = res.archived ? el('span', 'archived-badge', t('已归档')) : null;
+        row.append(el('strong', '', (res.number > 0 ? '#' + res.number + ' ' : '') + res.title));
+        if (badge)
+            row.append(badge);
+        row.append(el('span', '', res.snippet || res.title));
+        row.onclick = action(async () => {
+            closeGlobalSearch();
+            $('global-search').value = '';
+            if (res.archived) {
+                await api(`/sessions/${res.sessionId}`, { method: 'PATCH', body: JSON.stringify({ archived: false }) });
+                await loadSessions();
+            }
+            await selectSession(res.sessionId);
+        });
+        host.append(row);
+    });
+    if (pendingBody)
+        host.append(el('p', 'muted search-pending', t('加载中…')));
+    host.classList.remove('hidden');
+}
 function scheduleGlobalSearch() {
     clearTimeout(searchTimer);
     const q = $('global-search').value.trim();
@@ -14846,35 +14856,29 @@ function scheduleGlobalSearch() {
     }
     searchResultsWanted = true;
     const mySeq = ++searchSeq; // New input invalidates the previous response before debounce.
+    const host = $('search-results');
+    window.aideExperience?.reopen(host);
+    host.replaceChildren(el('p', 'muted', t('加载中…')));
+    host.classList.remove('hidden');
     searchTimer = setTimeout(action(async () => {
         searchTimer = null;
         if (!searchMayShow(mySeq, q))
             return;
-        const data = await api('/search?q=' + encodeURIComponent(q));
-        if (!searchMayShow(mySeq, q))
-            return;
-        const host = $('search-results');
-        window.aideExperience?.reopen(host);
-        host.replaceChildren();
-        if (!data.results?.length) {
-            host.append(el('p', 'muted', t("没有匹配的聊天")));
+        try {
+            const metadata = await api('/search?meta=1&q=' + encodeURIComponent(q));
+            renderGlobalSearchResults(metadata, mySeq, q, true);
+            const data = await api('/search?q=' + encodeURIComponent(q));
+            renderGlobalSearchResults(data, mySeq, q, false);
         }
-        data.results.forEach((res) => {
-            const row = el('button', 'search-result', '');
-            const badge = res.archived ? el('span', 'archived-badge', t('已归档')) : null;
-            row.append(el('strong', '', (res.number > 0 ? '#' + res.number + ' ' : '') + res.title), badge, el('span', '', res.snippet));
-            row.onclick = action(async () => {
-                closeGlobalSearch();
-                $('global-search').value = '';
-                if (res.archived) {
-                    await api(`/sessions/${res.sessionId}`, { method: 'PATCH', body: JSON.stringify({ archived: false }) });
-                    await loadSessions();
-                }
-                await selectSession(res.sessionId);
-            });
-            host.append(row);
-        });
-        host.classList.remove('hidden');
+        catch (error) {
+            if (searchMayShow(mySeq, q)) {
+                if (!host.querySelector('.search-result'))
+                    closeGlobalSearch();
+                else
+                    host.querySelector('.search-pending')?.remove();
+            }
+            throw error;
+        }
     }), 300);
 }
 $('global-search').addEventListener('input', scheduleGlobalSearch);
@@ -14893,7 +14897,31 @@ function showGlobalSearch() {
     host.replaceChildren(el('p', 'muted', t("输入关键字搜索聊天记录")));
     host.classList.remove('hidden');
 }
+function handleGlobalSearchKeydown(event) {
+    if (event.isComposing)
+        return;
+    const host = $('search-results');
+    if (host.classList.contains('hidden'))
+        return;
+    const rows = [...host.querySelectorAll('.search-result')];
+    if (!rows.length)
+        return;
+    const input = $('global-search');
+    const current = rows.indexOf(document.activeElement);
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const delta = event.key === 'ArrowDown' ? 1 : -1;
+        const next = current < 0 ? (delta > 0 ? 0 : rows.length - 1) : (current + delta + rows.length) % rows.length;
+        rows[next].focus();
+        return;
+    }
+    if (event.key === 'Enter' && document.activeElement === input) {
+        event.preventDefault();
+        rows[0].click();
+    }
+}
 $('global-search').addEventListener('focus', showGlobalSearch);
+$('global-search').closest('.global-search').addEventListener('keydown', handleGlobalSearchKeydown);
 $('global-search').closest('.global-search').addEventListener('focusout', (event) => {
     if (!event.currentTarget.contains(event.relatedTarget))
         closeGlobalSearch();

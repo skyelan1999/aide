@@ -158,59 +158,81 @@
 #timeline .file-diff-note{padding:4px 10px 8px;font-size:10px;color:var(--faintest)}
 #timeline .file-diff-fallback{margin:8px 0 4px;white-space:pre-wrap;font-size:10px;background:var(--code-bg);padding:10px;border-radius:8px;max-height:260px;overflow:auto}
 
-/* 任务与规划：会话级编排面板（主题令牌分级，跟随暗/亮主题） */
-#trajectory-content .plan-intro h3{margin:0 0 2px;font-size:15px;letter-spacing:.01em}
-#trajectory-content .plan-intro p{margin:2px 0}
-#trajectory-content .plan-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
-#trajectory-content .plan-metric strong{font-variant-numeric:tabular-nums}
-#trajectory-content .plan-metric-live strong{color:var(--brand)}
+/* 任务与规划：只呈现明确目标，执行细节归属于所属任务。 */
+#trajectory-content .plan-intro{display:flex;flex-direction:column;gap:5px;padding:2px 2px 0}
+#trajectory-content .plan-eyebrow{color:var(--brand-text);font-size:10px;font-weight:650;letter-spacing:.06em}
+#trajectory-content .plan-intro h3{margin:0;font-size:18px;font-weight:650;line-height:1.4;letter-spacing:-.01em}
+#trajectory-content .plan-intro p{margin:0;font-size:11px;line-height:1.65}
+#trajectory-content .plan-summary{display:flex;align-items:center;gap:0;padding:8px 0;border:1px solid var(--line-faint);border-radius:12px;background:var(--surface-alt)}
+#trajectory-content .plan-summary-item{flex:1;display:flex;align-items:baseline;justify-content:center;gap:6px;min-width:0;padding:3px 10px;border-left:1px solid var(--line-faint);color:var(--muted);font-size:10px}
+#trajectory-content .plan-summary-item:first-child{border-left:0}
+#trajectory-content .plan-summary-item strong{color:var(--text);font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+#trajectory-content .plan-metric-live strong{color:var(--brand-text)}
 #trajectory-content .plan-metric-done strong{color:var(--success)}
 #trajectory-content .plan-metric-failed strong{color:var(--danger)}
-#trajectory-content .plan-toolbar{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin:10px 0 12px}
-#trajectory-content .plan-add{display:flex;gap:8px;align-items:flex-end;flex:1;min-width:min(100%,320px)}
-#trajectory-content .plan-add-input{flex:1;min-height:44px;max-height:140px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;resize:vertical}
-#trajectory-content .plan-add-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+#trajectory-content .plan-toolbar{margin:0}
+#trajectory-content .plan-add-box{border:1px solid var(--line-faint);border-radius:12px;background:var(--surface);overflow:hidden}
+#trajectory-content .plan-add-box>summary{padding:11px 14px;cursor:pointer;color:var(--brand-text);font-size:12px;font-weight:600;list-style-position:inside}
+#trajectory-content .plan-add-box[open]>summary{border-bottom:1px solid var(--line-faint);background:var(--surface-alt)}
+#trajectory-content .plan-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;padding:14px}
+#trajectory-content .plan-add-input{box-sizing:border-box;width:100%;min-height:64px;max-height:160px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;line-height:1.6;resize:vertical}
+#trajectory-content .plan-add-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}
+#trajectory-content .plan-contract-fields{grid-column:1/-1}
+#trajectory-content .plan-contract-fields>summary{cursor:pointer;color:var(--muted);font-size:11px}
 #trajectory-content .plan-io{display:flex;gap:8px;flex-wrap:wrap}
-#trajectory-content .plan-board{display:flex;flex-direction:column;gap:8px}
-#trajectory-content .plan-row{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface);transition:border-color .16s ease,background .16s ease}
-#trajectory-content .plan-row:hover{border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
-#trajectory-content .plan-depth-1{margin-left:22px;background:var(--surface-alt);border-left:3px solid color-mix(in srgb,var(--brand) 45%,var(--line))}
-#trajectory-content .plan-depth-2{margin-left:40px}
-#trajectory-content .plan-row-head{display:flex;gap:8px;align-items:center;min-width:0}
-#trajectory-content .plan-status{flex:none;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:600;line-height:1}
-#trajectory-content .plan-status-ok{color:var(--success);background:color-mix(in srgb,var(--success) 14%,transparent)}
+#trajectory-content .plan-board{display:flex;flex-direction:column;gap:10px}
+#trajectory-content .plan-task{min-width:0;border:1px solid var(--line-faint);border-radius:13px;background:var(--surface);overflow:hidden;box-shadow:0 1px 2px var(--shadow-1)}
+#trajectory-content .plan-row{min-width:0;border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:var(--surface);transition:border-color .16s ease,background .16s ease}
+#trajectory-content .plan-task>.plan-row{border:0;border-radius:0;padding:14px 15px}
+#trajectory-content .plan-row:hover{border-color:color-mix(in srgb,var(--accent) 32%,var(--line))}
+#trajectory-content .plan-task>.plan-row:hover{border-color:transparent;background:var(--surface-alt)}
+#trajectory-content .plan-step-list{display:grid;gap:7px;padding:0 12px 12px 36px}
+#trajectory-content .plan-step-list .plan-row{background:var(--surface-alt);border-color:var(--line-faint);border-left:2px solid color-mix(in srgb,var(--brand) 35%,var(--line));padding:10px 12px}
+#trajectory-content .plan-depth-1,#trajectory-content .plan-depth-2{margin-left:0}
+#trajectory-content .plan-steps{border-top:1px solid var(--line-faint)}
+#trajectory-content .plan-steps>summary{padding:9px 14px;cursor:pointer;color:var(--muted);font-size:11px;list-style-position:inside}
+#trajectory-content .plan-steps[open]>summary{color:var(--text);background:var(--surface-alt)}
+#trajectory-content .plan-row-head{display:flex;gap:9px;align-items:flex-start;min-width:0}
+#trajectory-content .plan-status{flex:none;width:19px;height:19px;margin-top:1px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:650;line-height:1}
+#trajectory-content .plan-status-ok{color:var(--success);background:color-mix(in srgb,var(--success) 12%,transparent)}
 #trajectory-content .plan-status-bad{color:var(--danger);background:var(--danger-soft)}
-#trajectory-content .plan-status-live{color:var(--brand);background:color-mix(in srgb,var(--brand) 16%,transparent);animation:plan-pulse 1.6s ease-in-out infinite}
+#trajectory-content .plan-status-live{color:var(--brand-text);background:color-mix(in srgb,var(--brand) 12%,transparent);animation:plan-pulse 1.6s ease-in-out infinite}
 #trajectory-content .plan-status-idle{color:var(--muted);background:var(--bg-inset)}
 #trajectory-content .plan-status-closed{color:var(--faintest);background:transparent}
-@keyframes plan-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 22%,transparent)}50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 8%,transparent)}}
-#trajectory-content .plan-title{flex:1;min-width:0;font-size:12.8px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes plan-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 20%,transparent)}50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 7%,transparent)}}
+#trajectory-content .plan-title{flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.55;overflow-wrap:anywhere}
 #trajectory-content .plan-tags{display:flex;gap:6px;flex:none}
-#trajectory-content .plan-tag{padding:1px 6px;border-radius:6px;font-size:10.5px;letter-spacing:.02em;color:var(--muted);background:var(--bg-inset)}
-#trajectory-content .plan-tag-aide{color:var(--brand);background:color-mix(in srgb,var(--brand) 12%,transparent)}
+#trajectory-content .plan-tag{padding:2px 7px;border-radius:999px;font-size:10px;color:var(--muted);background:var(--bg-inset)}
 #trajectory-content .plan-tag-state.plan-state-ok{color:var(--success)}
 #trajectory-content .plan-tag-state.plan-state-bad{color:var(--danger)}
 #trajectory-content .plan-actions{display:flex;gap:6px;flex:none;align-items:center}
-#trajectory-content .plan-link{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer;padding:2px 4px;border-radius:6px}
+#trajectory-content .plan-link{border:0;background:transparent;color:var(--muted);font:inherit;font-size:11px;cursor:pointer;padding:4px 6px;border-radius:6px}
 #trajectory-content .plan-link:hover{color:var(--text);background:var(--bg-inset)}
 #trajectory-content .plan-link:disabled,.plan-launch:disabled{opacity:.45;cursor:not-allowed}
-#trajectory-content .plan-launch{font-size:11.5px;padding:3px 9px}
-#trajectory-content .plan-detail{margin:6px 0 0 26px;color:var(--muted);font-size:12px;white-space:pre-wrap}
-#trajectory-content .plan-meta{display:flex;gap:10px;flex-wrap:wrap;margin:5px 0 0 26px;color:var(--faintest);font-size:11px}
+#trajectory-content .plan-launch{font-size:11px;padding:5px 10px;white-space:nowrap}
+#trajectory-content .plan-detail{margin:8px 0 0 28px;color:var(--muted);font-size:12px;line-height:1.65;white-space:pre-wrap}
+#trajectory-content .plan-meta{display:flex;gap:10px;flex-wrap:wrap;margin:7px 0 0 28px;color:var(--faintest);font-size:10px}
 #trajectory-content .plan-dep{color:var(--warn)}
-#trajectory-content .plan-approvals{margin:6px 0 0 26px}
-#trajectory-content .plan-approvals summary{cursor:pointer;color:var(--muted);font-size:11.5px}
-#trajectory-content .plan-approval-line{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;padding:4px 0;border-top:1px dashed var(--line-faint);font-size:11.5px}
+#trajectory-content .plan-approvals{margin:8px 0 0 28px}
+#trajectory-content .plan-approvals summary{cursor:pointer;color:var(--muted);font-size:11px}
+#trajectory-content .plan-approval-line{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;padding:5px 0;border-top:1px dashed var(--line-faint);font-size:11px}
 #trajectory-content .plan-approval-status{font-weight:600;color:var(--muted)}
 #trajectory-content .plan-approval-approved{color:var(--success)}
 #trajectory-content .plan-approval-manual{color:var(--warn)}
 #trajectory-content .plan-approval-declined{color:var(--danger)}
 #trajectory-content .plan-approval-reason{flex-basis:100%;margin:0;color:var(--muted)}
-#trajectory-content .plan-run-group{border:1px solid var(--line-faint);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-#trajectory-content .plan-run-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12px}
-#trajectory-content .plan-empty{padding:26px 12px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
-#trajectory-content .plan-closed{margin-top:10px}
-#trajectory-content .plan-closed summary{cursor:pointer;color:var(--muted);font-size:12px}
+#trajectory-content .plan-empty{padding:30px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px;background:var(--surface-alt)}
+#trajectory-content .plan-empty strong{display:block;color:var(--text);font-size:13px;font-weight:600}
+#trajectory-content .plan-empty p{margin:7px 0 0;font-size:11px;line-height:1.65}
+#trajectory-content .plan-advanced,#trajectory-content .plan-closed{margin-top:2px;border:1px solid var(--line-faint);border-radius:11px;background:var(--surface-alt);overflow:hidden}
+#trajectory-content .plan-advanced>summary,#trajectory-content .plan-closed>summary{padding:10px 13px;cursor:pointer;color:var(--muted);font-size:11px;list-style-position:inside}
+#trajectory-content .plan-advanced>summary:hover,#trajectory-content .plan-closed>summary:hover{color:var(--text)}
+#trajectory-content .plan-advanced-body{display:grid;gap:12px;padding:14px;border-top:1px solid var(--line-faint)}
+#trajectory-content .plan-advanced-body .outcome-boundary{margin:0;font-size:10px;line-height:1.6}
+#trajectory-content .plan-closed>.plan-row{margin:0 10px 8px}
+#trajectory-content :is(.plan-add-box,.plan-steps,.plan-advanced,.plan-closed)>summary:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+@media(max-width:700px){#trajectory-content .plan-summary-item{flex-direction:column;align-items:center;gap:1px;padding:3px 5px}#trajectory-content .plan-row-head{flex-wrap:wrap}#trajectory-content .plan-title{flex-basis:calc(100% - 30px)}#trajectory-content .plan-actions{width:100%;justify-content:flex-end;margin-top:2px}#trajectory-content .plan-step-list{padding-left:12px}#trajectory-content .plan-add{grid-template-columns:1fr}#trajectory-content .plan-add>.primary{justify-self:start}}
+@media(prefers-reduced-motion:reduce){#trajectory-content .plan-status-live{animation:none}#trajectory-content .plan-row{transition:none}}
 #trajectory-content .approval-recommend{border:1px solid color-mix(in srgb,var(--brand) 34%,var(--line));border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--brand) 8%,transparent);margin:8px 0}
 #trajectory-content .approval-recommend h4{margin:0 0 4px;font-size:12.5px}
 #trajectory-content .approval-recommend-meta{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:0 0 4px}

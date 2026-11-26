@@ -144,10 +144,9 @@ func (p *executionPool) workerLimitLocked() int {
 	if cap(p.slots) == 0 {
 		return 0
 	}
-	if p.draining {
-		return cap(p.slots)
-	}
-	return cap(p.slots) - 1 // The main model may still be computing asynchronously.
+	// X always includes the main environment, including synchronous queue
+	// draining. Pausing main inference never creates an additional child slot.
+	return cap(p.slots) - 1
 }
 
 func (p *executionPool) finishQueuedLocked(j *executionJob, err error) {

@@ -36,6 +36,27 @@ interface Window {
     };
   }
   function build(session: any, journals: any = {}) {
+    if (session?.kind === 'assistant') {
+      const messages = Array.isArray(session.messages) ? session.messages : [];
+      const turns = messages.map((message: any, index: number) => {
+        const type = message.role === 'user' ? 'input' : 'assistant';
+        const content = String(message.content || '');
+        const at = timeOf(message.created || message.at || message.time);
+        return {
+          id:String(message.id || `message-${index}`), number:index + 1, prompt:clip(content, 100), started:at,
+          status:'completed', model:'', workspaceMode:'', lastEvent:null, events:[], dropped:0, journalWarning:'',
+          flow:[{id:'message', type, at, label:type === 'input' ? '用户输入' : '助手输出', preview:clip(content), content, legacy:at == null}],
+          toolCount:0, usage:{},
+        };
+      });
+      const points = turns.flatMap((turn: any) => turn.flow.map((item: any) => item.at)).filter((value: any) => value != null);
+      return {
+        id:String(session?.id || ''), title:String(session?.title || ''), status:'chat', model:'', workspaceMode:'',
+        created:timeOf(session?.created), updated:timeOf(session?.updated), total:turns.length, loaded:turns.length, turns,
+        first:points.length ? Math.min(...points) : null, last:points.length ? Math.max(...points) : null,
+        toolsLoaded:0, usage:session?.sessionUsage || {prompt:0, completion:0, total:0}, hasOlder:false,
+      };
+    }
     const runs = Array.isArray(session?.runs) ? session.runs.filter(Boolean) : [];
     const total = Number.isInteger(session?.runsTotal) ? session.runsTotal : runs.length;
     const turns = runs.map((run: any, index: number) => {
@@ -97,6 +118,7 @@ interface Window {
         ...flow.map(item => item.at)].filter((value: any) => value != null);
       return {
         id:String(run.id || `turn-${index}`), number:total-runs.length+index+1,
+        prompt:String(run.prompt || ''),
         status:String(run.status || 'unknown'), model:String(run.model || ''),
         workspaceMode:String(run.workspaceMode || ''), started:points.length ? Math.min(...points) : null,
         lastEvent:points.length && records.some((item: any) => item.start != null) ?
@@ -151,27 +173,28 @@ interface Window {
     };
     const heading = el('div', 'sr-heading');
     const title = el('div', 'sr-heading-title');
-    title.append(el('span', 'sr-eyebrow', t('会话状态评审')), el('h3', '', review.title || t('未命名会话')));
+    title.append(el('span', 'sr-eyebrow', t('运行轨迹')), el('h3', '', review.title || t('未命名会话')));
     heading.append(title, el('span', `sr-status sr-status-${review.status}`, status(review.status)));
     const meta = el('div', 'sr-overview');
     meta.append(
-      field(t('模型'), review.model), field(t('任务轮次'), review.total),
-      field(t('工具调用'), review.toolsLoaded), field(t('Token 用量'), Number(review.usage.total || 0).toLocaleString()),
-      field(t('开始时间'), timeLabel(review.created)), field(t('最近活动'), timeLabel(review.updated)),
+      field(t('任务轮次'), review.total), field(t('工具调用'), review.toolsLoaded),
+      field(t('Token 用量'), Number(review.usage.total || 0).toLocaleString()), field(t('模型'), review.model),
     );
-    const note = el('p', 'sr-note', t('按已保存的请求计时、工具结果和阶段输出展示。旧记录缺少时间时放在对应轮次末尾；并行事件可能重叠。'));
+    const note = el('p', 'sr-note', t('按时间记录输入、模型、工具和输出。点击事件查看详情，历史原始内容默认不展开。'));
     const toolbar = el('div', 'sr-toolbar');
     const search = el('input', 'sr-search');
-    search.type = 'search'; search.placeholder = t('搜索调用、结果或内容');
+    search.type = 'search'; search.placeholder = t('搜索本轮输入、工具或结果');
     search.setAttribute('aria-label', search.placeholder);
-    const collapse = el('button', '', t('收起所有轮次'));
+    const collapse = el('button', '', t('展开所有轮次'));
     collapse.type = 'button';
-    toolbar.append(el('span', 'sr-toolbar-title', t('会话调用流程')), search, collapse);
+    toolbar.append(el('span', 'sr-toolbar-title', t('执行时间线')), search, collapse);
     const overview = el('div', 'sr-flow-overview');
+    const activity = el('details', 'sr-activity');
+    activity.append(el('summary', '', t('活动时间分布')), overview);
     const transcript = el('div', 'sr-transcript');
     const older = review.hasOlder && loadOlder ? el('button', 'sr-older', t('加载更早的任务')) : null;
     if (older) { older.type = 'button'; older.onclick = loadOlder; }
-    host.replaceChildren(heading, meta, note, toolbar, overview, transcript, ...(older ? [older] : []));
+    host.replaceChildren(heading, meta, note, toolbar, activity, transcript, ...(older ? [older] : []));
 
     const span = Math.max(1, (review.last ?? 0) - (review.first ?? 0));
     const position = (at: any): number => review.first == null || at == null ? 0 :
@@ -204,7 +227,7 @@ interface Window {
       overview.append(scale);
     }
 
-    let allCollapsed = false;
+    let displayMode = 'latest';
     const cards: any[] = [];
     function render(query = ''): void {
       transcript.replaceChildren();
@@ -212,17 +235,20 @@ interface Window {
       const needle = query.trim().toLocaleLowerCase();
       for (const turn of review.turns) {
         const matches = turn.flow.filter((item: any) => !needle ||
-          `${item.label} ${item.preview} ${item.content || ''} ${item.args || ''}`.toLocaleLowerCase().includes(needle));
+          `${turn.prompt} ${item.label} ${item.preview} ${item.content || ''} ${item.args || ''}`.toLocaleLowerCase().includes(needle));
         if (needle && !matches.length) continue;
+        const expanded = !!needle || displayMode === 'all' || displayMode === 'latest' && turn === review.turns.at(-1);
         const card = el('section', 'sr-turn-card');
         const header = el('button', 'sr-turn-header');
         header.type = 'button';
-        header.setAttribute('aria-expanded', String(!allCollapsed));
-        header.append(el('span', 'sr-turn-title', `${t('第 {0} 轮', turn.number)} · ${status(turn.status)}`),
-          el('span', 'sr-turn-meta', `${turn.model || t('模型未记录')} · ${turn.toolCount} ${t('次工具调用')}`),
-          el('span', 'sr-chevron', '⌄'));
+        header.setAttribute('aria-expanded', String(expanded));
+        const heading = el('span', 'sr-turn-heading');
+        heading.append(el('strong', 'sr-turn-title', turn.prompt || t('未命名任务')),
+          el('span', 'sr-turn-meta', `${t('第 {0} 轮', turn.number)} · ${turn.model || t('模型未记录')} · ${turn.toolCount} ${t('次工具调用')}`));
+        header.append(el('span', 'sr-turn-number', '#' + turn.number), heading,
+          el('span', `sr-turn-status sr-status-${turn.status}`, status(turn.status)), el('span', 'sr-chevron', '⌄'));
         const rows = el('div', 'sr-turn-rows');
-        rows.hidden = allCollapsed;
+        rows.hidden = !expanded;
         for (const item of matches) {
           const row = el('details', `sr-row sr-row-${item.type}`);
           row.id = `sr-${turn.id}-${item.id}`;
@@ -253,9 +279,10 @@ interface Window {
     }
     search.oninput = () => render(search.value);
     collapse.onclick = () => {
-      allCollapsed = !allCollapsed;
-      collapse.textContent = allCollapsed ? t('展开所有轮次') : t('收起所有轮次');
-      for (const {header, rows} of cards) { rows.hidden = allCollapsed; header.setAttribute('aria-expanded', String(!allCollapsed)); }
+      displayMode = displayMode === 'all' ? 'none' : 'all';
+      collapse.textContent = displayMode === 'all' ? t('收起所有轮次') : t('展开所有轮次');
+      const expanded = displayMode === 'all';
+      for (const {header, rows} of cards) { rows.hidden = !expanded; header.setAttribute('aria-expanded', String(expanded)); }
     };
     render();
     return review;

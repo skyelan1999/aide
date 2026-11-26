@@ -144,13 +144,42 @@ func TestPlanMirrorsAgentStepsAndClosesOutcome(t *testing.T) {
 	}
 }
 
+func TestPlanIgnoresOrdinaryAgentPlanning(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	s := planSession(a, "plan-explicit-only", "明确任务")
+	s.Plan = []PlanItem{
+		{ID: "plan-user", Title: "用户目标", Source: "user", Status: "pending"},
+		{ID: "plan-legacy", Title: "旧版普通模型规划", Source: "aide", Status: "in_progress", RunID: "legacy-run"},
+	}
+	ordinary := &Task{ID: "ordinary-run", Status: "running", AgentPlan: &AgentPlan{Items: []AgentPlanItem{{Step: "普通对话自我规划", Status: "in_progress"}}}}
+	a.syncAgentPlanLocked(s, ordinary)
+	if len(s.Plan) != 2 {
+		a.mu.Unlock()
+		t.Fatalf("ordinary update_plan entered session tasks: %+v", s.Plan)
+	}
+	ctx := a.planContextLocked(s, "", 0)
+	if strings.Contains(ctx, "旧版普通模型规划") || !strings.Contains(ctx, "用户目标") {
+		a.mu.Unlock()
+		t.Fatalf("legacy orphan planning leaked into context: %q", ctx)
+	}
+	a.mu.Unlock()
+
+	w := request(a, "GET", "/api/sessions/plan-explicit-only/plan/export", nil)
+	requireStatus(t, w, 200)
+	var doc planDocument
+	if err := json.Unmarshal(w.Body.Bytes(), &doc); err != nil || len(doc.Tasks) != 1 || doc.Tasks[0].ID != "plan-user" {
+		t.Fatalf("export must contain only explicit tasks: %v %+v", err, doc.Tasks)
+	}
+}
+
 func TestPlanContextCarriesOpenTasksAndApprovals(t *testing.T) {
 	a := testApp(t)
 	a.mu.Lock()
 	s := planSession(a, "plan-ctx", "上下文")
 	s.Plan = []PlanItem{
 		{ID: "plan-open", Title: "尚未完成", Source: "user", Status: "in_progress"},
-		{ID: "plan-fail", Title: "失败的一步", Source: "aide", Status: "failed"},
+		{ID: "plan-fail", Title: "失败的一步", Source: "aide", Status: "failed", ParentID: "plan-open"},
 		{ID: "plan-done", Title: "已完成", Source: "user", Status: "completed"},
 	}
 	s.Runs = []*Task{{ID: "run-ctx", Status: "awaiting_approval", ApprovalReviews: []ApprovalReview{{Kind: "files", Status: "recommended", Reason: "低风险新文件"}}}}

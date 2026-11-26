@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func TestExecutionQueueDrainAllTenSlotsWithoutManager(t *testing.T) {
+func TestExecutionQueueDrainKeepsNineWorkerCeiling(t *testing.T) {
 	a, task, p := environmentFixture(t, 10)
 	gate, started := make(chan struct{}), make(chan struct{}, 50)
 	var once sync.Once
@@ -47,18 +47,23 @@ func TestExecutionQueueDrainAllTenSlotsWithoutManager(t *testing.T) {
 		receipt, err = p.runQueue(context.Background(), specs, "random", false, nil)
 		done <- err
 	}()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 9; i++ {
 		select {
 		case <-started:
 		case <-time.After(10 * time.Second):
-			t.Fatal("did not use all ten slots")
+			t.Fatal("did not use all nine temporary environment slots")
 		}
+	}
+	select {
+	case <-started:
+		t.Fatal("10X admitted a tenth temporary environment")
+	case <-time.After(100 * time.Millisecond):
 	}
 	a.mu.Lock()
 	paused, capacity, running := task.Environments.MainPaused, task.Environments.WorkerCapacity, task.Environments.Active
 	a.mu.Unlock()
-	if !paused || capacity != 10 || running != 10 || peak.Load() != 10 {
-		t.Fatal("reserved manager or oversubscribed", paused, capacity, running, peak.Load())
+	if !paused || capacity != 9 || running != 9 || peak.Load() != 9 {
+		t.Fatal("10X must reserve the main-environment slot", paused, capacity, running, peak.Load())
 	}
 	once.Do(func() { close(gate) })
 	select {
@@ -69,12 +74,12 @@ func TestExecutionQueueDrainAllTenSlotsWithoutManager(t *testing.T) {
 	case <-time.After(15 * time.Second):
 		t.Fatal("drain did not finish")
 	}
-	if requests.Load() != 50 || peak.Load() > 10 || receipt["collectedJobs"] != 50 || receipt["uncollectedJobs"] != 0 || receipt["previewTruncated"] != true {
+	if requests.Load() != 50 || peak.Load() > 9 || receipt["collectedJobs"] != 50 || receipt["uncollectedJobs"] != 0 || receipt["previewTruncated"] != true || receipt["workSlotCapacity"] != 9 {
 		t.Fatal(requests.Load(), peak.Load(), receipt)
 	}
 	status, _ := p.queueStatus("", 100)
 	if status["mainPaused"] != false || status["workerCapacity"] != 9 || status["active"] != 0 {
-		t.Fatal("borrowed slot not returned", status)
+		t.Fatal("main resume or worker cleanup did not finish", status)
 	}
 	for _, r := range task.Environments.Results {
 		if !r.Released || !r.Collected {
@@ -104,11 +109,11 @@ func TestExecutionQueueDrainCancelsAndJoinsBeforeResumingMain(t *testing.T) {
 		specs[i].Assignment = "cancel this bounded job"
 	}
 	go func() { _, err := p.runQueue(ctx, specs, "random", false, nil); done <- err }()
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 4; i++ {
 		select {
 		case <-started:
 		case <-time.After(10 * time.Second):
-			t.Fatal("not all slots working")
+			t.Fatal("5X did not retain the main slot and use four temporary environments")
 		}
 	}
 	if _, err := p.runQueue(context.Background(), nil, "random", false, nil); err == nil {
@@ -124,7 +129,7 @@ func TestExecutionQueueDrainCancelsAndJoinsBeforeResumingMain(t *testing.T) {
 		t.Fatal("cancel failed to join")
 	}
 	if len(p.slots) != 0 || len(p.queue) != 0 || task.Environments.MainPaused {
-		t.Fatal("returned while borrowed-slot work survived")
+		t.Fatal("returned while temporary-environment work survived")
 	}
 	for _, j := range p.jobs {
 		if j.result.Status == "running" || j.result.Status == "queued" {
@@ -164,7 +169,7 @@ func TestExecutionQueueDrainValidationDependenciesAndConflict(t *testing.T) {
 	child := &App{executionEnvironment: &executionEnvironment{pool: p, id: "worker"}}
 	out = child.executeEnvironmentTool(ctx, readCall("environment_run_queue", `{}`), task, nil)
 	if !strings.Contains(out, "only main") || environmentLocalTool("environment_run_queue") {
-		t.Fatal("worker borrowed another slot", out)
+		t.Fatal("worker started a nested queue", out)
 	}
 	_, _, one := environmentFixture(t, 1)
 	if _, err := one.runQueue(context.Background(), nil, "random", false, nil); err == nil || one.root != "" {

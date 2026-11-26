@@ -22,6 +22,8 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
    if (!await page.locator('#trajectory-sheet').evaluate(n => n.classList.contains('open'))) await page.locator('#trajectory-toggle').click();
    await page.locator('.traj-main-seg [data-view="outcome"]').click();
    const picker = page.locator('#traj-outcome-run'); if (await picker.count()) await picker.selectOption('');
+   const addBox = page.locator('.plan-add-box'); if (!await addBox.evaluate(n => n.open)) await addBox.locator('> summary').click();
+   const advanced = page.locator('.plan-advanced'); if (!await advanced.evaluate(n => n.open)) await advanced.locator('> summary').click();
    await page.locator('.plan-add').waitFor();
   }
   try {

@@ -44,10 +44,14 @@ test('empty and running sessions do not acquire fabricated timing', () => {
   assert.equal(running.first, running.last);
 });
 
-test('trajectory loads the review module before app.js and exposes the tab', () => {
+test('trajectory loads the review module, exposes tabs and keeps raw history Markdown-only', () => {
   const html = fs.readFileSync(path.join(__dirname, '../internal/server/web/index.html'), 'utf8');
   assert.match(html, /session-review\.js\?v=\d+[^]*app\.js\?v=\d+/);
-  assert.match(html, /data-view="review"[^>]*data-i18n="会话评审"/);
+  assert.match(html, /data-view="review"[^>]*data-i18n="运行轨迹"/);
+  assert.doesNotMatch(html, /id="traj-fmt-seg"/);
+  assert.match(html, /traj-main-seg[^]*原始记录/);
+  const app = fs.readFileSync(path.join(__dirname, '../internal/server/web/app.ts'), 'utf8');
+  assert.doesNotMatch(app, /trajFmt|buildTrajectoryJSON/);
 });
 
 test('execution journal provides dispatch and result order for older calls', () => {
@@ -93,16 +97,22 @@ test('review displays complete flow with search and collapsible turns', () => {
     assert.equal(find(host, 'sr-flow-overview').children.length, 4);
     const transcript = find(host, 'sr-transcript');
     assert.equal(transcript.children.length, 2);
+    const firstRows = transcript.children[0].children[1];
+    const latestRows = transcript.children[1].children[1];
+    assert.equal(firstRows.hidden, true, 'older turns start collapsed');
+    assert.equal(latestRows.hidden, false, 'latest turn starts expanded');
     const collapse = find(host, 'sr-toolbar').children[2];
     collapse.onclick();
-    assert.equal(find(host, 'sr-turn-rows').hidden, true);
+    assert.equal(firstRows.hidden, false, 'expand all reveals older turns');
     collapse.onclick();
-    assert.equal(find(host, 'sr-turn-rows').hidden, false);
+    assert.equal(firstRows.hidden, true, 'collapse all hides every turn');
+    assert.equal(latestRows.hidden, true);
     const search = find(host, 'sr-search');
     search.value = 'run_shell';
     search.oninput();
     assert.equal(transcript.children.length, 1);
-    assert.equal(find(host, 'sr-turn-title').textContent, '第 2 轮 · 失败');
+    assert.equal(find(host, 'sr-turn-title').textContent, '未命名任务');
+    assert.equal(find(host, 'sr-turn-rows').hidden, false, 'search reveals matching events');
   } finally {
     global.document = previousDocument;
   }

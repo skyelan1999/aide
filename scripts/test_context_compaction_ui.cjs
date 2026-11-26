@@ -70,6 +70,7 @@ const context = {
   renderContextMeter() {},
   latestRequestContext: () => null,
   paintContextRequestState() { inlineState.textContent = ''; inlineState.title = ''; },
+  paintContextCompactionRings() {},
 };
 vm.createContext(context);
 vm.runInContext(source.slice(begin, end), context);
@@ -160,9 +161,9 @@ context.showContextCompaction({sessionId:sessionB,phase:'completed',folded:4,bef
 assert.equal(pinned.children.length,1,'completion retains its concise terminal feedback');
 assert.equal(pinned.children.at(-1).children.some(child=>child.className==='context-compaction-meter'),false,'legacy horizontal compaction meter is removed');
 assert.match(style,/\.session-activity-badge/,'session rows have an independent compaction activity badge');
-assert.match(workbench,/\.context-card\.is-compacting \.usage-ring\{animation:context-compaction-ring-spin/,'active compaction starts the ring animation');
+assert.match(workbench,/\.usage-ring\.is-compacting\{animation:context-compaction-ring-spin/,'active compaction spins only its own ring');
 assert.match(workbench,/@keyframes context-compaction-ring-spin\{to\{transform:rotate\(360deg\)\}\}/,'the ring animation is defined in the shipped stylesheet');
-assert.match(workbench,/prefers-reduced-motion:reduce\)\{\.sidebar-footer \.context-card\.is-compacting \.usage-ring\{animation:none/,'reduced-motion users are not forced to watch the spinner');
+assert.match(workbench,/prefers-reduced-motion:reduce\)\{\.sidebar-footer \.usage-ring\.is-compacting\{animation:none/,'reduced-motion users are not forced to watch the spinner');
 assert.doesNotMatch(style,/\.session-item\.compacting::after/,'compaction no longer reuses the session row spinner');
 assert.doesNotMatch(style,/context-fold-sweep|context-compression-fold|context-card-breathe/,'legacy strip and card animations are removed');
 assert.doesNotMatch(workbench,/context-compaction-fill|context-usage-spin/,'legacy compaction meter and global ring spin are removed');

@@ -91,6 +91,7 @@ button.workspace-label:hover { background: var(--surface); }
 .search-shortcut { position: absolute; right: 9px; font: 10px -apple-system, sans-serif; color: var(--muted); pointer-events: none; }
 .search-results { width: min(380px, 85vw); padding: 6px; z-index: 28; }
 .search-result { padding: 11px 12px; }
+.search-result:is(:hover,:focus-visible) { background: var(--hover); outline: none; }
 .search-result strong { font-size: 13px; }
 .search-result span { font-size: 12px; }
 .sidebar-toggle, .sidebar-scrim { display: none; }
@@ -888,7 +889,6 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 .outcome-io-evidence-link{margin-top:8px}
 .outcome-io-resource{overflow-wrap:anywhere}
 .outcome-journal{margin:10px 0;padding:0 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface-alt,var(--bg))}.outcome-journal>summary{cursor:pointer;padding:13px 0;color:var(--muted);font-size:12px;font-weight:600}.outcome-journal-event{padding:10px 0;border-top:1px solid var(--line-soft)}.outcome-journal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px}.outcome-journal-head time{font-variant-numeric:tabular-nums;color:var(--muted)}.outcome-journal-kind{font-weight:600}.outcome-journal-event p{margin:6px 0;font-size:11px;overflow-wrap:anywhere}.outcome-journal-event .outcome-digest{margin-top:6px}
-.traj-header-controls:has(#traj-fmt-seg.hidden) .traj-ctrl-divider{display:none}
 #trajectory-sheet .sheet-head{display:grid;grid-template-columns:100px minmax(0,1fr)}
 #trajectory-sheet .traj-header-controls{min-width:0}
 #trajectory-sheet-close{margin-left:auto}
@@ -896,7 +896,7 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 @media(max-width:760px){.traj-outcome-picker{gap:10px}.traj-outcome-content .outcome-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 #trajectory-sheet .traj-main-seg{padding:3px;gap:3px;background:var(--bg-inset);border:1px solid var(--line);border-radius:10px}
-#trajectory-sheet .traj-main-seg .traj-seg-btn{font-size:12px;padding:7px 12px;border-radius:7px}
+#trajectory-sheet .traj-main-seg .traj-seg-btn{font-size:12px;padding:7px 12px;border-radius:7px;white-space:nowrap;flex:0 0 auto}
 #trajectory-sheet .traj-main-seg .traj-seg-btn.active{background:var(--selected);color:var(--text)}
 #trajectory-sheet .traj-main-seg.traj-animated::before{top:3px;bottom:3px;border-radius:7px;background:var(--selected)}
 #trajectory-sheet .traj-main-seg.traj-animated .traj-seg-btn.active{background:transparent;box-shadow:none}

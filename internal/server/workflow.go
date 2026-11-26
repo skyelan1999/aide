@@ -26,6 +26,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -2401,35 +2402,37 @@ func summarizeToolArgs(raw string) string {
 // streamEvent 推送给 SSE 订阅者的事件；event 包括 step | delta | output-rate | segment | tool | status | done。
 // SSE 是实时增强层，最终任务状态仍由 GET /sessions/{id} 持久化兜底。
 type streamEvent struct {
-	Segment      *OutputSegment `json:"segment,omitempty"`
-	Event        string         `json:"event"`
-	SessionID    string         `json:"sessionId,omitempty"`
-	AvatarCue    *AvatarCue     `json:"avatarCue,omitempty"`
-	Step         string         `json:"step,omitempty"`
-	Status       string         `json:"status,omitempty"`
-	Text         string         `json:"text,omitempty"`
-	Tool         string         `json:"tool,omitempty"`
-	Preview      string         `json:"preview,omitempty"`
-	Error        string         `json:"error,omitempty"`
-	Round        int            `json:"round,omitempty"` // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
-	StreamID     string         `json:"streamId,omitempty"`
-	OutputTokens int            `json:"outputTokens,omitempty"`
-	Question     string         `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
-	Reasoning    string         `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
-	Args         string         `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
-	CallID       string         `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
-	OK           bool           `json:"ok,omitempty"`        // tool 事件：是否执行成功
-	Phase        string         `json:"phase,omitempty"`     // compaction阶段：started | folding | completed | failed
-	StartedAt    int64          `json:"startedAt,omitempty"` // compaction开始时间（Unix毫秒），用于持续显示耗时
-	Preflight    bool           `json:"preflight,omitempty"` // 是否为发送任务前的同步压缩
-	BatchStage   string         `json:"batchStage,omitempty"`
-	Batch        int            `json:"batch,omitempty"`
-	Batches      int            `json:"batches,omitempty"`
-	RetryAttempt int            `json:"retryAttempt,omitempty"`
-	RetryDelayMs int64          `json:"retryDelayMs,omitempty"`
-	BeforeTokens int            `json:"beforeTokens,omitempty"`
-	AfterTokens  int            `json:"afterTokens,omitempty"`
-	Folded       int            `json:"folded,omitempty"`
+	Segment       *OutputSegment `json:"segment,omitempty"`
+	Event         string         `json:"event"`
+	SessionID     string         `json:"sessionId,omitempty"`
+	EnvironmentID string         `json:"environmentId,omitempty"`
+	AvatarCue     *AvatarCue     `json:"avatarCue,omitempty"`
+	Step          string         `json:"step,omitempty"`
+	Status        string         `json:"status,omitempty"`
+	Text          string         `json:"text,omitempty"`
+	Tool          string         `json:"tool,omitempty"`
+	Preview       string         `json:"preview,omitempty"`
+	Error         string         `json:"error,omitempty"`
+	Round         int            `json:"round,omitempty"` // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
+	StreamID      string         `json:"streamId,omitempty"`
+	OutputTokens  int            `json:"outputTokens,omitempty"`
+	Question      string         `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
+	Reasoning     string         `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
+	Args          string         `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
+	CallID        string         `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
+	OK            bool           `json:"ok,omitempty"`        // tool 事件：是否执行成功
+	Phase         string         `json:"phase,omitempty"`     // compaction阶段：started | folding | completed | failed
+	StartedAt     int64          `json:"startedAt,omitempty"` // compaction开始时间（Unix毫秒），用于持续显示耗时
+	UpdatedAt     int64          `json:"updatedAt,omitempty"` // compaction最近进度时间（Unix毫秒），用于独立环境新鲜度判断
+	Preflight     bool           `json:"preflight,omitempty"` // 是否为发送任务前的同步压缩
+	BatchStage    string         `json:"batchStage,omitempty"`
+	Batch         int            `json:"batch,omitempty"`
+	Batches       int            `json:"batches,omitempty"`
+	RetryAttempt  int            `json:"retryAttempt,omitempty"`
+	RetryDelayMs  int64          `json:"retryDelayMs,omitempty"`
+	BeforeTokens  int            `json:"beforeTokens,omitempty"`
+	AfterTokens   int            `json:"afterTokens,omitempty"`
+	Folded        int            `json:"folded,omitempty"`
 }
 
 // subscribeStream 订阅某任务的实时事件；返回 channel 与取消函数。
@@ -6281,7 +6284,16 @@ func (a *App) pluginOwnerOf(toolName string) string {
 	return ""
 }
 
-// ── 全局搜索（FR-92）：标题加权 + 正文片段 ──
+func sessionNumberSearchQuery(raw string) int {
+	q := strings.TrimSpace(raw)
+	n, err := strconv.Atoi(strings.TrimPrefix(q, "#"))
+	if err != nil || n <= 0 {
+		return 0
+	}
+	return n
+}
+
+// ── 全局搜索（FR-92）：标题加权 + 正文片段；编号查询只读会话目录 ──
 
 func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -6290,6 +6302,8 @@ func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	lower := strings.ToLower(q)
+	numberQuery := sessionNumberSearchQuery(q)
+	metadataOnly := r.URL.Query().Get("meta") == "1"
 	type result struct {
 		SessionID string `json:"sessionId"`
 		Title     string `json:"title"`
@@ -6302,12 +6316,31 @@ func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 	results := []result{}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	for _, sess := range a.sessionBodiesLocked() {
+	sessions := a.sessions
+	if numberQuery == 0 && !metadataOnly {
+		sessions = a.sessionBodiesLocked()
+	}
+	for _, sess := range sessions {
+		if sess == nil {
+			continue
+		}
+		if numberQuery > 0 {
+			if !sess.Deleted && sess.Number == numberQuery {
+				results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: sess.Title, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: 3})
+			}
+			continue
+		}
 		score := 0
 		snippet := ""
 		if strings.Contains(strings.ToLower(sess.Title), lower) {
 			score = 2
 			snippet = sess.Title
+		}
+		if metadataOnly {
+			if score > 0 {
+				results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: snippet, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: score})
+			}
+			continue
 		}
 		if strings.Contains(strings.ToLower(sess.Compact), lower) && score < 2 {
 			score = 1
@@ -6398,17 +6431,51 @@ func (a *App) contextCompactionProgressHandler(w http.ResponseWriter, r *http.Re
 	jsonOut(w, 200, map[string]any{"active": active, "event": record.Event, "updatedAt": record.UpdatedAt.UnixMilli()})
 }
 
-func (a *App) setContextCompactionProgress(sessionID string, event streamEvent) {
+// recordContextCompactionProgressLocked updates only the main App's session.
+// Temporary environments use their execution result instead of this map.
+func (a *App) recordContextCompactionProgressLocked(sessionID string, event streamEvent) streamEvent {
 	event.SessionID = sessionID
-	a.mu.Lock()
 	if previous, ok := a.contextCompactionProgress[sessionID]; ok && event.StartedAt == 0 {
 		event.StartedAt = previous.Event.StartedAt
 	}
 	if event.StartedAt == 0 && (event.Phase == "started" || event.Phase == "folding") {
 		event.StartedAt = time.Now().UnixMilli()
 	}
+	event.UpdatedAt = time.Now().UnixMilli()
+	if a.contextCompactionProgress == nil {
+		a.contextCompactionProgress = map[string]contextCompactionProgress{}
+	}
 	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: event, UpdatedAt: time.Now()}
+	return event
+}
+
+func (a *App) setContextCompactionProgressLocked(sessionID string, event streamEvent) {
+	if environment := a.executionEnvironment; environment != nil && environment.pool != nil {
+		event.SessionID = sessionID
+		event.EnvironmentID = environment.id
+		event.UpdatedAt = time.Now().UnixMilli()
+		environment.pool.publishCompaction(environment.id, event)
+		environment.pool.parent.publishStream(environment.pool.task.ID, event)
+		return
+	}
+	event = a.recordContextCompactionProgressLocked(sessionID, event)
+	a.publishStream(sessionID, event)
+}
+
+func (a *App) setContextCompactionProgress(sessionID string, event streamEvent) {
+	a.mu.Lock()
+	if environment := a.executionEnvironment; environment != nil && environment.pool != nil {
+		event.SessionID = sessionID
+		event.EnvironmentID = environment.id
+		event.UpdatedAt = time.Now().UnixMilli()
+		a.mu.Unlock()
+		environment.pool.publishCompaction(environment.id, event)
+		environment.pool.parent.publishStream(environment.pool.task.ID, event)
+		return
+	}
+	event = a.recordContextCompactionProgressLocked(sessionID, event)
 	a.mu.Unlock()
+	a.publishStream(sessionID, event)
 }
 
 // compactSessionForContext compacts the oldest history before a request is rejected for exceeding
@@ -6447,10 +6514,7 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 	if a.contextCompactionProgress == nil {
 		a.contextCompactionProgress = map[string]contextCompactionProgress{}
 	}
-	a.contextCompactionProgress[sessionID] = contextCompactionProgress{
-		Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split, Preflight: true},
-		UpdatedAt: time.Now(),
-	}
+	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split, Preflight: true})
 	a.mu.Unlock()
 	defer func() {
 		a.mu.Lock()
@@ -6474,21 +6538,21 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 	defer a.mu.Unlock()
 	sess = a.sessionLocked(sessionID)
 	if sess == nil || len(sess.Messages) != baseLen {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话在压缩期间发生变化，本次折叠已取消", Preflight: true}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话在压缩期间发生变化，本次折叠已取消", Preflight: true})
 		return errors.New("压缩期间会话已变化")
 	}
 	if !compactSnapshotMatches(sess.Messages[:split], snap.messages) {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消", Preflight: true}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消", Preflight: true})
 		return errors.New("压缩期间会话已变化")
 	}
 	candidate := compactedSessionCandidate(sess, snap, split, summary)
 	if err := a.save(&candidate); err != nil {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留", Preflight: true}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留", Preflight: true})
 		return err
 	}
 	*sess = candidate
 	a.resetCompactionCircuitLocked(compactionCircuitKey{sessionID: sessionID, model: cfg.Model})
-	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: sessionContextTokens(sess), Folded: split, Preflight: true}, UpdatedAt: time.Now()}
+	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: sessionContextTokens(sess), Folded: split, Preflight: true})
 	return nil
 }
 
@@ -6650,10 +6714,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		a.contextCompactionProgress = map[string]contextCompactionProgress{}
 	}
 	if split > 0 {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{
-			Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split},
-			UpdatedAt: time.Now(),
-		}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split})
 	}
 	a.mu.Unlock()
 	defer func() {
@@ -6678,24 +6739,24 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if sess.Kind == assistantSessionKind && !a.isAssistantUnlocked(sess.ID) {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "小秘会话已锁定，压缩结果未保存"}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "小秘会话已锁定，压缩结果未保存"})
 		fail(w, 403, errors.New("请先解锁小秘会话"))
 		return
 	}
 	// 提交校验：消息前缀必须仍与快照一致（未被并发修改）
 	if len(sess.Messages) != baseLen {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话已被修改，压缩取消；原会话内容已保留"}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话已被修改，压缩取消；原会话内容已保留"})
 		fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
 		return
 	}
 	if !compactSnapshotMatches(sess.Messages[:split], snap.messages) {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容已被修改，压缩取消；原会话内容已保留"}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容已被修改，压缩取消；原会话内容已保留"})
 		fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
 		return
 	}
 	candidate := compactedSessionCandidate(sess, snap, split, summary)
 	if err := a.save(&candidate); err != nil {
-		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"}, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"})
 		fail(w, 500, err)
 		return
 	}
@@ -6707,7 +6768,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		go a.runAutoEvolve(personaAide, modeCompress, "compaction", sample)
 	}
 	afterTokens := sessionContextTokens(sess)
-	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split}, UpdatedAt: time.Now()}
+	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split})
 	jsonOut(w, 200, map[string]any{"ok": true, "folded": split, "compact": summary, "compactedMessages": sess.CompactedMessages, "beforeTokens": beforeTokens, "afterTokens": afterTokens})
 }
 
@@ -7215,10 +7276,7 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 	}
 	publishLockedProgress := func(event streamEvent) {
 		event.StartedAt = startedAt
-		if a.contextCompactionProgress == nil {
-			a.contextCompactionProgress = map[string]contextCompactionProgress{}
-		}
-		a.contextCompactionProgress[s.ID] = contextCompactionProgress{Event: event, UpdatedAt: time.Now()}
+		a.setContextCompactionProgressLocked(s.ID, event)
 		a.publishStream(taskID, event)
 	}
 	publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("正在整理 %d 条早期消息并生成连续摘要", split)})

@@ -6,8 +6,8 @@ import (
 )
 
 // During this synchronous tool the main model is not making inference requests.
-// Its slot can be used for actual work; ordinary asynchronous calls retain the
-// one-slot reservation. No model is spawned to manage or poll the queue.
+// Its slot remains reserved: X always means main plus at most X-1 temporary
+// environments. No model is spawned to manage or poll the queue.
 func (p *executionPool) runQueue(ctx context.Context, specs []executionAssignment, order string, merge bool, versions map[string]Change) (map[string]any, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (p *executionPool) runQueue(ctx context.Context, specs []executionAssignmen
 	}
 	if p.draining {
 		p.mu.Unlock()
-		return nil, errors.New("queue already running with the main slot borrowed")
+		return nil, errors.New("queue already running")
 	}
 	if cap(p.slots) == 0 {
 		p.mu.Unlock()
@@ -50,8 +50,8 @@ func (p *executionPool) runQueue(ctx context.Context, specs []executionAssignmen
 	}
 	p.mu.Unlock()
 	defer func() {
-		// Do not resume main inference while X workers survive an interrupted
-		// drain. Closing cancels and joins every task-local worker first.
+		// Do not resume main inference while temporary environments survive an
+		// interrupted drain. Closing cancels and joins every task-local worker first.
 		if ctx.Err() != nil || p.ctx.Err() != nil {
 			p.close()
 		}
@@ -136,7 +136,7 @@ func (p *executionPool) runQueue(ctx context.Context, specs []executionAssignmen
 	return map[string]any{
 		"totalJobs": len(p.jobs), "counts": counts, "collectedJobs": collected, "uncollectedJobs": len(p.jobs) - collected, "unmergedCandidateJobs": unmerged,
 		"jobsPreview": rows, "previewTruncated": len(p.jobs) > len(rows), "collectionErrors": conflicts, "totalCollectionErrors": len(mergeErrors),
-		"order": order, "workSlotCapacity": cap(p.slots), "verified": false,
-		"notice": "Code ran and collected the queue while the main model was paused; no dedicated manager worker. The borrowed slot is returned before main inference resumes. Preview is bounded; environment_queue pages every retained ID. Worker claims are unverified; inspect selected environment_collect(detail=true) evidence and independently validate integration. mergedAsPending is an ordinary proposal, never applied code. Conflicts require explicit resolution; failed jobs are not replayed.",
+		"order": order, "workSlotCapacity": p.workerLimitLocked(), "verified": false,
+		"notice": "Code ran and collected the queue while the main model was paused; the main slot remains reserved, so X permits at most X-1 temporary environments. Preview is bounded; environment_queue pages every retained ID. Worker claims are unverified; inspect selected environment_collect(detail=true) evidence and independently validate integration. mergedAsPending is an ordinary proposal, never applied code. Conflicts require explicit resolution; failed jobs are not replayed.",
 	}, nil
 }

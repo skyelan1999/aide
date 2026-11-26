@@ -274,6 +274,55 @@ func TestSearchSessions(t *testing.T) {
 }
 
 // TestGetSessionByNumber 按 #N 编号读取会话。
+func TestGlobalSearchBySessionNumber(t *testing.T) {
+	a := testApp(t)
+	s := mustPostSession(t, a, "没有编号的普通标题")
+	s.Messages = nil
+	s.historyDeferred = true
+	for _, query := range []string{strconv.Itoa(s.Number), "%23" + strconv.Itoa(s.Number)} {
+		w := request(a, "GET", "/api/search?q="+query, nil)
+		requireStatus(t, w, 200)
+		var response struct {
+			Results []struct {
+				SessionID string `json:"sessionId"`
+				Number    int    `json:"number"`
+			} `json:"results"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+			t.Fatalf("decode search response: %v", err)
+		}
+		if len(response.Results) != 1 || response.Results[0].SessionID != s.ID || response.Results[0].Number != s.Number {
+			t.Fatalf("query %s should return only session #%d: %+v", query, s.Number, response.Results)
+		}
+		if !s.historyDeferred {
+			t.Fatalf("numeric query %s must not hydrate full session history", query)
+		}
+	}
+}
+
+func TestGlobalSearchMetadataSkipsDeferredHistory(t *testing.T) {
+	a := testApp(t)
+	s := mustPostSession(t, a, "独特的标题关键词")
+	s.Messages = nil
+	s.historyDeferred = true
+	w := request(a, "GET", "/api/search?q=标题关键词&meta=1", nil)
+	requireStatus(t, w, 200)
+	var response struct {
+		Results []struct {
+			SessionID string `json:"sessionId"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode metadata search response: %v", err)
+	}
+	if len(response.Results) != 1 || response.Results[0].SessionID != s.ID {
+		t.Fatalf("metadata search should return the title match: %+v", response.Results)
+	}
+	if !s.historyDeferred {
+		t.Fatal("metadata search must not hydrate full session history")
+	}
+}
+
 func TestGetSessionByNumber(t *testing.T) {
 	a := testApp(t)
 	s := mustPostSession(t, a, "按编号找我")

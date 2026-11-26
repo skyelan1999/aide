@@ -337,6 +337,9 @@ func (a *App) pendingSessionBodiesLocked() map[string]*Session {
 }
 
 func (a *App) prepareRequestSessionHistory(w http.ResponseWriter, r *http.Request) bool {
+	if r.URL.Path == "/api/search" && (sessionNumberSearchQuery(r.URL.Query().Get("q")) > 0 || r.URL.Query().Get("meta") == "1") {
+		return true
+	}
 	if r.URL.Path == "/api/export" || r.URL.Path == "/api/search" {
 		a.mu.Lock()
 		ids := make([]string, 0, len(a.sessions))
