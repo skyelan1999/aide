@@ -26,6 +26,8 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 		Assertion          json.RawMessage `json:"assertion"`
 		Challenge          string          `json:"challenge"`
 		AssistantSessionID string          `json:"assistantSessionId,omitempty"`
+		ApprovalSessionID  string          `json:"approvalSessionId,omitempty"`
+		ApprovalMode       string          `json:"approvalMode,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		return
@@ -48,7 +50,7 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			a.vaultAudit("master-auth:passwordless")
-			jsonOut(w, 200, map[string]any{"ok": true, "scope": "master", "unlocked": a.vaultIsUnlocked()})
+			a.masterAuthSuccess(w, "passwordless", in.ApprovalSessionID, in.ApprovalMode)
 			return
 		}
 		ok, needsUpgrade, verifyErr := a.verifyMasterPassword(in.Password, hash)
@@ -73,7 +75,7 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		a.vaultAudit("master-auth:password")
-		jsonOut(w, 200, map[string]any{"ok": true, "scope": "master", "unlocked": true})
+		a.masterAuthSuccess(w, "password", in.ApprovalSessionID, in.ApprovalMode)
 		return
 	}
 
@@ -109,7 +111,7 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.vaultAudit("master-auth:webauthn")
-	jsonOut(w, 200, map[string]any{"ok": true, "scope": "master", "unlocked": a.vaultIsUnlocked()})
+	a.masterAuthSuccess(w, "webauthn", in.ApprovalSessionID, in.ApprovalMode)
 }
 
 // unlockAssistantAfterMasterAuth lets a successfully verified password or

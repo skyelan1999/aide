@@ -205,14 +205,6 @@
         root.dataset.background = mode;
         lifecycle();
         refreshPanels();
-        if (mode === 'aurora') {
-            for (const variant of ['primary', 'secondary']) {
-                const glow = document.createElement('span');
-                glow.className = 'workbench-aurora workbench-aurora-' + variant;
-                layer.append(glow);
-            }
-            return;
-        }
         if (mode === 'studio') {
             for (const name of ['plane', 'line', 'halo']) {
                 const node = document.createElement('span');
@@ -289,7 +281,7 @@
         choices.className = 'background-options';
         choices.setAttribute('role', 'group');
         choices.setAttribute('aria-label', t('工作台背景'));
-        const buttons = [['off', '关闭'], ['aurora', '流光'], ['studio', '静域'], ['modern', '现代光场'], ['eye-comfort', '护眼'], ['local', '本地素材']].map(([value, text]) => {
+        const buttons = [['off', '关闭'], ['studio', '静域'], ['modern', '现代光场'], ['eye-comfort', '护眼'], ['local', '本地素材']].map(([value, text]) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.dataset.value = value;

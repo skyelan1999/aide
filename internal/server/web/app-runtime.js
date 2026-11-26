@@ -78,7 +78,7 @@ function passwordPrompt(title) {
 // requestMasterAuth({reason}) 统一主身份认证弹窗（#43）：密码输入 + 指纹授权按钮。
 // 已注册指纹（hasPlatformCredential=true）则按钮可点并自动发起 WebAuthn assertion；未注册置灰。
 // 返回 Promise<string|null>：输入密码且验证通过→密码串；指纹通过→'success'；取消→null（失败已 toast/内联提示，不锁死）。
-function requestMasterAuth({ reason, assistantSessionId } = {}) {
+function requestMasterAuth({ reason, assistantSessionId, authBody } = {}) {
     return new Promise((resolve) => {
         const dlg = el('dialog', 'master-auth');
         const box = el('div', 'master-auth-box');
@@ -91,6 +91,12 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
         input.spellcheck = false;
         input.placeholder = t('输入账户密码');
         const err = el('div', 'master-auth-error', '');
+        const hasCred = !!(state.config && state.config.hasPlatformCredential);
+        const approvalCredentialMissing = !!authBody?.approvalMode && !state.config?.hasPassword && !hasCred;
+        if (approvalCredentialMissing) {
+            input.disabled = true;
+            err.textContent = t('高风险审批需要先设置账户密码或绑定指纹，请前往设置 → 账户');
+        }
         const actions = el('div', 'editor-footer');
         const cancel = el('button', 'quiet', t('取消'));
         cancel.type = 'button';
@@ -98,6 +104,7 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
         fp.type = 'button';
         const ok = el('button', 'primary', t('确认'));
         ok.type = 'button';
+        ok.disabled = approvalCredentialMissing;
         actions.append(cancel, fp, ok);
         box.append(input, err, actions);
         dlg.append(box);
@@ -116,16 +123,18 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
                 return;
             }
             try {
-                const body = { password: pw };
+                const body = { ...(authBody || {}), password: pw };
                 if (assistantSessionId)
                     body.assistantSessionId = assistantSessionId;
-                await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
-                done(pw);
+                const result = await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
+                done(authBody ? result : pw);
             }
             catch (e) {
-                err.textContent = t('密码错误');
-                input.value = '';
-                input.focus();
+                err.textContent = e?.status === 403 && authBody?.approvalMode ? t(e.message) : t('密码错误');
+                if (!approvalCredentialMissing) {
+                    input.value = '';
+                    input.focus();
+                }
             }
         };
         ok.onclick = action(doPassword);
@@ -139,7 +148,6 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
                 done(null);
             }
         });
-        const hasCred = !!(state.config && state.config.hasPlatformCredential);
         const waReady = !!(state.config && state.config.webAuthnReady);
         const canFp = hasCred && waReady && location.hostname === 'localhost' && !window.AideNativeBiometrics;
         fp.disabled = !canFp;
@@ -171,11 +179,11 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
                     fp.disabled = false;
                     return;
                 }
-                const body = { challenge: start.challenge, assertion };
+                const body = { ...(authBody || {}), challenge: start.challenge, assertion };
                 if (assistantSessionId)
                     body.assistantSessionId = assistantSessionId;
-                await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
-                done('success');
+                const result = await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
+                done(authBody ? result : 'success');
             }
             catch (e) {
                 if (e && e.name === 'NotAllowedError') {

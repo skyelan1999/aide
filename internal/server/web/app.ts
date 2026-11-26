@@ -1209,7 +1209,7 @@ async function resumeRunById(runId?: any) {
     const review=await api(base+'/recovery');if(!active())return;
     const submit=(recovery?: any)=>{if(!active())throw Error(t('目标会话已变化，请重新打开'));return api(base+'/resume',{method:'POST',body:JSON.stringify({avatarFeedback:!!window.aideAvatarEnabled?.(),...(recovery?{recovery}:{})})});};
     const saved=async (run?: any)=>{if(active()){try{await selectSession(sessionId);if(!lockScreen.locked&&state.session?.id===sessionId)reconcileAvatarRun(run.id);}catch(e: any){if(!lockScreen.locked&&state.session?.id===sessionId)toast(t('任务已启动，刷新会话失败：{0}',e.message));}}};
-    if(review.required)window.AidePluginPlans!.openRecovery({el,t,review,active,submit,saved});
+    if(review.required)await saved(await submit({snapshot:review.snapshot,decision:'continue_without_replay'}));
     else await saved(await submit());
   } catch(e: any){if(active())toast(e.message);}
   finally{resumeRequests.delete(key);}
@@ -1615,8 +1615,66 @@ function buildToolUses(run?: any) {
   return group;
 }
 const statuses: any = { running: '运行中', paused: '已暂停', resumed: '已续跑', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用', awaiting_clarification: '等待澄清' };
-// The server reviews exact shell approvals; the browser never synthesizes a confirmation.
-function composerAutoReview() { return !!state.approvalPolicy?.enabled; }
+// Session overrides never mutate the global approval policy. Elevated modes
+// require a server-issued, one-time grant bound to this exact session and mode.
+function currentSessionApprovalMode() { return state.session?.approvalMode || ''; }
+function composerAutoReview() {
+  const mode = currentSessionApprovalMode();
+  if (mode === 'assisted_auto') return true;
+  if (mode === 'full_auto') return false;
+  return !!state.approvalPolicy?.enabled;
+}
+function composerApprovalLabel() {
+  const mode = currentSessionApprovalMode();
+  if (mode === 'assisted_auto') return t('辅助通过 · 本会话');
+  if (mode === 'full_auto') return t('全部通过 · 本会话');
+  return t(composerAutoReview() ? '辅助审批' : '手动审批');
+}
+function confirmSessionApprovalRisk(mode?: any) {
+  return new Promise<any>((resolve: any) => {
+    const dialog = el('dialog', 'master-auth');
+    const box = el('div', 'master-auth-box');
+    box.append(el('div', 'master-auth-title', t('高风险审批模式警示')));
+    const full = mode === 'full_auto';
+    box.append(el('p', 'muted', full
+      ? t('当前会话的所有命令、文件、浏览器和电脑操作审批都会自动通过，不再经过辅助审核或人工确认。高风险命令和外部副作用可能立即发生；仅沙箱、路径、目标和版本校验仍然有效。')
+      : t('当前会话的审批将由辅助审核自动处理：明确通过后立即执行，拒绝、超时或证据不足时自动拒绝，不再转人工确认。')));
+    box.append(el('p', 'muted', t('此模式只对当前会话生效，不改变其他会话或全局审批策略。启用后仍需密码或指纹授权。')));
+    const actions = el('div', 'editor-footer');
+    const cancel = el('button', 'quiet', t('取消')); cancel.type = 'button';
+    const accept = el('button', 'primary', t('我熟知并已确认风险')); accept.type = 'button';
+    actions.append(cancel, accept); box.append(actions); dialog.append(box);
+    let settled = false;
+    const done = (value: any) => { if (settled) return; settled = true; dialog.close(); dialog.remove(); resolve(value); };
+    cancel.onclick = () => done(false);
+    accept.onclick = () => done(true);
+    dialog.addEventListener('cancel', () => done(false));
+    dialog.addEventListener('click', (event?: any) => { if (event.target === dialog) done(false); });
+    document.body.append(dialog); dialog.showModal(); accept.focus();
+  });
+}
+async function setSessionApprovalMode(mode?: any) {
+  const sessionID = state.session?.id;
+  if (!sessionID || state.approvalModeBusy || currentSessionApprovalMode() === mode) return;
+  let grant = '';
+  if (mode === 'assisted_auto' || mode === 'full_auto') {
+    if (!await confirmSessionApprovalRisk(mode)) return;
+    const auth = await requestMasterAuth({
+      reason: t('授权在当前会话启用{0}', mode === 'full_auto' ? t('全部通过审批') : t('辅助通过审批')),
+      authBody: {approvalSessionId: sessionID, approvalMode: mode},
+    });
+    if (state.session?.id !== sessionID) { toast(t('会话已切换，未更改审批模式')); return; }
+    if (!auth?.approvalGrant) { toast(t('未获得有效审批授权')); return; }
+    grant = auth.approvalGrant;
+  }
+  state.approvalModeBusy = true; syncComposerApproval();
+  try {
+    await api('/sessions/' + encodeURIComponent(sessionID) + '/approval-mode', {method:'PUT', body:JSON.stringify({mode, grant, riskConfirmation: grant ? '我熟知并已确认风险' : ''})});
+    if (state.session?.id !== sessionID) return;
+    await selectSession(sessionID); schedulePoll();
+    toast(t(mode ? '审批模式仅对当前会话生效' : '当前会话已恢复全局审批策略'));
+  } finally { state.approvalModeBusy = false; syncComposerApproval(); }
+}
 function syncComposerApproval() { refreshStrategyUI(); }
 async function refreshApprovalPolicy() {
   const policy = await api('/approval-policy');
@@ -1629,6 +1687,9 @@ async function setComposerAutoReview(next?: any) {
   state.approvalModeBusy = true; syncComposerApproval();
   try {
     state.approvalPolicy = await api('/approval-policy', {method:'PUT', body:JSON.stringify({enabled:next})});
+    if (state.session?.approvalMode) {
+      await api('/sessions/' + encodeURIComponent(state.session.id) + '/approval-mode', {method:'PUT', body:JSON.stringify({mode:'', grant:'', riskConfirmation:''})});
+    }
     if (state.session) { await selectSession(state.session.id); schedulePoll(); }
     toast(t('审批模式已全局生效'));
   } catch(e: any) { await refreshApprovalPolicy().catch(() => {}); toast(e.message); }
@@ -5871,7 +5932,7 @@ function refreshStrategyUI() {
   const autoModel = routerAvailable && choice.modelRouter === 'auto';
   const modelName = display.label;
   const assistantMode = document.body.classList.contains('assistant-mode');
-  const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
+  const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + composerApprovalLabel());
   $('strategy-label').textContent = label;
   $('strategy-label').title = label + ' · ' + t('当前会话独立配置') + ' · ' + t('推理强度') + ': ' + choice.reasoningEffort;
   const menu = $('strategy-menu');
@@ -5926,11 +5987,15 @@ function refreshStrategyUI() {
     const approvalCol = el('div', 'strategy-menu-col strategy-approval-col');
     approvalCol.append(el('div', 'strategy-menu-sep', t('审批 · 全局')));
     const enabled = composerAutoReview();
+    const sessionMode = currentSessionApprovalMode();
     const busy = !!state.approvalModeBusy || !!state.submitting;
     approvalCol.append(
-      strategyMenuOption('approval', 'manual', t('手动审批'), t('未记住的操作由你确认'), !enabled, busy),
-      strategyMenuOption('approval', 'assisted', t('辅助审批'), t('所有会话立即生效'), enabled, busy),
-      el('small', 'strategy-approval-note', t('独立审核具体命令、网页访问和电脑操作；不确定时转人工，审核计入用量。'))
+      strategyMenuOption('approval', 'manual', t('手动审批'), t('未记住的操作由你确认'), !sessionMode && !enabled, busy),
+      strategyMenuOption('approval', 'assisted', t('辅助审批'), t('所有会话立即生效'), !sessionMode && enabled, busy),
+      el('div', 'strategy-menu-sep', t('审批 · 仅当前会话')),
+      strategyMenuOption('sessionApproval', 'assisted_auto', t('辅助通过审批'), t('辅助审核后自动处理；未明确通过则自动拒绝'), sessionMode === 'assisted_auto', busy),
+      strategyMenuOption('sessionApproval', 'full_auto', t('全部通过审批'), t('所有审批自动通过，不经过辅助审核'), sessionMode === 'full_auto', busy),
+      el('small', 'strategy-approval-note', t('会话模式不影响其他会话。高风险模式须确认“我熟知并已确认风险”，再通过密码或指纹授权；切换与自动处理写入防篡改审计日志。'))
     );
     if (state.approvalPolicy?.rememberedRules) {
       const manage=el('button','strategy-option',t('管理审批授权'));
@@ -6014,7 +6079,7 @@ function strategyMenuOption(kind?: any, value?: any, name?: any, desc?: any, sel
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
   b.type = 'button';
   b.disabled = disabled;
-  if (disabled && kind !== 'approval') b.title = kind === 'parallel' ? t('并行分析仅用于普通对话') : t('小秘使用独立模型来源，模型由小秘设置管理');
+  if (disabled && kind !== 'approval' && kind !== 'sessionApproval') b.title = kind === 'parallel' ? t('并行分析仅用于普通对话') : t('小秘使用独立模型来源，模型由小秘设置管理');
   b.setAttribute('role', 'menuitemradio');
   b.setAttribute('aria-checked', String(selected));
   b.append(el('span', 'strategy-option-check', selected ? '✓' : ''), el('span', '', name), el('small', '', desc));
@@ -6022,6 +6087,11 @@ function strategyMenuOption(kind?: any, value?: any, name?: any, desc?: any, sel
     if (kind === 'parallel') { window.AideParallelChat?.set(value); refreshStrategyUI(); return; }
     if (kind === 'approval') {
       await setComposerAutoReview(value === 'assisted');
+      closeStrategyMenu();
+      return;
+    }
+    if (kind === 'sessionApproval') {
+      await setSessionApprovalMode(value);
       closeStrategyMenu();
       return;
     }

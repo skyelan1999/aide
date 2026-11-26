@@ -185,7 +185,7 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 
 ## 界面、原生壳与语音
 
-Go 嵌入前端；浏览器与原生壳共享会话和任务。设置支持现代、专业、舒适与经典配色、明暗主题、背景及快捷键绑定。背景偏好为 `off | aurora | studio | modern | eye-comfort | local`，动态效果跟随系统减少动态效果，背景遮罩强度为独立偏好。护眼背景支持可选的本地远眺休息提醒。[外观说明](builtin-background.md)。
+Go 嵌入前端；浏览器与原生壳共享会话和任务。设置支持现代、专业、舒适与经典配色、明暗主题、背景及快捷键绑定。背景偏好为 `off | studio | modern | eye-comfort | local`，动态效果跟随系统减少动态效果，背景遮罩强度为独立偏好。旧 `aurora`（流光）背景已移除，已保存的该偏好升级后回退为 `off`。护眼背景支持可选的本地远眺休息提醒。[外观说明](builtin-background.md)。
 
 macOS 的 `modifier_gesture.swift`、`app_capture.swift` 实现可选双修饰键捕获前台窗口。PNG 和应用上下文经一次性票据绑定草稿，不自动发送。它依赖原生系统权限，浏览器页面不提供同等全局监听。
 

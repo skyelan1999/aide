@@ -89,7 +89,9 @@
         return ['comfort', 'green', 'professional'].indexOf(value) >= 0 ? value : 'modern';
     }
     function normalizeBackground(value) {
-        return ['off', 'aurora', 'studio', 'modern', 'eye-comfort', 'local'].indexOf(value) >= 0 ? value : 'studio';
+        if (value === 'aurora')
+            return 'off'; // Retired background: remove the persisted effect on upgrade.
+        return ['off', 'studio', 'modern', 'eye-comfort', 'local'].indexOf(value) >= 0 ? value : 'studio';
     }
     function normalizeBackgroundStrength(value) {
         return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;

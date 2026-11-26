@@ -64,7 +64,14 @@ func routineNewDocumentBatch(files []Change) bool {
 }
 
 func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
-	if a.applyRememberedFiles(task) {
+	a.mu.Lock()
+	sessionMode := a.taskSessionApprovalModeLocked(task)
+	a.mu.Unlock()
+	if sessionMode == sessionApprovalFullAuto {
+		a.autoApplySessionFiles(task)
+		return
+	}
+	if sessionMode == "" && a.applyRememberedFiles(task) {
 		return
 	}
 	a.mu.Lock()
@@ -187,7 +194,13 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		reason = "审批已取消或提案环境已变化"
 	}
 	grace := a.approvalGracePeriod()
+	if s.ApprovalMode == sessionApprovalAssistedAuto {
+		grace = 0
+	}
 	status := "manual"
+	if s.ApprovalMode == sessionApprovalAssistedAuto && !approved {
+		status = "declined"
+	}
 	if approved {
 		status = "approved"
 		if grace > 0 {
@@ -211,6 +224,14 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 			rec.Recommendation = "reject"
 		}
 	}
+	if status == "declined" && s.ApprovalMode == sessionApprovalAssistedAuto && task.approvalGeneration == gen {
+		task.Status = "failed"
+		task.CanResume = false
+		task.Error = "辅助审批未明确批准，文件未应用；当前会话已自动拒绝且不转人工"
+		if err := a.approvalAudit.append(approvalAuditEntry{Action: "session_assisted_auto_files_declined", SessionID: s.ID, RunID: task.ID, Mode: sessionApprovalAssistedAuto, Kind: "files", Fingerprint: record.Fingerprint}); err != nil {
+			task.Error += "；拒绝审计写入失败: " + err.Error()
+		}
+	}
 	if !statePersisted || a.save(s) != nil {
 		approved = false
 		if task.approvalGeneration == gen && task.Status == "awaiting_approval" {
@@ -230,11 +251,25 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		r.SetPathValue("id", s.ID)
 		r.SetPathValue("run", task.ID)
 		w := &approvalApplyResult{header: make(http.Header)}
-		a.applyTaskGuarded(w, r, current)
+		applyGuard := current
+		if s.ApprovalMode == sessionApprovalAssistedAuto {
+			applyGuard = func(t *Task) error {
+				if err := current(t); err != nil {
+					return err
+				}
+				return a.approvalAudit.append(approvalAuditEntry{Action: "session_assisted_auto_files_confirmed", SessionID: s.ID, RunID: task.ID, Mode: sessionApprovalAssistedAuto, Kind: "files", Fingerprint: record.Fingerprint})
+			}
+		}
+		a.applyTaskGuarded(w, r, applyGuard)
 		if w.status != http.StatusOK {
 			a.mu.Lock()
 			if task.approvalGeneration == gen {
 				task.ApprovalState = "manual"
+				if s.ApprovalMode == sessionApprovalAssistedAuto {
+					task.ApprovalState = "declined"
+					task.Status = "failed"
+					task.Error = "文件未成功应用，当前会话已结束本次自动审批: " + w.body.String()
+				}
 			}
 			if index < len(task.ApprovalReviews) && task.ApprovalReviews[index].At == record.At {
 				task.ApprovalReviews[index].Status = "manual"

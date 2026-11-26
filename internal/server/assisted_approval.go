@@ -207,6 +207,14 @@ func (a *App) reviewPendingCommand(task *Task) {
 	} else {
 		approved = false
 	}
+	if approved && s != nil && s.ApprovalMode == sessionApprovalAssistedAuto {
+		if err := a.approvalAudit.append(approvalAuditEntry{Action: "session_assisted_auto_confirmed", SessionID: s.ID, RunID: task.ID, Mode: sessionApprovalAssistedAuto, Kind: "shell", Fingerprint: record.Fingerprint}); err != nil {
+			approved = false
+			task.ApprovalState = "declined"
+			task.Error = "辅助通过审批的审计日志写入失败，操作未执行: " + err.Error()
+			_ = a.save(s)
+		}
+	}
 	if approved {
 		select {
 		case task.AnswerCh <- "确认":
@@ -215,6 +223,9 @@ func (a *App) reviewPendingCommand(task *Task) {
 		}
 	}
 	a.mu.Unlock()
+	if !approved {
+		a.rejectAssistedAutoApproval(task, round, gen)
+	}
 	if s != nil {
 		a.broadcastSessionsChanged(s.ID)
 	}

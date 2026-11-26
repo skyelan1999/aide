@@ -15,7 +15,7 @@ func assistantMessageType(managed bool) string {
 }
 
 func (a *App) taskAutoReviewLocked(task *Task) bool {
-	return a.approvalPolicy.Enabled || task.AssistantManaged && a.settings.AssistantAutoReview
+	return a.sessionAutoReviewLocked(a.approvalSessionLocked(task), task.AssistantManaged)
 }
 
 // Caller holds a.mu. Revoke old generations before scheduling new reviews.
@@ -43,8 +43,9 @@ func (a *App) refreshAssistantReviewsLocked() {
 				task.AutoReview = false
 				continue
 			}
-			if task.AutoReview && hasPendingApproval(task) {
+			if hasPendingApproval(task) {
 				go func(t *Task) {
+					a.autoAnswerFullApproval(t)
 					a.reviewPendingCommand(t)
 					a.reviewPendingSurfaceAction(t)
 					a.reviewPendingFiles(context.Background(), t)

@@ -492,6 +492,7 @@ type Session struct {
 	FollowNote             string                 `json:"followNote,omitempty"`          // 小秘跟进备注
 	Plan                   []PlanItem             `json:"plan,omitempty"`                // 会话级任务与规划：用户自然语言任务 + aide 拆解步骤
 	PlanClosed             []string               `json:"planClosed,omitempty"`          // 已关闭的 aide 步骤键（runId:step），不删除记录
+	ApprovalMode           string                 `json:"approvalMode,omitempty"`        // 仅当前会话：assisted_auto=辅助审核后自动处理；full_auto=全部自动通过
 }
 
 // sessionHistoryView adds pagination metadata to the regular Session JSON shape.
@@ -559,6 +560,8 @@ type App struct {
 	settings                  Settings
 	kvCache                   *kvCacheManager
 	approvalPolicy            ApprovalPolicy
+	approvalGrants            map[string]sessionApprovalGrant
+	approvalAudit             *approvalAuditLog
 	capabilityChecks          map[string]CapabilityCheck
 	capabilityChecking        bool
 	sessions                  map[string]*Session
@@ -958,7 +961,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, contextCompactionProgress: map[string]contextCompactionProgress{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}, approvalGrace: 30 * time.Second}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, contextCompactionProgress: map[string]contextCompactionProgress{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}, approvalGrants: map[string]sessionApprovalGrant{}, approvalGrace: 30 * time.Second}
 	if err := a.loadReminders(); err != nil {
 		a.Close()
 		return nil, err
@@ -1026,6 +1029,10 @@ func New(work, reference, data string) (*App, error) {
 	if err := a.loadApprovalPolicy(); err != nil {
 		a.Close()
 		return nil, err
+	}
+	if a.approvalAudit, err = openApprovalAudit(data); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("approval-audit: %w", err)
 	}
 	// #34：加载性格演化触发计数/回滚历史（config/personality-state.json），重启不清零。
 	a.loadPersonalityState()
@@ -1858,6 +1865,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/approval-policy/rules", a.listApprovalRules)
 	mux.HandleFunc("PUT /api/approval-policy/rules/{rule}", a.updateApprovalRule)
 	mux.HandleFunc("DELETE /api/approval-policy/rules/{rule}", a.updateApprovalRule)
+	mux.HandleFunc("PUT /api/sessions/{id}/approval-mode", a.setSessionApprovalMode)
+	mux.HandleFunc("GET /api/approval-audit/verify", a.verifySessionApprovalAudit)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
 	mux.HandleFunc("PUT /api/sessions/{id}/runs/{run}/approval-mode", a.setApprovalMode)
 	mux.HandleFunc("/api/messages/", a.messageAPI)

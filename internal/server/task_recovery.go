@@ -302,8 +302,8 @@ func readTaskResumeRequest(w http.ResponseWriter, r *http.Request) (*bool, *task
 	if req.Recovery != nil {
 		x := req.Recovery
 		x.Note = strings.TrimSpace(x.Note)
-		if x.Decision != "continue_without_replay" || len(x.Snapshot) != 64 || x.Note == "" || len(x.Note) > 4096 {
-			return nil, nil, errors.New("explicit continuation decision, snapshot and 1-4096 note bytes required")
+		if x.Decision != "continue_without_replay" || len(x.Snapshot) != 64 || len(x.Note) > 4096 {
+			return nil, nil, errors.New("explicit continuation decision and snapshot required")
 		}
 	}
 	return req.AvatarFeedback, req.Recovery, nil

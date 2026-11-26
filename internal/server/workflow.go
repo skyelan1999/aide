@@ -612,7 +612,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), PlanTaskID: in.PlanTaskID, PlanContext: a.planContextLocked(s, in.PlanTaskID, 6), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), PlanTaskID: in.PlanTaskID, PlanContext: a.planContextLocked(s, in.PlanTaskID, 6), AutoReview: a.sessionAutoReviewLocked(s, assistantManaged), WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	bindTaskToSessionLineage(s, task)
 	if item := a.findPlanItemLocked(s, in.PlanTaskID); item != nil && item.Contract != nil {
 		raw, _ := json.Marshal(item.Contract)
@@ -1603,8 +1603,8 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("请切回原工作区后恢复任务"))
 		return
 	}
-	if review.Required && (recoveryDecision == nil || !review.Ready || recoveryDecision.Snapshot != review.Snapshot) {
-		jsonOut(w, 409, map[string]any{"error": "恢复记录需要核查并明确确认；请重新加载恢复预览", "recovery": review})
+	if review.Required && (recoveryDecision == nil || recoveryDecision.Snapshot != review.Snapshot) {
+		jsonOut(w, 409, map[string]any{"error": "恢复快照已变化，请重新加载恢复预览", "recovery": review})
 		return
 	}
 	if !review.Required && recoveryDecision != nil {
@@ -6125,6 +6125,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	}
 	a.mu.Unlock()
 	a.publishStream(task.ID, streamEvent{Event: "clarification", Question: string(question)})
+	go a.autoAnswerFullApproval(task)
 	go a.reviewPendingCommand(task)
 	go a.reviewPendingSurfaceAction(task)
 	var answer string

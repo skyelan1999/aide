@@ -75,7 +75,6 @@ func TestTaskRecoveryPreviewAndGuardedResume(t *testing.T) {
 		t.Fatal("preview leaked private data")
 	}
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", nil), 409)
-	requireStatus(t, request(a, "POST", recoveryURL+"/resume", recoveryRequest(review)), 409)
 	recoveryCheck(t, a, task)
 	ready := a.taskRecoveryReviewLocked("effect-session", task)
 	if !ready.Ready {
@@ -100,9 +99,6 @@ func TestTaskRecoveryPreviewAndGuardedResume(t *testing.T) {
 	task.WorkspaceID = ""
 	bad := recoveryRequest(latest)
 	bad["source"] = "system_verified"
-	requireStatus(t, request(a, "POST", recoveryURL+"/resume", bad), 400)
-	bad = recoveryRequest(latest)
-	bad["recovery"].(map[string]any)["note"] = ""
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", bad), 400)
 	requireStatus(t, request(a, "GET", strings.Replace(recoveryURL, "effect-session", "other", 1)+"/recovery", nil), 404)
 	a.cancels[task.ID] = func() {}
@@ -131,17 +127,24 @@ func TestTaskRecoveryOrdinaryCheckpointKeepsLegacyWorkspaceBehavior(t *testing.T
 func TestTaskRecoveryContinuesNewGraphNeverReplaysOld(t *testing.T) {
 	a, task, old := recoveryFixture(t)
 	planInstall(t, a, "recovery-fixture", `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'recovery_probe',handler:args=>{fs.appendFileSync(path.join(__dirname,args.marker+'.marker'),'called\n');return 'new work returned';}})}};`)
-	recoveryCheck(t, a, task)
 	review := a.taskRecoveryReviewLocked("effect-session", task)
+	if review.Ready {
+		t.Fatal("fixture should still have unchecked effects")
+	}
+	payload := recoveryRequest(review)
+	delete(payload["recovery"].(map[string]any), "note")
 	newCall := planCall(t, "new-plan", []pluginPlanNodeSpec{{ID: "fresh", Tool: "recovery_probe", Arguments: map[string]any{"marker": "new"}}})
 	provider := newToolProvider(t, []func() (string, []ToolCall){func() (string, []ToolCall) { return "", []ToolCall{old} }, func() (string, []ToolCall) { return "", []ToolCall{newCall} }, func() (string, []ToolCall) { return "New work complete; old effects remain unverified.", nil }})
 	defer provider.Close()
 	a.settings = Settings{BaseURL: provider.URL, Model: "test"}
-	w := request(a, "POST", recoveryURL+"/resume", recoveryRequest(review))
+	w := request(a, "POST", recoveryURL+"/resume", payload)
 	requireStatus(t, w, 202)
 	var result Task
 	_ = json.Unmarshal(w.Body.Bytes(), &result)
 	done := recoveryWait(t, a, result.ID)
+	if done.RecoveryContinuation == nil || done.RecoveryContinuation.Note != "" {
+		t.Fatal("direct resume should not require or invent a continuation note")
+	}
 	root := filepath.Join(a.pluginsPath, "recovery-fixture")
 	if planExists(filepath.Join(root, "old.marker")) {
 		t.Fatal("old handler replayed")

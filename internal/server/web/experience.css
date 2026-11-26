@@ -80,8 +80,8 @@ html[data-motion="reduced"] #send,html[data-ui-paused] #send{transition:none}
 /* Adaptive rendering: preserve context and controls while removing continuous
    paint/layout work before shortening essential transitions. */
 body.sidebar-collapsed{transition:none}
-html[data-motion-profile="balanced"] :is(.workbench-aurora,.workbench-eye-glow,.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo),
-html[data-motion-profile="minimal"] :is(.workbench-aurora,.workbench-eye-glow,.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo){animation:none!important}
+html[data-motion-profile="balanced"] :is(.workbench-eye-glow,.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo),
+html[data-motion-profile="minimal"] :is(.workbench-eye-glow,.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo){animation:none!important}
 html[data-motion-profile="minimal"] :is(.sidebar,.topbar,.file-panel,.plugin-panel,#reminder-center,.composer,.strategy-menu,.search-results,.settings-sheet,dialog){-webkit-backdrop-filter:none;backdrop-filter:none}
 
 @media(prefers-reduced-motion:reduce){.motion-segment-ready::before{transition:none}}

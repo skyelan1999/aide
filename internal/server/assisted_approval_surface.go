@@ -187,6 +187,14 @@ func (a *App) reviewPendingSurfaceAction(task *Task) {
 	} else {
 		approved = false
 	}
+	if approved && session != nil && session.ApprovalMode == sessionApprovalAssistedAuto {
+		if err := a.approvalAudit.append(approvalAuditEntry{Action: "session_assisted_auto_confirmed", SessionID: session.ID, RunID: task.ID, Mode: sessionApprovalAssistedAuto, Kind: q.Kind, Fingerprint: record.Fingerprint}); err != nil {
+			approved = false
+			task.ApprovalState = "declined"
+			task.Error = "辅助通过审批的审计日志写入失败，操作未执行: " + err.Error()
+			_ = a.save(session)
+		}
+	}
 	if approved {
 		select {
 		case task.AnswerCh <- "确认":
@@ -195,6 +203,9 @@ func (a *App) reviewPendingSurfaceAction(task *Task) {
 		}
 	}
 	a.mu.Unlock()
+	if !approved {
+		a.rejectAssistedAutoApproval(task, round, gen)
+	}
 	if session != nil {
 		a.broadcastSessionsChanged(session.ID)
 	}
