@@ -1,9 +1,11 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -177,6 +179,57 @@ func TestTTSToolsPreserveAssistantSettings(t *testing.T) {
 	a.settings.SandboxMode = "read-only"
 	if a.sandboxToolError("tts_generate") == nil || a.sandboxToolError("tts_voices") != nil {
 		t.Fatal("TTS write/read sandbox boundaries")
+	}
+}
+
+// Exercise the normal workspace save with the same deterministic provider
+// fixture as the published TTS plug-in test, without requiring a market ZIP.
+func TestTTSToolsSaveFirstOutputInFreshWorkspace(t *testing.T) {
+	a := testApp(t)
+	if _, err := a.workspace.Stat("generated"); !os.IsNotExist(err) {
+		t.Fatalf("expected a fresh workspace without generated output: %v", err)
+	}
+	a.pluginSurface = []byte(`{"plugins":[{"id":"tts-tools","tools":[{"name":"tts_generate","executable":true}]}]}`)
+	releasePublicSpeech(t, a)
+}
+
+func TestNativeMediaSaveFirstVideoInFreshWorkspace(t *testing.T) {
+	a := testApp(t)
+	cfg := Settings{BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", Model: "wan2.7-t2v"}
+	const prompt = "生成三秒视频"
+	const assetURL = "https://dashscope-result-sh.oss-accelerate.aliyuncs.com/fixture.mp4"
+	task := &Task{ID: "video-fixture", Mode: "chat", Status: "running", WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: "local",
+		MediaGeneration: &MediaGeneration{Kind: "video", Model: cfg.Model, Identity: mediaIdentity(cfg), Format: "mp4",
+			RequestHash: hash([]byte(prompt + "\n\nmp4")), State: "succeeded", JobID: "already-generated", ResultURL: assetURL}}
+	session := &Session{ID: "video-fixture-session", Runs: []*Task{task}}
+	a.sessions[session.ID] = session
+	if err := a.save(session); err != nil {
+		t.Fatal(err)
+	}
+	// A valid MP4 type-box header is sufficient for the save path. No paid
+	// provider call is made, and a ready remote job must not be resubmitted.
+	payload := []byte("\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom")
+	downloads := 0
+	previous := http.DefaultTransport
+	t.Cleanup(func() { http.DefaultTransport = previous })
+	http.DefaultTransport = releasePublicTransport(func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodGet || r.URL.String() != assetURL {
+			t.Errorf("unexpected provider request: %s %s", r.Method, r.URL)
+			return nil, errors.New("unexpected provider request")
+		}
+		downloads++
+		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": {"video/mp4"}}, Body: io.NopCloser(bytes.NewReader(payload)), ContentLength: int64(len(payload)), Request: r}, nil
+	})
+	for i := 0; i < 2; i++ {
+		_, _, err := a.mediaGenerationChatRequest(context.Background(), cfg, nil, task, 0, prompt, "", "mp4", false)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	asset := task.MediaGeneration.Asset
+	got, err := a.workspace.ReadFile(asset)
+	if err != nil || !strings.HasPrefix(asset, "generated/video/") || !bytes.Equal(got, payload) || downloads != 1 {
+		t.Fatalf("unexpected video persistence: path=%q, downloads=%d, err=%v", asset, downloads, err)
 	}
 }
 

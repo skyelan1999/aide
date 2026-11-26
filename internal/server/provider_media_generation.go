@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -394,7 +395,11 @@ func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, inpu
 			return "", input, rootErr
 		}
 		fs := &transferFS{root: root}
-		err = writeStreamToTransferFSContext(ctx, fs, state.Asset, spool)
+		// Stage the download in the destination directory. A fresh workspace
+		// has neither generated/speech nor generated/video yet.
+		if err = fs.MkdirAll(path.Dir(state.Asset)); err == nil {
+			err = writeStreamToTransferFSContext(ctx, fs, state.Asset, spool)
+		}
 		err = errors.Join(err, root.Close())
 		if err != nil {
 			state.Asset = ""

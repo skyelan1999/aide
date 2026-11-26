@@ -45,6 +45,8 @@ flowchart LR
 并发倍率不是等比例提速承诺；模型审查不是测试通过。详细接口、约束与已有验收见[功能说明](docs/features.md)和[技术白皮书](docs/architecture/aide-technical-whitepaper.md)。
 
 
+若 Aide 服务所在网络必须经受信任的 HTTP(S) 代理访问 GitHub，可在**服务进程**设置 `AIDE_OFFICIAL_MARKET_USE_ENV_PROXY=1`，并配置 `HTTPS_PROXY` / `NO_PROXY`。默认保持直连；启用后仅官方市场目录和版本固定的安装包请求使用该代理，仍需通过 HTTPS 和原有安装包校验。任意第三方插件升级地址不使用此开关。
+
 源码增补（2026-11-13）：现有任务规划支持交付物与逐项验收，项目记忆支持带来源的事实、约束、决策和未决问题；见[项目目标与知识记录](docs/project-goals-knowledge.md)。此增补不包含在 v0.1.19.0-RC2 安装包中。
 
 ## 快速开始
