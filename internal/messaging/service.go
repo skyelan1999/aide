@@ -628,13 +628,14 @@ func (s *Service) Snapshot() map[string]any {
 	_ = json.Unmarshal(raw, &state)
 	peers := map[string]any{}
 	for id, card := range state.Peers {
-		peers[id] = map[string]any{"device": card.Device, "name": card.Name}
+		peers[id] = map[string]any{"device": card.Device, "name": card.Name, "dialNumber": dialNumber(id)}
 	}
 	unread, through := s.unreadLocked(consent)
 	if len(state.Messages) > 500 {
 		state.Messages = state.Messages[len(state.Messages)-500:]
 	}
-	return map[string]any{"device": s.identity.Device(), "name": s.name, "consent": consent, "peers": peers, "messages": state.Messages, "transfers": state.Transfers, "groups": state.Groups, "calls": state.Calls, "read": state.Read, "unread": unread, "readThrough": through, "signals": append([]Signal(nil), s.signals...)}
+	device := s.identity.Device()
+	return map[string]any{"device": device, "dialNumber": dialNumber(device.Fingerprint), "name": s.name, "consent": consent, "peers": peers, "messages": state.Messages, "transfers": state.Transfers, "groups": state.Groups, "calls": state.Calls, "read": state.Read, "unread": unread, "readThrough": through, "signals": append([]Signal(nil), s.signals...)}
 }
 func (s *Service) receive(w http.ResponseWriter, r *http.Request) {
 	peer, err := AuthenticatedPeer(r)

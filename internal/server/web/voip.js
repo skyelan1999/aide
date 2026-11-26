@@ -119,7 +119,7 @@
             }
         };
     }
-    function settings(api, t) {
+    function settings(api, t, gateway) {
         const form = document.createElement('form');
         form.className = 'settings-control voip-control';
         form.noValidate = true;
@@ -178,6 +178,23 @@
         };
         grid.append(field('话机 IPv4 地址', ip, '仅支持局域网、回环或链路本地地址。', 'voip-ip-field'), field('SIP 端口', port, '默认 5060，范围 1–65535。', 'voip-port-field'), field('SIP 用户', user, '可留空；支持字母、数字和 . _ + -。', 'voip-user-field'));
         network.append(grid);
+        const useGateway = make('button', 'quiet', '带入网关当前的话机地址和账号');
+        useGateway.type = 'button';
+        if (gateway)
+            network.append(useGateway);
+        useGateway.onclick = () => {
+            if (loading || saving || !local)
+                return;
+            const info = gateway?.();
+            if (!info?.running || !info.phone) {
+                setStatus(t('请先刷新并确认电话网关运行中'), 'error');
+                return;
+            }
+            ip.value = info.phone;
+            port.value = String(info.phonePort || 5060);
+            user.value = info.account;
+            changed();
+        };
         const footer = make('div', 'voip-footer');
         const status = make('p', 'voip-save-status', '正在读取话机设置…');
         status.setAttribute('role', 'status');
@@ -198,6 +215,7 @@
         };
         const refreshControls = () => {
             const unavailable = loading || saving || !local;
+            useGateway.disabled = unavailable;
             controls.forEach((field) => { field.disabled = unavailable; });
             reset.disabled = unavailable || !dirty;
             save.disabled = unavailable || !dirty;

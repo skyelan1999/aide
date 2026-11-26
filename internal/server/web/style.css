@@ -1903,6 +1903,12 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 /* Office editor keeps the existing viewer surface and surrounding Aide layout. */
 
 .voip-control{width:100%;max-width:720px;min-width:0;box-sizing:border-box;color:var(--text)}
+.voip-header a{color:var(--brand);text-decoration:underline}
+.voip-dial-rules{display:grid;grid-template-columns:fit-content(48%) minmax(0,1fr);gap:6px 16px;margin:12px 0;line-height:1.5}
+.voip-dial-rules dt{font-weight:600}
+.voip-dial-rules dd{margin:0;overflow-wrap:anywhere}
+.voip-section ol{padding-inline-start:1.5em}
+.voip-section li{margin-block:6px}
 .voip-control h4{margin:0;font-size:16px;line-height:1.45;font-weight:650}
 .voip-header{padding:16px;border:1px solid var(--line-faint);border-radius:12px;background:var(--bg-inset)}
 .voip-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}

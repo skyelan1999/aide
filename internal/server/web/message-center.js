@@ -78,7 +78,7 @@
         const reminderBadge = document.querySelector('.reminder-count');
         if (reminderBadge)
             reminderBadge.hidden = true;
-        let snapshot = null, activeTab = 'chats', selected = null, busy = false, epoch = 0, digesting = false, lastDevice = '', lastPaint = '', activeVoice = null, older = 100, viewDraft = '', pollTimer = 0;
+        let snapshot = null, activeTab = 'chats', selected = null, busy = false, epoch = 0, digesting = false, lastDevice = '', lastPaint = '', activeVoice = null, placingVoice = false, older = 100, viewDraft = '', pollTimer = 0;
         const files = new Map(), uploads = new Set(), paused = new Set(), processed = new Set();
         const data = () => snapshot?.data, own = () => data()?.device?.fingerprint || '', invitations = () => Object.values(data()?.consent?.invitations || {}), relations = () => data()?.consent?.relationships || {};
         const name = (peer) => data()?.peers?.[peer]?.name || data()?.peers?.[peer]?.device?.code || peer.slice(0, 8);
@@ -245,7 +245,8 @@
                 catch (_) { }
             }
         }
-        function identityCard() { const e = node('div', 'message-identity'); e.append(node('span', 'message-eyebrow', tr('我的设备码'))); const row = node('div', 'message-row'); row.append(node('strong', 'message-device-code', data()?.device?.code || '—'), button('复制设备码', async () => { await navigator.clipboard.writeText(data().device.code); toast(tr('已复制')); })); e.append(row); const more = node('details', 'message-fingerprint'); more.append(node('summary', '', tr('完整设备指纹')), node('code', '', own())); e.append(more); return e; }
+        function identityCard() { const e = node('div', 'message-identity'); e.append(node('span', 'message-eyebrow', tr('我的设备码'))); const row = node('div', 'message-row'); row.append(node('strong', 'message-device-code', data()?.device?.code || '—'), button('复制设备码', async () => { await navigator.clipboard.writeText(data().device.code); toast(tr('已复制')); })); e.append(row); if (data()?.dialNumber)
+            e.append(node('p', 'message-caption', tr('我的通话编号') + ' · ' + data().dialNumber)); const more = node('details', 'message-fingerprint'); more.append(node('summary', '', tr('完整设备指纹')), node('code', '', own())); e.append(more); return e; }
         function buildSettings() {
             if (!settingsBody)
                 return;
@@ -314,6 +315,25 @@
         function paintContacts() {
             const host = panes.contacts;
             host.replaceChildren(identityCard());
+            const dial = node('form', 'message-add-form'), number = input('输入 8 位成员编号');
+            number.inputMode = 'numeric';
+            number.maxLength = 8;
+            number.pattern = '[0-9]{8}';
+            number.required = true;
+            const callMember = button('呼叫成员');
+            callMember.type = 'submit';
+            dial.append(number, callMember);
+            dial.onsubmit = safe(async (event) => {
+                event.preventDefault();
+                callMember.disabled = true;
+                try {
+                    await startVoice({ number: number.value });
+                }
+                finally {
+                    callMember.disabled = false;
+                }
+            });
+            host.append(dial);
             const search = node('form', 'message-add-form');
             const code = input('输入 6 位设备码');
             code.maxLength = 6;
@@ -359,7 +379,7 @@
             for (const [peer, rel] of all) {
                 const row = node('article', 'message-contact');
                 const label = node('div');
-                label.append(node('strong', '', name(peer)), node('small', '', rel.blocked ? tr('已拉黑') : rel.localAccepted && rel.remoteAccepted ? data()?.peers?.[peer]?.device?.code || peer.slice(0, 6) : tr('等待对方同意')));
+                label.append(node('strong', '', name(peer)), node('small', '', rel.blocked ? tr('已拉黑') : rel.localAccepted && rel.remoteAccepted ? data()?.peers?.[peer]?.dialNumber || data()?.peers?.[peer]?.device?.code || peer.slice(0, 6) : tr('等待对方同意')));
                 row.append(label);
                 if (rel.localAccepted && rel.remoteAccepted && !rel.blocked)
                     row.append(button('开始聊天', () => { selected = { peer }; selectTab('chats'); }));
@@ -670,34 +690,41 @@
             }
         }
         async function startVoice(target) {
-            if (activeVoice)
+            if (activeVoice || placingVoice)
                 throw new Error(uiTextMessageCenter('请先结束当前通话'));
             const captured = epoch, voiceContext = prepareVoiceContext();
             let id, invitation = '';
+            placingVoice = true;
             try {
                 if (target.group) {
                     id = (await post('group-call', { group: target.group })).id;
                 }
                 else {
-                    const result = await post('invite', { peer: target.peer, kind: 'voice' });
+                    const result = target.number ? await post('dial', { number: target.number }) : await post('invite', { peer: target.peer, kind: 'voice' });
+                    target = { peer: result.invitation.peer };
                     id = result.invitation.resource;
                     invitation = result.invitation.id;
                 }
-                if (captured !== epoch || isLocked())
+                if (captured !== epoch || isLocked()) {
+                    if (invitation)
+                        await post('cancel', { id: invitation }).catch(() => { });
                     return;
+                }
                 activeVoice = { id, peer: target.peer || '', group: target.group || '', invitation, voiceContext, pcs: new Map(), audio: new Map(), participants: new Set(), serial: ++voiceSerial, status: '等待接听' };
                 paintCall();
                 await refresh(true);
             }
             finally {
+                placingVoice = false;
                 if (voiceContext && activeVoice?.voiceContext !== voiceContext && voiceContext.state !== 'closed')
                     void voiceContext.close().catch(() => { });
             }
         }
         async function answerVoice(inv) {
-            if (activeVoice)
+            if (activeVoice || placingVoice)
                 throw new Error(uiTextMessageCenter('请先结束当前通话'));
             const captured = epoch, voiceContext = prepareVoiceContext();
+            placingVoice = true;
             try {
                 await post('decide', { id: inv.id, accept: true });
                 await refresh(true);
@@ -709,6 +736,7 @@
                 await syncVoice();
             }
             finally {
+                placingVoice = false;
                 if (voiceContext && activeVoice?.voiceContext !== voiceContext && voiceContext.state !== 'closed')
                     void voiceContext.close().catch(() => { });
             }

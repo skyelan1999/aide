@@ -29,6 +29,23 @@ class PhoneProtocolTests(unittest.IsolatedAsyncioTestCase):
         gateway.datagram_received(b'INVITE sip:1000@10.0.0.1 SIP/2.0\r\nCall-ID: assistant\r\n\r\n', ('10.0.0.2',5060))
         self.assertEqual(gateway.incoming.qsize(),1)
 
+    def test_member_digits_are_only_routed_by_normal_gateway(self):
+        for normal in (False, True):
+            args = argparse.Namespace(phone='10.0.0.2', phone_user='1001', normal=normal, report=None)
+            gateway = Gateway(args, '10.0.0.1')
+            gateway.transport = Transport()
+            for n in ('10001', '1234567a', '123456789'):
+                gateway.datagram_received(('INVITE sip:'+n+'@10.0.0.1 SIP/2.0\r\nCall-ID: invalid\r\n\r\n').encode(), (args.phone, 5072))
+                self.assertTrue(gateway.transport.sent[-1][0].startswith(b'SIP/2.0 404'))
+            gateway.datagram_received(b'INVITE sip:00001000@10.0.0.1 SIP/2.0\r\nCall-ID: member\r\n\r\n', (args.phone,5072))
+            self.assertEqual(gateway.incoming.qsize(), int(normal))
+            if normal:
+                self.assertEqual(gateway.destination, '00001000')
+                self.assertEqual(gateway.dialog_peer, (args.phone,5072))
+            for user in ('other', '1001'):
+                gateway.datagram_received(('REGISTER sip:10.0.0.1 SIP/2.0\r\nTo: <sip:'+user+'@10.0.0.1>\r\n\r\n').encode(), (args.phone,5072))
+                self.assertEqual(bool(gateway.last_register_at), user == '1001')
+
     def test_playback_gain_boosts_quiet_voice_without_clipping(self):
         quiet = struct.pack('<h', 2000)*160
         loud = struct.pack('<hh', 30000, -30000)*80

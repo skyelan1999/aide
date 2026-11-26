@@ -1,0 +1,74 @@
+{
+  "id": "sip-hangup-order-20261127",
+  "request": "修复 SIP1 呼叫 1000 时用户说挂了或再见，小绵口头告别却仍不挂断。用回归测试和实体话机验收。",
+  "baseline": "0ccc0a9844185b4fec3a2e62a87afb78c66ad819",
+  "initial_status": "M docs/architecture/assistant-live.md\n M docs/architecture/assistant-openai-speech.md\n M docs/architecture/decentralized-messages.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/messaging/service.go\n M internal/server/assistant_native_hangup_test.go\n M internal/server/assistant_realtime.go\n M internal/server/assistant_sip_status.go\n M internal/server/message_center.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/app.ts\n M internal/server/web/i18n.js\n M internal/server/web/i18n.ts\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/locales/en.ts\n M internal/server/web/message-center.js\n M internal/server/web/message-center.ts\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/voip.js\n M internal/server/web/voip.ts\n M scripts/aide.sh\n M scripts/aide_sip_phone.py\n M scripts/aide_sip_service.py\n M scripts/desktop-session.py\n M scripts/test_aide_sip_phone.py\n?? docs/tasks/motorola-voip-platform.json\n?? internal/messaging/phone.go\n?? internal/messaging/phone_test.go\n?? internal/server/web/motorola-voip-guide.md\n?? scripts/aide_sip_members.py\n?? scripts/sip-phone-requirements.txt\n?? scripts/test_aide_sip_members.py\n?? scripts/test_aide_sip_service.py",
+  "acceptance": [
+    "An explicit farewell from the current handset caller closes SIP and paid media in bounded time, whether the final ASR precedes or follows VAD stop.",
+    "Negative or superseded utterances must not terminate a new turn. Verify against an actual call to 1000."
+  ],
+  "scope": [
+    "internal/server/assistant_realtime.go",
+    "internal/server/assistant_native_hangup_test.go",
+    "local Motorola SIP1 acceptance"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Fix explicit SIP caller farewells reported by the user.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Evaluate the final recognition and end-of-speech events for the same utterance. Preserve the existing hangup, playback and call release path.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Handle both event orders and use the speech-start item when a provider omits the stop item. Ignore superseded stop events for this SIP action.",
+      "evidence": [
+        "internal/server/assistant_realtime.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Regression and race suites passed. On the live Motorola call the assistant recognized the user farewell, the host requested hangup, and the SIP peer acknowledged BYE. The gateway returned to waiting.",
+      "evidence": [
+        ".agent-state/sip-hangup-order/before.log",
+        ".agent-state/sip-hangup-order/after.log",
+        ".agent-state/sip-hangup-order/relay.log",
+        ".agent-state/sip-hangup-order/race.log",
+        ".agent-state/sip-hangup-order/gateway-tests.log",
+        ".agent-state/sip-hangup-order/physical-retest.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Existing user-facing hangup command remains the same. Task acceptance records the event-order change.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed the disposable relay test container after the non-race and race suites finished. Original Aide data volumes remain in place.",
+      "evidence": [
+        ".agent-state/sip-hangup-order/race.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local deployment only. No public release requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Previous production image archived under .agent-state/sip-hangup-order/previous-image.tar and matched against the running OCI manifest.",
+  "handoff": "Reverified on the rebuilt 80c1c4a0 base. Physical hangup complete. No public release.",
+  "local_deployment": {
+    "status": "installed",
+    "evidence": [
+      ".agent-state/sip-hangup-order/runtime.json",
+      ".agent-state/sip-hangup-order/build.log",
+      ".agent-state/main-rebuild-20261127/new-runtime.json"
+    ]
+  }
+}

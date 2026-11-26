@@ -1,0 +1,84 @@
+{
+  "id": "motorola-voip-platform",
+  "request": "重构一下aide的voip设置与业务流程，专门对接该摩托罗拉的话机，做平台化适配，并提供保姆级的对接指南。只做 Aide 直连。消息中的成员生成8位编号，输入8位编号直接呼叫，1000呼叫本机助理。",
+  "baseline": "0ccc0a9844185b4fec3a2e62a87afb78c66ad819",
+  "initial_status": "",
+  "acceptance": [
+    "Direct Motorola SIP1 setup with real gateway diagnostics, independent takeover and callback.",
+    "Stable eight-digit member dial numbers visible in Messages, preserve six-character discovery codes. Both keypad and contact dialling respect mutual consent and voice invitation; 1000 still routes only to local assistant.",
+    "Exercise Go routing, SIP and two-way WebRTC media, UI and isolated candidate build."
+  ],
+  "scope": [
+    "internal/messaging, internal/server messaging and VoIP",
+    "host SIP adapter and protocol tests",
+    "VoIP onboarding and task evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Direct LAN handset only. Reserve 1000 and route eight decimal digits to an accepted Messages member.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use authenticated device identity for display and lookup. Member calls use existing voice invitations, lock checks, call lease, ICE and WebRTC, independent of assistant sessions.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Motorola direct SIP1 onboarding, host launcher port support, recent REGISTER and member adapter status, explicit takeover target import. Separate 1000 and exact eight-digit routes. Member calls use two-way G.711/WebRTC, invitation and voice lease with bilateral hangup.",
+      "evidence": [
+        "Working-tree content fingerprint SHA-256 88454cb83001c239cd7da823ec1b774fb88183219634317c64ef128b50913e6c",
+        "internal/messaging/phone.go",
+        "scripts/aide_sip_members.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Two isolated Aide instances discovered each other and mutually accepted synthetic identities. The final Linux/arm64 review image passed simulated UDP SIP -> real message invitation -> Chromium acceptance -> non-silent audio both ways -> BYE and revocation. Browser keypad dial, unknown number and decline verified, settings and guide download exercised. No physical phone call, real assistant model call or native Windows/Linux host acceptance in this run.",
+      "evidence": [
+        "Image aide:motorola-voip-review sha256:eaa2433c379190ac3837d87ab5fc236f5dd7ae4f3b284c6b2867854541f7e278",
+        "go test ./internal/messaging ./internal/voip and selected server AssistantSIP, VoIP, MessageCenter, Message.*Lock using Go 1.26.11 + Node; initial Go-only image lacked the assistant agent runtime, rerun passed",
+        ".agent-state/motorola-voip-platform/final-go.log",
+        "20 Python SIP tests with WebRTC (both offerer roles), 15 macOS desktop-session tests, 4 source-fingerprint tests, npm run typecheck, 9 settings navigation tests, docs and diff checks",
+        ".agent-state/motorola-voip-platform/two-host-final.log: SIP 100/180/200; browser inbound waveform peak 14, RTP from browser RMS max 14880; both message stores revoked after BYE",
+        ".agent-state/motorola-voip-platform/desktop-final.png",
+        ".agent-state/motorola-voip-platform/narrow-final.png (390px; no panel horizontal overflow)"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Downloadable offline Chinese installation/field guide, contact and dialing walkthrough, troubleshooting, both user guides and updated architecture paths.",
+      "evidence": [
+        "internal/server/web/motorola-voip-guide.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed synthetic browser, containers, test network and temporary SIP listener. Reviewed change list. Test reports and local candidate in ignored task directory.",
+      "evidence": [
+        "git diff --check",
+        "docker rm -fv and docker network rm on the two test fixtures"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local isolated review build only. No push, PR or public release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "The previous local Aide image was retained and its exact digest checked. The recovery tag and archive are recorded in .agent-state/motorola-live-cutover/preflight.json.",
+  "handoff": "Local Motorola SIP1 registered to the current LAN address. The handset originated two completed calls, with assistant dialogue and member echo verified. Both hung up and the production gateway returned to waiting. The temporary test member retains its original 24-hour expiry.",
+  "local_deployment": {
+    "status": "verified",
+    "summary": "The Motorola SIP1 registrar was updated from its stale address. The physical IP9910-2W showed registered and logged both calls. The local assistant answered six plus seven with thirteen over a 65-second call. A 31-second member call delivered two-way RTP with non-silent return audio at the echo endpoint. Both ended with BYE.",
+    "evidence": [
+      ".agent-state/motorola-live-cutover/acceptance.json",
+      ".agent-state/motorola-live-cutover/build.log"
+    ]
+  }
+}

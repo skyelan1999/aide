@@ -11,15 +11,18 @@ import (
 
 // A local host gateway publishes only connection settings, never credentials.
 type assistantSIPStatus struct {
-	Running   bool      `json:"running"`
-	Server    string    `json:"server"`
-	Port      int       `json:"port"`
-	Phone     string    `json:"phone"`
-	Account   string    `json:"account"`
-	Extension string    `json:"extension"`
-	Mode      string    `json:"mode"`
-	State     string    `json:"state"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	PhonePort           int        `json:"phonePort,omitempty"`
+	MemberDialAvailable bool       `json:"memberDialAvailable"`
+	LastRegisterAt      *time.Time `json:"lastRegisterAt,omitempty"`
+	Running             bool       `json:"running"`
+	Server              string     `json:"server"`
+	Port                int        `json:"port"`
+	Phone               string     `json:"phone"`
+	Account             string     `json:"account"`
+	Extension           string     `json:"extension"`
+	Mode                string     `json:"mode"`
+	State               string     `json:"state"`
+	UpdatedAt           time.Time  `json:"updatedAt"`
 }
 
 func (a *App) readAssistantSIPHostStatus() assistantSIPStatus {

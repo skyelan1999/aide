@@ -100,7 +100,7 @@ def session(root, start=False, command=run, health=host_health):
         # The explicitly configured phone gateway follows the desktop's normal
         # file access. A separate login daemon cannot read protected workspaces.
         try:
-            subprocess.run([sys.executable, str(sip_control), 'start', '--root', str(root)],
+            subprocess.run([sys.executable, str(sip_control), 'start', '--root', str(root), '--aide-port', str(port)],
                            cwd=root, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=10)
         except (OSError, subprocess.SubprocessError):
