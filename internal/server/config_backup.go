@@ -135,7 +135,7 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if bk.Format != configBackupFormat {
-		fail(w, 400, errors.New("不是有效的 aide 配置备份文件"))
+		fail(w, 400, errors.New("不是有效的 AIDE R&D 配置备份文件"))
 		return
 	}
 	if bk.FormatVersion > configBackupVersion {

@@ -145,7 +145,7 @@ type Persona struct {
 
 // builtinPersonas 内置人格注册表。新增人格在此追加即可，其余流程自动复用。
 var builtinPersonas = []Persona{
-	{ID: personaAide, Name: "aide", Role: "work", Builtin: true, Editable: true},
+	{ID: personaAide, Name: "AIDE R&D", Role: "work", Builtin: true, Editable: true},
 	{ID: personaXiaomi, Name: "小秘", Role: "life", Builtin: true, Editable: true},
 }
 

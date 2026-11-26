@@ -553,7 +553,7 @@ func (a *App) previewFactoryReset(w http.ResponseWriter, r *http.Request) {
 		"sessionsAndMemory": map[string]any{
 			"sessionFiles":    sessions,
 			"memoryCoreFiles": memCore,
-			"desc":            "全部会话 + aide 核心记忆 + 小秘历史/记忆 + 性格恢复默认",
+			"desc":            "全部会话 + AIDE R&D 核心记忆 + 小秘历史/记忆 + 性格恢复默认",
 		},
 		"credentialsAndKeys": map[string]any{
 			"hasPassword": hasPassword,

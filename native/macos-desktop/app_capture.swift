@@ -61,7 +61,7 @@ final class DesktopAppCapture {
         _ = CGRequestScreenCaptureAccess()
     }
     @MainActor func capture(_ target: NSRunningApplication) async throws -> [String: Any] {
-        guard CGPreflightScreenCaptureAccess() else { throw desktopError("请先在系统隐私设置中允许 Aide 屏幕录制。") }
+        guard CGPreflightScreenCaptureAccess() else { throw desktopError("请先在系统隐私设置中允许 AIDE R&D 屏幕录制。") }
         guard target.activationPolicy == .regular, target.bundleIdentifier != "com.apple.loginwindow",
               NSWorkspace.shared.frontmostApplication?.processIdentifier == target.processIdentifier else { throw desktopError("前台应用已改变，请重新双击快捷键。") }
         let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)

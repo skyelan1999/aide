@@ -46,11 +46,11 @@
             n.textContent = text; return n; };
         const wrap = create('div');
         wrap.className = 'desktop-capture-settings';
-        const title = create('h4', t('全局截屏到 Aide')), description = create('p', t('双击修饰键截取前台应用窗口，附带应用名、窗口标题和时间，再唤起 Aide 加入待发送附件。不会自动发送。'));
+        const title = create('h4', t('全局截屏到 AIDE R&D')), description = create('p', t('双击修饰键截取前台应用窗口，附带应用名、窗口标题和时间，再唤起 AIDE R&D 加入待发送附件。不会自动发送。'));
         description.className = 'section-desc';
         wrap.append(title, description);
         if (!native()) {
-            wrap.append(create('p', t('此功能需要 macOS 原生 Aide 桌面端。')));
+            wrap.append(create('p', t('此功能需要 macOS 原生 AIDE R&D 桌面端。')));
             return wrap;
         }
         const label = create('label'), enabled = create('input');
@@ -79,7 +79,7 @@
             current = value;
             enabled.checked = value.enabled;
             combo.value = value.modifier;
-            status.textContent = value.accessibility && value.screenRecording ? t('全局截屏权限已就绪') : t('需要在系统隐私设置中允许 Aide 辅助功能和屏幕录制。');
+            status.textContent = value.accessibility && value.screenRecording ? t('全局截屏权限已就绪') : t('需要在系统隐私设置中允许 AIDE R&D 辅助功能和屏幕录制。');
             if (value.enabled) {
                 const result = value.lastResult === 'Attached' ? t('截图已加入草稿') : value.lastResult === 'Capturing' ? t('正在截屏…') : value.lastResult || (!value.listening ? t('按键监听未启动，请关闭后重新开启。') : value.modifierEvents ? t('已检测到按键，等待快速双击修饰键。') : t('尚未检测到按键，请在其他应用中双击修饰键。'));
                 status.textContent += ' · ' + result;

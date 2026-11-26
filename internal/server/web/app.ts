@@ -1085,7 +1085,7 @@ async function stopRunById(runId?: any) {
         tags.append(tag(item.area === 'global' ? t('全局') : t('工作区')));
         if (item.area === 'workspace' && item.workspaceName) tags.append(tag(item.workspaceName));
         if (item.dueAt) tags.append(tag(t('到期：{0}', fmt(item.dueAt))));
-        tags.append(tag(t(item.source === 'aide' ? '来源：aide' : item.source === 'xiaomi' ? '来源：小秘' : '来源：手动')));
+        tags.append(tag(t(item.source === 'aide' ? '来源：AIDE R&D' : item.source === 'xiaomi' ? '来源：小秘' : '来源：手动')));
         if (item.status === 'completed') tags.append(tag(t('已完成')));
         if (item.execution) {
           const e = item.execution, labels: any = {pending:'等待执行',dispatching:'正在提交',submitted:'执行中',succeeded:'执行成功',failed:'执行失败',interrupted:'执行中断',cancelled:'已取消'};
@@ -1521,7 +1521,7 @@ async function newSession() {
   refreshChatDraftChoices();
   loadSessions().catch(() => {});
 }
-const labels: any = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', agent: '自主执行', chat: 'aide', file_application_receipt: '系统应用回执' };
+const labels: any = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', agent: '自主执行', chat: 'AIDE R&D', file_application_receipt: '系统应用回执' };
 function toolSummaryBrief(use?: any) {
   try {
     const args = JSON.parse(use.args || '{}');
@@ -2053,7 +2053,7 @@ function renderSession() {
     // 非对话模式没有分段时间戳：插话紧随初始 prompt，仍排在回答之前。
     if (run.mode !== 'chat') renderSteerMessages(run, box);
     box.dataset.renderSignature = renderSignature;
-    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'pw' ? '◈ PW WORKFLOW' : run.mode === 'workflow' ? t(run.steps?.some((step?: any) => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
+    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'pw' ? '◈ PW WORKFLOW' : run.mode === 'workflow' ? t(run.steps?.some((step?: any) => step.name === 'agent') ? "◈ AIDE R&D WORKFLOW · 自主执行" : "◈ AIDE R&D WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE R&D ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
     if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume && run !== state.session.runs.at(-1)) {
       const resume = el('button', 'quiet', t('恢复任务')); resume.type = 'button'; resume.onclick = () => resumeRunById(run.id); meta.append(resume);
     } else if (run.status === 'running' && run.pauseRequested) {
@@ -3687,8 +3687,8 @@ $('task-form').onsubmit = action(async (event?: any) => {
           sendMotion?.land([...($('timeline')?.querySelectorAll('.assistant-msg .am-text') || [])].at(-1));
         }
         if (resp.action === 'dispatch' && resp.dispatched) {
-          if (resp.dispatched.started) toast(t('已启动 aide 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
-          else toast(t('已创建 aide 会话 #{0}，但任务未启动：{1}', resp.dispatched.number || '?', resp.dispatched.startError || t('请检查模型配置')));
+          if (resp.dispatched.started) toast(t('已启动 AIDE R&D 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
+          else toast(t('已创建 AIDE R&D 会话 #{0}，但任务未启动：{1}', resp.dispatched.number || '?', resp.dispatched.startError || t('请检查模型配置')));
         } else if (resp.action === 'ask') {
           toast(resp.reply || t('小秘想追问'));
         } else if (resp.action === 'silent') {
@@ -4290,7 +4290,7 @@ $('settings-form').onsubmit = action(async (event?: any) => {
     if(/listen|record|聆听|倾听|录音/.test(value))return'listening';if(/think|reason|思考|推理/.test(value))return'thinking';if(/eat|token|snack|吃|投喂/.test(value))return'generating';if(/sleep|nap|睡|打盹/.test(value))return'sleeping';if(/tantrum|rage|angry|闹脾气|大吵|error|fail|错误|失败/.test(value))return'error';if(/done|success|完成|成功/.test(value))return'completed';if(/work|tool|run|执行|工作|工具/.test(value))return'executing';return'idle';
   }
   function renderer(){
-    const host=el('div','virtual-avatar-settings');host.append(el('p','section-desc',t('aide 与小秘共用一个形象。可分别选择聊天框和锁屏显示；关闭后不显示。素材与设置保存在此工作区，并缓存在当前浏览器。')));
+    const host=el('div','virtual-avatar-settings');host.append(el('p','section-desc',t('AIDE R&D 与小秘共用一个形象。可分别选择聊天框和锁屏显示；关闭后不显示。素材与设置保存在此工作区，并缓存在当前浏览器。')));
     const body=el('div','avatar-settings-body');host.append(body);let previewScene='idle',previewIndex=0;
     const draw=()=>{
       body.replaceChildren();let refreshPacks=()=>{},refreshSpeed=()=>{},refreshSmoothing=()=>{};const preview=el('div','avatar-preview-card'),previewActor=el('div','avatar-preview-actor'),sample=el('div','avatar-character-slot');previewActor.append(sample);
@@ -4611,7 +4611,7 @@ function renderComputerControlSettings() {
   const cfg=state.config||{};
   const permissions=el('section','computer-permissions');
   const permissionTitle=el('strong','',t('系统授权状态'));
-  const permissionSummary=el('p','muted',t('正在查询 Aide 电脑控制与系统授权…'));
+  const permissionSummary=el('p','muted',t('正在查询 AIDE R&D 电脑控制与系统授权…'));
   const permissionList=el('div','computer-permission-list');
   const executionHint=el('small','muted','');
   const refreshPermissions=el('button','quiet computer-permission-refresh',t('刷新授权状态'));refreshPermissions.type='button';
@@ -4624,7 +4624,7 @@ function renderComputerControlSettings() {
     const platform=status.platform||'';
     const items=status.permissions||(platform==='macos'?{screenRecording:{required:true,granted:status.screenRecording===true,supported:true},accessibility:{required:true,granted:status.accessibility===true,supported:true}}:platform==='windows'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:platform==='linux-x11'?{screenRecording:{required:false,granted:true,supported:true},accessibility:{required:false,granted:false,supported:false}}:{});
     const allGranted=platform==='macos'&&items.screenRecording?.granted===true&&items.accessibility?.granted===true;
-    permissionSummary.textContent=allGranted?t('Aide 已获得所需的 macOS 权限，可以读取允许应用的界面。'):platform==='macos'?t('权限由 Aide 主程序向 macOS 申请。点击申请后会打开对应隐私设置；若列表没有 Aide，点“添加”并选择 ~/Applications/Aide.app，再启用权限。返回后刷新，必要时重启 Aide。'):platform==='windows'?t('Windows 使用当前桌面用户权限；屏幕捕获与输入操作无需单独授权。'):platform==='linux-x11'?t('Linux 当前通过 X11 会话运行；屏幕捕获和输入使用当前桌面会话权限。'):t('电脑控制服务已连接。');
+    permissionSummary.textContent=allGranted?t('AIDE R&D 已获得所需的 macOS 权限，可以读取允许应用的界面。'):platform==='macos'?t('权限由 AIDE R&D 主程序向 macOS 申请。点击申请后会打开对应隐私设置；若列表没有 AIDE R&D，点“添加”并选择 ~/Applications/Aide.app，再启用权限。返回后刷新，必要时重启 AIDE R&D。'):platform==='windows'?t('Windows 使用当前桌面用户权限；屏幕捕获与输入操作无需单独授权。'):platform==='linux-x11'?t('Linux 当前通过 X11 会话运行；屏幕捕获和输入使用当前桌面会话权限。'):t('电脑控制服务已连接。');
     for(const key of ['screenRecording','accessibility']){
       const item=items[key];if(!item)continue;
       const row=el('div','computer-permission-row');
@@ -4643,7 +4643,7 @@ function renderComputerControlSettings() {
           try{
             const result=await api('/computer-control/permissions/'+route,{method:'POST',body:'{}'});
             permissionBusy=false;await loadPermissions();
-            if(result[key]!==true) permissionSummary.textContent=t('Aide 已发起{0}授权。若列表没有 Aide，点“添加”并选择 ~/Applications/Aide.app；开启权限后返回刷新。macOS 需要你手动确认。',permissionNames[key]);
+            if(result[key]!==true) permissionSummary.textContent=t('AIDE R&D 已发起{0}授权。若列表没有 AIDE R&D，点“添加”并选择 ~/Applications/Aide.app；开启权限后返回刷新。macOS 需要你手动确认。',permissionNames[key]);
           }
           catch(error: any){permissionSummary.textContent=t('权限请求失败：{0}',error.message);}
           finally{permissionBusy=false;for(const item of permissions.querySelectorAll('button'))item.disabled=false;}
@@ -4655,7 +4655,7 @@ function renderComputerControlSettings() {
   const loadPermissions=async()=>{
     if(permissionBusy)return;
     try{showPermissions(await api('/computer-control/status'));}
-    catch(error: any){const message=String(error.message||'');permissionSummary.textContent=message.startsWith('Aide 电脑控制服务不可用：')?message:t('Aide 电脑控制服务不可用：{0}',message);permissionList.replaceChildren();}
+    catch(error: any){const message=String(error.message||'');permissionSummary.textContent=message.startsWith('AIDE R&D 电脑控制服务不可用：')?message:t('AIDE R&D 电脑控制服务不可用：{0}',message);permissionList.replaceChildren();}
   };
   refreshPermissions.onclick=action(loadPermissions);
   permissions.append(permissionHeading,permissionSummary,permissionList);
@@ -4663,13 +4663,13 @@ function renderComputerControlSettings() {
   const enabledRow=el('label','settings-file-checkbox'),enabled: any=document.createElement('input');
   enabled.type='checkbox';enabled.checked=cfg.computerControlEnabled===true;
   const enabledCopy=el('span','settings-file-copy');
-  enabledCopy.append(el('strong','',t('启用电脑控制')),el('span','',t('允许 Aide 读取指定应用的界面；辅助审批可处理常规操作，手动模式下仍逐次确认。')));
+  enabledCopy.append(el('strong','',t('启用电脑控制')),el('span','',t('允许 AIDE R&D 读取指定应用的界面；辅助审批可处理常规操作，手动模式下仍逐次确认。')));
   enabledRow.append(enabled,enabledCopy);
   const label=el('label','control-label',t('已记住的应用'));
   const apps=document.createElement('textarea');apps.id='computer-control-allowed-apps';apps.rows=4;label.htmlFor=apps.id;apps.value=Array.isArray(cfg.computerControlAllowedApps)?cfg.computerControlAllowedApps.join('\n'):'';
   apps.placeholder=t('每行一个应用名称，例如 TextEdit、Safari 或 notepad.exe');
   apps.setAttribute('aria-label',t('允许控制的应用，每行一个'));
-  const hint=el('small','muted',t('Aide 会在首次访问目标应用时请求授权。这里列出已记住的应用，也可手动添加或移除；截图仅覆盖授权应用的窗口。'));
+  const hint=el('small','muted',t('AIDE R&D 会在首次访问目标应用时请求授权。这里列出已记住的应用，也可手动添加或移除；截图仅覆盖授权应用的窗口。'));
   const save=el('button','quiet',t('保存电脑控制设置'));save.type='button';
   let busy=false;
   const persist=async()=>{
@@ -4690,7 +4690,7 @@ function renderComputerControlSettings() {
 function renderKVCacheControl() {
   const wrap = el('div', 'settings-control execution-policy-form kv-cache-control');
   const intro = el('p', 'section-desc', t('实验性功能：以固定内存或固定磁盘总预算统一管理云端前缀缓存、llama.cpp 槽位 KV 与 vLLM / LMCache；同时启用真实 KV 引擎时共享该总预算。缓存失效只回退普通请求，不复用模型答案。'));
-  const warning = el('p', 'section-desc', t('真实 KV 由推理引擎持有。修改容量、路径或适配器会清理上一代缓存；引擎需要按下方配置重启。TTL 管理 Aide 的 llama.cpp 条目，LMCache 内部回收由引擎执行；物理清理前须停止 vLLM。配置写入成功不代表已经发生缓存命中。'));
+  const warning = el('p', 'section-desc', t('真实 KV 由推理引擎持有。修改容量、路径或适配器会清理上一代缓存；引擎需要按下方配置重启。TTL 管理 AIDE R&D 的 llama.cpp 条目，LMCache 内部回收由引擎执行；物理清理前须停止 vLLM。配置写入成功不代表已经发生缓存命中。'));
   const enabledRow = el('label', 'settings-file-checkbox'), enabled: any = document.createElement('input');
   enabled.type = 'checkbox';
   const enabledCopy = el('span', 'settings-file-copy');
@@ -4707,7 +4707,7 @@ function renderKVCacheControl() {
   const capacity = makeField('固定容量（MiB）', document.createElement('input'));
   capacity.type = 'number'; capacity.min = '16'; capacity.max = '1048576'; capacity.step = '1';
   const diskPath = makeField('固定磁盘路径', document.createElement('input'));
-  diskPath.type = 'text'; diskPath.placeholder = t('必须是绝对路径；llama.cpp 与 Aide 需共享此目录');
+  diskPath.type = 'text'; diskPath.placeholder = t('必须是绝对路径；llama.cpp 与 AIDE R&D 需共享此目录');
   const ttl = makeField('缓存生命周期（分钟）', document.createElement('input'));
   ttl.type = 'number'; ttl.min = '1'; ttl.max = '43200'; ttl.step = '1';
   const features: any = {};
@@ -4747,7 +4747,7 @@ function renderKVCacheControl() {
     ];
     for (const [label, value] of cards) { const card = el('div', 'execution-policy-stat'); card.append(el('strong', '', value), el('span', '', t(label))); stats.append(card); }
     engine.replaceChildren();
-    if (result.engineRestartRequired) engine.append(el('p', 'section-desc', t('引擎启动配置已生成，重启后生效；Aide 不伪造运行中引擎的命中状态。')));
+    if (result.engineRestartRequired) engine.append(el('p', 'section-desc', t('引擎启动配置已生成，重启后生效；AIDE R&D 不伪造运行中引擎的命中状态。')));
     if (Array.isArray(result.llamaLaunchArgs) && result.llamaLaunchArgs.length) engine.append(el('p', 'section-desc', t('llama.cpp 启动参数：{0}', result.llamaLaunchArgs.join(' '))));
     if (result.lmcacheConfigPath) engine.append(el('p', 'section-desc', t('vLLM / LMCache 配置：{0}', result.lmcacheConfigPath)));
     for (const note of result.notes || []) engine.append(el('small', 'muted', t(note)));
@@ -4785,7 +4785,7 @@ function renderAboutProject(control?: any) {
   const mark = el('span', 'about-mark', 'a');
   mark.setAttribute('aria-hidden', 'true');
   const identity = el('div');
-  identity.append(el('h4', 'about-name', 'aide'), el('p', 'about-description', t("AI+IDE，让想法成为下一步")));
+  identity.append(el('h4', 'about-name', 'AIDE R&D'), el('p', 'about-description', t("研发工作台 · Research and Development")));
   hero.append(mark, identity);
   const version = el('div', 'about-version');
   version.append(el('span', '', t("当前版本")), el('span', '', state.config?.version ? 'v' + state.config.version : t("开发版本")));
@@ -4793,7 +4793,7 @@ function renderAboutProject(control?: any) {
   link.href = control.repository;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.setAttribute('aria-label', t("在新标签页打开 aide 的 GitHub 仓库"));
+  link.setAttribute('aria-label', t("在新标签页打开 AIDE R&D 的 GitHub 仓库"));
   const text = el('span');
   text.append(el('strong', '', 'GitHub'), el('span', 'about-repository-path', 'skyelan1999 / aide'));
   link.append(text, el('span', 'about-external', '↗'));
@@ -4841,8 +4841,8 @@ function renderSoftwareUpdates() {
   const refreshSlots = el('button', 'quiet', t('刷新槽状态'));
   slotsTitle.append(el('h4', '', t('A/B 软件槽')), refreshSlots);
   const uploadRow = el('div', 'software-update-upload');
-  const file = el('input'); file.type = 'file'; file.accept = '.zip,application/zip'; file.setAttribute('aria-label', t('选择 aide 完整发行 ZIP 包或升级 ZIP 包'));
-  const folder = el('input'); folder.type = 'file'; folder.multiple = true; folder.setAttribute('webkitdirectory', ''); folder.setAttribute('directory', ''); folder.setAttribute('aria-label', t('选择解压后的 aide 升级文件夹'));
+  const file = el('input'); file.type = 'file'; file.accept = '.zip,application/zip'; file.setAttribute('aria-label', t('选择 AIDE R&D 完整发行 ZIP 包或升级 ZIP 包'));
+  const folder = el('input'); folder.type = 'file'; folder.multiple = true; folder.setAttribute('webkitdirectory', ''); folder.setAttribute('directory', ''); folder.setAttribute('aria-label', t('选择解压后的 AIDE R&D 升级文件夹'));
   const upload = el('button', 'quiet', t('上传到非活动槽'));
   const slotStatus = el('small', 'software-update-slot-status', t('正在读取 A/B 槽状态…'));
   const progress = el('div', 'software-update-progress');
@@ -4969,7 +4969,7 @@ function renderSoftwareUpdates() {
       if (result.activeSlot !== name && (hasPendingPackage || slot.imageId)) {
         const switchButton = el('button', 'quiet', hasPendingPackage ? t('手动激活槽 {0}', name) : t('手动切换到槽 {0}', name));
         switchButton.onclick = action(async () => {
-          if (!confirm(t('手动激活槽 {0} 会导入该槽镜像并短暂重启 aide；用户数据卷保持共用。若新版本健康检查失败会自动回滚。继续？', name))) return;
+          if (!confirm(t('手动激活槽 {0} 会导入该槽镜像并短暂重启 AIDE R&D；用户数据卷保持共用。若新版本健康检查失败会自动回滚。继续？', name))) return;
           switchButton.disabled = true; slotStatus.textContent = t('已提交切换请求，等待宿主启动器…');
           await api('/updates/switch', { method: 'POST', body: JSON.stringify({ target: name }) });
           const deadline = Date.now() + 180000;
@@ -5009,7 +5009,7 @@ function renderSoftwareUpdates() {
       return;
     }
     if (zipFiles.length && !/-(update-linux|full-linux)-(arm64|amd64)\.zip$/i.test(zipFiles[0].name)) {
-      slotStatus.textContent = t('所选 ZIP 不含可用于 A/B 升级的完整镜像。请选择 aide 完整发行包或应用内升级 ZIP；轻量启动器 ZIP 不含镜像。');
+      slotStatus.textContent = t('所选 ZIP 不含可用于 A/B 升级的完整镜像。请选择 AIDE R&D 完整发行包或应用内升级 ZIP；轻量启动器 ZIP 不含镜像。');
       return;
     }
     upload.disabled = true; slotStatus.textContent = t('正在上传并校验升级包…');
@@ -7274,11 +7274,11 @@ function reviewPluginWorkbenchProposal(id?: any){
   $('file-view').classList.add('hidden');
   const saved: any={...history.state};delete saved.aideFileRoute;
   history.replaceState(saved,'',location.pathname+location.search);
-  document.title=t('aide · AI 开发工作台');
+  document.title=t('AIDE R&D · 研发工作台');
  }
  return selectSession(id);
 }
-function pluginGuideServices(){return {api,t,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,settings:openPluginSettings,files:()=>{if(window.AidePluginWorkbenchTabs?.read()){history.replaceState(history.state,'',location.pathname+location.search);pluginPageKey='';document.title=t('aide · AI 开发工作台');}closeSidePanels();$('files-toggle').click();},openWorkbench:(plugin?: any)=>window.AidePluginWorkbench!.open(plugin,pluginWorkbenchServices())};}
+function pluginGuideServices(){return {api,t,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,settings:openPluginSettings,files:()=>{if(window.AidePluginWorkbenchTabs?.read()){history.replaceState(history.state,'',location.pathname+location.search);pluginPageKey='';document.title=t('AIDE R&D · 研发工作台');}closeSidePanels();$('files-toggle').click();},openWorkbench:(plugin?: any)=>window.AidePluginWorkbench!.open(plugin,pluginWorkbenchServices())};}
 function pluginWorkbenchServices(){return {api,t,toast,guide:(plugin?: any)=>window.AidePluginGuide!.open(plugin,{...pluginGuideServices(),inWorkbench:true}),reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:(id?: any)=>state.plugins.some((item?: any)=>item.id===id&&item.enabled),openPage:(plugin?: any,selection?: any)=>window.AidePluginWorkbenchTabs!.open(plugin,{t,toast,selection,blocked:()=>lockScreen.locked||!state.token,workspace:recoveryScope})};}
 let pluginPageOpening=false,pluginPageKey='';
 async function openRoutedPluginWorkbench(){
@@ -7293,7 +7293,7 @@ async function openRoutedPluginWorkbench(){
   if(!plugin)throw Error(t('插件工作台不可用，请检查插件是否已启用'));
   if(!plugin.enabled||plugin.error||window.AidePluginGuide!.fileFirst(plugin.id)){pluginPageKey=key;await window.AidePluginGuide!.open(plugin,pluginGuideServices());return;}
   const opened=await window.AidePluginWorkbench!.open(plugin,{...pluginWorkbenchServices(),inPage:true,selection:route.selection,onClose:()=>{pluginPageKey='';}});
-  if(opened){pluginPageKey=key;document.title=(plugin.workbench.title||plugin.name)+' · aide';}
+  if(opened){pluginPageKey=key;document.title=(plugin.workbench.title||plugin.name)+' · AIDE R&D';}
  }catch(error: any){toast(error.message);}finally{pluginPageOpening=false;}
 }
 async function loadPluginsPanel() {
@@ -8272,7 +8272,7 @@ function renderSourceFields() {
     host.append(template);
     transport.onchange = () => { const httpMode = transport.value === 'streamable-http'; urlInput.parentNode.hidden = !httpMode; tokenInput.parentNode.hidden = !httpMode; dockerLabel.hidden = !httpMode; commandInput.parentNode.hidden = httpMode; argsLabel.hidden = httpMode; template.hidden = httpMode; };
     transport.onchange();
-    host.append(el('p', 'muted', t('本地程序在 AIDE 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。')));
+    host.append(el('p', 'muted', t('本地程序在 AIDE R&D 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。')));
   }
   else if (type === 'relay') {
     addField(t('中继主机'), 'src-host', '192.168.1.10').required = true;
@@ -8280,7 +8280,7 @@ function renderSourceFields() {
     addField(t('远程共享目录（绝对路径）'), 'src-remote', '/srv/refs 或 C:\\Refs').required = true;
     addField(t('中继密钥（可选，32 字节 Base64）'), 'src-relay-key', editingSourceID ? t('留空 = 保留现有凭据') : t('留空自动生成')).type = 'password';
     host.append(el('p', 'muted', t('先保存配置，再下载脚本到远程设备。安装 Python 3.10+ 和 cryptography（python -m pip install cryptography），用 python 脚本文件名.py 运行，再点击检测中继。')));
-    host.append(el('p', 'muted', t('脚本含访问密钥，请保存在共享目录外。Aide 必须能连接中继端口；默认只读，修改共享目录或开放写入后需重新下载部署脚本。')));
+    host.append(el('p', 'muted', t('脚本含访问密钥，请保存在共享目录外。AIDE R&D 必须能连接中继端口；默认只读，修改共享目录或开放写入后需重新下载部署脚本。')));
   }
   else if (type === 'sftp') {
     addField(t("主机"), 'src-host', '192.168.1.10');
@@ -8298,7 +8298,7 @@ function renderSourceFields() {
     const relayHost = addField(t('中继主机'), 'src-sftp-relay-host', '192.168.1.20');
     const relayPort = addField(t('中继端口'), 'src-sftp-relay-port', '8768'); relayPort.type = 'number'; relayPort.min = '1'; relayPort.max = '65535'; relayPort.value = '8768';
     const relayKey = addField(t('中继密钥（可选，32 字节 Base64）'), 'src-sftp-relay-key', editingSourceID ? t('留空 = 保留现有凭据') : t('留空自动生成')); relayKey.type = 'password';
-    const hint = el('p','muted',t('先保存，再下载脚本到能访问 SFTP 服务的远程设备运行。安装 Python 3.10+ 和 cryptography。脚本只连接指定的 SFTP 主机，不含 SFTP 密码或私钥；默认只读，读写锁在 Aide 控制。修改目标主机、端口或目录后需重新部署。'));
+    const hint = el('p','muted',t('先保存，再下载脚本到能访问 SFTP 服务的远程设备运行。安装 Python 3.10+ 和 cryptography。脚本只连接指定的 SFTP 主机，不含 SFTP 密码或私钥；默认只读，读写锁在 AIDE R&D 控制。修改目标主机、端口或目录后需重新部署。'));
     const secretHint = el('p','muted',t('脚本含中继访问密钥，请保存在 SFTP 共享目录外并限制文件访问权限。'));
     host.append(hint, secretHint);
     mode.onchange = () => { const relay = mode.value === 'relay'; [relayHost.parentNode, relayPort.parentNode, relayKey.parentNode, hint, secretHint].forEach((node?: any) => { node.hidden = !relay; }); relayHost.required = relay; browse.disabled = relay; browse.title = relay ? t('先保存并部署中继，再从来源浏览目录') : t('浏览…'); };
@@ -10440,7 +10440,7 @@ async function openFileViewMode(forceNative=false) {
   if(!forceNative&&(globalThis as unknown as Window).AidePluginFilePreview){const current=()=>fileViewRouteCurrent(spec,openToken,openScope,openEpoch);if(await (globalThis as unknown as Window).AidePluginFilePreview!.open(spec,{...pluginWorkbenchServices(),current,native:()=>openFileViewMode(true)}))return;if(!current())return;}
 
   const fileName = String(spec.path).split(/[\\/]/).filter(Boolean).pop() || String(spec.path);
-  document.title = fileName + ' · aide';
+  document.title = fileName + ' · AIDE R&D';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
   if(/\.pp$/i.test(spec.path))await openProjectFileWorkbench(spec.path,spec.root,spec.source||'',()=>fileViewRouteCurrent(spec,openToken,openScope,openEpoch));
   // Single URL resources retain their virtual path; the graph carries a bounded
@@ -10772,7 +10772,7 @@ async function launchPlanTask(session?: any, item?: any) {
   const prompt = String(item.detail || '').trim() || item.title;
   try {
     await api(`/sessions/${session.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: 'chat', planTaskId: item.id }) });
-    toast(t('已交给 aide：{0}', item.title));
+    toast(t('已交给 AIDE R&D：{0}', item.title));
     await selectSession(session.id);
     if (state.session?.id === session.id) renderTrajectory();
   } catch (e: any) {
@@ -12383,7 +12383,7 @@ function renderVoiceDispatchControl() {
   sens.value = cfg.voiceInsertSensitivity || 'conservative';
   row.append(sens);
 
-  wrap.append(head,row,el('small','',t('小秘把识别意图发给 aide 时自行判断排队还是插队：紧急/中止类立即插队，新任务/不紧急排队。保守=5秒内不重复插队，中止指令不受限。')));
+  wrap.append(head,row,el('small','',t('小秘把识别意图发给 AIDE R&D 时自行判断排队还是插队：紧急/中止类立即插队，新任务/不紧急排队。保守=5秒内不重复插队，中止指令不受限。')));
   const autosave=settingsAutosave(wrap,()=>({voiceDefaultSendMode:mode.value,voiceInsertSensitivity:sens.value}));
   mode.onchange=sens.onchange=()=>autosave.change();
   return wrap;
@@ -12422,13 +12422,13 @@ function renderSIPPhoneGuide() {
   callbackRow.append(callback,el('span','',t('任务完成后回拨原话机')));
   const callbackStatus=el('p','muted'); callbackStatus.setAttribute('role','status');
   const callbackPanel=el('section','voip-section');
-  callbackPanel.append(callbackRow,el('small','muted',t('仅本次电话新交办的任务，挂断且实际完成后才回拨；未接听不自动重拨。保持 Aide 运行、工作区及小绵解锁。')),callbackStatus);
+  callbackPanel.append(callbackRow,el('small','muted',t('仅本次电话新交办的任务，挂断且实际完成后才回拨；未接听不自动重拨。保持 AIDE R&D 运行、工作区及小绵解锁。')),callbackStatus);
   const steps=el('ol');
   for (const text of [
     '准备：电脑与话机接入同一局域网，启用本机 SIP 网关；在语音助理中选择可用的通话模型和音色。',
-    '话机：打开 SIP1，填写上表服务器、端口与话机账号，传输协议选择 UDP。本地单话机网关的鉴权账号与密码留空，模型密钥只配置在 Aide 中。',
+    '话机：打开 SIP1，填写上表服务器、端口与话机账号，传输协议选择 UDP。本地单话机网关的鉴权账号与密码留空，模型密钥只配置在 AIDE R&D 中。',
     '音频与拨号：优先使用 G.711U（PCMU），也可用 G.711A（PCMA）；音频包长 20 毫秒、DTMF 选择 RFC2833。手动接听，按听感调整音量。',
-    '通话：保持 Aide 运行并解锁小绵，话机拨助理分机后按 # 或拨号键；接通后自然说话，挂回听筒结束。'
+    '通话：保持 AIDE R&D 运行并解锁小绵，话机拨助理分机后按 # 或拨号键；接通后自然说话，挂回听筒结束。'
   ]) steps.append(el('li','',t(text)));
   const details=el('details'), summary=el('summary','',t('未注册、拨不通或没有声音'));
   details.append(summary);
@@ -12983,7 +12983,7 @@ function renderAccessibilityControl() {
   const resetWidths = el('button', 'quiet', t('重置侧边栏宽度')); resetWidths.type = 'button';
   resetWidths.onclick = () => { resetSidebarWidths(); toast(t('两侧边栏宽度已恢复默认')); };
   resizeRow.append(resetWidths);
-  wrap.append(head, row, el('small', '', t('勾选即自动保存。开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；aide 主会话本身不发声。')), portRow, el('small', '', t('修改后会自动重启离线启动包服务；设置保存在数据卷中。')), resizeRow, el('small', '', t('恢复左侧工作区栏和右侧文件/插件栏的默认宽度。')));
+  wrap.append(head, row, el('small', '', t('勾选即自动保存。开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；AIDE R&D 主会话本身不发声。')), portRow, el('small', '', t('修改后会自动重启离线启动包服务；设置保存在数据卷中。')), resizeRow, el('small', '', t('恢复左侧工作区栏和右侧文件/插件栏的默认宽度。')));
   return wrap;
 }
 controlRenderers['accessibility-read'] = renderAccessibilityControl;
@@ -13203,7 +13203,7 @@ function renderPersonaSwitchControl() {
     list.append(card);
   }
   if (!personas.length) list.append(el('p', 'muted', t('加载中…')));
-  wrap.append(head, list, el('small', '', t('主会话默认 aide 工作人格；语音听写与锁屏解锁后自动进入小秘生活人格。')));
+  wrap.append(head, list, el('small', '', t('主会话默认 AIDE R&D 工作人格；语音听写与锁屏解锁后自动进入小秘生活人格。')));
   return wrap;
 }
 controlRenderers['persona-switch'] = renderPersonaSwitchControl;
@@ -13213,7 +13213,7 @@ function renderPersonalityControl(control?: any) {
   const pid = control.persona || 'aide';
   const wrap = el('div', 'settings-control personality-panel');
   const head = el('div', 'control-label');
-  head.append(el('span', '', t(control.label || (pid === 'xiaomi' ? '助理性格系统' : 'aide 性格系统'))));
+  head.append(el('span', '', t(control.label || (pid === 'xiaomi' ? '助理性格系统' : 'AIDE R&D 性格系统'))));
 
   const top = el('div', 'personality-top');
   const toggle = el('label', 'switch');
@@ -13491,7 +13491,7 @@ async function updateTouchIdButton() {
   btn.setAttribute('aria-disabled', String(!hasCred));
   if (hint) {
     hint.hidden = hasCred;
-    hint.textContent = t(res.native ? (window.AideNativeBiometrics?.platform === 'windows' ? '请先用密码解锁，在设置 → 账户中绑定 Windows Hello' : '请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID') : '未注册触控 ID，可在设置 → 账号中绑定');
+    hint.textContent = t(res.native ? (window.AideNativeBiometrics?.platform === 'windows' ? '请先用密码解锁，在设置 → 账户中绑定 Windows Hello' : '请先用密码解锁，在设置 → 账户中为 AIDE R&D 桌面绑定触控 ID') : '未注册触控 ID，可在设置 → 账号中绑定');
   }
 }
 function assertionToJSON(a?: any) {
@@ -13643,7 +13643,7 @@ function renderAccountControl() {
     waSection.append(el('div', 'control-label', t('触控 ID / Passkey')));
     const waList = el('div', 'wa-cred-list');
     const regBtn = el('button', 'quiet', t(window.AideNativeBiometrics! ? (window.AideNativeBiometrics!.platform === 'windows' ? '绑定 Windows Hello' : '绑定本机 Touch ID') : '注册新设备')); regBtn.type = 'button';
-    if (window.AideNativeBiometrics!) waSection.append(el('p','muted',t(window.AideNativeBiometrics?.platform === 'windows' ? 'Aide 桌面需单独绑定 Windows Hello，浏览器的现有凭据会保留。' : 'Aide 桌面需单独绑定一次，Safari 的现有指纹凭据会保留。')));
+    if (window.AideNativeBiometrics!) waSection.append(el('p','muted',t(window.AideNativeBiometrics?.platform === 'windows' ? 'AIDE R&D 桌面需单独绑定 Windows Hello，浏览器的现有凭据会保留。' : 'AIDE R&D 桌面需单独绑定一次，Safari 的现有指纹凭据会保留。')));
 
     async function refreshWaList() {
       waList.replaceChildren();
@@ -13678,7 +13678,7 @@ function renderAccountControl() {
       const start = await api('/webauthn/register/start', { method: 'POST', body: JSON.stringify({ oldPassword: pw }) });
       const credJSON = await createPlatformCredential(start);
       if (!credJSON) return;
-      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge) + (window.AideNativeBiometrics! ? '&label=' + encodeURIComponent(window.AideNativeBiometrics?.platform === 'windows' ? 'Aide 桌面 · Windows Hello' : 'Aide 桌面 · Touch ID') : ''), {
+      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge) + (window.AideNativeBiometrics! ? '&label=' + encodeURIComponent(window.AideNativeBiometrics?.platform === 'windows' ? 'AIDE R&D 桌面 · Windows Hello' : 'AIDE R&D 桌面 · Touch ID') : ''), {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
         body: JSON.stringify(credJSON),
@@ -13695,7 +13695,7 @@ function renderAccountControl() {
   // Local-only user custody keys. The server returns metadata only; values cannot be read back.
   const custody = el('section', 'wa-section custody-key-section');
   custody.append(el('div', 'control-label', t('代持密钥')));
-  custody.append(el('small', 'custody-key-note', t('密钥仅保存在当前 Aide 实例的加密保险库，不会随模型 API 请求、配置备份或导出传输。此页面不会再次显示已保存的密钥。')));
+  custody.append(el('small', 'custody-key-note', t('密钥仅保存在当前 AIDE R&D 实例的加密保险库，不会随模型 API 请求、配置备份或导出传输。此页面不会再次显示已保存的密钥。')));
   const custodyStatus = el('div', 'wa-cred-meta', t('正在读取本地保险库…'));
   const custodyList = el('div', 'wa-cred-list');
   const custodyForm = el('div', 'custody-key-form');
@@ -13719,7 +13719,7 @@ function renderAccountControl() {
     custodyList.replaceChildren();
     try {
       const data = await api('/account/custody-keys');
-      custodyStatus.textContent = data.unlocked ? t('当前 Aide 实例的加密保险库已解锁') : t('保险库已锁定，请先解锁后管理密钥');
+      custodyStatus.textContent = data.unlocked ? t('当前 AIDE R&D 实例的加密保险库已解锁') : t('保险库已锁定，请先解锁后管理密钥');
       custodySave.disabled = !data.unlocked;
       for (const entry of data.entries || []) {
         const row = el('div', 'wa-cred-item');
@@ -13749,7 +13749,7 @@ function renderAccountControl() {
       }
       if (!(data.entries || []).length) custodyList.append(el('div', 'wa-cred-meta', t('尚无代持密钥')));
     } catch (error: any) {
-      custodyStatus.textContent = error.message || t('无法读取当前 Aide 实例保险库状态');
+      custodyStatus.textContent = error.message || t('无法读取当前 AIDE R&D 实例保险库状态');
     }
   }
   custodySave.onclick = action(async () => {
@@ -13810,7 +13810,7 @@ function renderBackupControl() {
   // ---------- 导入 ----------
   const imp = el('div', 'backup-block');
   imp.append(el('div', 'backup-block-title', t('导入配置')));
-  imp.append(el('p', 'backup-desc', t('选择此前导出的 aide 配置备份文件，确认内容后导入。')));
+  imp.append(el('p', 'backup-desc', t('选择此前导出的 AIDE R&D 配置备份文件，确认内容后导入。')));
   const fileInput = el('input'); fileInput.type = 'file'; fileInput.accept = '.json,application/json'; fileInput.style.display = 'none';
   const chooseBtn = el('button', 'quiet', t('选择备份文件'));
   imp.append(chooseBtn, fileInput);
@@ -13836,7 +13836,7 @@ function renderBackupControl() {
     rd.onload = () => {
       try {
         parsed = JSON.parse(rd.result as string);
-        if (parsed.format !== 'aide-config-backup') { toast(t('不是有效的 aide 配置备份文件')); parsed = null; return; }
+        if (parsed.format !== 'aide-config-backup') { toast(t('不是有效的 AIDE R&D 配置备份文件')); parsed = null; return; }
         info.classList.remove('hidden');
         info.querySelector('.backup-meta')?.remove();
         const meta = el('div', 'backup-meta');
@@ -13889,7 +13889,7 @@ function renderFactoryResetControl() {
   const wrap = el('div', 'settings-control');
   const zone = el('div', 'danger-zone');
   zone.append(el('div', 'backup-block-title', t('恢复出厂设置')));
-  zone.append(el('p', 'backup-desc', t('以下操作会改动 aide 的配置与本地数据。/workspace 与 /context 里的你的代码和文件永远不会被删除。')));
+  zone.append(el('p', 'backup-desc', t('以下操作会改动 AIDE R&D 的配置与本地数据。/workspace 与 /context 里的你的代码和文件永远不会被删除。')));
   const btn = el('button', 'danger-outline', t('开始重置…'));
   btn.type = 'button';
   zone.append(btn);
@@ -13918,7 +13918,7 @@ function openFactoryResetDialog() {
   // 范围分组复选框
   const groups = [
     { key: 'settings', label: t('设置项'), desc: t('模型 / TTS / 主题 / 权限 / 工具轮数 / 推理强度 / 沙箱 / 工作流 / 无障碍'), checked: true },
-    { key: 'sessionsAndMemory', label: t('会话与记忆'), desc: t('全部会话 + aide 核心记忆 + 小秘历史/记忆 + 性格恢复默认'), checked: false },
+    { key: 'sessionsAndMemory', label: t('会话与记忆'), desc: t('全部会话 + AIDE R&D 核心记忆 + 小秘历史/记忆 + 性格恢复默认'), checked: false },
     { key: 'credentialsAndKeys', label: t('凭据与密钥'), desc: t('登录密码 / API Key / SSH·vault 凭据 / 来源密钥 / 调试令牌 / WebAuthn / KDF salt / access-token'), checked: false },
     { key: 'workspaceConfig', label: t('工作空间配置'), desc: t('工作空间连接配置回到本地默认（不删除任何用户文件）'), checked: false },
   ];

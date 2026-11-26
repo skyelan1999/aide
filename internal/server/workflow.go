@@ -1364,7 +1364,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if item := a.findPlanItemLocked(s, orig.PlanTaskID); item != nil && item.Flow != nil {
-		fail(w, 409, errors.New("流程阶段重试请在任务与规划中重新交给 aide，以保留依赖和验收绑定"))
+		fail(w, 409, errors.New("流程阶段重试请在任务与规划中重新交给 AIDE R&D，以保留依赖和验收绑定"))
 		return
 	}
 	if orig.PW != nil {

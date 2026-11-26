@@ -241,7 +241,7 @@
                     speechSession = session;
                     speechEvent('authorizing', '正在等待系统麦克风和语音识别授权…');
                     let authorizationTimer;
-                    const value = await Promise.race([nativeSpeech()({ action: 'start', session }), new Promise((_, reject) => { authorizationTimer = setTimeout(() => reject(Error('系统语音授权超时。请在系统设置 → 隐私与安全性 → 语音识别中检查 Aide 权限后重试。')), 20000); })]).finally(() => clearTimeout(authorizationTimer));
+                    const value = await Promise.race([nativeSpeech()({ action: 'start', session }), new Promise((_, reject) => { authorizationTimer = setTimeout(() => reject(Error('系统语音授权超时。请在系统设置 → 隐私与安全性 → 语音识别中检查 AIDE R&D 权限后重试。')), 20000); })]).finally(() => clearTimeout(authorizationTimer));
                     if (invalid() || speechSession !== session) {
                         await nativeSpeech()({ action: 'stop', session });
                         return;
@@ -271,7 +271,7 @@
                 else {
                     const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
                     if (!Ctor || !('processLocally' in Ctor.prototype))
-                        throw Error('当前浏览器不支持强制离线识别。请使用 Aide Mac 桌面版或支持本机识别的浏览器。');
+                        throw Error('当前浏览器不支持强制离线识别。请使用 AIDE R&D Mac 桌面版或支持本机识别的浏览器。');
                     if (typeof Ctor.available === 'function' && await Ctor.available({ langs: ['zh-CN'], processLocally: true }) !== 'available')
                         throw Error('本机中文离线语言包不可用，请先安装对应语言包。');
                     if (invalid())
@@ -344,7 +344,7 @@
                             throw Error('Invalid editor response');
                         item.editorId = response.editorId;
                         if (!popup)
-                            throw Error(uiTextPluginWorkbench('请允许Aide打开编辑器窗口，再次点击恢复'));
+                            throw Error(uiTextPluginWorkbench('请允许AIDE R&D打开编辑器窗口，再次点击恢复'));
                         popup.location = response.url;
                         reply('opened');
                         notice.textContent = uiTextPluginWorkbench('原生窗口已打开；保存后关闭原生窗口，再刷新工程');

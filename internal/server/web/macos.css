@@ -16,7 +16,10 @@ button.primary { border-radius: 9px; font-weight: 600; box-shadow: 0 1px 2px var
 .brand { margin: 0 8px 26px; gap: 9px; font-size: 27px; letter-spacing: -1.2px; }
 .brand-icon { width: 31px; height: 31px; border-radius: 9px; font-size: 29px; padding-bottom: 4px; }
 .brand small { margin-left: auto; border: 0; font-size: 9px; letter-spacing: 1.3px; }
-.brand-dot { color: var(--text); }
+#brand-button { flex-wrap: wrap; gap: 2px 6px; }
+#brand-button small { padding-inline: 1px; }
+.brand-wordmark { white-space: nowrap; font-size: 0.84em; }
+.brand-edition { font-weight: 550; }
 .brand .brand-icon {
   flex-shrink: 0;
   transform-origin: 50% 60%;

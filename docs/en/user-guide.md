@@ -1,4 +1,6 @@
-# User guide
+# AIDE R&D user guide
+
+The current source version uses **AIDE R&D** as its display name. R&D stands for Research and Development. The repository is `aide`. Existing installations retain their workspaces, accounts and settings.
 
 > Operating guidance updated against the current source workline on 8 November 2026. Entry screenshots and their original scope remain from the isolated 17 October instance: [actual screenshots and limits](../ui-evidence.md) · [step-by-step demo](../demo-guide.md). Source behavior, browser observation and release acceptance are separate states.
 
