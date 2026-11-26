@@ -26,7 +26,7 @@ interface Window {
     if (englishLoad) return englishLoad;
     englishLoad = new Promise(resolve => {
       const script = document.createElement('script');
-      script.src = '/locales/en.js?v=221'; script.async = true;
+      script.src = '/locales/en.js?v=222'; script.async = true;
       script.onload = () => { catalog = window.aideEnglish || {}; resolve(); };
       script.onerror = () => { englishLoad = null; resolve(); };
       document.head.append(script);

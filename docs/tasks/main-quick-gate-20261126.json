@@ -1,0 +1,70 @@
+{
+  "id": "main-quick-gate-20261126",
+  "request": "修复 AIDE main 的 quick CI 失败，验证后合并必要改动",
+  "baseline": "0ccc0a9844185b4fec3a2e62a87afb78c66ad819",
+  "initial_status": "Clean isolated checkout before applying three test fixture changes from PR #993.",
+  "acceptance": [
+    "Restore all four checks failing in Aide CI run 45867886185.",
+    "Keep the existing CI gates enabled and merge only the CI-related repair after validation."
+  ],
+  "scope": [
+    "Three JavaScript test fixtures from PR #993, the English catalog and cache revisions, and this verification record. Excludes the proxy and media runtime changes in PR #993."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Scoped the repair to the four failing main quick checks.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/actions/runs/45867886185"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Supply production helper functions to the VM fixtures and keep versioned lazy loading checks; fix real missing English strings without relaxing coverage.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/actions/runs/45867886185"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Ported the three fixture changes from PR #993 and translated the 22 missing plugin-management strings; updated cache revisions.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/actions/runs/45867886185"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "All four targeted regressions and web TypeScript generation passed locally; waiting for the complete GitHub gate. No live app rollout was tested.",
+      "evidence": [
+        "node scripts/test_approval_persistence.cjs",
+        "node --test scripts/i18n-lazy.test.cjs",
+        "node scripts/test_i18n_coverage.cjs",
+        "node scripts/auto-model-router-ui.test.cjs",
+        "npm run build:web",
+        "git diff --check"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded CI failure, scope and verification boundaries in this task.",
+      "evidence": [
+        "docs/tasks/main-quick-gate-20261126.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Checked the patch for whitespace; only fixtures, English assets and this record are included.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Merge verified CI repairs only; no new release, runtime changes or unrelated draft merge.",
+  "rollback": "Revert only the CI repair PR; no application rollout or release asset changes.",
+  "handoff": "GitHub CI and merge must be verified from the exact fix PR. Separate proxy and first-run media changes from #993 are excluded."
+}
