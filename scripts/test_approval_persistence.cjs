@@ -10,7 +10,7 @@ function extract(name) {
   assert.ok(end > start, `Missing function boundary: ${name}`);
   return source.slice(start, end);
 }
-const functions = ['composerAutoReview', 'syncComposerApproval', 'refreshApprovalPolicy', 'setComposerAutoReview', 'setupGlobalEvents'].map(extract).join('\n');
+const functions = ['currentSessionApprovalMode', 'composerAutoReview', 'syncComposerApproval', 'refreshApprovalPolicy', 'setComposerAutoReview', 'setupGlobalEvents'].map(extract).join('\n');
 let server = {enabled: false, revision: 1};
 let puts = 0, failPut = false, failGet = false, holdPut = null;
 function client() {

@@ -11,7 +11,7 @@ vm.createContext(c);
 const change=c.window.AideSessionModelSelection.change;
 vm.runInContext(fs.readFileSync('internal/server/web/session-model-selection.js','utf8'),c);
 c.window.AideSessionModelSelection.install({state});c.window.AideSessionModelSelection.change=change;
-vm.runInContext(fn('composerModelStatus')+'\n'+fn('refreshStrategyUI')+'\n'+fn('strategyMenuOption'),c);
+vm.runInContext(fn('currentSessionApprovalMode')+'\n'+fn('composerApprovalLabel')+'\n'+fn('composerModelStatus')+'\n'+fn('refreshStrategyUI')+'\n'+fn('strategyMenuOption'),c);
 function modelButtons(){return elements['strategy-menu'].children[1].children.filter(x=>x.tag==='button');}
 (async()=>{
  c.refreshStrategyUI();assert.equal(modelButtons()[0].children[1].textContent,'Code','no plugin preserves ordinary menu');
