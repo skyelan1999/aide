@@ -367,6 +367,104 @@ func TestContextRecoveryCompactionInvalidatesOldUsageAnchor(t *testing.T) {
 	}
 }
 
+func TestCompactionRequestsStructuredJSONWhenSupported(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		capability string
+		wantFormat bool
+	}{
+		{name: "compatible provider", wantFormat: true},
+		{name: "explicitly unsupported", capability: "unsupported", wantFormat: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a := testApp(t)
+			var calls atomic.Int32
+			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls.Add(1)
+				var body map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				format, hasFormat := body["response_format"]
+				if hasFormat != tc.wantFormat {
+					t.Errorf("response_format presence=%v, want %v", hasFormat, tc.wantFormat)
+				}
+				if hasFormat {
+					value, ok := format.(map[string]any)
+					if !ok || value["type"] != "json_object" {
+						t.Errorf("unexpected response_format: %#v", format)
+					}
+				}
+				parallelReply(w, `{"goal":"preserve context","decisions":[],"files":[],"facts":[],"pending":[]}`)
+			}))
+			defer provider.Close()
+			cfg := Settings{BaseURL: provider.URL, Model: "fixture"}
+			if tc.capability != "" {
+				cfg.Models = []ModelRef{{ID: "fixture", Capabilities: map[string]string{"structured_output": tc.capability}}}
+			}
+			summary, err := a.summarizeCompactionBatch(context.Background(), cfg, []Message{{Role: "user", Content: "history"}})
+			if err != nil || summary == "" || calls.Load() != 1 {
+				t.Fatalf("calls=%d summary=%q err=%v", calls.Load(), summary, err)
+			}
+		})
+	}
+}
+
+func TestManualCompactionUsesProviderUsageCalibration(t *testing.T) {
+	a := testApp(t)
+	var requests atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		parallelReply(w, `{"goal":"compressed after observed overflow","decisions":[],"files":[],"facts":[],"pending":[]}`)
+	}))
+	defer provider.Close()
+	a.settings.BaseURL = provider.URL
+	a.settings.Model = "fixture"
+	a.settings.Models = []ModelRef{{ID: "fixture", ContextWindow: 65536}}
+	created := createSession(t, a)
+	a.mu.Lock()
+	s := a.sessions[created.ID]
+	s.Messages = []Message{{Role: "user", Content: "old"}, {Role: "assistant", Content: "answer"}, {Role: "user", Content: "latest"}}
+	base := a.buildContextPreview(s, "", "chat", "", nil, a.settings, ProfileParams{}, true)
+	s.Runs = []*Task{{ID: "observed", ContextAnchor: &ContextUsageAnchor{
+		Usage: TokenUsage{Prompt: 93178, Completion: 1970}, PromptEstimate: base.InputEstimate, CompletionEstimate: 1251,
+		// A changed runtime header must not hide the same observed overflow that
+		// the sidebar already presents to the user.
+		HeaderFingerprint: "changed-runtime-header", SummaryFingerprint: contextSummaryFingerprint(base.Messages),
+	}}}
+	a.mu.Unlock()
+	if _, split := a.snapshotForCompact(s); split != 0 {
+		t.Fatal("small raw history fixture unexpectedly exceeds the legacy threshold")
+	}
+	w := request(a, "POST", "/api/sessions/"+s.ID+"/compact", map[string]any{})
+	if w.Code != 200 || requests.Load() == 0 || s.CompactedMessages == 0 {
+		t.Fatalf("status=%d requests=%d folded=%d body=%s", w.Code, requests.Load(), s.CompactedMessages, w.Body.String())
+	}
+}
+
+func TestRequiredCompactionFoldsDespiteNominalHistoryBudget(t *testing.T) {
+	a := testApp(t)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		parallelReply(w, `{"goal":"required recovery","decisions":[],"files":[],"facts":[],"pending":[]}`)
+	}))
+	defer provider.Close()
+	created := createSession(t, a)
+	a.mu.Lock()
+	s := a.sessions[created.ID]
+	s.Messages = []Message{{Role: "user", Content: "old"}, {Role: "assistant", Content: "answer"}, {Role: "user", Content: "latest"}}
+	a.mu.Unlock()
+	if _, split := a.snapshotForCompactBudget(s, compactKeepTokens); split != 0 {
+		t.Fatal("fixture must begin below the nominal history budget")
+	}
+	cfg := Settings{BaseURL: provider.URL, Model: "fixture"}
+	if err := a.compactSessionForContext(context.Background(), s.ID, cfg, 8192, compactKeepTokens); err != nil {
+		t.Fatal(err)
+	}
+	if s.CompactedMessages == 0 {
+		t.Fatal("confirmed over-window recovery deadlocked on the nominal history estimate")
+	}
+}
+
 func TestContextRecoverySummaryNormalizesTextShapesOnly(t *testing.T) {
 	summary, e := parseCompactSummary(`{"goal":["first goal","second goal"],"constraints":"no writes","decisions":[],"files":[],"facts":"code R731861","pending":[]}`)
 	if e != nil {

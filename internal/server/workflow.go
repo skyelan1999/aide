@@ -6510,6 +6510,13 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		keepBudget = historyBudget[0]
 	}
 	snap, split := a.snapshotForCompactBudget(sess, keepBudget)
+	if split == 0 && len(sess.Messages) > 0 {
+		// This path is entered only after the complete calibrated request was
+		// already over its window. Provider usage can exceed the DSH history
+		// estimate by enough that the nominal history budget still looks valid.
+		// Fold one safe boundary instead of deadlocking with "nothing to fold".
+		snap, split = a.snapshotForCompactBudget(sess, sessionContextTokens(sess)-1)
+	}
 	baseLen := len(sess.Messages)
 	beforeTokens := sessionContextTokens(sess)
 	if a.contextCompactionProgress == nil {
@@ -6699,8 +6706,41 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	snap, split := a.snapshotForCompact(sess)
 	cfg := a.settings
+	snap, split := a.snapshotForCompact(sess)
+	if split == 0 && len(sess.Messages) > 0 {
+		// Manual compaction uses the same full-request calibration as automatic
+		// recovery. Raw history alone omits provider usage, system prompts and
+		// tool schemas, and can incorrectly report that an over-window session
+		// is below threshold.
+		observedOverflow := false
+		for i := len(sess.Runs) - 1; i >= 0; i-- {
+			anchor := sess.Runs[i].ContextAnchor
+			if anchor == nil || anchor.Usage.Estimated || anchor.Usage.Prompt <= 0 {
+				continue
+			}
+			observedOverflow = anchor.Usage.Prompt > a.modelWindow(cfg.Model)
+			break
+		}
+		preview := a.buildContextPreview(sess, "", "chat", "", nil, cfg, ProfileParams{}, false)
+		if preview.OverLimit || observedOverflow {
+			currentSession := &Session{ID: sess.ID, Kind: sess.Kind}
+			current := a.buildContextPreview(currentSession, "", "chat", "", nil, cfg, ProfileParams{}, false)
+			if !current.OverLimit {
+				keepBudget := current.ContextWindow - current.OutputReserve - current.InputEstimate - 512
+				if keepBudget > compactKeepTokens {
+					keepBudget = compactKeepTokens
+				}
+				if keepBudget < 0 {
+					keepBudget = 0
+				}
+				snap, split = a.snapshotForCompactBudget(sess, keepBudget)
+				if split == 0 {
+					snap, split = a.snapshotForCompactBudget(sess, sessionContextTokens(sess)-1)
+				}
+			}
+		}
+	}
 	if modelKey, keyErr := a.modelAPIKeyLocked(); keyErr != nil {
 		a.mu.Unlock()
 		fail(w, 400, keyErr)
@@ -7011,7 +7051,14 @@ func completeCompactionRequest(ctx context.Context, cfg Settings, messages []Mes
 		if err := ctx.Err(); err != nil {
 			return "", err
 		}
-		out, _, _, err := complete(ctx, cfg, messages, ProfileParams{MaxTokens: compactSummaryOutput}, nil, nil)
+		params := ProfileParams{MaxTokens: compactSummaryOutput}
+		if modelCapabilityStatus(cfg, "structured_output") != "unsupported" {
+			// Compaction always validates JSON. Ask compatible providers to enforce
+			// that contract on the wire instead of relying on prompt wording alone;
+			// explicitly unsupported models retain the bounded text retry path.
+			params.ResponseFormat = "json_object"
+		}
+		out, _, _, err := complete(ctx, cfg, messages, params, nil, nil)
 		return out, err
 	}
 	for attempt := 1; ; attempt++ {
