@@ -162,7 +162,7 @@ function requestMasterAuth({ reason, assistantSessionId, authBody } = {}) {
                 fp.disabled = !enabled;
                 fp.classList.toggle('disabled', !enabled);
                 if (!enabled)
-                    fp.title = t(window.AideNativeBiometrics?.platform === 'windows' ? '请先用密码解锁，在设置 → 账户中绑定 Windows Hello' : '请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID');
+                    fp.title = t(window.AideNativeBiometrics?.platform === 'windows' ? '请先用密码解锁，在设置 → 账户中绑定 Windows Hello' : '请先用密码解锁，在设置 → 账户中为 AIDE R&D 桌面绑定触控 ID');
             }).catch(() => { });
         fp.onclick = action(async () => {
             fp.disabled = true;

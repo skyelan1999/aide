@@ -9,7 +9,7 @@ interface Window {
  const detect=({spec,api}: any)=>{const q=query(spec);q.set('probe','1');return api('/file/git-history?'+q);};
  function mount({dialog,snapshotPanel,hasSnapshots,spec,editor,api,t,isActive,onTabChange,lineDiff,renderDiff,syncComparison}: any): void {
   const el=<K extends keyof HTMLElementTagNameMap>(tag: K,cls?: string | null,text?: string | null): HTMLElementTagNameMap[K]=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;};
-  const tabs=el('div','git-history-tabs'),snap=el('button','quiet',t('Aide 快照')),git=el('button','quiet',t('Git 比较'));
+  const tabs=el('div','git-history-tabs'),snap=el('button','quiet',t('AIDE R&D 快照')),git=el('button','quiet',t('Git 比较'));
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label',t('历史来源'));
   for(const button of [snap,git]){button.type='button';tabs.append(button);}
   snap.hidden=!hasSnapshots;git.disabled=true;

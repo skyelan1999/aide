@@ -146,7 +146,7 @@ async function refreshConfig({ modelConnectionsSaved = false } = {}) {
   await refreshApprovalPolicy();
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
-  $('settings-sheet-version').textContent = ' · aide ' + versionText;
+  $('settings-sheet-version').textContent = ' · AIDE R&D ' + versionText;
   syncVoiceAssistantDisplayName();
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
   refreshStrategyUI();

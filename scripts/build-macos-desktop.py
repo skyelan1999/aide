@@ -118,17 +118,17 @@ def compile_app(root):
             subprocess.run(common + ['-O', '-target', os.uname().machine + '-apple-macos14.0',
                                       str(sources[0]), str(biometric_source), str(computer_control_source), *map(str, capture_sources), '-o', str(executable)], check=True)
             shutil.copyfile(SOURCE / 'scripts/desktop-session.py', resources / 'desktop-session.py')
-            info = {'CFBundleIdentifier': bundle_id(root), 'CFBundleName': 'Aide',
-                    'CFBundleDisplayName': 'Aide', 'CFBundleExecutable': 'AideDesktop',
+            info = {'CFBundleIdentifier': bundle_id(root), 'CFBundleName': 'AIDE R&D',
+                    'CFBundleDisplayName': 'AIDE R&D', 'CFBundleExecutable': 'AideDesktop',
                     'CFBundleIconFile': 'AppIcon', 'CFBundlePackageType': 'APPL',
                     'CFBundleVersion': match[1], 'CFBundleShortVersionString': match[1],
                     'LSMinimumSystemVersion': '14.0', 'NSHighResolutionCapable': True,
                     'LSApplicationCategoryType': 'public.app-category.developer-tools',
-                    'NSMicrophoneUsageDescription': 'Aide 使用麦克风进行你主动开启的语音输入和通话。',
-                    'NSSpeechRecognitionUsageDescription': 'Aide 仅在你主动开启语音输入时请求语音识别。',
-                    'NSLocationUsageDescription': 'Aide 仅在你点击获取当前位置时请求定位，并将坐标提供给当前插件用于本次查询。',
-                    'NSCameraUsageDescription': 'Aide 仅在你主动使用需要摄像头的功能时请求访问。',
-                    'NSLocalNetworkUsageDescription': 'Aide 连接这台电脑上的本地工作台服务。',
+                    'NSMicrophoneUsageDescription': 'AIDE R&D 使用麦克风进行你主动开启的语音输入和通话。',
+                    'NSSpeechRecognitionUsageDescription': 'AIDE R&D 仅在你主动开启语音输入时请求语音识别。',
+                    'NSLocationUsageDescription': 'AIDE R&D 仅在你点击获取当前位置时请求定位，并将坐标提供给当前插件用于本次查询。',
+                    'NSCameraUsageDescription': 'AIDE R&D 仅在你主动使用需要摄像头的功能时请求访问。',
+                    'NSLocalNetworkUsageDescription': 'AIDE R&D 连接这台电脑上的本地工作台服务。',
                     'AideProjectRoot': str(root), 'AideDisplayVersion': version, 'AideDesktopBuildDigest': key}
             (staging / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
             renderer = Path(temporary) / 'render-icon'

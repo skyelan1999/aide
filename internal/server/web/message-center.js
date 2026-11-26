@@ -223,7 +223,7 @@
                         toast(text);
                     if (event.allow.desktop && window.Notification?.permission === 'granted') {
                         try {
-                            new window.Notification('aide', { body: text, tag: 'aide-message:' + event.key });
+                            new window.Notification('AIDE R&D', { body: text, tag: 'aide-message:' + event.key });
                         }
                         catch (_) { }
                     }

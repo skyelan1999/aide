@@ -86,7 +86,7 @@ final class DesktopLocalSpeech {
         SFSpeechRecognizer.requestAuthorization { authorization in
             DispatchQueue.main.async {
                 guard self.session == key, self.state == "starting" else { completion(["error": "录音请求已撤销"]); return }
-                guard authorization == .authorized else { completion(["error": "未获得语音识别权限，请在系统隐私设置中允许 Aide。"]); return }
+                guard authorization == .authorized else { completion(["error": "未获得语音识别权限，请在系统隐私设置中允许 AIDE R&D。"]); return }
                 AVCaptureDevice.requestAccess(for: .audio) { allowed in
                     DispatchQueue.main.async {
                         guard self.session == key, self.state == "starting", allowed else { completion(["error": "未获得麦克风权限或请求已撤销。"]); return }
@@ -303,14 +303,14 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let envFile = root.appendingPathComponent(".env")
         guard let contents = try? String(contentsOf: envFile, encoding: .utf8),
               let line = contents.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix("AIDE_COMPUTER_BRIDGE_TOKEN=") }) else {
-            fputs("Aide computer control is unavailable: local token is not configured.\n", stderr)
+            fputs("AIDE R&D computer control is unavailable: local token is not configured.\n", stderr)
             return
         }
         let token = String(line.dropFirst("AIDE_COMPUTER_BRIDGE_TOKEN=".count)).trimmingCharacters(in: CharacterSet(charactersIn: " \"'"))
-        guard token.count >= 32 else { fputs("Aide computer control is unavailable: invalid local token.\n", stderr); return }
+        guard token.count >= 32 else { fputs("AIDE R&D computer control is unavailable: invalid local token.\n", stderr); return }
         let host = AideComputerControlHost(token: token)
         do { try host.start(); computerControlHost = host }
-        catch { fputs("Aide computer control failed to start: \(error.localizedDescription)\n", stderr) }
+        catch { fputs("AIDE R&D computer control failed to start: \(error.localizedDescription)\n", stderr) }
     }
 
     func makeWindow() -> NSWindow {
@@ -319,7 +319,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
-        window.title = "Aide"
+        window.title = "AIDE R&D"
         window.minSize = NSSize(width: 720, height: 540)
         window.center()
         window.isReleasedWhenClosed = false
@@ -343,14 +343,14 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             entry.target = self
             menu.addItem(entry)
         }
-        let app = section("Aide")
-        item(app, "关于 Aide", #selector(about))
+        let app = section("AIDE R&D")
+        item(app, "关于 AIDE R&D", #selector(about))
         item(app, "设置…", #selector(settings), ",")
         app.addItem(.separator())
-        item(app, "隐藏 Aide", #selector(hideApp), "h")
+        item(app, "隐藏 AIDE R&D", #selector(hideApp), "h")
         app.addItem(.separator())
         item(app, "停止本地服务并退出…", #selector(stopAndQuit))
-        item(app, "退出 Aide", #selector(quit), "q")
+        item(app, "退出 AIDE R&D", #selector(quit), "q")
         let file = section("文件")
         item(file, "新建工作台标签页", #selector(newTab), "t")
         item(file, "关闭窗口", #selector(closeWindow), "w")
@@ -378,7 +378,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let container = NSView()
         let label = NSTextField(labelWithString: message)
         label.font = .systemFont(ofSize: 17, weight: .medium)
-        let note = NSTextField(labelWithString: "Aide")
+        let note = NSTextField(labelWithString: "AIDE R&D")
         note.font = .systemFont(ofSize: 36, weight: .bold)
         let retry = NSButton(title: "重试连接", target: self, action: #selector(retryConnect))
         retry.isHidden = true
@@ -506,7 +506,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         window.contentView = web
         views[window] = web
         titleObservers[ObjectIdentifier(web)] = web.observe(\.title, options: [.new]) { [weak window] view, _ in
-            window?.title = String((view.title?.isEmpty == false ? view.title! : "Aide").prefix(120))
+            window?.title = String((view.title?.isEmpty == false ? view.title! : "AIDE R&D").prefix(120))
         }
         window.makeFirstResponder(web)
         return web
@@ -551,7 +551,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let id = UUID().uuidString.lowercased()
         detachedWindows[id] = (window, owner, web, url)
         titleObservers[ObjectIdentifier(web)] = web.observe(\.title, options: [.new]) { [weak window] view, _ in
-            window?.title = String((view.title?.isEmpty == false ? view.title! : "Aide").prefix(120))
+            window?.title = String((view.title?.isEmpty == false ? view.title! : "AIDE R&D").prefix(120))
         }
         web.load(URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData))
         window.makeKeyAndOrderFront(nil)
@@ -747,7 +747,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             completionHandler(); return
         }
         let alert = NSAlert()
-        alert.messageText = "Aide"
+        alert.messageText = "AIDE R&D"
         alert.informativeText = String(message.prefix(8000))
         alert.addButton(withTitle: "好")
         alert.beginSheetModal(for: webView.window ?? mainWindow) { _ in completionHandler() }
@@ -763,7 +763,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             completionHandler(false); return
         }
         let alert = NSAlert()
-        alert.messageText = "Aide"
+        alert.messageText = "AIDE R&D"
         alert.informativeText = String(message.prefix(8000))
         alert.addButton(withTitle: "确认"); alert.addButton(withTitle: "取消")
         alert.beginSheetModal(for: webView.window ?? mainWindow) { response in completionHandler(response == .alertFirstButtonReturn) }
@@ -1174,7 +1174,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         group.notify(queue: .main) {
             guard dirty else { sender.reply(toApplicationShouldTerminate: true); return }
             let alert = NSAlert()
-            alert.messageText = "退出 Aide？"
+            alert.messageText = "退出 AIDE R&D？"
             alert.informativeText = "插件中有未保存的修改，退出后无法恢复。"
             alert.addButton(withTitle: "取消"); alert.addButton(withTitle: "退出")
             alert.beginSheetModal(for: self.mainWindow) { response in
@@ -1215,7 +1215,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
             web.callAsyncJavaScript("window.AideDesktopCapture?.error(message)", arguments: ["message": message], in: nil, in: .page, completionHandler: nil)
         }
         web.evaluateJavaScript("window.AideDesktopCapture?.prepare()") { result, error in
-            guard error == nil, let ticket = result as? String, !ticket.isEmpty else { fail("请先解锁 Aide 并连接工作区，再截屏。故障或弹窗关闭后可重试。"); return }
+            guard error == nil, let ticket = result as? String, !ticket.isEmpty else { fail("请先解锁 AIDE R&D 并连接工作区，再截屏。故障或弹窗关闭后可重试。"); return }
             Task { @MainActor in
                 do {
                     var payload = try await self.appCapture.capture(target)
@@ -1256,7 +1256,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     @objc func stopAndQuit() {
         let alert = NSAlert()
-        alert.messageText = "停止 Aide 本地服务？"
+        alert.messageText = "停止 AIDE R&D 本地服务？"
         alert.informativeText = "正在执行的任务和通话将中断，数据会保留。"
         alert.addButton(withTitle: "取消"); alert.addButton(withTitle: "停止并退出")
         alert.beginSheetModal(for: mainWindow) { result in
@@ -1337,7 +1337,7 @@ if arguments.contains("--prepare-update") {
         RunLoop.current.run(until: Date().addingTimeInterval(0.1))
     }
     if others.contains(where: { !$0.isTerminated }) {
-        fputs("Finish or cancel unsaved plugin edits, quit Aide, then retry the desktop update.\n", stderr)
+        fputs("Finish or cancel unsaved plugin edits, quit AIDE R&D, then retry the desktop update.\n", stderr)
         exit(1)
     }
     exit(0)
@@ -1354,7 +1354,7 @@ if let rootPath = rootPath, let boundRoot = boundRoot,
     fputs("This Aide.app belongs to another installation; rebuild desktop.command in the intended directory.\n", stderr); exit(2)
 }
 guard let rootPath = rootPath, rootPath.hasPrefix("/") else {
-    fputs("Aide installation directory is missing; rebuild with desktop.command.\n", stderr); exit(2)
+    fputs("AIDE R&D installation directory is missing; rebuild with desktop.command.\n", stderr); exit(2)
 }
 let output = argument("--smoke-output").map { URL(fileURLWithPath: $0) }
 let application = NSApplication.shared

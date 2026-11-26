@@ -1,0 +1,89 @@
+{
+  "id": "aidrd-display-brand",
+  "request": "从当前版本开始切换为 Research and Development 版本，产品名 AIDE R&D，调整 UI 及整体内部显示，仓库名字不变。",
+  "baseline": "7cf91e5fbf6b212d001682bc84218af5a1d412f8",
+  "initial_status": "",
+  "acceptance": [
+    "Show AIDE R&D in the main, login, secondary and native desktop surfaces.",
+    "Use Research and Development as the edition name in both languages.",
+    "Keep repository, package, protocol, credential and storage identities stable.",
+    "Check browser titles, language changes, mobile layout and product metadata."
+  ],
+  "scope": [
+    "Product-owned display copy, localized UI, native desktop display metadata and current user documentation."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "The confirmed display spelling is AIDE R&D. R&D stands for Research and Development. The repository remains skyelan1999/aide.",
+      "evidence": [
+        "README.md",
+        "README.en.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse the existing monogram and theme. Change first-party labels and desktop display metadata. Keep WebAuthn identity, bearer storage, macOS app path, Windows WebView profile, persona ID, plugin protocol and source repository stable.",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/webauthn.go",
+        "native/windows-launcher/main.cpp",
+        "scripts/build-macos-desktop.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Updated workbench and secondary page titles, About, workspace and message labels, settings copy and notifications, service-supplied UI messages, desktop menus and system permission labels. The edition label uses the existing version number.",
+      "evidence": [
+        "internal/server/web/app.ts",
+        "internal/server/web/locales/en.ts",
+        "internal/server/web/settings-schema.json",
+        "internal/server/web/macos.css",
+        "native/macos-desktop/main.swift",
+        "native/windows-launcher/desktop.hpp"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Quick passed all 359 commands. TS compile and typecheck, Go build and targeted server tests, 15 macOS desktop tests, an isolated signed macOS build and three Windows portable checks passed. Real Chrome checked Chinese and English login and About, the repository link, two desktop widths, mobile navigation and three secondary pages. No Windows hardware run.",
+      "evidence": [
+        ".agent-state/verify-20261126T201251181452Z.log",
+        ".agent-state/aidrd-display-brand/go-final.log",
+        ".agent-state/aidrd-display-brand/typecheck.log",
+        ".agent-state/aidrd-display-brand/mac-build.log",
+        ".agent-state/aidrd-display-brand/windows.log",
+        ".agent-state/aidrd-display-brand/browser-final.log",
+        ".agent-state/aidrd-display-brand/about-zh.png",
+        ".agent-state/aidrd-display-brand/mobile.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated both README introductions, current user guides, and the first-party handset guide displayed from the application.",
+      "evidence": [
+        "README.md",
+        "README.en.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "internal/server/web/motorola-voip-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Stopped the temporary loopback QA instance and removed its synthetic token and intermediate binaries. Kept only verification artifacts and the isolated macOS build.",
+      "evidence": [
+        ".agent-state/aidrd-display-brand/browser-final.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Isolated source verification complete. Merge and installation results are recorded by the pull request, CI and local build receipts.",
+      "evidence": [
+        "version.md"
+      ]
+    }
+  },
+  "release_authorization": "User authorized committing the display changes, merging to main after CI, rebuilding from main and installing on the local Mac.",
+  "rollback": "Revert the product display changes and rebuild from the previous source. No data or credential migration was introduced.",
+  "handoff": "Pre-merge verification includes the compiled macOS desktop, Chrome checks and portable Windows checks. The requested local cutover follows successful CI."
+}

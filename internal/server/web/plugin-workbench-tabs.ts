@@ -24,7 +24,7 @@ interface Window {
   if(selected)params.set('selection',JSON.stringify(selected));url.hash=params.toString();
   // Open directly in the click path, before any asynchronous bridge/API work.
   const page=window.open(url.href,'_blank');
-  if(!page){services.toast(services.t('请允许 Aide 打开新页面后重试'));return false;}
+  if(!page){services.toast(services.t('请允许 AIDE R&D 打开新页面后重试'));return false;}
   page.opener=null;return true;
  }
  window.AidePluginWorkbenchTabs=Object.freeze({read,open});
