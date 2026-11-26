@@ -92,13 +92,20 @@ function renderSessionList(snapshot) {
         if (highlight)
             item.append(el('span', 'session-dot dot-done', ''));
         const label = el('span', 'session-label' + (isSub ? ' sub-session-label' : ''));
+        const heading = el('span', 'session-heading');
         if (s.pinned) {
             const pin = el('span', 'session-pin-icon');
             pin.setAttribute('aria-hidden', 'true');
             pin.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l-1 5 3 3v2H6v-2l3-3-1-5Z"/><path d="m12 13-1 8"/></svg>';
-            label.append(pin);
+            heading.append(pin);
         }
-        label.append(el('span', 'session-title', s.number > 0 ? '#' + s.number + ' ' + s.title : s.title));
+        heading.append(el('span', 'session-title', s.number > 0 ? '#' + s.number + ' ' + s.title : s.title));
+        label.append(heading);
+        const preview = String(s.preview || '').trim();
+        if (preview)
+            label.append(el('span', 'session-preview', preview));
+        if (preview)
+            item.title += '\n' + preview;
         label.onclick = action(() => selectSession(s.id));
         item.append(label);
         if (status) {
@@ -328,7 +335,33 @@ function openAssistantGate(id, title) {
 // 锁屏时清空小秘会话内存解锁态
 function clearAssistantGate() { Object.keys(localStorage).filter((k) => k.indexOf('assistantUnlocked_') === 0).forEach((k) => localStorage.removeItem(k)); }
 const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
-const SESSION_HISTORY_PAGE = 30;
+const SESSION_HISTORY_PAGE = 12;
+let sessionHistoryLoading = false;
+async function loadEarlierSessionHistory() {
+    const id = state.session?.id;
+    if (!id || !state.session?.hasOlder || sessionHistoryLoading)
+        return;
+    sessionHistoryLoading = true;
+    state.historyLimit = Math.min(2000, state.historyLimit + SESSION_HISTORY_PAGE);
+    state.historyScroll = true;
+    const button = $('timeline').querySelector('.load-older-history');
+    if (button) {
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = t('正在加载更早的会话历史…');
+    }
+    try {
+        await selectSession(id);
+    }
+    finally {
+        sessionHistoryLoading = false;
+    }
+}
+function loadEarlierHistoryNearTop() {
+    const conversation = $('conversation');
+    if (conversation?.scrollTop <= 120)
+        void action(loadEarlierSessionHistory)().catch(() => { });
+}
 function sessionRevision(s) {
     const runs = s.runs || [], messages = s.messages || [];
     const lastRun = runs[runs.length - 1];
@@ -1194,7 +1227,7 @@ function updateJumpBtn() {
     if (btn)
         btn.classList.toggle('hidden', dist < c.clientHeight * 0.8);
 }
-$('conversation')?.addEventListener('scroll', updateJumpBtn);
+$('conversation')?.addEventListener('scroll', () => { updateJumpBtn(); loadEarlierHistoryNearTop(); }, { passive: true });
 $('conversation')?.addEventListener('wheel', () => { state.jumpAnimating = false; }, { passive: true });
 $('conversation')?.addEventListener('touchstart', () => { state.jumpAnimating = false; }, { passive: true });
 $('jump-bottom')?.addEventListener('click', () => {
@@ -2666,14 +2699,7 @@ function renderSession() {
     if (state.session?.hasOlder) {
         const older = el('button', 'quiet load-older-history', t('加载更早的会话历史'));
         older.type = 'button';
-        older.onclick = action(async () => {
-            const id = state.session?.id;
-            if (!id || !state.session?.hasOlder)
-                return;
-            state.historyLimit = Math.min(2000, state.historyLimit + SESSION_HISTORY_PAGE);
-            state.historyScroll = true;
-            await selectSession(id);
-        });
+        older.onclick = action(loadEarlierSessionHistory);
         $('timeline').append(older);
     }
     // #62：小蜜空状态——历史为空时显示专属引导，绝不显示通用欢迎页

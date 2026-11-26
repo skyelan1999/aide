@@ -60,10 +60,10 @@ async function testSessionSelection() {
   assert.equal(s2.classList.contains('active'), true, 'selection must paint before GET');
   assert.equal(s2.classList.contains('loading'), true);
   assert.equal(nodes.conversation.attributes['aria-busy'], 'true');
-  assert.deepEqual(requests, [['/sessions/s2?limit=30','GET']], 'checked write must not precede GET');
+  assert.deepEqual(requests, [['/sessions/s2?limit=12','GET']], 'checked write must not precede GET');
   s2.classList.add('status-completed');
   s2.querySelector = selector => selector === '.session-dot.dot-done' ? {remove() { s2.dotRemoved = true; }} : null;
-  gets.get('/sessions/s2?limit=30').resolve({id:'s2',title:'s2',runs:[]});
+  gets.get('/sessions/s2?limit=12').resolve({id:'s2',title:'s2',runs:[]});
   await first;
   assert.equal(state.session.id, 's2');
   assert.equal(nodes.prompt.focused, true);
@@ -75,14 +75,14 @@ async function testSessionSelection() {
 
   const old = context.selectSession('s1');
   const latest = context.selectSession('s3');
-  gets.get('/sessions/s3?limit=30').resolve({id:'s3',title:'s3',runs:[]});
+  gets.get('/sessions/s3?limit=12').resolve({id:'s3',title:'s3',runs:[]});
   await latest;
-  gets.get('/sessions/s1?limit=30').resolve({id:'s1',title:'s1',runs:[]});
+  gets.get('/sessions/s1?limit=12').resolve({id:'s1',title:'s1',runs:[]});
   await old;
   assert.equal(state.session.id, 's3', 'stale response must not overwrite newest selection');
 
   const failed = context.selectSession('s1');
-  gets.get('/sessions/s1?limit=30').reject(new Error('offline'));
+  gets.get('/sessions/s1?limit=12').reject(new Error('offline'));
   await assert.rejects(failed, /offline/);
   assert.equal(state.session.id, 's3');
   assert.equal(s3.classList.contains('active'), true, 'failed GET must restore prior selection');
@@ -96,17 +96,17 @@ async function testSessionSelection() {
   context.recoveryScope = () => 'workspace-fixture';
   const recovering = context.selectSession('s1');
   assert.equal(s1.classList.contains('active'), true);
-  assert.ok(gets.has('/sessions/s1?limit=30'), 'session GET must start while draft recovery is pending');
+  assert.ok(gets.has('/sessions/s1?limit=12'), 'session GET must start while draft recovery is pending');
   const priorPosts = requests.filter(([,method]) => method === 'POST').length;
   recovery.resolve({text:'Recovered draft', attachments:[{name:'note.md'}],start:3,end:3,scroll:20});
   await new Promise(resolve => setImmediate(resolve));
-  gets.get('/sessions/s1?limit=30').resolve({id:'s1',title:'s1',runs:[]});
+  gets.get('/sessions/s1?limit=12').resolve({id:'s1',title:'s1',runs:[]});
   await recovering;
   // This session already has an in-memory draft, which takes precedence.
   assert.equal(requests.filter(([,method]) => method === 'POST').length, priorPosts);
   const fresh = context.selectSession('restored');
   await new Promise(resolve => setImmediate(resolve));
-  gets.get('/sessions/restored?limit=30').resolve({id:'restored',title:'restored',runs:[]});
+  gets.get('/sessions/restored?limit=12').resolve({id:'restored',title:'restored',runs:[]});
   await fresh;
   assert.equal(nodes.prompt.value, 'Recovered draft');
   assert.equal(state.attachments[0].name, 'note.md');
@@ -114,7 +114,7 @@ async function testSessionSelection() {
 
   const checksBefore = requests.filter(([,method]) => method === 'PATCH').length;
   const alreadyRead = context.selectSession('s2');
-  gets.get('/sessions/s2?limit=30').resolve({id:'s2',title:'s2',runs:[],checked:true});
+  gets.get('/sessions/s2?limit=12').resolve({id:'s2',title:'s2',runs:[],checked:true});
   await alreadyRead;
   assert.equal(requests.filter(([,method]) => method === 'PATCH').length, checksBefore,
     'returning to an already-read session must not rewrite it');

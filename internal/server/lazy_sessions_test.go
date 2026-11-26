@@ -22,7 +22,7 @@ func lazyHistoryFixture(t *testing.T) (*App, string, string, []byte) {
 	a.mu.Lock()
 	stored := a.sessions[s.ID]
 	stored.Messages = []Message{{Role: "user", Content: "original historical evidence"}}
-	stored.Runs = []*Task{{ID: newID(), Status: "completed", Steps: []Step{{Name: "result", Content: "full tool evidence"}}}}
+	stored.Runs = []*Task{{ID: newID(), Prompt: "latest user prompt", Status: "completed", Steps: []Step{{Name: "result", Content: "full tool evidence"}}}}
 	if err := a.save(stored); err != nil {
 		a.mu.Unlock()
 		t.Fatal(err)
@@ -48,7 +48,11 @@ func lazyHistoryFixture(t *testing.T) (*App, string, string, []byte) {
 
 func TestLazySessionListDoesNotHydrateAndSaveRefusesPartialHistory(t *testing.T) {
 	a, id, path, before := lazyHistoryFixture(t)
-	requireStatus(t, request(a, "GET", "/api/sessions", nil), 200)
+	w := request(a, "GET", "/api/sessions", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"preview":"latest user prompt"`) {
+		t.Fatal("deferred session list omitted its bounded prompt preview")
+	}
 	a.mu.Lock()
 	s := a.sessions[id]
 	if !s.historyDeferred {

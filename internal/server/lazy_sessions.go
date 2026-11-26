@@ -98,7 +98,7 @@ func (l *lazySessionStore) metadata(path string) (*Session, string, bool) {
 }
 
 func sessionCatalogueMetadata(s *Session) *Session {
-	m := &Session{ID: s.ID, Title: s.Title, Created: s.Created, Updated: s.Updated, Number: s.Number, Kind: s.Kind, Pinned: s.Pinned, Archived: s.Archived, Deleted: s.Deleted, Checked: s.Checked, ParentID: s.ParentID, AutoArchived: s.AutoArchived, FollowedByAssistant: s.FollowedByAssistant, FollowNote: s.FollowNote, ModelSelectionRevision: s.ModelSelectionRevision}
+	m := &Session{ID: s.ID, Title: s.Title, Preview: sessionListPreview(s), Created: s.Created, Updated: s.Updated, Number: s.Number, Kind: s.Kind, Pinned: s.Pinned, Archived: s.Archived, Deleted: s.Deleted, Checked: s.Checked, ParentID: s.ParentID, AutoArchived: s.AutoArchived, FollowedByAssistant: s.FollowedByAssistant, FollowNote: s.FollowNote, ModelSelectionRevision: s.ModelSelectionRevision}
 	// Scalar task summaries support list status, counters and passive polling;
 	// they are never executor state and may not be saved as a full session.
 	for _, task := range s.Runs {

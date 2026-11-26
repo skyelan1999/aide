@@ -23,8 +23,10 @@ async function sessions(){
  const c={state,recoveryScope:()=>scope,subGroupState:{},$:()=>list,el:node,t:(s,n)=>s.replace('{0}',n),renderAssistantEntry(){},renderSessionCompactionIndicators(){},action:fn=>fn,document:{documentElement:{lang:'zh-CN'},createDocumentFragment:()=>node('fragment')},api:url=>{const d=deferred();requests.push({url,...d});return d.promise;}};vm.createContext(c);
  vm.runInContext(excerpt('function sessionStatusPresentation','let sessionListRequest='),c);
  vm.runInContext(excerpt('let sessionListRequest=','// 全局 SSE（#60）'),c);
- const active=[{id:'main',title:'Main',status:'completed',checked:true}],archived=Array.from({length:5},(_,i)=>({id:'sub'+i,parentId:'main',title:'Child '+i,autoArchived:true}));
+ const active=[{id:'main',title:'Main',preview:'Latest request',status:'completed',checked:true}],archived=Array.from({length:5},(_,i)=>({id:'sub'+i,parentId:'main',title:'Child '+i,autoArchived:true}));
  const first=c.loadSessions();requests[0].resolve(active);requests[1].resolve(archived);await first;
+ const mainItem=list.children[0],preview=mainItem.children.flatMap(n=>n.children||[]).find(n=>n.textContent==='Latest request');
+ assert.ok(preview,'session rows expose the bounded recent prompt preview');
  const toggle=()=>list.children.find(n=>n.children.some(child=>child.textContent.startsWith('子会话'))),more=()=>list.children.find(n=>n.children.some(child=>child.textContent.startsWith('展开全部')));
  assert.equal(list.children.length,6);const before=requests.length;toggle().onclick();assert.equal(requests.length,before,'collapse must not fetch two lists');assert.equal(list.children.length,2,'collapse paints synchronously');toggle().onclick();assert.equal(list.children.length,6);more().onclick({stopPropagation(){}});assert.equal(list.children.length,8,'show all children without waiting for network');
  const paints=list.paints;let offset=requests.length;const unchanged=c.loadSessions();requests[offset].resolve(active);requests[offset+1].resolve(archived);await unchanged;assert.equal(list.paints,paints,'identical snapshots preserve existing DOM');

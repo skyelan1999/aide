@@ -1,4 +1,5 @@
 /* One reading surface for streaming and persisted conversation answers. */
+#timeline>.run,#timeline>.assistant-msg{content-visibility:auto;contain-intrinsic-size:auto 720px}
 #timeline .run{width:100%;min-width:0}
 #timeline :is(.chat-answer,.stage-answer){
   display:flow-root;position:relative;box-sizing:border-box;width:100%;min-width:0;

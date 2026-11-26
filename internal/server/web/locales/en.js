@@ -1298,6 +1298,7 @@ window.aideEnglish = {
     "能力核验来源或依据（可选）": "Capability verification source or evidence (optional)",
     "能力核验日期": "Capability verification date",
     "加载更早的会话历史": "Load earlier conversation history",
+    "正在加载更早的会话历史…": "Loading earlier conversation history…",
     "系统日志": "System logs",
     "查看近期运行日志，按级别筛选并下载 JSONL 文件以辅助问题分析。现有未结构化日志的级别根据内容推断；敏感凭据会在记录和导出前脱敏。": "View recent runtime logs, filter by level, and download JSONL for troubleshooting. Levels for existing unstructured logs are inferred from their content. Sensitive credentials are redacted before storage and export.",
     "运行日志": "Runtime logs",

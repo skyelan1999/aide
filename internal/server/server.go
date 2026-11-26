@@ -471,6 +471,7 @@ type Session struct {
 	ModelSelection         *SessionModelSelection `json:"modelSelection,omitempty"`
 	ID                     string                 `json:"id"`
 	Title                  string                 `json:"title"`
+	Preview                string                 `json:"preview,omitempty"` // List-only recent user prompt; populated on catalogue/list views.
 	Created                string                 `json:"created"`
 	Messages               []Message              `json:"messages"`
 	Runs                   []*Task                `json:"runs"`
@@ -3173,6 +3174,33 @@ func sessionDisplayStatus(s *Session) string {
 	return ""
 }
 
+// sessionListPreview returns only the latest user-authored conversation text.
+// Assistant private messages stay behind their existing unlock gate.
+func sessionListPreview(s *Session) string {
+	if s == nil || s.Kind == assistantSessionKind {
+		return ""
+	}
+	text := ""
+	for i := len(s.Runs) - 1; i >= 0; i-- {
+		if s.Runs[i] != nil && strings.TrimSpace(s.Runs[i].Prompt) != "" {
+			text = s.Runs[i].Prompt
+			break
+		}
+	}
+	if text == "" {
+		for i := len(s.Messages) - 1; i >= 0; i-- {
+			if s.Messages[i].Role == "user" && strings.TrimSpace(s.Messages[i].Content) != "" {
+				text = s.Messages[i].Content
+				break
+			}
+		}
+	}
+	if text == "" {
+		text = s.Preview
+	}
+	return clip(strings.Join(strings.Fields(text), " "), 160)
+}
+
 func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -3182,6 +3210,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 		Number                                        int
 		Kind                                          string
 		Pinned, Archived, Checked, AutoArchived       bool
+		Preview                                       string
 	}
 	items := []item{}
 	for _, sess := range a.sessions {
@@ -3189,7 +3218,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		status := sessionDisplayStatus(sess)
-		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Number, sess.Kind, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived})
+		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Number, sess.Kind, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived, sessionListPreview(sess)})
 	}
 	// #30：小秘系统会话永远最顶（先于普通置顶）；然后普通置顶；再按最近活动时间倒序
 	sort.Slice(items, func(i, j int) bool {
@@ -3211,7 +3240,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	})
 	out := make([]map[string]any, len(items))
 	for i, it := range items {
-		out[i] = map[string]any{"id": it.ID, "title": it.Title, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked, "parentId": it.ParentID, "autoArchived": it.AutoArchived, "number": it.Number, "kind": it.Kind}
+		out[i] = map[string]any{"id": it.ID, "title": it.Title, "preview": it.Preview, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked, "parentId": it.ParentID, "autoArchived": it.AutoArchived, "number": it.Number, "kind": it.Kind}
 	}
 	jsonOut(w, 200, out)
 }

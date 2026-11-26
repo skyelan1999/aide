@@ -319,6 +319,10 @@
       ],
       [
         "node",
+        "scripts/session-history-window.test.cjs"
+      ],
+      [
+        "node",
         "scripts/markdown-image-path.test.js"
       ],
       [
