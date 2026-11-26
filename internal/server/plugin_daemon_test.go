@@ -219,6 +219,82 @@ func TestDaemonDisabledByDefault(t *testing.T) {
 	}
 }
 
+func TestPluginAutoStartPreferenceAndPersistence(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins,
+		PluginManifest{ID: "background", Name: "Background", Main: "index.js", Daemon: true, Enabled: true},
+		PluginManifest{ID: "short-lived", Name: "Short lived", Main: "index.js", Enabled: true},
+	)
+	a.mu.Unlock()
+
+	w := request(a, "PUT", "/api/plugins/background/autostart", map[string]any{"enabled": false})
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"autoStart":false`) {
+		t.Fatalf("autostart response: %s", w.Body.String())
+	}
+	if !a.pluginRegistry.Plugins[0].Enabled || pluginAutoStart(a.pluginRegistry.Plugins[0]) {
+		t.Fatalf("autostart changed enabled state or was not applied: %+v", a.pluginRegistry.Plugins[0])
+	}
+	raw, err := os.ReadFile(filepath.Join(a.pluginsPath, "registry.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved pluginRegistry
+	if err := json.Unmarshal(raw, &saved); err != nil {
+		t.Fatal(err)
+	}
+	if len(saved.Plugins) != 2 || saved.Plugins[0].AutoStart == nil || *saved.Plugins[0].AutoStart {
+		t.Fatalf("autostart preference not persisted: %+v", saved.Plugins)
+	}
+	requireStatus(t, request(a, "PUT", "/api/plugins/background/autostart", map[string]any{"enabled": true}), 200)
+	requireStatus(t, request(a, "PUT", "/api/plugins/short-lived/autostart", map[string]any{"enabled": false}), 409)
+	requireStatus(t, request(a, "PUT", "/api/plugins/missing/autostart", map[string]any{"enabled": false}), 404)
+	if !pluginAutoStart(PluginManifest{}) || pluginAutoStart(PluginManifest{AutoStart: new(bool)}) {
+		t.Fatal("legacy nil must default on and explicit false must remain off")
+	}
+}
+
+func TestDaemonRestoreHonorsAutoStartPreference(t *testing.T) {
+	src := findMockDaemon(t)
+	root := t.TempDir()
+	work := filepath.Join(root, "work")
+	pluginsDir := filepath.Join(work, "plugins")
+	code, err := os.ReadFile(filepath.Join(src, "index.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	disabled := false
+	reg := pluginRegistry{Version: 1, Plugins: []PluginManifest{
+		{ID: "legacy-auto", Name: "Legacy automatic", Main: "index.js", Daemon: true, Enabled: true},
+		{ID: "opted-out", Name: "Opted out", Main: "index.js", Daemon: true, Enabled: true, AutoStart: &disabled},
+	}}
+	for _, plugin := range reg.Plugins {
+		if err := os.MkdirAll(filepath.Join(pluginsDir, plugin.ID), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(pluginsDir, plugin.ID, "index.js"), code, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	raw, _ := json.Marshal(reg)
+	if err := os.WriteFile(filepath.Join(pluginsDir, "registry.json"), raw, 0644); err != nil {
+		t.Fatal(err)
+	}
+	a, err := New(work, filepath.Join(root, "ref"), filepath.Join(root, "data"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(a.Close)
+	a.daemons.mu.Lock()
+	_, legacyStarted := a.daemons.procs["legacy-auto"]
+	_, optedOutStarted := a.daemons.procs["opted-out"]
+	a.daemons.mu.Unlock()
+	if !legacyStarted || optedOutStarted {
+		t.Fatalf("restore procs: legacy=%v opted-out=%v", legacyStarted, optedOutStarted)
+	}
+}
+
 // installHookedDaemon 在注册表登记一个 daemon 插件，并在管理器里预置一个带 launchHook 的 proc。
 // 钩子由调用方控制：进入慢启动时发 enteredReady 前先 close(enteredSlow)，等待 releaseStart 后才算 ready，
 // 之后等 p.stopCh 关闭再 close(doneCh)（模拟优雅退出）。

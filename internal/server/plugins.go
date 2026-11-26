@@ -79,7 +79,8 @@ type PluginManifest struct {
 	Author         string           `json:"author,omitempty"`
 	Main           string           `json:"main"`
 	Enabled        bool             `json:"enabled"`
-	Daemon         bool             `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
+	AutoStart      *bool            `json:"autoStart,omitempty"` // 常驻插件随 Aide 启动；nil 保持旧版默认开启
+	Daemon         bool             `json:"daemon,omitempty"`    // 协议 v1.2：常驻守护插件
 	Settings       map[string]any   `json:"settings,omitempty"`
 	SettingsSchema map[string]any   `json:"settingsSchema,omitempty"`
 	InstalledAt    string           `json:"installedAt"`
@@ -253,7 +254,8 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 		items = append(items, map[string]any{
 			"id": p.ID, "name": p.Name, "description": p.Description, "version": p.Version,
 			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt, "daemon": p.Daemon,
-			"error": a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
+			"autoStart": pluginAutoStart(p),
+			"error":     a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
 			"updateURL": pluginUpdateSource(p), "updatedAt": p.UpdatedAt, "upgradeBackup": p.UpgradeBackup,
 			"settingsSchema": a.pluginSettingsSchema(p.ID, p.SettingsSchema),
 			"workbench":      p.Workbench,
@@ -840,6 +842,52 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 	errText := a.pluginError(id)
 	a.mu.Unlock()
 	jsonOut(w, 200, map[string]any{"id": id, "enabled": in.Enabled, "error": errText})
+}
+
+func pluginAutoStart(p PluginManifest) bool {
+	return p.AutoStart == nil || *p.AutoStart
+}
+
+// updatePluginAutoStart controls the next Aide launch without changing the
+// plugin's enabled state or stopping a daemon that is already running.
+func (a *App) updatePluginAutoStart(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
+	var in struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	id := r.PathValue("id")
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if err := managementGuardLocked(a, r); err != nil {
+		fail(w, 409, err)
+		return
+	}
+	for i := range a.pluginRegistry.Plugins {
+		p := &a.pluginRegistry.Plugins[i]
+		if p.ID != id {
+			continue
+		}
+		if !p.Daemon {
+			fail(w, 409, errors.New("仅声明 daemon 的插件支持后台自启动管理"))
+			return
+		}
+		value := in.Enabled
+		previous := p.AutoStart
+		p.AutoStart = &value
+		if err := a.savePluginRegistry(); err != nil {
+			p.AutoStart = previous
+			fail(w, 500, err)
+			return
+		}
+		jsonOut(w, 200, map[string]any{"id": id, "autoStart": value})
+		return
+	}
+	fail(w, 404, errors.New("插件不存在"))
 }
 
 func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {

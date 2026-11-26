@@ -143,5 +143,45 @@
         } upgrade(plugin, services).catch(() => { }); };
         return b;
     }
-    window.AidePluginUpgrade = Object.freeze({ button, openSource, upgrade });
+    async function checkAll(plugins, services) {
+        const candidates = plugins.filter((plugin) => plugin && typeof plugin.id === 'string' && plugin.id && plugin.installed !== false && plugin.installedSource !== 'bundled'), updates = [], failures = [];
+        let cursor = 0;
+        async function worker() { while (cursor < candidates.length) {
+            const plugin = candidates[cursor++];
+            try {
+                const result = await services.api('/plugins/' + encodeURIComponent(plugin.id) + '/source/sync', { method: 'POST', body: '{}' });
+                if (result.updateAvailable && result.update)
+                    updates.push({ ...result.update, name: plugin.name });
+            }
+            catch (error) {
+                failures.push({ id: plugin.id, name: plugin.name, message: error.message });
+            }
+        } }
+        await Promise.all(Array.from({ length: Math.min(3, candidates.length) }, worker));
+        updates.sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id)));
+        return { updates, failures };
+    }
+    async function upgradeAll(updates, services) {
+        const succeeded = [], failures = [];
+        for (const update of updates) {
+            try {
+                const result = await services.api('/plugins/' + encodeURIComponent(update.id) + '/upgrade', { method: 'POST', body: '{}' });
+                succeeded.push({ ...update, result });
+            }
+            catch (error) {
+                failures.push({ ...update, message: error.message });
+            }
+        }
+        let refreshError = '';
+        if (succeeded.length) {
+            try {
+                await services.refresh();
+            }
+            catch (error) {
+                refreshError = error.message || services.t('列表刷新失败');
+            }
+        }
+        return { succeeded, failures, refreshError };
+    }
+    window.AidePluginUpgrade = Object.freeze({ button, openSource, upgrade, checkAll, upgradeAll });
 })();

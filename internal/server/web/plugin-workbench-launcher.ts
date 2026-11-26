@@ -24,7 +24,13 @@ interface Window {
     const rail = document.getElementById('plugin-workbench-letters')!;
     const preview = document.getElementById('plugin-workbench-preview') as HTMLElement;
     const close = document.getElementById('plugin-workbench-close') as HTMLButtonElement | null;
-    if (!entry || !dialog || !grid || !rail || !preview || !close || entry.dataset.mounted) return;
+    const updateButton = document.getElementById('plugin-workbench-updates') as HTMLButtonElement;
+    const updateCount = document.getElementById('plugin-workbench-update-count')!;
+    const autostartButton = document.getElementById('plugin-workbench-autostart') as HTMLButtonElement;
+    const autostartDialog = document.getElementById('plugin-autostart-dialog') as HTMLDialogElement;
+    const autostartList = document.getElementById('plugin-autostart-list')!;
+    const autostartEmpty = document.getElementById('plugin-autostart-empty')!;
+    if (!entry || !dialog || !grid || !rail || !preview || !close || !updateButton || !updateCount || !autostartButton || !autostartDialog || !autostartList || !autostartEmpty || entry.dataset.mounted) return;
     entry.dataset.mounted = 'true';
     const node = services.el;
     const t = services.t;
@@ -33,6 +39,9 @@ interface Window {
     let activeLetter = '';
     let previewTimer: any = 0;
     let previewToken = 0;
+    let updateBusy = false, autostartBusy = false, updateCheckedAt = 0;
+    let updates: any[] = [];
+    const updateServices = {api:services.api, refresh:services.refreshPlugins, t, toast:services.toast};
 
     function hidePreview(): void {
       previewToken++;
@@ -50,7 +59,7 @@ interface Window {
       if (item.disabled) return;
       hidePreview();
       const token = previewToken;
-      previewTimer = setTimeout(async () => {
+      previewTimer = setTimeout(() => {
         if (token !== previewToken || !dialog.open) return;
         const name = services.displayName ? services.displayName(plugin.name) : plugin.name;
         const fileFirst = services.fileFirst(plugin.id);
@@ -65,13 +74,9 @@ interface Window {
         preview.replaceChildren(heading, description, node('span', 'workbench-preview-meta', 'v' + (plugin.version || '—')), status);
         preview.hidden = false;
         positionPreview(item);
-        if (!fileFirst && plugin.enabled && !plugin.error) {
-          const preloaded = await services.preloadWorkbench(plugin);
-          if (token === previewToken && preloaded) {
-            preview.dataset.preloaded = plugin.id;
-            status.textContent = t('已启动后台预加载');
-          }
-        }
+        // Hover only renders metadata. Starting an iframe/daemon here made a
+        // pointer crossing several cards repeatedly create and destroy full
+        // workbenches, which was the launcher's main source of intermittent jank.
       }, 180);
     }
     function animateOrder(previous: Map<string, DOMRect>): void {
@@ -154,6 +159,66 @@ interface Window {
       }
     }
 
+    function paintUpdates(): void {
+      updateButton.disabled = updateBusy;
+      updateButton.classList.toggle('has-updates', updates.length > 0);
+      updateButton.dataset.state = updateBusy ? 'busy' : updates.length ? 'available' : 'idle';
+      updateCount.hidden = updates.length === 0;
+      updateCount.textContent = String(updates.length);
+      updateButton.title = updateBusy ? t('正在处理插件升级…') : updates.length ? t('一键升级 {0} 个插件', updates.length) : t('检查插件升级');
+      updateButton.setAttribute('aria-label', updateButton.title);
+      const autostartCount = services.plugins().filter((plugin: any) => plugin.daemon && plugin.enabled && plugin.autoStart !== false).length;
+      autostartButton.dataset.count = String(autostartCount);
+    }
+    async function checkUpdates(force = false): Promise<void> {
+      if (updateBusy || services.blocked() || (!force && updateCheckedAt && Date.now() - updateCheckedAt < 300000)) return;
+      updateBusy = true; updates = []; paintUpdates();
+      try {
+        const result = await window.AidePluginUpgrade!.checkAll(services.plugins(), updateServices);
+        updates = result.updates; updateCheckedAt = Date.now();
+        if (result.failures.length) services.toast(t('{0} 个插件升级检查失败，可稍后重试', result.failures.length));
+      } catch (error: any) { services.toast(error.message || t('插件升级检查失败')); }
+      finally { updateBusy = false; paintUpdates(); refresh(); }
+    }
+    async function applyUpdates(): Promise<void> {
+      if (updateBusy || services.blocked()) return;
+      if (!updates.length) { await checkUpdates(true); if (!updates.length) return; }
+      updateBusy = true; paintUpdates();
+      try {
+        const result = await window.AidePluginUpgrade!.upgradeAll(updates, updateServices);
+        updates = result.failures; updateCheckedAt = Date.now();
+        if (result.succeeded.length) services.toast(t('已升级 {0} 个插件', result.succeeded.length));
+        if (result.refreshError) services.toast(t('插件已升级，列表刷新失败，请手动刷新'));
+        if (result.failures.length) services.toast(t('{0} 个插件升级失败，请单独重试', result.failures.length));
+      } catch (error: any) { services.toast(error.message || t('插件升级失败')); }
+      finally { updateBusy = false; paintUpdates(); refresh(); }
+    }
+    function renderAutostart(): void {
+      const plugins = services.plugins().filter((plugin: any) => plugin.daemon);
+      autostartList.replaceChildren(); autostartEmpty.hidden = plugins.length > 0;
+      for (const plugin of plugins) {
+        const row = node('div', 'plugin-autostart-row');
+        const text = node('div', 'plugin-autostart-copy');
+        text.append(node('strong', '', services.displayName(plugin.name)), node('small', '', plugin.id + ' · ' + (plugin.enabled ? t('插件已启用') : t('插件已停用'))));
+        const toggle = node('button', 'plugin-autostart-toggle' + (plugin.autoStart === false ? '' : ' active'), plugin.autoStart === false ? t('已关闭') : t('已开启'));
+        toggle.type = 'button'; toggle.disabled = autostartBusy;
+        toggle.setAttribute('aria-pressed', String(plugin.autoStart !== false));
+        toggle.setAttribute('aria-label', t('{0} 后台自启动', services.displayName(plugin.name)));
+        toggle.onclick = async () => {
+          if (autostartBusy) return;
+          autostartBusy = true; renderAutostart();
+          try {
+            const enabled = plugin.autoStart === false;
+            await services.api('/plugins/' + encodeURIComponent(plugin.id) + '/autostart', {method:'PUT', body:JSON.stringify({enabled})});
+            plugin.autoStart = enabled;
+            services.toast(enabled ? t('已开启 {0} 后台自启动', services.displayName(plugin.name)) : t('已关闭 {0} 后台自启动', services.displayName(plugin.name)));
+          } catch (error: any) { services.toast(error.message || t('后台自启动设置失败')); }
+          finally { autostartBusy = false; renderAutostart(); paintUpdates(); }
+        };
+        row.append(text, toggle); autostartList.append(row);
+      }
+    }
+
     for (const letter of letters) {
       const button = node('button', '', letter);
       button.type = 'button';
@@ -172,7 +237,14 @@ interface Window {
       activeLetter = '';
       refresh();
       if (!dialog.open) dialog.showModal();
+      paintUpdates();
+      checkUpdates().catch(() => {});
     };
+    updateButton.onclick = () => { applyUpdates().catch(() => {}); };
+    autostartButton.onclick = () => { renderAutostart(); if (!autostartDialog.open) autostartDialog.showModal(); };
+    const autostartClose = document.getElementById('plugin-autostart-close') as HTMLButtonElement;
+    autostartClose.onclick = () => autostartDialog.close();
+    autostartDialog.addEventListener('click', (event: MouseEvent) => { if (event.target === autostartDialog) autostartDialog.close(); });
     close.onclick = () => dialog.close();
     grid.addEventListener('scroll', hidePreview);
     dialog.addEventListener('close', hidePreview);
@@ -180,8 +252,9 @@ interface Window {
       if (event.target === dialog) dialog.close();
     });
     refreshPanel = () => refresh();
-    closePanel = () => { hidePreview(); if (dialog.open) dialog.close(); };
+    closePanel = () => { hidePreview(); if (autostartDialog.open) autostartDialog.close(); if (dialog.open) dialog.close(); };
     refresh();
+    paintUpdates();
   }
 
   window.AidePluginWorkbenchLauncher = {

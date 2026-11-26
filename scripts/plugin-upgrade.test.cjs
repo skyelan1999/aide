@@ -22,6 +22,17 @@ const el=(_tag,_class,text)=>({dataset:{},textContent:text});
  const activeA=api.upgrade(plugin,services),activeB=api.upgrade(otherPlugin,services);assert.equal(button.disabled,true);assert.equal(otherButton.disabled,true);assert.equal(await api.upgrade(otherPlugin,services),false);
  finishA({version:'4.0.0'});await activeA;assert.equal(button.disabled,false);assert.equal(rerendered.disabled,false);assert.equal(otherButton.disabled,true);assert.equal(otherRerendered.textContent,'升级中…');
  const failedB=assert.rejects(activeB,/other upgrade failed/);const errorB=Error('other upgrade failed');errorB.status=400;failB(errorB);await failedB;assert.equal(otherButton.disabled,false);assert.equal(otherButton.textContent,'升级');assert.equal(button.textContent,'升级');
+ // Batch source checks are independent and cap work to installed external plugins.
+ const batchPlugins=[{id:'a/b',name:'A',installed:true},{id:'other',name:'Other',installed:true},{id:'bundled',name:'Bundled',installed:true,installedSource:'bundled'}];
+ const checked=[];let batchRefresh=0;
+ const batchServices={t,el,toast:()=>{},refresh:async()=>{batchRefresh++;},api:async(path,options)=>{
+   if(path.endsWith('/source/sync')){checked.push(path);if(path.includes('/other/'))throw Error('offline');return{updateAvailable:true,update:{version:'2.0.0'}};}
+   if(path.endsWith('/upgrade')){assert.equal(options.method,'POST');if(path.includes('/other/'))throw Error('upgrade offline');return{version:'2.0.0'};}
+   throw Error('unexpected route');
+ }};
+ const checkedResult=await api.checkAll(batchPlugins,batchServices);assert.equal(checkedResult.updates.length,1);assert.equal(checkedResult.failures.length,1);assert.equal(checked.length,2);assert.equal(batchRefresh,0);
+ const batchResult=await api.upgradeAll([{id:'a/b',name:'A'},{id:'other',name:'Other'}],batchServices);assert.equal(batchResult.succeeded.length,1);assert.equal(batchResult.failures.length,1);assert.equal(batchRefresh,1);
+ batchServices.refresh=async()=>{throw Error('refresh offline');};const refreshFailure=await api.upgradeAll([{id:'a/b',name:'A'}],batchServices);assert.equal(refreshFailure.succeeded.length,1);assert.equal(refreshFailure.refreshError,'refresh offline');
  const {readAppSource,sourceIncludes}=require('./fixtures/app-source.cjs'),app=readAppSource(),index=fs.readFileSync('internal/server/web/index.html','utf8');assert(sourceIncludes(app,'window.AidePluginUpgrade.button(p,pluginUpgradeServices())'));assert(index.indexOf('/plugin-upgrade.js')<index.indexOf('/app.js'));
  console.log('PASS plugin upgrade: per-plugin pending state, same-ID duplicate guard, rerender, independent concurrent settlement, failure, unchanged, refresh failure and transport uncertainty');
 })().catch(error=>{console.error(error);process.exitCode=1;});

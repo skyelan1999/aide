@@ -200,10 +200,11 @@ func (a *App) daemonPluginMain(id string) string {
 	return filepath.Join(a.pluginsPath, id, "index.js")
 }
 
-// restore 容器/进程重启后按注册表期望状态自动恢复：声明 daemon 且 enabled 的插件自动拉起。
+// restore 容器/进程重启后按注册表期望状态自动恢复：声明 daemon、enabled 且允许自启动的插件自动拉起。
+// 旧注册表没有 autoStart 字段，pluginAutoStart 将其视为 true，保持升级前行为。
 func (m *DaemonManager) restore() {
 	for _, p := range m.app.pluginRegistry.Plugins {
-		if p.Daemon && p.Enabled {
+		if p.Daemon && p.Enabled && pluginAutoStart(p) {
 			if err := m.Start(p.ID); err != nil {
 				log.Printf("[daemon] 自动恢复 %s 失败: %v", p.ID, err)
 			}

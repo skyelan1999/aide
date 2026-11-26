@@ -1,5 +1,5 @@
 interface Window {
-  AidePluginUpgrade?: Readonly<{ button: (plugin: any, services: any) => any; openSource: (plugin: any, services: any) => void; upgrade: (plugin: any, services: any, options?: any) => Promise<any> }>;
+  AidePluginUpgrade?: Readonly<{ button: (plugin: any, services: any) => any; openSource: (plugin: any, services: any) => void; upgrade: (plugin: any, services: any, options?: any) => Promise<any>; checkAll: (plugins: any[], services: any) => Promise<any>; upgradeAll: (updates: any[], services: any) => Promise<any> }>;
 }
 /* Online plugin replacement; all installation and validation stays server-side. */
 (() => {
@@ -56,5 +56,16 @@ interface Window {
   b.title=plugin.updateURL?services.t('从已配置来源在线升级'):services.t('设置来源并在线升级');
   b.onclick=()=>{if(!plugin.updateURL){openSource(plugin,services);return;}upgrade(plugin,services).catch(()=>{});};return b;
  }
- window.AidePluginUpgrade=Object.freeze({button,openSource,upgrade});
+ async function checkAll(plugins: any[],services: any): Promise<any>{
+  const candidates=plugins.filter((plugin: any)=>plugin&&typeof plugin.id==='string'&&plugin.id&&plugin.installed!==false&&plugin.installedSource!=='bundled'),updates: any[]=[],failures: any[]=[];let cursor=0;
+  async function worker(): Promise<void>{while(cursor<candidates.length){const plugin=candidates[cursor++];try{const result=await services.api('/plugins/'+encodeURIComponent(plugin.id)+'/source/sync',{method:'POST',body:'{}'});if(result.updateAvailable&&result.update)updates.push({...result.update,name:plugin.name});}catch(error: any){failures.push({id:plugin.id,name:plugin.name,message:error.message});}}}
+  await Promise.all(Array.from({length:Math.min(3,candidates.length)},worker));updates.sort((a: any,b: any)=>String(a.name||a.id).localeCompare(String(b.name||b.id)));return {updates,failures};
+ }
+ async function upgradeAll(updates: any[],services: any): Promise<any>{
+  const succeeded: any[]=[],failures: any[]=[];
+  for(const update of updates){try{const result=await services.api('/plugins/'+encodeURIComponent(update.id)+'/upgrade',{method:'POST',body:'{}'});succeeded.push({...update,result});}catch(error: any){failures.push({...update,message:error.message});}}
+  let refreshError='';if(succeeded.length){try{await services.refresh();}catch(error: any){refreshError=error.message||services.t('列表刷新失败');}}
+  return {succeeded,failures,refreshError};
+ }
+ window.AidePluginUpgrade=Object.freeze({button,openSource,upgrade,checkAll,upgradeAll});
 })();

@@ -1719,6 +1719,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /plugin-editor/{ticket}/{asset...}", a.serveNativeEditor)
 	mux.HandleFunc("POST /plugin-editor/{ticket}/{asset...}", a.serveNativeEditor)
 	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
+	mux.HandleFunc("PUT /api/plugins/{id}/autostart", a.updatePluginAutoStart)
+	mux.HandleFunc("POST /api/plugins/{id}/source/sync", a.syncPluginUpdateSource)
 	mux.HandleFunc("POST /api/plugins/{id}/upgrade", a.upgradePlugin)
 	mux.HandleFunc("GET /api/file/history", a.markdownHistoryAPI)
 	mux.HandleFunc("GET /api/file/git-history", a.fileGitHistoryAPI)

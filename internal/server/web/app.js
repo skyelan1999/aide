@@ -10294,6 +10294,8 @@ function openPluginSettings(plugin) {
     pluginSettingsState.schema = plugin.settingsSchema || { type: 'object', title: t('通用参数'), properties: {}, additionalProperties: true };
     $('plugin-settings-title').textContent = t("{0} 设置", trPlugin(plugin.name));
     $('plugin-settings-description').textContent = plugin.description ? trPlugin(plugin.description) : plugin.id;
+    $('plugin-autostart-setting').hidden = !plugin.daemon;
+    $('plugin-autostart-enabled').checked = plugin.autoStart !== false;
     $('plugin-settings-template-name').textContent = t(pluginSettingsState.schema.title || t('通用参数'));
     const settings = plugin.settings && typeof plugin.settings === 'object' && !Array.isArray(plugin.settings) ? plugin.settings : {};
     $('plugin-settings-json').value = JSON.stringify(settings, null, 2);
@@ -10307,6 +10309,28 @@ function openPluginSettings(plugin) {
     $('plugin-settings-dialog').showModal();
     $('plugin-settings-rendered').focus();
 }
+$('plugin-autostart-enabled').onchange = async () => {
+    const plugin = pluginSettingsState.plugin;
+    const checkbox = $('plugin-autostart-enabled');
+    if (!plugin?.daemon) {
+        checkbox.checked = false;
+        return;
+    }
+    const enabled = checkbox.checked;
+    checkbox.disabled = true;
+    try {
+        await api('/plugins/' + encodeURIComponent(plugin.id) + '/autostart', { method: 'PUT', body: JSON.stringify({ enabled }) });
+        plugin.autoStart = enabled;
+        toast(enabled ? t('已开启 {0} 后台自启动', trPlugin(plugin.name)) : t('已关闭 {0} 后台自启动', trPlugin(plugin.name)));
+    }
+    catch (error) {
+        checkbox.checked = !enabled;
+        toast(error.message || t('后台自启动设置失败'));
+    }
+    finally {
+        checkbox.disabled = false;
+    }
+};
 $('plugin-settings-rendered').onclick = () => setPluginSettingsMode('rendered');
 $('plugin-settings-raw').onclick = () => setPluginSettingsMode('raw');
 function pluginUpgradeServices() { return { api, refresh: loadPluginsPanel, toast, t, el }; }
@@ -10420,7 +10444,7 @@ $('plugins-toggle').onclick = action(async () => {
     await window.AidePluginMarket.open();
 });
 window.AidePluginMarket.mount({ api, raw: (path, options = {}) => fetch('/api' + path, { ...options, headers: { Authorization: 'Bearer ' + state.token, ...options.headers } }), t, el, refreshInstalled: loadPluginsPanel, paintInstalled: renderPluginList, blocked: () => lockScreen.locked || !state.token });
-window.AidePluginWorkbenchLauncher.mount({ t, el, plugins: () => state.plugins, displayName: trPlugin, fileFirst: (id) => window.AidePluginGuide.fileFirst(id), openGuide: (plugin) => window.AidePluginGuide.open(plugin, pluginGuideServices()), openWorkbench: (plugin) => window.AidePluginWorkbench.open(plugin, pluginWorkbenchServices()), preloadWorkbench: (plugin) => window.AidePluginWorkbench.preload(plugin, { ...pluginWorkbenchServices(), toast: () => { } }), blocked: () => lockScreen.locked || !state.token, toast });
+window.AidePluginWorkbenchLauncher.mount({ api, t, el, plugins: () => state.plugins, displayName: trPlugin, fileFirst: (id) => window.AidePluginGuide.fileFirst(id), openGuide: (plugin) => window.AidePluginGuide.open(plugin, pluginGuideServices()), openWorkbench: (plugin) => window.AidePluginWorkbench.open(plugin, pluginWorkbenchServices()), refreshPlugins: loadPluginsPanel, blocked: () => lockScreen.locked || !state.token, toast });
 $('refresh-plugins').onclick = action(() => window.AidePluginMarket.refresh());
 $('plugin-search').addEventListener('input', renderPluginList);
 $('plugin-settings-form').onsubmit = action(async (event) => {

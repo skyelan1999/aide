@@ -438,6 +438,91 @@ func pluginVersionDowngrade(oldVersion, newVersion string) bool {
 	return marketVersionOlder(strings.SplitN(newVersion, "+", 2)[0], strings.SplitN(oldVersion, "+", 2)[0])
 }
 
+// syncPluginUpdateSource performs a read-only update check. Official market
+// entries are compared from the signed catalog; custom HTTPS sources are
+// downloaded and validated without changing the installed plugin or registry.
+func (a *App) syncPluginUpdateSource(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	a.mu.Lock()
+	var old PluginManifest
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == id {
+			old = p
+			break
+		}
+	}
+	a.mu.Unlock()
+	if old.ID == "" {
+		fail(w, 404, errors.New("插件不存在"))
+		return
+	}
+	source := pluginUpdateSource(old)
+	if source == officialPluginPrefix+id {
+		source = marketUpdatePrefix + id
+	}
+	if source == "" {
+		jsonOut(w, 200, map[string]any{"id": id, "updateAvailable": false, "currentVersion": old.Version})
+		return
+	}
+	if _, err := pluginUpdateURL(source); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
+	defer cancel()
+	update := map[string]any{"id": id, "name": old.Name, "currentVersion": old.Version, "source": source}
+	available := false
+	if source == marketUpdatePrefix+id {
+		snapshot, _, err := a.loadMarket(ctx, true)
+		if err != nil {
+			fail(w, 502, err)
+			return
+		}
+		found := false
+		for _, entry := range snapshot.Catalog.entries() {
+			if entry.ID != id {
+				continue
+			}
+			found = true
+			if compatible, reason := marketCompatibleForRuntime(entry, a.buildVersion, a.buildRuntimeMode); !compatible {
+				fail(w, 409, errors.New(reason))
+				return
+			}
+			update["name"], update["version"], update["description"], update["sha256"] = entry.Name, entry.Version, entry.Description, entry.SHA256
+			available = strings.TrimSpace(old.Version) == "" || marketVersionOlder(old.Version, entry.Version) || (old.Version == entry.Version && old.PackageSHA256 != "" && entry.SHA256 != "" && !strings.EqualFold(old.PackageSHA256, entry.SHA256))
+			break
+		}
+		if !found {
+			fail(w, 404, errors.New("官方市场未收录此插件"))
+			return
+		}
+	} else {
+		client := a.pluginUpdateClient
+		if client == nil {
+			client = newPluginUpdateClient()
+		}
+		raw, err := pluginFetch(ctx, client, source, maxPluginBundle)
+		if err != nil {
+			fail(w, 502, err)
+			return
+		}
+		manifest, _, err := parsePluginBundle(raw)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if manifest.ID != id {
+			fail(w, 400, errors.New("升级包插件 ID 与当前插件不一致"))
+			return
+		}
+		digest := sha256.Sum256(raw)
+		sum := hex.EncodeToString(digest[:])
+		update["name"], update["version"], update["description"], update["sha256"] = manifest.Name, manifest.Version, manifest.Description, sum
+		available = strings.TrimSpace(old.Version) == "" || marketVersionOlder(old.Version, manifest.Version) || (old.Version == manifest.Version && old.PackageSHA256 != "" && !strings.EqualFold(old.PackageSHA256, sum))
+	}
+	jsonOut(w, 200, map[string]any{"id": id, "updateAvailable": available, "currentVersion": old.Version, "update": update})
+}
+
 func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	if r.PathValue("id") == retiredOfficePluginID {
 		fail(w, http.StatusGone, errRetiredOfficePlugin)
@@ -698,6 +783,7 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	manifest.Enabled = old.Enabled
+	manifest.AutoStart = old.AutoStart
 	manifest.Settings = old.Settings
 	manifest.InstalledAt = old.InstalledAt
 	manifest.UpdateURL = source

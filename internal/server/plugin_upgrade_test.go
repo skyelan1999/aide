@@ -15,6 +15,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -96,6 +97,8 @@ func TestPluginUpgradePreservesStateAndRunsNewResources(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(dir, ".data/records.json"), record, 0600)
 	raw := upgradePackage(t, id, `module.exports={apply(ctx){ctx.tool({name:'upgrade_fixture_tool',description:'fixture',parameters:{type:'object'},handler:()=>({text:require('./helper.js').value+ctx.settings.marker})});}};`, map[string]string{"helper.js": "exports.value='new-';"})
 	setUpgradeBytes(a, raw)
+	autoStart := false
+	a.pluginRegistry.Plugins[0].AutoStart = &autoStart
 	sum := sha256.Sum256(raw)
 	w := postUpgrade(a, id, map[string]any{"url": "https://updates.example.test/latest.zip", "sha256": hex.EncodeToString(sum[:])})
 	requireStatus(t, w, 200)
@@ -123,7 +126,7 @@ func TestPluginUpgradePreservesStateAndRunsNewResources(t *testing.T) {
 	}
 	requireStatus(t, postUpgrade(a, id, map[string]any{}), 200)
 	registry := a.pluginRegistry.Plugins[0]
-	if registry.Version != "2.0.0" || registry.Settings["marker"] != "keep" || !registry.Enabled || registry.UpdateURL != "https://updates.example.test/latest.zip" {
+	if registry.Version != "2.0.0" || registry.Settings["marker"] != "keep" || !registry.Enabled || registry.UpdateURL != "https://updates.example.test/latest.zip" || registry.AutoStart == nil || *registry.AutoStart {
 		t.Fatalf("registry: %+v", registry)
 	}
 	requireStatus(t, postUpgrade(a, id, map[string]any{}), 200)
@@ -134,6 +137,25 @@ func TestPluginUpgradePreservesStateAndRunsNewResources(t *testing.T) {
 		t.Fatal("upgrade not persistent")
 	}
 }
+func TestPluginSourceSyncChecksWithoutInstalling(t *testing.T) {
+	a, id := upgradeFixture(t)
+	a.pluginRegistry.Plugins[0].UpdateURL = "https://updates.example.test/latest.zip"
+	before := a.pluginRegistry.Plugins[0]
+	setUpgradeBytes(a, upgradePackage(t, id, `module.exports={apply(ctx){}};`, nil))
+	w := request(a, "POST", "/api/plugins/"+id+"/source/sync", map[string]any{})
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"updateAvailable":true`) || !strings.Contains(w.Body.String(), `"version":"2.0.0"`) {
+		t.Fatalf("source sync response: %s", w.Body.String())
+	}
+	if !reflect.DeepEqual(before, a.pluginRegistry.Plugins[0]) {
+		t.Fatalf("read-only source check changed registry: %+v", a.pluginRegistry.Plugins[0])
+	}
+	code, err := os.ReadFile(filepath.Join(a.pluginsPath, id, "index.js"))
+	if err != nil || string(code) != upgradeOldCode {
+		t.Fatalf("read-only source check changed plugin files: %q, %v", code, err)
+	}
+}
+
 func TestPluginUpgradePreservesDisabledState(t *testing.T) {
 	a, id := upgradeFixture(t)
 	requireStatus(t, request(a, "PUT", "/api/plugins/"+id, map[string]any{"enabled": false}), 200)
