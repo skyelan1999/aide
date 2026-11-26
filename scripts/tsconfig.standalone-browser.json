@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "moduleDetection": "auto"
+  },
+  "files": [
+    "node-globals.d.ts",
+    "../site/main.ts",
+    "fixtures/marked-resource-probes.ts"
+  ],
+  "include": []
+}

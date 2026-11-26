@@ -38,8 +38,8 @@ jobs:
       - name: Require committed TypeScript-generated JavaScript
         run: |
           npm run build:ts
-          git diff --exit-code -- '*.js'
-          test -z "$(git ls-files --others --exclude-standard -- '*.js')"
+          git diff --exit-code -- '*.js' '*.cjs'
+          test -z "$(git ls-files --others --exclude-standard -- '*.js' '*.cjs')"
       - name: Repository quick gate and CI contracts
         run: |
           python3 scripts/test_workflow_action_pins.py

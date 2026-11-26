@@ -4,9 +4,9 @@
   "description": "Native TypeScript sources and generated JavaScript runtime for the embedded Aide UI and host bridges; no bundler, no framework.",
   "scripts": {
     "check:ts-sources": "node scripts/check-ts-sources.cjs",
-    "typecheck": "npm run check:ts-sources && tsc -p internal/server/web/tsconfig.json --noEmit && tsc -p internal/server/web/tsconfig.worklets.json --noEmit && tsc -p scripts/tsconfig.computer-bridge.json --noEmit && tsc -p scripts/tsconfig.computer-bridge-linux.json --noEmit && tsc -p scripts/tsconfig.headless-browser-bridge.json --noEmit && tsc -p scripts/tsconfig.safari-bridge.json --noEmit",
+    "typecheck": "npm run check:ts-sources && tsc -p internal/server/web/tsconfig.json --noEmit && tsc -p internal/server/web/tsconfig.worklets.json --noEmit && tsc -p scripts/tsconfig.computer-bridge.json --noEmit && tsc -p scripts/tsconfig.computer-bridge-linux.json --noEmit && tsc -p scripts/tsconfig.headless-browser-bridge.json --noEmit && tsc -p scripts/tsconfig.safari-bridge.json --noEmit && tsc -p scripts/tsconfig.standalone-browser.json --noEmit && tsc -p scripts/tsconfig.standalone-node.json --noEmit",
     "build:web": "tsc -p internal/server/web/tsconfig.json",
-    "build:ts": "npm run check:ts-sources && tsc -p internal/server/web/tsconfig.json && tsc -p internal/server/web/tsconfig.worklets.json && tsc -p scripts/tsconfig.computer-bridge.json && tsc -p scripts/tsconfig.computer-bridge-linux.json && tsc -p scripts/tsconfig.headless-browser-bridge.json && tsc -p scripts/tsconfig.safari-bridge.json"
+    "build:ts": "npm run check:ts-sources && tsc -p internal/server/web/tsconfig.json && tsc -p internal/server/web/tsconfig.worklets.json && tsc -p scripts/tsconfig.computer-bridge.json && tsc -p scripts/tsconfig.computer-bridge-linux.json && tsc -p scripts/tsconfig.headless-browser-bridge.json && tsc -p scripts/tsconfig.safari-bridge.json && tsc -p scripts/tsconfig.standalone-browser.json && tsc -p scripts/tsconfig.standalone-node.json && node scripts/finalize-standalone-output.cjs"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

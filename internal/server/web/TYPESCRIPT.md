@@ -10,8 +10,8 @@
 - 根 `package.json` 只含 `typescript` devDependency（`node_modules/` 已在 .gitignore）。
 - 命令（仓库根）：
   - `npm run build:web`：仅编译 `internal/server/web/tsconfig.json` 覆盖的 `.ts`。
-  - `npm run build:ts`：重新生成主 web、AudioWorklet 与四个独立 CommonJS 桥接配置的全部 JS。
-  - `npm run typecheck`：仅类型检查不产出，覆盖与 `build:ts` 相同的六套配置。
+  - `npm run build:ts`：重新生成主 web、AudioWorklet、四个独立 CommonJS 桥接配置及两套 standalone 配置的全部 JS/CJS。
+  - `npm run typecheck`：仅类型检查不产出，覆盖与 `build:ts` 相同的八套配置。
 - `tsconfig` 要点：`target: ES2021`（保留 `||=` 等原语法，避免 downlevel helper 改变行为）、
   `lib: ES2022+DOM`（Object.hasOwn 等仅类型层面）、`module: ES2020`（非模块经典脚本
   不产生模块标记，禁止仅为隔离类型而引入 import/export）、`strict: true`。
@@ -283,4 +283,16 @@
   运行时资产，不打包 TS、tsconfig 或本迁移说明。
   本轮统计：100 个 TS 文件、0 个 `@ts-ignore`、19 个有边界的 `@ts-expect-error`。
 
-vendor 三方库、`.agent-state` 快照、插件备份、testdata fixture 不在改造范围。
+- **批 5f（自有 standalone 收尾）**：新增 `tsconfig.standalone-browser.json` 与
+  `tsconfig.standalone-node.json`，为其余自有运行/桥接脚本补齐 12 个 `.ts` 和 7 个 `.cts`
+  权威源。`.cts` 编译为同路径 `.cjs`，其余编译为同路径 `.js`；Go embed、Node 调用、
+  浏览器 script 和测试入口继续使用原运行文件，不引入 ESM 或 bundler。
+  `finalize-standalone-output.cjs` 仅擦除 `tsc` 自动附加的 `__esModule` 标记及源文件未声明的
+  strict prologue，保持原 classic-script/CommonJS 运行形态。
+  `check-ts-sources.cjs` 同时检查 `.js ↔ .ts` 与 `.cjs ↔ .cts` 成对关系。四个高度动态
+  VM/DOM 测试 fixture 保留带原因的 `@ts-nocheck`，生产运行源不使用该总开关。
+  所有由上述 TS/CTS 生成的入库 JS/CJS 均在 `.gitattributes` 标记 `linguist-generated=true`，
+  避免 GitHub 将编译产物重复计为 JavaScript 源码。
+- 其余大量测试、评审和工具 `.cjs` 未纳入本批迁移；不得把本批范围表述为全仓 CJS 均已 TS 化。
+
+第三方 vendor 库、`.agent-state` 快照、插件备份及第三方测试 oracle 不在改造范围。

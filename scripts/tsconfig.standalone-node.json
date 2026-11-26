@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "moduleDetection": "force",
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false
+  },
+  "files": [
+    "node-globals.d.ts",
+    "../internal/server/plugin_host.ts",
+    "../examples/file-preview-plugin/index.ts",
+    "../internal/server/testdata/provider-support/ali/index.ts",
+    "../internal/server/testdata/provider-support/deepseek/index.ts",
+    "../internal/server/testdata/provider-support/openai/index.ts",
+    "../plugins/testdata/mock-daemon/index.ts",
+    "lock-cluster-election.test.ts",
+    "lock-cluster-state.test.ts",
+    "markdown-download-export.test.ts",
+    "markdown-image-path.test.ts",
+    "../internal/server/mixsoul/agent.cts",
+    "../internal/server/mixsoul/cognition.cts",
+    "../internal/server/mixsoul/embedding-client.cts",
+    "../internal/server/mixsoul/emotion.cts",
+    "../internal/server/mixsoul/store.cts",
+    "../internal/server/code_analysis/javascript.cts",
+    "codex-host-control.cts"
+  ],
+  "include": []
+}
