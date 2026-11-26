@@ -48,7 +48,7 @@ interface Window {
     const callBar=node('section','message-call hidden');callBar.setAttribute('aria-live','polite');center.append(callBar);
     const status=node('p','message-status');status.setAttribute('role','status');head.after(status);
     const badge=node('span','message-unread-count hidden');document.getElementById('reminder-center-button')!.append(badge);const reminderBadge: any=document.querySelector('.reminder-count');if(reminderBadge)reminderBadge.hidden=true;
-    let snapshot: any=null, activeTab='chats', selected: any=null, busy=false, epoch=0, digesting=false, lastDevice='', lastPaint='', activeVoice: any=null, older=100, viewDraft='', pollTimer: any=0;
+    let snapshot: any=null, activeTab='chats', selected: any=null, busy=false, epoch=0, digesting=false, lastDevice='', lastPaint='', activeVoice: any=null, placingVoice=false, older=100, viewDraft='', pollTimer: any=0;
     const files=new Map<any,any>(), uploads=new Set<any>(), paused=new Set<any>(), processed=new Set<any>();
     const data=(): any=>snapshot?.data, own=(): any=>data()?.device?.fingerprint||'', invitations=(): any=>Object.values(data()?.consent?.invitations||{}), relations=(): any=>data()?.consent?.relationships||{};
     const name=(peer: any): any=>data()?.peers?.[peer]?.name||data()?.peers?.[peer]?.device?.code||peer.slice(0,8);
@@ -119,7 +119,7 @@ interface Window {
       if(sound&&notificationAudio?.state==='running'){try{const wave=notificationAudio.createOscillator(),gain=notificationAudio.createGain();gain.gain.value=.035;wave.frequency.value=660;wave.connect(gain);gain.connect(notificationAudio.destination);wave.start();wave.stop(notificationAudio.currentTime+.12);wave.onended=(): void=>{wave.disconnect();gain.disconnect();};}catch(_){}}
 
     }
-    function identityCard() {const e=node('div','message-identity');e.append(node('span','message-eyebrow',tr('我的设备码')));const row=node('div','message-row');row.append(node('strong','message-device-code',data()?.device?.code||'—'),button('复制设备码',async(): Promise<void>=>{await navigator.clipboard.writeText(data().device.code);toast(tr('已复制'));}));e.append(row);const more=node('details','message-fingerprint');more.append(node('summary','',tr('完整设备指纹')),node('code','',own()));e.append(more);return e;}
+    function identityCard() {const e=node('div','message-identity');e.append(node('span','message-eyebrow',tr('我的设备码')));const row=node('div','message-row');row.append(node('strong','message-device-code',data()?.device?.code||'—'),button('复制设备码',async(): Promise<void>=>{await navigator.clipboard.writeText(data().device.code);toast(tr('已复制'));}));e.append(row);if(data()?.dialNumber)e.append(node('p','message-caption',tr('我的通话编号')+' · '+data().dialNumber));const more=node('details','message-fingerprint');more.append(node('summary','',tr('完整设备指纹')),node('code','',own()));e.append(more);return e;}
     function buildSettings(): void {if(!settingsBody)return;settingsBody.replaceChildren();const config=snapshot?.config||{enabled:false,name:'',network:{listen:':45840',lan:true,relays:[],advertise:[]}};const form=node('form','message-config-form');const enabled=input('启用设备通信','checkbox');enabled.checked=!!config.enabled&&!!config.name;enabled.disabled=!config.name;const label=field('启用设备通信',enabled);label.classList.add('message-checkbox');form.append(label,empty('开启后接收联系人申请；聊天、通话、群组和文件分别征得同意。'));
       form.append(field('账户名称',node('strong','message-account-name',config.name||tr('未设置'))));if(!config.name)form.append(empty('请先在设置 → 账户填写账户名称，才能启用设备通信。'),button('前往账户设置',()=>openSettings?.('account')));const assistant=input('允许助理读取和管理消息模块','checkbox');assistant.checked=!!config.assistantAccess;const assistantLabel=field('允许助理读取和管理消息模块',assistant);assistantLabel.classList.add('message-checkbox');form.append(assistantLabel,empty('默认关闭。读取的消息会交给当前助理模型处理；可发送文字、标记已读和管理拉黑，不会自动同意联系人、群组、通话或文件。'));
       const advanced=node('details');advanced.append(node('summary','',tr('高级网络设置')));const lan=input('局域网发现','checkbox');lan.checked=!!config.network?.lan;const lanLabel=field('局域网发现',lan);lanLabel.classList.add('message-checkbox');advanced.append(lanLabel);
@@ -130,10 +130,17 @@ interface Window {
       const save=button('保存设置');save.type='submit';save.className='primary';form.append(save);form.onsubmit=safe(async(event: any): Promise<void>=>{event.preventDefault();save.disabled=true;epoch++;await stopVoice();status.textContent=tr('正在更新网络设置');try{const lines=(e: any)=>e.value.split(/\r?\n/).map((v: any)=>v.trim()).filter(Boolean);await api('/messages/config',{method:'PUT',body:JSON.stringify({config:{enabled:enabled.checked,assistantAccess:assistant.checked,network:{listen:listen.value.trim(),lan:lan.checked,relays:lines(relays),advertise:lines(advertise)},iceURLs:lines(ice),iceUsername:username.value},credential:credential.value})});credential.value='';await refresh(true);toast(tr('设置已保存')); }finally{save.disabled=false;}});form.append(button('通知与角标',showSettings));settingsBody.append(form);
     }
     function requestCard(inv: any) {const card=node('article','message-request');const kind: any=({contact:'联系人申请',group:'群组邀请',voice:'语音邀请',file:'文件邀请'} as any)[inv.kind]||inv.kind;card.append(node('strong','',tr(kind)),node('span','message-caption',name(inv.peer)));if(inv.kind==='file'){const f=data()?.transfers?.[inv.id];if(f)card.append(node('p','message-filename',f.manifest.name+' · '+bytes(f.manifest.size)));card.append(empty('同意前不会发送文件内容。'));}if(inv.kind==='group'){const g=data()?.groups?.[inv.resource];if(g)card.append(node('p','',g.name));}const fingerprint=node('details','message-fingerprint');fingerprint.append(node('summary','',tr('完整设备指纹')),node('code','',inv.peer));card.append(fingerprint);const ops=node('div','message-row');ops.append(button(inv.kind==='voice'?'接听':'同意',async(): Promise<any>=>{if(inv.kind==='voice')return answerVoice(inv);await post('decide',{id:inv.id,accept:true});await refresh(true);},'primary'),button('拒绝',async(): Promise<void>=>{await post('decide',{id:inv.id,accept:false});await refresh(true);}));card.append(ops);return card;}
-    function paintContacts(): void {const host=panes.contacts;host.replaceChildren(identityCard());const search=node('form','message-add-form');const code=input('输入 6 位设备码');code.maxLength=6;code.autocomplete='off';code.spellcheck=false;code.className='message-code-input';const find=button('查找设备');find.type='submit';search.append(code,find);const results=node('div','message-discovery');search.onsubmit=safe(async(event: any): Promise<void>=>{event.preventDefault();find.disabled=true;results.replaceChildren();try{const cards=await post('discover',{code:code.value.trim().toUpperCase()});if(!cards.length)results.append(empty('未找到设备，请确认对方在线且使用相同中继或同一局域网。'));if(cards.length>1)results.append(empty('同码设备有多个，请核对完整指纹后选择。'));for(const card of cards){const item=node('article','message-request');item.append(node('strong','',card.name),node('code','message-full-fingerprint',card.device.fingerprint),empty('请通过其他可信渠道核对完整指纹。'));const checked=input('已核对完整指纹','checkbox');const checkedLabel=field('已核对完整指纹',checked);checkedLabel.classList.add('message-checkbox');const add=button('申请添加',async(): Promise<void>=>{await post('invite',{peer:card.device.fingerprint,card,kind:'contact'});toast(tr('申请已发出'));results.replaceChildren();await refresh(true);},'primary');add.disabled=true;checked.onchange=(): void=>{add.disabled=!checked.checked;};item.append(checkedLabel,add);results.append(item);}}finally{find.disabled=false;}});host.append(node('h3','',tr('添加联系人')),search,results,node('h3','',tr('待处理申请')));
+    function paintContacts(): void {const host=panes.contacts;host.replaceChildren(identityCard());
+      const dial=node('form','message-add-form'), number=input('输入 8 位成员编号');
+      number.inputMode='numeric';number.maxLength=8;number.pattern='[0-9]{8}';number.required=true;
+      const callMember=button('呼叫成员');callMember.type='submit';dial.append(number,callMember);
+      dial.onsubmit=safe(async(event: Event)=>{event.preventDefault();callMember.disabled=true;
+        try { await startVoice({number:number.value}); } finally { callMember.disabled=false; }
+      });host.append(dial);
+      const search=node('form','message-add-form');const code=input('输入 6 位设备码');code.maxLength=6;code.autocomplete='off';code.spellcheck=false;code.className='message-code-input';const find=button('查找设备');find.type='submit';search.append(code,find);const results=node('div','message-discovery');search.onsubmit=safe(async(event: any): Promise<void>=>{event.preventDefault();find.disabled=true;results.replaceChildren();try{const cards=await post('discover',{code:code.value.trim().toUpperCase()});if(!cards.length)results.append(empty('未找到设备，请确认对方在线且使用相同中继或同一局域网。'));if(cards.length>1)results.append(empty('同码设备有多个，请核对完整指纹后选择。'));for(const card of cards){const item=node('article','message-request');item.append(node('strong','',card.name),node('code','message-full-fingerprint',card.device.fingerprint),empty('请通过其他可信渠道核对完整指纹。'));const checked=input('已核对完整指纹','checkbox');const checkedLabel=field('已核对完整指纹',checked);checkedLabel.classList.add('message-checkbox');const add=button('申请添加',async(): Promise<void>=>{await post('invite',{peer:card.device.fingerprint,card,kind:'contact'});toast(tr('申请已发出'));results.replaceChildren();await refresh(true);},'primary');add.disabled=true;checked.onchange=(): void=>{add.disabled=!checked.checked;};item.append(checkedLabel,add);results.append(item);}}finally{find.disabled=false;}});host.append(node('h3','',tr('添加联系人')),search,results,node('h3','',tr('待处理申请')));
       const requests=pending();if(!requests.length)host.append(empty('暂无待处理申请'));for(const inv of requests)host.append(requestCard(inv));
       const all=Object.entries<any>(relations());host.append(node('h3','',tr('联系人')));if(!all.length)host.append(empty('暂无联系人'));
-      for(const [peer,rel]of all){const row=node('article','message-contact');const label=node('div');label.append(node('strong','',name(peer)),node('small','',rel.blocked?tr('已拉黑'):rel.localAccepted&&rel.remoteAccepted?data()?.peers?.[peer]?.device?.code||peer.slice(0,6):tr('等待对方同意')));row.append(label);if(rel.localAccepted&&rel.remoteAccepted&&!rel.blocked)row.append(button('开始聊天',(): void=>{selected={peer};selectTab('chats');}));row.append(button(rel.blocked?'解除拉黑':'拉黑',async(): Promise<void>=>{if(activeVoice?.peer===peer||activeVoice?.participants?.has(peer))await stopVoice();await post('block',{peer,blocked:!rel.blocked});if(rel.blocked)toast(tr('解除拉黑后需重新添加联系人。'));await refresh(true);}));host.append(row);}
+      for(const [peer,rel]of all){const row=node('article','message-contact');const label=node('div');label.append(node('strong','',name(peer)),node('small','',rel.blocked?tr('已拉黑'):rel.localAccepted&&rel.remoteAccepted?data()?.peers?.[peer]?.dialNumber||data()?.peers?.[peer]?.device?.code||peer.slice(0,6):tr('等待对方同意')));row.append(label);if(rel.localAccepted&&rel.remoteAccepted&&!rel.blocked)row.append(button('开始聊天',(): void=>{selected={peer};selectTab('chats');}));row.append(button(rel.blocked?'解除拉黑':'拉黑',async(): Promise<void>=>{if(activeVoice?.peer===peer||activeVoice?.participants?.has(peer))await stopVoice();await post('block',{peer,blocked:!rel.blocked});if(rel.blocked)toast(tr('解除拉黑后需重新添加联系人。'));await refresh(true);}));host.append(row);}
       const outgoing=invitations().filter((i: any)=>i.direction==='outgoing'&&i.status==='pending'&&new Date(i.expires)>new Date());for(const inv of outgoing){const row=node('div','message-request');row.append(node('span','',name(inv.peer)+' · '+tr('等待对方同意')),button('重试',async(): Promise<void>=>{await post('refresh',{id:inv.id});await refresh(true);}),button('取消邀请',async(): Promise<void>=>{await post('cancel',{id:inv.id});await refresh(true);}));host.append(row);}
       groupForm(host);
     }
@@ -179,22 +186,29 @@ interface Window {
       try{const context=new Ctor();void context.resume().catch(()=>{});return context;}catch(_){return null;}
     }
     async function startVoice(target: any): Promise<void> {
-      if(activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));
+      if(activeVoice||placingVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));
       const captured=epoch,voiceContext=prepareVoiceContext();
       let id: any,invitation='';
+      placingVoice=true;
       try{
         if(target.group){id=(await post('group-call',{group:target.group})).id;}
-        else{const result=await post('invite',{peer:target.peer,kind:'voice'});id=result.invitation.resource;invitation=result.invitation.id;}
-        if(captured!==epoch||isLocked())return;
+        else{const result=target.number?await post('dial',{number:target.number}):await post('invite',{peer:target.peer,kind:'voice'});
+          target={peer:result.invitation.peer};id=result.invitation.resource;invitation=result.invitation.id;}
+        if(captured!==epoch||isLocked()){
+          if(invitation)await post('cancel',{id:invitation}).catch(()=>{});
+          return;
+        }
         activeVoice={id,peer:target.peer||'',group:target.group||'',invitation,voiceContext,pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'等待接听'};
         paintCall();await refresh(true);
       }finally{
+        placingVoice=false;
         if(voiceContext&&activeVoice?.voiceContext!==voiceContext&&voiceContext.state!=='closed')void voiceContext.close().catch(()=>{});
       }
     }
     async function answerVoice(inv: any): Promise<void> {
-      if(activeVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));
+      if(activeVoice||placingVoice)throw new Error(uiTextMessageCenter('请先结束当前通话'));
       const captured=epoch,voiceContext=prepareVoiceContext();
+      placingVoice=true;
       try{
         await post('decide',{id:inv.id,accept:true});
         await refresh(true);
@@ -203,6 +217,7 @@ interface Window {
         activeVoice={id:inv.resource,peer:call?'':inv.peer,group:call?.group||'',invitation:inv.id,voiceContext,pcs:new Map(),audio:new Map(),participants:new Set(),serial:++voiceSerial,status:'连接中'};
         paintCall();await syncVoice();
       }finally{
+        placingVoice=false;
         if(voiceContext&&activeVoice?.voiceContext!==voiceContext&&voiceContext.state!=='closed')void voiceContext.close().catch(()=>{});
       }
     }

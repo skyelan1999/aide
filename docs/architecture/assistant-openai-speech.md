@@ -64,4 +64,4 @@ Validation uses `scripts/browser-settings-autosave.cjs` (also available through 
 
 ## SIP 话机作为实时通话设备
 
-在「助理与语音 → 语音助理 → VoIP 话机接管」开启助理电话后，直接拨打配置的话机，摘机后才连接所选实时模型。听筒音频进入原有实时模型通路，模型音频经原有播放队列送到听筒。静音只影响助理听到的输入，两端都可以结束通话。设备配置和接入条件见[局域网 SIP 话机接管](decentralized-messages.md#局域网-sip-话机接管)。
+在「助理与语音 → VoIP 话机 → 从工作台呼叫话机」开启助理电话后，直接拨打配置的话机，摘机后才连接所选实时模型。听筒音频进入原有实时模型通路，模型音频经原有播放队列送到听筒。静音只影响助理听到的输入，两端都可以结束通话。设备配置和接入条件见[局域网 SIP 话机接管](decentralized-messages.md#局域网-sip-话机接管)。

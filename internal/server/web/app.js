@@ -17026,24 +17026,36 @@ function renderVoiceDispatchControl() {
 controlRenderers['voice-dispatch'] = renderVoiceDispatchControl;
 // Both voice features use the active key of one saved model connection.
 function renderSIPPhoneGuide() {
-    const wrap = el('section', 'settings-control');
-    wrap.append(el('h4', 'control-label', t('SIP 电话配置指南')));
+    const wrap = el('section', 'settings-control voip-control');
+    const header = el('header', 'voip-header');
+    header.append(el('h4', '', t('拿起话机，选择要拨的号码')));
+    const dial = el('dl', 'voip-dial-rules');
+    for (const [number, purpose] of [['1000', '本机助理'], ['8 位成员编号', '消息 → 联系人 → 对方的通话编号']]) {
+        dial.append(el('dt', '', t(number)), el('dd', '', t(purpose)));
+    }
+    header.append(dial);
+    const manual = el('a', '', t('下载逐步对接指南（中文）'));
+    manual.href = '/motorola-voip-guide.md';
+    manual.download = 'Motorola-IP9910-2W-Aide.md';
+    header.append(manual);
+    wrap.append(header);
+    const guide = el('section', 'voip-section');
+    guide.append(el('h4', '', t('在话机上设置 SIP1')));
     const status = el('p', 'muted', t('正在读取电话网关状态…'));
     status.setAttribute('role', 'status');
-    const refresh = el('button', 'btn-secondary', t('刷新网关状态'));
-    const table = el('table');
-    table.style.width = '100%';
+    const refresh = el('button', 'quiet', t('刷新网关状态'));
+    refresh.type = 'button';
+    const table = el('dl', 'voip-dial-rules');
     const values = {};
-    for (const [key, label] of [['server', 'SIP 服务器'], ['port', 'SIP 端口'], ['account', '话机账号'], ['extension', '助理分机'], ['phone', '允许接入的话机']]) {
-        const row = el('tr'), name = el('th', '', t(label)), value = el('td');
-        name.scope = 'row';
-        name.style.textAlign = 'start';
-        value.style.overflowWrap = 'anywhere';
+    for (const [key, label] of [['server', '服务器 · 电脑局域网 IP'], ['port', '服务器端口 · UDP'], ['account', '话机账号'], ['phone', '允许接入的话机'], ['phonePort', '话机本地 SIP 端口']]) {
+        const value = el('dd');
         values[key] = value;
-        row.append(name, value);
-        table.append(row);
+        table.append(el('dt', '', t(label)), value);
     }
-    wrap.append(status, refresh, table);
+    const diagnostics = el('p', 'muted');
+    guide.append(status, refresh, table, diagnostics);
+    wrap.append(guide);
+    let liveGateway = null;
     const callback = el('input');
     callback.type = 'checkbox';
     callback.disabled = true;
@@ -17051,10 +17063,11 @@ function renderSIPPhoneGuide() {
     callbackRow.append(callback, el('span', '', t('任务完成后回拨原话机')));
     const callbackStatus = el('p', 'muted');
     callbackStatus.setAttribute('role', 'status');
-    wrap.append(callbackRow, el('small', 'muted', t('仅本次电话新交办的任务，挂断且实际完成后才回拨；未接听不自动重拨。保持 Aide 运行、工作区及小绵解锁。')), callbackStatus);
+    const callbackPanel = el('section', 'voip-section');
+    callbackPanel.append(callbackRow, el('small', 'muted', t('仅本次电话新交办的任务，挂断且实际完成后才回拨；未接听不自动重拨。保持 Aide 运行、工作区及小绵解锁。')), callbackStatus);
     const steps = el('ol');
     for (const text of [
-        '准备：电脑与话机接入同一局域网，启用本机 SIP 网关；在上方选择可用的通话模型和音色。',
+        '准备：电脑与话机接入同一局域网，启用本机 SIP 网关；在语音助理中选择可用的通话模型和音色。',
         '话机：打开 SIP1，填写上表服务器、端口与话机账号，传输协议选择 UDP。本地单话机网关的鉴权账号与密码留空，模型密钥只配置在 Aide 中。',
         '音频与拨号：优先使用 G.711U（PCMU），也可用 G.711A（PCMA）；音频包长 20 毫秒、DTMF 选择 RFC2833。手动接听，按听感调整音量。',
         '通话：保持 Aide 运行并解锁小绵，话机拨助理分机后按 # 或拨号键；接通后自然说话，挂回听筒结束。'
@@ -17069,21 +17082,38 @@ function renderSIPPhoneGuide() {
         '日常使用与工作台语音通话共用助理设置及权限；查询审批不会批准任务，提交决定仍需明确确认。'
     ])
         details.append(el('p', '', t(text)));
-    wrap.append(steps, details);
+    guide.append(steps, details);
+    const takeover = el('details', 'settings-advanced');
+    const takeoverBody = el('div', 'settings-advanced-body');
+    takeover.append(el('summary', '', t('从工作台呼叫话机')), takeoverBody);
+    takeover.addEventListener('toggle', () => { if (takeover.open && !takeoverBody.childElementCount)
+        takeoverBody.append(window.AideVoIP.settings(api, t, () => liveGateway)); });
+    wrap.append(takeover, callbackPanel);
     async function load() {
         refresh.disabled = true;
+        callback.disabled = true;
+        liveGateway = null;
         try {
             const info = await api('/assistant-sip/status');
+            liveGateway = info.running ? info : null;
             callback.checked = info.callbacksEnabled === true;
             callback.disabled = false;
             const labels = { queued: '等待挂断或任务完成', claimed: '准备回拨', dialing: '正在拨号', connected: '正在汇报', reported: '已发送语音汇报', unanswered: '未接听', failed: '回拨未完成', canceled: '已取消回拨', expired: '回拨已过期' };
             callbackStatus.textContent = t('待回拨：{0}', Number(info.callbackPending) || 0) + (info.callbackLastStatus ? ' · #' + Number(info.callbackLastSession) + ' · ' + t(labels[info.callbackLastStatus] || '回拨未完成') : '');
             status.textContent = t(info.running ? (info.mode === 'normal' ? '电话网关运行中 · 普通通话' : '电话网关运行中 · 只读连接') : '电话网关未运行：请先在本机启用网关，再按本指南设置话机。');
             for (const key of Object.keys(values))
-                values[key].textContent = String(info[key] || t('网关启动后显示'));
+                values[key].textContent = info.running ? String(info[key] || (key === 'phonePort' ? 5060 : '—')) : '—';
+            diagnostics.textContent = info.running ? [
+                info.lastRegisterAt ? t('最近收到话机注册请求：{0}', new Date(info.lastRegisterAt).toLocaleTimeString()) : t('本轮监听尚未收到匹配账号的注册请求'),
+                t(info.memberDialAvailable ? '成员语音组件已就绪' : '成员语音组件未就绪，请查看对接指南')
+            ].join(' · ') : t('首次接入请从指南中的电脑端准备开始。');
         }
         catch (_) {
             status.textContent = t('无法读取电话网关状态，请检查本地服务连接。');
+            for (const v of Object.values(values))
+                v.textContent = '—';
+            callbackStatus.textContent = '';
+            diagnostics.textContent = '';
         }
         finally {
             refresh.disabled = false;
@@ -17106,6 +17136,12 @@ function renderSIPPhoneGuide() {
     return wrap;
 }
 controlRenderers['sip-phone-guide'] = renderSIPPhoneGuide;
+controlRenderers['open-voip'] = () => {
+    const button = el('button', 'quiet', t('打开 VoIP 话机设置'));
+    button.type = 'button';
+    button.onclick = () => { settingsPanel.active = 'voip-phone'; settingsPanel.activeChild = ''; renderSettingsSheet(); $('settings-content').scrollTop = 0; };
+    return button;
+};
 function renderTTSEngineControl() {
     const wrap = el('div', 'settings-control tts-engine-control');
     let cfg = state.config || {};

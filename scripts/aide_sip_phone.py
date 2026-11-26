@@ -132,6 +132,9 @@ class Gateway(asyncio.DatagramProtocol):
         self.responses = asyncio.Queue(maxsize=128)
         self.incoming = asyncio.Queue(maxsize=1)
         self.ended = asyncio.Event()
+        self.last_register_at = None
+        self.destination = None
+        self.dialog_peer = (args.phone, getattr(args, "phone_port", 5060))
         self.peer_ended = False
         self.bye_sent = False
         self.call_id = ''
@@ -212,12 +215,17 @@ class Gateway(asyncio.DatagramProtocol):
             contact = header(headers, 'contact')
             extra = ['Contact: '+contact, 'Expires: 300'] if contact else ['Expires: 300']
             self.transport.sendto(self.response(headers, 200, 'OK', extras=extra), addr)
+            # Expose an observation, not a claim that registration is still valid.
+            account = re.search(r'\bsip:([^@;>\s]+)@', header(headers, 'to'), re.I)
+            if account and account[1] == self.args.phone_user:
+                self.last_register_at = datetime.now(timezone.utc).isoformat()
             self.metrics['registrations'] += 1
             self.event('sip_registered')
         elif method == 'OPTIONS':
             self.transport.sendto(self.response(headers, 200, 'OK'), addr)
         elif method == 'INVITE':
-            if not first.split()[1].lower().startswith('sip:1000@'):
+            uri = re.fullmatch(r'INVITE sip:(1000|[0-9]{8})@[^\s]+ SIP/2\.0', first, re.I)
+            if not uri or (uri[1] != '1000' and not getattr(self.args, 'normal', False)):
                 self.transport.sendto(self.response(headers, 404, 'Not Found'), addr)
                 return
             if cid == self.call_id:
@@ -225,6 +233,7 @@ class Gateway(asyncio.DatagramProtocol):
             elif self.active or self.incoming.full():
                 self.transport.sendto(self.response(headers, 486, 'Busy Here'), addr)
             else:
+                self.destination, self.dialog_peer = uri[1], addr
                 self.active, self.call_id = True, cid
                 self.invitation = headers
                 self.transport.sendto(self.response(headers, 100, 'Trying'), addr)
@@ -246,6 +255,8 @@ class Gateway(asyncio.DatagramProtocol):
 
     async def dial(self, rtp_port):
         uri = 'sip:%s@%s' % (self.args.phone_user, self.args.phone)
+        if self.dialog_peer[1] != 5060:
+            uri += ':%d' % self.dialog_peer[1]
         self.call_id = uuid.uuid4().hex+'@'+self.ip
         self.active = True
         branch = 'z9hG4bK'+uuid.uuid4().hex
@@ -266,7 +277,7 @@ class Gateway(asyncio.DatagramProtocol):
             return ('\r\n'.join(lines+['Content-Length: '+str(len(body.encode())), '', body])).encode()
 
         self.make_request = request
-        peer = (self.args.phone, 5060)
+        peer = self.dialog_peer
         invite = request('INVITE', self.sdp(rtp_port))
         self.transport.sendto(invite, peer)
         try:
@@ -299,6 +310,12 @@ class Gateway(asyncio.DatagramProtocol):
             self.transport.sendto(request('CANCEL'), peer)
             raise
 
+    def reject(self, incoming, code, phrase):
+        if not self.last_answer and not self.ended.is_set():
+            headers, _, addr = incoming
+            self.last_answer = self.response(headers, code, phrase)
+            self.transport.sendto(self.last_answer, addr)
+
     def answer(self, incoming, rtp_port):
         headers, body, addr = incoming
         remote, codec = media_offer(body, self.args.phone)
@@ -329,7 +346,7 @@ class Gateway(asyncio.DatagramProtocol):
         if hasattr(self, 'make_request') and not self.peer_ended and not self.bye_sent:
             self.bye_sent = True
             self.cseq += 1
-            self.transport.sendto(self.make_request('BYE', new_branch=True), (self.args.phone, 5060))
+            self.transport.sendto(self.make_request('BYE', new_branch=True), self.dialog_peer)
             with contextlib.suppress(asyncio.TimeoutError):
                 while True:
                     first, headers, _, _ = await asyncio.wait_for(self.responses.get(), 2)
@@ -374,8 +391,8 @@ class Media(asyncio.DatagramProtocol):
 
 class SIPHostClient:
     """Authenticated local host control; never sent to the physical phone."""
-    def __init__(self, data, tls, token):
-        self.token, self.base = token, 'https://localhost:9999'
+    def __init__(self, data, tls, token, port=9999):
+        self.token, self.base = token, 'https://localhost:%d' % port
         directory = data/'sip'; directory.mkdir(mode=0o700, exist_ok=True)
         path = directory/'host-key'
         try:
@@ -515,11 +532,11 @@ async def bridge(args):
     # leaf as the chain anchor while retaining signature/hostname validation.
     # Python 3.9's LibreSSL supports this flag but doesn't expose its constant.
     tls.verify_flags |= getattr(ssl, 'VERIFY_X509_PARTIAL_CHAIN', 0x80000)
-    host = SIPHostClient(data, tls, token)
+    host = SIPHostClient(data, tls, token, args.aide_port)
     sid = args.assistant
-    base = 'https://localhost:9999'
+    base = host.base
     probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    probe.connect((args.phone, 5060))
+    probe.connect((args.phone, args.phone_port))
     ip = probe.getsockname()[0]
     probe.close()
     loop = asyncio.get_running_loop()
@@ -531,11 +548,19 @@ async def bridge(args):
     tasks = []
     status_path = data/'sip'/'host-status.json'
     status_path.parent.mkdir(mode=0o700, exist_ok=True)
+    try:
+        from aide_sip_members import member_call
+    except (ImportError, OSError):
+        member_call = None
+    member_dial_available = args.normal and member_call is not None
     def publish_status():
         value = {'server':ip, 'port':args.sip_port, 'phone':args.phone,
-                 'account':args.phone_user, 'extension':'1000',
+                 'account':args.phone_user, 'extension':'1000', 'phonePort':args.phone_port,
+                 'memberDialAvailable':member_dial_available,
                  'mode':'normal' if args.normal else 'read-only', 'state':gateway.phase,
                  'updatedAt':datetime.now(timezone.utc).isoformat()}
+        if gateway.last_register_at:
+            value['lastRegisterAt'] = gateway.last_register_at
         tmp = status_path.with_suffix('.tmp')
         tmp.write_text(json.dumps(value)+'\n');os.chmod(tmp,0o600);tmp.replace(status_path)
     async def status_loop():
@@ -549,6 +574,14 @@ async def bridge(args):
         if not args.dial:
             gateway.event('waiting_for_phone', extension='1000')
             incoming, callback = await wait_phone_or_callback(gateway, host, args.normal and args.serve)
+        if incoming and gateway.destination != '1000':
+            if not member_dial_available:
+                gateway.reject(incoming, 503, 'Service Unavailable')
+                gateway.event('member_audio_unavailable')
+                return
+            media_offer(incoming[1], args.phone)
+            await member_call(gateway, host, incoming, media, rtp_transport.get_extra_info('sockname')[1])
+            return
         if callback: sid = callback['assistantId']
         def preflight():
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=tls))
@@ -609,7 +642,7 @@ async def bridge(args):
             if opening.get('text'):
                 opening_pcm = await loop.run_in_executor(None, synthesize_phone_speech, host, opening['text'])
         if gateway.ended.is_set(): return
-        url = 'wss://localhost:9999/api/sessions/'+sid+'/assistant-call/socket'
+        url = 'wss://localhost:%d/api/sessions/' % args.aide_port+sid+'/assistant-call/socket'
         if not args.normal: url += '?readOnly=1'
         headers = {'Authorization':'Bearer '+token}
         if call_ticket: headers.update({'X-Aide-SIP-Key':host.key,'X-Aide-SIP-Call':call_ticket['callId']})
@@ -763,9 +796,8 @@ async def bridge(args):
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
-        if incoming and not gateway.last_answer and not gateway.ended.is_set():
-            headers, _, addr = incoming
-            sip_transport.sendto(gateway.response(headers, 480, 'Temporarily Unavailable'), addr)
+        if incoming:
+            gateway.reject(incoming, 480, 'Temporarily Unavailable')
         await gateway.hangup()
         if call_ticket:
             with contextlib.suppress(OSError, ValueError):
@@ -788,6 +820,8 @@ def main():
     parser.add_argument('--phone-user', default='1001')
     parser.add_argument('--assistant', required=True)
     parser.add_argument('--data', default='.aide-data/storage/data')
+    parser.add_argument('--aide-port', type=int, default=9999, help='local Aide HTTPS port')
+    parser.add_argument('--phone-port', type=int, default=5060, help='handset SIP listening port for callbacks')
     parser.add_argument('--sip-port', type=int, default=5060)
     parser.add_argument('--dial', action='store_true')
     parser.add_argument('--normal', action='store_true', help='use the same ordinary assistant call session as the workbench')
@@ -800,7 +834,7 @@ def main():
     args = parser.parse_args()
     if not ipaddress.IPv4Address(args.phone).is_private or not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', args.phone_user):
         parser.error('explicit private IPv4 phone and simple local SIP user required')
-    if not 1024 <= args.sip_port <= 65535 or not 1 <= args.call_seconds <= 1800 or not 1 <= args.ring_seconds <= 120:
+    if not 1 <= args.aide_port <= 65535 or not 1 <= args.phone_port <= 65535 or not 1024 <= args.sip_port <= 65535 or not 1 <= args.call_seconds <= 1800 or not 1 <= args.ring_seconds <= 120:
         parser.error('invalid local port or call duration')
     if not 1 <= args.output_gain <= 3:
         parser.error('output gain must be between 1 and 3')
@@ -810,7 +844,10 @@ def main():
         task = asyncio.current_task()
         loop = asyncio.get_running_loop()
         for signum in (signal.SIGTERM, signal.SIGINT):
-            loop.add_signal_handler(signum, task.cancel)
+            try:
+                loop.add_signal_handler(signum, task.cancel)
+            except NotImplementedError:  # Windows event loop
+                signal.signal(signum, lambda *_: loop.call_soon_threadsafe(task.cancel))
         while True:
             try:
                 await bridge(args)

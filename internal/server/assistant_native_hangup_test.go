@@ -54,6 +54,23 @@ func TestNativePhoneHangupBindsCurrentTurnAndCanBeRevoked(t *testing.T) {
 	}
 }
 func TestAssistantSIPUserHangupEmitsHostActionAndClosesPaidSocket(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		text            string
+		transcriptFirst bool
+		stopID          string
+	}{
+		{"stop-first", "挂了吧，挂了吧，你给挂了吧。", false, "last"},
+		{"final-before-stop", "Goodbye.", true, "last"},
+		{"stop-uses-start-id", "再见。", true, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testSIPHangupEventOrder(t, tc.text, tc.transcriptFirst, tc.stopID)
+		})
+	}
+}
+
+func testSIPHangupEventOrder(t *testing.T, utterance string, transcriptFirst bool, stopID string) {
 	a, _, _, _ := sipFixture(t)
 	id := assistantSessionID(t, a)
 	a.settings.Model = "fixture"
@@ -84,9 +101,24 @@ func TestAssistantSIPUserHangupEmitsHostActionAndClosesPaidSocket(t *testing.T) 
 		}
 		send(map[string]any{"type": "session.updated"})
 		send(map[string]any{"type": "aide.call_end", "reason": "user-request", "turnId": "provider-spoof"})
-		send(map[string]any{"type": "input_audio_buffer.speech_started"})
-		send(map[string]any{"type": "input_audio_buffer.speech_stopped", "item_id": "last"})
-		send(map[string]any{"type": "conversation.item.input_audio_transcription.completed", "item_id": "last", "transcript": "挂了吧，挂了吧，你给挂了吧。"})
+		// A newer utterance starts before the previous farewell has finished.
+		// A delayed stop for that previous utterance must not end this call.
+		send(map[string]any{"type": "input_audio_buffer.speech_started", "item_id": "old"})
+		send(map[string]any{"type": "conversation.item.input_audio_transcription.completed", "item_id": "old", "transcript": "挂了。"})
+		send(map[string]any{"type": "input_audio_buffer.speech_started", "item_id": "correction"})
+		send(map[string]any{"type": "input_audio_buffer.speech_stopped", "item_id": "old"})
+		send(map[string]any{"type": "input_audio_buffer.speech_stopped", "item_id": "correction"})
+		send(map[string]any{"type": "conversation.item.input_audio_transcription.completed", "item_id": "correction", "transcript": "别挂，我还有话。"})
+		send(map[string]any{"type": "input_audio_buffer.speech_started", "item_id": "last"})
+		stopped := map[string]any{"type": "input_audio_buffer.speech_stopped", "item_id": stopID}
+		transcript := map[string]any{"type": "conversation.item.input_audio_transcription.completed", "item_id": "last", "transcript": utterance}
+		if transcriptFirst {
+			send(transcript)
+			send(stopped)
+		} else {
+			send(stopped)
+			send(transcript)
+		}
 		for {
 			if ws.ReadJSON(&e) != nil {
 				return

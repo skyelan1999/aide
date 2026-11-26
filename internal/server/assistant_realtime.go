@@ -592,6 +592,8 @@ func (a *App) assistantRealtimeSocketWithWork(w http.ResponseWriter, r *http.Req
 	}
 	initiativeCount := 0
 	inputSpeaking := false
+	var speakingItem string
+	phoneHangupEnabled := sipScope.CallID != "" && !sipReportOnly(ctx)
 	lastConversationActivity := time.Now()
 	approvalAnnouncements := map[string]bool{}
 	var lastApprovalCheck time.Time
@@ -758,6 +760,29 @@ func (a *App) assistantRealtimeSocketWithWork(w http.ResponseWriter, r *http.Req
 			return send(map[string]any{"type": "response.create"}) == nil
 		}
 		return true
+	}
+	// The final transcript and the VAD stop can arrive in either order.
+	// Act only when both belong to the current utterance.
+	applyPhoneHangup := func(turn string) bool {
+		if !phoneHangupEnabled || ledger.heard[turn] == "" {
+			return true
+		}
+		action := phoneHangup.observe(ledger, turn, ledger.heard[turn], inputSpeaking, time.Now())
+		if action == nil {
+			return true
+		}
+		if action["type"] == "aide.call_end" {
+			// Stop unaccepted helpers, not already dispatched task runs.
+			for callID, stop := range inflightTools {
+				stop()
+				delete(inflightTools, callID)
+			}
+			pendingTools = nil
+			toolResponsePending = false
+			toneRetryTurn = ""
+			log.Printf("[assistant-call] call=%s stage=user-hangup-requested", nativeCallID)
+		}
+		return emit(action) == nil
 	}
 	saveReplies := func() {
 		if agentBinding == nil {
@@ -1039,23 +1064,8 @@ func (a *App) assistantRealtimeSocketWithWork(w http.ResponseWriter, r *http.Req
 			}
 			saveReplies()
 			_ = emit(map[string]any{"type": kind, "transcript": heard, "item_id": heardID})
-			if sipScope.CallID != "" && !sipReportOnly(ctx) {
-				if action := phoneHangup.observe(ledger, heardID, heard, inputSpeaking, time.Now()); action != nil {
-					if action["type"] == "aide.call_end" {
-						// Stop unaccepted helpers, not already dispatched task runs.
-						for callID, stop := range inflightTools {
-							stop()
-							delete(inflightTools, callID)
-						}
-						pendingTools = nil
-						toolResponsePending = false
-						toneRetryTurn = ""
-						log.Printf("[assistant-call] call=%s stage=user-hangup-requested", nativeCallID)
-					}
-					if emit(action) != nil {
-						return
-					}
-				}
+			if !applyPhoneHangup(heardID) {
+				return
 			}
 			if !finishTools() {
 				return
@@ -1152,6 +1162,7 @@ func (a *App) assistantRealtimeSocketWithWork(w http.ResponseWriter, r *http.Req
 				nativeInstructionOverride = false
 			}
 			inputSpeaking = true
+			speakingItem = str("item_id")
 			for callID, stop := range inflightTools {
 				stop()
 				delete(inflightTools, callID)
@@ -1212,14 +1223,27 @@ func (a *App) assistantRealtimeSocketWithWork(w http.ResponseWriter, r *http.Req
 				return
 			}
 		case "input_audio_buffer.speech_stopped":
+			turn := str("item_id")
+			if phoneHangupEnabled && turn == "" {
+				turn = speakingItem
+			}
+			if phoneHangupEnabled && speakingItem != "" && turn != speakingItem {
+				// A late stop from the previous turn cannot end new speech.
+				continue
+			}
 			inputSpeaking = false
+			speakingItem = ""
 			lastConversationActivity = time.Now()
-			ledger.commit(str("item_id"))
-			if emit(event) != nil {
+			ledger.commit(turn)
+			if emit(event) != nil || !applyPhoneHangup(turn) {
 				return
 			}
 		case "input_audio_buffer.committed":
-			ledger.commit(str("item_id"))
+			turn := str("item_id")
+			ledger.commit(turn)
+			if !applyPhoneHangup(turn) {
+				return
+			}
 		case "response.done":
 			lastConversationActivity = time.Now()
 			var response struct {

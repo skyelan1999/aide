@@ -363,6 +363,47 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	s := m.service
 	switch {
+	case path == "dial" && r.Method == http.MethodPost:
+		var input struct {
+			Number string `json:"number"`
+		}
+		if err = decode(w, r, &input); err != nil {
+			break
+		}
+		peer, lookupErr := s.ResolveDialNumber(input.Number)
+		if lookupErr != nil {
+			fail(w, 404, lookupErr)
+			return
+		}
+		// A dial is live. Revoke an undelivered invitation rather than leaving
+		// a future incoming call after the handset has already hung up.
+		card, cardErr := s.Card()
+		if cardErr != nil {
+			fail(w, 503, cardErr)
+			return
+		}
+		dialCtx, done := context.WithTimeout(ctx, 5*time.Second)
+		inv, dialErr := s.Request(dialCtx, peer, messaging.Voice, "", nil)
+		done()
+		if dialErr != nil || ctx.Err() != nil {
+			if inv.ID != "" {
+				cleanup, finish := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+				_ = s.Cancel(cleanup, inv.ID)
+				finish()
+			}
+			fail(w, 503, errors.New("成员当前无法接听"))
+			return
+		}
+		jsonOut(w, 200, map[string]any{"invitation": inv, "self": card.Device.Fingerprint})
+		return
+	case path == "dial-state" && r.Method == http.MethodGet:
+		status, signals, stateErr := s.PhoneCallState(r.URL.Query().Get("id"))
+		if stateErr != nil {
+			fail(w, 403, stateErr)
+			return
+		}
+		jsonOut(w, 200, map[string]any{"status": status, "signals": signals})
+		return
 	case path == "discover" && r.Method == http.MethodPost:
 		var input struct {
 			Code string `json:"code"`
