@@ -233,17 +233,9 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	if f, _ := formats.Load("plan"); f == "json_object" {
 		t.Fatal("plan 步骤不应强制 json_object")
 	}
-	// 主题总结并发执行：标题异步落库
-	for i := 0; i < 300; i++ {
-		w = request(a, "GET", "/api/sessions/"+s.ID, nil)
-		_ = json.Unmarshal(w.Body.Bytes(), &s)
-		if s.Title == "更新主题" {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if s.Title != "更新主题" {
-		t.Fatalf("topic title: %s", s.Title)
+	// The explicit title in the create request remains the user's title.
+	if s.Title != "test" {
+		t.Fatalf("explicit title: %s", s.Title)
 	}
 	b, _ := a.workspace.ReadFile("hello.txt")
 	if string(b) != "old" {
@@ -338,7 +330,7 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 		// Topic summaries run independently of the chat request; arrival order
 		// is not a stable way to choose the fixture response.
 		if len(body.Messages) > 0 && strings.Contains(body.Messages[0].Content, "主题短语") {
-			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "主题标题"}}}})
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "Model costs review"}}}})
 			return
 		}
 		secondPrompt := false
@@ -370,7 +362,7 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	var s Session
 	_ = json.Unmarshal(w.Body.Bytes(), &s)
 	url := "/api/sessions/" + s.ID + "/runs"
-	requireStatus(t, request(a, "POST", url, map[string]string{"mode": "chat", "prompt": "hello"}), 202)
+	requireStatus(t, request(a, "POST", url, map[string]string{"mode": "chat", "prompt": "Review model costs for the project"}), 202)
 	for i := 0; i < 200; i++ {
 		w = request(a, "GET", "/api/sessions/"+s.ID, nil)
 		_ = json.Unmarshal(w.Body.Bytes(), &s)
@@ -386,12 +378,12 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	for i := 0; i < 300; i++ {
 		w = request(a, "GET", "/api/sessions/"+s.ID, nil)
 		_ = json.Unmarshal(w.Body.Bytes(), &s)
-		if s.Title == "主题标题" {
+		if s.Title == "Model costs review" {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if s.Title != "主题标题" {
+	if s.Title != "Model costs review" {
 		t.Fatalf("topic summary title: %s", s.Title)
 	}
 	w = request(a, "POST", url, map[string]string{"mode": "chat", "prompt": "second"})

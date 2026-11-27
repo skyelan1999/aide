@@ -541,9 +541,15 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			if in.Queued {
 				existing.Queue = append(existing.Queue, in.Prompt)
 			}
+			oldTitle, oldSource := s.Title, s.TitleSource
+			setLocalTopic(s, in.Prompt)
 			if err := a.save(s); err != nil {
+				s.Title, s.TitleSource = oldTitle, oldSource
 				fail(w, 500, err)
 				return
+			}
+			if oldTitle != s.Title {
+				a.broadcastSessionsChanged(s.ID)
 			}
 			jsonOut(w, 202, map[string]any{"steered": !in.Queued, "queued": in.Queued, "runId": existing.ID})
 			return
@@ -647,15 +653,6 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task.HarnessConfig = &harness
-	oldTitle := s.Title
-	oldPendingPrompt := s.PendingPrompt
-	if len(s.Messages) == 0 {
-		title := []rune(in.Prompt)
-		if len(title) > 32 {
-			title = title[:32]
-		}
-		s.Title = string(title)
-	}
 	// R08-04：与 /api/context-preview 共用同一构建器；超限在此可解释拦截（Provider 不会收到该调用）
 	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
@@ -669,7 +666,6 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		current := a.buildContextPreviewWithTask(currentSession, in.Prompt, in.Mode, contextText, images, cfg, params, false, policy, harness, task, in.AvatarFeedback)
 		a.applyWorkflowContextWithPolicy(current, in.Mode, in.WorkflowPhase, policy)
 		if current.OverLimit {
-			s.Title = oldTitle
 			fail(w, 400, fmt.Errorf("当前输入已超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；压缩历史无法缩小当前输入，请选择更大窗口的模型、减少附件/提示或使用文件工具分段读取", current.InputEstimate, current.OutputReserve, current.TotalEstimate, current.ContextWindow))
 			return
 		}
@@ -764,6 +760,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("流程输入在准备执行期间已变化，请重新核对"))
 		return
 	}
+	oldTitle, oldTitleSource, oldPendingPrompt := s.Title, s.TitleSource, s.PendingPrompt
 	oldMessageCount, oldRunCount, oldUpdated := len(s.Messages), len(s.Runs), s.Updated
 	oldPlan, _ := json.Marshal(s.Plan)
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, SourceRunID: task.ID, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano), Type: assistantMessageType(assistantManaged)})
@@ -775,6 +772,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.ModelSelection = cloneModelSelection(&choice)
 	}
 	s.Runs = append(s.Runs, task)
+	setLocalTopic(s, task.Prompt)
 	if task.PlanTaskID != "" {
 		if item := a.findPlanItemLocked(s, task.PlanTaskID); item != nil {
 			item.Status, item.RunID, item.Updated = "in_progress", task.ID, time.Now().UTC().Format(time.RFC3339Nano)
@@ -793,7 +791,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.Plan = restoredPlan
 		s.ModelSelection = oldSelection
 		s.ModelSelectionRevision = oldSelectionRevision
-		s.Title = oldTitle
+		s.Title, s.TitleSource = oldTitle, oldTitleSource
 		s.PendingPrompt = oldPendingPrompt
 		fail(w, 500, fmt.Errorf("无法启动任务：执行记录未能保存，原阶段和草稿已保留。请检查存储空间和目录权限后重试：%w", err))
 		return
@@ -1096,44 +1094,6 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}
 	a.finishLiveRun(s.ID, task.ID, task.Status) // #35：done/interrupted/failed
 	a.finishStream(task.ID, task.Status, task.Error)
-}
-
-// summarizeTopic 每次新任务先总结当前主题并更新会话标题（FR-88）。
-// 独立轻量调用（max_tokens ≤64），失败时保留原标题，不阻断任务。
-func (a *App) summarizeTopic(ctx context.Context, s *Session, task *Task, cfg Settings, params ProfileParams) {
-	if mediaTask(cfg) {
-		return
-	}
-	summaryParams := params
-	summaryParams.MaxTokens = 64
-	input := []Message{
-		{Role: "system", Content: "你只输出一个不超过 12 个字的主题短语，概括用户当前任务的唯一主题。不要解释、不要标点、不要引号。"},
-		{Role: "user", Content: task.Prompt},
-	}
-	a.mu.Lock()
-	topicContext := requestContext(input, nil, summaryParams.MaxTokens, a.modelWindow(cfg.Model))
-	task.TopicContext = topicContext
-	a.mu.Unlock()
-	topic, _, usage, err := complete(withoutKVCache(ctx), cfg, input, summaryParams, nil, nil)
-	if err == nil {
-		a.mu.Lock()
-		task.Usage = addUsage(task.Usage, usage)
-		topicContext.Usage = usage
-		a.mu.Unlock()
-	}
-	if err != nil || strings.TrimSpace(topic) == "" {
-		return
-	}
-	topic = strings.TrimSpace(topic)
-	runes := []rune(topic)
-	if len(runes) > 32 {
-		runes = runes[:32]
-	}
-	a.mu.Lock()
-	s.Title = string(runes)
-	saveErr := a.save(s)
-	a.mu.Unlock()
-	_ = saveErr
 }
 
 func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[string]Change) error {
@@ -6365,21 +6325,22 @@ func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 		if sess == nil {
 			continue
 		}
+		title := displaySessionTitle(sess)
 		if numberQuery > 0 {
 			if !sess.Deleted && sess.Number == numberQuery {
-				results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: sess.Title, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: 3})
+				results = append(results, result{SessionID: sess.ID, Title: title, Snippet: title, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: 3})
 			}
 			continue
 		}
 		score := 0
 		snippet := ""
-		if strings.Contains(strings.ToLower(sess.Title), lower) {
+		if strings.Contains(strings.ToLower(title), lower) {
 			score = 2
-			snippet = sess.Title
+			snippet = title
 		}
 		if metadataOnly {
 			if score > 0 {
-				results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: snippet, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: score})
+				results = append(results, result{SessionID: sess.ID, Title: title, Snippet: snippet, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: score})
 			}
 			continue
 		}
@@ -6402,7 +6363,7 @@ func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if score > 0 {
-			results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: snippet, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: score})
+			results = append(results, result{SessionID: sess.ID, Title: title, Snippet: snippet, Created: sess.Created, Archived: sess.Archived, Number: sess.Number, Score: score})
 		}
 	}
 	sort.Slice(results, func(i, j int) bool {

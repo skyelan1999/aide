@@ -231,8 +231,8 @@ func TestKVCacheLlamaTopicSummaryDoesNotEvictConversation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := &Session{ID: "topic-session", Title: "old title"}
 	task := &Task{ID: "topic-task", Prompt: "summarize the main task"}
+	s := &Session{ID: "topic-session", Title: "新会话", TitleSource: "auto", Runs: []*Task{task}}
 	a.mu.Lock()
 	a.sessions[s.ID] = s
 	a.mu.Unlock()

@@ -1,0 +1,31 @@
+{
+  "schema": "aide.task.v1",
+  "task": "issue-2026-11-27-session-topic-navigation",
+  "title": "智能会话主题与手动改名保护",
+  "summary": "从用户真实目标生成可辨认的会话主题，忽略寒暄、催促和工具名；保留手动标题，并防止迟到的异步摘要覆盖更新后的主题。",
+  "modifications": [
+    "为自动标题与手动标题记录 TitleSource；旧文件仅在标题明显无效时参与自动修复，描述性旧标题和小秘系统标题保持不变。",
+    "本地主题投影优先提取任务对象，支持复合交付物和显式换题，列表、详情与搜索共用同一展示口径且不改写原始历史。",
+    "模型摘要仅接收用户目标，不泄露助手私有回复；拒绝空泛、工具名、状态播报和与当前意图不匹配的标题。",
+    "手动改名通过会话 PATCH 持久化并标记 manual；异步摘要返回时再次核对标题与任务意图，避免覆盖手动或更新后的主题。",
+    "主题请求继续使用独立无 KV Cache 的轻量调用，其用量归入对应任务；发送动效使用的 steerAt 不属于本提交。"
+  ],
+  "backend": [
+    "internal/server/session_topic.go",
+    "internal/server/server.go",
+    "internal/server/lazy_sessions.go",
+    "internal/server/workflow.go"
+  ],
+  "frontend": [],
+  "scripts": [],
+  "docs": [],
+  "checks": [
+    {
+      "id": "g-go-focused",
+      "command": "go test ./internal/server -run '^(TestSessionTopic.*|TestChatHistoryAndCancelEndpoint|TestWorkflowApprovalConflictAndPersistence|TestKVCacheLlamaTopicSummaryDoesNotEvictConversation|TestToolLoopRepairsUnissuedToolNotice|Test.*Compaction.*)$' -count=1",
+      "result": "pass",
+      "evidence": "G-only Linux/Docker 快照：ok aide/internal/server 21.362s。"
+    }
+  ],
+  "screenshots": []
+}

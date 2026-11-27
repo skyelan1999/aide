@@ -471,6 +471,7 @@ type Session struct {
 	ModelSelection         *SessionModelSelection `json:"modelSelection,omitempty"`
 	ID                     string                 `json:"id"`
 	Title                  string                 `json:"title"`
+	TitleSource            string                 `json:"titleSource,omitempty"`
 	Preview                string                 `json:"preview,omitempty"` // List-only recent user prompt; populated on catalogue/list views.
 	Created                string                 `json:"created"`
 	Messages               []Message              `json:"messages"`
@@ -3230,7 +3231,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		status := sessionDisplayStatus(sess)
-		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Number, sess.Kind, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived, sessionListPreview(sess)})
+		items = append(items, item{sess.ID, displaySessionTitle(sess), sess.Created, status, sess.Updated, sess.ParentID, sess.Number, sess.Kind, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived, sessionListPreview(sess)})
 	}
 	// #30：小秘系统会话永远最顶（先于普通置顶）；然后普通置顶；再按最近活动时间倒序
 	sort.Slice(items, func(i, j int) bool {
@@ -3269,6 +3270,11 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	s := &Session{ID: newID(), Title: in.Title, Created: now, Updated: now, Messages: []Message{}, Runs: []*Task{}}
+	if defaultTopicTitle(in.Title) {
+		s.TitleSource = "auto"
+	} else {
+		s.TitleSource = "manual"
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	choice := a.defaultModelSelectionLocked()
@@ -3286,10 +3292,11 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 // patchSession 会话属性更新：pinned / archived（指针字段，缺省不动）。
 func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Pinned   *bool `json:"pinned"`
-		Archived *bool `json:"archived"`
-		Touch    bool  `json:"touch"`
-		Check    bool  `json:"check"`
+		Title    *string `json:"title"`
+		Pinned   *bool   `json:"pinned"`
+		Archived *bool   `json:"archived"`
+		Touch    bool    `json:"touch"`
+		Check    bool    `json:"check"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -3301,6 +3308,14 @@ func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
+	}
+	var title string
+	if in.Title != nil {
+		title = strings.TrimSpace(*in.Title)
+		if s.Kind == assistantSessionKind || title == "" || len([]rune(title)) > 120 || strings.ContainsAny(title, "\r\n") {
+			fail(w, 400, errors.New("请为普通会话填写 1–120 个字符的单行标题"))
+			return
+		}
 	}
 	// #30：小秘系统会话永久置顶、不可归档
 	if s.Kind == assistantSessionKind {
@@ -3321,7 +3336,12 @@ func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 	if in.Check {
 		s.Checked = true
 	}
+	oldTitle, oldSource := s.Title, s.TitleSource
+	if in.Title != nil {
+		s.Title, s.TitleSource = title, "manual"
+	}
 	if err := a.save(s); err != nil {
+		s.Title, s.TitleSource = oldTitle, oldSource
 		fail(w, 500, err)
 		return
 	}
@@ -3414,6 +3434,11 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
+	}
+	if title := displaySessionTitle(s); title != s.Title {
+		view := *s
+		view.Title = title
+		s = &view
 	}
 	if s.Kind != assistantSessionKind && s.ModelSelection == nil {
 		view := *s
