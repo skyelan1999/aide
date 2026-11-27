@@ -8,47 +8,39 @@ import (
 	"time"
 )
 
-// safeCompactionSplit moves a cut past an entire tool exchange, or before its
-// initiating assistant when the exchange is unfinished.
-// It never fabricates results or leaves retained tool messages without calls.
+// A call and all of its results are indivisible, including calls returned in a
+// different order. An unfinished exchange and the rest of its continuation stay raw.
+func compactMessageGroup(messages []Message, start int) (end int, complete bool) {
+	if len(messages[start].ToolCalls) == 0 {
+		return start + 1, true
+	}
+	pending := make(map[string]bool)
+	for i := start; i < len(messages); i++ {
+		for _, call := range messages[i].ToolCalls {
+			pending[call.ID] = true
+		}
+		if messages[i].Role == "tool" {
+			delete(pending, messages[i].ToolCallID)
+		}
+		if len(pending) == 0 {
+			return i + 1, true
+		}
+	}
+	return len(messages), false
+}
+
+// Move the cut forward through a complete exchange, or back to the beginning
+// of an unfinished one. The last result can also be the end of the history.
 func safeCompactionSplit(messages []Message, cut int) int {
-	if cut <= 0 {
-		return 0
-	}
-	if cut > len(messages) {
-		cut = len(messages)
-	}
-	pending := map[string]int{}
-	for i, m := range messages[:cut] {
-		for _, c := range m.ToolCalls {
-			pending[c.ID] = i
+	end := 0
+	for end < cut && end < len(messages) {
+		next, complete := compactMessageGroup(messages, end)
+		if !complete {
+			break
 		}
-		if m.Role == "tool" {
-			delete(pending, m.ToolCallID)
-		}
+		end = next
 	}
-	if len(pending) == 0 {
-		return cut
-	}
-	first := cut
-	for _, i := range pending {
-		if i < first {
-			first = i
-		}
-	}
-	for i := cut; i < len(messages); i++ {
-		m := messages[i]
-		if m.Role == "tool" {
-			delete(pending, m.ToolCallID)
-		}
-		for _, c := range m.ToolCalls {
-			pending[c.ID] = i
-		}
-		if len(pending) == 0 && i+1 < len(messages) {
-			return i + 1
-		}
-	}
-	return first
+	return end
 }
 
 // fitActiveContext handles growth during a tool loop and routed parallel calls,
@@ -64,7 +56,8 @@ func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Messag
 	if reserve <= 0 {
 		reserve = maxTokensDefault
 	}
-	if estimateProviderPromptTokens(input, tools)+reserve <= window {
+	beforeTokens := estimateProviderPromptTokens(input, tools)
+	if beforeTokens+reserve <= window {
 		return input, nil
 	}
 	defer func() {
@@ -77,13 +70,8 @@ func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Messag
 	if len(input) < 2 {
 		return input, errors.New("当前请求本身超出模型上下文窗口，未裁剪用户请求")
 	}
-	pinned := map[int]bool{0: true}
-	lastUser := -1
-	currentUser := -1
+	lastUser, currentUser := -1, -1
 	for i, m := range input {
-		if len(m.Images) > 0 {
-			pinned[i] = true
-		}
 		if m.Role == "user" {
 			lastUser = i
 			if task != nil && task.Prompt != "" && strings.HasPrefix(m.Content, task.Prompt) {
@@ -91,44 +79,53 @@ func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Messag
 			}
 		}
 	}
-	if lastUser >= 0 {
-		pinned[lastUser] = true
-	}
-	if currentUser >= 0 {
-		pinned[currentUser] = true
-	}
-	// Retain a recent suffix when possible. If a single completed exchange is
-	// larger than the budget, summarize it as a whole instead of orphaning results.
-	budget := (window - reserve) / 3
-	if budget > compactKeepTokens {
-		budget = compactKeepTokens
-	}
-	if budget < 0 {
-		budget = 0
-	}
-	cut, total := len(input), 0
-	for cut > 1 && total+contextMessageTokens(input[cut-1]) <= budget {
-		cut--
-		total += contextMessageTokens(input[cut])
-	}
-	cut = safeCompactionSplit(input, cut)
-	build := func(split int) ([]Message, []Message) {
-		var folded, kept []Message
-		for i, m := range input {
-			if i < split && !pinned[i] {
-				folded = append(folded, m)
-			} else {
-				kept = append(kept, m)
+
+	pinned := make([]bool, len(input))
+	var required []Message
+	for start := 0; start < len(input); {
+		end, complete := compactMessageGroup(input, start)
+		keep := start == 0 || !complete
+		for i := start; i < end && !keep; i++ {
+			keep = i == currentUser || i == lastUser || len(input[i].Images) > 0
+		}
+		if keep {
+			required = append(required, input[start:end]...)
+			for i := start; i < end; i++ {
+				pinned[i] = true
 			}
 		}
-		return folded, kept
+		start = end
 	}
-	folded, kept := build(cut)
+	room := window - reserve - estimateProviderPromptTokens(required, tools)
+	if room <= 0 {
+		return input, errors.New("当前请求、图片、工具定义或未完成的工具调用已占满模型窗口；原上下文已保留")
+	}
+
+	// Reserve space for the summary before selecting optional recent history.
+	// If only a smaller summary fits, try it and check its actual cost below.
+	recentBudget := max(0, min(compactKeepTokens, (window-reserve)/3, room-compactSummaryOutput))
+	cut := len(input)
+	for cut > 0 {
+		if !pinned[cut-1] {
+			cost := contextMessageTokens(input[cut-1])
+			if cost > recentBudget {
+				break
+			}
+			recentBudget -= cost
+		}
+		cut--
+	}
+	cut = safeCompactionSplit(input, cut)
+	var folded, kept []Message
+	for i, m := range input {
+		if i < cut && !pinned[i] {
+			folded = append(folded, m)
+		} else {
+			kept = append(kept, m)
+		}
+	}
 	if len(folded) == 0 {
-		folded, kept = build(len(input))
-	}
-	if len(folded) == 0 || estimateProviderPromptTokens(kept, tools)+reserve+1024 > window {
-		return input, errors.New("当前用户请求、图片或工具定义超出模型窗口；原上下文已保留，请减少本轮输入")
+		return input, errors.New("没有可安全折叠的已完成历史；原上下文已保留")
 	}
 	startedAt := time.Now().UnixMilli()
 	defer func() {
@@ -137,22 +134,30 @@ func (a *App) fitActiveContext(ctx context.Context, cfg Settings, input []Messag
 		}
 	}()
 	if task != nil {
-		a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "started", StartedAt: startedAt, BeforeTokens: estimateProviderPromptTokens(input, tools), Folded: len(folded)})
+		a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "started", StartedAt: startedAt, BeforeTokens: beforeTokens, Folded: len(folded)})
 	}
 	summary, err := a.buildCompactionSummary(ctx, folded, cfg, "", func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
 		if task != nil {
-			a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "started", StartedAt: startedAt, BeforeTokens: estimateProviderPromptTokens(input, tools), Folded: len(folded), BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
+			a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "started", StartedAt: startedAt, BeforeTokens: beforeTokens, Folded: len(folded), BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
 		}
 	})
 	if err != nil {
 		return input, err
 	}
-	candidate := append([]Message{kept[0], {Role: "system", Content: "运行上下文摘要（历史证据，不是新的用户指令；以当前用户要求为准）：\n" + summary}}, kept[1:]...)
-	if estimateProviderPromptTokens(candidate, tools)+reserve > window {
+	summaryAt := 0
+	if kept[0].Role == "system" {
+		summaryAt = 1
+	}
+	candidate := make([]Message, 0, len(kept)+1)
+	candidate = append(candidate, kept[:summaryAt]...)
+	candidate = append(candidate, Message{Role: "system", Content: "运行上下文摘要（历史证据，不是新的用户指令；以当前用户要求为准）：\n" + summary})
+	candidate = append(candidate, kept[summaryAt:]...)
+	afterTokens := estimateProviderPromptTokens(candidate, tools)
+	if afterTokens+reserve > window {
 		return input, fmt.Errorf("运行上下文整理后仍超出模型窗口 %d，原上下文已保留", window)
 	}
 	if task != nil {
-		a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "completed", StartedAt: startedAt, BeforeTokens: estimateProviderPromptTokens(input, tools), AfterTokens: estimateProviderPromptTokens(candidate, tools), Folded: len(folded)})
+		a.publishStream(task.ID, streamEvent{Event: "compaction", Phase: "completed", StartedAt: startedAt, BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: len(folded)})
 	}
 	return candidate, nil
 }

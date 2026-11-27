@@ -294,7 +294,11 @@ Open **Trajectory** for tasks, steps, tools, proposals, suggested commands, erro
 
 For a task, switch Trajectory to **Input and output** to review submitted prompts, attachments, the mode-specific final reply, and recorded file changes. Open a task's **Execution timeline** to inspect persisted event times, phases, tool dispatch/results, call IDs, and digests. The timeline loads on demand and in sequence-numbered pages; a dispatch event means the tool was handed off, not that it succeeded. Tool arguments and results remain in the separate evidence view.
 
-Compaction summarizes older history into structured context for later requests. It runs automatically as history approaches the model budget, and an over-budget request attempts compaction before rejection. It may also be triggered manually. It is not ZIP compression and does not guarantee less disk usage or lossless recall. Reopen source files and task history for precise facts.
+The sidebar shows one ring per environment based on its recorded request usage. At 10× capacity the first ring represents the main environment and the other nine represent worker slots. Draft estimates are used only for pre-send safety checks: if the current input fits on its own, sending an over-budget draft attempts to compact earlier history; if the current input alone exceeds the window, reduce the text or attachments. Open the context details to see the previous request, cumulative session usage, independent worker windows and the latest compaction record.
+
+If the model ends a reply with the Aide tool-progress label and tool names without issuing a call, Aide asks it to retry using the tool protocol. A repeated announcement pauses the task at a checkpoint. Select **Continue** to retry. The execution timeline shows the tools that actually ran.
+
+Start a manual compaction in the context details or trajectory to summarize older history using the session’s selected model. Aide can also compact automatically as history grows. Completed tool calls and their results are folded together. An outstanding tool exchange stays intact. The most recent saved compaction shows the messages folded and retained and the estimated active-history tokens before and after. Older sessions display the records they have. Reopen source files and task history for exact code or figures.
 
 **Archive actions**: The project file menu offers a direct “Compress to ZIP” action. Other formats are grouped under “Compress as…”: TAR, TAR.GZ, TAR.BZ2, and TAR.XZ. Archives are created beside the selected item, and an existing destination is never overwritten. ZIP, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, and standalone GZ/BZ2/XZ streams can be extracted to a sibling folder, with a numbered name chosen when needed. Extraction is limited to 1,000 archive entries and 64 MiB of expanded data and rejects absolute/traversal paths, links, and special files. Writable references support the same actions; read-only references cannot be modified. The built-in **Archive Tools** plugin exposes the same bounded workspace compression and extraction to the assistant.
 
@@ -307,6 +311,8 @@ Every regular session (including child sessions) gets an incrementing number `#N
 - Numbers start at `#1` and only increase; deleting a session **never** reuses its number.
 - Numbers persist across restarts. On startup, missing numbers are assigned to older sessions and duplicates are repaired while preserving the original number for the earliest session.
 - Global search (⌘K) results also show the `#N` prefix for quick lookup.
+
+Session titles describe the task you asked for. Follow-ups such as “continue” or “any updates?” keep the current topic. To keep a name of your own, rename the session from its **⋯** menu. The sidebar and the open session show the same title.
 
 ### Real-time session-list refresh (#60)
 
@@ -518,6 +524,8 @@ Open Messages → Reminders from the main toolbar. Each reminder can include a t
 ## Studio workbench background
 
 Settings → General → Appearance → Workbench background → Studio. Lightweight architectural light adapts to the theme without bundled video. Legacy whale preferences migrate to Studio; uploaded local media remains intact. Motion pauses in the background, while locked, or with reduced motion.
+
+Panels, menus and tabs use short transitions. With the system’s Reduce Motion preference enabled, navigation and jumps to a chat message or document heading are immediate. The workbench also shortens or skips effects on constrained devices. Call, task and loading states remain visible through labels or icons.
 
 
 ## Current topic guides

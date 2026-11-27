@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +36,8 @@ func TestIssue113LockedAssistantCompactionCannotReadOrSendHistory(t *testing.T) 
 			a.mu.Lock()
 			s := a.findAssistantSessionLocked()
 			issue113History(s)
+			s.Compact = "private summary fixture"
+			s.LastCompaction = &CompactionReceipt{Folded: 2, Kept: 1}
 			a.settings.BaseURL = provider.URL
 			a.settings.Model = ""
 			if configured {
@@ -46,6 +49,16 @@ func TestIssue113LockedAssistantCompactionCannotReadOrSendHistory(t *testing.T) 
 			}
 			before := append([]Message(nil), s.Messages...)
 			a.mu.Unlock()
+			for _, path := range []string{"/api/sessions/" + s.ID, "/api/sessions/" + s.ID + "?limit=1"} {
+				var view Session
+				rr := request(a, "GET", path, nil)
+				requireStatus(t, rr, 200)
+				if err := json.Unmarshal(rr.Body.Bytes(), &view); err != nil || view.Compact != "" || view.LastCompaction != nil {
+					t.Fatal("locked session should return metadata only")
+				}
+			}
+			requireStatus(t, request(a, "GET", "/api/sessions/"+s.ID+"/compaction-progress", nil), 403)
+			requireStatus(t, request(a, "POST", "/api/context-preview", map[string]any{"sessionId": s.ID, "mode": "chat", "baseline": true}), 403)
 			w := request(a, "POST", "/api/sessions/"+s.ID+"/compact", map[string]any{})
 			if w.Code != 403 {
 				t.Errorf("locked private compaction returned%d, want403", w.Code)
@@ -54,7 +67,7 @@ func TestIssue113LockedAssistantCompactionCannotReadOrSendHistory(t *testing.T) 
 				t.Error("locked private history reached model provider")
 			}
 			a.mu.Lock()
-			unchanged := reflect.DeepEqual(s.Messages, before) && s.CompactedMessages == 0 && s.Compact == ""
+			unchanged := reflect.DeepEqual(s.Messages, before) && s.CompactedMessages == 0 && s.Compact == "private summary fixture"
 			a.mu.Unlock()
 			if !unchanged {
 				t.Error("locked compaction mutated private conversation")

@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -125,5 +126,32 @@ func TestContextParallelTransientAnchorDoesNotInflateBaseline(t *testing.T) {
 	fallback := a.buildContextPreview(sess, "next", "chat", "", nil, a.settings, params, false)
 	if fallback.Breakdown.UsageCalibration == 0 {
 		t.Fatal("ordinary fallback request should retain calibration")
+	}
+}
+
+func TestDraftBudgetIdentifiesRecoverableHistory(t *testing.T) {
+	a := testApp(t)
+	a.settings = Settings{Model: "local", Models: []ModelRef{{ID: "local", ContextWindow: 65536}}}
+	session := createSession(t, a)
+	a.mu.Lock()
+	a.sessions[session.ID].Messages = []Message{{Role: "user", Content: strings.Repeat("prior ", 55000)}}
+	a.mu.Unlock()
+	draft := map[string]any{"sessionId": session.ID, "mode": "chat", "prompt": "hello"}
+	preview := func() ContextPreview {
+		t.Helper()
+		w := request(a, "POST", "/api/context-preview", draft)
+		requireStatus(t, w, 200)
+		var v ContextPreview
+		if err := json.Unmarshal(w.Body.Bytes(), &v); err != nil {
+			t.Fatal(err)
+		}
+		return v
+	}
+	if v := preview(); !v.OverLimit || !v.CanCompactHistory {
+		t.Fatalf("wanted recoverable history overflow, got %d/%d, recoverable=%t", v.TotalEstimate, v.ContextWindow, v.CanCompactHistory)
+	}
+	a.settings.Models[0].ContextWindow = 1024
+	if v := preview(); !v.OverLimit || v.CanCompactHistory {
+		t.Fatalf("current input overflow should block sending, got %d/%d", v.TotalEstimate, v.ContextWindow)
 	}
 }

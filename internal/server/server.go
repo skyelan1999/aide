@@ -479,6 +479,7 @@ type Session struct {
 	Compact                string                 `json:"compact,omitempty"`           // 压缩摘要（compaction）
 	CompactedMessages      int                    `json:"compactedMessages,omitempty"` // 已折叠消息数
 	CompactedAt            string                 `json:"compactedAt,omitempty"`
+	LastCompaction         *CompactionReceipt     `json:"lastCompaction,omitempty"`
 	Pinned                 bool                   `json:"pinned,omitempty"`              // 置顶：列表排序优先（活动排序不会把置顶顶下去）
 	Archived               bool                   `json:"archived,omitempty"`            // 归档：默认列表隐藏
 	Deleted                bool                   `json:"deleted,omitempty"`             // 删除墓碑：save/加载跳过，防写盘复活
@@ -3425,8 +3426,11 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 		// 未解锁时只回元数据（清空 Messages），不得合并 xiaomiHistoryLocked()，
 		// 否则持有 access-token 的请求可绕过密码门拉走小秘全部私聊/历史。
 		if !a.isAssistantUnlocked(s.ID) {
-			view := *s
-			view.Messages = []Message{}
+			view := Session{
+				ID: s.ID, Kind: s.Kind, Number: s.Number, Title: s.Title,
+				Created: s.Created, Updated: s.Updated, Pinned: s.Pinned, Checked: s.Checked,
+				Archived: s.Archived, Messages: []Message{}, Runs: []*Task{},
+			}
 			if limit > 0 {
 				jsonOut(w, 200, makeSessionHistoryView(&view, limit))
 			} else {

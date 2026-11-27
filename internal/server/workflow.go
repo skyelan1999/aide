@@ -2806,12 +2806,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			return partialResult(round, lastOut, input, contextErr)
 		}
 		saveCheckpoint()
+		a.mu.Lock()
+		requestWindow := a.modelWindow(cfg.Model)
+		a.mu.Unlock()
 		snapshotIndex := -1
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
 			a.mu.Lock()
 			if task.Parallel != nil && hasParallelBriefing(input) {
-				task.Parallel.MainContext = requestContext(input, tools, params.MaxTokens, a.modelWindow(cfg.Model))
+				task.Parallel.MainContext = requestContext(input, tools, params.MaxTokens, requestWindow)
 			}
 			if !task.SnapshotsTruncated && len(task.RequestSnapshots) < 12 {
 				task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{
@@ -3001,8 +3004,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			compactedAt = session.CompactedAt
 		}
 		task.ContextAnchor = &ContextUsageAnchor{
-			Scope: scope,
-			Usage: usage, PromptEstimate: estimateProviderPromptTokens(input, tools),
+			ContextWindow: requestWindow,
+			Scope:         scope,
+			Usage:         usage, PromptEstimate: estimateProviderPromptTokens(input, tools),
 			CompletionEstimate: contextMessageTokens(Message{Role: "assistant", Content: out, ToolCalls: calls}),
 			HeaderFingerprint:  contextHeaderFingerprint(cfg, system, tools),
 			CompactedAt:        compactedAt,
@@ -6413,9 +6417,15 @@ type compactionProgressFunc func(stage string, batch, batches, retryAttempt int,
 func (a *App) contextCompactionProgressHandler(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.PathValue("id")
 	a.mu.Lock()
-	if a.sessionLocked(sessionID) == nil {
+	s := a.sessionLocked(sessionID)
+	if s == nil {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if s.Kind == assistantSessionKind && !a.isAssistantUnlocked(s.ID) {
+		a.mu.Unlock()
+		fail(w, 403, errors.New("请先解锁小秘会话"))
 		return
 	}
 	record, ok := a.contextCompactionProgress[sessionID]
@@ -6553,14 +6563,14 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消", Preflight: true})
 		return errors.New("压缩期间会话已变化")
 	}
-	candidate := compactedSessionCandidate(sess, snap, split, summary)
+	candidate := compactedSessionCandidate(sess, snap, split, summary, beforeTokens)
 	if err := a.save(&candidate); err != nil {
 		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留", Preflight: true})
 		return err
 	}
 	*sess = candidate
 	a.resetCompactionCircuitLocked(compactionCircuitKey{sessionID: sessionID, model: cfg.Model})
-	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: sessionContextTokens(sess), Folded: split, Preflight: true})
+	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: candidate.LastCompaction.AfterTokens, Folded: split, Preflight: true})
 	return nil
 }
 
@@ -6603,46 +6613,15 @@ func (a *App) snapshotForCompactBudget(sess *Session, keepBudget int) (compactSn
 	if split <= 0 {
 		return compactSnapshot{}, 0
 	}
-	if split > compactMaxFolded {
-		split = compactMaxFolded
-	}
-	if split > len(sess.Messages) {
-		split = len(sess.Messages)
-	}
-	// A single oversized final answer may itself need summarization. A slice
-	// ending at len is valid; retaining it unconditionally prevents recovery.
-	split = safeCompactionSplit(sess.Messages, split)
-	if split <= 0 {
+	// Do not extend a tool exchange past this pass's hard message cap. If
+	// its final result is outside the cap, keep the whole exchange for later.
+	limit := min(len(sess.Messages), compactMaxFolded)
+	split = safeCompactionSplit(sess.Messages[:limit], split)
+	if split == 0 {
 		return compactSnapshot{}, 0
 	}
-	// A retained tool result must keep the assistant call that owns it, even
-	// when the complete exchange exceeds the preferred recent-history budget.
-	split = compactProtocolBoundary(sess.Messages, split)
-	if split <= 0 {
-		return compactSnapshot{}, 0
-	}
-	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: cloneCompactMessages(sess.Messages[:split])}, split
-}
-
-// Return the last boundary at or before limit with no outstanding tool calls.
-// This also handles assistants issuing multiple calls with separate results.
-func compactProtocolBoundary(messages []Message, limit int) int {
-	pending := map[string]bool{}
-	safe := 0
-	for i, message := range messages[:limit] {
-		if message.Role == "assistant" {
-			for _, call := range message.ToolCalls {
-				pending[call.ID] = true
-			}
-		}
-		if message.Role == "tool" {
-			delete(pending, message.ToolCallID)
-		}
-		if len(pending) == 0 {
-			safe = i + 1
-		}
-	}
-	return safe
+	original := cloneCompactMessages(sess.Messages[:split])
+	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: original}, split
 }
 
 func cloneCompactMessages(messages []Message) []Message {
@@ -6667,12 +6646,21 @@ func compactSnapshotMatches(current, snapshot []Message) bool {
 	return true
 }
 
-func compactedSessionCandidate(sess *Session, snap compactSnapshot, split int, summary string) Session {
+// CompactionReceipt measures the active history, excluding the system prompt, tools and output reserve.
+type CompactionReceipt struct {
+	Folded       int `json:"folded"`
+	Kept         int `json:"kept"`
+	BeforeTokens int `json:"beforeTokens"`
+	AfterTokens  int `json:"afterTokens"`
+}
+
+func compactedSessionCandidate(sess *Session, snap compactSnapshot, split int, summary string, beforeTokens int) Session {
 	candidate := *sess
 	candidate.Compact = summary
 	candidate.CompactedMessages = snap.prevCount + split
 	candidate.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	candidate.Messages = append([]Message(nil), sess.Messages[split:]...)
+	candidate.LastCompaction = &CompactionReceipt{Folded: split, Kept: len(candidate.Messages), BeforeTokens: beforeTokens, AfterTokens: sessionContextTokens(&candidate)}
 	return candidate
 }
 
@@ -6691,7 +6679,13 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, errors.New("请先解锁小秘会话"))
 		return
 	}
-	if a.settings.Model == "" {
+	cfg, err := a.selectionSettingsLocked(a.sessionModelSelectionLocked(sess))
+	if err != nil {
+		a.mu.Unlock()
+		fail(w, 400, err)
+		return
+	}
+	if cfg.Model == "" {
 		a.mu.Unlock()
 		fail(w, 400, errors.New("请先配置模型"))
 		return
@@ -6706,7 +6700,6 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	cfg := a.settings
 	snap, split := a.snapshotForCompact(sess)
 	if split == 0 && len(sess.Messages) > 0 {
 		// Manual compaction uses the same full-request calibration as automatic
@@ -6719,7 +6712,14 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 			if anchor == nil || anchor.Usage.Estimated || anchor.Usage.Prompt <= 0 {
 				continue
 			}
-			observedOverflow = anchor.Usage.Prompt > a.modelWindow(cfg.Model)
+			model := anchor.Usage.Model
+			if model == "" {
+				model = sess.Runs[i].Model
+			}
+			// A past call on another model or before a saved compaction cannot
+			// establish that the remaining history overflows this window.
+			observedOverflow = (model == "" || model == cfg.Model) && anchor.Scope == "" &&
+				anchor.CompactedAt == sess.CompactedAt && anchor.Usage.Prompt > a.modelWindow(cfg.Model)
 			break
 		}
 		preview := a.buildContextPreview(sess, "", "chat", "", nil, cfg, ProfileParams{}, false)
@@ -6741,7 +6741,13 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if modelKey, keyErr := a.modelAPIKeyLocked(); keyErr != nil {
+	if split == 0 {
+		summary := sess.Compact
+		a.mu.Unlock()
+		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": summary})
+		return
+	}
+	if modelKey, keyErr := a.modelAPIKeyForConfigLocked(cfg); keyErr != nil {
 		a.mu.Unlock()
 		fail(w, 400, keyErr)
 		return
@@ -6754,19 +6760,13 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	if a.contextCompactionProgress == nil {
 		a.contextCompactionProgress = map[string]contextCompactionProgress{}
 	}
-	if split > 0 {
-		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split})
-	}
+	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split})
 	a.mu.Unlock()
 	defer func() {
 		a.mu.Lock()
 		delete(a.compactingSessions, sessionID)
 		a.mu.Unlock()
 	}()
-	if split == 0 {
-		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": snap.prevCompact})
-		return
-	}
 	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
 		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
 	})
@@ -6795,7 +6795,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
 		return
 	}
-	candidate := compactedSessionCandidate(sess, snap, split, summary)
+	candidate := compactedSessionCandidate(sess, snap, split, summary, beforeTokens)
 	if err := a.save(&candidate); err != nil {
 		a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"})
 		fail(w, 500, err)
@@ -6808,7 +6808,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		sample := messagesSample(snap.messages)
 		go a.runAutoEvolve(personaAide, modeCompress, "compaction", sample)
 	}
-	afterTokens := sessionContextTokens(sess)
+	afterTokens := candidate.LastCompaction.AfterTokens
 	a.setContextCompactionProgressLocked(sessionID, streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split})
 	jsonOut(w, 200, map[string]any{"ok": true, "folded": split, "compact": summary, "compactedMessages": sess.CompactedMessages, "beforeTokens": beforeTokens, "afterTokens": afterTokens})
 }
@@ -7353,7 +7353,7 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 		publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消"})
 		return
 	}
-	candidate := compactedSessionCandidate(s, snap, split, summary)
+	candidate := compactedSessionCandidate(s, snap, split, summary, beforeTokens)
 	if err := a.save(&candidate); err != nil {
 		log.Printf("自动压缩保存失败: %v", err)
 		publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"})
@@ -7361,7 +7361,7 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 	}
 	*s = candidate
 	a.resetCompactionCircuitLocked(circuitKey)
-	afterTokens := sessionContextTokens(s)
+	afterTokens := candidate.LastCompaction.AfterTokens
 	publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split, Text: fmt.Sprintf("已折叠 %d 条早期消息", split)})
 }
 

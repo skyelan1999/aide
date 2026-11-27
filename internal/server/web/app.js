@@ -433,7 +433,7 @@ function sessionRevision(s) {
         sessionTextRevision(JSON.stringify(run?.pw || null)),
         sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
     ].join(':')).join(';');
-    return [s.id, s.title, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.runningRuns, s.messagesTotal ?? messages.length, state.historyLimit,
+    return [s.id, s.title, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.compactedAt, s.compactedMessages, s.runsTotal ?? runs.length, s.runningRuns, s.messagesTotal ?? messages.length, state.historyLimit,
         runs.length, messages.length, JSON.stringify(runs.map((run) => [run.id, run.steers || []])), runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
         lastRun?.steps?.map((step) => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning) + ':' + sessionTextRevision(JSON.stringify(step.outputSegments || []))).join(',')].join('|');
 }
@@ -4922,7 +4922,7 @@ $('task-form').onsubmit = action(async (event) => {
         return;
     }
     if (state.previewOverLimit) {
-        toast(t("上下文预算超限：请缩短任务或减少附件后再发送"));
+        toast(state.contextMeter?.draftNotice || t("上下文预算超限：请缩短任务或减少附件后再发送"));
         return;
     }
     const sendMotion = window.aideExperience?.beginSend($('send'));
@@ -5103,7 +5103,7 @@ function updateSendEnabled() {
         $('composer-hint').textContent = t('正在提交…');
     }
     else if (state.previewOverLimit) {
-        $('composer-hint').textContent = t("⚠ 上下文预算超限：请缩短任务或减少附件");
+        $('composer-hint').textContent = state.contextMeter?.draftNotice || t("⚠ 上下文预算超限：请缩短任务或减少附件");
     }
     else {
         $('composer-hint').textContent = window.AideKeybindings?.hint(t) || t("Shift + Enter 发送 · Enter 换行");
@@ -5174,10 +5174,11 @@ function renderContextPreview(data) {
         return;
     state.contextPreview = data;
     state.previewFingerprint = data.fingerprint || '';
-    state.previewOverLimit = !!data.overLimit;
+    state.previewOverLimit = !!data.overLimit && !data.canCompactHistory;
+    $('context-preview').classList.toggle('over', !!data.overLimit);
     const bd = data.breakdown;
     const overText = data.overLimit ? ' · ' + t("⚠ 超限 {0}", Math.max(0, data.totalEstimate - data.contextWindow)) : '';
-    $('cp-summary').textContent = t("输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}", data.inputEstimate, data.outputReserve, data.totalEstimate, data.contextWindow) + overText;
+    $('cp-summary').textContent = t("输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}", data.inputEstimate, data.outputReserve, data.totalEstimate, data.contextWindow) + overText + (data.canCompactHistory ? ' · ' + t('发送时将尝试压缩历史') : '');
     const detail = $('cp-detail');
     detail.replaceChildren();
     const parts = contextParts(bd);
@@ -5241,13 +5242,27 @@ async function refreshContextPreview() {
     if (contextMeterTransitioning())
         return;
     const prompt = $('prompt').value.trim();
-    if (!prompt || !state.config?.configured) {
+    if ((!prompt && !state.attachments?.length) || !state.config?.configured || state.mode === 'pw') {
         hideContextPreview();
         return;
     }
     $('context-preview').classList.remove('hidden');
-    $('cp-summary').textContent = t("上下文预算计算中…（估算）");
+    const showNotice = (notice, blocked = false) => {
+        state.contextPreview = null;
+        state.previewFingerprint = '';
+        state.previewOverLimit = blocked;
+        $('context-preview').classList.toggle('over', blocked);
+        $('cp-summary').textContent = notice;
+        $('cp-detail').replaceChildren();
+        renderContextMeter({ draftNotice: notice }, true);
+        updateSendEnabled();
+    };
     try {
+        if (composerByteLength(prompt) > PROMPT_MAX_BYTES) {
+            showNotice(t('任务文字超过 20,000 字节，请缩短文字或改用附件。'), true);
+            return;
+        }
+        showNotice(t('上下文预算计算中…（估算）'));
         const strategy = sessionModelPreferences().strategy;
         const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
         const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', parallelism: window.AideParallelChat?.value(state.mode, state.session?.kind === 'assistant') || 1, prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
@@ -5260,16 +5275,7 @@ async function refreshContextPreview() {
             return;
         if (error?.name === 'AbortError')
             return;
-        if (error && String(error.message).includes(t("上下文预算超限"))) {
-            const m = String(error.message);
-            state.previewOverLimit = true;
-            $('cp-summary').textContent = '⚠ ' + m;
-            $('context-preview').classList.add('over');
-            $('context-preview').classList.remove('hidden');
-            updateSendEnabled();
-            return;
-        }
-        hideContextPreview();
+        showNotice(t('草稿预算暂不可用，发送时将重新检查。'));
     }
     finally {
         if (state.previewController === controller)
@@ -9471,17 +9477,6 @@ function fmtTokens(n) { return window.AideModelTokenChart.formatTokens(n); }
 state.contextMeterSeq = state.contextMeterSeq || { value: 0 };
 state.contextMeterKey = state.contextMeterKey || '';
 state.contextMeterDraft = state.contextMeterDraft || false;
-function ensureContextMeterControls() {
-    const card = $('context-card');
-    if (!card)
-        return;
-    const bar = $('context-bar');
-    if (bar && !$('context-card-detail')) {
-        const detail = el('div', 'context-card-detail');
-        detail.id = 'context-card-detail';
-        card.append(detail);
-    }
-}
 function contextMeterKey() {
     const messages = state.session?.messages || [];
     const signature = messages.map((m) => [m.role, (m.content || '').length, (m.toolCalls || []).map((c) => (c.function?.arguments || '').length).join(',')].join(':')).join('|');
@@ -9491,7 +9486,7 @@ function contextMeterKey() {
     return [state.config?.workspaceId || '', session?.id || 'new', session?.messagesTotal ?? messages.length, session?.compactedMessages || 0,
         session?.compactedAt || '', (session?.compact || '').length, anchor?.headerFingerprint || '',
         anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0, anchor?.scope || '',
-        JSON.stringify(sessionModelPreferences()), state.mode || 'chat', state.workflowPhase || '', !!window.aideAvatarEnabled?.(), signature].join('~');
+        JSON.stringify(sessionModelPreferences()), activeModel()?.contextWindow || 0, window.AideParallelChat?.value(state.mode, session?.kind === 'assistant') || 1, state.mode || 'chat', state.workflowPhase || '', !!window.aideAvatarEnabled?.(), signature].join('~');
 }
 function contextUsageTotal(usage) {
     return Math.max(0, Number(usage?.total) || (Number(usage?.prompt) || 0) + (Number(usage?.completion) || 0));
@@ -9507,14 +9502,13 @@ function currentContextUsage() {
     const run = [...runs].reverse().find((run) => contextUsageTotal(run.usage) > 0);
     return { usage: run?.usage || null, lifetime: false };
 }
-function latestRequestContext(data) {
+function latestRequestContext() {
     const run = state.session?.runs?.at(-1);
     if (!run)
         return null;
-    const model = state.config?.models?.find((model) => model.id === run.model);
     const anchor = run.contextAnchor;
     if (anchor)
-        return { label: anchor.scope === 'parallel_merge' ? '最近主汇总请求' : '最近主请求', inputEstimate: anchor.promptEstimate, contextWindow: model?.contextWindow || data?.contextWindow || 65536, usage: anchor.usage };
+        return { label: anchor.scope === 'parallel_merge' ? '最近主汇总请求' : '最近主请求', inputEstimate: anchor.promptEstimate, contextWindow: anchor.contextWindow, usage: anchor.usage };
     const progress = run.parallel;
     if (progress?.mainContext)
         return { label: '最近主汇总请求', ...progress.mainContext };
@@ -9526,183 +9520,91 @@ function renderParallelContextDetail(detail) {
     const run = state.session?.runs?.at(-1);
     if (!(run?.parallelism > 1))
         return;
-    detail.append(el('p', 'context-card-actual context-parallel-detail', t('并行各路独立计量，累计消耗不等于单个上下文窗口。')));
-    const progress = run.parallel;
     const row = (label, context) => {
-        if (!context)
-            return;
-        const actual = !context.usage?.estimated && context.usage?.prompt > 0;
-        const input = actual ? context.usage.prompt : context.inputEstimate;
-        detail.append(el('p', 'context-card-actual context-parallel-detail', t('{0}：输入 {1} / 独立窗口 {2} · {3}', t(label), fmtTokens(input || 0), fmtTokens(context.contextWindow || 0), t(actual ? '上游实际' : '估算'))));
+        if (context)
+            detail.append(el('p', 'context-card-actual', label + ' · ' + requestContextReadout(context)));
     };
-    row('标题辅助请求', run.topicContext);
-    for (const [index, context] of (progress?.plannerHistory || []).entries())
-        row(t('第 {0} 轮规划请求', index + 1), context);
-    if (!progress?.plannerHistory?.length || JSON.stringify(progress.plannerHistory.at(-1)) !== JSON.stringify(progress.plannerContext))
-        row('规划请求', progress?.plannerContext);
-    const contexts = [
-        ...(progress?.parts || []).map((part) => part.context),
-        ...(run.environments?.results || []).map((result) => result.context),
-    ].filter(Boolean);
-    if (contexts.length) {
-        const actual = contexts.every((context) => !context.usage?.estimated && context.usage?.prompt > 0);
-        const inputs = contexts.map((context) => !context.usage?.estimated && context.usage?.prompt > 0 ? context.usage.prompt : context.inputEstimate || 0);
-        const windows = [...new Set(contexts.map((context) => context.contextWindow || 0))];
-        detail.append(el('p', 'context-card-actual context-parallel-detail', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入 {1}–{2}（含估算），各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
-    }
-    row('最近主汇总请求', progress?.mainContext);
-    if (!progress?.plannerContext && !progress?.mainContext && !contexts.length)
-        detail.append(el('p', 'context-card-actual context-parallel-detail', t(['running', 'queued'].includes(run.status) ? '正在等待逐请求用量回传…' : '此历史任务未记录逐请求上下文，不能从累计用量反推。')));
+    row(t('标题辅助请求'), run.topicContext);
+    const progress = run.parallel;
+    const history = progress?.plannerHistory || [];
+    history.forEach((context, index) => row(t('第 {0} 轮规划请求', index + 1), context));
+    if (!history.length || JSON.stringify(history.at(-1)) !== JSON.stringify(progress.plannerContext))
+        row(t('规划请求'), progress?.plannerContext);
 }
-function paintContextRequestState(request) {
-    const node = $('context-request-state');
-    if (!node)
-        return;
-    if (!request) {
-        node.textContent = t('暂无上下文');
-        node.dataset.state = 'empty';
-        node.title = t('暂无上下文');
-        return;
-    }
+function requestContextReadout(request) {
+    if (!request)
+        return t('暂无逐请求数据');
     const actual = !request.usage?.estimated && request.usage?.prompt > 0;
-    const input = actual ? request.usage.prompt : request.inputEstimate || 0;
+    const input = actual ? request.usage.prompt : request.inputEstimate;
+    if (!Number.isFinite(input))
+        return t('暂无逐请求数据');
     const output = actual ? request.usage.completion || 0 : 0;
-    const window = request.contextWindow || 65536;
-    const percent = Math.round((input + output) / window * 100);
-    node.textContent = t(actual ? '实际' : '估算') + ' ' + percent + '%';
-    node.dataset.state = actual ? 'actual' : 'estimated';
-    node.title = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
+    const parts = [actual ? t('上游实际') : t('估算'), t('输入 {0}', fmtTokens(input))];
+    if (actual)
+        parts.push(t('输出 {0}', fmtTokens(output)));
+    if (request.contextWindow > 0) {
+        parts.push(t('窗口 {0}', fmtTokens(request.contextWindow)));
+        if (input + output > request.contextWindow)
+            parts.push(t('超过该次配置窗口'));
+    }
+    else {
+        parts.push(t('未记录当时窗口'));
+    }
+    return parts.join(' · ');
+}
+function paintSavedCompaction() {
+    const session = state.session;
+    const saved = session?.lastCompaction;
+    const folded = session?.compactedMessages || 0;
+    const lines = [];
+    if (folded > 0)
+        lines.push(t('累计折叠 {0} 条早期消息', folded));
+    if (saved) {
+        lines.push(t('上次折叠 {0} 条，保留 {1} 条', saved.folded, saved.kept));
+        if (saved.beforeTokens > 0 && Number.isFinite(saved.afterTokens)) {
+            const before = saved.beforeTokens, after = saved.afterTokens;
+            lines.push(t('活动历史估算 {0} → {1} tokens', before.toLocaleString(), after.toLocaleString()));
+            if (before > after)
+                lines.push(t('减少约 {0}%', Math.round((before - after) / before * 100)));
+        }
+    }
+    if (session?.compactedAt) {
+        const when = new Date(session.compactedAt);
+        if (Number.isFinite(when.getTime()))
+            lines.push(when.toLocaleString());
+    }
+    $('context-saved-compaction').textContent = lines.length ? lines.join(' · ') : t('暂无已保存的压缩记录');
 }
 function paintContextUsage(data) {
-    ensureContextMeterControls();
     const { usage, lifetime } = currentContextUsage();
     const run = state.session?.runs?.at(-1);
-    const parallelism = Math.max(1, Number(run?.parallelism) || 1);
-    const card = $('context-card');
-    card.classList.toggle('is-parallel', parallelism > 1);
-    const parallelBadge = $('context-parallel-badge');
-    parallelBadge.hidden = true;
-    parallelBadge.textContent = '';
-    $('context-card-label').textContent = t(lifetime || !usage ? '消耗' : '最近任务');
+    const scopeLabel = t(lifetime || !usage ? '会话消耗' : '最近任务消耗');
+    $('context-card-label').textContent = scopeLabel;
+    $('context-usage-heading').textContent = scopeLabel;
     $('context-stat').textContent = usage ? formatUsageTokens(contextUsageTotal(usage)).replace(/\.0(?=[KMB])/, '') : '—';
-    const totalDetail = usage ? t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), contextUsageTotal(usage).toLocaleString()) : t('等待上游用量回传');
-    const totalHover = t('会话消耗') + ': ' + totalDetail;
-    $('context-stat').removeAttribute('title');
-    card.dataset.totalDetail = totalHover;
-    $('context-total-line').setAttribute('aria-label', totalHover);
     $('context-usage-kind').textContent = usage?.estimated ? t('含估算') : '';
-    const usageSummary = $('context-usage-summary');
-    const usageRatio = $('context-usage-ratio');
-    usageSummary.replaceChildren();
-    usageRatio.replaceChildren();
-    usageRatio.hidden = !usage;
-    if (usage) {
-        const total = Math.max(1, contextUsageTotal(usage));
-        for (const [kind, label, value] of [['input', '输入', usage.prompt || 0], ['output', '输出', usage.completion || 0]]) {
-            const item = el('span', 'context-usage-part context-usage-' + kind);
-            item.append(el('i', 'context-usage-dot'), el('span', '', t(label)), el('strong', '', formatUsageTokens(value)));
-            usageSummary.append(item);
-            if (Number(value) > 0) {
-                const segment = el('span', 'context-usage-ratio-segment context-usage-ratio-' + kind);
-                segment.style.width = Math.max(0, Math.min(100, Number(value) / total * 100)) + '%';
-                segment.style.minWidth = '2px';
-                usageRatio.append(segment);
-            }
-        }
-        usageRatio.setAttribute('aria-label', t('输入 {0} · 输出 {1}', formatUsageTokens(usage.prompt), formatUsageTokens(usage.completion)));
-    }
-    else {
-        usageSummary.textContent = t('等待上游用量回传');
-        usageRatio.setAttribute('aria-label', t('等待上游用量回传'));
-    }
-    const runSummary = $('context-run-summary');
+    const totalDetail = usage ? t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), contextUsageTotal(usage).toLocaleString()) : t('等待上游用量回传');
+    $('context-usage-summary').textContent = totalDetail + (usage ? ' · ' + t(usage.estimated ? '含估算' : '上游实际') : '');
     const runUsage = run?.usage;
+    const runSummary = $('context-run-summary');
     runSummary.hidden = !(lifetime && contextUsageTotal(runUsage) > 0);
     $('context-run-label').textContent = t('最近任务');
-    $('context-run-total').textContent = runSummary.hidden ? '' : formatUsageTokens(contextUsageTotal(runUsage)).replace(/\.0(?=[KMB])/, '');
-    const showParallel = false;
-    parallelBadge.hidden = !showParallel;
-    parallelBadge.textContent = showParallel ? parallelism + '×' : '';
-    parallelBadge.title = t('并行容量；不代表 Token 倍率或等比例提速');
-    if (!runSummary.hidden) {
-        const runDetail = t('最近任务') + ': ' + t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (runUsage.prompt || 0).toLocaleString(), (runUsage.completion || 0).toLocaleString(), contextUsageTotal(runUsage).toLocaleString()) + (parallelism > 1 ? ' · ' + t('并行 {0}×', parallelism) + ' · ' + t('并行容量；不代表 Token 倍率或等比例提速') : '');
-        runSummary.removeAttribute('title');
-        runSummary.setAttribute('aria-label', runDetail);
-        card.dataset.runDetail = runDetail;
-    }
-    const request = latestRequestContext(data);
-    if (state.contextCompactions.has(state.session?.id || ''))
-        renderContextCompactionState();
-    else
-        paintContextRequestState(request);
+    $('context-run-total').textContent = runSummary.hidden ? '' : t('{0} tokens', contextUsageTotal(runUsage).toLocaleString());
+    paintSavedCompaction();
+    const request = latestRequestContext();
+    $('context-request-summary').textContent = (request?.label ? t(request.label) + ' · ' : '') + requestContextReadout(request);
     renderContextRuntime(run);
     paintContextUsageRings(run, request);
-    const bar = $('context-bar');
-    const requestSummary = $('context-request-summary');
-    bar.replaceChildren();
-    bar.classList.remove('warn');
-    bar.hidden = !request;
-    requestSummary.replaceChildren();
-    if (request) {
-        const actual = !request.usage?.estimated && request.usage?.prompt > 0;
-        const input = actual ? request.usage.prompt : request.inputEstimate || 0;
-        const output = actual ? request.usage.completion || 0 : 0;
-        const window = request.contextWindow || 65536;
-        const occupied = input + output;
-        const requestLabel = el('span', 'context-request-label', t('上下文'));
-        requestLabel.append(el('small', '', t(actual ? '上游实际' : '估算')));
-        const metric = el('span', 'context-request-metric');
-        metric.append(el('strong', 'context-request-value', fmtTokens(occupied) + ' / ' + fmtTokens(window)), el('small', 'context-request-percent', Math.round(occupied / window * 100) + '%'));
-        requestSummary.append(requestLabel, metric);
-        const requestDetail = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
-        requestSummary.removeAttribute('title');
-        requestSummary.setAttribute('aria-label', requestDetail);
-        card.dataset.requestDetail = requestDetail;
-        card.style.setProperty('--context-progress', Math.min(100, Math.max(0, occupied / window * 100)) + '%');
-        bar.setAttribute('aria-label', requestSummary.textContent);
-        for (const [tokens, kind, name] of [[input, 'input', '请求输入'], [output, 'output', '请求输出']]) {
-            if (!tokens)
-                continue;
-            const segment = el('span', 'context-segment context-request-' + kind);
-            segment.style.width = Math.min(100, Math.max(0, tokens / window * 100)) + '%';
-            segment.setAttribute('role', 'img');
-            segment.setAttribute('aria-label', t('{0}：{1} tokens · {2}', t(name), tokens, t(actual ? '上游实际' : '估算')));
-            bar.append(segment);
-        }
-        bar.classList.toggle('warn', occupied > window * .9);
+    if ($('context-usage-dialog').open) {
+        paintContextEnvironmentList(run, request);
+        const detail = $('context-card-detail');
+        detail.replaceChildren();
+        renderParallelContextDetail(detail);
     }
-    else {
-        requestSummary.textContent = t(run?.parallelism > 1 ? '等待上下文' : '暂无上下文');
-        requestSummary.removeAttribute('title');
-        requestSummary.setAttribute('aria-label', requestSummary.textContent);
-        card.dataset.requestDetail = requestSummary.textContent;
-        card.style.setProperty('--context-progress', '0%');
-        bar.setAttribute('aria-label', requestSummary.textContent);
-    }
-    const detail = $('context-card-detail');
-    const wasOpen = !!detail.querySelector?.('details')?.open;
-    const scrollTop = detail.querySelector?.('.context-usage-detail-body')?.scrollTop || 0;
-    detail.replaceChildren();
-    const disclosure = el('details', 'context-usage-details');
-    disclosure.open = wasOpen;
-    disclosure.append(el('summary', '', t(run?.parallelism > 1 ? '用量明细 · 并行 {0}×' : '用量明细', run?.parallelism || 1)));
-    const body = el('div', 'context-usage-detail-body');
-    if (usage)
-        body.append(el('p', 'context-card-actual', t('累计输入 {0} · 输出 {1} · {2}', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), t(usage.estimated ? '含估算' : '上游实际'))));
-    if (runUsage)
-        body.append(el('p', 'context-card-actual', t('最近任务') + ': ' + formatUsageTokens(runUsage.prompt || 0) + ' + ' + formatUsageTokens(runUsage.completion || 0) + ' = ' + formatUsageTokens(contextUsageTotal(runUsage)) + (parallelism > 1 ? ' · ' + t('并行 {0}×', parallelism) : '')));
-    if (['running', 'queued'].includes(run?.status))
-        body.append(el('p', 'context-card-actual', t('运行中，仅统计已回传用量；未完成请求稍后更新。')));
-    renderParallelContextDetail(body);
-    if (data)
-        body.append(el('p', 'context-card-actual context-next-estimate', t('下次请求预估（非实际消耗）：输入 {0} · 输出预留 {1}', fmtTokens(data.inputEstimate || 0), fmtTokens(data.outputReserve || 0))));
-    disclosure.append(body);
-    detail.append(disclosure);
-    body.scrollTop = scrollTop;
     renderContextCompactionState($('context-compaction-slot'));
 }
 function renderContextMeter(data, isDraft) {
-    if (!data || !data.breakdown)
+    if (!data?.breakdown && !(isDraft && data?.draftNotice))
         return;
     state.contextMeter = data;
     state.contextMeterDraft = !!isDraft;
@@ -9852,8 +9754,7 @@ function showEnvironmentCompaction(event) {
     const timer = setTimeout(() => {
         if (result.compaction?.updatedAt !== record.updatedAt)
             return;
-        if (terminal)
-            result.compaction = null;
+        // Preserve the last recorded worker outcome for its assignment detail.
         environmentCompactionTimers.delete(environmentId);
         paintContextCompactionRings();
     }, terminal ? 10000 : 180000);
@@ -9932,19 +9833,24 @@ function renderContextCompactionState(detail) {
     const card = $('context-card');
     const inProgress = event?.phase === 'started' || event?.phase === 'folding';
     const inlineState = $('context-request-state');
-    if (inlineState) {
-        if (!event)
-            paintContextRequestState(latestRequestContext(state.contextMeter));
-        else {
-            inlineState.textContent = inProgress ? t('上下文压缩中') : (event.phase === 'completed' ? (event.text || t('压缩完成')) : t('压缩失败'));
-            inlineState.dataset.state = inProgress ? 'compacting' : (event.phase === 'completed' ? 'completed' : 'failed');
-            inlineState.title = event.text || inlineState.textContent;
-        }
-    }
     const stalledForMs = inProgress ? Math.max(0, Date.now() - (event.updatedAt || event.startedAt || Date.now())) : 0;
     const stalled = inProgress && stalledForMs >= 180_000;
     const running = inProgress && !stalled;
-    const failed = !!event && !inProgress && event.phase !== 'completed';
+    const failed = event?.phase === 'failed';
+    const cancelled = event?.phase === 'cancelled';
+    const count = state.session?.compactedMessages || 0;
+    if (inlineState) {
+        const label = stalled ? t('压缩停滞') : running ? t('压缩中') : failed ? t('压缩失败') : cancelled ? t('压缩已取消') : event?.phase === 'completed' ? t(event.folded || event.afterTokens ? '压缩完成' : '无需压缩') : count > 0 ? t('已折叠 {0} 条', count) : '';
+        inlineState.hidden = !label;
+        inlineState.textContent = label;
+        inlineState.dataset.state = stalled ? 'stalled' : running ? 'compacting' : failed ? 'failed' : cancelled ? 'cancelled' : 'idle';
+        inlineState.title = event?.text || label;
+    }
+    const trigger = $('context-compaction-action');
+    if (trigger) {
+        trigger.disabled = !sessionID || !!inProgress;
+        trigger.hidden = !!failed || !!stalled;
+    }
     card?.classList.toggle('is-compacting', !!running);
     card?.classList.toggle('is-compaction-stalled', !!stalled);
     card?.classList.toggle('is-compaction-failed', failed || stalled);
@@ -9959,21 +9865,28 @@ function renderContextCompactionState(detail) {
         else
             card.dataset.compactionDetail = ' · × ' + (event.text || t('压缩失败，原会话内容已保留'));
     }
-    const retry = $('context-compaction-retry');
-    if (retry) {
-        retry.hidden = !(failed || stalled);
-        retry.disabled = !!inProgress && !stalled;
+    for (const retry of [$('context-compaction-retry'), $('context-ring-retry')]) {
+        if (retry) {
+            retry.hidden = !(failed || stalled);
+            retry.disabled = !!inProgress && !stalled;
+        }
     }
     detail.querySelectorAll('.context-compaction-status').forEach((row) => row.remove());
     paintContextCompactionRings();
-    if (!event || (inProgress && !stalled))
+    if (!event)
         return;
     const row = el('div', 'context-compaction-status ' + (stalled ? 'stalled' : (running ? 'running' : event.phase)));
     row.setAttribute('role', 'status');
-    row.setAttribute('aria-live', 'polite');
+    row.setAttribute('aria-live', inProgress ? 'off' : 'polite');
     if (inProgress) {
-        row.append(el('span', 'context-compaction-stall-icon', 'Ⅱ'));
-        row.append(el('span', '', t('进度已停滞 · 最近 {0} 分钟无更新，仍在等待模型返回', Math.floor(stalledForMs / 60_000))));
+        row.append(el('span', 'context-compaction-stall-icon', stalled ? 'Ⅱ' : '◌'));
+        const stage = event.phase === 'folding' ? t('正在保存摘要') : event.batchStage === 'reduce' ? t('正在合并摘要') : t('正在整理早期消息');
+        let progress = stalled ? t('进度已停滞 · 最近 {0} 分钟无更新，仍在等待模型返回', Math.floor(stalledForMs / 60_000)) : stage;
+        if (event.batch > 0 && event.batches > 0)
+            progress += ' · ' + t('批次 {0}/{1}', event.batch, event.batches);
+        if (event.retryAttempt > 0)
+            progress += ' · ' + t('第 {0} 次重试', event.retryAttempt);
+        row.append(el('span', '', progress));
         const detailText = event.folded > 0
             ? t('{0} 条早期消息 · 当前约 {1}', event.folded, fmtTokens(event.beforeTokens || 0))
             : (event.beforeTokens > 0 ? t('当前约 {0}', fmtTokens(event.beforeTokens)) : '');
@@ -9986,10 +9899,11 @@ function renderContextCompactionState(detail) {
         row.append(el('strong', 'context-compaction-elapsed', elapsedText));
     }
     else if (event.phase === 'completed') {
-        const saved = Math.max(0, (event.beforeTokens || 0) - (event.afterTokens || 0));
         row.append(el('span', 'context-compaction-check', '✓'));
-        row.append(el('span', '', event.preflight ? t('发送前已压缩 {0} 条 · 活动上下文估算', event.folded || 0) : t('已压缩 {0} 条 · 活动上下文估算', event.folded || 0)));
-        row.append(el('strong', '', fmtTokens(event.beforeTokens || 0) + ' → ' + fmtTokens(event.afterTokens || 0) + ' (−' + fmtTokens(saved) + ')'));
+        row.append(el('span', '', event.folded ? t(event.preflight ? '发送前已压缩 {0} 条 · 活动上下文估算' : '已压缩 {0} 条 · 活动上下文估算', event.folded) : (event.text || t('无需压缩'))));
+        if (event.beforeTokens > 0 && Number.isFinite(event.afterTokens)) {
+            row.append(el('strong', '', t('活动历史估算 {0} → {1} tokens', event.beforeTokens.toLocaleString(), event.afterTokens.toLocaleString())));
+        }
     }
     else {
         row.append(el('span', 'context-compaction-check', ''));
@@ -10002,13 +9916,6 @@ function contextMeterScope() {
 }
 function contextMeterTransitioning() {
     return !!state.pendingSessionId && state.pendingSessionId !== state.session?.id;
-}
-function contextOccupancyRatio(context) {
-    const actual = !!context?.usage && !context.usage.estimated && (context.usage.prompt || 0) > 0;
-    const input = actual ? context.usage.prompt || 0 : context?.inputEstimate || 0;
-    const output = actual ? context.usage.completion || 0 : 0;
-    const window = context?.contextWindow || 0;
-    return window > 0 ? Math.min(1, Math.max(0, (input + output) / window)) : 0;
 }
 function contextRunDuration(run) {
     const started = Date.parse(run?.created || '');
@@ -10046,6 +9953,10 @@ function renderContextRuntime(run) {
     const duration = contextRunDuration(run);
     node.textContent = duration ? t('运行时间') + ' ' + duration : '';
     node.title = duration ? t('运行时间') + ' ' + duration : '';
+    const compact = $('context-runtime-compact');
+    compact.textContent = duration;
+    compact.title = node.title;
+    compact.setAttribute('aria-label', node.title);
 }
 setInterval(() => {
     const run = state.session?.runs?.at(-1);
@@ -10062,124 +9973,203 @@ function paintContextCompactionRing(ring, lane) {
     const phase = compaction?.phase || '';
     const active = phase === 'started' || phase === 'folding';
     const updatedAt = Number(compaction?.updatedAt) || 0;
-    const age = updatedAt > 0 ? Math.max(0, Date.now() - updatedAt) : 0;
-    const compacting = active && (!updatedAt || age <= 180000);
-    const completed = phase === 'completed' && (!updatedAt || age <= 10000);
-    const failed = phase === 'failed' && (!updatedAt || age <= 10000);
-    ring.classList.toggle('is-compacting', compacting);
-    ring.classList.toggle('was-compacted', completed);
-    ring.classList.toggle('is-compaction-failed', failed);
-    ring.classList.toggle('is-compaction-stalled', active && !compacting);
-    ring.dataset.compactionState = compacting ? 'compacting' : completed ? 'completed' : failed ? 'failed' : active ? 'stalled' : '';
+    const stalled = active && updatedAt > 0 && Date.now() - updatedAt >= 180000;
+    let label = '';
+    if (active)
+        label = t(stalled ? '压缩停滞' : '压缩中');
+    if (phase === 'completed')
+        label = compaction.folded || compaction.afterTokens ? t('压缩完成') : t('无需压缩');
+    if (phase === 'failed' || phase === 'cancelled')
+        label = t(phase === 'failed' ? '压缩失败' : '压缩已取消');
+    if (label && compaction.beforeTokens > 0 && Number.isFinite(compaction.afterTokens))
+        label += ' · ' + t('活动历史估算 {0} → {1} tokens', compaction.beforeTokens.toLocaleString(), compaction.afterTokens.toLocaleString());
+    else if (label && compaction.text)
+        label += ' · ' + compaction.text;
+    ring.dataset.compactionState = phase ? (stalled ? 'stalled' : phase) : '';
+    if (ring.dataset.slot !== undefined) {
+        const recent = !updatedAt || Date.now() - updatedAt <= 10000;
+        ring.classList.toggle('is-compacting', active && !stalled);
+        ring.classList.toggle('is-compaction-stalled', stalled);
+        ring.classList.toggle('was-compacted', phase === 'completed' && recent && !!(compaction.folded || compaction.afterTokens));
+        ring.classList.toggle('is-compaction-failed', phase === 'failed' && recent);
+        ring._ringDescription = [ring._laneDescription, label].filter(Boolean).join(' · ');
+        ring.setAttribute('aria-label', ring._ringDescription);
+        const tip = $('context-ring-tip');
+        if (tip.dataset.slot === ring.dataset.slot)
+            tip.textContent = ring._ringDescription;
+    }
+    else {
+        const stateLabel = ring.querySelector('.context-lane-compaction');
+        stateLabel.textContent = label;
+        stateLabel.hidden = !label;
+    }
 }
 function paintContextCompactionRings() {
-    const host = $('context-parallel-rings');
-    if (!host)
-        return;
-    for (const ring of host.children)
-        paintContextCompactionRing(ring, ring._aideContextLane);
+    for (const host of [$('context-parallel-rings'), $('context-environment-list')]) {
+        if (host)
+            for (const node of host.children)
+                paintContextCompactionRing(node, node._aideContextLane);
+    }
+}
+function contextRingButton(index) {
+    const ring = el('button', 'usage-ring');
+    ring.type = 'button';
+    ring.dataset.slot = String(index);
+    ring.setAttribute('aria-controls', 'context-ring-tip');
+    ring.setAttribute('aria-expanded', 'false');
+    ring.append(el('span', 'usage-ring-face'), el('span', 'usage-ring-center'));
+    const tip = $('context-ring-tip');
+    const show = () => {
+        ring.parentElement?.children[tip.dataset.slot]?.setAttribute('aria-expanded', 'false');
+        tip.dataset.slot = ring.dataset.slot;
+        tip.textContent = ring._ringDescription;
+        tip.hidden = false;
+        ring.setAttribute('aria-expanded', 'true');
+    };
+    const hide = () => {
+        ring.setAttribute('aria-expanded', 'false');
+        if (tip.dataset.slot !== ring.dataset.slot)
+            return;
+        tip.hidden = true;
+        delete tip.dataset.slot;
+    };
+    ring.onpointerenter = (event) => { if (event.pointerType !== 'touch')
+        show(); };
+    ring.onpointerleave = () => { if (document.activeElement !== ring)
+        hide(); };
+    ring.onfocus = show;
+    ring.onblur = hide;
+    ring.onclick = () => { ring.focus(); show(); };
+    ring.onkeydown = (event) => { if (event.key === 'Escape' && !tip.hidden) {
+        event.stopPropagation();
+        hide();
+    } };
+    return ring;
 }
 function paintContextUsageRings(run, request) {
     const host = $('context-parallel-rings');
-    if (!host)
-        return;
-    host.replaceChildren();
-    const card = $('context-card');
-    const count = Math.max(1, Math.min(10, run?.parallelism || 1));
-    const environmentJobs = count > 1 && run?.environments ? (run.environments.results || []).slice(-(count - 1)) : null;
-    for (let index = 0; index < count; index++) {
-        const environmentJob = environmentJobs && index > 0 ? environmentJobs[index - 1] : null;
-        const part = !environmentJobs && count > 1 ? run?.parallel?.parts?.[index] : null;
-        const context = environmentJobs ? (index === 0 ? request : environmentJob?.context) : (count > 1 ? part?.context : request);
-        const ratio = contextOccupancyRatio(context);
-        const percent = Math.round(ratio * 1000) / 10;
-        const ring = el('span', 'usage-ring');
-        ring.tabIndex = 0;
-        ring.setAttribute('role', 'listitem');
-        ring.style.setProperty('--ring-progress', percent + '%');
-        const laneLabel = environmentJobs ? (index === 0 ? t('主环境') : t('执行环境 {0}', index + 1)) : (count > 1 ? t('第 {0} 路', index + 1) : t('主请求'));
-        let detail = laneLabel + ' · ' + t('并行 {0}×', count);
-        if (environmentJob)
-            detail += ' · ' + (environmentJob.status || t('等待'));
-        if (context) {
-            const actual = !!context.usage && !context.usage.estimated && (context.usage.prompt || 0) > 0;
-            const input = actual ? context.usage.prompt || 0 : context.inputEstimate || 0;
-            const output = actual ? context.usage.completion || 0 : 0;
-            detail += ' · ' + t('输入') + ' ' + fmtTokens(input)
-                + ' · ' + t('输出') + ' ' + fmtTokens(output)
-                + ' · ' + t('窗口') + ' ' + fmtTokens(context.contextWindow || 0)
-                + ' · ' + percent + '%';
-            if (!actual && input > 0)
-                detail += ' · ' + t('估算');
-            ring.dataset.contextState = actual ? 'actual' : 'estimated';
-        }
-        else {
-            detail += ' · ' + t(environmentJobs && index > 0 && !environmentJob ? '未分配执行环境' : '暂无上下文');
-            if (contextUsageTotal(environmentJob?.usage) > 0)
-                detail += ' · ' + t('累计消耗') + ' ' + fmtTokens(contextUsageTotal(environmentJob.usage));
-            ring.dataset.contextState = 'empty';
-        }
-        const show = () => { if (card)
-            card.dataset.ringDetail = detail; };
-        const hide = () => { if (card?.dataset.ringDetail === detail)
-            delete card.dataset.ringDetail; };
-        ring.onpointerenter = show;
-        ring.onfocus = show;
-        ring.onpointerleave = hide;
-        ring.onblur = hide;
-        ring.setAttribute('aria-label', detail);
-        ring.append(el('span', 'usage-ring-center'));
-        ring._aideContextLane = { main: index === 0, result: environmentJob, part };
-        paintContextCompactionRing(ring, ring._aideContextLane);
-        host.append(ring);
+    const environments = run?.environments;
+    const count = Math.max(1, Math.min(10, Number(environments?.capacity || run?.parallelism) || 1));
+    const isLegacyAnalysis = !environments && count > 1 && !!run?.parallel?.parts?.length;
+    let jobs = environments?.results || [];
+    if (jobs.length > count - 1) {
+        // The service has job IDs, not numbered slots. Keep active jobs visible as slots refill.
+        const running = jobs.filter(job => job.status === 'running');
+        const others = jobs.filter(job => job.status !== 'running');
+        const remaining = Math.max(0, count - 1 - running.length);
+        jobs = running.concat(remaining ? others.slice(-remaining) : []);
     }
-    renderContextCompactionState($('context-compaction-slot'));
+    if (host.children.length !== count) {
+        $('context-ring-tip').hidden = true;
+        delete $('context-ring-tip').dataset.slot;
+        host.replaceChildren(...Array.from({ length: count }, (_, index) => contextRingButton(index)));
+    }
+    host.style.setProperty('--ring-count', String(count));
+    const statuses = { queued: '等待资源', running: '执行中', completed: '已完成', failed: '失败', cancelled: '已取消', interrupted: '已中断' };
+    for (let i = 0; i < count; i++) {
+        const main = i === 0 && !isLegacyAnalysis;
+        const job = environments && i > 0 ? jobs[i - 1] : null;
+        const part = isLegacyAnalysis ? run.parallel.parts[i] : null;
+        const assignment = job || part;
+        const context = main ? request : assignment?.context;
+        const actual = !context?.usage?.estimated && context?.usage?.prompt > 0;
+        const input = actual ? context.usage.prompt : context?.inputEstimate;
+        const output = actual ? context.usage.completion || 0 : 0;
+        const measured = Number.isFinite(input) && context?.contextWindow > 0;
+        const percent = measured ? Math.max(0, Math.round((input + output) / context.contextWindow * 1000) / 10) : 0;
+        const ring = host.children[i];
+        ring.style.setProperty('--ring-progress', Math.min(100, percent) + '%');
+        ring.dataset.contextState = context ? (actual ? 'actual' : 'estimated') : 'empty';
+        ring.dataset.windowKnown = String(measured);
+        const laneName = main ? t('主环境') : (environments ? t('执行环境 {0}', i + 1) : t('第 {0} 路', i + 1));
+        const pieces = [laneName, t('容量 {0}', count), job?.assignment || part?.title];
+        if (assignment?.status)
+            pieces.push(t(statuses[assignment.status] || '未知'));
+        pieces.push(!main && !assignment ? t('未分配执行环境') : requestContextReadout(context));
+        if (measured)
+            pieces.push(t('窗口占用 {0}%', percent));
+        if (!context && contextUsageTotal(assignment?.usage) > 0)
+            pieces.push(t('累计消耗') + ' ' + fmtTokens(contextUsageTotal(assignment.usage)));
+        ring._laneDescription = pieces.filter(Boolean).join(' · ');
+        ring._aideContextLane = { main, result: job, part };
+    }
+}
+function paintContextEnvironmentList(run, request) {
+    const host = $('context-environment-list');
+    const group = $('context-environments');
+    const environments = run?.environments;
+    const capacity = Math.max(1, Number(environments?.capacity || run?.parallelism) || 1);
+    group.hidden = capacity <= 1;
+    host.replaceChildren();
+    if (group.hidden)
+        return;
+    const jobs = environments?.results || [];
+    const parts = run?.parallel?.parts || [];
+    $('context-parallel-badge').textContent = t('容量 {0}', capacity);
+    $('context-env-description').textContent = environments
+        ? t('含主环境 · 活跃子环境 {0} · 已分配任务 {1}', environments.active || 0, jobs.length)
+        : t('独立分析任务 {0} 个', parts.length);
+    const statuses = { queued: '等待资源', running: '执行中', completed: '已完成', failed: '失败', cancelled: '已取消', interrupted: '已中断' };
+    const appendLane = (label, context, lane, status) => {
+        const item = el('li', 'context-lane');
+        item._aideContextLane = lane;
+        const name = el('strong', '', label);
+        const description = el('small', '', requestContextReadout(context));
+        const usage = contextUsageTotal(lane.result?.usage || lane.part?.usage);
+        if (!context && usage > 0)
+            description.textContent += ' · ' + t('累计消耗') + ' ' + fmtTokens(usage);
+        item.append(name);
+        if (status)
+            item.append(el('span', 'context-lane-status', t(statuses[status] || '未知')));
+        item.append(description);
+        const stateLabel = el('span', 'context-lane-compaction');
+        item.append(stateLabel);
+        paintContextCompactionRing(item, lane);
+        host.append(item);
+    };
+    appendLane(t('主环境'), request, { main: true });
+    if (environments) {
+        for (const [index, job] of jobs.entries()) {
+            appendLane(job.assignment || t('执行环境 {0}', index + 1), job.context, { result: job }, job.status);
+        }
+    }
+    else {
+        for (const [index, part] of parts.entries()) {
+            appendLane(part.title || t('第 {0} 路', index + 1), part.context, { part }, part.status);
+        }
+    }
 }
 function clearContextMeterDisplay() {
-    $('context-card-label').textContent = t('消耗');
+    $('context-card-label').textContent = t('会话消耗');
     $('context-stat').textContent = '—';
-    $('context-stat').title = '';
     $('context-usage-kind').textContent = '';
-    const inlineRequestState = $('context-request-state');
-    inlineRequestState.textContent = '';
-    inlineRequestState.title = '';
-    delete inlineRequestState.dataset.state;
-    renderContextRuntime(null);
-    const parallelBadge = $('context-parallel-badge');
-    parallelBadge.hidden = true;
-    parallelBadge.textContent = '';
-    const usageRatio = $('context-usage-ratio');
-    usageRatio.replaceChildren();
-    usageRatio.hidden = true;
-    usageRatio.removeAttribute('aria-label');
-    const runSummary = $('context-run-summary');
-    runSummary.hidden = true;
-    $('context-run-label').textContent = t('最近任务');
+    const inline = $('context-request-state');
+    inline.textContent = '';
+    inline.hidden = true;
+    inline.title = '';
+    delete inline.dataset.state;
+    $('context-compaction-slot').replaceChildren();
+    $('context-saved-compaction').textContent = t('暂无已保存的压缩记录');
+    $('context-compaction-action').disabled = true;
+    $('context-compaction-action').hidden = false;
+    $('context-compaction-retry').hidden = true;
+    $('context-ring-retry').hidden = true;
+    $('context-environments').open = false;
+    $('context-environments').hidden = true;
+    $('context-parallel-rings').replaceChildren();
+    $('context-environment-list').replaceChildren();
+    $('context-ring-tip').hidden = true;
+    delete $('context-ring-tip').dataset.slot;
+    $('context-card-detail').replaceChildren();
+    $('context-usage-heading').textContent = t('会话消耗');
+    $('context-usage-summary').textContent = t('等待上游用量回传');
+    $('context-request-summary').textContent = t('暂无逐请求数据');
+    $('context-run-summary').hidden = true;
     $('context-run-total').textContent = '';
-    runSummary.title = '';
-    const bar = $('context-bar');
-    bar.replaceChildren();
-    bar.hidden = true;
-    bar.removeAttribute('aria-label');
-    bar.classList.remove('warn');
-    $('context-card-detail')?.replaceChildren();
-    $('context-usage-summary').textContent = '';
-    $('context-request-summary').textContent = '';
-    $('context-compaction-slot')?.replaceChildren();
-    $('context-parallel-rings')?.replaceChildren();
-    const compactionRetry = $('context-compaction-retry');
-    if (compactionRetry) {
-        compactionRetry.hidden = true;
-        compactionRetry.disabled = false;
-    }
-    const contextCard = $('context-card');
-    if (contextCard) {
-        delete contextCard.dataset.ringDetail;
-        delete contextCard.dataset.compactionDetail;
-    }
-    contextCard?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled', 'is-compaction-failed', 'is-parallel');
-    if ($('context-card-detail'))
-        $('context-card-detail').title = '';
+    renderContextRuntime(null);
+    const card = $('context-card');
+    delete card.dataset.compactionDetail;
+    card.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled', 'is-compaction-failed');
     hideCtxTooltip();
 }
 function resetContextMeter() {
@@ -10214,7 +10204,8 @@ async function refreshContextMeter() {
     const controller = new AbortController();
     state.contextMeterController = controller;
     state.contextMeterPendingKey = key;
-    paintContextUsage(state.contextMeter);
+    state.contextMeter = null;
+    paintContextUsage(null);
     const seq = ++state.contextMeterSeq.value;
     const strategy = sessionModelPreferences().strategy;
     const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
@@ -10240,8 +10231,11 @@ async function refreshContextMeter() {
 function estimateContext() {
     if (state.contextMeterScope !== contextMeterScope() || !state.config?.configured)
         resetContextMeter();
-    if (!state.config?.configured)
+    if (!state.config?.configured) {
+        if (!contextMeterTransitioning())
+            paintContextUsage(null);
         return;
+    }
     paintContextUsage(state.contextMeter);
     refreshContextMeter();
 }
@@ -15358,12 +15352,27 @@ function refreshCompactInfo() {
         return;
     btn.classList.toggle('has-compacted', (state.session?.compactedMessages || 0) > 0);
 }
+$('context-toggle').onclick = () => {
+    if (lockScreen.locked || !$('context-usage-dialog'))
+        return;
+    $('context-usage-dialog').showModal();
+    paintContextUsage(state.contextMeter);
+};
+window.LockCluster?.on('effective', (locked) => { if (locked)
+    $('context-usage-dialog').close(); });
+$('context-compaction-action').onclick = () => {
+    if (!$('context-compaction-action').disabled)
+        $('compact-button').click();
+};
 $('compact-button').onclick = action(async () => {
     if (!state.session) {
         toast(t("请先选择会话"));
         return;
     }
     const sessionId = state.session.id;
+    const scope = contextMeterScope();
+    if (sessionCompactionVisualState(sessionId) === 'compacting' || (state.pendingSessionId && state.pendingSessionId !== sessionId))
+        return;
     showContextCompaction({ phase: 'started', folded: 0, text: t('正在分析可压缩的早期消息'), sessionId: sessionId });
     const stopCompactionWatch = ensureContextCompactionWatch(sessionId);
     try {
@@ -15372,16 +15381,30 @@ $('compact-button').onclick = action(async () => {
             showContextCompaction({ phase: 'completed', folded: res.folded, beforeTokens: res.beforeTokens, afterTokens: res.afterTokens, sessionId });
         else
             showContextCompaction({ phase: 'completed', folded: 0, text: t('历史未超阈值，无需压缩'), sessionId });
-        await selectSession(sessionId);
-        refreshCompactInfo();
     }
     catch (error) {
         showContextCompaction({ phase: 'failed', text: error?.message || t('压缩失败，原会话内容已保留'), sessionId });
+        return;
     }
     finally {
         await stopCompactionWatch();
     }
+    const stillSelected = () => !lockScreen.locked && contextMeterScope() === scope && !contextMeterTransitioning();
+    if (!stillSelected())
+        return;
+    const updated = await getSessionWindow(sessionId);
+    if (!stillSelected())
+        return;
+    const changed = adoptSessionIfChanged(updated);
+    refreshCompactInfo();
+    // A manual action can finish while the dialog is open on a session with no runs.
+    // Refresh the saved receipt and latest request details independently of timeline rendering.
+    paintContextUsage(null);
+    await refreshContextPreview();
+    if (changed && stillSelected())
+        renderSession();
 });
+$('context-ring-retry').onclick = () => $('context-compaction-retry').click();
 $('context-compaction-retry').onclick = () => {
     if (!$('context-compaction-retry').disabled)
         $('compact-button').click();

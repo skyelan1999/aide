@@ -1,0 +1,75 @@
+{
+  "schema": "aide.task.v1",
+  "task": "issue-2026-11-27-context-rings-compaction",
+  "title": "独立上下文圆环与历史压缩明细",
+  "summary": "按本轮验收，仅保留各执行环境的实际上下文圆环、历史压缩回执与发送前安全预检；下次请求预算的侧栏及弹层展示已回退，不进入提交。",
+  "modifications": [
+    "主请求锚点保存发送时的模型窗口；主环境与并行槽位分别展示真实占用、压缩状态和失败重试。",
+    "侧栏与明细弹层不展示下次请求预算，草稿估算只用于发送前安全检查，不覆盖会话实测。",
+    "历史压缩成功写盘后保存折叠条数、保留条数和活动历史前后估算，重新打开会话仍可查看。",
+    "手动压缩沿用会话选择的模型和凭据；无可折叠内容时明确返回成功空操作。",
+    "压缩遵守工具调用组边界、活动请求必填内容和锁屏隐私边界，失败保留原历史并支持重试。"
+  ],
+  "backend": [
+    "internal/server/compaction_circuit.go",
+    "internal/server/context.go",
+    "internal/server/context_recovery.go",
+    "internal/server/execution_environments.go",
+    "internal/server/server.go",
+    "internal/server/workflow.go"
+  ],
+  "frontend": [
+    "internal/server/web/app.ts",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/workbench.css",
+    "internal/server/web/locales/en.ts",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/i18n.ts",
+    "internal/server/web/i18n.js"
+  ],
+  "scripts": [
+    "scripts/context-meter.test.cjs",
+    "scripts/test_context_compaction_ui.cjs",
+    "scripts/browser-context-rings.cjs",
+    "scripts/fixtures/render-context-accounting.py"
+  ],
+  "docs": [
+    "docs/architecture.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md"
+  ],
+  "checks": [
+    {
+      "id": "e-go-focused",
+      "command": "go test ./internal/server -run '^(Test.*Compaction.*|TestContextRecovery.*|TestDraftBudgetIdentifiesRecoverableHistory|TestCancelledOutputMaterializeBeforeCompaction|TestIssue113LockedAssistantCompactionCannotReadOrSendHistory|TestConversationParallelEndToEnd)$' -count=1",
+      "result": "pass",
+      "evidence": "E-only Linux/Docker 快照：ok aide/internal/server 24.034s。"
+    },
+    {
+      "id": "e-build-typecheck",
+      "command": "npm run build:web && npm run typecheck",
+      "result": "pass",
+      "evidence": "E-only 快照构建成功，122 个运行 JavaScript 文件均有 TypeScript 来源。"
+    },
+    {
+      "id": "e-context-ui",
+      "command": "node scripts/context-meter.test.cjs && node scripts/test_context_compaction_ui.cjs",
+      "result": "pass",
+      "evidence": "缓存、草稿隔离、竞态、10 环、压缩批次、重试、空操作和终态通过；预算 DOM 与绘制函数不存在。"
+    },
+    {
+      "id": "e-browser-rings",
+      "command": "node scripts/browser-context-rings.cjs",
+      "result": "pass",
+      "evidence": "桌面与触屏圆环、键盘访问、槽位容量及窄屏英文标题通过。"
+    },
+    {
+      "id": "e-real-app",
+      "command": "本机 Aide 真实窗口验收",
+      "result": "pass",
+      "evidence": "真实窗口无下次请求预算侧栏或弹层区域；保留 10 个独立圆环、压缩回执和手动压缩。"
+    }
+  ],
+  "screenshots": []
+}

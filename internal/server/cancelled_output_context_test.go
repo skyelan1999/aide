@@ -314,7 +314,7 @@ func TestCancelledOutputMaterializeBeforeCompaction(t *testing.T) {
 	if !found || split == 0 {
 		t.Fatalf("compaction omitted recovered text: split%d", split)
 	}
-	candidate := compactedSessionCandidate(s, snap, split, "摘要已标记未完成")
+	candidate := compactedSessionCandidate(s, snap, split, "摘要已标记未完成", sessionContextTokens(s))
 	if len(conversationHistory(&candidate)) != len(candidate.Messages) {
 		t.Fatal("compacted interruption resurrected")
 	}

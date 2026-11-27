@@ -113,3 +113,25 @@ func TestCompactionCircuitBoundsAndExpiresState(t *testing.T) {
 		t.Fatalf("expired circuit still blocks recovery: %s", wait)
 	}
 }
+
+func TestAutoCompactionBackoffSurvivesHalfOpenProbes(t *testing.T) {
+	a := testApp(t)
+	key := compactionCircuitKey{sessionID: "one", model: "fixture"}
+	now := time.Now()
+	for _, want := range []time.Duration{30 * time.Second, 2 * time.Minute, 5 * time.Minute, 5 * time.Minute} {
+		if got := a.recordAutoCompactionFailureLocked(key, now); got != want {
+			t.Fatalf("cooldown %s, want %s", got, want)
+		}
+		if wait := a.autoCompactionRetryAfterLocked(key, now.Add(want-time.Second)); wait != time.Second {
+			t.Fatalf("early retry with %s remaining", wait)
+		}
+		now = now.Add(want)
+		if wait := a.autoCompactionRetryAfterLocked(key, now); wait != 0 {
+			t.Fatalf("probe at deadline blocked for %s", wait)
+		}
+	}
+	a.resetCompactionCircuitLocked(key)
+	if got := a.recordAutoCompactionFailureLocked(key, now); got != 30*time.Second {
+		t.Fatalf("new failure after recovery has cooldown %s", got)
+	}
+}

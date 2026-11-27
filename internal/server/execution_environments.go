@@ -526,6 +526,9 @@ func executionEnvironmentRequestContext(task *Task, window int) *RequestContext 
 		return nil
 	}
 	anchor := task.ContextAnchor
+	if anchor.ContextWindow > 0 {
+		window = anchor.ContextWindow
+	}
 	return &RequestContext{
 		InputEstimate: anchor.PromptEstimate,
 		OutputReserve: anchor.CompletionEstimate,

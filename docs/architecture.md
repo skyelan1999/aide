@@ -94,6 +94,8 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 工作台对思考事件仅保留有界文本，超出 131,072 个字符时保留开头和末尾片段。思考区默认折叠；折叠时只更新一行预览，不向隐藏正文节点逐 token 累积文本，展开后才装载已保留记录。最终回答沿用增量 Markdown 扫描与稳定块渲染。超长未闭合块以纯文本显示，活动区记录起始偏移并只复制新到达的尾部；稳定区同样仅复制新闭合范围，避免逐帧复制累计前缀或活动尾部。活动区偏移改变、文本回退时重建节点以保持内容正确。该路径减少长流期间的重复 DOM/Markdown 工作，但最终回答仍须进入浏览器 DOM，不能视为无上限或跨设备性能保证。
 
 
+会话持久化最近一次历史压缩的统计 `lastCompaction`，随摘要一起保存折叠条数、保留条数和活动历史前后估算。只有成功写盘才更新这份记录，旧数据仍可根据 `compactedMessages` 与 `compactedAt` 展示。运行中临时整理只影响该次请求。新的主请求锚点保存发送时的配置窗口，用于解释历史用量。侧栏圆环按已记录的主请求锚点显示各环境实际占用；草稿预检只用于发送前安全检查，不替代会话实测。
+
 上下文卡按工作区与会话隔离缓存，只在成功响应后提交缓存键。切换期间先清空旧值，过期响应不得覆盖当前会话；同键请求合并，失败后可重试。草稿预算不会复用为会话基线，清空输入后重新获取基线。
 
 The context card scopes its cache to the workspace and session and commits cache keys only after successful responses. Switching clears stale values; late responses cannot overwrite the current session. Pending requests are deduplicated and failures can retry. Draft budgets are invalidated before returning to the session baseline.

@@ -244,6 +244,17 @@ func TestContextRecoveryActiveBudgetPreservesScopeAndProtocol(t *testing.T) {
 	if !seen["CURRENT_SCOPE"] || !seen["LATEST_CORRECTION"] || len(original[2].ToolCalls) != 1 {
 		t.Fatal("scope or source mutated")
 	}
+	call := testToolCall("list_files", "{}")
+	groupFirst := []Message{
+		{Role: "assistant", ToolCalls: []ToolCall{call}},
+		{Role: "tool", ToolCallID: call.ID, Content: "result"},
+		{Role: "assistant", Content: strings.Repeat("older work ", 1800)},
+		{Role: "user", Content: "continue"},
+	}
+	got, e = a.fitActiveContext(context.Background(), cfg, groupFirst, ProfileParams{MaxTokens: 512}, nil, nil)
+	if e != nil || len(got) != 4 || got[0].Role != "system" || !reflect.DeepEqual(got[1:3], groupFirst[:2]) {
+		t.Fatal("summary must not separate an initial pinned tool call from its results", e)
+	}
 }
 
 func TestContextRecoveryActiveFailurePreservesInput(t *testing.T) {
@@ -261,6 +272,117 @@ func TestContextRecoveryActiveFailurePreservesInput(t *testing.T) {
 	after, _ := json.Marshal(got)
 	if e == nil || string(before) != string(after) {
 		t.Fatal("failed compaction destroyed original context")
+	}
+}
+
+func TestContextRecoveryFinalToolGroupBoundary(t *testing.T) {
+	a := testApp(t)
+	first, second := testToolCall("read_file", strings.Repeat("x", 18000)), testToolCall("list_files", "{}")
+	second.ID = "call-2"
+	group := []Message{
+		{Role: "user", Content: "original scope"},
+		{Role: "assistant", ToolCalls: []ToolCall{first, second}},
+		{Role: "tool", ToolCallID: second.ID, Content: "listed"},
+		{Role: "tool", ToolCallID: first.ID, Content: "read"},
+	}
+	for _, end := range []int{2, 3, 4} {
+		want := 1
+		if end == len(group) {
+			want = len(group)
+		}
+		if got := safeCompactionSplit(group[:end], 2); got != want {
+			t.Errorf("%d messages: boundary %d, want %d", end, got, want)
+		}
+	}
+	if _, cut := a.snapshotForCompactBudget(&Session{Messages: group}, 1200); cut != len(group) {
+		t.Fatalf("completed final exchange stranded outside summary: cut %d", cut)
+	}
+	var long []Message
+	for range compactMaxFolded - 1 {
+		long = append(long, Message{Role: "assistant", Content: "completed"})
+	}
+	long = append(long, group[1:]...)
+	if _, cut := a.snapshotForCompactBudget(&Session{Messages: long}, 0); cut != compactMaxFolded-1 {
+		t.Fatalf("a tool group across the batch cap should remain intact for the next pass, got cut %d", cut)
+	}
+}
+
+func TestContextRecoveryFitsRecentHistoryBesideRequiredRequest(t *testing.T) {
+	a := testApp(t)
+	requests := make(chan []Message, 1)
+	var sawRecent atomic.Bool
+	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+			Tools    []any     `json:"tools"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("request JSON: %v", err)
+		}
+		if len(body.Tools) != 0 {
+			requests <- body.Messages
+			parallelReply(w, "done")
+			return
+		}
+		for _, message := range body.Messages {
+			if strings.Contains(message.Content, "RECENT_RESULT") {
+				sawRecent.Store(true)
+			}
+		}
+		parallelReply(w, `{"goal":"preserve scope","decisions":[],"files":[],"facts":["RECENT_RESULT"],"pending":[]}`)
+	}))
+	defer p.Close()
+	cfg := Settings{BaseURL: p.URL, Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 4096}}}
+	a.settings = cfg
+	call := testToolCall("inspect", "{}")
+	tools := []any{map[string]any{"type": "function", "function": map[string]any{"name": "inspect", "description": strings.Repeat("d", 2400)}}}
+	input := []Message{
+		{Role: "system", Content: strings.Repeat("s", 8800)},
+		{Role: "assistant", Content: strings.Repeat("h", 8000)},
+		{Role: "user", Content: "CURRENT_REQUEST"},
+		{Role: "assistant", ToolCalls: []ToolCall{call}},
+		{Role: "tool", ToolCallID: call.ID, Content: "RECENT_RESULT " + strings.Repeat("r", 3500)},
+	}
+	original := cloneCompactMessages(input)
+	params := ProfileParams{MaxTokens: 512}
+	got, err := a.fitActiveContext(context.Background(), cfg, input, params, tools, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err = complete(context.Background(), cfg, got, params, tools, nil); err != nil {
+		t.Fatal(err)
+	}
+	var final []Message
+	select {
+	case final = <-requests:
+	default:
+		t.Fatal("provider did not receive the fitted tool-enabled request")
+	}
+	if !sawRecent.Load() || len(final) != 3 || final[0].Content != input[0].Content || !strings.Contains(final[1].Content, "RECENT_RESULT") || final[2].Content != "CURRENT_REQUEST" {
+		t.Fatalf("fitted provider request lost required input or tool evidence (messages=%d)", len(final))
+	}
+	if estimateProviderPromptTokens(final, tools)+params.MaxTokens > 4096 || !reflect.DeepEqual(input, original) {
+		t.Fatal("fitted request exceeded budget or changed source")
+	}
+}
+
+func TestContextRecoveryUnfinishedToolGroupStaysRaw(t *testing.T) {
+	a := testApp(t)
+	var calls atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		parallelReply(w, `{"goal":"work","decisions":[],"files":[],"facts":[],"pending":[]}`)
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 4096}}}
+	a.settings = cfg
+	first, second := testToolCall("read_file", strings.Repeat("a", 19000)), testToolCall("list_files", "{}")
+	second.ID = "call-2"
+	input := []Message{{Role: "system", Content: "policy"}, {Role: "user", Content: "current scope"}, {Role: "assistant", ToolCalls: []ToolCall{first, second}}, {Role: "tool", ToolCallID: first.ID, Content: "partial result"}}
+	before := cloneCompactMessages(input)
+	got, err := a.fitActiveContext(context.Background(), cfg, input, ProfileParams{MaxTokens: 512}, nil, nil)
+	if err == nil || calls.Load() != 0 || !reflect.DeepEqual(before, got) || !reflect.DeepEqual(before, input) {
+		t.Fatal("oversized unfinished exchange must remain available to resume without a summary request")
 	}
 }
 
@@ -420,6 +542,7 @@ func TestManualCompactionUsesProviderUsageCalibration(t *testing.T) {
 	defer provider.Close()
 	a.settings.BaseURL = provider.URL
 	a.settings.Model = "fixture"
+	a.settings.ModelProviders = nil
 	a.settings.Models = []ModelRef{{ID: "fixture", ContextWindow: 65536}}
 	created := createSession(t, a)
 	a.mu.Lock()

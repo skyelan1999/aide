@@ -28,11 +28,15 @@ func (a *App) autoCompactionRetryAfterLocked(key compactionCircuitKey, now time.
 	if !ok {
 		return 0
 	}
-	if !now.Before(state.retryAfter) {
+	if now.Sub(state.updated) >= compactionCircuitMaxAge {
 		delete(a.contextCompactionCircuits, key)
 		return 0
 	}
-	return state.retryAfter.Sub(now)
+	if now.Before(state.retryAfter) {
+		return state.retryAfter.Sub(now)
+	}
+	// Keep the failure count through a half-open probe until it succeeds.
+	return 0
 }
 
 // recordAutoCompactionFailureLocked applies bounded exponential cooldowns:
@@ -47,7 +51,7 @@ func (a *App) recordAutoCompactionFailureLocked(key compactionCircuitKey, now ti
 			delete(a.contextCompactionCircuits, existing)
 		}
 	}
-	if len(a.contextCompactionCircuits) >= compactionCircuitMaxKeys {
+	if _, exists := a.contextCompactionCircuits[key]; !exists && len(a.contextCompactionCircuits) >= compactionCircuitMaxKeys {
 		var oldestKey compactionCircuitKey
 		var oldest time.Time
 		for existing, state := range a.contextCompactionCircuits {

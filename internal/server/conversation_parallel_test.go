@@ -901,7 +901,7 @@ func parallelEndToEnd(t *testing.T, limit int) {
 	if task.Status != "completed" || task.Parallel.Phase != "completed" || task.Parallel.Parts[1].Status != "failed" || task.Steps[0].Content != "One reconciled final answer." {
 		t.Fatalf("bad final task %+v", task)
 	}
-	if task.ContextAnchor == nil || task.ContextAnchor.Scope != "parallel_merge" || task.Parallel.MainContext == nil || task.Parallel.MainContext.Usage.Prompt != task.ContextAnchor.Usage.Prompt || task.Parallel.MainContext.Usage.Total >= task.Usage.Total {
+	if task.ContextAnchor == nil || task.ContextAnchor.Scope != "parallel_merge" || task.Parallel.MainContext == nil || task.ContextAnchor.ContextWindow <= 0 || task.ContextAnchor.ContextWindow != task.Parallel.MainContext.ContextWindow || task.Parallel.MainContext.Usage.Prompt != task.ContextAnchor.Usage.Prompt || task.Parallel.MainContext.Usage.Total >= task.Usage.Total {
 		t.Fatal("main request context must be separate from cumulative usage")
 	}
 	if task.TopicContext != nil && task.TopicContext.Usage.Prompt > 0 {

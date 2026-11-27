@@ -91,15 +91,15 @@ assert.equal(detail.children.length, 0, 'another session must not render status 
 context.state.session = { id: sessionB };
 context.renderContextCompactionState(detail);
 assert.equal(card.classList.contains('is-compacting'), true, 'switching back restores the active animation');
-assert.equal(detail.children.length, 0, 'active compaction uses the ring animation without a summary-processing row');
-assert.equal(inlineState.textContent, '上下文压缩中', 'the compact inline state still identifies active compaction');
+assert.equal(detail.children.length, 1, 'active compaction exposes the current stage in details');
+assert.equal(inlineState.textContent, '压缩中', 'the compact inline state still identifies active compaction');
 
 context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600, batchStage: 'map', batch: 2, batches: 5, startedAt: Date.now() - 65000 });
 context.renderContextCompactionState(detail);
-assert.equal(detail.children.length, 0, 'batch progress never creates a summary-processing row');
+assert.match(detail.children.at(-1).children[1].textContent,/批次 2\/5/);
 context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600, batchStage: 'map', batch: 2, batches: 5, retryAttempt: 2, retryDelayMs: 800 });
 context.renderContextCompactionState(detail);
-assert.equal(detail.children.length, 0, 'retry progress also remains on the animated ring');
+assert.match(detail.children.at(-1).children[1].textContent,/第 2 次重试/);
 assert.doesNotMatch(source, /摘要处理中/, 'the removed processing label cannot reappear');
 
 context.state.session = { id: sessionA };
@@ -139,11 +139,11 @@ context.showContextCompaction({ sessionId: sessionB, phase: 'completed', folded:
 context.state.session = { id: sessionB };
 context.renderContextCompactionState(detail);
 assert.equal(sessionItemB.classList.contains('compacting'), false, 'completion stops the session row spinner');
-assert.equal(detail.children.at(-1).children[2].textContent.includes('13,600 tokens → 5,400 tokens'), true, 'completion readback retains the correct session totals');
+assert.equal(detail.children.at(-1).children[2].textContent.includes('13,600 → 5,400 tokens'), true, 'completion readback retains the correct session totals');
 assert.equal(card.classList.contains('was-compacted'), true, 'completed animation is visible when returning');
 context.showContextCompaction({ sessionId: sessionB, phase: 'completed', folded: 0, text: '历史未超阈值，无需压缩' });
 context.renderContextCompactionState(detail);
-assert.equal(inlineState.textContent, '历史未超阈值，无需压缩', 'no-op compaction stays inline without a popup');
+assert.equal(inlineState.textContent, '无需压缩', 'no-op compaction stays inline without a popup');
 assert.match(card.dataset.compactionDetail, /无需压缩/);
 
 context.showContextCompaction({ sessionId: sessionB, phase: 'cancelled', text: '压缩已取消，原会话内容已保留' });
@@ -156,18 +156,17 @@ assert.equal(sessionItemC.classList.contains('compaction-stalled'), false, 'canc
 const pinned = element('context-compaction-slot');
 context.$ = id => ({'context-card':card,'context-card-detail':detail,'context-compaction-slot':pinned})[id];
 context.showContextCompaction({sessionId:sessionB,phase:'started',folded:4,beforeTokens:9000});
-assert.equal(pinned.children.length,0,'running compaction has no textual processing row');
+assert.equal(pinned.children.length,1,'running compaction exposes a single scoped progress row');
 context.showContextCompaction({sessionId:sessionB,phase:'completed',folded:4,beforeTokens:9000,afterTokens:3000});
 assert.equal(pinned.children.length,1,'completion retains its concise terminal feedback');
 assert.equal(pinned.children.at(-1).children.some(child=>child.className==='context-compaction-meter'),false,'legacy horizontal compaction meter is removed');
 assert.match(style,/\.session-activity-badge/,'session rows have an independent compaction activity badge');
-assert.match(workbench,/\.usage-ring\.is-compacting\{animation:context-compaction-ring-spin/,'active compaction spins only its own ring');
-assert.match(workbench,/@keyframes context-compaction-ring-spin\{to\{transform:rotate\(360deg\)\}\}/,'the ring animation is defined in the shipped stylesheet');
-assert.match(workbench,/prefers-reduced-motion:reduce\)\{\.sidebar-footer \.usage-ring\.is-compacting\{animation:none/,'reduced-motion users are not forced to watch the spinner');
+assert.match(workbench,/#context-toggle:focus-visible/,'the keyboard detail action has a focus indicator');
+assert.match(workbench,/context-lane-compaction/,'each assignment keeps its own visible compaction status');
 assert.doesNotMatch(style,/\.session-item\.compacting::after/,'compaction no longer reuses the session row spinner');
 assert.doesNotMatch(style,/context-fold-sweep|context-compression-fold|context-card-breathe/,'legacy strip and card animations are removed');
 assert.doesNotMatch(workbench,/context-compaction-fill|context-usage-spin/,'legacy compaction meter and global ring spin are removed');
 const compactHandler = source.slice(source.indexOf("$('compact-button').onclick"), source.indexOf("$('context-compaction-retry').onclick"));
 assert.doesNotMatch(compactHandler,/toast\(t\("已压缩|toast\(t\("历史未超阈值|throw error/,'manual compaction never creates global result or error toasts');
 
-console.log('PASS: per-session inline compaction without popups, spinner, timing, and terminal states');
+console.log('PASS: isolated compaction, batches, retries, elapsed time, no-op and terminal states');

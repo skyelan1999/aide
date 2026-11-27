@@ -58,7 +58,8 @@ func hasParallelBriefing(input []Message) bool {
 }
 
 type ContextUsageAnchor struct {
-	Scope string `json:"scope,omitempty"` // transient parallel/active summaries are absent from later baseline
+	ContextWindow int    `json:"contextWindow,omitempty"` // Window configured when this request was sent.
+	Scope         string `json:"scope,omitempty"`         // transient parallel/active summaries are absent from later baseline
 
 	Usage              TokenUsage `json:"usage"`
 	PromptEstimate     int        `json:"promptEstimate"`
@@ -176,21 +177,22 @@ func (b *ContextBreakdown) price() int {
 
 // ContextPreview 一次任务首轮请求的构建预览（R08-04）。
 type ContextPreview struct {
-	Model          string           `json:"model"`
-	ContextWindow  int              `json:"contextWindow"`
-	OutputReserve  int              `json:"outputReserve"`
-	InputEstimate  int              `json:"inputEstimate"`
-	TotalEstimate  int              `json:"totalEstimate"`
-	OverLimit      bool             `json:"overLimit"`
-	EstimationNote string           `json:"estimationNote"`
-	Instruction    string           `json:"instruction"`
-	Breakdown      ContextBreakdown `json:"breakdown"`
-	Messages       []Message        `json:"messages,omitempty"`
-	Tools          []any            `json:"tools,omitempty"`
-	Fingerprint    string           `json:"fingerprint"`
-	WorkspaceID    string           `json:"workspaceId"`
-	SessionID      string           `json:"sessionId,omitempty"`
-	GeneratedAt    string           `json:"generatedAt"`
+	Model             string           `json:"model"`
+	ContextWindow     int              `json:"contextWindow"`
+	OutputReserve     int              `json:"outputReserve"`
+	InputEstimate     int              `json:"inputEstimate"`
+	TotalEstimate     int              `json:"totalEstimate"`
+	OverLimit         bool             `json:"overLimit"`
+	CanCompactHistory bool             `json:"canCompactHistory,omitempty"`
+	EstimationNote    string           `json:"estimationNote"`
+	Instruction       string           `json:"instruction"`
+	Breakdown         ContextBreakdown `json:"breakdown"`
+	Messages          []Message        `json:"messages,omitempty"`
+	Tools             []any            `json:"tools,omitempty"`
+	Fingerprint       string           `json:"fingerprint"`
+	WorkspaceID       string           `json:"workspaceId"`
+	SessionID         string           `json:"sessionId,omitempty"`
+	GeneratedAt       string           `json:"generatedAt"`
 }
 
 // RequestSnapshot 实际发出的 Provider 请求快照（含工具续跑轮次）。
@@ -860,6 +862,9 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请输入 1–20000 字节的任务或添加附件"))
 		return
 	}
+	if !in.Baseline && in.Prompt == "" && len(in.Attachments) > 0 {
+		in.Prompt = defaultAttachmentPrompt
+	}
 	if in.Mode != "chat" && in.Mode != "workflow" {
 		fail(w, 400, errors.New("未知工作模式"))
 		return
@@ -884,6 +889,10 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		s = a.sessionLocked(in.SessionID)
 		if s == nil {
 			fail(w, 404, errors.New("会话不存在"))
+			return
+		}
+		if s.Kind == assistantSessionKind && !a.isAssistantUnlocked(s.ID) {
+			fail(w, 403, errors.New("请先解锁小秘会话"))
 			return
 		}
 	}
@@ -933,8 +942,17 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	harness, _ := a.loadHarnessConfig()
 	previewTask := &Task{Mode: in.Mode, Parallelism: in.Parallelism, WorkspaceMode: a.workspaceMode(), HarnessConfig: &harness}
-	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, !in.Baseline, a.currentExecutionPolicy(), harness, previewTask, in.AvatarFeedback)
-	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
+	policy := a.currentExecutionPolicy()
+	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, !in.Baseline, policy, harness, previewTask, in.AvatarFeedback)
+	a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
+	if preview.OverLimit && s != nil && preview.Breakdown.HistoryMessages > 0 {
+		// Match the send preflight: folding old history can only help if the
+		// current user input, attachments, tool schemas and output reserve fit.
+		empty := &Session{ID: s.ID, Kind: s.Kind}
+		current := a.buildContextPreviewWithTask(empty, in.Prompt, in.Mode, contextText, images, cfg, params, false, policy, harness, previewTask, in.AvatarFeedback)
+		a.applyWorkflowContextWithPolicy(current, in.Mode, in.WorkflowPhase, policy)
+		preview.CanCompactHistory = !current.OverLimit
+	}
 	jsonOut(w, 200, preview)
 }
 

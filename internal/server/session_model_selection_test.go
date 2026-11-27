@@ -259,3 +259,58 @@ func TestSessionModelSelectionSteerKeepsOriginalTask(t *testing.T) {
 		t.Fatal("new composer choice changed an in-flight interjection")
 	}
 }
+
+func TestManualCompactionUsesSessionProviderAndPersistsReceipt(t *testing.T) {
+	a := testApp(t)
+	defaultProvider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("manual compaction sent history to the global default provider")
+		http.Error(w, "incorrect provider", http.StatusBadRequest)
+	}))
+	defer defaultProvider.Close()
+	selected := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Model string }
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Model != "model-b" || r.Header.Get("Authorization") != "Bearer fixture-selected" {
+			t.Error("wrong summary model or credential")
+		}
+		parallelReply(w, `{"goal":"continue fixture work","facts":["T42"],"decisions":[],"files":[],"pending":[]}`)
+	}))
+	defer selected.Close()
+	selectionModels(a, defaultProvider.URL, selected.URL)
+	if err := a.vault.Put(modelProviderVaultID("b", "fixture"), VaultTypeModelAPIKey, "fixture", []byte("fixture-selected"), ""); err != nil {
+		t.Fatal(err)
+	}
+	session := createSession(t, a)
+	sessionChoice(t, a, session.ID, SessionModelSelection{Model: "model-b", Strategy: "auto", Profile: "default", ReasoningEffort: "auto"}, 0)
+	a.mu.Lock()
+	s := a.sessions[session.ID]
+	for i := 0; i < 8; i++ {
+		s.Messages = append(s.Messages, Message{Role: "user", Content: strings.Repeat("history ", 1600)}, Message{Role: "assistant", Content: "reply"})
+	}
+	originalCount := len(s.Messages)
+	before := sessionContextTokens(s)
+	a.mu.Unlock()
+	requireStatus(t, request(a, "POST", "/api/sessions/"+session.ID+"/compact", map[string]any{}), 200)
+	view := getSelectionSession(t, a, session.ID)
+	receipt := view.LastCompaction
+	if receipt == nil || view.CompactedAt == "" || receipt.Folded <= 0 || receipt.Folded != view.CompactedMessages || receipt.Kept <= 0 ||
+		receipt.Kept+receipt.Folded != originalCount || receipt.BeforeTokens != before || receipt.AfterTokens != sessionContextTokens(&view) || receipt.AfterTokens >= before {
+		t.Fatalf("wrong saved compression measurements: %+v", receipt)
+	}
+	raw, err := os.ReadFile(SessionPath(a.dataPath, session.ID, sessionBucketFor(s)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved Session
+	if err := json.Unmarshal(raw, &saved); err != nil || saved.LastCompaction == nil || *saved.LastCompaction != *receipt {
+		t.Fatalf("disk receipt differs from the API: err=%v", err)
+	}
+	again := request(a, "POST", "/api/sessions/"+session.ID+"/compact", map[string]any{})
+	requireStatus(t, again, 200)
+	var result struct {
+		Folded  int
+		Compact string
+	}
+	if err := json.Unmarshal(again.Body.Bytes(), &result); err != nil || result.Folded != 0 || result.Compact != saved.Compact {
+		t.Fatal("a no-op compaction should return the existing summary")
+	}
+}
