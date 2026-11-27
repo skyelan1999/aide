@@ -264,6 +264,19 @@
         cancel(node);
         animateEntry(node, [first, last], motionDuration(165, 105));
     }
+    // Draw the current underline at the position of the previous selection, then
+    // settle it into place. The tab's actual hit target is already at its final bounds.
+    function moveSettingsIndicator(marker, previous) {
+        if (!marker || !allowed() || !visible(marker) || typeof marker.animate !== 'function')
+            return;
+        const current = marker.getBoundingClientRect();
+        if (!current.width || !previous.width || Math.abs(previous.top - current.top) > 3)
+            return;
+        const offset = previous.left - current.left, scale = previous.width / current.width;
+        if (Math.abs(offset) < 1 && Math.abs(scale - 1) < .02)
+            return;
+        animateEntry(marker, [{ transform: `translateX(${offset}px) scaleX(${scale})` }, { transform: 'none' }], motionDuration(180, 110));
+    }
     function bindSegment(node) {
         let scheduled = 0;
         const selected = () => node.querySelector('button[aria-selected="true"]') || node.querySelector('button[aria-pressed="true"]') || node.querySelector('button.active');
@@ -522,14 +535,6 @@
         queue();
     }).observe(document.body, { childList: true });
     new MutationObserver(queue).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    const content = document.getElementById('settings-content');
-    if (content)
-        new MutationObserver((records) => {
-            // Settings render replaces direct children once per navigation. Async control
-            // refreshes and counters update descendants and never restart this transition.
-            if (records.some((record) => record.addedNodes.length) && content.closest('.settings-sheet.open'))
-                reveal(content, 'content');
-        }).observe(content, { childList: true });
     const lock = document.getElementById('lock-screen');
     if (lock)
         new MutationObserver(() => { if (!lock.hidden)
@@ -594,6 +599,6 @@
         settle(node); for (const stop of [...sendEffects])
         stop(); });
     // Navigation owns this API even when the optional intro does not run.
-    window.aideExperience = Object.assign(window.aideExperience || {}, { leave, settle, reopen, changePanels, revealContent, beginSend, beginStop });
+    window.aideExperience = Object.assign(window.aideExperience || {}, { leave, settle, reopen, changePanels, revealContent, moveSettingsIndicator, beginSend, beginStop });
     root.dataset.motionLayer = 'ready';
 })();

@@ -4,7 +4,7 @@
     {
       "id": "appearance",
       "title": "外观",
-      "description": "分别选择配色和明暗，修改后立即生效。",
+      "description": "外观偏好仅在当前设备生效。",
       "controls": [
         {
           "id": "palette",

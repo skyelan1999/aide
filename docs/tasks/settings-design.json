@@ -1,0 +1,90 @@
+{
+  "id": "settings-design",
+  "request": "你这个不能这么写，感觉看起来傻傻的，然后你把整体的设置的视觉效果也提升一下，我记得之前有做类似网页动态效果参考模板的网站，你去学习一下然后改一下，整体的排版啊什么的都处理一下",
+  "baseline": "c859ab217b231bbaa12249f4adad7b9624388f6d",
+  "initial_status": "M README.en.md\n M README.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/computer_control.go\n M internal/server/config_backup.go\n M internal/server/dwg_preview.go\n M internal/server/factory_reset.go\n M internal/server/kv_cache.go\n M internal/server/persona.go\n M internal/server/plugin_market_source_compat.go\n M internal/server/storage_usage.go\n M internal/server/updates.go\n M internal/server/voip.go\n M internal/server/web/app-config.js\n M internal/server/web/app-config.ts\n M internal/server/web/app-runtime.js\n M internal/server/web/app-runtime.ts\n M internal/server/web/app-sidebar.js\n M internal/server/web/app-sidebar.ts\n M internal/server/web/app.js\n M internal/server/web/app.ts\n M internal/server/web/assistant-call.css\n M internal/server/web/assistant-memory.js\n M internal/server/web/assistant-memory.ts\n M internal/server/web/avatar-player.js\n M internal/server/web/avatar-player.ts\n M internal/server/web/conversation.css\n M internal/server/web/crash-monitor.js\n M internal/server/web/crash-monitor.ts\n M internal/server/web/desktop-capture.js\n M internal/server/web/desktop-capture.ts\n M internal/server/web/experience.css\n M internal/server/web/experience.js\n M internal/server/web/experience.ts\n M internal/server/web/git-history.js\n M internal/server/web/git-history.ts\n M internal/server/web/i18n.js\n M internal/server/web/i18n.ts\n M internal/server/web/index.html\n M internal/server/web/lan-login.html\n M internal/server/web/local-mounts.js\n M internal/server/web/local-mounts.ts\n M internal/server/web/locales/en.js\n M internal/server/web/locales/en.ts\n M internal/server/web/macos.css\n M internal/server/web/management.js\n M internal/server/web/management.ts\n M internal/server/web/markdown-export.js\n M internal/server/web/markdown-export.ts\n M internal/server/web/markdown-history.js\n M internal/server/web/markdown-history.ts\n M internal/server/web/markdown-outline.js\n M internal/server/web/markdown-outline.ts\n M internal/server/web/markdown-pdf-appearance.js\n M internal/server/web/markdown-pdf-appearance.ts\n M internal/server/web/message-center.css\n M internal/server/web/message-center.js\n M internal/server/web/message-center.ts\n M internal/server/web/mobile-capture.html\n M internal/server/web/motorola-voip-guide.md\n M internal/server/web/plugin-guide.js\n M internal/server/web/plugin-guide.ts\n M internal/server/web/plugin-market.js\n M internal/server/web/plugin-market.ts\n M internal/server/web/plugin-upgrade.js\n M internal/server/web/plugin-upgrade.ts\n M internal/server/web/plugin-workbench-launcher.css\n M internal/server/web/plugin-workbench-tabs.js\n M internal/server/web/plugin-workbench-tabs.ts\n M internal/server/web/plugin-workbench.js\n M internal/server/web/plugin-workbench.ts\n M internal/server/web/session-plan.js\n M internal/server/web/session-plan.ts\n M internal/server/web/session-review.js\n M internal/server/web/session-review.ts\n M internal/server/web/settings-init.js\n M internal/server/web/settings-init.ts\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/starmap.ts\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/web/task-outcome.ts\n M internal/server/web/usage-analytics.js\n M internal/server/web/usage-analytics.ts\n M internal/server/web/voip.js\n M internal/server/web/voip.ts\n M internal/server/web/workbench-background.js\n M internal/server/web/workbench-background.ts\n M internal/server/web/workbench.css\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M native/macos-desktop/app_capture.swift\n M native/macos-desktop/biometrics.swift\n M native/macos-desktop/computer_control.swift\n M native/macos-desktop/main.swift\n M native/windows-launcher/desktop.hpp\n M native/windows-launcher/desktop_hello.hpp\n M native/windows-launcher/main.cpp\n M native/windows-launcher/resources/aide.manifest\n M scripts/browser-markdown-inline-style.cjs\n M scripts/build-macos-desktop.py\n M scripts/experience-runtime.test.cjs\n M scripts/lock-recovery.test.cjs\n M scripts/plugin-file-review.test.cjs\n M scripts/reasoning-settings.test.cjs\n M scripts/settings-navigation.test.cjs\n M scripts/test_i18n.cjs\n M scripts/ui-response-latency.test.cjs\n M scripts/windows_desktop_smoke.cpp\n M scripts/workbench-background.test.cjs\n?? docs/reviews/2026-11-27-aide-rd-wordmark/\n?? docs/reviews/2026-11-27-workbench-motion/\n?? docs/reviews/2026-11-27-workbench-polish/\n?? docs/tasks/aide-rd-wordmark.json\n?? docs/tasks/workbench-motion.json\n?? docs/tasks/workbench-ui-polish.json",
+  "acceptance": [
+    "All eight categories and their pages remain reachable by pointer, search and keyboard.",
+    "About shows a single version beside the aide wordmark, a small R&D mark and accessible license information.",
+    "Desktop light, dark and mobile layouts retain readable controls and respect reduced motion.",
+    "An actual local build, desktop verification and shareable before/after views."
+  ],
+  "scope": [
+    "Redesign the Aide settings window, its navigation and controls, including general appearance and system about. Rebuild and update the daily Mac installation."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested an in-place settings redesign based on published motion and layout examples. The original product name and secondary R&D mark are retained.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "A two-column desktop window and scrolling mobile navigation use theme colors and locally rendered controls. Keep the shell steady, show a directional transition for the new pane and connect the selected underline. Separate project and bundled-component metadata.",
+      "evidence": [
+        "https://motion.dev/examples/react-smooth-tabs",
+        "https://www.radix-ui.com/primitives/docs/components/tabs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Settings now uses a responsive icon navigation rail, scrollable mobile categories, keyboard search and tabs, native theme previews, and an aligned About table. The local motion controls keep reduced-motion and minimal settings instantaneous.",
+      "evidence": [
+        "internal/server/web/settings-layout.css",
+        "internal/server/web/settings-about.css",
+        "internal/server/web/app.ts",
+        "internal/server/web/app-config.ts",
+        "internal/server/web/experience.ts",
+        "internal/server/web/settings-schema.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "The isolated D-only snapshot passed TypeScript build, full type checking with 122 runtime pairs, and 13 checks across settings navigation, experience motion, localization, lock recovery and UI response tests. Earlier browser checks covered 29 pages in 8 groups across dark, light and mobile layouts, including arrow, Home and End navigation. The installed macOS app was rechecked in light and dark themes after the final icon refinement.",
+      "evidence": [
+        ".agent-state/verify-20261127T032243996859Z.log",
+        ".agent-state/settings-design/focused.log",
+        ".agent-state/settings-design/typecheck.log",
+        ".agent-state/settings-design/compile.log",
+        ".agent-state/settings-design/final.log",
+        ".agent-state/settings-design/about-table.json",
+        ".agent-state/settings-design/after/dark-audit.json",
+        ".agent-state/settings-design/after/light-audit.json",
+        ".agent-state/settings-design/after/phone-audit.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated English and Chinese settings navigation guidance. Recorded a continuous tab and theme switch and captured the original and updated settings using an isolated account.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/reviews/2026-11-27-settings-design/settings-comparison.png",
+        "docs/reviews/2026-11-27-settings-design/settings-about-dark.png",
+        "docs/reviews/2026-11-27-settings-design/settings-appearance-light.png",
+        "docs/reviews/2026-11-27-settings-design/settings-about-mobile.png",
+        "docs/reviews/2026-11-27-settings-design/settings-navigation.mp4"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed the isolated QA container; verified its absence. The local rollback image and prior native bundle remain available.",
+      "evidence": [
+        ".agent-state/settings-design/install/prior-image.tar",
+        ".agent-state/settings-design/install/prior-native/Aide.app"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Rebuilt and installed the current source on the daily Mac. The local service is healthy, eight served assets match the source, and the 214 existing session IDs and storage mounts matched after replacement.",
+      "evidence": [
+        ".agent-state/settings-design/install/build.log",
+        ".agent-state/settings-design/install/results.json",
+        ".agent-state/settings-design/install/assets.json"
+      ]
+    }
+  },
+  "release_authorization": "Local update of the existing daily Aide installation only.",
+  "rollback": "Prior Mac bundle and service image are saved under .agent-state/settings-design/install/.",
+  "handoff": "The redesigned settings window is installed on the daily Mac. Open 系统 → 关于 or 通用 → 外观 to view the updated pages. Inspection used an isolated account for recordings and preserved the previous service image and Mac bundle locally."
+}

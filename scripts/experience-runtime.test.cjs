@@ -39,11 +39,21 @@ for(const mode of ['normal','balanced','minimal','hidden','reduced']){
  assert(api,mode+': complete script creates the API');assert.equal(root.dataset.motionLayer,'ready');
  for(const name of ['leave','settle','reopen','changePanels','revealContent','beginSend'])assert.equal(typeof api[name],'function',name);
  assert.equal(api.replay,undefined,'removed replay API stays removed');
+ const markerFrames=[];
+ const marker={...segment,getBoundingClientRect:()=>({left:85,top:16,width:32}),animate(keyframes,options){markerFrames.push(keyframes);return animate(keyframes,options);}};
+ api.moveSettingsIndicator(marker,{left:45,top:16,width:64});
+ assert.equal(markerFrames.length,animated?1:0,'underline motion follows the effective system/device profile');
+ if(animated)assert.equal(markerFrames[0][0].transform,'translateX(-40px) scaleX(2)');
+ api.moveSettingsIndicator(marker,{left:45,top:58,width:64});
+ assert.equal(markerFrames.length,animated?1:0,'moving to another tab row never sweeps across unrelated text');
+ api.settle(marker);
+
  let closed=0,changed=0;
  const finish=api.leave(null,()=>closed++);finish();api.settle(null);api.reopen(null);api.changePanels(()=>changed++);
  assert.equal(closed,1);assert.equal(changed,1,'panel mutation is immediate');
  const classes=new Set(),composer={isConnected:true,closest:()=>null,querySelector:()=>null,animate,getClientRects:()=>[1],getBoundingClientRect:()=>({left:300,right:1100,top:700})};
- const button={isConnected:true,closest:()=>composer,getBoundingClientRect:()=>({left:1050,top:770,width:30,height:30}),animate(){},classList:{add:name=>classes.add(name),remove:name=>classes.delete(name)}};
+ let buttonHidden=false;
+ const button={isConnected:true,closest:()=>composer,getBoundingClientRect:()=>buttonHidden?{left:0,top:0,width:0,height:0}:{left:1050,top:770,width:30,height:30},animate(){},classList:{add:name=>classes.add(name),remove:name=>classes.delete(name)}};
  const send=api.beginSend(button);
  assert.equal(classes.has('send-beaming'),animated,'send motion follows visibility and reduced-motion preference');
  assert.equal(added,animated?1:0,'only visible motion creates a light route');

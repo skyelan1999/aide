@@ -3,6 +3,11 @@
 window.aideEnglish = {
   "研发工作空间": "R&D workspace",
   "打开 AIDE R&D 设置": "Open AIDE R&D settings",
+  "版权": "Copyright",
+  "源代码": "Source code",
+  "许可清单": "License notices",
+  "组件": "Component",
+  "离线图表编辑": "Offline diagram editor",
   "VoIP 话机": "VoIP handset",
   "Motorola IP9910-2W · SIP1 局域网直连": "Motorola IP9910-2W · Direct LAN connection on SIP1",
   "打开 VoIP 话机设置": "Open VoIP handset settings",

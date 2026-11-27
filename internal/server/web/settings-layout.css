@@ -1,0 +1,390 @@
+/* Main preferences window. The workspace sheet and tool dialogs use their own layouts. */
+#settings-sheet {
+  --settings-gutter: clamp(20px, 3vw, 36px);
+  width: min(960px, calc(100vw - 48px));
+  height: min(724px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-mid);
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+body:has(#settings-sheet.open) > .sidebar-resizer { pointer-events: none; z-index: 29; }
+
+#settings-sheet > .sheet-head {
+  min-height: 54px;
+  padding: 8px 16px 8px 22px;
+  gap: 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line-faint);
+}
+#settings-sheet .sheet-head h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+  line-height: 1.35;
+}
+#settings-sheet #settings-sheet-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+#settings-sheet #settings-sheet-close:hover {
+  border-color: var(--line-faint);
+  background: var(--hover);
+  color: var(--text);
+}
+
+#settings-sheet .settings-body {
+  display: grid;
+  grid-template-columns: clamp(172px, 21%, 202px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  gap: 0;
+  min-height: 0;
+  margin: 0;
+}
+#settings-sheet .settings-nav {
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 14px;
+  padding: 18px 10px;
+  overflow: hidden;
+  border: 0;
+  border-inline-end: 1px solid var(--line-faint);
+  background: var(--panel-alt);
+}
+#settings-sheet .settings-nav-search {
+  align-self: center;
+  width: calc(100% - 8px);
+  min-height: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line-mid);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--text);
+  font-size: 13px;
+}
+#settings-sheet .settings-nav-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 3px;
+  min-height: 0;
+  padding: 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+#settings-sheet .settings-nav-item {
+  display: flex;
+  align-items: center;
+  flex: none;
+  min-width: 0;
+  min-height: 38px;
+  gap: 8px;
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  text-align: start;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+#settings-sheet .settings-nav-icon {
+  display: block;
+  box-sizing: border-box;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  transition: color var(--motion-fast, 110ms), background-color var(--motion-fast, 110ms), border-color var(--motion-fast, 110ms);
+}
+#settings-sheet .settings-nav-item:hover .settings-nav-icon {
+  border-color: color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--text);
+}
+#settings-sheet .settings-nav-item:hover,
+#settings-sheet .settings-subnav-item:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+#settings-sheet .settings-nav-item.active {
+  border-color: var(--line-faint);
+  background: var(--selected);
+  color: var(--text);
+  box-shadow: none;
+  font-weight: 650;
+}
+#settings-sheet .settings-nav-item.active .settings-nav-icon {
+  border-color: color-mix(in srgb, var(--brand) 20%, transparent);
+  background: color-mix(in srgb, var(--brand) 11%, transparent);
+  color: var(--brand-text);
+}
+#settings-sheet .settings-nav-result {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 2px;
+}
+#settings-sheet .settings-nav-result small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+#settings-sheet .settings-nav-empty { padding: 5px 10px; font-size: 12px; }
+
+#settings-sheet .settings-content {
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  padding: 25px var(--settings-gutter) 30px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 16px;
+}
+#settings-sheet .settings-page-heading { margin: 0 0 14px; }
+#settings-sheet .settings-page-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+#settings-sheet .section-desc {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+#settings-sheet .settings-page-heading .section-desc { margin: 6px 0 0; }
+#settings-sheet .settings-page-heading .section-desc:empty { display: none; }
+#settings-sheet .settings-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 2px 4px;
+  padding: 0;
+  margin: 0 0 20px;
+  border-bottom: 1px solid var(--line-faint);
+}
+#settings-sheet .settings-subnav-item {
+  position: relative;
+  flex: none;
+  min-height: 35px;
+  padding: 6px 10px 8px;
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+#settings-sheet .settings-subnav-item.active {
+  background: transparent;
+  color: var(--text);
+  font-weight: 650;
+  box-shadow: none;
+}
+#settings-sheet .settings-subnav-item.danger-text { color: var(--danger); }
+#settings-sheet .settings-tab-indicator {
+  position: absolute;
+  inset: auto 9px 0;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  pointer-events: none;
+  transform-origin: left center;
+}
+#settings-sheet :is(.settings-nav-item,.settings-subnav-item):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+#settings-sheet .settings-page-body > .section-desc { margin: 0 0 18px; }
+#settings-sheet .settings-page-body > .settings-control { margin-block: 0; }
+#settings-sheet .settings-page-body > .settings-control + .settings-control {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-faint);
+}
+#settings-sheet .settings-control > .control-label {
+  gap: 10px;
+  margin-bottom: 9px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+#settings-sheet .control-value {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+#settings-sheet .settings-advanced {
+  margin-block: 14px 0;
+  border-radius: 9px;
+  background: var(--surface-alt);
+}
+#settings-sheet .settings-advanced > summary { min-height: 38px; font-weight: 550; }
+
+/* Show color families independently of the palette currently in use. */
+#settings-sheet [data-control="palette"] button {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 5px 7px;
+}
+#settings-sheet [data-control="palette"] [data-value="comfort"] {
+  --swatch-base: #eff1ea; --swatch-accent: #627a56; --swatch-dark: #1c201b;
+}
+#settings-sheet [data-control="palette"] [data-value="green"] {
+  --swatch-base: #d3e9d8; --swatch-accent: #2b8f5a; --swatch-dark: #283a2e;
+}
+#settings-sheet [data-control="palette"] [data-value="professional"] {
+  --swatch-base: #e8edf3; --swatch-accent: #547da8; --swatch-dark: #202831;
+}
+#settings-sheet [data-control="palette"] [data-value="modern"] {
+  --swatch-base: #ebebef; --swatch-accent: #808087; --swatch-dark: #2c2c30;
+}
+#settings-sheet [data-control="palette"] button::before {
+  content: '';
+  display: block;
+  width: 35px;
+  height: 10px;
+  margin: 0;
+  border: 1px solid var(--line-mid);
+  border-radius: 4px;
+  background: linear-gradient(90deg,var(--swatch-base) 33%,var(--swatch-accent) 33% 67%,var(--swatch-dark) 67%);
+  box-shadow: none;
+}
+#settings-sheet [data-control="palette"] button[aria-pressed="true"]::after {
+  position: absolute;
+  inset: 3px 6px auto auto;
+  content: '✓';
+  font-size: 10px;
+  line-height: 1;
+}
+#settings-sheet [data-control="theme"] {
+  --sample-light: #fafafa; --sample-light-rail: #ebebef;
+  --sample-dark: #1c1d1f; --sample-dark-rail: #2c2c30;
+}
+#settings-sheet [data-control="theme"][data-palette="comfort"] {
+  --sample-light: #f3f4f0; --sample-light-rail: #e0e5dc;
+  --sample-dark: #1c201b; --sample-dark-rail: #30372e;
+}
+#settings-sheet [data-control="theme"][data-palette="green"] {
+  --sample-light: #f4f9f5; --sample-light-rail: #d3e9d8;
+  --sample-dark: #111513; --sample-dark-rail: #283a2e;
+}
+#settings-sheet [data-control="theme"][data-palette="professional"] {
+  --sample-light: #fbfcfe; --sample-light-rail: #e8edf3;
+  --sample-dark: #141a21; --sample-dark-rail: #28313b;
+}
+#settings-sheet [data-control="theme"] [data-value="light"] {
+  --sample-surface: linear-gradient(90deg,var(--sample-light-rail) 23%,var(--sample-light) 23%);
+}
+#settings-sheet [data-control="theme"] [data-value="dark"] {
+  --sample-surface: linear-gradient(90deg,var(--sample-dark-rail) 23%,var(--sample-dark) 23%);
+}
+#settings-sheet [data-control="theme"] [data-value="system"] {
+  --sample-surface: linear-gradient(90deg,var(--sample-light-rail) 23%,var(--sample-light) 23% 50%,var(--sample-dark) 50%);
+}
+#settings-sheet [data-control="theme"] button::before {
+  height: 49px;
+  border: 1px solid var(--line-mid);
+  border-radius: 5px;
+  box-shadow: none;
+  background: linear-gradient(#85888b37,#85888b37) top / 100% 7px,
+    linear-gradient(#888b90aa,#888b90aa) 38% 46% / 28% 4px,
+    linear-gradient(#888b9080,#888b9080) 53% 65% / 50% 2px,
+    linear-gradient(#888b9080,#888b9080) 39% 78% / 30% 2px,
+    var(--sample-surface);
+  background-repeat: no-repeat;
+}
+#settings-sheet .background-picker input[type="file"] {
+  max-width: 100%;
+  padding: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+#settings-sheet .background-picker input::file-selector-button {
+  min-height: 27px;
+  margin-inline-end: 8px;
+  padding-inline: 9px;
+  border: 1px solid var(--line-faint);
+  border-radius: 5px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 680px) {
+  #settings-sheet {
+    --settings-gutter: 16px;
+    width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+  }
+  #settings-sheet > .sheet-head { min-height: 46px; padding: 4px 8px 4px var(--settings-gutter); }
+  #settings-sheet #settings-sheet-close { width: 38px; height: 38px; }
+  #settings-sheet .settings-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  #settings-sheet .settings-nav {
+    gap: 4px;
+    padding: 8px 0 4px;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--line-faint);
+  }
+  #settings-sheet .settings-nav-search { width: calc(100% - 2 * var(--settings-gutter)); font-size: 16px; }
+  #settings-sheet .settings-nav-list,
+  #settings-sheet .settings-subnav {
+    flex-flow: row nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: var(--settings-gutter);
+  }
+  #settings-sheet .settings-nav-list { padding: 2px var(--settings-gutter); }
+  #settings-sheet .settings-nav-item,
+  #settings-sheet .settings-subnav-item { min-height: 38px; white-space: nowrap; }
+  #settings-sheet .settings-nav-result { min-width: 90px; }
+  #settings-sheet .settings-content { padding-block: 18px 24px; }
+  #settings-sheet .settings-page-heading { margin-bottom: 10px; }
+  #settings-sheet .settings-page-title { font-size: 21px; }
+  #settings-sheet .settings-subnav { margin-bottom: 16px; }
+}
+@media (max-height: 460px) {
+  #settings-sheet { height: calc(100dvh - 8px); max-height: calc(100dvh - 8px); }
+  #settings-sheet > .sheet-head { min-height: 40px; padding-block: 1px; }
+  #settings-sheet .settings-content { padding-block: 10px 18px; }
+}
+@media (forced-colors: active) {
+  #settings-sheet .settings-nav-item.active { border-color: Highlight; }
+  #settings-sheet .settings-nav-icon { border-color: ButtonText; }
+  #settings-sheet .settings-nav-item.active .settings-nav-icon { border-color: Highlight; color: Highlight; }
+  #settings-sheet .settings-tab-indicator { background: Highlight; }
+}

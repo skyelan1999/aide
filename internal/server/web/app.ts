@@ -5754,6 +5754,43 @@ function cleanupSettingsRefreshers() {
   }
   settingsPanel.refreshers = [];
 }
+// A single optical system: 24px geometry, rounded joins and balanced negative space.
+const settingsIconPaths: Record<string, string> = {
+  general: 'M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4',
+  files: 'M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z',
+  ai: 'M12 3 19 6v5c0 4.4-2.7 7.6-7 9-4.3-1.4-7-4.6-7-9V6l7-3ZM9 12l2 2 4-4',
+  assistant: 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3ZM5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8',
+  communication: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10ZM8 11h.01M12 11h.01M16 11h.01',
+  data: 'M20 6c0 1.66-3.58 3-8 3S4 7.66 4 6s3.58-3 8-3 8 1.34 8 3ZM4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6',
+  system: 'M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5ZM8 21h8M12 17v4',
+  'data-analysis': 'M3 20h18M5 20v-5M12 20V10M19 20V4'
+};
+function settingsGroupIcon(id: string): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const icon = document.createElementNS(ns, 'svg');
+  icon.setAttribute('class', 'settings-nav-icon');
+  icon.setAttribute('fill', 'none');
+  icon.setAttribute('stroke', 'currentColor');
+  icon.setAttribute('stroke-width', '1.45');
+  icon.setAttribute('stroke-linejoin', 'round');
+  icon.setAttribute('stroke-linecap', 'round');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.setAttribute('focusable', 'false');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', settingsIconPaths[id] || settingsIconPaths.general);
+  icon.append(path);
+  return icon;
+}
+function keepSettingsButtonInView(button: HTMLElement | null): void {
+  const list = button?.parentElement;
+  if (!list || !button) return;
+  const item = button.getBoundingClientRect(), bounds = list.getBoundingClientRect();
+  if (item.left < bounds.left) list.scrollLeft += item.left - bounds.left;
+  else if (item.right > bounds.right) list.scrollLeft += item.right - bounds.right;
+  if (item.top < bounds.top) list.scrollTop += item.top - bounds.top;
+  else if (item.bottom > bounds.bottom) list.scrollTop += item.bottom - bounds.bottom;
+}
 function renderSettingsSheet() {
   const nav = $('settings-nav');
   const content = $('settings-content');
@@ -5767,9 +5804,39 @@ function renderSettingsSheet() {
   if(!page)return;
   settingsPanel.active=page.sectionId;settingsPanel.activeChild=page.childId;
   const group=model.groups.find((group?: any)=>group.pages.some((item?: any)=>item.id===page.id));
-  const select = (target?: any) => {settingsPanel.active=target.sectionId;settingsPanel.activeChild=target.childId;renderSettingsSheet();$('settings-content').scrollTop=0;};
-  const search=el('input','settings-nav-search');search.type='search';search.placeholder=t('搜索设置');search.setAttribute('aria-label',t('搜索设置'));search.value=settingsPanel.search||'';
-  const navList=el('div','settings-nav-list');nav.append(search,navList);
+  const select = (target: any, source: 'group' | 'tab' | 'search') => {
+    if (target.id === page.id) {
+      if (source==='search') sub.querySelector('.active')?.focus({preventScroll:true});
+      return;
+    }
+    const oldMarker = sub.querySelector('.settings-tab-indicator');
+    const before = oldMarker?.getBoundingClientRect();
+    const subScroll = sub.scrollLeft;
+    const navScroll = {left: navList.scrollLeft, top: navList.scrollTop};
+    settingsPanel.active = target.sectionId;
+    settingsPanel.activeChild = target.childId;
+    renderSettingsSheet();
+    content.scrollTop = 0;
+    const nextList = nav.querySelector('.settings-nav-list');
+    nextList.scrollLeft = navScroll.left;
+    nextList.scrollTop = navScroll.top;
+    const sameGroup = group.pages.some((item: any) => item.id === target.id);
+    const nextTabs = content.querySelector('.settings-subnav');
+    if (sameGroup) nextTabs.scrollLeft = subScroll;
+    const activeTab = nextTabs.querySelector('.active');
+    const activeGroup = nextList.querySelector('.active');
+    const focusTarget = source === 'tab' ? activeTab : activeGroup;
+    focusTarget?.focus({preventScroll:true});
+    keepSettingsButtonInView(activeTab);
+    keepSettingsButtonInView(activeGroup);
+    const direction = sameGroup && group.pages.indexOf(target) < group.pages.indexOf(page) ? -1 : 1;
+    window.aideExperience?.revealContent(content.querySelector('.settings-page-body'), direction);
+    if (sameGroup && before) window.aideExperience?.moveSettingsIndicator(activeTab.querySelector('.settings-tab-indicator'), before);
+  };
+  const search = el('input','settings-nav-search');
+  search.type='search'; search.placeholder=t('搜索设置'); search.setAttribute('aria-label',t('搜索设置')); search.value=settingsPanel.search||'';
+  const navList = el('div','settings-nav-list');
+  nav.append(search, navList);
   const renderNavList=()=>{
     navList.replaceChildren();
     const query=search.value.trim();settingsPanel.search=query;
@@ -5779,26 +5846,74 @@ function renderSettingsSheet() {
       for(const match of matches){
         const button=el('button','settings-nav-item settings-nav-result'+(match.page.id===page.id?' active':''));button.type='button';
         button.append(el('span','',match.page.title),el('small','',match.group.title));
-        button.setAttribute('aria-current',match.page.id===page.id?'page':'false');button.onclick=()=>select(match.page);navList.append(button);
+        button.setAttribute('aria-current',match.page.id===page.id?'page':'false');button.onclick=()=>select(match.page,'search');navList.append(button);
       }
       return;
     }
     for(const item of model.groups){
-      const button=el('button','settings-nav-item'+(item.id===group.id?' active':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===group.id?'page':'false');
-      button.onclick=()=>{const remembered=settingsPanel.groupPages?.[item.id];select(item.pages.find((page?: any)=>page.id===remembered)||item.pages[0]);};navList.append(button);
+      const button=el('button','settings-nav-item'+(item.id===group.id?' active':''));
+      button.append(settingsGroupIcon(item.id), el('span','settings-nav-label',item.title));button.type='button';button.setAttribute('aria-current',item.id===group.id?'page':'false');
+      button.onclick=()=>{const remembered=settingsPanel.groupPages?.[item.id];select(item.pages.find((page?: any)=>page.id===remembered)||item.pages[0], 'group');};navList.append(button);
     }
   };
-  search.addEventListener('input',renderNavList);search.addEventListener('keydown',(event?: any)=>{if(event.key==='Escape'&&search.value){event.stopPropagation();search.value='';renderNavList();}});
+  search.addEventListener('input',renderNavList);
+  search.addEventListener('keydown',(event: KeyboardEvent)=>{
+    if(event.key==='Escape' && search.value){
+      event.preventDefault(); event.stopPropagation(); search.value=''; renderNavList();
+    } else if (event.key==='ArrowDown' || (event.key==='Enter' && search.value.trim() && !event.isComposing)){
+      const first = navList.querySelector('button');
+      if(first){event.preventDefault(); if(event.key==='Enter') first.click(); else first.focus();}
+    }
+  });
+  navList.addEventListener('keydown',(event: KeyboardEvent)=>{
+    if (!search.value.trim() || event.isComposing) return;
+    const buttons = Array.from(navList.querySelectorAll('button')) as HTMLButtonElement[];
+    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (index < 0) return;
+    if(event.key==='Escape'){
+      event.preventDefault(); event.stopPropagation(); search.value=''; renderNavList(); search.focus();
+    } else if(event.key==='ArrowDown' || event.key==='ArrowUp'){
+      event.preventDefault();
+      if(event.key==='ArrowUp' && index===0)search.focus();
+      else buttons[Math.min(buttons.length-1,index+(event.key==='ArrowDown'?1:-1))].focus();
+    }
+  });
   renderNavList();
   (settingsPanel.groupPages ||= {})[group.id]=page.id;
-  const heading=el('div','settings-page-heading');heading.append(el('h3','settings-page-title',group.title),el('p','section-desc',group.description||''));content.append(heading);
-  const sub=el('nav','settings-subnav');sub.setAttribute('aria-label',group.title);
+  const heading=el('div','settings-page-heading');
+  heading.append(el('h3','settings-page-title',group.title));
+  content.append(heading);
+  const sub=el('div','settings-subnav');
+  sub.setAttribute('role','tablist'); sub.setAttribute('aria-label',group.title);
   for(const item of group.pages){
-    const button=el('button','settings-subnav-item'+(item.id===page.id?' active':'')+(item.id==='danger'?' danger-text':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===page.id?'page':'false');button.onclick=()=>select(item);sub.append(button);
+    const active=item.id===page.id;
+    const button=el('button','settings-subnav-item'+(active?' active':'')+(item.id==='danger'?' danger-text':''),item.title);
+    button.type='button'; button.id='settings-tab-'+item.id; button.setAttribute('role','tab');
+    button.setAttribute('aria-controls','settings-current-page');
+    button.setAttribute('aria-selected',String(active)); button.tabIndex=active?0:-1;
+    if(active){
+      const marker=el('span','settings-tab-indicator'); marker.setAttribute('aria-hidden','true'); button.append(marker);
+    }
+    button.onclick=()=>select(item,'tab'); sub.append(button);
   }
+  sub.addEventListener('keydown',(event: KeyboardEvent)=>{
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const index=group.pages.indexOf(page), count=group.pages.length;
+    let next: number;
+    switch(event.key){
+      case 'ArrowLeft': next=(index+count-1)%count; break;
+      case 'ArrowRight': next=(index+1)%count; break;
+      case 'Home': next=0; break;
+      case 'End': next=count-1; break;
+      default: return;
+    }
+    event.preventDefault(); select(group.pages[next],'tab');
+  });
   content.append(sub);
-  if(window.matchMedia?.('(max-width: 600px)').matches)requestAnimationFrame(()=>sub.querySelector('.active')?.scrollIntoView({block:'nearest',inline:'nearest'}));
-  const body=el('section','settings-page-body');body.setAttribute('aria-label',page.title);content.append(body);
+  const body=el('section','settings-page-body'); body.id='settings-current-page'; body.tabIndex=0;
+  body.setAttribute('role','tabpanel'); body.setAttribute('aria-labelledby','settings-tab-'+page.id); content.append(body);
+  // Also reveal the selected tab on deep links where the strip starts scrolled to zero.
+  if(sub.scrollWidth>sub.clientWidth)keepSettingsButtonInView(sub.querySelector('.active'));
   if(page.id==='notifications')(document.getElementById('reminder-center') as MessageCenterElement | null)?.messageUI?.renderNotifications(body);
   else if(page.id==='messages')(document.getElementById('reminder-center') as MessageCenterElement | null)?.messageUI?.renderSettings(body);
   else renderControlsInto(body,page.controls||[],page.description);
@@ -5837,9 +5952,10 @@ function closeSettingsSheet() {
   cleanupSettingsRefreshers();
   $('settings-content').removeAttribute('aria-busy');
   setSettingsOpen(false);
-  // 鼠标点击打开设置后，关闭时不要再 focus() 触发按钮，否则品牌按钮会残留
-  // 3px 蓝色焦点环；blur 让焦点回到 body，键盘 Tab 的 :focus-visible 不受影响。
-  if (settingsPanel.trigger) settingsPanel.trigger.blur();
+  if (settingsPanel.trigger) {
+    // Keyboard navigation returns to the control which opened preferences.
+    settingsPanel.trigger.focus({preventScroll:true});
+  }
   settingsPanel.trigger = null;
 }
 function bindSettingsTrigger(button?: any) {
