@@ -24,10 +24,10 @@ func marketCompatibleForRuntime(p marketPlugin, version, mode string) (bool, str
 			// This build implements the generic plugin quota catalog contract.
 		case "provider-support-usd-v1":
 			if !validSupportCurrency("USD") {
-				return false, "当前 AIDE R&D 源码构建缺少插件要求的能力"
+				return false, "当前 Aide 源码构建缺少插件要求的能力"
 			}
 		default:
-			return false, "当前 AIDE R&D 源码构建缺少插件要求的能力"
+			return false, "当前 Aide 源码构建缺少插件要求的能力"
 		}
 	}
 	// Preserve all normal feature checks and apply the explicit source floor.

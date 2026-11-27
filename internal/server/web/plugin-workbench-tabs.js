@@ -44,7 +44,7 @@
         // Open directly in the click path, before any asynchronous bridge/API work.
         const page = window.open(url.href, '_blank');
         if (!page) {
-            services.toast(services.t('请允许 AIDE R&D 打开新页面后重试'));
+            services.toast(services.t('请允许 Aide 打开新页面后重试'));
             return false;
         }
         page.opener = null;

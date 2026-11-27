@@ -190,7 +190,7 @@ interface Window {
    for(const a of run.attachments||[])input.append(node('p','outcome-io-resource',(a.directory?t('文件夹'):t('附件'))+' · '+a.path+' · '+(a.source||a.root||'workspace')));
    for(const steer of run.steers||[])input.append(node('p','outcome-io-resource',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
    const output=node('section','outcome-io-block outcome-io-assistant');output.append(node('h4','','助手'));
-   if(final){output.append(node('p','outcome-io-model',(run.model||'AIDE R&D')+' · '+phaseName(final.name)));appendReplyBody(output,final,run.mode,t,renderMarkdown);}
+   if(final){output.append(node('p','outcome-io-model',(run.model||'Aide')+' · '+phaseName(final.name)));appendReplyBody(output,final,run.mode,t,renderMarkdown);}
    else if(run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));
    else output.append(node('p','muted',t(run.status==='running'?'正在生成回复…':'没有记录到助手正文')));
    if(final&&run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));

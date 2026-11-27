@@ -129,9 +129,9 @@ func (a *App) storageUsageHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := scanStorageUsage(r.Context(), a.dataPath, true)
 	if err != nil {
 		if !errors.Is(err, r.Context().Err()) {
-			log.Printf("AIDE R&D 数据存储扫描失败: %v", err)
+			log.Printf("Aide 数据存储扫描失败: %v", err)
 		}
-		fail(w, 500, errors.New("AIDE R&D 数据存储扫描失败"))
+		fail(w, 500, errors.New("Aide 数据存储扫描失败"))
 		return
 	}
 	data.ID = "aide-data"

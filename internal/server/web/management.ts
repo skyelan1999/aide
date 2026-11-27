@@ -23,7 +23,7 @@ declare var state: any, lockScreen: any, api: any, t: any, action: any, refreshC
   }
   function card(p: any,epoch: number,scope: any){
     const item=text('article','management-proposal',''),head=text('div','management-proposal-head','');
-    head.append(text('strong','',operation(p)+' · '+p.target),text('span','management-actor',p.actor==='assistant'?tr('助理','Assistant'):'AIDE R&D'));
+    head.append(text('strong','',operation(p)+' · '+p.target),text('span','management-actor',p.actor==='assistant'?tr('助理','Assistant'):'aide'));
     item.append(head);
     if(p.reason)item.append(text('p','management-reason',p.reason));
     const detail=document.createElement('details'),summary=text('summary','',tr('审阅变更','Review changes')),body=text('div','management-preview','');detail.append(summary,body);item.append(detail);

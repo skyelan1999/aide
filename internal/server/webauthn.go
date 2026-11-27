@@ -68,7 +68,7 @@ type localWebAuthnUser struct {
 
 func (u localWebAuthnUser) WebAuthnID() []byte                         { return []byte(webAuthnUserHandleStr) }
 func (u localWebAuthnUser) WebAuthnName() string                       { return "aide-local" }
-func (u localWebAuthnUser) WebAuthnDisplayName() string                { return "AIDE R&D local" }
+func (u localWebAuthnUser) WebAuthnDisplayName() string                { return "aide local" }
 func (u localWebAuthnUser) WebAuthnCredentials() []webauthn.Credential { return u.creds }
 
 // newWebAuthnManager 初始化 WebAuthn 管理器；RPID 固定 localhost（IP 字面量不合法）。
@@ -83,7 +83,7 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 	// 每次 ceremony 在 start 时验证并绑定严格的 localhost origin，finish 只接受该 origin。
 	cfg := &webauthn.Config{
 		RPID:          "localhost",
-		RPDisplayName: "AIDE R&D",
+		RPDisplayName: "aide",
 		RPOrigins:     []string{"https://localhost"}, // per-ceremony clone replaces this with the validated origin
 	}
 	wa, err := webauthn.New(cfg)

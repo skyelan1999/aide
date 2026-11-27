@@ -1127,7 +1127,7 @@
             }
         }
         target.setTitle(stem);
-        target.setCreator('AIDE R&D');
+        target.setCreator('aide');
         return new Blob([await job.wait(target.save({ useObjectStreams: true }))], { type: 'application/pdf' });
     }
     async function run(format, o, progress = () => { }, shared = null) {

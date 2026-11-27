@@ -650,10 +650,10 @@ ${cell('参考','{{reference}}')}
 
   copy.onclick=async()=>{
    const guide=t(section==='cover'
-    ?'请生成可粘贴到 AIDE R&D 的 HTML PDF 首页。使用内联 CSS，设置居中标题 {{coverTitle}}、副标题 {{subtitle}} 和摘要 {{summary}}。文字可用自定义 {{fieldName}} 变量，变量名用英文字母、数字或下划线，只输出 HTML。'
+    ?'请生成可粘贴到 Aide 的 HTML PDF 首页。使用内联 CSS，设置居中标题 {{coverTitle}}、副标题 {{subtitle}} 和摘要 {{summary}}。文字可用自定义 {{fieldName}} 变量，变量名用英文字母、数字或下划线，只输出 HTML。'
     :section==='footer'
-    ?'请生成可直接粘贴到 AIDE R&D 的 HTML PDF 页脚。使用 HTML 片段、表格和内联 CSS。用 {{page}} 表示当前页，{{pages}} 表示总页数，只输出 HTML。'
-    :'请生成可直接粘贴到 AIDE R&D 的 HTML PDF 页眉。使用 HTML 表格和内联 CSS，包含文档名称、编号、编制与审批、日期和版本。{{title}} 是文件名，{{page}} 是当前页，{{pages}} 是总页数，{{logo}} 是上传 Logo 的占位符。只输出 HTML。');
+    ?'请生成可直接粘贴到 Aide 的 HTML PDF 页脚。使用 HTML 片段、表格和内联 CSS。用 {{page}} 表示当前页，{{pages}} 表示总页数，只输出 HTML。'
+    :'请生成可直接粘贴到 Aide 的 HTML PDF 页眉。使用 HTML 表格和内联 CSS，包含文档名称、编号、编制与审批、日期和版本。{{title}} 是文件名，{{page}} 是当前页，{{pages}} 是总页数，{{logo}} 是上传 Logo 的占位符。只输出 HTML。');
    try{
     await navigator.clipboard.writeText(guide);
     if(dialog.open)status.textContent=t('已复制');
@@ -739,7 +739,7 @@ ${cell('参考','{{reference}}')}
     }
     if(dialog.open&&valid())applyProfile(profile);
    }catch{
-    if(dialog.open&&valid())error.textContent=t('无法导入配置，请选择有效且版本受支持的 AIDE R&D PDF 版式 JSON 文件。');
+    if(dialog.open&&valid())error.textContent=t('无法导入配置，请选择有效且版本受支持的 Aide PDF 版式 JSON 文件。');
    }finally{
     setTransferDisabled(false);
     choose.disabled=remove.disabled=false;

@@ -137,7 +137,7 @@ interface Window {
       panel.append(heading);
       return panel;
     };
-    const access = section('接管范围', '分别选择需要转移到话机的通话类型，关闭后仍在 AIDE R&D 中使用音频。');
+    const access = section('接管范围', '分别选择需要转移到话机的通话类型，关闭后仍在 Aide 中使用音频。');
     const box = () => Object.assign(document.createElement('input'), {type: 'checkbox'});
     const messages = box(), assistant = box();
     const toggle = (label: any, description: any, field: any) => {
@@ -208,7 +208,7 @@ interface Window {
       const state = !config.local ? 'remote' : config.ready ? 'ready' : 'offline';
       badge.dataset.state = state;
       badge.textContent = t(state === 'remote' ? '仅本机可设置' : state === 'ready' ? '组件已连接' : '组件未连接');
-      runtime.textContent = t(state === 'remote' ? '当前设备仅可查看，需在运行 AIDE R&D 的本机修改。' : state === 'ready' ? '本机 VoIP 组件已连接，新通话将使用此处保存的话机配置。' : '本机 VoIP 组件未连接，请用启动器重新启动 AIDE R&D');
+      runtime.textContent = t(state === 'remote' ? '当前设备仅可查看，需在运行 Aide 的本机修改。' : state === 'ready' ? '本机 VoIP 组件已连接，新通话将使用此处保存的话机配置。' : '本机 VoIP 组件未连接，请用启动器重新启动 Aide');
     };
     const apply = (config: any): void => {
       savedConfig = {messages: !!config.messages, assistant: !!config.assistant,

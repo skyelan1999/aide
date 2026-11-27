@@ -25,10 +25,10 @@
         const routing = node('section', 'market-routing'), routingTitle = node('strong', '', t('插件路由')), routingLabel = node('label', 'market-routing-toggle'), autoInstall = node('input'), policyStatus = node('p', 'market-status');
         autoInstall.type = 'checkbox';
         autoInstall.disabled = true;
-        autoInstall.setAttribute('aria-label', t('允许 AIDE R&D 自动安装所需插件'));
-        routingLabel.append(autoInstall, node('span', '', t('允许 AIDE R&D 自动安装所需插件')));
+        autoInstall.setAttribute('aria-label', t('允许 Aide 自动安装所需插件'));
+        routingLabel.append(autoInstall, node('span', '', t('允许 Aide 自动安装所需插件')));
         policyStatus.setAttribute('role', 'status');
-        routing.append(routingTitle, routingLabel, node('p', 'muted', t('路由索引默认更新；仅加载匹配工具。此开关对当前 AIDE R&D 实例生效。仅自动安装官方公开兼容插件，不覆盖已安装或停用插件，执行权限保持原有规则。')), policyStatus);
+        routing.append(routingTitle, routingLabel, node('p', 'muted', t('路由索引默认更新；仅加载匹配工具。此开关对当前 Aide 实例生效。仅自动安装官方公开兼容插件，不覆盖已安装或停用插件，执行权限保持原有规则。')), policyStatus);
         let routingPolicy = null, routingLoading = false;
         async function initRouting() { if (blocked() || routingLoading)
             return; routingLoading = true; try {
@@ -53,7 +53,7 @@
                 return;
             routingPolicy = data;
             autoInstall.checked = data.autoInstall;
-            policyStatus.textContent = t(data.autoInstall ? '已允许 AIDE R&D 自动安装匹配的公开插件' : '已关闭自动安装');
+            policyStatus.textContent = t(data.autoInstall ? '已允许 Aide 自动安装匹配的公开插件' : '已关闭自动安装');
         }
         catch (e) {
             autoInstall.checked = previous;
@@ -96,7 +96,7 @@
                 list.append(node('p', 'muted', t('没有匹配的插件')));
             for (const p of items.slice(0, limit)) {
                 const card = node('article', 'market-card'), head = node('div', 'market-card-head'), title = node('div', 'market-card-title');
-                title.append(node('strong', '', p.name), node('small', '', t('AIDE R&D 官方') + ' · v' + p.version));
+                title.append(node('strong', '', p.name), node('small', '', t('Aide 官方') + ' · v' + p.version));
                 head.append(icon(p.category, node), title);
                 const foot = node('div', 'market-card-foot'), open = node('button', 'quiet', t('查看详情'));
                 open.type = 'button';
@@ -112,8 +112,8 @@
         more.onclick = () => { limit += 24; paint(); };
         function showSync(data) {
             const stamp = Number(data.fetched);
-            syncStatus.textContent = Number.isFinite(stamp) && stamp > 0 ? t('上次成功同步：') + new Date(stamp * 1000).toLocaleString() : t('尚未成功同步，当前显示随 AIDE R&D 提供的离线目录。');
-            syncStatus.title = t('市场目录独立更新，无需升级 AIDE R&D。');
+            syncStatus.textContent = Number.isFinite(stamp) && stamp > 0 ? t('上次成功同步：') + new Date(stamp * 1000).toLocaleString() : t('尚未成功同步，当前显示随 Aide 提供的离线目录。');
+            syncStatus.title = t('市场目录独立更新，无需升级 Aide。');
             status.textContent = data.refreshError ? t('刷新失败，保留可用目录：') + data.refreshError : data.stale ? t('当前使用缓存目录；正在检查更新。') : t('官方目录 · 下载前核对权限与兼容性');
         }
         async function load(force, onOpen = false) { if (loading || blocked())

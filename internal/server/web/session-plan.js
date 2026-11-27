@@ -111,7 +111,7 @@
                     return !dep || dep.status === 'completed' || (dep.status === 'closed' && (!dep.contract || dep.contract.criteria.every((c) => c.review?.state === 'passed' && c.review.runId === dep.runId)));
                 });
                 if (launchTask) {
-                    const launch = node('button', 'primary plan-launch', t(item.flow ? '开始本阶段' : '交给 AIDE R&D'));
+                    const launch = node('button', 'primary plan-launch', t(item.flow ? '开始本阶段' : '交给 aide'));
                     launch.type = 'button';
                     launch.disabled = !depsReady || !!(run && ['running', 'awaiting_approval', 'awaiting_clarification'].includes(run.status));
                     if (!depsReady)
@@ -248,7 +248,7 @@
             input.rows = 2;
             input.name = 'title';
             input.setAttribute('aria-label', t('任务目标'));
-            input.placeholder = t('用自然语言描述一个任务，交给 AIDE R&D 拆解执行…');
+            input.placeholder = t('用自然语言描述一个任务，交给 aide 拆解执行…');
             const submit = node('button', 'primary', t('添加任务'));
             submit.type = 'submit';
             addForm.append(input, submit);

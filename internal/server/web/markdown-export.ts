@@ -786,7 +786,7 @@ interface Window {
     page.drawText(label,{x:right-font.widthOfTextAtSize(label,size),y,size,font,color:rgb(0.32,0.38,0.46)});
    }
   }
-  target.setTitle(stem);target.setCreator('AIDE R&D');return new Blob([await job.wait(target.save({useObjectStreams:true}))],{type:'application/pdf'});
+  target.setTitle(stem);target.setCreator('aide');return new Blob([await job.wait(target.save({useObjectStreams:true}))],{type:'application/pdf'});
  }
  async function run(format: string,o: any,progress: (current: number, total: number, chunk: number) => void=()=>{},shared: any=null): Promise<void>{
   if(!shared)close();if(!o.valid())return;const job=shared?.job||{controller:new AbortController()};if(!job.wait)job.wait=(p: any)=>new Promise((resolve,reject)=>{const signal=job.controller.signal,cancel=()=>{signal.removeEventListener('abort',cancel);reject(new DOMException('Cancelled','AbortError'));};signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel();Promise.resolve(p).then(v=>{signal.removeEventListener('abort',cancel);resolve(v);},e=>{signal.removeEventListener('abort',cancel);reject(e);});});active=job;const alive=()=>active===job&&!job.controller.signal.aborted&&o.valid();

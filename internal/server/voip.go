@@ -211,7 +211,7 @@ func (a *App) voipCallSocket(w http.ResponseWriter, r *http.Request) {
 	call := &voipCall{id: newID(), events: make(chan voip.Event, 16), lost: make(chan struct{})}
 	if host == nil || a.voip.call != nil {
 		a.voip.mu.Unlock()
-		message := "本机 VoIP 组件未连接，请用启动器重新启动 AIDE R&D"
+		message := "本机 VoIP 组件未连接，请用启动器重新启动 Aide"
 		if host != nil {
 			message = "话机正用于另一通通话"
 		}

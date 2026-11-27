@@ -59,8 +59,8 @@ struct Hello {
    auto user=decode(options.at("user").at("id").get<std::string>());bool algorithm=false;
    for(auto& entry:options.at("pubKeyCredParams"))if(entry.value("type","")=="public-key"&&entry.value("alg",0)==-7)algorithm=true;
    if(!algorithm||user.empty()||user.size()>64||options.value("attestation","none")!="none"||options.value("authenticatorSelection",json::object()).value("residentKey","")=="required"||own.size()>=32)throw std::runtime_error("Unsupported registration options");
-   WEBAUTHN_RP_ENTITY_INFORMATION party{WEBAUTHN_RP_ENTITY_INFORMATION_CURRENT_VERSION,L"localhost",L"AIDE R&D",nullptr};
-   WEBAUTHN_USER_ENTITY_INFORMATION account{WEBAUTHN_USER_ENTITY_INFORMATION_CURRENT_VERSION,DWORD(user.size()),user.data(),L"aide-local",nullptr,L"AIDE R&D local"};
+   WEBAUTHN_RP_ENTITY_INFORMATION party{WEBAUTHN_RP_ENTITY_INFORMATION_CURRENT_VERSION,L"localhost",L"Aide",nullptr};
+   WEBAUTHN_USER_ENTITY_INFORMATION account{WEBAUTHN_USER_ENTITY_INFORMATION_CURRENT_VERSION,DWORD(user.size()),user.data(),L"aide-local",nullptr,L"Aide local"};
    WEBAUTHN_COSE_CREDENTIAL_PARAMETER parameter{WEBAUTHN_COSE_CREDENTIAL_PARAMETER_CURRENT_VERSION,WEBAUTHN_CREDENTIAL_TYPE_PUBLIC_KEY,-7};
    WEBAUTHN_COSE_CREDENTIAL_PARAMETERS parameters{1,&parameter};
    WEBAUTHN_AUTHENTICATOR_MAKE_CREDENTIAL_OPTIONS settings{};settings.dwVersion=WEBAUTHN_AUTHENTICATOR_MAKE_CREDENTIAL_OPTIONS_VERSION_2;settings.dwTimeoutMilliseconds=120000;settings.CredentialList=allow;settings.dwAuthenticatorAttachment=WEBAUTHN_AUTHENTICATOR_ATTACHMENT_PLATFORM;settings.dwUserVerificationRequirement=WEBAUTHN_USER_VERIFICATION_REQUIREMENT_REQUIRED;settings.dwAttestationConveyancePreference=WEBAUTHN_ATTESTATION_CONVEYANCE_PREFERENCE_NONE;settings.pCancellationId=&op->cancellation;

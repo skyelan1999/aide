@@ -112,7 +112,7 @@ interface Window {
         const text=labelFor(event.key)+' · '+tr('收到新消息或申请')+(event.count>1?' × '+event.count:'');
         if(delivered<5){
           if(event.allow.popup&&document.visibilityState==='visible')toast(text);
-          if(event.allow.desktop&&window.Notification?.permission==='granted'){try{new window.Notification('AIDE R&D',{body:text,tag:'aide-message:'+event.key});}catch(_){}}
+          if(event.allow.desktop&&window.Notification?.permission==='granted'){try{new window.Notification('aide',{body:text,tag:'aide-message:'+event.key});}catch(_){}}
         }
         sound||=!!event.allow.sound;delivered++;
       }

@@ -3,7 +3,7 @@
 (() => {
     'use strict';
     function render({ api, t, el, blocked }) {
-        const box = el('section', 'local-mount-settings'), intro = el('p', 'muted', t('添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。工作区与资料可使用这些目录，缓存保留在 AIDE R&D 数据区。'));
+        const box = el('section', 'local-mount-settings'), intro = el('p', 'muted', t('添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。工作区与资料可使用这些目录，缓存保留在 Aide 数据区。'));
         const notice = el('p', 'local-mount-notice'), list = el('div', 'local-mount-list'), actions = el('div', 'local-mount-actions');
         notice.setAttribute('role', 'status');
         const button = (text, fn, cls = 'quiet') => { const b = el('button', cls, t(text)); b.type = 'button'; b.onclick = fn; return b; };
@@ -12,7 +12,7 @@
         const refresh = button('刷新', () => run(load)), add = button('添加目录', () => { entries.push({ id: 'dir-' + Date.now().toString(36) + '-' + (++serial), name: t('本地目录'), path: '', readOnly: true }); paint(); });
         const save = button('保存配置', () => run(async () => { const data = await api('/local-mounts', { method: 'PUT', body: JSON.stringify({ revision: snapshot.revision, config: { version: 1, entries } }) }); if (!live())
             return; snapshot = data; entries = data.config.entries; paint(); notice.textContent = t('配置已保存，应用并重启后生效。'); }), 'primary');
-        const apply = button('应用并重启', () => run(async () => { if (!snapshot || !window.confirm(t('请先保存当前工作。应用目录配置会重新创建 AIDE R&D 容器，中断正在运行的会话和手机连接；还需在本机窗口确认。')))
+        const apply = button('应用并重启', () => run(async () => { if (!snapshot || !window.confirm(t('请先保存当前工作。应用目录配置会重新创建 Aide 容器，中断正在运行的会话和手机连接；还需在本机窗口确认。')))
             return; await request('apply'); }));
         const retryForwarders = button('重试局域网转发', () => run(() => request('retry-forwarders')));
         retryForwarders.dataset.native = 'true';

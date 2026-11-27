@@ -217,7 +217,7 @@
                 const output = node('section', 'outcome-io-block outcome-io-assistant');
                 output.append(node('h4', '', '助手'));
                 if (final) {
-                    output.append(node('p', 'outcome-io-model', (run.model || 'AIDE R&D') + ' · ' + phaseName(final.name)));
+                    output.append(node('p', 'outcome-io-model', (run.model || 'Aide') + ' · ' + phaseName(final.name)));
                     appendReplyBody(output, final, run.mode, t, renderMarkdown);
                 }
                 else if (run.error)

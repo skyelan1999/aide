@@ -2,9 +2,11 @@
 
 **English** · [简体中文](README.md)
 
-# AIDE R&D
+# aide
 
-### Research and Development Workbench
+### AI + IDE: one workspace for projects, models, tools and inspectable execution.
+
+The small **R/D/P** beside the **aide.** wordmark stands for **Research, Development and Productivity**. The goal of this second phase is to connect workflows within each industry.
 
 Connect local or SSH projects, use models you choose, inspect proposals and verify actual file and command results. Conversation, approvals, tool calls and execution receipts stay associated with the task.
 
@@ -16,7 +18,7 @@ Connect local or SSH projects, use models you choose, inspect proposals and veri
 
 ## Work with real projects
 
-AIDE R&D is a self-hosted research and development workbench for a trusted single-user environment. Project files, reference sources, model requests, tools and plugins share a workspace identity. Model statements, proposed changes and actual execution outcomes are tracked separately.
+Aide is a self-hosted engineering workbench for a trusted single-user environment. Project files, reference sources, model requests, tools and plugins share a workspace identity. Model statements, proposed changes and actual execution outcomes are tracked separately.
 
 | Area | Current source capabilities |
 | --- | --- |

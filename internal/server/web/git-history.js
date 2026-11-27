@@ -14,7 +14,7 @@
         const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
             e.className = cls; if (text != null)
             e.textContent = text; return e; };
-        const tabs = el('div', 'git-history-tabs'), snap = el('button', 'quiet', t('AIDE R&D 快照')), git = el('button', 'quiet', t('Git 比较'));
+        const tabs = el('div', 'git-history-tabs'), snap = el('button', 'quiet', t('Aide 快照')), git = el('button', 'quiet', t('Git 比较'));
         tabs.setAttribute('role', 'group');
         tabs.setAttribute('aria-label', t('历史来源'));
         for (const button of [snap, git]) {

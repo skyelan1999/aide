@@ -299,7 +299,7 @@ func callComputerControlBridge(ctx context.Context, method, route string, payloa
 	client := &http.Client{Timeout: timeout, Transport: &http.Transport{Proxy: nil}}
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("AIDE R&D 电脑控制服务不可用：%w", err)
+		return nil, fmt.Errorf("Aide 电脑控制服务不可用：%w", err)
 	}
 	defer response.Body.Close()
 	data, err := io.ReadAll(io.LimitReader(response.Body, 8<<20))

@@ -1,0 +1,75 @@
+{
+  "id": "aide-rd-wordmark",
+  "request": "产品名仍为 aide。R&D 表示第二阶段的主题目标。恢复原有字标，将 R&D 做成小字，并展示真实 UI 效果。",
+  "baseline": "c859ab217b231bbaa12249f4adad7b9624388f6d",
+  "initial_status": "",
+  "acceptance": [
+    "Keep the existing aide name and original sidebar monogram, lowercase letters, period and hover behavior.",
+    "Use a small R&D annotation beside the wordmark. Explain its meaning as the phase-two goal in About, in both languages.",
+    "Verify both themes, narrow desktop and mobile navigation, and provide actual UI screenshots."
+  ],
+  "scope": [
+    "Undo the prior product rename on public-facing surfaces. Add the phase mark to the workbench sidebar and About."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Retain the original product name and show the second-phase goal in smaller type.",
+      "evidence": [
+        "README.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse the original monogram and wordmark with a raised theme-aware annotation.",
+      "evidence": [
+        "docs/reviews/2026-11-27-aide-rd-wordmark/wordmark.png"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Restored product names on web and native surfaces and explained the phase in the bilingual About view.",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/macos.css",
+        "internal/server/web/app.ts"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "359 quick checks passed. Verified both themes, mobile sidebar, language switching and native macOS bundle naming.",
+      "evidence": [
+        ".agent-state/verify-20261127T014916580712Z.log",
+        ".agent-state/aide-rd-wordmark/browser.log",
+        "docs/reviews/2026-11-27-aide-rd-wordmark/preview.html"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated bilingual project introductions and provided an offline gallery of actual screens.",
+      "evidence": [
+        "README.md",
+        "docs/reviews/2026-11-27-aide-rd-wordmark/preview.html"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Stopped the isolated preview container and removed its temporary server binary.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local deployment only. Installed and relaunched the signed Mac app and rebuilt its service. The actual desktop showed the restored wordmark and raised R&D annotation. Verified all 214 session IDs, mounts and service readiness.",
+      "evidence": [
+        ".agent-state/aide-rd-wordmark/local-update/build.log",
+        ".agent-state/aide-rd-wordmark/local-update/before.json",
+        ".agent-state/aide-rd-wordmark/local-update/after.json",
+        ".agent-state/aide-rd-wordmark/local-update/results.json",
+        ".agent-state/aide-rd-wordmark/local-update/desktop-ui.json"
+      ]
+    }
+  },
+  "release_authorization": "用户要求将这次调整直接更新到本机日用 Aide。",
+  "rollback": "The prior tagged image archive and signed Mac app are in .agent-state/aide-rd-wordmark/local-update/prior-image.tar and prior-native/Aide.app. The data mounts are recorded in the local deployment checks.",
+  "handoff": "The daily local workbench runs the verified working tree at https://localhost:9999/. The visual review is in docs/reviews/2026-11-27-aide-rd-wordmark/preview.html."
+}

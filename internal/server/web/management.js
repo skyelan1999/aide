@@ -38,7 +38,7 @@
     }
     function card(p, epoch, scope) {
         const item = text('article', 'management-proposal', ''), head = text('div', 'management-proposal-head', '');
-        head.append(text('strong', '', operation(p) + ' · ' + p.target), text('span', 'management-actor', p.actor === 'assistant' ? tr('助理', 'Assistant') : 'AIDE R&D'));
+        head.append(text('strong', '', operation(p) + ' · ' + p.target), text('span', 'management-actor', p.actor === 'assistant' ? tr('助理', 'Assistant') : 'aide'));
         item.append(head);
         if (p.reason)
             item.append(text('p', 'management-reason', p.reason));

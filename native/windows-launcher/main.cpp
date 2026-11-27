@@ -585,7 +585,7 @@ int chooseDirectory(){
  HRESULT initialized=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE);if(FAILED(initialized))throw std::runtime_error("Cannot initialize native directory picker");
  IFileOpenDialog* dialog=nullptr;HRESULT result=CoCreateInstance(CLSID_FileOpenDialog,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&dialog));
  if(FAILED(result)){CoUninitialize();throw std::runtime_error("Native directory picker unavailable");}
- DWORD options=0;dialog->GetOptions(&options);dialog->SetOptions(options|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM);dialog->SetTitle(L"Choose a directory for AIDE R&D");result=dialog->Show(nullptr);
+ DWORD options=0;dialog->GetOptions(&options);dialog->SetOptions(options|FOS_PICKFOLDERS|FOS_FORCEFILESYSTEM);dialog->SetTitle(L"Choose a directory for Aide");result=dialog->Show(nullptr);
  std::wstring selected;if(SUCCEEDED(result)){IShellItem* item=nullptr;if(SUCCEEDED(dialog->GetResult(&item))){PWSTR path=nullptr;if(SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH,&path))){selected=path;CoTaskMemFree(path);}item->Release();}}
  dialog->Release();CoUninitialize();if(selected.empty())return 2;std::cout<<utf8(selected);return 0;
 }
@@ -641,7 +641,7 @@ int wmain(int argc,wchar_t** argv){
   realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
   if(fs::exists(compiledReceipt)&&!dryRun&&action!=L"build"&&action!=L"clean"&&action!=L"host-stop"&&action!=L"recover-stop"){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){stateRoot=compiledRoot;auto probe=run(target,{L"--launcher-contract"},5000);bool compatible=!probe.code&&trim(probe.out)=="aide-launcher-contract=2";if(compatible&&(action==L"start"||action==L"start-built"||action==L"refresh-helpers")){auto feature=run(target,{L"--windows-lan-remote-access-contract"},5000);compatible=!feature.code&&trim(feature.out)=="aide-windows-lan-remote-access=1";}if(compatible){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}}
   if(action==L"choose-directory")return chooseDirectory();
-  if(action==L"confirm-directory-restart")return MessageBoxW(nullptr,L"Apply saved directory permissions and recreate AIDE R&D? Save your work first. Running tasks and phone connections will stop.",L"AIDE R&D directories",MB_OKCANCEL|MB_ICONWARNING|MB_DEFBUTTON2)==IDOK?0:2;
+  if(action==L"confirm-directory-restart")return MessageBoxW(nullptr,L"Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.",L"Aide directories",MB_OKCANCEL|MB_ICONWARNING|MB_DEFBUTTON2)==IDOK?0:2;
   if(force&&action!=L"build"&&action!=L"clean")throw std::runtime_error("--force-build is valid only with build or clean; start never compiles");
   if(dryRun&&(action==L"stop"||action==L"recover-stop"||action==L"build"||action==L"clean"||action==L"docker_clean"||action==L"release"||action==L"verify")){
    bool source=fs::exists(root/L".git")||(fs::exists(root/L"go.mod")&&fs::exists(root/L"Dockerfile"));if(!source&&(action==L"build"||action==L"clean"||action==L"release"))throw std::runtime_error("Source-only command is unavailable in a Release package");
@@ -690,5 +690,5 @@ int wmain(int argc,wchar_t** argv){
    if(!nativeStopping())app.browser();
   }
   return 0;
- }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{nativeRecordStopBlocker(e.what());}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(desktopAction)MessageBoxW(nullptr,wide(message).c_str(),L"AIDE R&D desktop",MB_OK|MB_ICONERROR);if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
+ }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{nativeRecordStopBlocker(e.what());}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(desktopAction)MessageBoxW(nullptr,wide(message).c_str(),L"Aide desktop",MB_OK|MB_ICONERROR);if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
 }

@@ -163,8 +163,8 @@ interface Window {
       const metrics = document.createElement('div'); metrics.className = 'analytics-metrics';
       metrics.append(
         metric(t('外部总流量'), formatBytes(totalBytes(totals)), tools.range() === 'all' ? t('全部记录') : t('近 {0} 天', tools.range()), 'is-total'),
-        metric(t('上传'), formatBytes(totals.uploadBytes), t('AIDE R&D 对外发送（已扣除页面连接）')),
-        metric(t('下载'), formatBytes(totals.downloadBytes), t('AIDE R&D 从外部接收（已扣除页面连接）')),
+        metric(t('上传'), formatBytes(totals.uploadBytes), t('Aide 对外发送（已扣除页面连接）')),
+        metric(t('下载'), formatBytes(totals.downloadBytes), t('Aide 从外部接收（已扣除页面连接）')),
         metric(t('页面连接（已排除）'), formatBytes(totals.localUploadBytes + totals.localDownloadBytes), t('工作台 HTTP 收发，不计入外部流量')),
       );
       content.append(metrics, sectionTitle(t('每日流量趋势')), networkChart(entries));
@@ -185,7 +185,7 @@ interface Window {
         content.append(list);
       }
       const note = document.createElement('p'); note.className = 'analytics-note';
-      note.textContent = t('按网卡增量估算 AIDE R&D 对外通信，并扣除工作台页面 HTTP 收发；包含模型、插件、媒体、实时连接和 SSH。每 5 秒采样，按 UTC 日期归档，不等于运营商计费。');
+      note.textContent = t('按网卡增量估算 Aide 对外通信，并扣除工作台页面 HTTP 收发；包含模型、插件、媒体、实时连接和 SSH。每 5 秒采样，按 UTC 日期归档，不等于运营商计费。');
       content.append(note);
       if (data.legacyExcluded) {
         const warning = document.createElement('p'); warning.className = 'analytics-warning'; warning.textContent = t('旧版本混合了页面本机流量，已从当前趋势中排除；原始账本仍保留。'); content.append(warning);
@@ -193,7 +193,7 @@ interface Window {
       if (data.persistenceWarning) {
         const warning = document.createElement('p'); warning.className = 'analytics-warning'; warning.textContent = t('历史统计文件暂时无法保存，当前新增数据仅保留在内存中。'); content.append(warning);
       }
-      status.textContent = data.supported && data.available ? `${t('更新于')} ${formatTime(data.sampledAt)}` : t('当前运行环境无法读取 AIDE R&D 网络接口计数，未使用 Token 估算替代。');
+      status.textContent = data.supported && data.available ? `${t('更新于')} ${formatTime(data.sampledAt)}` : t('当前运行环境无法读取 Aide 网络接口计数，未使用 Token 估算替代。');
     }
     async function load() {
       control.setAttribute('aria-busy', 'true'); status.textContent = t('正在读取网络流量…');
@@ -241,7 +241,7 @@ interface Window {
     return strip;
   }
   function storageDiskLabel(id: string): string {
-    if (id === 'aide-data') return t('AIDE R&D 数据磁盘');
+    if (id === 'aide-data') return t('Aide 数据磁盘');
     if (id === 'current-workspace') return t('工作区磁盘');
     return id;
   }
@@ -264,7 +264,7 @@ interface Window {
         const sshExcluded = data.workspaceAudit?.reason === 'ssh-source';
         const metrics = document.createElement('div'); metrics.className = 'analytics-metrics';
         metrics.append(
-          metric(t('AIDE R&D 数据'), formatBytes(data.data?.logicalBytes), t('{0} 个文件', Number(data.data?.files) || 0), 'is-total'),
+          metric(t('Aide 数据'), formatBytes(data.data?.logicalBytes), t('{0} 个文件', Number(data.data?.files) || 0), 'is-total'),
           metric(t('当前工作区'), sshExcluded ? '—' : formatBytes(data.workspace?.logicalBytes), sshExcluded ? t('SSH 来源未计入审计') : t('{0} 个文件', Number(data.workspace?.files) || 0)),
           metric(t('存储位置'), t('{0} 个磁盘', disks.length), t('按本地审计位置分别统计')),
         );
@@ -279,13 +279,13 @@ interface Window {
           const available = document.createElement('small'); available.textContent = Number(item.availableBytes) >= 0 ? `${t('可用')} ${formatBytes(item.availableBytes)}` : t('容量不可用');
           row.append(name, share, size, available); diskList.append(row);
         });
-        content.append(diskList, sectionTitle(t('AIDE R&D 数据构成')));
+        content.append(diskList, sectionTitle(t('Aide 数据构成')));
         const children = Array.isArray(data.data?.children) ? data.data.children : [];
         if (!children.length) {
-          const empty = document.createElement('p'); empty.className = 'analytics-empty'; empty.textContent = t('还没有可统计的 AIDE R&D 数据。'); content.append(empty);
+          const empty = document.createElement('p'); empty.className = 'analytics-empty'; empty.textContent = t('还没有可统计的 Aide 数据。'); content.append(empty);
         } else {
           const dataTotal = children.reduce((sum: number, item: any) => sum + Math.max(0, Number(item.logicalBytes) || 0), 0);
-          content.append(storageShareStrip(children, 'storage-category-strip', t('AIDE R&D 数据分类占比')));
+          content.append(storageShareStrip(children, 'storage-category-strip', t('Aide 数据分类占比')));
           const list = document.createElement('div'); list.className = 'storage-category-list';
           children.forEach((item: any, index: number) => {
             const row = document.createElement('div'); row.className = 'storage-category-row'; row.style.setProperty('--share-color', storageColors[index % storageColors.length]);

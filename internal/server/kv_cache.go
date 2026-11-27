@@ -749,9 +749,9 @@ func (a *App) kvCacheStatusLocked() map[string]any {
 		"notes": []string{
 			"云端前缀缓存只保存哈希键，不保存提示词或答案；节省量以提供商 cached_tokens 为准。",
 			"固定总预算在同时启用的真实 KV 引擎间均分；llama.cpp 与 LMCache 使用独立子目录，磁盘统计包含二者文件。",
-			"llama.cpp 磁盘模式要求 AIDE R&D 与引擎共享同一固定目录；内存模式需在引擎启动参数中设置同等固定 --cache-ram。",
-			"TTL 仅管理 AIDE R&D 的 llama.cpp 条目；LMCache 内部 LRU 由引擎执行，清理或变更 vLLM 缓存前必须停止引擎。",
-			"vLLM 需以生成的 LMCACHE_CONFIG_FILE 和 LMCacheConnectorV1 重启；AIDE R&D 不把配置写入成功计作 KV 命中。",
+			"llama.cpp 磁盘模式要求 Aide 与引擎共享同一固定目录；内存模式需在引擎启动参数中设置同等固定 --cache-ram。",
+			"TTL 仅管理 Aide 的 llama.cpp 条目；LMCache 内部 LRU 由引擎执行，清理或变更 vLLM 缓存前必须停止引擎。",
+			"vLLM 需以生成的 LMCACHE_CONFIG_FILE 和 LMCacheConnectorV1 重启；Aide 不把配置写入成功计作 KV 命中。",
 		},
 	}
 	return status

@@ -10,8 +10,8 @@ enum BiometricFailure: String, Error {
         switch self {
         case .unavailable: return "触控 ID 暂不可用，请使用账户密码"
         case .invalidOptions: return "指纹请求无效，请重新开始"
-        case .noCredential: return "请先用密码解锁，在设置 → 账户中为 AIDE R&D 桌面绑定触控 ID"
-        case .alreadyRegistered: return "本机已绑定 Touch ID；如需重新绑定，请先在账户设置中删除旧的 AIDE R&D 桌面凭据"
+        case .noCredential: return "请先用密码解锁，在设置 → 账户中为 Aide 桌面绑定触控 ID"
+        case .alreadyRegistered: return "本机已绑定 Touch ID；如需重新绑定，请先在账户设置中删除旧的 Aide 桌面凭据"
         case .cancelled: return "已取消触控 ID 验证"
         case .busy: return "触控 ID 正在验证，请稍候"
         case .capacity: return "本机指纹凭据已达上限，请使用账户密码"
@@ -231,7 +231,7 @@ final class DesktopBiometrics {
             let deadline = DispatchWorkItem { authentication.invalidate() }
             DispatchQueue.main.asyncAfter(deadline: .now() + 120, execute: deadline)
             authentication.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                localizedReason: operation == "create" ? "为 AIDE R&D 桌面绑定触控 ID" : "验证你的身份以解锁 AIDE R&D") { success, _ in
+                localizedReason: operation == "create" ? "为 Aide 桌面绑定触控 ID" : "验证你的身份以解锁 Aide") { success, _ in
                 self.queue.async {
                     let result: Result<[String: Any], BiometricFailure>
                     do {

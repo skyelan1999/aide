@@ -31,16 +31,16 @@ interface Window {
  function render({t,onCleanup}: any){
   const create=<K extends keyof HTMLElementTagNameMap>(tag: K,text?: string | null): HTMLElementTagNameMap[K]=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
   const wrap=create('div');wrap.className='desktop-capture-settings';
-  const title=create('h4',t('全局截屏到 AIDE R&D')),description=create('p',t('双击修饰键截取前台应用窗口，附带应用名、窗口标题和时间，再唤起 AIDE R&D 加入待发送附件。不会自动发送。'));description.className='section-desc';
+  const title=create('h4',t('全局截屏到 Aide')),description=create('p',t('双击修饰键截取前台应用窗口，附带应用名、窗口标题和时间，再唤起 Aide 加入待发送附件。不会自动发送。'));description.className='section-desc';
   wrap.append(title,description);
-  if(!native()){wrap.append(create('p',t('此功能需要 macOS 原生 AIDE R&D 桌面端。')));return wrap;}
+  if(!native()){wrap.append(create('p',t('此功能需要 macOS 原生 Aide 桌面端。')));return wrap;}
   const label=create('label'),enabled=create('input');enabled.type='checkbox';enabled.setAttribute('aria-label',t('启用全局截屏'));label.append(enabled,document.createTextNode(' '+t('启用全局截屏')));
   const comboLabel=create('label',t('触发方式')),combo=create('select');combo.setAttribute('aria-label',t('截屏触发方式'));
   for(const [value,text] of [['shift','双击 Shift'],['command','双击 Command']]){const option=create('option',t(text));option.value=value;combo.append(option);}comboLabel.append(combo);
   const permission=create('button',t('授权全局按键与屏幕录制')),refresh=create('button',t('刷新权限状态'));for(const b of [permission,refresh]){b.type='button';b.className='quiet';}
   const status=create('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const controls=[enabled,combo,permission,refresh];let disposed=false,current: any=null,busy=false;
-  const show=(value: any): void=>{current=value;enabled.checked=value.enabled;combo.value=value.modifier;status.textContent=value.accessibility&&value.screenRecording?t('全局截屏权限已就绪'):t('需要在系统隐私设置中允许 AIDE R&D 辅助功能和屏幕录制。');
+  const show=(value: any): void=>{current=value;enabled.checked=value.enabled;combo.value=value.modifier;status.textContent=value.accessibility&&value.screenRecording?t('全局截屏权限已就绪'):t('需要在系统隐私设置中允许 Aide 辅助功能和屏幕录制。');
    if(value.enabled){const result=value.lastResult==='Attached'?t('截图已加入草稿'):value.lastResult==='Capturing'?t('正在截屏…'):value.lastResult||(!value.listening?t('按键监听未启动，请关闭后重新开启。'):value.modifierEvents?t('已检测到按键，等待快速双击修饰键。'):t('尚未检测到按键，请在其他应用中双击修饰键。'));status.textContent+=' · '+result;}
   };
   const run=async (body: any): Promise<void>=>{if(busy)return;busy=true;controls.forEach(n=>n.disabled=true);try{const value=await request(body);if(!disposed)show(value);}catch(error: any){if(!disposed){if(current)show(current);status.textContent=error.message;}}finally{busy=false;if(!disposed)controls.forEach(n=>n.disabled=false);}};

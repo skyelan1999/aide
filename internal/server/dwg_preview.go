@@ -50,7 +50,7 @@ func dwgConverter() (string, error) {
 	}
 	resolved, err := exec.LookPath(p)
 	if err != nil {
-		return "", dwgError(503, "DWG 预览组件未安装，请更新标准 AIDE R&D 构建；也可下载原文件用 CAD 打开。")
+		return "", dwgError(503, "DWG 预览组件未安装，请更新标准 Aide 构建；也可下载原文件用 CAD 打开。")
 	}
 	return resolved, nil
 }
@@ -68,7 +68,7 @@ func convertDWG(ctx context.Context, input []byte) ([]byte, error) {
 	}
 	python, err := exec.LookPath("python3")
 	if err != nil {
-		return nil, dwgError(503, "DWG 预览组件不完整，请更新标准 AIDE R&D 构建。")
+		return nil, dwgError(503, "DWG 预览组件不完整，请更新标准 Aide 构建。")
 	}
 	dir, err := os.MkdirTemp("", "aide-dwg-preview-*")
 	if err != nil {
@@ -137,7 +137,7 @@ var cadPreviewFonts string
 func renderDWGSVG(ctx context.Context, dxf []byte) ([]byte, error) {
 	python, err := exec.LookPath("python3")
 	if err != nil {
-		return nil, dwgError(503, "DWG 详细预览组件不可用，请更新标准 AIDE R&D 构建。")
+		return nil, dwgError(503, "DWG 详细预览组件不可用，请更新标准 Aide 构建。")
 	}
 	dir, err := os.MkdirTemp("", "aide-dwg-svg-*")
 	if err != nil {

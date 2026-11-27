@@ -396,7 +396,7 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 	if files := r.MultipartForm.File["package"]; len(files) > 0 {
 		if len(files) != 1 || !strings.EqualFold(filepath.Ext(files[0].Filename), ".zip") {
 			_ = tmp.Close()
-			fail(w, 400, errors.New("请选择一个 AIDE R&D 应用内升级 ZIP 包，不能选择平台启动器 ZIP"))
+			fail(w, 400, errors.New("请选择一个 aide 应用内升级 ZIP 包，不能选择平台启动器 ZIP"))
 			return
 		}
 		file, err := files[0].Open()
@@ -438,7 +438,7 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		_ = tmp.Close()
-		fail(w, 400, errors.New("请选择 AIDE R&D 应用内升级 ZIP 包，或选择解压后的完整升级文件夹"))
+		fail(w, 400, errors.New("请选择 aide 应用内升级 ZIP 包，或选择解压后的完整升级文件夹"))
 		return
 	}
 	manifest, imageHash, err := validateUpdatePackage(packagePath)

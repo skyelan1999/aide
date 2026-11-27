@@ -98,13 +98,13 @@ interface Window {
    if(nativeSpeech()){
     const session=crypto.randomUUID();speechSession=session;
     speechEvent('authorizing','正在等待系统麦克风和语音识别授权…');
-    let authorizationTimer: any;const value=await Promise.race([nativeSpeech()({action:'start',session}),new Promise((_,reject)=>{authorizationTimer=setTimeout(()=>reject(Error('系统语音授权超时。请在系统设置 → 隐私与安全性 → 语音识别中检查 AIDE R&D 权限后重试。')),20000);})]).finally(()=>clearTimeout(authorizationTimer));
+    let authorizationTimer: any;const value=await Promise.race([nativeSpeech()({action:'start',session}),new Promise((_,reject)=>{authorizationTimer=setTimeout(()=>reject(Error('系统语音授权超时。请在系统设置 → 隐私与安全性 → 语音识别中检查 Aide 权限后重试。')),20000);})]).finally(()=>clearTimeout(authorizationTimer));
     if(invalid()||speechSession!==session){await nativeSpeech()({action:'stop',session});return;}
     if(value.error)throw Error(value.error);speechStop.hidden=false;speechEvent('recording','本机录音中');
     speechPoll=setInterval(async(): Promise<void>=>{if(invalid()){void item.stopSpeech();return;}try{const value=await nativeSpeech()({action:'status',session});if(speechSession!==session)return;if(value.error)throw Error(value.error);speechEvent(value.state,value.message||'本机录音中',value.text);if(value.state!=='recording')void item.stopSpeech();}catch(error: any){speechEvent('error',error.message);void item.stopSpeech();}},350);
    }else{
     const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!Ctor||!('processLocally' in Ctor.prototype))throw Error('当前浏览器不支持强制离线识别。请使用 AIDE R&D Mac 桌面版或支持本机识别的浏览器。');
+    if(!Ctor||!('processLocally' in Ctor.prototype))throw Error('当前浏览器不支持强制离线识别。请使用 Aide Mac 桌面版或支持本机识别的浏览器。');
     if(typeof Ctor.available==='function'&&await Ctor.available({langs:['zh-CN'],processLocally:true})!=='available')throw Error('本机中文离线语言包不可用，请先安装对应语言包。');
     if(invalid())return;const recognition=new Ctor();speechRecognition=recognition;recognition.processLocally=true;recognition.lang='zh-CN';recognition.continuous=true;recognition.interimResults=true;
     recognition.onresult=(e: any): void=>{const text=Array.from(e.results).map((r: any)=>r[0]?.transcript||'').join('');speechEvent('recording','本机录音中',text);};recognition.onerror=(e: any): void=>{speechEvent('error','本机语音失败：'+e.error);void item.stopSpeech();};recognition.onend=(): void=>speechEvent('stopped','录音已停止，请核对逐字稿');recognition.start();speechStop.hidden=false;speechEvent('recording','本机录音中');
@@ -133,7 +133,7 @@ interface Window {
       if(invalid())throw Error(uiTextPluginWorkbench('工作区已切换'));
       if(response.protocol!==1||response.status!=='ready'||!/^\/plugin-editor\/[a-f0-9]{64}\/$/.test(response.url)||!(/^[a-f0-9]{64}$/.test(response.editorId)))throw Error('Invalid editor response');
       item.editorId=response.editorId;
-      if(!popup)throw Error(uiTextPluginWorkbench('请允许AIDE R&D打开编辑器窗口，再次点击恢复'));
+      if(!popup)throw Error(uiTextPluginWorkbench('请允许Aide打开编辑器窗口，再次点击恢复'));
       popup.location=response.url;reply('opened');notice.textContent=uiTextPluginWorkbench('原生窗口已打开；保存后关闭原生窗口，再刷新工程');
      }catch(error: any){popup?.close();reply('error',error.message);services.toast(error.message);}finally{editor.disabled=false;}
     };return;

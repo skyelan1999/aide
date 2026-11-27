@@ -6,7 +6,7 @@ interface Window {
   const fileFirst = new Set(['video-preview', 'step-viewer']);
   const tips: Record<string, string> = {
     'almanac': '选择日期即可查看；宜忌是民俗资料，节日不等于放假安排。',
-    'current-time': '选择显示时区，再点“切换”。时间来自 AIDE R&D 主机，当前 SSH 设备可能不同。',
+    'current-time': '选择显示时区，再点“切换”。时间来自 Aide 主机，当前 SSH 设备可能不同。',
     'lunar-calendar': '点选日期查看公历与农历；方向键也可选日。支持 1901–2099 年。',
     'file-preview': '先在插件设置中配置独立渲染引擎，再选授权来源、文件和页码。原文件保持只读。',
     'mapcanvas': '先导入 YAML 和 PGM/PNG 地图，再编辑。只读来源也可导入；覆盖原图需要写权限。',
@@ -52,11 +52,11 @@ interface Window {
       if (tips[guide.id]) body.append(n('p', '', t(tips[guide.id])));
       const steps = n('ol');
       const executable = (guide.tools || []).filter((tool: any) => tool.executable);
-      if (guide.providerSupport) steps.append(n('li', '', t('在模型设置中配置对应提供商与模型。此插件补充价格或账户能力，没有独立工作台；密钥由 AIDE R&D 管理。')));
+      if (guide.providerSupport) steps.append(n('li', '', t('在模型设置中配置对应提供商与模型。此插件补充价格或账户能力，没有独立工作台；密钥由 Aide 管理。')));
       if (guide.modelRouter) steps.append(n('li', '', t('先在模型设置中添加可用模型，再选择自动策略。插件帮助选择已有模型，不会提供模型账户。')));
       if (guide.workbench) steps.append(n('li', '', t(fileFirst.has(guide.id) ? '从项目文件中选择受支持的文件，再选择插件打开方式。' : '打开工作台，按页面提示选择文件、连接或示例。需要设置时可从本说明直接进入插件设置。')));
       if (executable.length) steps.append(n('li', '', t('也可在对话中说明任务和输入，让模型调用此插件的工具。工具开关、文件权限和审批仍然生效。')));
-      if (!guide.workbench && !guide.providerSupport && !guide.modelRouter && !executable.length) steps.append(n('li', '', t('此包没有独立工作台或当前可执行工具。能力声明不会新增执行器；请查看包内说明，确认它如何与 AIDE R&D 配合。')));
+      if (!guide.workbench && !guide.providerSupport && !guide.modelRouter && !executable.length) steps.append(n('li', '', t('此包没有独立工作台或当前可执行工具。能力声明不会新增执行器；请查看包内说明，确认它如何与 Aide 配合。')));
       steps.append(n('li', '', t('核对实际结果：文件是否保存、连接是否成功、工具是否返回有效结果。启用状态不能代替这些检查。'))); body.append(steps);
       if (guide.workbench?.fileHandler?.extensions?.length) body.append(n('p', 'muted', t('支持的文件类型：') + guide.workbench.fileHandler.extensions.join(', ')));
       if (guide.tools?.length) { const d = n('details'); d.append(n('summary', '', t('工具与能力详情'))); for (const tool of guide.tools) d.append(n('p', '', String(tool.name || '') + ' · ' + t(tool.executable ? '可执行工具' : '能力声明') + (tool.description ? ' — ' + tool.description : ''))); body.append(d); }
