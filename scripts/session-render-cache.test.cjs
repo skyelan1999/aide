@@ -33,6 +33,7 @@ assert.ok(context.signature(largeRun), 'large answers can be fingerprinted witho
 assert.doesNotMatch(signature, /JSON\.stringify/, 'run signature does not serialize the full rendered task into a temporary string');
 const session = {id:'session-1',updated:'same',runs:[base],messages:[],runsTotal:1,messagesTotal:0};
 const sessionSnapshot = context.sessionRevision(session);
+assert.notEqual(context.sessionRevision({...session,title:'已经提炼的主题'}), sessionSnapshot, 'a title-only detail update must be adopted');
 const sameLengthPollEdit = structuredClone(session); sameLengthPollEdit.runs[0].steps[0].content = '# Result\n\nAnswer answer';
 assert.notEqual(context.sessionRevision(sameLengthPollEdit), sessionSnapshot, 'equal-length last-run output edits must trigger a new session render');
 const sameLengthReasoningEdit = structuredClone(session); sameLengthReasoningEdit.runs[0].steps[0].reasoning = 'masked reasoning';

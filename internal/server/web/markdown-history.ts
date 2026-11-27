@@ -52,7 +52,7 @@ interface Window {
    try {
     const markdown=/\.(md|markdown)$/i.test(spec.path);const data=markdown?await api('/file/history?'+query(spec)):{enabled:false,versions:[]};if(blocked()||request!==epoch||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
     const dialog=document.createElement('dialog');activeDialog=dialog;dialog.className='md-history-dialog';
-    const head=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent=t('历史版本')+' · '+spec.path;close.type='button';close.className='icon-button';close.textContent='×';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();head.append(title,close);
+    const head=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent=t('历史版本')+' · '+spec.path;close.type='button';close.className='icon-button';close.textContent='×';close.setAttribute('aria-label',t('关闭对话框'));close.onclick=()=>dialog.close();head.append(title,close);
     const status=document.createElement('p');status.className='muted';status.textContent=t(data.enabled?'已启用：只记录实际变更，直接修改原文件。':'追踪未启用；已有历史仍可查看。');
     if(data.observation==='checked')status.textContent+=' '+t('已检查当前正文与引用资源的外部变更。');
     if(data.observationChange){const change=data.observationChange,parts=[];if(change.bodyChanged)parts.push(t('正文有变化'));if(change.assetsChanged?.length)parts.push(t('资源有变化')+' '+change.assetsChanged.join('、'));if(!parts.length)parts.push(t('版本指纹有变化'));status.textContent+=' '+t('本次检查发现新版本')+' '+change.version+'：'+parts.join('；')+'。';}

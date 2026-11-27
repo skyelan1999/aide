@@ -719,16 +719,19 @@ html[data-motion="reduced"] .traj-seg-btn:hover,html[data-motion="reduced"] .tra
 .voice-lock-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
 .voice-lock-row input[type="password"] { flex: 1; padding: 7px 9px; font-size: 12px; background: var(--field); color: var(--text); border: 1px solid var(--field-border); border-radius: 8px; }
 
-/* ── 账户锁屏：全屏毛玻璃糊化遮罩（视觉层，不停止后端任务） ── */
-.lock-screen {
+/* A full-viewport native modal keeps open editors and settings beneath the lock. */
+#lock-screen {
   position: fixed; inset: 0; z-index: 9000;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-  overflow-y: auto; padding: 18px 0;
-  background: color-mix(in srgb, var(--backdrop, rgba(20,22,30,.35)) 55%, transparent);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  backdrop-filter: blur(12px) saturate(1.1);
+  box-sizing: border-box;
+  width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 18px 0; border: 0; border-radius: 0;
+  overflow: auto; box-shadow: none;
+  color: var(--text); background: var(--panel);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
 }
-.lock-screen[hidden] { display: none; }
+#lock-screen::backdrop { background: var(--panel); }
+#lock-screen[hidden] { display: none; }
 .lock-companion { width: min(360px, calc(100vw - 48px)); text-align: center; }
 #lock-avatars { display:flex; justify-content:center; align-items:flex-end; gap:12px; min-height:0; }
 .lock-avatar-actor { width:172px;height:172px;opacity:var(--avatar-opacity,1); }

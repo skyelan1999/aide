@@ -184,8 +184,6 @@ function syncVoiceAssistantDisplayName() {
     entry.title = name;
   }
   if (assistantEntrySession) assistantEntrySession.title = name;
-  const lockName = $('lock-assistant-name');
-  if (lockName) lockName.textContent = name;
   if (state.session?.kind === 'assistant') {
     state.session.title = name;
     const title = $('session-title');

@@ -1,0 +1,81 @@
+{
+  "id": "workbench-ui-polish",
+  "request": "调整aide界面细节，使其看起来更专业更协调。不光是R&D，其他的看到的细节和扫到的异常漏洞都要处理一下。",
+  "baseline": "c859ab217b231bbaa12249f4adad7b9624388f6d",
+  "initial_status": "M README.en.md\n M README.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/computer_control.go\n M internal/server/config_backup.go\n M internal/server/dwg_preview.go\n M internal/server/factory_reset.go\n M internal/server/kv_cache.go\n M internal/server/persona.go\n M internal/server/plugin_market_source_compat.go\n M internal/server/storage_usage.go\n M internal/server/updates.go\n M internal/server/voip.go\n M internal/server/web/app-config.js\n M internal/server/web/app-config.ts\n M internal/server/web/app-runtime.js\n M internal/server/web/app-runtime.ts\n M internal/server/web/app.js\n M internal/server/web/app.ts\n M internal/server/web/desktop-capture.js\n M internal/server/web/desktop-capture.ts\n M internal/server/web/git-history.js\n M internal/server/web/git-history.ts\n M internal/server/web/index.html\n M internal/server/web/lan-login.html\n M internal/server/web/local-mounts.js\n M internal/server/web/local-mounts.ts\n M internal/server/web/locales/en.js\n M internal/server/web/locales/en.ts\n M internal/server/web/macos.css\n M internal/server/web/management.js\n M internal/server/web/management.ts\n M internal/server/web/markdown-export.js\n M internal/server/web/markdown-export.ts\n M internal/server/web/markdown-pdf-appearance.js\n M internal/server/web/markdown-pdf-appearance.ts\n M internal/server/web/message-center.js\n M internal/server/web/message-center.ts\n M internal/server/web/mobile-capture.html\n M internal/server/web/motorola-voip-guide.md\n M internal/server/web/plugin-guide.js\n M internal/server/web/plugin-guide.ts\n M internal/server/web/plugin-market.js\n M internal/server/web/plugin-market.ts\n M internal/server/web/plugin-workbench-tabs.js\n M internal/server/web/plugin-workbench-tabs.ts\n M internal/server/web/plugin-workbench.js\n M internal/server/web/plugin-workbench.ts\n M internal/server/web/session-plan.js\n M internal/server/web/session-plan.ts\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/task-outcome.js\n M internal/server/web/task-outcome.ts\n M internal/server/web/usage-analytics.js\n M internal/server/web/usage-analytics.ts\n M internal/server/web/voip.js\n M internal/server/web/voip.ts\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M native/macos-desktop/app_capture.swift\n M native/macos-desktop/biometrics.swift\n M native/macos-desktop/computer_control.swift\n M native/macos-desktop/main.swift\n M native/windows-launcher/desktop.hpp\n M native/windows-launcher/desktop_hello.hpp\n M native/windows-launcher/main.cpp\n M native/windows-launcher/resources/aide.manifest\n M scripts/build-macos-desktop.py\n M scripts/plugin-file-review.test.cjs\n M scripts/windows_desktop_smoke.cpp\n?? docs/reviews/2026-11-27-aide-rd-wordmark/\n?? docs/tasks/aide-rd-wordmark.json",
+  "acceptance": [
+    "Use the original wordmark and layout. Distinguish titles, secondary details and state without changing their meaning.",
+    "Verify desktop and mobile geometry, keyboard focus, and representative interactions in dark and light themes.",
+    "Install locally and check the actual workbench and session identities.",
+    "Icon-only dismiss controls and modal windows have accessible names in both languages.",
+    "An open modal or newly arriving dialog cannot cover the lock screen or receive keyboard input while locked. Verify unlock and draft retention.",
+    "Untrusted Markdown links opening another window are isolated. Embedded controls cannot target host forms or commandeer focus. Formatted text, ordinary links and disabled task checkboxes retain their intended behavior."
+  ],
+  "scope": [
+    "Polish the existing workbench navigation, inspector and message composer, and update the daily local installation.",
+    "Inspect visible workbench controls, modal accessibility, untrusted display data and lock-screen privacy. Repair confirmed issues and test on an isolated instance."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Refine the existing desktop workbench with the second-phase wordmark intact.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep the existing workbench and phase wordmark. Use the existing theme tokens and movable panel widths; align docked headers and give the writing area and actions separate space.",
+      "evidence": [
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Reworked session titles, status and keyboard navigation. Aligned docked headers and separated writing from composer controls. Fixed mobile search placement, accessible dialog names, lock-screen modal isolation, and unsafe window and form behavior in rendered Markdown.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/app.ts",
+        "internal/server/web/index.html",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.ts"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "359 local quick checks, TypeScript check and build passed. Tested light and dark layouts, themed desktops, phone touch emulation, side panels, keyboard navigation and search. Chromium and WebKit verified lock, retained drafts, Markdown window isolation and inert controls. Actual installed Mac app showed the updated UI.",
+      "evidence": [
+        ".agent-state/verify-20261127T022558345597Z.log",
+        ".agent-state/workbench-polish/after.log",
+        ".agent-state/workbench-polish/touch.log",
+        ".agent-state/workbench-polish/lock/chromium.log",
+        ".agent-state/workbench-polish/lock/webkit.log",
+        ".agent-state/workbench-polish/markdown-chromium/result.json",
+        ".agent-state/workbench-polish/markdown-webkit/result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Saved a side-by-side workbench comparison with synthetic session and file data, with close-ups of navigation, the file panel and the composer.",
+      "evidence": [
+        "docs/reviews/2026-11-27-workbench-polish/workbench-comparison.png"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Temporary browser test and lock test instances were removed. Prior local image and signed bundle remain available for rollback.",
+      "evidence": [
+        ".agent-state/workbench-polish/install/results.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Rebuilt and installed the working tree locally. Service image matches source, macOS code signature verified, daily app renders the workbench and exposes 100 named session title buttons. All 214 session identities and storage mounts matched the pre-update snapshot.",
+      "evidence": [
+        ".agent-state/workbench-polish/install/build-final.log",
+        ".agent-state/workbench-polish/install/results.json"
+      ]
+    }
+  },
+  "release_authorization": "Continuation of the requested update to the daily local Aide installation.",
+  "rollback": "The prior installed Mac bundle and previous service image are preserved under .agent-state/workbench-polish/install/.",
+  "handoff": "Updated local Aide at https://localhost:9999/. The before-and-after image uses synthetic sessions and files. No remote release was requested."
+}

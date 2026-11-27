@@ -119,7 +119,7 @@ function initSidebarResizers() {
 initSidebarResizers();
 // @ts-expect-error -- classic page scripts expose their own toast helper.
 function toast(text) {
-    const host = document.querySelector('dialog[open]') || document.body;
+    const host = document.querySelector('dialog[open]:not(#lock-screen)') || document.body;
     let notice = $('toast');
     if (!notice) {
         notice = document.createElement('div');

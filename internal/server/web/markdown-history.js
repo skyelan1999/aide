@@ -105,7 +105,7 @@
                 close.type = 'button';
                 close.className = 'icon-button';
                 close.textContent = '×';
-                close.setAttribute('aria-label', t('关闭'));
+                close.setAttribute('aria-label', t('关闭对话框'));
                 close.onclick = () => dialog.close();
                 head.append(title, close);
                 const status = document.createElement('p');

@@ -46,10 +46,21 @@ function sessionStatusPresentation(s, isSub = false) {
 let sessionListRequest = 0, sessionListPaintKey = '';
 async function loadSessions() {
     const scope = recoveryScope(), token = state.token, sequence = ++sessionListRequest;
+    const selectedId = state.session?.id, previousTitle = state.session?.title;
     const [sessions, archived] = await Promise.all([api('/sessions'), api('/sessions?archived=1')]);
     if (scope !== recoveryScope() || token !== state.token || sequence !== sessionListRequest)
         return;
     renderSessionList({ scope, token, sessions, archived });
+    const selected = state.session;
+    // A background title update can arrive after the last run poll has stopped.
+    if (selected && selected.id === selectedId && selected.title === previousTitle &&
+        selected.kind !== 'assistant' && (!state.pendingSessionId || state.pendingSessionId === selectedId)) {
+        const summary = sessions.find((s) => s.id === selectedId) || archived.find((s) => s.id === selectedId);
+        if (summary?.title && summary.title !== selected.title) {
+            selected.title = summary.title;
+            $('session-title').textContent = summary.title;
+        }
+    }
     return sessions;
 }
 function renderSessionList(snapshot) {
@@ -84,14 +95,20 @@ function renderSessionList(snapshot) {
         // 未读与执行状态分离：新结果可以独立提醒，选中态不再抹掉执行状态。
         const highlight = status?.key === 'completed-unread';
         const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : '') + (isSub ? ' sub-session' : ''));
+        const title = s.title?.trim() || t('未命名会话');
+        const numberPrefix = s.number > 0 ? '#' + s.number + ' ' : '';
         item.dataset.sessionId = s.id;
-        item.dataset.sessionTitle = s.title;
+        item.dataset.sessionTitle = title;
         item.dataset.status = s.status || 'idle';
         item.classList.toggle('loading', state.pendingSessionId === s.id);
-        item.title = s.title + (status ? ' · ' + t(status.label) : '');
+        item.title = title + (status ? ' · ' + t(status.label) : '');
         if (highlight)
             item.append(el('span', 'session-dot dot-done', ''));
-        const label = el('span', 'session-label' + (isSub ? ' sub-session-label' : ''));
+        const summary = el('div', 'session-summary');
+        const label = el('button', 'session-label' + (isSub ? ' sub-session-label' : ''));
+        label.type = 'button';
+        label.id = 'session-select-' + s.id;
+        label.setAttribute('aria-label', numberPrefix + title);
         const heading = el('span', 'session-heading');
         if (s.pinned) {
             const pin = el('span', 'session-pin-icon');
@@ -99,18 +116,25 @@ function renderSessionList(snapshot) {
             pin.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l-1 5 3 3v2H6v-2l3-3-1-5Z"/><path d="m12 13-1 8"/></svg>';
             heading.append(pin);
         }
-        heading.append(el('span', 'session-title', s.number > 0 ? '#' + s.number + ' ' + s.title : s.title));
+        if (numberPrefix)
+            heading.append(el('span', 'session-number', numberPrefix));
+        heading.append(el('span', 'session-title', title));
         label.append(heading);
         const preview = String(s.preview || '').trim();
         if (preview)
-            label.append(el('span', 'session-preview', preview));
-        if (preview)
             item.title += '\n' + preview;
         label.onclick = action(() => selectSession(s.id));
-        item.append(label);
+        item.onclick = (event) => {
+            if (!event.target.closest('button'))
+                label.click();
+        };
+        const details = el('div', 'session-details');
+        summary.append(label, details);
+        item.append(summary);
         if (status) {
             const badge = el('button', 'session-status-badge status-' + status.key);
             badge.type = 'button';
+            badge.id = 'session-status-' + s.id;
             badge.dataset.status = status.key;
             badge.title = item.title;
             badge.setAttribute('aria-label', item.title);
@@ -124,18 +148,38 @@ function renderSessionList(snapshot) {
                     $('run-action-content')?.querySelector('button,summary,input')?.focus({ preventScroll: true });
                 }
             });
-            item.append(badge);
+            details.append(badge);
         }
         const activity = el('span', 'session-activity-badge');
         activity.hidden = true;
         activity.setAttribute('role', 'status');
+        details.append(activity);
+        if (preview)
+            details.append(el('span', 'session-preview', preview));
         const more = el('button', 'session-more', '⋯');
+        more.id = 'session-menu-button-' + s.id;
         more.setAttribute('aria-label', t("会话操作"));
         more.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll('.session-menu').forEach((m) => leaveUISurface(m, null, true));
             const menu = el('div', 'session-menu');
             const closeMenu = () => { leaveUISurface(menu, null, true); };
+            const renameBtn = el('button', 'menu-item', t('重命名'));
+            renameBtn.onclick = action(async () => {
+                closeMenu();
+                more.focus({ preventScroll: true });
+                const input = window.prompt(t('请输入新的会话名称'), title);
+                if (input === null)
+                    return;
+                const name = input.trim();
+                if (!name || Array.from(name).length > 120 || /[\r\n]/.test(name)) {
+                    throw Error(t('会话名称需要 1 至 120 个字符，且只能占一行'));
+                }
+                if (name === title)
+                    return;
+                await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ title: name }) });
+                await loadSessions();
+            });
             const pinBtn = el('button', 'menu-item', s.pinned ? t("取消置顶") : t("置顶"));
             pinBtn.onclick = action(async () => { await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ pinned: !s.pinned }) }); closeMenu(); await loadSessions(); });
             const archBtn = el('button', 'menu-item', s.archived ? t("取消归档") : t("归档"));
@@ -166,7 +210,7 @@ function renderSessionList(snapshot) {
                 }
                 await loadSessions();
             });
-            menu.append(pinBtn, archBtn, delBtn);
+            menu.append(renameBtn, pinBtn, archBtn, delBtn);
             // 挂到 body 用 fixed 定位：测量尺寸后贴 ⋯ 按钮，空间不足则向上翻，不受侧栏滚动裁切
             document.body.append(menu);
             const btnRect = more.getBoundingClientRect();
@@ -175,7 +219,7 @@ function renderSessionList(snapshot) {
             menu.style.top = (btnRect.bottom + mh + 8 <= window.innerHeight ? btnRect.bottom + 4 : Math.max(8, btnRect.top - mh - 4)) + 'px';
             setTimeout(() => { const close = () => { closeMenu(); document.removeEventListener('click', close); }; document.addEventListener('click', close); }, 0);
         };
-        item.append(activity, more);
+        item.append(more);
         return item;
     };
     const renderedMains = new Set(mains.map((m) => m.id));
@@ -187,16 +231,24 @@ function renderSessionList(snapshot) {
         const done = doneChildrenOf[m.id] || [];
         if (done.length) {
             const st = subGroupState[m.id] = subGroupState[m.id] || { collapsed: false, expandAll: false };
-            const toggle = el('div', 'sub-group-toggle');
+            const toggle = el('button', 'sub-group-toggle');
+            toggle.type = 'button';
+            toggle.id = 'session-group-toggle-' + m.id;
+            toggle.setAttribute('aria-expanded', String(!st.collapsed));
             toggle.onclick = () => { st.collapsed = !st.collapsed; renderSessionList(snapshot); };
-            toggle.append(el('span', 'sub-group-caret', st.collapsed ? '▸' : '▾'));
+            const caret = el('span', 'sub-group-caret', st.collapsed ? '▸' : '▾');
+            caret.setAttribute('aria-hidden', 'true');
+            toggle.append(caret);
             toggle.append(el('span', 'sub-group-title', t("子会话 ({0})", done.length)));
             list.append(toggle);
             if (!st.collapsed) {
                 const shown = st.expandAll ? done : done.slice(0, 3);
                 shown.forEach((c) => list.append(buildItem(c, true)));
                 if (done.length > 3) {
-                    const more = el('div', 'sub-group-toggle sub-group-more');
+                    const more = el('button', 'sub-group-toggle sub-group-more');
+                    more.type = 'button';
+                    more.id = 'session-group-more-' + m.id;
+                    more.setAttribute('aria-expanded', String(st.expandAll));
                     more.onclick = (e) => { e.stopPropagation(); st.expandAll = !st.expandAll; renderSessionList(snapshot); };
                     more.append(el('span', '', st.expandAll ? t("收起") : t("展开全部 (+{0})", done.length - 3)));
                     list.append(more);
@@ -209,7 +261,11 @@ function renderSessionList(snapshot) {
         if (!renderedMains.has(pid))
             childrenOf[pid].forEach((c) => list.append(buildItem(c, true)));
     });
-    $('sessions').replaceChildren(list);
+    const sessionsNode = $('sessions');
+    const focusedId = sessionsNode.contains(document.activeElement) ? document.activeElement?.id : '';
+    sessionsNode.replaceChildren(list);
+    if (focusedId)
+        document.getElementById(focusedId)?.focus({ preventScroll: true });
     renderSessionCompactionIndicators();
     sessionListPaintKey = paintKey();
 }
@@ -377,7 +433,7 @@ function sessionRevision(s) {
         sessionTextRevision(JSON.stringify(run?.pw || null)),
         sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
     ].join(':')).join(';');
-    return [s.id, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.runningRuns, s.messagesTotal ?? messages.length, state.historyLimit,
+    return [s.id, s.title, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.runningRuns, s.messagesTotal ?? messages.length, state.historyLimit,
         runs.length, messages.length, JSON.stringify(runs.map((run) => [run.id, run.steers || []])), runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
         lastRun?.steps?.map((step) => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning) + ':' + sessionTextRevision(JSON.stringify(step.outputSegments || []))).join(',')].join('|');
 }
@@ -1360,7 +1416,8 @@ async function stopRunById(runId) {
     const button = document.createElement('button');
     button.id = 'reminder-center-button';
     button.type = 'button';
-    button.className = 'quiet';
+    button.className = 'quiet top-action';
+    button.setAttribute('aria-controls', 'reminder-center');
     button.setAttribute('aria-label', t('消息'));
     button.dataset.i18nAriaLabel = '消息';
     button.setAttribute('aria-pressed', 'false');
@@ -1369,11 +1426,11 @@ async function stopRunById(runId) {
     icon.setAttribute('viewBox', '0 0 24 24');
     icon.setAttribute('fill', 'none');
     icon.setAttribute('stroke', 'currentColor');
-    icon.setAttribute('stroke-width', '1.7');
+    icon.setAttribute('stroke-width', '1.75');
     icon.setAttribute('stroke-linecap', 'round');
     icon.setAttribute('stroke-linejoin', 'round');
     icon.setAttribute('aria-hidden', 'true');
-    icon.innerHTML = '<path d="M7 18l-4 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3Z"/><path d="M7 8h10M7 12h6"/>';
+    icon.innerHTML = '<path d="M6 17.5H5A2 2 0 0 1 3 15.5V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2h-7.5L6 21Z"/><path d="M7.5 9.5h9"/>';
     const messageLabel = document.createElement('span');
     messageLabel.dataset.i18n = '消息';
     messageLabel.textContent = t('消息');
@@ -1384,7 +1441,7 @@ async function stopRunById(runId) {
     document.querySelector('.panel-switch').insertBefore(button, $('plugins-toggle'));
     document.body.insertAdjacentHTML('beforeend', `
     <aside id="reminder-center" class="reminder-center-panel" aria-labelledby="reminder-center-title">
-      <header class="reminder-center-head"><h2 id="reminder-center-title" data-i18n="消息">消息</h2><div class="reminder-panel-actions"><button type="button" id="reminder-create-toggle" aria-label="新建提醒" title="新建提醒" data-i18n-aria-label="新建提醒" data-i18n-title="新建提醒">＋</button><button type="button" class="icon-button" id="reminder-center-close" aria-label="关闭" data-i18n-aria-label="关闭"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></header>
+      <header class="reminder-center-head"><h2 id="reminder-center-title" data-i18n="消息">消息</h2><div class="reminder-panel-actions"><button type="button" id="reminder-create-toggle" aria-label="新建提醒" title="新建提醒" data-i18n-aria-label="新建提醒" data-i18n-title="新建提醒">＋</button><button type="button" class="icon-button" id="reminder-center-close" aria-label="关闭消息面板" data-i18n-aria-label="关闭消息面板"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></header>
       <div class="reminder-center-body">
         <form class="reminder-create" id="reminder-form"><h3 id="reminder-form-title" data-i18n="新建提醒">新建提醒</h3>
           <label><span data-i18n="标题">标题</span><input id="reminder-title" maxlength="200" required></label>
@@ -1409,7 +1466,7 @@ async function stopRunById(runId) {
         </section>
       </div>
     </aside>
-    <dialog id="reminder-alert" class="reminder-alert-dialog" aria-labelledby="reminder-alert-title"><div class="dialog-heading"><h2 id="reminder-alert-title" data-i18n="到期提醒">到期提醒</h2><button type="button" class="icon-button" id="reminder-alert-close" aria-label="关闭" data-i18n-aria-label="关闭">×</button></div><p data-i18n="这些提醒已经到期：">这些提醒已经到期：</p><div id="reminder-alert-items" class="reminder-alert-list"></div><div class="editor-footer"><span></span><div><button type="button" class="quiet" id="reminder-alert-open" data-i18n="打开提醒中心">打开提醒中心</button><button type="button" class="primary" id="reminder-alert-done" data-i18n="知道了">知道了</button></div></div></dialog>
+    <dialog id="reminder-alert" class="reminder-alert-dialog" aria-labelledby="reminder-alert-title"><div class="dialog-heading"><h2 id="reminder-alert-title" data-i18n="到期提醒">到期提醒</h2><button type="button" class="icon-button" id="reminder-alert-close" aria-label="关闭对话框" data-i18n-aria-label="关闭对话框">×</button></div><p data-i18n="这些提醒已经到期：">这些提醒已经到期：</p><div id="reminder-alert-items" class="reminder-alert-list"></div><div class="editor-footer"><span></span><div><button type="button" class="quiet" id="reminder-alert-open" data-i18n="打开提醒中心">打开提醒中心</button><button type="button" class="primary" id="reminder-alert-done" data-i18n="知道了">知道了</button></div></div></dialog>
   `);
     window.aideI18n?.applyStatic();
     let filterArea = 'all', filterStatus = 'pending', editingID = '', searchTimer = 0, popupBusy = false;
@@ -2849,7 +2906,7 @@ function renderSession() {
             renderSteerMessages(run, box);
         box.dataset.renderSignature = renderSignature;
         const meta = el('div', 'run-meta');
-        meta.append(el('span', '', run.mode === 'pw' ? '◈ PW WORKFLOW' : run.mode === 'workflow' ? t(run.steps?.some((step) => step.name === 'agent') ? "◈ AIDE R&D WORKFLOW · 自主执行" : "◈ AIDE R&D WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE R&D ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status)));
+        meta.append(el('span', '', run.mode === 'pw' ? '◈ PW WORKFLOW' : run.mode === 'workflow' ? t(run.steps?.some((step) => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status)));
         if (run.strategy)
             meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
         if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume && run !== state.session.runs.at(-1)) {
@@ -8491,7 +8548,7 @@ async function openApprovalRules() {
     dialog.setAttribute('aria-labelledby', title.id);
     const close = el('button', 'icon-button', '×'), reload = el('button', 'quiet', t('重新读取'));
     close.type = reload.type = 'button';
-    close.setAttribute('aria-label', t('关闭'));
+    close.setAttribute('aria-label', t('关闭对话框'));
     close.onclick = () => dialog.close();
     const content = el('div', 'outcome-content'), feedback = el('p', 'muted');
     feedback.hidden = true;
@@ -10549,7 +10606,13 @@ function renderWorkspaceSummary() {
     startupWarning.textContent = wsState.config?.startupWarning || '';
     startupWarning.hidden = !startupWarning.textContent;
     const sshMode = w.mode === 'ssh';
-    $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || t("远程")) + ' · SSH/SFTP' : t("{0} · 本地", state.config?.workspaceDisplay || '/workspace');
+    const path = sshMode ? w.path || '' : state.config?.workspaceDisplay || '/workspace';
+    const name = path.replace(/[\\/]+$/, '').split(/[\\/]/).pop();
+    const location = sshMode ? [w.host, path].filter(Boolean).join(':') : path;
+    $('workspace-name').textContent = name || (sshMode ? w.host : path) || t("工作空间");
+    $('workspace-kind').textContent = sshMode ? 'SSH' : t("本地");
+    $('workspace-summary').textContent = location;
+    $('workspace-summary').title = location;
     $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || t("未配置主机")) : t("本地");
     const interactive = $('command-interactive');
     interactive.disabled = !sshMode;
@@ -11477,7 +11540,7 @@ function renderSourceFields() {
         host.append(template);
         transport.onchange = () => { const httpMode = transport.value === 'streamable-http'; urlInput.parentNode.hidden = !httpMode; tokenInput.parentNode.hidden = !httpMode; dockerLabel.hidden = !httpMode; commandInput.parentNode.hidden = httpMode; argsLabel.hidden = httpMode; template.hidden = httpMode; };
         transport.onchange();
-        host.append(el('p', 'muted', t('本地程序在 AIDE R&D 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。')));
+        host.append(el('p', 'muted', t('本地程序在 AIDE 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。')));
     }
     else if (type === 'relay') {
         addField(t('中继主机'), 'src-host', '192.168.1.10').required = true;
@@ -11659,8 +11722,26 @@ const BLOCKED_TAGS = new Set(['script', 'style', 'iframe', 'object', 'embed', 'f
 function sanitizeHtml(html) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     doc.body.querySelectorAll('*').forEach((el) => {
-        if (BLOCKED_TAGS.has(el.tagName.toLowerCase())) {
+        const tag = el.localName;
+        if (BLOCKED_TAGS.has(tag)) {
             el.remove();
+            return;
+        }
+        // GFM task lists are display-only. Rebuild checkboxes without form associations.
+        if (el instanceof HTMLInputElement) {
+            if (el.type !== 'checkbox') {
+                el.remove();
+                return;
+            }
+            const checkbox = doc.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.disabled = true;
+            checkbox.defaultChecked = el.defaultChecked;
+            el.replaceWith(checkbox);
+            return;
+        }
+        if (['button', 'label', 'select', 'option', 'optgroup', 'textarea', 'dialog'].includes(tag)) {
+            el.replaceWith(...el.childNodes);
             return;
         }
         for (const attr of [...el.attributes]) {
@@ -11675,11 +11756,24 @@ function sanitizeHtml(html) {
                 el.removeAttribute(attr.name);
                 continue;
             }
+            if (name.startsWith('form') || ['autofocus', 'accesskey', 'contenteditable', 'command', 'commandfor', 'popover', 'popovertarget', 'popovertargetaction'].includes(name)) {
+                el.removeAttribute(attr.name);
+                continue;
+            }
             if (name === 'href' || name === 'src') {
                 // 去掉 scheme 内的 tab/换行/空白等控制字符，堵住 java\tscript: / java\nscript: 绕过
                 const norm = (attr.value || '').replace(/[\x00-\x20]/g, '');
                 if (/^(javascript|vbscript|data:text\/html)/i.test(norm))
                     el.removeAttribute(attr.name);
+            }
+        }
+        if (el instanceof HTMLAnchorElement) {
+            for (const token of [...el.relList]) {
+                if (token.toLowerCase() === 'opener')
+                    el.relList.remove(token);
+            }
+            if (el.target && !['_self', '_parent', '_top'].includes(el.target.toLowerCase())) {
+                el.relList.add('noopener', 'noreferrer');
             }
         }
     });
@@ -11763,7 +11857,7 @@ function setupImagePreview(container, filePath, root, source, viewerSpec) {
     btnZoomOut.title = t('缩小');
     btnFit.title = t('适应窗口');
     btnOrig.title = t('原始大小');
-    btnClose.title = t('关闭');
+    btnClose.title = t('关闭预览');
     toolbar.append(info, dims, btnZoomOut, btnZoomIn, btnFit, btnOrig, btnClose);
     const canvas = el('div', 'img-canvas');
     const img = el('img', 'img-preview');
@@ -12199,7 +12293,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec, pr
     btnZoomOut.title = t('缩小');
     btnZoomIn.title = t('放大');
     btnFit.title = t('适应宽度');
-    btnClose.title = t('关闭');
+    btnClose.title = t('关闭预览');
     toolbar.append(info, meta, btnPrev, pageInput, pageTotal, btnNext, btnZoomOut, btnZoomIn, btnFit, btnClose);
     let sheetSelect = null;
     if (previewOptions?.sheets?.length) {
@@ -13229,7 +13323,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     btnZoomOut.title = t('缩小');
     btnZoomIn.title = t('放大');
     btnFit.title = t('适应窗口');
-    btnClose.title = t('关闭');
+    btnClose.title = t('关闭预览');
     btnZoomOut.disabled = btnZoomIn.disabled = btnFit.disabled = true;
     toolbar.append(info, meta, btnZoomOut, btnZoomIn, btnFit, btnClose);
     const canvas = el('div', 'dxf-canvas');
@@ -14880,6 +14974,7 @@ function openTrajectory() {
     closeWorkspaceSheet();
     ensureTrajectoryTabs();
     $('trajectory-sheet').classList.add('open');
+    $('trajectory-toggle').setAttribute('aria-expanded', 'true');
     renderTrajectory();
     $('settings-backdrop').classList.add('open');
     requestAnimationFrame(() => {
@@ -14905,6 +15000,7 @@ function closeTrajectory() {
     trajectoryViewAnimation = null;
     window.AideTaskOutcome?.close();
     $('trajectory-sheet').classList.remove('open');
+    $('trajectory-toggle').setAttribute('aria-expanded', 'false');
     $('settings-backdrop').classList.remove('open');
 }
 $('trajectory-toggle').onclick = () => { if ($('trajectory-sheet').classList.contains('open'))
@@ -15721,7 +15817,7 @@ function ttsPlaybackStatus(phase, detail = '', retry = null) {
     button.type = 'button';
     button.onclick = retry;
     notice.append(el('span', '', detail || t('浏览器等待播放授权')), button);
-    (document.querySelector('dialog[open]') || document.body).append(notice);
+    (document.querySelector('dialog[open]:not(#lock-screen)') || document.body).append(notice);
 }
 function effectiveVoiceProvider() { return state.config?.voiceBinding?.provider || state.config?.ttsProvider || 'auto'; }
 function ttsWantsEdge(overrideProvider) {
@@ -16943,7 +17039,7 @@ function renderVoiceNameControl() {
     input.value = voiceAssistantDisplayName();
     const row = el('div', 'voice-name-row');
     row.append(input);
-    wrap.append(head, row, el('small', '', t('名称同步显示在小秘会话和锁屏界面；默认「小秘」。')));
+    wrap.append(head, row, el('small', '', t('名称显示在侧栏和助理会话中，默认为「小秘」。')));
     const autosave = settingsAutosave(wrap, () => ({ voiceAssistantName: input.value.trim() || '小秘' }));
     input.oninput = () => autosave.change(false);
     input.onchange = () => autosave.change();
@@ -18248,13 +18344,35 @@ function resumeUnlockedState() {
     fileViewAutoSave.resume();
     void reconcileAfterUnlock(snapshot);
 }
+function showLockModal(joining) {
+    const veil = $('lock-screen');
+    veil.classList.toggle('joining', joining);
+    veil.hidden = false;
+    if (!veil.open)
+        veil.showModal();
+}
+$('lock-screen').addEventListener('cancel', (event) => event.preventDefault());
+// An asynchronous file preview or reminder can open a modal after the lock.
+// Keep the authentication surface last in the top layer and retain the pending dialogs.
+new MutationObserver(records => {
+    const veil = $('lock-screen');
+    if (!veil.open)
+        return;
+    const login = $('login-dialog');
+    const loginClosed = !login.open && records.some(({ target }) => target === login);
+    if (loginClosed || records.some(({ target }) => target instanceof HTMLDialogElement && target !== veil && target !== login && target.open)) {
+        const guard = login.open ? login : veil;
+        guard.close();
+        guard.showModal();
+    }
+}).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
 /* 视觉层：把 effectiveLocked=true 落到本地遮罩 + 小秘退下（幂等，可重复调用）。 */
 function applyLockVisual() {
     window.AidePluginMarket?.close?.();
     if (!state.config || !state.config.hasPassword)
         return;
-    const veil = $('lock-screen');
     if (lockScreen.locked) {
+        showLockModal(false);
         refreshLockStatus();
         return;
     }
@@ -18271,8 +18389,7 @@ function applyLockVisual() {
         voiceClose();
     window.aideAssistantLive?.stop();
     ttsCancel();
-    veil.hidden = false;
-    veil.classList.remove('joining');
+    showLockModal(false);
     $('lock-password').value = '';
     $('lock-error').textContent = '';
     refreshLockStatus();
@@ -18289,6 +18406,8 @@ function releaseLockVisual() {
         lockScreen.lastActivity = Date.now();
     lockScreen.locked = false;
     const veil = $('lock-screen');
+    if (veil.open)
+        veil.close();
     veil.hidden = true;
     veil.classList.remove('joining');
     if (!lockScreen.unlocking)
@@ -18300,9 +18419,7 @@ function releaseLockVisual() {
 }
 /* 加入窗口期中性面纱：不露内容、不抢密码框。 */
 function showJoiningVeil() {
-    const veil = $('lock-screen');
-    veil.hidden = false;
-    veil.classList.add('joining');
+    showLockModal(true);
     $('lock-error').textContent = '';
     $('lock-status').textContent = t('正在确认安全状态…');
 }
