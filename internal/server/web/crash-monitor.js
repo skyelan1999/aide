@@ -136,7 +136,7 @@
                     detail.focus();
                 }
             };
-            const close = element('button', t('关闭'));
+            const close = element('button', t('关闭对话框'));
             close.type = 'button';
             close.onclick = () => dialog.close();
             const note = element('p', t('诊断仅保存在本机。不会自动刷新、重发任务或中断其他会话。'));
@@ -147,7 +147,7 @@
         }
         ui.heading.textContent = t('崩溃与异常诊断');
         ui.note.textContent = t('诊断仅保存在本机。不会自动刷新、重发任务或中断其他会话。');
-        ui.close.textContent = t('关闭');
+        ui.close.textContent = t('关闭对话框');
         ui.dismiss.setAttribute('aria-label', t('收起异常提示'));
         list.setAttribute('aria-label', t('选择异常记录'));
         paintUpdateNotice();

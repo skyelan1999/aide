@@ -34,7 +34,7 @@ interface Window {
   let existing: any=document.getElementById('plugin-upgrade-dialog');if(existing){existing.close();existing.remove();}
   const dialog=el('dialog','plugin-settings-dialog');dialog.id='plugin-upgrade-dialog';
   const form=el('form'),heading=el('div','dialog-heading'),title=el('h2','',t('插件升级：{0}',plugin.name));title.id='plugin-upgrade-title';dialog.setAttribute('aria-labelledby',title.id);
-  const close=el('button','icon-button','×');close.type='button';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();heading.append(title,close);
+  const close=el('button','icon-button','×');close.type='button';close.setAttribute('aria-label',t('关闭对话框'));close.onclick=()=>dialog.close();heading.append(title,close);
   const hint=el('p','muted',t('选择本地 ZIP 升级包，或填写 HTTPS ZIP 地址。升级保留原设置和可恢复备份。'));
   const label=el('label','',t('升级来源')),input=el('input');input.type='url';input.required=true;input.value=plugin.updateURL||'';input.placeholder='https://…/plugin.zip';input.autocomplete='off';input.maxLength=2048;label.append(input);
   const localLabel=el('label','',t('本地 ZIP 升级包')),local=el('input');local.type='file';local.accept='.zip,application/zip';localLabel.append(local);local.onchange=()=>{input.required=!local.files?.length;input.disabled=!!local.files?.length;};

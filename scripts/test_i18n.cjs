@@ -11,6 +11,13 @@ assert.equal(api.language(),'en');
 assert.equal(api.t('语言'),'Language');
 assert.equal(api.t('显示'),'Show');
 assert.equal(api.t('隐藏'),'Hide');
+assert.equal(api.t('关闭'),'Off');
+assert.equal(api.t('关闭对话框'),'Close dialog');
+const html = fs.readFileSync('internal/server/web/index.html', 'utf8');
+for (const [markup] of html.matchAll(/<button\b[^>]*data-close="[^"]+"[^>]*>×<\/button>/g)) {
+  const label = markup.match(/data-i18n-aria-label="([^"]+)"/)?.[1];
+  assert.ok(label && api.t(label).startsWith('Close'), 'Icon-only dismiss button needs a localized close action: ' + markup);
+}
 assert.equal(api.t('对{0}说点什么…', '小秘'),'Say something to 小秘…');
 assert.equal(api.t('unknown 中文'),'unknown 中文');
 ctx.window.aideEnglish['test {0}']='value {0}';

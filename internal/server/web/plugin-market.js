@@ -157,7 +157,7 @@
             const heading = node('div', 'market-detail-head'), title = node('h2', '', p.name), close = node('button', 'icon-button', '×');
             title.id = 'market-detail-title';
             close.type = 'button';
-            close.setAttribute('aria-label', t('关闭'));
+            close.setAttribute('aria-label', t('关闭对话框'));
             close.onclick = () => modal.close();
             heading.append(icon(p.category, node), title, close);
             modal.append(heading, node('p', '', p.description));

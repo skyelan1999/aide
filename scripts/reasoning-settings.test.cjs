@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync('internal/server/web/index.html','utf8'),app=require('./fixtures/app-source.cjs').readAppSource();
-const dialog=html.match(/<dialog id="settings-dialog">[\s\S]*?<\/dialog>/)[0];
+const dialog=html.match(/<dialog\b[^>]*\bid="settings-dialog"[^>]*>[\s\S]*?<\/dialog>/)?.[0];
+assert.ok(dialog,'model settings dialog exists');
 assert.doesNotMatch(dialog,/model-reasoning-effort|save-default-reasoning/,'model settings has no duplicate reasoning controls');
 assert.doesNotMatch(app,/defaultReasoningSettings|model-reasoning-effort/);
 assert.doesNotMatch(html,/src="\/reasoning-settings\.js/);

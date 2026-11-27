@@ -64,7 +64,7 @@
         dialog.setAttribute('aria-labelledby', title.id);
         const close = el('button', 'icon-button', '×');
         close.type = 'button';
-        close.setAttribute('aria-label', t('关闭'));
+        close.setAttribute('aria-label', t('关闭对话框'));
         close.onclick = () => dialog.close();
         heading.append(title, close);
         const hint = el('p', 'muted', t('选择本地 ZIP 升级包，或填写 HTTPS ZIP 地址。升级保留原设置和可恢复备份。'));

@@ -85,12 +85,12 @@ interface Window {
         try { await navigator.clipboard.writeText(text(selected)); copy.textContent = t('已复制诊断'); }
         catch (_) { copy.textContent = t('无法自动复制，请选择诊断文本复制'); detail.focus(); }
       };
-      const close = element('button',t('关闭')); close.type = 'button'; close.onclick = () => dialog.close();
+      const close = element('button',t('关闭对话框')); close.type = 'button'; close.onclick = () => dialog.close();
       const note = element('p',t('诊断仅保存在本机。不会自动刷新、重发任务或中断其他会话。'));
       list.onchange = () => { selected = reports.find(r => r.id === list.value) || reports.at(-1); detail.textContent = selected ? text(selected) : t('尚无异常记录'); copy.textContent = t('复制诊断'); };
       Object.assign(ui,{heading,note,close});dialog.append(heading,list,detail,note,copy,close); document.body.append(dialog);
     }
-    ui.heading.textContent=t('崩溃与异常诊断');ui.note.textContent=t('诊断仅保存在本机。不会自动刷新、重发任务或中断其他会话。');ui.close.textContent=t('关闭');ui.dismiss.setAttribute('aria-label',t('收起异常提示'));list.setAttribute('aria-label',t('选择异常记录'));
+    ui.heading.textContent=t('崩溃与异常诊断');ui.note.textContent=t('诊断仅保存在本机。不会自动刷新、重发任务或中断其他会话。');ui.close.textContent=t('关闭对话框');ui.dismiss.setAttribute('aria-label',t('收起异常提示'));list.setAttribute('aria-label',t('选择异常记录'));
     paintUpdateNotice();
     if (locked()) { notice.hidden = true; if (dialog.open) dialog.close(); return; }
     notice.hidden = dismissed || !reports.length;

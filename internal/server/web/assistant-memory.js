@@ -14,7 +14,7 @@
         element.append(entry);
         const dialog = make('dialog', null, 'assistant-memory-dialog');
         dialog.setAttribute('aria-label', t('记忆管理'));
-        const header = make('header'), title = make('h2', t('记忆管理')), close = make('button', t('关闭'));
+        const header = make('header'), title = make('h2', t('记忆管理')), close = make('button', t('关闭对话框'));
         close.type = 'button';
         header.append(title, close);
         const summary = make('p'), notice = make('p', t('这里管理当前工作区的长期记忆。删除不会清除聊天历史、旧备份或外部模型留存。'), 'assistant-memory-note'), rules = make('div'), list = make('div'), footer = make('footer'), prev = make('button', t('上一页')), next = make('button', t('下一页')), status = make('span');
