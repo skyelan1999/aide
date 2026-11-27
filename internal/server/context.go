@@ -206,6 +206,7 @@ type RequestSnapshot struct {
 	SHA256                string          `json:"sha256"`
 	Outcome               string          `json:"outcome,omitempty"`
 	FailureCode           string          `json:"failureCode,omitempty"`
+	FinishReason          string          `json:"finishReason,omitempty"`
 	At                    string          `json:"at"`
 	FirstTokenAt          string          `json:"firstTokenAt,omitempty"`
 	CompletedAt           string          `json:"completedAt,omitempty"`
@@ -532,7 +533,7 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	historyStart := len(history)
 	historyCount := 0
 	if s != nil {
-		conversation := conversationHistory(s)
+		conversation := historyForModel(conversationHistory(s), s.Runs)
 		for i := range conversation {
 			conversation[i].SourceRunID = ""
 			conversation[i].CreatedAt = ""

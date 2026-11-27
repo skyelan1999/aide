@@ -2727,7 +2727,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 	}
 	repeatedCallResults := map[string]int{}
 	var lastOut string
-	emptyFallback := 0            // d 类空响应自动续接计数（成功一轮即重置）
+	emptyFallback := 0 // d 类空响应自动续接计数（成功一轮即重置）
+	toolNoticeCorrected := false
 	webReadCorrections := 0       // At most one correction for a research answer without a real page attempt.
 	clarificationCorrections := 0 // Bound prose-question repair to one extra model round.
 	coverageCorrections := 0
@@ -2866,11 +2867,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			reasoningBuffer.WriteString(rc)
 			flushReasoning(false)
 		}
-		markSnapshotComplete := func(started, completed time.Time, usage TokenUsage, requestErr error, emptyResponse bool) {
+		markSnapshotComplete := func(started, completed time.Time, usage TokenUsage, finish string, requestErr error, out string, calls []ToolCall) (string, bool) {
+			emptyResponse := len(calls) == 0 && strings.TrimSpace(out) == ""
+			prose, unissuedTools := toolResponseProse(task.Prompt, out, finish, tools, calls, requestErr)
 			a.mu.Lock()
 			outcome := "completed"
 			if requestErr != nil {
 				outcome = "failed"
+			} else if unissuedTools {
+				outcome = "missing_tool_call"
 			} else if emptyResponse {
 				outcome = "empty_response"
 			}
@@ -2880,7 +2885,11 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
 				snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
 				applyProviderRequestTiming(snapshot, started, usage)
-				snapshot.Outcome = "completed"
+				snapshot.Outcome = outcome
+				switch finish {
+				case "stop", "length", "tool_calls", "function_call", "content_filter":
+					snapshot.FinishReason = finish
+				}
 				snapshot.FailureCode = ""
 				if requestErr != nil {
 					if isEmptyCompletionErr(requestErr) {
@@ -2890,18 +2899,31 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 						snapshot.Outcome = "failed"
 						snapshot.FailureCode, _, _ = incidentClass(requestErr, 0)
 					}
+				} else if unissuedTools {
+					snapshot.FailureCode = "MISSING_TOOL_CALL"
 				} else if emptyResponse {
 					snapshot.Outcome = "empty_response"
 					snapshot.FailureCode = "EMPTY_RESPONSE"
 				}
 			}
 			a.mu.Unlock()
+			return prose, unissuedTools
+		}
+		requestModel := func() (string, []ToolCall, TokenUsage, string, error) {
+			out, calls, usage, finish, err := completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
+			// SSE reports an entirely empty declared call as an empty completion.
+			// Treat it like the equivalent JSON reply at the tool protocol boundary.
+			var empty *emptyCompletionError
+			if len(tools) > 0 && errors.As(err, &empty) && toolCallFinish(empty.finish) {
+				return out, calls, usage, empty.finish, nil
+			}
+			return out, calls, usage, finish, err
 		}
 		requestStarted := time.Now()
-		out, calls, usage, finish, err := completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
+		out, calls, usage, finish, err := requestModel()
 		streamDeltas.close()
 		flushReasoning(true)
-		markSnapshotComplete(requestStarted, time.Now(), usage, err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
+		prose, unissuedTools := markSnapshotComplete(requestStarted, time.Now(), usage, finish, err, out, calls)
 		if err != nil {
 			a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
 		}
@@ -2963,9 +2985,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				return "", input, checkpointErr
 			}
 			requestStarted = time.Now()
-			out, calls, usage, finish, err = completeStream(roundCtx, cfg, input, params, tools, rec, onDelta, onReasoning)
+			out, calls, usage, finish, err = requestModel()
 			flushReasoning(true)
-			markSnapshotComplete(requestStarted, time.Now(), usage, err, err == nil && len(calls) == 0 && strings.TrimSpace(out) == "")
+			prose, unissuedTools = markSnapshotComplete(requestStarted, time.Now(), usage, finish, err, out, calls)
 			if err != nil {
 				a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
 			}
@@ -3012,6 +3034,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			CompactedAt:        compactedAt,
 			SummaryFingerprint: contextSummaryFingerprint(input),
 		}
+		out = prose
 		lastOut = out
 		a.mu.Unlock()
 		if err := a.saveOutputSegment(task, stepIndex, round, out); err != nil {
@@ -3049,7 +3072,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		// Cosmetic feedback is carried by the existing completion, never another
 		// background classifier. Keep ordinary tool calls paired with their results.
-		if avatarEnabled {
+		if avatarEnabled && !unissuedTools {
 			var cue *AvatarCue
 			out, calls, cue = consumeAvatarCues(out, calls, true, &avatarCuesUsed)
 			if cue != nil {
@@ -3104,6 +3127,19 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			needsRead := needsWebReadAttempt(task.Prompt, task.Mode, tools, task.ToolUses)
 			a.mu.Unlock()
+			if unissuedTools {
+				if toolNoticeCorrected || round+1 >= maxRounds {
+					return out, input, fmt.Errorf("%w：模型没有发出结构化工具调用，预告中的工具未执行。已有进度已保留，可从检查点继续。", errDeliveryIncomplete)
+				}
+				toolNoticeCorrected = true
+				if strings.TrimSpace(out) != "" {
+					input = append(input, Message{Role: "assistant", Content: out})
+				}
+				input = append(input, Message{Role: "user", Content: unissuedToolCorrection})
+				a.publishStream(task.ID, streamEvent{Event: "note", Text: "尚未收到工具调用，正在请求模型使用工具协议…", Round: round})
+				saveCheckpoint()
+				continue
+			}
 			if needsRead {
 				if webReadCorrections == 0 && round+1 < maxRounds {
 					webReadCorrections++
@@ -3373,7 +3409,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		input = appendPluginImages(input, imageSink)
 		a.mu.Lock()
-		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
+		task.Steps[stepIndex].Content = toolNoticePrefix + strings.Join(toolCallNames(calls), ", ")
 		a.mu.Unlock()
 	}
 	if strings.TrimSpace(lastOut) == "" {
@@ -6543,7 +6579,7 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "failed", BeforeTokens: beforeTokens, Text: "历史消息不足以压缩，原会话内容已保留", Preflight: true})
 		return errors.New("历史消息不足以压缩")
 	}
-	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
+	summary, err := a.buildCompactionSummary(ctx, snap.summaryInput, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
 		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true, BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
 	})
 	if err != nil {
@@ -6575,9 +6611,10 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 }
 
 type compactSnapshot struct {
-	prevCompact string
-	prevCount   int
-	messages    []Message
+	summaryInput []Message
+	prevCompact  string
+	prevCount    int
+	messages     []Message
 }
 
 func (a *App) snapshotForCompact(sess *Session) (compactSnapshot, int) {
@@ -6621,7 +6658,7 @@ func (a *App) snapshotForCompactBudget(sess *Session, keepBudget int) (compactSn
 		return compactSnapshot{}, 0
 	}
 	original := cloneCompactMessages(sess.Messages[:split])
-	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: original}, split
+	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: original, summaryInput: historyForModel(original, sess.Runs)}, split
 }
 
 func cloneCompactMessages(messages []Message) []Message {
@@ -6767,7 +6804,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		delete(a.compactingSessions, sessionID)
 		a.mu.Unlock()
 	}()
-	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
+	summary, err := a.buildCompactionSummary(ctx, snap.summaryInput, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
 		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
 	})
 	if err != nil {
@@ -7328,7 +7365,7 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 		a.publishStream(taskID, event)
 	}
 	publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("正在整理 %d 条早期消息并生成连续摘要", split)})
-	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
+	summary, err := a.buildCompactionSummary(ctx, snap.summaryInput, cfg, snap.prevCompact, func(stage string, batch, batches, retryAttempt int, retryDelay time.Duration) {
 		publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches, RetryAttempt: retryAttempt, RetryDelayMs: retryDelay.Milliseconds()})
 	})
 	if err != nil {

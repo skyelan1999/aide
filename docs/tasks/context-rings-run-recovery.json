@@ -1,0 +1,37 @@
+{
+  "schema": "aide.task.v1",
+  "task": "issue-2026-11-27-tool-run-recovery",
+  "title": "工具协议纠正与中断输出恢复",
+  "summary": "修复模型仅预告工具而未发出结构化调用时的假完成，保留可恢复的检查点；对有明确证据的旧会话只在模型视图中补充真实执行结果，不改写原始会话。",
+  "modifications": [
+    "识别普通段落末尾的工具预告，并核对本轮提供的工具名称、结构化调用和 finish_reason；引用、代码块及示例文本不触发纠正。",
+    "缺失工具调用时最多自动纠正一次；重复发生时返回可继续的交付不完整状态，不把预告保存为真实工具活动。",
+    "请求快照记录 missing_tool_call、MISSING_TOOL_CALL 和上游 finish_reason，便于审计异常完成。",
+    "后续请求和历史压缩共用证据受限的只读历史投影；压缩 compare-and-save 仍校验原始消息，避免误写用户历史。",
+    "F-only 测试按 chat#0 定位请求快照，不依赖主题请求与聊天请求的异步顺序。"
+  ],
+  "backend": [
+    "internal/server/context.go",
+    "internal/server/interrupted_output.go",
+    "internal/server/tool_notice.go",
+    "internal/server/workflow.go"
+  ],
+  "frontend": [],
+  "scripts": [],
+  "docs": [],
+  "checks": [
+    {
+      "id": "f-go-focused",
+      "command": "go test ./internal/server -run '^(TestToolNotice.*|TestToolLoopRepairsUnissuedToolNotice|TestUnissuedToolNoticeInHistoryAndSummary|Test.*Compaction.*|TestCancelledOutput.*|TestContextRecovery.*|TestIssue113LockedAssistantCompactionCannotReadOrSendHistory|TestChatHistoryAndCancelEndpoint)$' -count=1",
+      "result": "pass",
+      "evidence": "F-only Linux/Docker 快照：ok aide/internal/server 24.984s。"
+    },
+    {
+      "id": "f-real-model-existing",
+      "command": "此前本地真实模型会话验收",
+      "result": "pass",
+      "evidence": "混合版本中已从检查点继续，真实执行目录和文件读取并返回唯一标记；F-only 本轮复验为聚焦 Go 回归，未重新部署。"
+    }
+  ],
+  "screenshots": []
+}

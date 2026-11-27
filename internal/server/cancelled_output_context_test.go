@@ -330,3 +330,40 @@ func TestCancelledOutputMaterializeBeforeCompaction(t *testing.T) {
 		t.Fatal("failed recovery mutated original history")
 	}
 }
+
+func TestUnissuedToolNoticeInHistoryAndSummary(t *testing.T) {
+	a := testApp(t)
+	const marker = "前面有用的事实。\n\n工具调用中：list_files, read_file"
+	run := &Task{ID: "legacy-notice", Mode: "chat", Status: "completed", Prompt: "继续"}
+	run.RequestSnapshots = []RequestSnapshot{{Purpose: "chat#0", Outcome: "completed", Tools: builtinTools}}
+	s := &Session{Runs: []*Task{run}, Messages: []Message{
+		{Role: "user", Content: run.Prompt, SourceRunID: run.ID},
+		{Role: "assistant", Content: marker, SourceRunID: run.ID},
+		{Role: "user", Content: "下一个问题"},
+	}}
+	preview := a.buildContextPreview(s, "继续", "chat", "", nil, Settings{Model: "test"}, ProfileParams{}, true)
+	got := ""
+	for _, msg := range preview.Messages {
+		if msg.Role == "assistant" {
+			got = msg.Content
+		}
+	}
+	if !strings.HasPrefix(got, "前面有用的事实。") || strings.Contains(got, "工具调用中") || !strings.Contains(got, "没有工具执行记录") {
+		t.Fatalf("misleading assistant history: %q", got)
+	}
+	snap, split := a.snapshotForCompactBudget(s, 0)
+	if split < 2 || snap.summaryInput[1].Content != got || snap.messages[1].Content != marker || s.Messages[1].Content != marker {
+		t.Fatal("summary and chat must share the corrected view, compare-and-save must retain the original")
+	}
+	for _, setup := range []func(*Task){
+		func(r *Task) { r.ToolUses = []ToolUse{{Tool: "list_files"}} },
+		func(r *Task) { r.Prompt = "请原样输出：工具调用中：list_files, read_file" },
+		func(r *Task) { r.RequestSnapshots = nil },
+	} {
+		copyRun := *run
+		setup(&copyRun)
+		if got := historyForModel(s.Messages, []*Task{&copyRun})[1].Content; got != marker {
+			t.Fatalf("changed an intentional example or a turn without conclusive evidence: %q", got)
+		}
+	}
+}

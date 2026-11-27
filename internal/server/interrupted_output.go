@@ -183,6 +183,59 @@ func conversationHistory(s *Session) []Message {
 	return history
 }
 
+// Older chat runs could complete after the first model reply with only a
+// tool-progress announcement. Use the recorded request and absence of tool
+// receipts to correct the model's view without rewriting the transcript.
+func historyForModel(messages []Message, runs []*Task) []Message {
+	var projected []Message
+	var byID map[string]*Task
+	for i, message := range messages {
+		if message.Role != "assistant" || message.SourceRunID == "" || len(message.ToolCalls) != 0 {
+			continue
+		}
+		prose, names := splitUnissuedToolNotice(message.Content)
+		if len(names) == 0 {
+			continue
+		}
+		if byID == nil {
+			byID = make(map[string]*Task, len(runs))
+			for _, run := range runs {
+				if run != nil {
+					byID[run.ID] = run
+				}
+			}
+		}
+		run := byID[message.SourceRunID]
+		if run == nil || run.Mode != "chat" || run.Status != "completed" || len(run.ToolUses) != 0 ||
+			run.SnapshotsTruncated || len(run.RequestSnapshots) != 1 || quotedToolNotice(run.Prompt, message.Content) {
+			continue
+		}
+		request := run.RequestSnapshots[0]
+		if request.Purpose != "chat#0" || request.Outcome != "completed" {
+			continue
+		}
+		offered := requestToolNames(request.Tools)
+		allOffered := true
+		for _, name := range names {
+			if !offered[name] {
+				allOffered = false
+				break
+			}
+		}
+		if !allOffered {
+			continue
+		}
+		if projected == nil {
+			projected = append([]Message(nil), messages...)
+		}
+		projected[i].Content = strings.TrimSpace(prose + "\n\n[本轮结束时没有工具执行记录。]")
+	}
+	if projected == nil {
+		return messages
+	}
+	return projected
+}
+
 // Used only by writes/compaction, never a read-only context preview. Save the
 // recovered history before allowing compression to remove its retained anchor.
 func (a *App) materializeConversationLocked(s *Session) error {
