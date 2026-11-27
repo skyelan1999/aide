@@ -5,7 +5,7 @@
     let intro = null, timer = 0, dismissal = null;
     const root = document.documentElement;
     const motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    function motionAllowed() { return !document.hidden && root.dataset.motion !== 'reduced' && root.dataset.motionProfile !== 'minimal' && !motionMedia?.matches; }
+    function motionAllowed() { return !document.hidden && root.dataset.motion !== 'reduced' && root.dataset.motionProfile !== 'minimal' && !motionMedia?.matches && !document.querySelector('#login-dialog[open],#lock-screen:not([hidden])'); }
     function remove() { clearTimeout(timer); dismissal?.cancel(); dismissal = null; if (intro) {
         intro.remove();
         intro = null;
@@ -31,16 +31,20 @@
         intro.className = 'aide-intro';
         intro.setAttribute('aria-hidden', 'true');
         intro.innerHTML = '<div class="aide-intro-mark"><svg viewBox="0 0 260 260" aria-hidden="true"><circle class="aide-intro-register" cx="130" cy="130" r="121" stroke-dasharray="1 12"/><path class="aide-intro-register" d="M130 1v13m0 232v13M1 130h13m232 0h13"/><path class="aide-intro-halo" d="M65 65a92 92 0 0 1 150 91"/><ellipse class="aide-intro-ring" cx="130" cy="130" rx="112" ry="70"/><circle class="aide-intro-ring inner" cx="130" cy="130" r="76"/><circle class="aide-intro-ray" cx="130" cy="130" r="95"/><path class="aide-intro-star" d="M208 55l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg><span class="aide-intro-core">a<span>·</span></span></div>';
+        intro.addEventListener('animationend', (event) => { if (event.target === intro && event.animationName === 'aide-intro-fade')
+            remove(); });
         document.body.appendChild(intro);
-        timer = setTimeout(remove, root.dataset.motionProfile === 'balanced' ? 520 : 980);
+        timer = setTimeout(remove, root.dataset.motionProfile === 'balanced' ? 550 : 850);
         document.addEventListener('pointerdown', dismiss, { once: true });
         document.addEventListener('keydown', dismiss, { once: true });
     }
     function visibility() { root.toggleAttribute('data-ui-paused', document.hidden); if (document.hidden)
         remove(); }
+    const preferenceChanged = () => { if (!motionAllowed())
+        remove(); };
     document.addEventListener('visibilitychange', visibility);
-    window.addEventListener('aide:motion', () => { if (root.dataset.motion === 'reduced' || root.dataset.motionProfile === 'minimal')
-        remove(); });
+    window.addEventListener('aide:motion', preferenceChanged);
+    motionMedia?.addEventListener?.('change', preferenceChanged);
     visibility();
     try {
         if (!sessionStorage.getItem('aide.intro.shown')) {
@@ -58,12 +62,14 @@
     const root = document.documentElement;
     const profile = () => root.dataset.motionProfile || 'full';
     const motionDuration = (full, balanced) => profile() === 'balanced' ? balanced : full;
+    const enterEase = 'cubic-bezier(.2,.8,.2,1)', exitEase = 'cubic-bezier(.4,0,.8,.35)';
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const finePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)');
     const nativeDialogMotion = !!window.CSS?.supports('transition-behavior', 'allow-discrete');
     const surfaces = new Map(), running = new Map(), exits = new Map(), segmentSyncs = [], sendEffects = new Set();
     const sideIDs = new Set(['file-panel', 'plugin-panel', 'reminder-center']);
-    const dialogIDs = new Set(['settings-dialog', 'editor-dialog', 'rca-dialog', 'new-file-dialog', 'new-folder-dialog', 'file-properties-dialog', 'plugin-settings-dialog', 'plugin-upload-dialog', 'ws-browse-dialog', 'source-dialog', 'reminder-alert']);
+    const dialogIDs = new Set(['settings-dialog', 'editor-dialog', 'rca-dialog', 'new-file-dialog', 'new-folder-dialog', 'file-properties-dialog', 'plugin-settings-dialog', 'plugin-upload-dialog', 'plugin-workbench-panel', 'plugin-autostart-dialog', 'ws-browse-dialog', 'source-dialog', 'reminder-alert']);
+    const viewerDialogs = 'dialog:is(.md-link-dialog,.md-diagram-dialog,.md-image-lightbox,.md-history-dialog,.recovery-dialog)';
     const fixedIDs = new Set([...sideIDs, 'strategy-menu', 'search-results', 'terminal-body', 'reminder-form']);
     const dynamicSelector = '.session-menu,.file-ctx-menu';
     let scheduled = 0, panelTransition = null, resumeSamples = new WeakMap();
@@ -83,10 +89,12 @@
     } }
     function settle(node) { exits.get(node)?.(); cancel(node); }
     function reopen(node) {
-        const style = exits.has(node) ? getComputedStyle(node) : null;
-        const from = style ? { opacity: style.opacity, transform: style.transform } : null;
+        if (!exits.has(node))
+            return;
+        const style = getComputedStyle(node);
+        const from = { opacity: style.opacity, transform: style.transform };
         settle(node);
-        if (from && allowed()) {
+        if (allowed()) {
             resumeSamples.set(node, from);
             const state = surfaces.get(node);
             if (state)
@@ -99,6 +107,12 @@
         settle(node); for (const node of running.keys())
         cancel(node); for (const stop of [...sendEffects])
         stop(); }
+    function animateEntry(node, frames, duration) {
+        const animation = node.animate(frames, { duration, easing: enterEase });
+        running.set(node, animation);
+        animation.finished.then(() => { if (running.get(node) === animation)
+            running.delete(node); }, () => { });
+    }
     function reveal(node, kind = 'menu', from = null) {
         const interrupted = running.has(node) ? getComputedStyle(node) : null;
         const current = from || resumeSamples.get(node) || (interrupted ? { opacity: interrupted.opacity, transform: interrupted.transform } : null);
@@ -110,13 +124,10 @@
         const shifted = finePointer?.matches && kind !== 'terminal';
         const first = { opacity: current?.opacity ?? 0 }, last = { opacity: 1 };
         if (shifted) {
-            first.transform = current?.transform ?? (kind === 'side' ? 'translateX(8px)' : 'translateY(5px)');
+            first.transform = current?.transform ?? (kind === 'side' ? 'translateX(7px)' : 'translateY(3px)');
             last.transform = 'none';
         }
-        const animation = node.animate([first, last], { duration: kind === 'side' ? motionDuration(200, 130) : motionDuration(160, 110), easing: 'cubic-bezier(.22,1,.36,1)' });
-        running.set(node, animation);
-        animation.finished.then(() => { if (running.get(node) === animation)
-            running.delete(node); }, () => { });
+        animateEntry(node, [first, last], kind === 'side' ? motionDuration(185, 120) : motionDuration(145, 95));
     }
     // Logical close happens now; this retains the same inert node's paint for at
     // most 200 ms, without a DOM clone or an active button/focus gate underneath.
@@ -183,10 +194,11 @@
         }
         else
             delete from.transform;
-        const animation = node.animate([from, last], { duration: kind === 'side' ? motionDuration(180, 115) : motionDuration(140, 100), easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+        const duration = kind === 'side' ? motionDuration(145, 95) : motionDuration(115, 75);
+        const animation = node.animate([from, last], { duration, easing: exitEase, fill: 'forwards' });
         running.set(node, animation);
         animation.finished.then(finish, () => { });
-        timer = setTimeout(finish, motionDuration(200, 140));
+        timer = setTimeout(finish, duration + 40);
         return finish;
     }
     function activePanel() {
@@ -243,14 +255,14 @@
     function revealContent(node, direction = 1) {
         if (!node || !allowed() || !visible(node) || typeof node.animate !== 'function')
             return;
+        const sample = running.has(node) ? getComputedStyle(node) : null;
+        const first = { opacity: sample?.opacity ?? .82 }, last = { opacity: 1 };
+        if (finePointer?.matches) {
+            first.transform = sample?.transform ?? `translateX(${direction * 4}px)`;
+            last.transform = 'none';
+        }
         cancel(node);
-        const animation = node.animate([
-            { opacity: .72, transform: `translate3d(${direction * 6}px,0,0)` },
-            { opacity: 1, transform: 'translate3d(0,0,0)' }
-        ], { duration: motionDuration(190, 120), easing: 'cubic-bezier(.22,1,.36,1)' });
-        running.set(node, animation);
-        animation.finished.then(() => { if (running.get(node) === animation)
-            running.delete(node); }, () => { });
+        animateEntry(node, [first, last], motionDuration(165, 105));
     }
     function bindSegment(node) {
         let scheduled = 0;
@@ -476,7 +488,7 @@
     function watch(node, inserted = false) {
         if (surfaces.has(node))
             return;
-        const dialog = node.tagName === 'DIALOG' && dialogIDs.has(node.id);
+        const dialog = node.tagName === 'DIALOG' && (dialogIDs.has(node.id) || node.matches(viewerDialogs));
         if (!dialog && !fixedIDs.has(node.id) && !node.matches(dynamicSelector))
             return;
         const kind = sideIDs.has(node.id) ? 'side' : node.id === 'terminal-body' ? 'terminal' : 'menu';

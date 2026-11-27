@@ -140,10 +140,22 @@ interface Window {
     root.setAttribute('data-theme', effectiveOf(doc.theme));
     root.setAttribute('data-theme-pref', doc.theme);
     root.setAttribute('data-palette', doc.palette);
-    root.setAttribute('data-motion', motionMedia && motionMedia.matches ? 'reduced' : 'full');
-    root.setAttribute('data-motion-profile', motionProfile());
-    window.dispatchEvent(new Event('aide:motion'));
     root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
+  }
+
+  // Only a change in device capacity should reset an adaptive downgrade.
+  var lastDeviceProfile: string;
+  function applyMotion(): void {
+    var deviceProfile = motionProfile();
+    if (lastDeviceProfile !== deviceProfile) {
+      root.setAttribute('data-motion-profile', deviceProfile);
+      lastDeviceProfile = deviceProfile;
+    }
+    root.setAttribute('data-motion', motionMedia && motionMedia.matches ? 'reduced' : 'full');
+    window.dispatchEvent(new Event('aide:motion'));
+  }
+  function allowsMotion(): boolean {
+    return root.getAttribute('data-motion') !== 'reduced' && root.getAttribute('data-motion-profile') !== 'minimal';
   }
 
   /* ── 通知：单个订阅者异常不得影响设置本身 ── */
@@ -178,6 +190,7 @@ interface Window {
 
   /* ── 首次应用：同步执行，早于首次内容绘制 ── */
   applyTheme();
+  applyMotion();
 
   /* ── 跟随系统外观：仅当偏好为 system 时响应 ── */
   if (media) {
@@ -191,12 +204,12 @@ interface Window {
   }
 
   if (motionMedia) {
-    if (motionMedia.addEventListener) motionMedia.addEventListener('change', applyTheme);
-    else if (motionMedia.addListener) motionMedia.addListener(applyTheme);
+    if (motionMedia.addEventListener) motionMedia.addEventListener('change', applyMotion);
+    else if (motionMedia.addListener) motionMedia.addListener(applyMotion);
   }
   if (connection) {
-    if (connection.addEventListener) connection.addEventListener('change', applyTheme);
-    else if (connection.addListener) connection.addListener(applyTheme);
+    if (connection.addEventListener) connection.addEventListener('change', applyMotion);
+    else if (connection.addListener) connection.addListener(applyMotion);
   }
 
   /* ── 跨标签页同步：JSON 键与旧键都吸收 ── */
@@ -239,6 +252,8 @@ interface Window {
   /* ── JSON 设置门面（FR-59）：面板只允许通过此处操作设置 ── */
   window.aideUI = {
     key: KEY,
+    allowsMotion,
+    scrollBehavior: (): ScrollBehavior => allowsMotion() ? 'smooth' : 'instant',
     version: VERSION,
     get: function (name: any) {
       if(name==='fileMarkdownEditing')return doc[name]==='text'?'text':'split';

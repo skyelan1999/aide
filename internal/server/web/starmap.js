@@ -15,7 +15,8 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && logbook.open) {
 const params = new URLSearchParams(location.search), channelName = params.get('channel');
 const channel = channelName && /^[a-zA-Z0-9-]{10,100}$/.test(channelName) ? new BroadcastChannel('aide-stars-' + channelName) : null;
 let token = localStorage.getItem('aide-token') || '', graph = { nodes: [], edges: [], sources: [], warnings: [] }, selected = null, region = '', results = [], yaw = 0, pitch = .1, zoom = 1, drag = null, projection = [], width = 0, height = 0, pixelRatio = 0, loading = false;
-const motionReduced = () => document.documentElement.dataset.motion === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motionMedia = matchMedia('(prefers-reduced-motion: reduce)');
+const motionReduced = () => document.documentElement.dataset.motion === 'reduced' || document.documentElement.dataset.motionProfile === 'minimal' || motionMedia.matches;
 const infrared = window.AideInfrared.create({ button: $('infrared'), note: $('infrared-note'), redraw: () => redraw(), motionEnabled: () => motionEnabled(), onChange: (enabled) => { scheduleSkyRecovery(); say(enabled ? uiTextStarmap('红外伪彩视觉模拟已开启 · 非真实观测数据') : uiTextStarmap('已恢复可见光星图配色')); } });
 let codeView = params.get('code') === '1', edgeMode = 'all', focusCode = false, focusCache = null, focusKey = '', graphGeneration = 0, layoutGeneration = 0, loadAbort = null, aiAbort = null;
 let documentAbort = null, documentGeneration = 0, documentBatch = null;
@@ -188,7 +189,7 @@ function persistSkyView(active = () => !locked) {
 function scheduleSkyRecovery() { if (locked)
     return; clearTimeout(recoveryTimer); recoveryTimer = setTimeout(persistSkyView, 850); }
 function defaultSkyView() {
-    return { version: 1, codeView: params.get('code') === '1', region: '', query: '', retrievalMode: 'nodes', edgeMode: 'all', callDepth: 'all', focusCode: false, camera: { yaw: 0, pitch: .1, zoom: 1 }, motionPhase: { skyTime: 0, driftTime: 0 }, scroll: { search: 0, detail: 0 }, path: [], selected: null, animate: !motionReduced(), infrared: false };
+    return { version: 1, codeView: params.get('code') === '1', region: '', query: '', retrievalMode: 'nodes', edgeMode: 'all', callDepth: 'all', focusCode: false, camera: { yaw: 0, pitch: .1, zoom: 1 }, motionPhase: { skyTime: 0, driftTime: 0 }, scroll: { search: 0, detail: 0 }, path: [], selected: null, animate: true, infrared: false };
 }
 function restoreSkyView(value) {
     if (!value || value.version !== 1 || locked)
@@ -224,7 +225,7 @@ function restoreSkyView(value) {
     skyFloat.x = Math.sin(driftTime / 22000) * .038;
     skyFloat.y = Math.sin(driftTime / 29000) * .024;
     if (typeof value.animate === 'boolean')
-        animate = value.animate && !motionReduced();
+        animate = value.animate;
     if (typeof value.infrared === 'boolean')
         infrared.set(value.infrared, false);
     document.querySelector('.search-panel').scrollTop = finite(value.scroll?.search, 0, 0, 1000000);
@@ -420,7 +421,7 @@ async function pollLive() {
     }
 }
 const retrievalMode = () => codeView ? 'nodes' : $('retrieval-mode').value;
-let animate = !motionReduced(), frame = 0, pageLeaving = false;
+let animate = true, frame = 0, pageLeaving = false;
 let driftTime = 0;
 const skyFloat = { x: 0, y: 0 };
 let skyTime = 0, lastPaint = null, pausedAt = document.hidden ? performance.now() : null, cameraTween = null, graphFade = null;
@@ -432,7 +433,7 @@ let cosmos = null, cosmicEnabled = true, cosmicScene = null, cosmicKey = '', cos
 let cosmicWheel = 0, cosmicWheelLast = 0, cosmicGate = 0, cosmicScopeKey = '', cosmicStars = [], cosmicStarEdges = [], cosmicCallState = null, cosmicGates = [], cosmicFocusID = '', cosmicAimX = 0, cosmicAimY = 0, cosmicLocalHits = [], cosmicLensHits = [], cosmicLensedStarIDs = new Set(), cosmicLensOwnerByStar = new Map(), cosmicLensAssignmentCamera = '', cosmicLensAssignmentScene = null;
 const cosmicTextureCache = new Map(), cosmicSceneCache = new Map();
 let cosmicDustFrameCache = null;
-const panelAnimations = new Map(), motionMedia = matchMedia('(prefers-reduced-motion: reduce)');
+const panelAnimations = new Map();
 // Read the same appearance contract as the workbench, once per change. Canvas
 // keeps its own prepared textures; it never reads CSS in the animation loop.
 function readMapPalette() {
@@ -586,9 +587,9 @@ function revealPanel(el, shown) {
     if (!shown && entering)
         return;
     el.hidden = false;
-    const first = current || (shown ? { opacity: entering ? 0 : .65, transform: entering ? 'translateY(10px)' : 'none' } : { opacity: 1, transform: 'none' });
-    const last = shown ? { opacity: 1, transform: 'none' } : { opacity: 0, transform: 'translateY(6px)' };
-    const a = el.animate([first, last], { duration: shown ? (entering ? 240 : 170) : 150, easing: 'cubic-bezier(.22,1,.36,1)' });
+    const first = current || (shown ? { opacity: entering ? 0 : .8, transform: entering ? 'translateY(4px)' : 'none' } : { opacity: 1, transform: 'none' });
+    const last = shown ? { opacity: 1, transform: 'none' } : { opacity: 0, transform: 'translateY(3px)' };
+    const a = el.animate([first, last], { duration: shown ? (entering ? 180 : 130) : 110, easing: 'cubic-bezier(.22,1,.36,1)' });
     panelAnimations.set(el, a);
     a.finished.then(() => { if (panelAnimations.get(el) !== a)
         return; if (!shown)
@@ -1746,7 +1747,7 @@ function drawCosmos(now, t) {
             ctx.setLineDash([]);
             ctx.globalAlpha = fade;
         }
-        if (active && animate && particles++ < 24) {
+        if (active && motionEnabled() && particles++ < 24) {
             const q = (t / 6500 + e.phase) % 1;
             ctx.globalAlpha = fade * transmission;
             ctx.fillStyle = mapPalette.star;
@@ -2070,6 +2071,7 @@ function draw(now = performance.now()) {
     frame = 0;
     if (document.hidden)
         return;
+    const paintMotion = motionEnabled();
     const active = !!(drag || cameraTween || wheelZoom || graphFade || cosmicFlight || now < interactionUntil || now < liveAnimationUntil), budget = active ? 1000 / 60 : 1000 / 30;
     if (!paintRequested && lastPaint !== null && now - lastPaint < budget - 1) {
         redraw(false);
@@ -2078,11 +2080,11 @@ function draw(now = performance.now()) {
     paintRequested = false;
     const delta = lastPaint === null ? 0 : clamp(now - lastPaint, 0, 64);
     lastPaint = now;
-    if (animate)
+    if (paintMotion)
         skyTime += delta;
     // A bounded, rigid sky drift preserves relations and hit testing. Its clock
     // pauses during manipulation and while motion is disabled, without snapping.
-    if (motionEnabled() && !drag && !cameraTween && !wheelZoom && !cosmicFlight && now >= interactionUntil) {
+    if (paintMotion && !drag && !cameraTween && !wheelZoom && !cosmicFlight && now >= interactionUntil) {
         driftTime += delta;
         skyFloat.x = Math.sin(driftTime / 22000) * .038;
         skyFloat.y = Math.sin(driftTime / 29000) * .024;
@@ -2124,7 +2126,7 @@ function draw(now = performance.now()) {
             if (u === 1)
                 graphFade = null;
         }
-        if (infrared.transitioning || animate || cameraTween || wheelZoom || graphFade || cosmicFlight || now < liveAnimationUntil)
+        if (infrared.transitioning || paintMotion || cameraTween || wheelZoom || graphFade || cosmicFlight || now < liveAnimationUntil)
             redraw(false);
         return;
     }
@@ -2199,7 +2201,7 @@ function draw(now = performance.now()) {
                 ctx.stroke();
             }
         }
-        if (animate && !e.hierarchy && particles < 48 && (activeEdge || e.phase < .20)) {
+        if (paintMotion && !e.hierarchy && particles < 48 && (activeEdge || e.phase < .20)) {
             const progress = (t / 6500 + e.phase) % 1, px = a.x + (b.x - a.x) * progress, py = a.y + (b.y - a.y) * progress;
             ctx.fillStyle = mapPalette.star + (activeEdge ? 'ff' : '88');
             ctx.beginPath();
@@ -2248,7 +2250,7 @@ function draw(now = performance.now()) {
             graphFade = null;
     }
     drawLiveGhosts(now, 0);
-    if (infrared.transitioning || animate || cameraTween || wheelZoom || graphFade || now < liveAnimationUntil)
+    if (infrared.transitioning || paintMotion || cameraTween || wheelZoom || graphFade || now < liveAnimationUntil)
         redraw(false);
 }
 function redraw(dirty = true) { if (dirty)
@@ -2870,27 +2872,40 @@ async function load() {
             scheduleLive(progressiveDelay(graph));
     }
 }
-function syncMotion() { $('motion').textContent = animate ? uiTextStarmap('动效 · 开') : uiTextStarmap('动效 · 关'); $('motion').setAttribute('aria-pressed', String(animate)); }
-$('motion').onclick = () => { if (motionReduced()) {
-    say(uiTextStarmap('当前已减少动态效果，请在工作台外观或系统设置中调整。'));
-    return;
-} animate = !animate; if (!animate) {
-    for (const n of graph.nodes)
-        delete n.bornAt;
-    liveGhosts = [];
-    liveAnimationUntil = 0;
-    if (cameraTween) {
-        ({ yaw, pitch, zoom } = cameraTween.to);
-        cameraTween = null;
+function syncMotion() {
+    const enabled = motionEnabled();
+    $('motion').textContent = enabled ? uiTextStarmap('动效 · 开') : uiTextStarmap('动效 · 关');
+    $('motion').setAttribute('aria-pressed', String(enabled));
+}
+function respectMotion() {
+    if (!motionEnabled()) {
+        for (const n of graph.nodes)
+            delete n.bornAt;
+        liveGhosts = [];
+        liveAnimationUntil = 0;
+        if (cameraTween) {
+            ({ yaw, pitch, zoom } = cameraTween.to);
+            cameraTween = null;
+        }
+        if (wheelZoom) {
+            zoom = wheelZoom.target;
+            wheelZoom = null;
+        }
+        graphFade = null;
+        cosmicFlight = null;
+        settlePanels();
     }
-    if (wheelZoom) {
-        zoom = wheelZoom.target;
-        wheelZoom = null;
+    syncMotion();
+    redraw();
+}
+$('motion').onclick = () => {
+    if (motionReduced()) {
+        say(uiTextStarmap('当前已减少动态效果，请在工作台外观或系统设置中调整。'));
+        return;
     }
-    graphFade = null;
-    cosmicFlight = null;
-    settlePanels();
-} syncMotion(); redraw(); };
+    animate = !animate;
+    respectMotion();
+};
 syncMotion();
 addEventListener('visibilitychange', () => {
     const now = performance.now();
@@ -3309,26 +3324,6 @@ for (const event of ['pointerdown', 'pointermove', 'keydown', 'wheel'])
     addEventListener(event, () => { if (!locked)
         window.LockCluster?.noteActivity(); }, { passive: true });
 redraw();
-function respectMotion() { if (motionReduced()) {
-    animate = false;
-    for (const n of graph.nodes)
-        delete n.bornAt;
-    liveGhosts = [];
-    liveAnimationUntil = 0;
-    if (cameraTween) {
-        ({ yaw, pitch, zoom } = cameraTween.to);
-        cameraTween = null;
-    }
-    if (wheelZoom) {
-        zoom = wheelZoom.target;
-        wheelZoom = null;
-    }
-    graphFade = null;
-    cosmicFlight = null;
-    settlePanels();
-    syncMotion();
-    redraw();
-} }
 addEventListener('aide:motion', respectMotion);
 motionMedia.addEventListener('change', respectMotion);
 // Repaint owned map chrome after a same-origin language preference change; no model request or page reload.

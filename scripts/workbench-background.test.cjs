@@ -4,12 +4,12 @@ const source=fs.readFileSync('internal/server/web/workbench-background.js','utf8
 const settings=fs.readFileSync('internal/server/web/settings-init.js','utf8');
 const flush=async()=>{for(let i=0;i<10;i++)await Promise.resolve();};
 class Node {
- constructor(tag='div'){this.tagName=tag.toUpperCase();this.dataset={};this.attrs={};this.children=[];this.isConnected=true;this.files=[];this.plays=0;this.pauses=0;}
+ constructor(tag='div'){this.tagName=tag.toUpperCase();this.dataset={};this.attrs={};this.children=[];this.isConnected=true;this.files=[];this.paused=true;this.plays=0;this.pauses=0;}
  setAttribute(k,v){this.attrs[k]=String(v);}removeAttribute(k){delete this.attrs[k];}hasAttribute(k){return k in this.attrs;}
  toggleAttribute(k,on){on?this.setAttribute(k,''):this.removeAttribute(k);}
  append(...n){this.children.push(...n);}prepend(n){this.children.unshift(n);}replaceChildren(...n){this.children=n;}
  addEventListener(){}contains(node){return node===this||this.children.some(c=>c?.contains?.(node));}
- remove(){this.isConnected=false;}play(){this.plays++;return Promise.resolve();}pause(){this.pauses++;}load(){}
+ remove(){this.isConnected=false;}play(){this.plays++;this.paused=false;return Promise.resolve();}pause(){this.pauses++;this.paused=true;}load(){}
  set src(v){this.setAttribute('src',v);}get src(){return this.attrs.src;}
 }
 function setup(initial='off'){
@@ -55,8 +55,9 @@ function setup(initial='off'){
  const glows=h.layer().children.slice();assert.equal(glows.length,3);h.update();assert.deepEqual(h.layer().children,glows,'preference refresh must not accumulate background layers');
  h.document.hidden=true;h.listeners.visibilitychange();assert.ok(h.root.hasAttribute('data-background-paused'));h.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.root.hasAttribute('data-background-paused'),false);
  h.asset={blob:{},name:'clip.webm',type:'video/webm'};h.setMode('local');await flush();let video=h.layer().children[0];assert.equal(video.tagName,'VIDEO');assert.equal(video.muted,true);assert.ok(video.src);assert.ok(video.plays>0);
- const strengthPanel=h.render(),range=strengthPanel.children[6].children[1];
+ const strengthPanel=h.render(),range=strengthPanel.children[6].children[1],plays=video.plays;
  range.value='40';range.oninput();await flush();assert.equal(h.root.attrs['--wb-background-strength'],'0.4');assert.equal(h.layer().children[0],video);assert.equal(h.urls.length,1);assert.equal(strengthPanel.children[6].children[2].textContent,'40%');
+ h.events.pageshow();await flush();assert.equal(h.layer().children[0],video,'initial pageshow preserves the installed media');assert.equal(video.plays,plays,'unrelated preference refreshes do not restart playback');
  h.document.hidden=true;h.listeners.visibilitychange();assert.ok(video.pauses>0);assert.ok(h.root.hasAttribute('data-background-paused'));
  h.document.hidden=false;h.locked=true;h.update();assert.ok(h.root.hasAttribute('data-background-paused'));
  h.locked=false;h.root.dataset.motion='reduced';h.events['aide:motion']();assert.ok(h.root.hasAttribute('data-background-paused'));
@@ -70,6 +71,18 @@ function setup(initial='off'){
  // GIFs are actually unloaded when reduced motion is active.
  h.setMode('off');h.asset={blob:{},name:'motion.gif',type:'image/gif'};h.setMode('local');await flush();let image=h.layer().children[0];assert.ok(image.src);
  h.mediaQuery.matches=true;h.update();assert.equal(image.src,undefined);h.mediaQuery.matches=false;h.update();assert.ok(image.src);
+ const images=setup();
+ images.root.dataset.motionProfile='minimal';
+ for(const [type,tag,animated] of [['image/png','acTL',true],['image/png','IDAT',false],['image/webp','VP8X',true],['image/webp','VP8L',false]]){
+  images.setMode('off');
+  const header=Buffer.alloc(32);
+  header.write(tag,12,'ascii');
+  if(tag==='VP8X')header[20]=2;
+  images.asset={type,blob:new Blob([header]),name:tag};
+  images.setMode('local');await flush();
+  assert.equal(images.root.dataset.backgroundMedia,animated?'animated':'image');
+  assert.equal(images.layer().children[0].hasAttribute('src'),!animated,'minimal profile preserves only still media');
+ }
  h.events.pagehide();assert.equal(h.layer().children.length,0);h.events.pageshow();await flush();assert.equal(h.layer().children.length,1);
  // Save failure retains the old media/preference; invalid/oversized types never write.
  const panel=h.render(),picker=panel.children[2].children[1];h.fail=true;const oldAsset=h.asset;

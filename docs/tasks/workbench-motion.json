@@ -1,0 +1,84 @@
+{
+  "id": "workbench-motion",
+  "request": "你把所有的动画和现实效果都调整一下也",
+  "baseline": "c859ab217b231bbaa12249f4adad7b9624388f6d",
+  "initial_status": "M README.en.md\n M README.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/computer_control.go\n M internal/server/config_backup.go\n M internal/server/dwg_preview.go\n M internal/server/factory_reset.go\n M internal/server/kv_cache.go\n M internal/server/persona.go\n M internal/server/plugin_market_source_compat.go\n M internal/server/storage_usage.go\n M internal/server/updates.go\n M internal/server/voip.go\n M internal/server/web/app-config.js\n M internal/server/web/app-config.ts\n M internal/server/web/app-runtime.js\n M internal/server/web/app-runtime.ts\n M internal/server/web/app-sidebar.js\n M internal/server/web/app-sidebar.ts\n M internal/server/web/app.js\n M internal/server/web/app.ts\n M internal/server/web/assistant-memory.js\n M internal/server/web/assistant-memory.ts\n M internal/server/web/crash-monitor.js\n M internal/server/web/crash-monitor.ts\n M internal/server/web/desktop-capture.js\n M internal/server/web/desktop-capture.ts\n M internal/server/web/git-history.js\n M internal/server/web/git-history.ts\n M internal/server/web/i18n.js\n M internal/server/web/i18n.ts\n M internal/server/web/index.html\n M internal/server/web/lan-login.html\n M internal/server/web/local-mounts.js\n M internal/server/web/local-mounts.ts\n M internal/server/web/locales/en.js\n M internal/server/web/locales/en.ts\n M internal/server/web/macos.css\n M internal/server/web/management.js\n M internal/server/web/management.ts\n M internal/server/web/markdown-export.js\n M internal/server/web/markdown-export.ts\n M internal/server/web/markdown-history.js\n M internal/server/web/markdown-history.ts\n M internal/server/web/markdown-pdf-appearance.js\n M internal/server/web/markdown-pdf-appearance.ts\n M internal/server/web/message-center.css\n M internal/server/web/message-center.js\n M internal/server/web/message-center.ts\n M internal/server/web/mobile-capture.html\n M internal/server/web/motorola-voip-guide.md\n M internal/server/web/plugin-guide.js\n M internal/server/web/plugin-guide.ts\n M internal/server/web/plugin-market.js\n M internal/server/web/plugin-market.ts\n M internal/server/web/plugin-upgrade.js\n M internal/server/web/plugin-upgrade.ts\n M internal/server/web/plugin-workbench-tabs.js\n M internal/server/web/plugin-workbench-tabs.ts\n M internal/server/web/plugin-workbench.js\n M internal/server/web/plugin-workbench.ts\n M internal/server/web/session-plan.js\n M internal/server/web/session-plan.ts\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/web/task-outcome.ts\n M internal/server/web/usage-analytics.js\n M internal/server/web/usage-analytics.ts\n M internal/server/web/voip.js\n M internal/server/web/voip.ts\n M internal/server/web/workbench.css\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M native/macos-desktop/app_capture.swift\n M native/macos-desktop/biometrics.swift\n M native/macos-desktop/computer_control.swift\n M native/macos-desktop/main.swift\n M native/windows-launcher/desktop.hpp\n M native/windows-launcher/desktop_hello.hpp\n M native/windows-launcher/main.cpp\n M native/windows-launcher/resources/aide.manifest\n M scripts/browser-markdown-inline-style.cjs\n M scripts/build-macos-desktop.py\n M scripts/lock-recovery.test.cjs\n M scripts/plugin-file-review.test.cjs\n M scripts/reasoning-settings.test.cjs\n M scripts/test_i18n.cjs\n M scripts/ui-response-latency.test.cjs\n M scripts/windows_desktop_smoke.cpp\n?? docs/reviews/2026-11-27-aide-rd-wordmark/\n?? docs/reviews/2026-11-27-workbench-polish/\n?? docs/tasks/aide-rd-wordmark.json\n?? docs/tasks/workbench-ui-polish.json",
+  "acceptance": [
+    "Visible responses are coordinated in light and dark themes at desktop and mobile widths.",
+    "Normal, reduced and adaptive modes respond to changes, respect keyboard input and settle final states on rapid navigation.",
+    "Rendering does not keep scheduling optional frames for an idle STL preview or a paused background.",
+    "Local build and application checked against source and existing sessions."
+  ],
+  "scope": [
+    "Existing Aide host UI, its motion preferences, navigation, feedback and background rendering.",
+    "Build, check the local running Mac desktop and keep a synthetic screen recording."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Polish the animation and visual feedback across the existing Aide workbench as a continuation of the local UI update.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Share effective motion and scroll settings across the host, separate discrete interaction feedback from persistent status cues, and keep existing themes and background choices.",
+      "evidence": [
+        "internal/server/web/settings-init.ts",
+        "internal/server/web/experience.ts",
+        "internal/server/web/workbench-background.ts"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Unified transitions for navigation, overlays and control feedback. Respected motion and device preferences in scrolling, status cues, avatars, backgrounds, star maps and STL previews. Kept mobile drawers within the layout viewport while opening and closing.",
+      "evidence": [
+        "internal/server/web/experience.ts",
+        "internal/server/web/workbench.css",
+        "internal/server/web/workbench-background.ts",
+        "internal/server/web/app.ts",
+        "internal/server/web/settings-init.ts"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "359 repository quick checks and TypeScript build/typecheck passed. Chromium and WebKit covered rapid reversals and motion preferences. Tested light/dark, 320/390/600px emulated touch, real WebM playback, demand-driven STL drawing and live star-map settings. An actual Mac desktop reload and file-panel close/reopen succeeded.",
+      "evidence": [
+        ".agent-state/verify-20261127T030152244185Z.log",
+        ".agent-state/workbench-motion/final.log",
+        ".agent-state/workbench-motion/touch-320.log",
+        ".agent-state/workbench-motion/touch-600.log",
+        ".agent-state/experience-local-qa/results.log",
+        ".agent-state/workbench-motion/viewer.log",
+        ".agent-state/workbench-motion/check-background.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented adaptive motion in the workbench user guide in both languages. Recorded a desktop workflow using synthetic sessions for the preview.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/reviews/2026-11-27-workbench-motion/workbench-motion.mp4"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed the temporary browser-test container. The prior local image and signed Mac bundle remain available for rollback.",
+      "evidence": [
+        ".agent-state/workbench-motion/install/before.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Installed locally and checked the signed Mac app against the current working tree. The service is healthy, all 214 prior session identities and the storage mounts match, and all 13 checked front-end assets match the source byte for byte.",
+      "evidence": [
+        ".agent-state/workbench-motion/install/results.json",
+        ".agent-state/workbench-motion/install/assets.json",
+        ".agent-state/workbench-motion/install/build.log"
+      ]
+    }
+  },
+  "release_authorization": "Local rebuild and daily Mac installation per the ongoing request.",
+  "rollback": "Previous installed service image and signed Mac bundle are archived under .agent-state/workbench-motion/install/.",
+  "handoff": "The daily local Mac app is running with the updated workbench. The downloadable desktop recording uses synthetic data. Changes are local."
+}

@@ -9,6 +9,7 @@
     layer.inert = true;
     document.body.prepend(layer);
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const forcedColors = window.matchMedia?.('(forced-colors: active)');
     const accepted = new Set(['video/mp4', 'video/webm', 'image/gif', 'image/png', 'image/jpeg', 'image/webp']);
     let mode = '', generation = 0, media = null, url = '', record = null, message = '', saving = false;
     const panels = new Set();
@@ -44,6 +45,35 @@
     function pageAvailable() {
         return pageActive && !document.hidden &&
             !document.querySelector('#login-dialog[open],#lock-screen:not([hidden])');
+    }
+    // PNG and WebP carry both still images and animation. Skip chunk payloads when
+    // reading PNG metadata so a large color profile does not require decoding it.
+    async function animatedImage(type, blob) {
+        if (type !== 'image/png' && type !== 'image/webp')
+            return type === 'image/gif';
+        if (!blob?.slice)
+            return true;
+        if (type === 'image/webp') {
+            const header = new Uint8Array(await blob.slice(0, 21).arrayBuffer());
+            return String.fromCharCode(...header.subarray(12, 16)) === 'VP8X' && (header[20] & 2) !== 0;
+        }
+        let offset = 8;
+        // Unusual metadata layouts fall back to the pausable path.
+        for (let reads = 0; reads < 32 && offset + 8 <= blob.size; reads++) {
+            const bytes = await blob.slice(offset, offset + 1024).arrayBuffer();
+            const chunks = new DataView(bytes);
+            let cursor = 0;
+            while (cursor + 8 <= chunks.byteLength) {
+                const tag = chunks.getUint32(cursor + 4);
+                if (tag === 0x6163544c)
+                    return true; // acTL precedes the first image data chunk.
+                if (tag === 0x49444154 || tag === 0x49454e44)
+                    return false; // IDAT or IEND.
+                cursor += chunks.getUint32(cursor) + 12;
+            }
+            offset += cursor;
+        }
+        return true;
     }
     function startEyeRest() {
         if (mode !== 'eye-comfort' || !pageAvailable() || restEnds)
@@ -145,20 +175,18 @@
     function lifecycle() {
         const visible = pageAvailable();
         const resting = syncEyeRest(visible);
-        const paused = !visible || root.dataset.motion === 'reduced' || root.dataset.motionProfile === 'balanced' || root.dataset.motionProfile === 'minimal' || reduced?.matches || resting;
+        const paused = !visible || root.dataset.motion === 'reduced' || root.dataset.motionProfile === 'balanced' || root.dataset.motionProfile === 'minimal' || reduced?.matches || forcedColors?.matches || resting;
         root.toggleAttribute('data-background-paused', paused);
         if (!media)
             return;
         if (media.tagName === 'VIDEO') {
-            if (paused)
+            if (paused && !media.paused)
                 media.pause();
-            else {
-                const play = media.play();
-                play?.catch(() => { });
-            }
+            if (!paused && media.paused)
+                media.play()?.catch(() => { });
         }
-        else if (record?.type === 'image/gif' || record?.type === 'image/webp') {
-            // GIF/WebP can animate without a playback API. Unload while paused.
+        else if (root.dataset.backgroundMedia === 'animated') {
+            // Animated images lack playback controls. Unload while paused.
             if (paused)
                 media.removeAttribute('src');
             else if (!media.hasAttribute('src'))
@@ -238,6 +266,9 @@
                 refreshPanels();
                 return;
             }
+            const animated = await animatedImage(asset.type, asset.blob);
+            if (ticket !== generation)
+                return;
             record = asset;
             url = asset.src || URL.createObjectURL(asset.blob);
             const video = asset.type.startsWith('video/');
@@ -256,7 +287,7 @@
                 message = '背景素材无法播放，请更换文件';
                 refreshPanels();
             } };
-            root.dataset.backgroundMedia = video ? 'video' : (asset.type === 'image/gif' || asset.type === 'image/webp') ? 'animated' : 'image';
+            root.dataset.backgroundMedia = video ? 'video' : animated ? 'animated' : 'image';
             layer.append(media);
             if (video || !root.hasAttribute('data-background-paused') || root.dataset.backgroundMedia === 'image')
                 media.src = url;
@@ -409,11 +440,15 @@
     document.addEventListener('visibilitychange', lifecycle);
     window.addEventListener('aide:motion', lifecycle);
     reduced?.addEventListener?.('change', lifecycle);
+    forcedColors?.addEventListener?.('change', lifecycle);
     const observer = new MutationObserver(lifecycle);
     for (const node of document.querySelectorAll('#login-dialog,#lock-screen'))
         observer.observe(node, { attributes: true, attributeFilter: ['hidden', 'open', 'class'] });
     window.addEventListener('pagehide', () => { pageActive = false; lifecycle(); ++generation; release(); });
-    window.addEventListener('pageshow', () => { pageActive = true; apply(true); });
+    window.addEventListener('pageshow', () => { if (!pageActive) {
+        pageActive = true;
+        apply(true);
+    } });
     window.aideUI?.subscribe(() => apply());
     window.AideBackground = { renderSettings };
     apply();

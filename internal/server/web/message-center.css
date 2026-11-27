@@ -7,9 +7,9 @@
 .message-center input[type=checkbox]{width:17px;height:17px;min-height:17px;flex:none;accent-color:var(--brand)}
 .message-center textarea{resize:vertical;max-height:160px}
 .message-center h3{font-size:13px;margin:3px 0 0;font-weight:650}
-.message-center .reminder-center-head{flex:none;padding:0 12px;height:42px;min-height:42px;box-sizing:border-box;gap:10px}
-#plugin-panel .plugin-panel-heading{height:42px;min-height:42px;padding-inline:12px}
-@media(pointer:coarse){#plugin-panel .plugin-panel-heading,.message-center .reminder-center-head{height:46px;min-height:46px}}
+.message-center .reminder-center-head{flex:none;padding:0 12px;height:var(--wb-header-height,42px);min-height:var(--wb-header-height,42px);box-sizing:border-box;gap:10px}
+#plugin-panel .plugin-panel-heading{height:var(--wb-header-height,42px);min-height:var(--wb-header-height,42px);padding-inline:12px}
+@media(pointer:coarse){#plugin-panel .plugin-panel-heading,.message-center .reminder-center-head{height:var(--wb-header-height,46px);min-height:var(--wb-header-height,46px)}}
 .message-center .reminder-center-head h2{margin:0;font-size:15px}
 .message-center .reminder-panel-actions{gap:6px}
 .message-center .reminder-panel-actions button{width:32px;height:32px;min-height:32px;padding:6px}

@@ -219,7 +219,7 @@
                         const target = document.getElementById?.(`sr-${turn.id}-${item.id}`);
                         if (target) {
                             target.open = true;
-                            target.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+                            target.scrollIntoView?.({ block: 'center', behavior: window.aideUI?.scrollBehavior?.() ?? 'instant' });
                         }
                     };
                     plot.append(bar);

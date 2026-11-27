@@ -13,8 +13,8 @@
 .workbench-launcher-head .icon-button{flex:none;width:34px;height:34px}
 .workbench-launcher-body{display:flex;flex:1;min-height:0}
 .plugin-workbench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;align-content:start;flex:1;min-width:0;min-height:0;padding:24px 18px 32px 28px;overflow:auto;scroll-behavior:auto}
-.workbench-plugin-item{--plugin-tone:#4f7cff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:158px;padding:18px 10px 14px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--text);text-align:center;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
-.workbench-plugin-item:hover:not(:disabled),.workbench-plugin-item:focus-visible{border-color:color-mix(in srgb,var(--plugin-tone) 28%,var(--line));background:color-mix(in srgb,var(--plugin-tone) 6%,var(--panel));transform:translateY(-2px)}
+.workbench-plugin-item{--plugin-tone:#4f7cff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:158px;padding:18px 10px 14px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--text);text-align:center;cursor:pointer;transition:background-color var(--motion-fast,110ms),border-color var(--motion-fast,110ms)}
+.workbench-plugin-item:hover:not(:disabled),.workbench-plugin-item:focus-visible{border-color:color-mix(in srgb,var(--plugin-tone) 28%,var(--line));background:color-mix(in srgb,var(--plugin-tone) 6%,var(--panel))}
 .workbench-plugin-item:disabled{opacity:.45;cursor:not-allowed}
 .workbench-plugin-glyph{display:grid;place-items:center;width:66px;height:66px;border:1px solid color-mix(in srgb,var(--plugin-tone) 24%,transparent);border-radius:20px;background:color-mix(in srgb,var(--plugin-tone) 14%,var(--panel));color:var(--plugin-tone);font-size:27px;font-weight:700;box-shadow:0 8px 24px color-mix(in srgb,var(--plugin-tone) 12%,transparent)}
 .workbench-plugin-item strong{max-width:100%;font-size:13px;line-height:1.4;overflow-wrap:anywhere}

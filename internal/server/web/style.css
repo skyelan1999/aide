@@ -97,9 +97,9 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .cp-note { margin: 0.3rem 0 0; color: var(--muted, #8a8f98); font-size: 0.75rem; }
 
 /* ── SSE 流式输出：DSH/Codex 风格实时显示 ── */
-.stream-cursor { color: var(--brand, #4c8dff); animation: aide-cur 1s steps(2, start) infinite; }
+.stream-cursor { color: var(--brand, #4c8dff); animation: aide-cur 1.65s ease-in-out infinite; }
 .live-stable, .live-active { margin: 0; padding: 0; border: 0; background: none; }
-@keyframes aide-cur { to { visibility: hidden; } }
+@keyframes aide-cur { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 .thinking-dot { animation: aide-th 1.2s ease-in-out infinite; }
 .thinking-dot:nth-of-type(2) { animation-delay: .2s; }
 .thinking-dot:nth-of-type(3) { animation-delay: .4s; }
@@ -125,9 +125,9 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
   align-items: center;
   justify-content: center;
   z-index: 5;
-  transition: all .15s;
+  transition: background-color var(--motion-fast,110ms), border-color var(--motion-fast,110ms);
 }
-.jump-bottom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.16); }
+.jump-bottom:hover { background: var(--hover); border-color: var(--muted); }
 .jump-bottom.hidden { display: none; }
 
 /* 队列条（Codex pending_input_preview 风格：弱化、紧凑、↳ 条目 + 提示行） */
@@ -440,12 +440,12 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .phase-report-link { padding: 0 2px; color: var(--brand); text-decoration: underline; text-underline-offset: 2px; font-size: inherit; }
 .phase-report-link:hover { color: var(--text); }
 @keyframes phaseIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes phaseOut {
   from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 0; transform: translateY(-2px); }
 }
 
 /* ── 语音小秘（语音转文字智能助手）────────────────────────── */
@@ -653,21 +653,21 @@ html[data-motion="reduced"] .traj-seg-btn:hover,html[data-motion="reduced"] .tra
   min-height: 36px;
 }
 .voice-panel.hidden { display: none; }
-.voice-panel:not(.hidden) { animation: voice-panel-in .14s ease; }
+.voice-panel:not(.hidden) { animation: voice-panel-in var(--motion-normal,180ms) var(--motion-ease,ease-out); }
 @keyframes voice-panel-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 .voice-panel-head { display: flex; align-items: center; gap: 8px; margin: 0; min-height: 36px; }
 .voice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--muted, #888); }
-.voice-panel.listening .voice-dot { background: var(--success, #22c55e); animation: voice-breathe 1.6s ease-in-out infinite; }
+.voice-panel.listening .voice-dot { background: var(--success, #22c55e); animation: voice-breathe 2.4s ease-in-out infinite; }
 .voice-panel.ignored .voice-dot { background: var(--warn, #d97706); }
 .voice-panel.standby .voice-dot { background: var(--muted, #888); }
-.voice-panel.requesting .voice-dot { background: var(--brand, #4c8dff); animation: voice-breathe 1.2s ease-in-out infinite; }
-@keyframes voice-breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.82); } }
+.voice-panel.requesting .voice-dot { background: var(--brand, #4c8dff); animation: voice-breathe 1.8s ease-in-out infinite; }
+@keyframes voice-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .62; } }
 @media (prefers-reduced-motion: reduce) {
   .voice-panel:not(.hidden) { animation: none; }
   .voice-panel.listening .voice-dot { animation: none; }
   .rsp-spinner { animation: rsp-spinner-pulse 1.6s ease-in-out infinite; }
 }
-@keyframes rsp-spinner-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes rsp-spinner-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
 .voice-panel-name { font-size: 11px; font-weight: 500; color: var(--muted, #888); flex-shrink: 0; }
 .voice-panel .voice-status { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: center; }
 .voice-panel #voice-status-text {
@@ -823,7 +823,7 @@ html[data-motion="reduced"] .traj-seg-btn:hover,html[data-motion="reduced"] .tra
 /* ── 人格切换卡片 ─────────────────────────── */
 .persona-switch-list{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0;}
 .persona-card{flex:1 1 140px;display:flex;flex-direction:column;gap:4px;text-align:left;
-  padding:12px 14px;border:1.5px solid var(--border,#e2e2e8);border-radius:12px;background:transparent;cursor:pointer;transition:all .15s;}
+  padding:12px 14px;border:1.5px solid var(--border,#e2e2e8);border-radius:12px;background:transparent;cursor:pointer;transition:border-color var(--motion-fast,110ms),background-color var(--motion-fast,110ms);}
 .persona-card small{color:var(--muted,#888);font-size:12px;}
 .persona-card:hover{border-color:var(--accent,#4f7cff);}
 .persona-card.active{border-color:var(--accent,#4f7cff);background:color-mix(in srgb,var(--accent,#4f7cff) 8%,transparent);}
@@ -1024,8 +1024,8 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 .assistant-gate-title{font-size:16px;font-weight:600}
 .assistant-gate-input{padding:8px 10px;border:1px solid var(--line-mid,#ccc);border-radius:8px;font-size:14px}
 .assistant-gate-error{color:var(--danger,#d33);font-size:12px;min-height:14px}
-@keyframes gateShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-.assistant-gate-box.shake{animation:gateShake .35s}
+@keyframes gate-feedback{0%,45%{border-color:var(--warn);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 20%,transparent)}}
+.assistant-gate-box.shake{animation:gate-feedback .32s ease-out}
 .danger-zone{border:1px solid var(--danger-line);border-radius:10px;padding:14px;background:color-mix(in srgb, var(--danger) 5%, transparent)}
 .fr-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line-faint)}
 .fr-row:last-of-type{border-bottom:0}
@@ -1164,7 +1164,7 @@ dialog.master-auth{width:min(380px,90vw)}
 /* ── 子任务4：小蜜专属空状态 ── */
 .assistant-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 20px;color:var(--muted)}
 .assistant-empty-icon{width:56px;height:56px;border-radius:16px;background:var(--chip-bg,var(--bg-inset));display:flex;align-items:center;justify-content:center}
-.assistant-empty-icon::before{content:'';width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);border-top-color:transparent;animation:pulse-ring 1.6s ease-in-out infinite}
+.assistant-empty-icon::before{content:'';width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);border-top-color:transparent;animation:pulse-ring 1.4s linear infinite}
 .assistant-empty-title{font-size:16px;font-weight:600;color:var(--text);margin:6px 0 0}
 .assistant-empty-sub{font-size:13px;margin:0}
 @keyframes pulse-ring{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
@@ -1796,7 +1796,7 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .token-stats .balance-water-row{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:center;margin:6px 0}
 .token-stats .balance-water-tank{position:relative;height:72px;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--balance-color) 5%,transparent)}
 .token-stats .balance-water{position:absolute;bottom:0;width:100%;background:linear-gradient(0deg,color-mix(in srgb,var(--balance-color) 95%,transparent),color-mix(in srgb,var(--balance-color) 72%,transparent));transition:height .7s ease,background .25s ease}
-.token-stats .balance-water:before{content:'';position:absolute;left:-50%;top:-5px;width:200%;height:12px;border-radius:45%;background:color-mix(in srgb,var(--balance-color) 60%,transparent);animation:balance-water-wave 4s ease-in-out infinite alternate}
+.token-stats .balance-water:before{content:'';position:absolute;left:-50%;top:-5px;width:200%;height:12px;border-radius:45%;background:color-mix(in srgb,var(--balance-color) 60%,transparent);animation:balance-water-wave 6s ease-in-out infinite alternate}
 .token-stats .balance-alarm-line{position:absolute;left:0;right:0;height:0;border-top:1px dashed var(--balance-alert);z-index:1}
 .token-stats .balance-amount{font-size:25px;line-height:1.2;letter-spacing:-.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
 .token-stats .balance-currency{display:block;font-size:9px;color:var(--muted);line-height:1.5;margin-top:3px}
@@ -1815,7 +1815,7 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .token-stats .balance-pool-error:empty{display:none}
 .token-stats .balance-account-card[data-state=low] .balance-amount,.token-stats .balance-account-card[data-state=empty] .balance-amount{color:var(--balance-color)}
 .token-stats .balance-account-card[data-state=low] .balance-account-badge,.token-stats .balance-account-card[data-state=empty] .balance-account-badge{color:var(--balance-alert);background:color-mix(in srgb,var(--balance-alert) 12%,transparent)}
-@keyframes balance-water-wave{from{transform:translateX(-10%) rotate(-4deg)}to{transform:translateX(10%) rotate(4deg)}}
+@keyframes balance-water-wave{from{transform:translateX(-5%) rotate(-2deg)}to{transform:translateX(5%) rotate(2deg)}}
 @media(prefers-reduced-motion:reduce){.token-stats .balance-water{transition:none}.token-stats .balance-water:before{animation:none}}
 
 [data-theme="dark"] .token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#ff7080}

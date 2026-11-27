@@ -13,7 +13,8 @@ addEventListener('keydown',(e: any)=>{if(e.key==='Escape'&&logbook.open){e.preve
 const params=new URLSearchParams(location.search), channelName=params.get('channel');
 const channel=channelName&&/^[a-zA-Z0-9-]{10,100}$/.test(channelName)?new BroadcastChannel('aide-stars-'+channelName):null;
 let token=localStorage.getItem('aide-token')||'',graph: any={nodes:[],edges:[],sources:[],warnings:[]},selected: any=null,region='',results: any=[],yaw=0,pitch=.1,zoom=1,drag: any=null,projection: any=[],width=0,height=0,pixelRatio=0,loading=false;
-const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motionMedia=matchMedia('(prefers-reduced-motion: reduce)');
+const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||document.documentElement.dataset.motionProfile==='minimal'||motionMedia.matches;
 const infrared=window.AideInfrared.create({button:$('infrared'),note:$('infrared-note'),redraw:()=>redraw(),motionEnabled:()=>motionEnabled(),onChange:(enabled: any)=>{scheduleSkyRecovery();say(enabled?uiTextStarmap('红外伪彩视觉模拟已开启 · 非真实观测数据'):uiTextStarmap('已恢复可见光星图配色'));}});
 let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache: any=null,focusKey='',graphGeneration=0,layoutGeneration=0,loadAbort: any=null,aiAbort: any=null;
 let documentAbort: any=null,documentGeneration=0,documentBatch: any=null;
@@ -88,7 +89,7 @@ function persistSkyView(active: any=()=>!locked){
 }
 function scheduleSkyRecovery(){if(locked)return;clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistSkyView,850);}
 function defaultSkyView(){
- return {version:1,codeView:params.get('code')==='1',region:'',query:'',retrievalMode:'nodes',edgeMode:'all',callDepth:'all',focusCode:false,camera:{yaw:0,pitch:.1,zoom:1},motionPhase:{skyTime:0,driftTime:0},scroll:{search:0,detail:0},path:[],selected:null,animate:!motionReduced(),infrared:false};
+ return {version:1,codeView:params.get('code')==='1',region:'',query:'',retrievalMode:'nodes',edgeMode:'all',callDepth:'all',focusCode:false,camera:{yaw:0,pitch:.1,zoom:1},motionPhase:{skyTime:0,driftTime:0},scroll:{search:0,detail:0},path:[],selected:null,animate:true,infrared:false};
 }
 function restoreSkyView(value: any){
  if(!value||value.version!==1||locked)return;
@@ -108,7 +109,7 @@ function restoreSkyView(value: any){
  const finite=(v: any,fallback: any,min: any,max: any)=>Number.isFinite(v)?clamp(v,min,max):fallback;
  yaw=finite(value.camera?.yaw,0,-2.5,2.5);pitch=finite(value.camera?.pitch,.1,-1,1);zoom=finite(value.camera?.zoom,1,.5,2.8);
  skyTime=finite(value.motionPhase?.skyTime,0,0,604800000);driftTime=finite(value.motionPhase?.driftTime,0,0,604800000);skyFloat.x=Math.sin(driftTime/22000)*.038;skyFloat.y=Math.sin(driftTime/29000)*.024;
- if(typeof value.animate==='boolean')animate=value.animate&&!motionReduced();
+ if(typeof value.animate==='boolean')animate=value.animate;
  if(typeof value.infrared==='boolean')infrared.set(value.infrared,false);
  (document.querySelector('.search-panel') as any).scrollTop=finite(value.scroll?.search,0,0,1000000);$('detail').scrollTop=finite(value.scroll?.detail,0,0,1000000);$('detail-text').scrollTop=finite(value.scroll?.detailText,0,0,1000000);
  syncMotion();syncCodeView();syncGraphChrome();syncCosmicNav();redraw();say(uiTextStarmap('已恢复上次星图视角与筛选；未自动执行检索或 AI。'));
@@ -209,7 +210,7 @@ async function pollLive(){
 }
 
 const retrievalMode=()=>codeView?'nodes':$('retrieval-mode').value;
-let animate=!motionReduced(), frame=0, pageLeaving=false;
+let animate=true, frame=0, pageLeaving=false;
 let driftTime=0;const skyFloat: any={x:0,y:0};
 let skyTime=0,lastPaint: any=null,pausedAt=document.hidden?performance.now():null,cameraTween: any=null,graphFade: any=null;
 let wheelZoom: any=null,interactionUntil=0,paintRequested=true,renderRevision=0,renderKey='';
@@ -220,7 +221,7 @@ let cosmos: any=null,cosmicEnabled=true,cosmicScene: any=null,cosmicKey='',cosmi
 let cosmicWheel=0,cosmicWheelLast=0,cosmicGate=0,cosmicScopeKey='',cosmicStars: any=[],cosmicStarEdges: any=[],cosmicCallState: any=null,cosmicGates: any=[],cosmicFocusID='',cosmicAimX=0,cosmicAimY=0,cosmicLocalHits: any=[],cosmicLensHits: any=[],cosmicLensedStarIDs=new Set<any>(),cosmicLensOwnerByStar=new Map<any, any>(),cosmicLensAssignmentCamera='',cosmicLensAssignmentScene: any=null;
 const cosmicTextureCache=new Map<any, any>(),cosmicSceneCache=new Map<any, any>();
 let cosmicDustFrameCache: any=null;
-const panelAnimations=new Map<any, any>(),motionMedia=matchMedia('(prefers-reduced-motion: reduce)');
+const panelAnimations=new Map<any, any>();
 // Read the same appearance contract as the workbench, once per change. Canvas
 // keeps its own prepared textures; it never reads CSS in the animation loop.
 function readMapPalette(){
@@ -309,9 +310,9 @@ function revealPanel(el: any,shown: any){
  const entering=el.hidden;
  if(!shown&&entering)return;
  el.hidden=false;
- const first=current||(shown?{opacity:entering?0:.65,transform:entering?'translateY(10px)':'none'}:{opacity:1,transform:'none'});
- const last=shown?{opacity:1,transform:'none'}:{opacity:0,transform:'translateY(6px)'};
- const a=el.animate([first,last],{duration:shown?(entering?240:170):150,easing:'cubic-bezier(.22,1,.36,1)'});
+ const first=current||(shown?{opacity:entering?0:.8,transform:entering?'translateY(4px)':'none'}:{opacity:1,transform:'none'});
+ const last=shown?{opacity:1,transform:'none'}:{opacity:0,transform:'translateY(3px)'};
+ const a=el.animate([first,last],{duration:shown?(entering?180:130):110,easing:'cubic-bezier(.22,1,.36,1)'});
  panelAnimations.set(el,a);
  a.finished.then(()=>{if(panelAnimations.get(el)!==a)return;if(!shown)el.hidden=true;panelAnimations.delete(el)},()=>{});
 }
@@ -721,7 +722,7 @@ function drawCosmos(now: any,t: any){
  for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0,edgeBins: any=Array.from({length:5},()=>({edges:[],transmission:0}));for(const e of batch.edges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;const depth=((e.a.depth||0)+(e.b.depth||0))*.5,transmission=cosmicDustSample(dustFrame,e,(e.a.x+e.b.x)*.5,(e.a.y+e.b.y)*.5,depth,cx,cy),bin=Math.max(0,Math.min(4,Math.floor(transmission*5))),bucket=edgeBins[bin];bucket.edges.push(e);bucket.transmission+=transmission;}
   for(const bucket of edgeBins){const edges=bucket.edges;if(!edges.length)continue;const transmission=bucket.transmission/edges.length;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of edges){ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}if(band>=2&&!batch.hierarchy){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*transmission;ctx.strokeStyle=(mapPalette.light?'#6b98b8':'#a3d5ff')+(band===2?'1a':band===3?'2a':'38');ctx.lineWidth=.8+band*.34;ctx.shadowColor=mapPalette.light?'#6b98b8':'#81c7ff';ctx.shadowBlur=2+band*1.7;ctx.stroke();ctx.restore();}ctx.globalAlpha=fade*transmission;ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(12+band*9).toString(16).padStart(2,'0'));ctx.lineWidth=.32+band*.17;ctx.stroke();ctx.globalAlpha=fade;
   }}ctx.setLineDash([]);
- let particles=0;for(const e of cosmicStarEdges){if(!selected||(e.from!==selected.id&&e.to!==selected.id))continue;if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id),depth=((e.a.depth||0)+(e.b.depth||0))*.5,transmission=cosmicDustSample(dustFrame,e,(e.a.x+e.b.x)*.5,(e.a.y+e.b.y)*.5,depth,cx,cy);if(active){ctx.globalAlpha=fade*transmission;ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=fade;}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.globalAlpha=fade*transmission;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();ctx.globalAlpha=fade;}}
+ let particles=0;for(const e of cosmicStarEdges){if(!selected||(e.from!==selected.id&&e.to!==selected.id))continue;if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id),depth=((e.a.depth||0)+(e.b.depth||0))*.5,transmission=cosmicDustSample(dustFrame,e,(e.a.x+e.b.x)*.5,(e.a.y+e.b.y)*.5,depth,cx,cy);if(active){ctx.globalAlpha=fade*transmission;ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=fade;}if(active&&motionEnabled()&&particles++<24){const q=(t/6500+e.phase)%1;ctx.globalAlpha=fade*transmission;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();ctx.globalAlpha=fade;}}
  // Gate icons use only indexed edges that cross established stellar systems.
  cosmicGates=cosmicScene.gates||[];
  for(const gate of cosmicGates)if(gate.p)gate.p.onScreen=false;
@@ -826,12 +827,13 @@ function projectInto(n: any,out: any,driftX: any,driftY: any,depth: any=n.depth)
 function edgeInView(e: any){const a=e.a,b=e.b;return a&&b&&Math.max(a.x,b.x)>=-70&&Math.min(a.x,b.x)<=width+70&&Math.max(a.y,b.y)>=-70&&Math.min(a.y,b.y)<=height+70;}
 function draw(now: any=performance.now()){
  frame=0;if(document.hidden)return;
+ const paintMotion=motionEnabled();
  const active=!!(drag||cameraTween||wheelZoom||graphFade||cosmicFlight||now<interactionUntil||now<liveAnimationUntil),budget=active?1000/60:1000/30;
  if(!paintRequested&&lastPaint!==null&&now-lastPaint<budget-1){redraw(false);return;}
- paintRequested=false;const delta=lastPaint===null?0:clamp(now-lastPaint,0,64);lastPaint=now;if(animate)skyTime+=delta;
+ paintRequested=false;const delta=lastPaint===null?0:clamp(now-lastPaint,0,64);lastPaint=now;if(paintMotion)skyTime+=delta;
  // A bounded, rigid sky drift preserves relations and hit testing. Its clock
  // pauses during manipulation and while motion is disabled, without snapping.
- if(motionEnabled()&&!drag&&!cameraTween&&!wheelZoom&&!cosmicFlight&&now>=interactionUntil){
+ if(paintMotion&&!drag&&!cameraTween&&!wheelZoom&&!cosmicFlight&&now>=interactionUntil){
   driftTime+=delta;skyFloat.x=Math.sin(driftTime/22000)*.038;skyFloat.y=Math.sin(driftTime/29000)*.024;
  }
  const t=skyTime;updateCamera(now);
@@ -842,7 +844,7 @@ function draw(now: any=performance.now()){
  if(cosmicEnabled&&cosmicScene){
   drawCosmos(now,t);drawEvidencePath();
   if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
-  if(infrared.transitioning||animate||cameraTween||wheelZoom||graphFade||cosmicFlight||now<liveAnimationUntil)redraw(false);return;
+  if(infrared.transitioning||paintMotion||cameraTween||wheelZoom||graphFade||cosmicFlight||now<liveAnimationUntil)redraw(false);return;
  }
  refreshView();const driftX=0,driftY=0;
  for(const c of clusters){if(region&&c.region!==region)continue;const p=projectInto(c,c.projected,driftX,driftY),size=Math.max(110,c.radius*width*3.3*zoom),density=Math.min(.85,.16+c.nodes.length/85);
@@ -864,7 +866,7 @@ function draw(now: any=performance.now()){
    if(lastDash!==e.dashed){ctx.setLineDash(e.dashed?[3,5]:[]);lastDash=e.dashed;}
    if(activeEdge){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
    if(e.directed){const angle=Math.atan2(b.y-a.y,b.x-a.x),x=b.x-Math.cos(angle)*7,y=b.y-Math.sin(angle)*7;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-Math.cos(angle-.45)*5,y-Math.sin(angle-.45)*5);ctx.moveTo(x,y);ctx.lineTo(x-Math.cos(angle+.45)*5,y-Math.sin(angle+.45)*5);ctx.stroke();}}
-  if(animate&&!e.hierarchy&&particles<48&&(activeEdge||e.phase<.20)){const progress=(t/6500+e.phase)%1,px=a.x+(b.x-a.x)*progress,py=a.y+(b.y-a.y)*progress;ctx.fillStyle=mapPalette.star+(activeEdge?'ff':'88');ctx.beginPath();ctx.arc(px,py,activeEdge?1.65:.9,0,tau);ctx.fill();particles++;}
+  if(paintMotion&&!e.hierarchy&&particles<48&&(activeEdge||e.phase<.20)){const progress=(t/6500+e.phase)%1,px=a.x+(b.x-a.x)*progress,py=a.y+(b.y-a.y)*progress;ctx.fillStyle=mapPalette.star+(activeEdge?'ff':'88');ctx.beginPath();ctx.arc(px,py,activeEdge?1.65:.9,0,tau);ctx.fill();particles++;}
  }ctx.setLineDash([]);
  for(const n of renderNodes){const {x,y,onScreen}=n.projected;if(!onScreen)continue;const chosen=n.chosen,match=n.match,r=n.apparentRadius+(chosen?1.5:0),g=n.glowSize;
   ctx.globalAlpha=n.drawAlpha*birthAlpha(n,now);ctx.drawImage(n.glow,x-g/2,y-g/2,g,g);ctx.fillStyle=n.starColor;ctx.beginPath();ctx.arc(x,y,r*(.4+.6*birthAlpha(n,now)),0,tau);ctx.fill();ctx.globalAlpha=1;
@@ -877,7 +879,7 @@ function draw(now: any=performance.now()){
  ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=mapPalette.muted+'66';for(let i=0;i<9;i++){const x=width*(i+1)/10;ctx.fillRect(x,height*.82,1,5);ctx.fillText(String(i*30).padStart(3,'0')+'°',x-8,height*.82+19);}
  if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
  drawLiveGhosts(now,0);
- if(infrared.transitioning||animate||cameraTween||wheelZoom||graphFade||now<liveAnimationUntil)redraw(false);
+ if(infrared.transitioning||paintMotion||cameraTween||wheelZoom||graphFade||now<liveAnimationUntil)redraw(false);
 }
 function redraw(dirty: any=true){if(dirty)paintRequested=true;if(!frame&&!document.hidden)frame=requestAnimationFrame(draw);}
 function nodeOutlineMatch(n: any,terms: any){
@@ -1067,8 +1069,26 @@ async function load(){
  }catch(e: any){if(!locked&&e.name!=='AbortError'){liveFailures++;stellarLogbook.interrupted();say(e.message);}}
  finally{loading=false;syncCodeView();redraw();if(!locked&&generation!==graphGeneration)load();else scheduleLive(progressiveDelay(graph));}
 }
-function syncMotion(){ $('motion').textContent=animate?uiTextStarmap('动效 · 开'):uiTextStarmap('动效 · 关');$('motion').setAttribute('aria-pressed',String(animate)); }
-$('motion').onclick=()=>{if(motionReduced()){say(uiTextStarmap('当前已减少动态效果，请在工作台外观或系统设置中调整。'));return;}animate=!animate;if(!animate){for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();}syncMotion();redraw();};syncMotion();
+function syncMotion(){
+ const enabled=motionEnabled();
+ $('motion').textContent=enabled?uiTextStarmap('动效 · 开'):uiTextStarmap('动效 · 关');
+ $('motion').setAttribute('aria-pressed',String(enabled));
+}
+function respectMotion(){
+ if(!motionEnabled()){
+  for(const n of graph.nodes)delete n.bornAt;
+  liveGhosts=[];liveAnimationUntil=0;
+  if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}
+  if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}
+  graphFade=null;cosmicFlight=null;settlePanels();
+ }
+ syncMotion();redraw();
+}
+$('motion').onclick=()=>{
+ if(motionReduced()){say(uiTextStarmap('当前已减少动态效果，请在工作台外观或系统设置中调整。'));return;}
+ animate=!animate;respectMotion();
+};
+syncMotion();
 addEventListener('visibilitychange',()=>{
  const now=performance.now();cancelAnimationFrame(frame);frame=0;
  if(document.hidden){persistSkyView();scheduleLive(2000);pausedAt=now;drag=null;settlePanels();}
@@ -1171,7 +1191,6 @@ if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();
 
-function respectMotion(){if(motionReduced()){animate=false;for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();syncMotion();redraw();}}
 addEventListener('aide:motion',respectMotion);motionMedia.addEventListener('change',respectMotion);
 // Repaint owned map chrome after a same-origin language preference change; no model request or page reload.
 window.addEventListener('aide:language', () => {

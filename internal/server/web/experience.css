@@ -1,10 +1,11 @@
 /* Shared motion layer: short feedback, stable reading surfaces, no input gate. */
-:root{--motion-fast:140ms;--motion-normal:200ms;--motion-slow:260ms;--motion-ease:cubic-bezier(.22,1,.36,1)}
+:root{--motion-fast:110ms;--motion-normal:180ms;--motion-slow:230ms;--motion-ease:cubic-bezier(.2,.8,.2,1);--motion-exit:cubic-bezier(.4,0,.8,.35);--intro-duration:760ms}
+:root[data-motion-profile="balanced"]{--motion-fast:80ms;--motion-normal:120ms;--motion-slow:150ms;--intro-duration:450ms}
 button,a,input,textarea,select{transition:background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,color var(--motion-fast) ease;}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
 .segmented-thumb{transition:transform var(--motion-normal) var(--motion-ease),width var(--motion-normal) var(--motion-ease)}
-.settings-backdrop,.settings-sheet{transition:opacity var(--motion-normal) ease,transform 220ms var(--motion-ease),visibility 0s linear 220ms}
-.settings-backdrop.open,.settings-sheet.open{transition:opacity var(--motion-normal) ease,transform 220ms var(--motion-ease)}
+.settings-backdrop,.settings-sheet{transition:opacity var(--motion-fast) ease-out,transform var(--motion-normal) var(--motion-exit),visibility 0s linear var(--motion-normal)}
+.settings-backdrop.open,.settings-sheet.open{transition:opacity var(--motion-normal) ease-out,transform var(--motion-slow) var(--motion-ease)}
 .settings-backdrop{backdrop-filter:blur(6px)}
 .settings-sheet{backdrop-filter:blur(12px);background:color-mix(in srgb,var(--panel) 96%,transparent)}
 .persona-card{transition:border-color var(--motion-fast) ease,background-color var(--motion-fast) ease}
@@ -18,21 +19,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .section-desc,.settings-control .control-label,.settings-nav-item{line-height:1.65}
 @media(hover:hover) and (pointer:fine){.starter-card{transition:transform var(--motion-normal) var(--motion-ease),background-color var(--motion-fast),border-color var(--motion-fast)}.starter-card:hover{transform:translateY(-2px)}}
 /* A translucent orbital signature, not a blocking splash screen. */
-.aide-intro{position:fixed;inset:0;z-index:150;pointer-events:none;display:grid;place-items:center;overflow:hidden;animation:aide-intro-fade 940ms ease both}
+.aide-intro{position:fixed;inset:0;z-index:150;pointer-events:none;display:grid;place-items:center;overflow:hidden;animation:aide-intro-fade var(--intro-duration) ease-out both}
 .aide-intro::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--bg) 95%,transparent),color-mix(in srgb,var(--bg) 35%,transparent) 55%,transparent 80%)}
-.aide-intro-mark{width:260px;height:260px;position:relative;display:grid;place-items:center;animation:aide-intro-arrive 740ms var(--motion-ease) both}
+.aide-intro-mark{width:clamp(170px,24vmin,240px);aspect-ratio:1;position:relative;display:grid;place-items:center;animation:aide-intro-arrive var(--intro-duration) var(--motion-ease) both}
 .aide-intro svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;color:var(--brand)}
-.aide-intro-ring{fill:none;stroke:currentColor;stroke-width:.7;opacity:.38;transform-origin:130px 130px;animation:aide-orbit 900ms var(--motion-ease) both}
+.aide-intro-ring{fill:none;stroke:currentColor;stroke-width:.7;opacity:.38;transform-origin:130px 130px;animation:aide-orbit var(--intro-duration) var(--motion-ease) both}
 .aide-intro-ring.inner{stroke-width:1.1;opacity:.7;animation-direction:reverse}
-.aide-intro-ray{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:40 490;transform-origin:130px 130px;animation:aide-orbit 850ms var(--motion-ease) both}
+.aide-intro-ray{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:40 490;transform-origin:130px 130px;animation:aide-orbit var(--intro-duration) var(--motion-ease) both}
 .aide-intro-core{font:600 68px/1 system-ui;color:var(--text);position:relative;letter-spacing:-5px;text-shadow:0 0 24px color-mix(in srgb,var(--brand) 25%,transparent)}
-.aide-intro-star{fill:var(--text);animation:aide-star 850ms ease both;transform-origin:208px 64px}
-@keyframes aide-orbit{from{transform:rotate(-110deg)}to{transform:rotate(55deg)}}
+.aide-intro-star{fill:var(--text);animation:aide-star var(--intro-duration) ease both;transform-origin:208px 64px}
+@keyframes aide-orbit{from{transform:rotate(-58deg)}to{transform:rotate(32deg)}}
 @keyframes aide-star{0%{opacity:0;transform:scale(.3)}45%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}
-@keyframes aide-intro-arrive{from{opacity:0;transform:scale(.88)}45%{opacity:1}to{opacity:1;transform:scale(1)}}
-@keyframes aide-intro-fade{0%{opacity:0}15%,64%{opacity:1}100%{opacity:0}}
-html[data-ui-paused] *,html[data-ui-paused] *::before,html[data-ui-paused] *::after{animation-play-state:paused!important}
-html[data-motion="reduced"] *,html[data-motion="reduced"] *::before,html[data-motion="reduced"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@keyframes aide-intro-arrive{from{opacity:0;transform:scale(.95)}34%{opacity:1}to{opacity:1;transform:scale(1)}}
+@keyframes aide-intro-fade{0%{opacity:0}20%,50%{opacity:1}100%{opacity:0}}
+html[data-ui-paused] *,html[data-ui-paused] *::before,html[data-ui-paused] *::after{animation-play-state:paused!important;transition:none!important;scroll-behavior:auto!important}
+html:is([data-motion="reduced"],[data-motion-profile="minimal"]) *,
+html:is([data-motion="reduced"],[data-motion-profile="minimal"]) *::before,
+html:is([data-motion="reduced"],[data-motion-profile="minimal"]) *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+html:is([data-motion="reduced"],[data-motion-profile="minimal"]) .aide-intro{display:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.aide-intro{display:none}}
 /* Preview tiles belong to palettes only. Other settings remain compact controls. */
 .segmented:not([data-palette]){gap:4px;padding:3px;background:var(--bg-inset);border:1px solid var(--line-soft);border-radius:10px}
@@ -58,7 +62,7 @@ html[data-motion-layer="ready"] .file-ctx-menu{animation:none!important}
 [data-ui-exiting="true"]{pointer-events:none!important;user-select:none!important}
 /* One sliding selection surface across the workbench's main module switches. */
 .panel-switch.motion-segment-ready,.mode-switch.motion-segment-ready,.root-tabs.motion-segment-ready,#plugin-mode-tabs.motion-segment-ready{position:relative;isolation:isolate}
-.panel-switch.motion-segment-ready::before,.mode-switch.motion-segment-ready::before,.root-tabs.motion-segment-ready::before,#plugin-mode-tabs.motion-segment-ready::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:var(--motion-segment-width);transform:translate3d(var(--motion-segment-x),0,0);border-radius:inherit;background:var(--selected);box-shadow:0 1px 3px var(--shadow-1);pointer-events:none;transition:transform 230ms var(--motion-ease),width 230ms var(--motion-ease)}
+.panel-switch.motion-segment-ready::before,.mode-switch.motion-segment-ready::before,.root-tabs.motion-segment-ready::before,#plugin-mode-tabs.motion-segment-ready::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:var(--motion-segment-width);transform:translate3d(var(--motion-segment-x),0,0);border-radius:inherit;background:var(--selected);box-shadow:0 1px 3px var(--shadow-1);pointer-events:none;transition:transform var(--motion-normal) var(--motion-ease),width var(--motion-normal) var(--motion-ease)}
 #plugin-mode-tabs.motion-segment-ready::before{top:8px;bottom:8px;border-radius:8px}
 .panel-switch.motion-segment-ready.motion-segment-initial::before,.mode-switch.motion-segment-ready.motion-segment-initial::before,.root-tabs.motion-segment-ready.motion-segment-initial::before,#plugin-mode-tabs.motion-segment-ready.motion-segment-initial::before{transition:none}
 .panel-switch.motion-segment-ready button,.mode-switch.motion-segment-ready button,.root-tabs.motion-segment-ready button,#plugin-mode-tabs.motion-segment-ready button{position:relative;z-index:1}
@@ -74,7 +78,7 @@ html[data-motion-layer="ready"] .file-ctx-menu{animation:none!important}
 .send-light-rail{stroke:var(--text);stroke-width:.65;opacity:.055}
 .send-light-route>g{filter:drop-shadow(0 0 3px color-mix(in srgb,var(--text) 26%,transparent))}
 .send-light-beam{stroke:var(--text);stroke-width:2.4}
-html[data-motion="reduced"] .motion-segment-ready::before,html[data-ui-paused] .motion-segment-ready::before{transition:none}
+:root:is([data-motion="reduced"],[data-motion-profile="minimal"],[data-ui-paused]) .motion-segment-ready::before{transition:none!important}
 html[data-motion="reduced"] #send,html[data-ui-paused] #send{transition:none}
 
 /* Adaptive rendering: preserve context and controls while removing continuous
@@ -83,6 +87,7 @@ body.sidebar-collapsed{transition:none}
 html[data-motion-profile="balanced"] :is(.workbench-eye-glow,.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo),
 html[data-motion-profile="minimal"] :is(.workbench-eye-glow,.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo){animation:none!important}
 html[data-motion-profile="minimal"] :is(.sidebar,.topbar,.file-panel,.plugin-panel,#reminder-center,.composer,.strategy-menu,.search-results,.settings-sheet,dialog){-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-motion-profile="minimal"] :is(.settings-backdrop,.settings-sheet,.strategy-menu,.toast,#send){animation:none!important;transition:none!important}
 
 @media(prefers-reduced-motion:reduce){.motion-segment-ready::before{transition:none}}
 @media(min-width:951px){
@@ -93,21 +98,22 @@ html[data-motion-profile="minimal"] :is(.sidebar,.topbar,.file-panel,.plugin-pan
    dialogs are not marked and never inherit these discretionary transitions. */
 @supports (transition-behavior:allow-discrete){
  dialog[data-ui-motion="dialog"]{
-  opacity:0;transform:translateY(6px);pointer-events:none;
-  transition:opacity 160ms ease,transform 180ms var(--motion-ease),display 180ms allow-discrete,overlay 180ms allow-discrete;
+  opacity:0;translate:0 3px;pointer-events:none;
+  transition:opacity var(--motion-fast) ease-out,translate var(--motion-fast) var(--motion-exit),display var(--motion-fast) allow-discrete,overlay var(--motion-fast) allow-discrete;
  }
- dialog[data-ui-motion="dialog"][open]{opacity:1;transform:none;pointer-events:auto}
- dialog[data-ui-motion="dialog"]::backdrop{opacity:0;transition:opacity 160ms ease,display 180ms allow-discrete,overlay 180ms allow-discrete}
- dialog[data-ui-motion="dialog"][open]::backdrop{opacity:1}
+ dialog[data-ui-motion="dialog"][open]{opacity:1;translate:none;pointer-events:auto;transition-duration:var(--motion-normal)}
+ dialog[data-ui-motion="dialog"]::backdrop{opacity:0;pointer-events:none;transition:opacity var(--motion-fast) ease-out,display var(--motion-fast) allow-discrete,overlay var(--motion-fast) allow-discrete}
+ dialog[data-ui-motion="dialog"][open]::backdrop{opacity:1;pointer-events:auto;transition-duration:var(--motion-normal)}
  @starting-style{
-  dialog[data-ui-motion="dialog"][open]{opacity:0;transform:translateY(6px)}
+  dialog[data-ui-motion="dialog"][open]{opacity:0;translate:0 5px}
   dialog[data-ui-motion="dialog"][open]::backdrop{opacity:0}
  }
- html[data-ui-paused] dialog[data-ui-motion="dialog"],
- html[data-ui-paused] dialog[data-ui-motion="dialog"]::backdrop{transition:none!important}
+ :root:is([data-ui-paused],[data-motion="reduced"],[data-motion-profile="minimal"]) dialog[data-ui-motion="dialog"],
+ :root:is([data-ui-paused],[data-motion="reduced"],[data-motion-profile="minimal"]) dialog[data-ui-motion="dialog"]::backdrop{transition:none!important}
+ @media(prefers-reduced-motion:reduce){dialog[data-ui-motion="dialog"]::backdrop{transition:none!important}}
  @media(hover:none),(pointer:coarse){
-  dialog[data-ui-motion="dialog"]{transform:none}
-  @starting-style{dialog[data-ui-motion="dialog"][open]{transform:none}}
+  dialog[data-ui-motion="dialog"]{translate:none}
+  @starting-style{dialog[data-ui-motion="dialog"][open]{translate:none}}
  }
 }
 

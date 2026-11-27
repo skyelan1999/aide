@@ -46,7 +46,7 @@
                 event.preventDefault();
                 const top = heading.getBoundingClientRect().top - host.getBoundingClientRect().top + host.scrollTop;
                 const inset = 20;
-                host.scrollTo({ top: Math.max(0, top - inset), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+                host.scrollTo({ top: Math.max(0, top - inset), behavior: window.aideUI?.scrollBehavior?.() ?? 'instant' });
                 heading.tabIndex = -1;
                 heading.focus({ preventScroll: true });
                 if (docked || reader.getBoundingClientRect().width < 420)

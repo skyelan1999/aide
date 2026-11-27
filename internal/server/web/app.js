@@ -1294,8 +1294,13 @@ $('conversation')?.addEventListener('touchstart', () => { state.jumpAnimating = 
 $('jump-bottom')?.addEventListener('click', () => {
     const c = $('conversation');
     state.autoScroll = true;
-    state.jumpAnimating = true;
-    c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+    const behavior = window.aideUI?.scrollBehavior?.() ?? 'instant';
+    state.jumpAnimating = behavior === 'smooth';
+    c.scrollTo({ top: c.scrollHeight, behavior });
+    if (!state.jumpAnimating) {
+        updateJumpBtn();
+        return;
+    }
     setTimeout(() => { state.jumpAnimating = false; }, 1200); // 兜底：动画未触发滚动事件时复位
 });
 // 会话快照未变化时跳过整页重渲染（流式期间 step.content/usage 未变，轮询只做轻量校验）
@@ -5319,7 +5324,7 @@ function syncTaskActionHub(run) {
     }
     title.onclick = () => {
         const article = [...document.querySelectorAll('#timeline .run')].find((node) => node.dataset.run === run?.id);
-        article?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        article?.scrollIntoView({ block: 'start', behavior: window.aideUI?.scrollBehavior?.() ?? 'instant' });
     };
     const signature = JSON.stringify([typeof recoveryScope === 'function' ? recoveryScope() : '', typeof window !== 'undefined' ? window.aideI18n?.language() : '', state.session?.id, run?.id, run?.status, run?.pendingQuestion, run?.approvalState, run?.autoReview]);
     if (slot.dataset.signature === signature)
@@ -12042,38 +12047,39 @@ async function setupStlPreview(container, filePath, root, source, viewerSpec) {
     const grid = new THREE.GridHelper(20, 20, 0x444466, 0x333355);
     scene.add(grid);
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
+    controls.enableDamping = !!window.aideUI?.allowsMotion?.();
+    controls.dampingFactor = 0.12;
     let animId = 0, resizeObs = null, stlGeometry = null, stlMaterial = null;
     let disposed = false;
-    const animateSTL = () => {
-        animId = 0;
-        if (disposed || document.hidden || !container.isConnected)
+    // OrbitControls emits change while damping still moves the camera. Each event
+    // requests one paint; a stationary preview has no outstanding frame.
+    const requestSTLPaint = () => {
+        if (animId || disposed || document.hidden || !container.isConnected)
             return;
-        controls.update();
-        renderer.render(scene, camera);
-        if (document.documentElement.dataset.motion !== 'reduced')
-            animId = requestAnimationFrame(animateSTL);
+        animId = requestAnimationFrame(() => {
+            animId = 0;
+            if (disposed || document.hidden || !container.isConnected)
+                return;
+            controls.update();
+            renderer.render(scene, camera);
+        });
     };
     const syncSTLMotion = () => {
-        if (animId)
-            cancelAnimationFrame(animId);
+        cancelAnimationFrame(animId);
         animId = 0;
-        controls.enableDamping = document.documentElement.dataset.motion !== 'reduced';
-        animateSTL();
+        controls.enableDamping = !!window.aideUI?.allowsMotion?.();
+        requestSTLPaint();
     };
-    const renderSTLChange = () => { if (!disposed && document.documentElement.dataset.motion === 'reduced')
-        renderer.render(scene, camera); };
     document.addEventListener('visibilitychange', syncSTLMotion);
     window.addEventListener('aide:motion', syncSTLMotion);
-    controls.addEventListener('change', renderSTLChange);
+    controls.addEventListener('change', requestSTLPaint);
     const teardown = () => {
         if (disposed)
             return;
         disposed = true;
         document.removeEventListener('visibilitychange', syncSTLMotion);
         window.removeEventListener('aide:motion', syncSTLMotion);
-        controls.removeEventListener('change', renderSTLChange);
+        controls.removeEventListener('change', requestSTLPaint);
         if (animId) {
             cancelAnimationFrame(animId);
             animId = 0;
@@ -12132,13 +12138,13 @@ async function setupStlPreview(container, filePath, root, source, viewerSpec) {
         controls.update();
         meta.textContent = Math.round(stlGeometry.attributes.position.count / 3) + ' ' + t('三角面') + ' · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
         btnReset.onclick = () => { camera.position.set(camDist, camDist * 0.7, camDist); controls.target.set(0, 0, 0); controls.update(); };
-        animateSTL();
+        requestSTLPaint();
         const resize = () => { if (disposed)
             return; const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) {
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
             renderer.setSize(w, h);
-            renderSTLChange();
+            requestSTLPaint();
         } };
         resize();
         resizeObs = new ResizeObserver(resize);
@@ -13914,7 +13920,7 @@ async function setupDocxNativePreview(container, filePath, root, source, viewerS
                     highlightComment(c);
                     const hl = docxBody.querySelector('.comment-anchor-hl');
                     if (hl)
-                        hl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        hl.scrollIntoView({ behavior: window.aideUI?.scrollBehavior?.() ?? 'instant', block: 'center' });
                 };
                 listEl.append(card);
             });
@@ -14127,7 +14133,7 @@ function setupMarkdownPreview(host, text, path, spec, allowLarge = false) {
             }
             const target = [...host.querySelectorAll('[id]')].find((node) => node.id === id);
             if (target)
-                host.scrollTo({ top: target.getBoundingClientRect().top - host.getBoundingClientRect().top + host.scrollTop, behavior: document.documentElement.dataset.motion === 'reduced' ? 'auto' : 'smooth' });
+                host.scrollTo({ top: target.getBoundingClientRect().top - host.getBoundingClientRect().top + host.scrollTop, behavior: window.aideUI?.scrollBehavior?.() ?? 'instant' });
         });
     });
     host.querySelectorAll('a[data-internal-link]').forEach((link) => {
@@ -14688,16 +14694,22 @@ function animateTrajectorySwitch(direction) {
     trajectoryViewAnimation?.cancel();
     trajectoryViewAnimation = null;
     const host = $('trajectory-content');
-    if (!host?.animate || !host.isConnected || document.documentElement.dataset.motion === 'reduced' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+    if (!host?.animate || !host.isConnected || document.hidden || !window.aideUI?.allowsMotion?.())
         return;
     const animation = host.animate([
-        { opacity: .65, transform: `translate3d(${direction * 7}px,0,0)` },
+        { opacity: .65, transform: `translate3d(${direction * 4}px,0,0)` },
         { opacity: 1, transform: 'translate3d(0,0,0)' }
-    ], { duration: 190, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    ], { duration: 150, easing: 'cubic-bezier(.2,.75,.24,1)' });
     trajectoryViewAnimation = animation;
     animation.onfinish = animation.oncancel = () => { if (trajectoryViewAnimation === animation)
         trajectoryViewAnimation = null; };
 }
+function settleTrajectoryMotion() {
+    if (document.hidden || !window.aideUI?.allowsMotion?.())
+        trajectoryViewAnimation?.cancel();
+}
+window.addEventListener('aide:motion', settleTrajectoryMotion);
+document.addEventListener('visibilitychange', settleTrajectoryMotion);
 function renderTrajectory() {
     const host = $('trajectory-content');
     ++trajectoryGeneration;
@@ -16699,11 +16711,11 @@ async function focusRunInChat(runId) {
     const art = document.querySelector('article.run[data-run="' + CSS.escape(runId) + '"]');
     if (art) {
         art.classList.add('narration-highlight');
-        art.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        art.scrollIntoView({ behavior: window.aideUI?.scrollBehavior?.() ?? 'instant', block: 'center' });
         await narrSleep(480);
     }
     else {
-        $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: 'smooth' });
+        $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: window.aideUI?.scrollBehavior?.() ?? 'instant' });
     }
 }
 async function doOpenForNarration(st) {

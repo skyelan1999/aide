@@ -7,6 +7,10 @@
     const manifests = new Map();
     const images = new Map();
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    function motionPaused() {
+        return !!reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced' ||
+            document.documentElement.dataset.motionProfile === 'minimal';
+    }
     const MAX_CACHED_IMAGES = 4;
     const MAX_CACHED_PIXELS = 8 * 1024 * 1024;
     let raf = 0, intersectionObserver, resizeObserver, removalObserver, observing = false;
@@ -171,7 +175,7 @@
         player.preloadRecord = null;
     }
     async function warmNext(player) {
-        if (player.destroyed || !player.manifest || !player.image || player.pendingRecord || document.hidden || (reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced') || !visible(player)) {
+        if (player.destroyed || !player.manifest || !player.image || player.pendingRecord || document.hidden || motionPaused() || !visible(player)) {
             releasePreload(player);
             return false;
         }
@@ -230,7 +234,7 @@
     function canAnimate(player) {
         return !player.destroyed && player.image && player.clip?.frames.length > 1 &&
             (player.clip.loop || player.elapsed < player.clip.total) && !document.hidden &&
-            !(reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced') && visible(player);
+            !motionPaused() && visible(player);
     }
     function schedule() {
         const runnable = [...players].some(canAnimate);
@@ -242,7 +246,7 @@
         }
     }
     function commitDeferred(player) {
-        if (!player.deferredMotion || player.destroyed || !player.manifest || document.hidden || (reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced') || !visible(player))
+        if (!player.deferredMotion || player.destroyed || !player.manifest || document.hidden || motionPaused() || !visible(player))
             return false;
         const clip = nextVariant(player);
         if (!clip || (clip.sheet.src !== player.clip?.sheet.src && (player.preloadRecord?.key !== clip.sheet.src || !player.preloadRecord.settled)))

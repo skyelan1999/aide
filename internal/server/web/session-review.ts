@@ -214,7 +214,7 @@ interface Window {
         bar.setAttribute('aria-label', bar.title);
         bar.onclick = () => {
           const target: any = document.getElementById?.(`sr-${turn.id}-${item.id}`);
-          if (target) { target.open = true; target.scrollIntoView?.({block:'center', behavior:'smooth'}); }
+          if (target) { target.open = true; target.scrollIntoView?.({block:'center', behavior:window.aideUI?.scrollBehavior?.() ?? 'instant'}); }
         };
         plot.append(bar);
       }

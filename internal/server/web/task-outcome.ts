@@ -265,8 +265,8 @@ interface Window {
     if(!valid())return;
     const owner=recordGeneration,snapshot=data.snapshot,request={};evidenceRequest=request;
     try{const raw=await api(base+'/evidence/'+encodeURIComponent(record.id)+'?digest='+encodeURIComponent(record.digest));if(!ownsRecords(owner)||data.snapshot!==snapshot||evidenceRequest!==request)return;
-     const details=node('details','outcome-evidence');details.open=true;details.append(node('summary','',record.id+' · '+raw.tool),node('h4','',t(raw.source==='system'?'系统记录来源':'原始参数')),node('pre','',raw.source==='system'?'AIDE R&D · '+raw.tool:raw.args||'—'),node('h4','',t('原始返回')),node('pre','',raw.result||t('没有返回记录')),node('code','outcome-digest',raw.digest));
-     const previous=content.querySelector('.outcome-evidence');previous?.remove();content.append(details);details.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+     const details=node('details','outcome-evidence');details.open=true;details.append(node('summary','',record.id+' · '+raw.tool),node('h4','',t(raw.source==='system'?'系统记录来源':'原始参数')),node('pre','',raw.source==='system'?'Aide · '+raw.tool:raw.args||'—'),node('h4','',t('原始返回')),node('pre','',raw.result||t('没有返回记录')),node('code','outcome-digest',raw.digest));
+     const previous=content.querySelector('.outcome-evidence');previous?.remove();content.append(details);details.scrollIntoView({block:'nearest',behavior:window.aideUI?.scrollBehavior?.() ?? 'instant'});
     }catch(e){if(ownsRecords(owner)&&data.snapshot===snapshot&&evidenceRequest===request)error?.((e as Error).message);}
    }
    function syncPolling(): void{
