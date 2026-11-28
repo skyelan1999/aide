@@ -17,6 +17,7 @@ func ulaw(value int16) byte {
 func unUlaw(value byte) int16 {
 	v := ^value
 	n := (int(v&15)<<3 + 132) << ((v >> 4) & 7)
+	// n is 132..32256, so either signed result fits in int16.
 	if v&128 != 0 {
 		return int16(132 - n)
 	}
@@ -45,5 +46,6 @@ func unAlaw(value byte) int16 {
 	if v&128 == 0 {
 		n = -n
 	}
+	// The largest magnitude is (240 + 264) << 6 = 32256.
 	return int16(n)
 }

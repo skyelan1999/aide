@@ -39,8 +39,9 @@ func command(ctx context.Context, name string, args ...string) ([]byte, error) {
 	return exec.CommandContext(ctx, name, args...).Output()
 }
 
-// Only the launcher-selected Docker Compose implementation is accepted. No shell
-// evaluation or arbitrary command arguments are taken from the environment.
+// The executable selection is trusted host-launcher configuration, like -docker
+// and PATH. The basename check restricts command shape; it does not authenticate
+// the binary. No shell evaluation or arguments are taken from the environment.
 func compose(ctx context.Context, docker string, args ...string) ([]byte, error) {
 	selected := os.Getenv("AIDE_LOCAL_MOUNTS_COMPOSE")
 	if selected == "" || selected == "docker" {

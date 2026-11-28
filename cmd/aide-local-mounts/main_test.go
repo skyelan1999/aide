@@ -68,7 +68,10 @@ func TestComposeChoiceAndRejectArguments(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX executable fixture")
 	}
-	dir := t.TempDir()
+	dir := filepath.Join(t.TempDir(), "Compose tools 空格")
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
 	script := filepath.Join(dir, "docker-compose")
 	if err := os.WriteFile(script, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\"\n"), 0700); err != nil {
 		t.Fatal(err)
@@ -82,10 +85,12 @@ func TestComposeChoiceAndRejectArguments(t *testing.T) {
 	if _, err = compose(context.Background(), script, "config"); err == nil {
 		t.Fatal("accepted arbitrary command")
 	}
-	t.Setenv("AIDE_LOCAL_MOUNTS_COMPOSE", "docker")
-	out, err = compose(context.Background(), script, "config")
-	if err != nil || string(out) != "compose\nconfig\n" {
-		t.Fatalf("%s %v", out, err)
+	for _, selected := range []string{"", "docker"} {
+		t.Setenv("AIDE_LOCAL_MOUNTS_COMPOSE", selected)
+		out, err = compose(context.Background(), script, "config")
+		if err != nil || string(out) != "compose\nconfig\n" {
+			t.Fatalf("selection %q: %s %v", selected, out, err)
+		}
 	}
 }
 func TestApplyRecreatesOnlyAideAndRefreshesForwarders(t *testing.T) {
