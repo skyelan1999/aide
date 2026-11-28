@@ -140,6 +140,8 @@ struct Desktop {
    case WM_PAINT:{PAINTSTRUCT paint{};auto dc=BeginPaint(hwnd,&paint);Chrome::fill(dc,paint.rcPaint,self->chrome.background);EndPaint(hwnd,&paint);return 0;}
    case WM_ERASEBKGND:{RECT area{};GetClientRect(hwnd,&area);Chrome::fill(reinterpret_cast<HDC>(w),area,self->chrome.background);return 1;}
    case WM_DRAWITEM:{auto item=reinterpret_cast<DRAWITEMSTRUCT*>(l);if(item->CtlType==ODT_BUTTON){self->chrome.button(*item);return TRUE;}break;}
+   case WM_THEMECHANGED:self->chrome.refresh(hwnd,self->bar);break;
+   case WM_SETTINGCHANGE:case WM_SYSCOLORCHANGE:self->chrome.refresh(hwnd,self->bar);break;
    case WM_DPICHANGED:{self->chrome.setDpi(HIWORD(w));self->icons();auto bounds=reinterpret_cast<RECT*>(l);SetWindowPos(hwnd,nullptr,bounds->left,bounds->top,bounds->right-bounds->left,bounds->bottom-bounds->top,SWP_NOZORDER|SWP_NOACTIVATE);self->resize();return 0;}
    case WM_SIZE:self->resize();if(w==SIZE_MINIMIZED){self->pause(self->active());self->hello.cancel(self->ceremony);}return 0;
    case WM_SHOWWINDOW:if(!w){self->pause(self->active());self->hello.cancel(self->ceremony);}break;
@@ -170,7 +172,7 @@ struct Desktop {
   chrome.setDpi(GetDpiForWindow(window));icons();
   bar=CreateWindowExW(0,WC_TABCONTROLW,L"",WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|TCS_FIXEDWIDTH|TCS_BUTTONS|TCS_FLATBUTTONS,0,0,1200,chrome.height(),window,nullptr,cls.hInstance,nullptr);
   CreateWindowExW(0,L"BUTTON",L"New tab",WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,1205,3,40,42,window,reinterpret_cast<HMENU>(101),cls.hInstance,nullptr);
-  chrome.install(bar);resize();
+  chrome.install(bar);chrome.refresh(window,bar);resize();
   ShowWindow(window,SW_SHOW);UpdateWindow(window);
   try{computer.start();}catch(...){MessageBoxW(window,L"Aide computer control is unavailable. Check whether port 17778 is already in use.",L"Aide",MB_OK|MB_ICONWARNING);}
   loader=LoadLibraryExW(dll.c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_SYSTEM32);if(!loader)throw std::runtime_error("Verified WebView2 loader unavailable");

@@ -33,6 +33,19 @@ static void compactChromeChecks(){
  if(aide_desktop::Chrome::contrast(aide_desktop::Chrome::readable(app.chrome.muted,app.chrome.background),app.chrome.background)<4.5)throw std::runtime_error("Inactive title contrast below 4.5");
  results["compact32DipStrip"]=true;results["windowAndShellIcons"]=true;results["perMonitorV2Manifest"]=true;results["inactiveTitleContrast"]=true;
 }
+static void highContrastChromeCheck(){
+ auto& app=*testApp;auto& chrome=app.chrome;auto page=chrome.pageAppearance;
+ chrome.systemPalette();
+ if(chrome.background!=GetSysColor(COLOR_WINDOW)||chrome.selected!=GetSysColor(COLOR_HIGHLIGHT)||chrome.text!=GetSysColor(COLOR_WINDOWTEXT)||chrome.dark||!chrome.highContrast)throw std::runtime_error("System High Contrast palette was not applied");
+ if(aide_desktop::Chrome::contrast(chrome.ink(chrome.selected,true),chrome.selected)<4.5)throw std::runtime_error("Selected High Contrast text unreadable");
+ capture(L"native-high-contrast.bmp");
+ bool rejected=false;
+ try{chrome.apply(app.window,app.bar,{{"background","#111111"},{"surface","#222222"},{"selected","#333333"},{"text","#444444"},{"muted","#555555"},{"line","invalid"},{"dark",false}});}catch(const std::exception&){rejected=true;}
+ if(!rejected||chrome.pageAppearance.background!=page.background||chrome.pageAppearance.line!=page.line)throw std::runtime_error("Invalid appearance replaced the saved palette");
+ chrome.restorePagePalette();
+ if(chrome.highContrast||chrome.background!=page.background||chrome.dark!=page.dark)throw std::runtime_error("Page palette not restored after High Contrast");
+ chrome.refresh(app.window,app.bar);results["systemHighContrastPalette"]=true;results["pagePaletteRestored"]=true;
+}
 static void layoutCaptures(bool dark){
  auto& app=*testApp;RECT original{};GetWindowRect(app.window,&original);auto dpi=app.chrome.dpi;
  SetWindowPos(app.window,nullptr,original.left,original.top,640,480,SWP_NOZORDER|SWP_NOACTIVATE);
@@ -42,6 +55,8 @@ static void layoutCaptures(bool dark){
  // single display. It does not claim physical multi-monitor hardware coverage.
  RECT narrow{};GetWindowRect(app.window,&narrow);SendMessageW(app.window,WM_DPICHANGED,MAKEWPARAM(144,144),reinterpret_cast<LPARAM>(&narrow));compactChromeChecks();
  RedrawWindow(app.window,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW|RDW_ALLCHILDREN);capture(dark?L"compact-dark-150.bmp":L"compact-light-150.bmp");
+ SendMessageW(app.window,WM_DPICHANGED,MAKEWPARAM(192,192),reinterpret_cast<LPARAM>(&narrow));compactChromeChecks();
+ RedrawWindow(app.window,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW|RDW_ALLCHILDREN);capture(dark?L"compact-dark-200.bmp":L"compact-light-200.bmp");results["syntheticDpi200Capture"]=true;
  SendMessageW(app.window,WM_DPICHANGED,MAKEWPARAM(dpi,dpi),reinterpret_cast<LPARAM>(&original));for(int i=9;i>=before;i--)TabCtrl_DeleteItem(app.bar,i);TabCtrl_SetCurSel(app.bar,int(app.selected));app.resize();results["narrowOverflowAndSyntheticDpi"]=true;
 }
 static void pollScript(const std::wstring& script,std::function<void(const json&)> done){
@@ -54,7 +69,7 @@ static VOID CALLBACK tick(HWND,UINT,UINT_PTR,DWORD){
  try{
  if(finished||!testApp||!testApp->window)return;
  if(GetTickCount()-began>90000){finish(false,"Timed out in phase "+std::to_string(phase));return;}
- if(phase==0){pollScript(L"({ready:window.fixtureReady===true,native:window.fixtureNativeReady===true})",[](const json& v){if(!v.is_object()||!v.value("ready",false)||!v.value("native",false))return;RECT work{},bounds{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);GetWindowRect(testApp->window,&bounds);if(bounds.left<work.left||bounds.top<work.top||bounds.right>work.right||bounds.bottom>work.bottom)throw std::runtime_error("Desktop default window exceeds work area");compactChromeChecks();results["windowFitsWorkArea"]=true;results["localTLSPin"]=true;results["nativeHelloProbe"]=true;phase=1;testApp->active()->web->ExecuteScript(L"document.getElementById('open').click();",nullptr);});}
+ if(phase==0){pollScript(L"({ready:window.fixtureReady===true,native:window.fixtureNativeReady===true})",[](const json& v){if(!v.is_object()||!v.value("ready",false)||!v.value("native",false))return;RECT work{},bounds{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);GetWindowRect(testApp->window,&bounds);if(bounds.left<work.left||bounds.top<work.top||bounds.right>work.right||bounds.bottom>work.bottom)throw std::runtime_error("Desktop default window exceeds work area");compactChromeChecks();highContrastChromeCheck();results["windowFitsWorkArea"]=true;results["localTLSPin"]=true;results["nativeHelloProbe"]=true;phase=1;testApp->active()->web->ExecuteScript(L"document.getElementById('open').click();",nullptr);});}
  else if(phase==1&&testApp->tabs.size()==2){pollScript(L"({ready:window.fixturePluginReady===true,blocked:window.fixtureNativeBlocked===true,title:document.title})",[](const json& v){if(!v.is_object()||!v.value("ready",false))return;if(!v.value("blocked",false))throw std::runtime_error("Plugin page exposed native authentication");results["appTabs"]=testApp->tabs.size()==2;results["sharedStorageSandboxPort"]=true;results["pluginNativeBridgeBlocked"]=true;phase=2;capture();clickCloseTab(int(testApp->selected));});}
  else if(phase==2&&testApp->tabs.size()==1){results["closePluginKeepsMain"]=true;results["tabCloseClickWorks"]=true;phase=19;testApp->add(testApp->entry);}
  else if(phase==19&&testApp->tabs.size()==2){pollScript(L"({ready:window.fixtureReady===true})",[](const json& v){if(!v.is_object()||!v.value("ready",false))return;phase=18;clickCloseTab(0);});}
