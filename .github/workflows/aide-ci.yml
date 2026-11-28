@@ -45,6 +45,9 @@ jobs:
           python3 scripts/test_workflow_action_pins.py
           python3 scripts/test_windows_native_host.py
           python3 scripts/test_windows_native_portable.py
+          python3 scripts/test_build_network.py
+          python3 scripts/test_pip_install_retry.py
+          python3 scripts/test_build_cn_sources.py
           python3 scripts/agent-route.py verify quick
           node --test scripts/codex-host-control.test.cjs
           node scripts/ci/browser-navigation-errors.test.cjs

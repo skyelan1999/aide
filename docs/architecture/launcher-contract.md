@@ -171,3 +171,9 @@ Selected directories retain their `/mounts/<id>` paths. The native helper holds 
 The native helper and launcher must be updated together. The Windows resident host launches an immutable helper copy and checks its preparation receipt. Workers remain while Docker uses their volumes; retired generations stop only when those owned volumes are unused. Preserve configuration and identity receipts for recovery. `active.json` has no export secrets and uses mode 0644 for the container UID; its private host parent is 0700. Export keys and other bridge receipts remain private.
 
 RO is enforced by the host server. Writes synchronize before stable acknowledgment; bounded soft NFS timeouts mean helper failure or host suspension can cause I/O errors that require rereading before assuming a save. `nolock` does not coordinate native-host database writers: stop concurrent writers before opening the same database through the bridge. Special files and foreign ownership changes are refused. See the [source and isolated acceptance record](../reviews/2026-11-12-directory-object-bridge/README.md) for tested scope and hardware limits.
+
+
+### 认证 Python 包索引
+
+`PIP_INDEX_URL` 和 Docker/Compose 构建参数只接收无凭据的索引，用于公开镜像等场景。认证索引请把完整 HTTPS URL 单独写在构建目录外只有自己可读的文件中，把文件路径（不是 URL）设置为宿主环境变量 `AIDE_PIP_INDEX_FILE`，然后运行源码构建入口。不要把认证 URL 写进仓库、`.env` 或命令行。
+启动器通过 BuildKit secret `aide_pip_index` 传入文件，不将 URL 作为构建参数。认证安装不输出原始 pip 日志、不切换镜像、不使用公共 pip 缓存，也不能和 `PIP_OFFLINE=1` 一起启用。手动调用 Buildx 时使用 `--secret id=aide_pip_index,src=/path/outside/context`、`--build-arg AIDE_PRIVATE_PIP=1` 和 `--no-cache-filter dev,build,runtime-base`，不要把认证 URL 填到 `--build-arg PIP_INDEX_URL=...`。

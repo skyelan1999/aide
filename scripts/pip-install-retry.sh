@@ -2,6 +2,38 @@
 # Retry complete installs and select a compatible public mainland index only
 # after a transport failure. Explicit private indexes and offline installs stay put.
 set -eu
+# BuildKit injects this file only into this RUN step, never a layer or ARG.
+secret_file=/run/secrets/aide_pip_index
+if [ "${AIDE_PRIVATE_PIP:-0}" = 1 ] || [ -f "$secret_file" ]; then
+  if [ ! -s "$secret_file" ]; then
+    echo '[Aide] Authenticated Python index secret is missing or empty.' >&2
+    exit 2
+  fi
+  index=$(cat "$secret_file")
+  case "$index" in
+    https://?*) ;;
+    *) echo '[Aide] Authenticated Python index must use HTTPS.' >&2; exit 2 ;;
+  esac
+  # This wrapper is called by Docker without index flags. Never print raw
+  # private pip output (including redirected URLs) or reuse the public cache.
+  # Repeat only the same private index, with shared pip config disabled.
+  attempt=1
+  while :; do
+    if PIP_INDEX_URL="$index" PIP_EXTRA_INDEX_URL= PIP_NO_INDEX= PIP_FIND_LINKS= \
+      PIP_CONFIG_FILE=/dev/null PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 \
+      "$@" >/dev/null 2>&1; then
+      exit 0
+    else
+      result=$?
+    fi
+    if [ "$attempt" -ge 3 ]; then
+      echo '[Aide] Authenticated Python dependency installation failed; verify the secret and private index access.' >&2
+      exit "$result"
+    fi
+    sleep 2
+    attempt=$((attempt + 1))
+  done
+fi
 log=$(mktemp)
 trap 'rm -f "$log"' EXIT HUP INT TERM
 index=${PIP_INDEX_URL:-https://pypi.org/simple/}

@@ -85,3 +85,8 @@ A full package can be verified/imported and started offline. Daily start uses an
 Offline source builds separately require base images, build inputs and the correct platform wheelhouse. `scripts/prebuild-wheels.sh --target-platform linux/arm64` (or amd64) plus `PIP_OFFLINE=1` only prepare the Python wheel portion. See [runtime inputs](runtime-bundle.md).
 
 For a missing image, check architecture/tag and build source explicitly if applicable. For a checksum mismatch, stop using the file. For a missing/replaced directory, confirm the drive and deliberately reselect instead of creating an empty substitute. After bridge I/O failure, reread before assuming a save. Missing sessions usually require checking the installation/project/data mounts. Never use `docker compose down -v` or global prune as routine recovery. Keep workspaces, history, plugins, credentials and old images. Release checks and device limits are documented in [Release validation](../testing/release-validation.md).
+
+
+### Authenticated Python package index for source builds
+
+Keep credentials out of `PIP_INDEX_URL`, Compose, and Docker build arguments. Put the HTTPS index URL in a private file outside the checkout, then set the host environment variable `AIDE_PIP_INDEX_FILE` to its path and run the source build launcher. The launcher passes a BuildKit secret rather than the URL, suppresses raw private-index pip output, retries only the configured index, and disables pip caching for that install. This option is not compatible with `PIP_OFFLINE=1`. Public credential-free index overrides continue to use `PIP_INDEX_URL`.

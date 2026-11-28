@@ -35,6 +35,29 @@
   auto configuredBuild=config()["services"]["aide"]["build"];auto file=configuredBuild.value("dockerfile","Dockerfile");arguments.insert(arguments.end(),{L"--file",wide(file)});
   if(configuredBuild.contains("network"))arguments.insert(arguments.end(),{L"--network",wide(configuredBuild["network"].get<std::string>())});
   auto values=configuredBuild.value("args",json::object());values["AIDE_VERSION"]=identity.first;values["AIDE_COMMIT"]=commit;values["AIDE_SRC_SHA"]=source;values["AIDE_RUNTIME_MODE"]="source";
+  if(values.contains("PIP_INDEX_URL")&&!values["PIP_INDEX_URL"].is_null()){
+   auto index=values["PIP_INDEX_URL"].get<std::string>();
+   if(!aide_build_sources::uncredentialedPipIndex(index))
+    throw std::runtime_error("PIP_INDEX_URL accepts credential-free URLs only; use AIDE_PIP_INDEX_FILE for authenticated builds");
+  }
+  const auto configuredPipFile=env(L"AIDE_PIP_INDEX_FILE");
+  if(!configuredPipFile.empty()){
+   if(values.value("PIP_OFFLINE",std::string("0"))=="1")
+    throw std::runtime_error("AIDE_PIP_INDEX_FILE cannot be used together with PIP_OFFLINE=1");
+   std::error_code ec;auto path=fs::canonical(fs::path(configuredPipFile),ec);
+   if(ec||!fs::is_regular_file(path,ec)||ec)
+    throw std::runtime_error("AIDE_PIP_INDEX_FILE must be a regular file outside the build context");
+   for(auto parent=path.parent_path();!parent.empty();parent=parent.parent_path()){
+    if(fs::equivalent(root,parent,ec)||ec)
+     throw std::runtime_error("AIDE_PIP_INDEX_FILE must be a regular file outside the build context");
+    if(parent==parent.parent_path())break;
+   }
+   if(path.wstring().find_first_of(L",\"\r\n")!=std::wstring::npos)
+    throw std::runtime_error("AIDE_PIP_INDEX_FILE path must not contain commas, quotes or newlines");
+   values.erase("PIP_INDEX_URL");values["AIDE_PRIVATE_PIP"]="1";
+   arguments.insert(arguments.end(),{L"--secret",L"id=aide_pip_index,src="+path.wstring()});
+   if(!force)arguments.insert(arguments.end(),{L"--no-cache-filter",L"dev,build,runtime-base"});
+  }
   for(auto item=values.begin();item!=values.end();++item)if(!item.value().is_null())arguments.insert(arguments.end(),{L"--build-arg",wide(item.key()+"="+(item.value().is_string()?item.value().get<std::string>():item.value().dump()))});
   if(force)arguments.push_back(L"--no-cache");arguments.push_back(L".");say("Building current source and embedded runtime components in the owned builder...");buildWithMainlandFallback(arguments,file,values,"Source build failed; no Release substitution was performed");
   auto built=inspect(ref);if(!runtime(built,platform,true)||label(built,"aide.runtime-profile")!="source"||label(built,"aide.srcsha")!=source||label(built,"aide.installation")!=scope)throw std::runtime_error("Built source image identity/fingerprint/installation did not verify");

@@ -18,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE_ID = re.compile(r"sha256:[a-f0-9]{64}\Z")
@@ -397,6 +398,36 @@ class Launcher:
             self.call(['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund'], timeout=600)
         self.call(['npm', 'run', 'build:ts'], timeout=600)
 
+    def pip_build_secrets(self, arguments):
+        index = str(arguments.get('PIP_INDEX_URL') or 'https://pypi.org/simple/')
+        try:
+            parsed = urlsplit(index)
+            valid = (parsed.scheme in ('http', 'https') and parsed.hostname
+                     and not (parsed.username is not None or parsed.password is not None)
+                     and not any(c in index for c in ('?', '#', '\\'))
+                     and not any(c.isspace() or ord(c) < 32 for c in index))
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValueError('PIP_INDEX_URL accepts credential-free URLs only; use AIDE_PIP_INDEX_FILE for authenticated builds')
+        configured = os.environ.get('AIDE_PIP_INDEX_FILE')
+        if not configured:
+            return []
+        if str(arguments.get('PIP_OFFLINE', '0')) == '1':
+            raise ValueError('AIDE_PIP_INDEX_FILE cannot be used together with PIP_OFFLINE=1')
+        path = Path(configured).expanduser().resolve()
+        if not path.is_file() or path.is_relative_to(self.root):
+            raise ValueError('AIDE_PIP_INDEX_FILE must be a regular file outside the build context')
+        # Avoid buildx CSV parsing ambiguity and keep the URL itself off argv.
+        if any(c in str(path) for c in (',', '"', chr(10), chr(13))):
+            raise ValueError('AIDE_PIP_INDEX_FILE path must not contain commas, quotes or newlines')
+        arguments.pop('PIP_INDEX_URL', None)
+        arguments['AIDE_PRIVATE_PIP'] = '1'
+        # BuildKit excludes secrets from its cache key. Re-run these specific
+        # dependency stages so a changed or revoked credential is rechecked.
+        return ['--secret', f'id=aide_pip_index,src={path}',
+                '--no-cache-filter', 'dev,build,runtime-base']
+
     def build(self):
         self.require_source()
         builder_mode = os.environ.get('AIDE_BUILDX_BUILDER', 'dedicated')
@@ -424,7 +455,11 @@ class Launcher:
             self.call(disk_check)
         configuration = json.loads(self.d('compose', 'config', '--format', 'json', capture=True))
         build = configuration['services']['aide']['build']
-        arguments = self.select_build_sources(build, dict(build.get('args') or {}))
+        arguments = dict(build.get('args') or {})
+        pip_secrets = self.pip_build_secrets(arguments)
+        arguments = self.select_build_sources(build, arguments)
+        if pip_secrets:
+            arguments.pop('PIP_INDEX_URL', None)
         source = self.call(['bash', 'scripts/aide.sh', 'source-sha'], capture=True, timeout=1800,
                            progress='AIDE: 正在读取源码计算构建指纹；此阶段尚未进入 Docker 编译…')
         if not re.fullmatch(r'[a-f0-9]{64}', source):
@@ -446,6 +481,7 @@ class Launcher:
         command = ['buildx', 'build', '--builder', builder, '--load', '--pull=false',
                    '--label', 'aide.installation=' + self.scope, '--label', 'aide.build-role=runtime',
                    '--file', build.get('dockerfile', 'Dockerfile'), '--tag', self.image]
+        command += pip_secrets
         if build.get('network'):
             command += ['--network', build['network']]
         for key, value in sorted(arguments.items()):
