@@ -55,6 +55,74 @@ func marketInput(a *App, s marketSnapshot) map[string]any {
 	p := s.Catalog.Plugins[0]
 	return map[string]any{"revision": s.Revision, "version": p.Version, "sha256": p.SHA256, "workspace": a.wsID(), "workspaceRevision": a.wsRevision}
 }
+func TestOfficialMarketEnvironmentProxyScope(t *testing.T) {
+	a := &App{}
+	t.Setenv(marketUseEnvProxy, "")
+	if tr, ok := a.marketClient().Transport.(*http.Transport); !ok || tr.Proxy != nil {
+		t.Fatal("official market must default to its direct transport")
+	}
+	t.Setenv(marketUseEnvProxy, "1")
+	if _, ok := a.marketClient().Transport.(officialMarketTransport); !ok {
+		t.Fatal("official market did not opt in to environment proxy")
+	}
+	if tr, ok := newPluginUpdateClient().Transport.(*http.Transport); !ok || tr.Proxy != nil {
+		t.Fatal("market opt-in changed the generic updater")
+	}
+	directCalls, proxyCalls := 0, 0
+	useProxy := true
+	transport := officialMarketTransport{
+		direct: pluginUpgradeTransport(func(r *http.Request) (*http.Response, error) {
+			directCalls++
+			return upgradeResponse(nil), nil
+		}),
+		proxied: pluginUpgradeTransport(func(r *http.Request) (*http.Response, error) {
+			proxyCalls++
+			return upgradeResponse(nil), nil
+		}),
+		proxy: func(r *http.Request) (*url.URL, error) {
+			if useProxy {
+				return &url.URL{Scheme: "http", Host: "proxy.invalid:8080"}, nil
+			}
+			return nil, nil
+		},
+	}
+	ref := "https://api.github.com/repos/" + marketRepository + "/git/ref/heads/main"
+	catalog := marketRaw + strings.Repeat("a", 40) + "/catalog.json"
+	bundle := marketRaw + strings.Repeat("a", 40) + "/packages/current-time/1.1.0.zip"
+	check := func(raw string, allowed bool) {
+		t.Helper()
+		req, err := http.NewRequest(http.MethodGet, raw, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := transport.RoundTrip(req)
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if (err == nil) != allowed {
+			t.Fatalf("market transport decision for %q: %v", raw, err)
+		}
+	}
+	for _, raw := range []string{ref, catalog, bundle} {
+		check(raw, true)
+	}
+	for _, raw := range []string{
+		strings.Replace(ref, "https:", "http:", 1),
+		strings.Replace(ref, marketRepository, "another/repo", 1),
+		strings.Replace(ref, "api.github.com", "api.github.com:443", 1),
+		strings.Replace(catalog, "raw.githubusercontent.com", "example.invalid", 1),
+		strings.Replace(catalog, strings.Repeat("a", 40), "main", 1),
+		catalog + "?unexpected=1",
+	} {
+		check(raw, false)
+	}
+	useProxy = false
+	check(ref, true)
+	if directCalls != 1 || proxyCalls != 3 {
+		t.Fatalf("unexpected forward counts: direct=%d proxy=%d", directCalls, proxyCalls)
+	}
+}
+
 func TestPluginMarketInstallUpdateAndDownload(t *testing.T) {
 	a, s, raw := marketFixture(t, "2.0.0")
 	id := s.Catalog.Plugins[0].ID
