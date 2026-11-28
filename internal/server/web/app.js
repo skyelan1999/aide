@@ -10775,13 +10775,7 @@ function renderWorkspaceSummary() {
     startupWarning.textContent = wsState.config?.startupWarning || '';
     startupWarning.hidden = !startupWarning.textContent;
     const sshMode = w.mode === 'ssh';
-    const path = sshMode ? w.path || '' : state.config?.workspaceDisplay || '/workspace';
-    const name = path.replace(/[\\/]+$/, '').split(/[\\/]/).pop();
-    const location = sshMode ? [w.host, path].filter(Boolean).join(':') : path;
-    $('workspace-name').textContent = name || (sshMode ? w.host : path) || t("工作空间");
-    $('workspace-kind').textContent = sshMode ? 'SSH' : t("本地");
-    $('workspace-summary').textContent = location;
-    $('workspace-summary').title = location;
+    $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || t("远程")) + ' · SSH/SFTP' : t("{0} · 本地", state.config?.workspaceDisplay || '/workspace');
     $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || t("未配置主机")) : t("本地");
     const interactive = $('command-interactive');
     interactive.disabled = !sshMode;

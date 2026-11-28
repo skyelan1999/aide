@@ -438,39 +438,12 @@ button.primary:hover{box-shadow:0 4px 12px var(--shadow-1)}
 .sidebar .new-session:hover{background:color-mix(in srgb,var(--brand-hi) 90%,var(--text));color:var(--on-brand)}
 .sidebar .new-session kbd{border-color:color-mix(in srgb,currentColor 36%,transparent);color:inherit;font-size:10px}
 .section-label{font-size:10px;font-weight:650;letter-spacing:1.15px;color:var(--text-faint);margin-bottom:7px}
-/* The workspace and its assistant share one icon and text column. */
-.sidebar .ws-assistant-card{
-  flex:none;gap:0;padding:3px;margin-bottom:12px;border:1px solid var(--line-faint);
-  border-radius:10px;background:color-mix(in srgb,var(--surface) 55%,var(--panel-alt));box-shadow:none;
-}
-.sidebar .ws-assistant-card:hover{border-color:var(--line-faint);box-shadow:none}
-.sidebar .ws-assistant-card .workspace-label,
-.sidebar .ws-assistant-card .assistant-entry{
-  display:grid;grid-template-columns:20px minmax(0,1fr) 12px;align-items:center;column-gap:8px;
-  margin:0;padding:7px 8px;border:0;border-radius:6px;background:transparent;box-shadow:none;
-}
-.sidebar .ws-assistant-card .workspace-label{min-height:48px}
-.sidebar .ws-assistant-card .assistant-entry{min-height:32px;height:auto;color:var(--muted)}
-.sidebar .ws-assistant-card button:is(:hover,.active){background:var(--hover);color:var(--text)}
-.sidebar .ws-assistant-card .assistant-entry.active{background:var(--selected);color:var(--text)}
-.ws-assistant-card button:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
-.ws-assistant-card :is(.folder-icon,.assistant-entry-icon){display:grid;place-items:center;width:20px;height:20px;color:inherit;font-size:inherit}
-.sidebar .workspace-label .folder-icon .ui-icon{width:18px;height:18px}
-.ws-assistant-card .assistant-entry-icon svg{width:16px;height:16px}
-.ws-assistant-card .workspace-label strong{font-size:13px;font-weight:650;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:start}
-.ws-assistant-card .workspace-label .ws-location{
-  display:flex;align-items:baseline;gap:4px;margin:2px 0 0;
-  color:var(--muted);font-size:10.5px;line-height:1.4;direction:inherit;
-}
-.ws-location #workspace-kind{flex:none}
-.ws-location #workspace-summary{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:start;unicode-bidi:plaintext}
-.ws-location #workspace-kind:has(+ #workspace-summary:not(:empty))::after{content:"·";margin-inline-start:4px;color:var(--text-faint)}
-.ws-assistant-card .ws-open-icon{justify-self:center;width:12px;height:12px;color:var(--muted)}
-.ws-assistant-card .assistant-entry-dot{justify-self:center}
-.ws-assistant-card .assistant-entry-dot:not(.live){visibility:hidden}
-.ws-assistant-card .assistant-entry:is(.loading,.compacting) .assistant-entry-dot{display:none}
-.ws-assistant-card .assistant-entry:is(.loading,.compacting)::after{margin:0;justify-self:center}
-.section-label.session-label{margin-bottom:6px}
+.workspace-label{min-height:64px;padding:12px;border:1px solid var(--line-faint);background:var(--surface-alt);box-shadow:0 1px 2px var(--shadow-1)}
+.workspace-label:hover{border-color:var(--line-mid);background:var(--surface)}
+.workspace-label strong{font-size:12.5px;font-weight:650}
+.workspace-label small{font-size:10.5px;color:var(--muted)}
+.assistant-entry{margin-top:6px;border-radius:10px}
+.session-label{margin-bottom:6px}.session-item .session-label{margin-bottom:0}
 .session-item{min-height:54px;margin-bottom:3px;padding:8px 10px;border:1px solid transparent;border-radius:9px;font-size:12.5px;color:var(--text-session);content-visibility:auto;contain-intrinsic-size:auto 56px}
 .session-summary{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
 .session-item .session-label{min-height:20px;margin:0;padding:0;border:0;border-radius:3px;background:transparent;color:inherit;font:inherit;text-align:start}
