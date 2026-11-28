@@ -254,13 +254,19 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 			t.Fatal(got)
 		}
 		return []string{"installed offline almanac returns the requested exact date"}
-	case "deepseek-supporter", "ali-bailian-supporter", "openai-supporter":
+	case "deepseek-supporter", "ali-bailian-supporter", "openai-supporter", "kimi-supporter", "mimo-supporter":
 		endpoint, model := "https://api.deepseek.com/v1", "deepseek-flash"
 		if id == "ali-bailian-supporter" {
 			endpoint, model = "https://dashscope.aliyuncs.com/compatible-mode/v1", "qwen-plus"
 		}
 		if id == "openai-supporter" {
 			endpoint, model = "https://api.openai.com/v1", "gpt-6-luna"
+		}
+		if id == "kimi-supporter" {
+			endpoint, model = "https://api.moonshot.cn/v1", "kimi-k3.1-pro"
+		}
+		if id == "mimo-supporter" {
+			endpoint, model = "https://api.xiaomimimo.com/v1", "mimo-v2.6-pro"
 		}
 		quote := a.providerQuote(endpoint, model, 100, supporterAt(t, "2026-10-31T09:00:00+08:00"))
 		if quote == nil || quote.Source != id {
@@ -270,6 +276,19 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 			t.Fatal("foreign endpoint matched")
 		}
 		return []string{"real installed pricing catalog quotes a supported model", "foreign provider endpoint rejected; no live account balance claim"}
+	case "strategy-generator":
+		const sample = "ABCDEFGHI中文"
+		got := releasePublicCall(t, a, id, "strategy_estimate_tokens", map[string]any{"text": sample})
+		var result struct {
+			Tokens     int
+			Characters int
+			Method     string
+		}
+		if err := json.Unmarshal([]byte(got), &result); err != nil || result.Tokens != 6 ||
+			result.Characters != 11 || result.Method == "" || strings.Contains(got, sample) {
+			t.Fatalf("unexpected installed strategy estimate: %s (%v)", got, err)
+		}
+		return []string{"installed estimator returns exact mixed-script counts without echoing input"}
 	case "auto-ai-model-router":
 		got := releasePublicCall(t, a, id, "auto_model_router_catalog", map[string]any{})
 		if !strings.Contains(got, "models") {
