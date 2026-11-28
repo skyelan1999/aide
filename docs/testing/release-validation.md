@@ -32,6 +32,8 @@
 
 运行器标签见 [GitHub 官方说明](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)；引擎安装见 [Playwright 官方文档](https://playwright.dev/docs/browsers)。Linux WebKit 覆盖 WebKit 引擎，不能代称原生 Safari/macOS 隐私授权验收。
 
+Go 工具调用预算回归使用独立的有限等待窗口，以适应原生 CI 上 26 次调用逐条记录的开销；仍要求会话正常结束且记录恰好 26 次调用。超时报告末次状态和调用数，不重试、不跳过，也不改变产品运行超时。
+
 ## 当前公开插件安装包范围
 
 [冻结清单](../../scripts/ci/public-plugins.lock.json) 来自公开市场的固定提交，本次更新覆盖 **32 个 public 包条目**（31 个可安装条目和已迁移为宿主能力的 computer-control 历史包）。每项保留市场版本、原 ZIP 大小/SHA256、公开实现仓库和来源提交，以及最近公开 tag 供差异审阅。较新源码 tag 不会悄悄替换市场包。私有插件不进入本轮公开验收或发行镜像。

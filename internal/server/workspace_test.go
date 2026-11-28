@@ -335,18 +335,29 @@ func createSession(t *testing.T, a *App) *Session {
 
 func waitTaskDone(t *testing.T, a *App, sessionID string) {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
+	waitTaskDoneWithin(t, a, sessionID, 5*time.Second)
+}
+
+func waitTaskDoneWithin(t *testing.T, a *App, sessionID string, timeout time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	var lastStatus string
+	var lastToolCount int
 	for time.Now().Before(deadline) {
 		w := request(a, "GET", "/api/sessions/"+sessionID, nil)
 		var s Session
 		_ = json.Unmarshal(w.Body.Bytes(), &s)
-		if s.Runs[0].Status != "running" {
+		if len(s.Runs) == 0 {
+			t.Fatalf("no task in session response (HTTP %d)", w.Code)
+		}
+		lastStatus, lastToolCount = s.Runs[0].Status, len(s.Runs[0].ToolUses)
+		if lastStatus != "running" {
 			time.Sleep(100 * time.Millisecond) // 等待 execute 协程完成最终 save，避免与 TempDir 清理竞态
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	t.Fatal("task did not finish")
+	t.Fatalf("task did not finish within %s: status=%s tool uses=%d", timeout, lastStatus, lastToolCount)
 }
 
 type providerServer struct{ *httptest.Server }

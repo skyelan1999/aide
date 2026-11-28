@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestToolLoopAllowsMoreThan24Calls(t *testing.T) {
@@ -22,7 +23,8 @@ func TestToolLoopAllowsMoreThan24Calls(t *testing.T) {
 	a.settings = Settings{BaseURL: provider.URL, Model: "test", ToolMaxRounds: 60}
 	s := createSession(t, a)
 	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "连续检查工作目录"}), 202)
-	waitTaskDone(t, a, s.ID)
+	// This checks the call budget, not CI wall-clock performance. Each call is recorded.
+	waitTaskDoneWithin(t, a, s.ID, 30*time.Second)
 	response := request(a, "GET", "/api/sessions/"+s.ID, nil)
 	var sess Session
 	if err := json.Unmarshal(response.Body.Bytes(), &sess); err != nil {
