@@ -1,10 +1,10 @@
 {
-  "revision": "7a7aa3d8912471ee53391d307b8c88ac74146726",
+  "revision": "2a6c609179b0b76abb49b47cee514d365fb78016",
   "fetched": 0,
   "catalog": {
     "schemaVersion": 1,
     "title": "Aide 官方插件市场",
-    "sourceCommit": "5bec24776314b37565a13ff9f25746ca0f770741",
+    "sourceCommit": "bc60a3ec30aaff1de78e39688aebb4fbe3aa8405",
     "plugins": [
       {
         "id": "ali-bailian-supporter",
@@ -247,14 +247,14 @@
         "id": "codex-bridge",
         "kind": "plugin",
         "name": "Codex Bridge · Codex 模型桥接",
-        "description": "Codex 本地模型桥接：配套新版 Aide 可在插件内安装、启动、停止、卸载、生成密钥；支持三端、模型目录和只读账户额度。",
-        "version": "0.4.1",
+        "description": "Codex 本地模型桥接：插件内管理宿主；显示原生／Docker API 地址，提供可靠复制与限时明文密钥；支持三端、模型目录和只读账户额度。",
+        "version": "0.4.3",
         "author": "skyelan1999",
         "category": "communication",
         "icon": "communication",
-        "package": "packages/codex-bridge/0.4.1-6fc6bad3d1f4.zip",
-        "sha256": "6fc6bad3d1f4643b85cd8353a4a05f42f2c28328cc82f3caa5fba9f2df84cc84",
-        "bytes": 38403,
+        "package": "packages/codex-bridge/0.4.3-11b0769c9f34.zip",
+        "sha256": "11b0769c9f34f8df2815aa63fa9412a5498127a2ae55129b29343d8d831918f7",
+        "bytes": 41405,
         "minAideVersion": "0.1.17.6 RC2",
         "platforms": [
           "windows",
@@ -263,19 +263,19 @@
         ],
         "dependencies": [
           "Account-pool support requires Aide provider-account-quota-v1; released minimum0.1.17.6 RC2, or a capable source build under sourceCompatibility.",
-          "Quota HTTP reads require bridge host0.3.0+; published0.4.0 works. Node.js18+ and an existing signed-in Codex CLI are prerequisites.",
+          "Quota HTTP reads require bridge host0.3.0+; published0.4.0 works. Node.js18+ and an existing signed-in Codex CLI are prerequisites; Aide dynamic tools require Codex CLI0.92.0+.",
           "Integrated host management still needs matching Aide launcher components. Existing keys/config/login are retained."
         ],
-        "permissions": "On compatible Aide launchers, authenticated manual workbench capability permits fixed install/start/stop/uninstall/key/model-catalog/read-only-quota operations only. No arbitrary host command, path or URL; management credentials remain private to launcher/backend. Model keys are shown only on explicit user action and masked. Older hosts retain separate-manager pairing. Selected text is sent to Codex using the signed-in OS account.",
-        "trustNotice": "Public MIT preview. Account-pool quota is declared by this plugin and fetched by Aide using the selected key at the same local provider origin. Read-only percentages and reset times; no inference or earned-reset consumption. Candidate tested with 53 Node tests, native manager Go race, Aide actual-ZIP protocol tests and isolated Safari. Nine cross-platform plugin CI jobs passed. Actual macOS published host0.4.0 read returned quota. Windows desktop and real-account inference are not claimed.",
+        "permissions": "On compatible Aide launchers, authenticated manual workbench capability permits fixed install/start/stop/uninstall/key/model-catalog/read-only-quota operations only. No arbitrary host command, path or URL; management credentials remain private to launcher/backend. Model keys appear only after explicit user action, with temporary plaintext, 60-second masking and explicit hide controls. Older hosts retain separate-manager pairing. Selected text is sent to Codex using the signed-in OS account.",
+        "trustNotice": "Public MIT preview. Version 0.4.3 passed 61 synthetic Node tests and all nine Windows/macOS/Linux CI jobs, including native manager tests and both architecture builds. Clipboard denial, selectable plaintext, timed masking, deployment URL switching and narrow layout were checked in Chromium. Local Aide upgrade and the new workbench were observed in native WKWebView. Windows desktop destination paste and live inference were not tested for this patch. Account quota is read-only shared percentages, not currency balance; reads consume no earned reset.",
         "features": [
           "provider-account-quota-v1"
         ],
-        "source": "https://github.com/skyelan1999/aide-pkg-CodexBridge/tree/747e6f4c76b7299c9bab6d632bc1b2bf74ff7a1c",
+        "source": "https://github.com/skyelan1999/aide-pkg-CodexBridge/tree/6372c475352dd62110f01d5c32bf6ea21a8c51b5",
         "license": "MIT",
-        "readme": "Version 0.4.1 requires Aide provider-account-quota-v1 support (a capable source build, or a compatible future release; marketplace release floor RC2). Older hosts must keep 0.4.0. The local bridge host must support /v1/usage (0.3.0+).\n\n# Codex Bridge 0.4.0 — Aide 内管理 / In-plugin management\n\n新版 Aide 启动器支持 `host.component.codex-bridge` 时，打开插件即可操作 **安装、启动、停止、卸载、生成密钥**。不用另下 EXE，不用打开独立管理器网页，不用填写管理连接码。宿主组件随 Aide 镜像提供，启动器校验后自动运行；安装桥接仍由你点击“安装”执行。\n\n需要宿主已有 Node.js 18+、已安装并登录的 Codex CLI。点击“生成密钥”后复制到 Aide 模型提供商的加密设置；不会覆盖已有提供商或切换模型。卸载保留配置、密钥和 Codex 登录。账户额度仅查询，不消耗重置次数。\n\n**兼容说明**：该流程需要包含 Aide #615 集成的新启动器和镜像，单独升级插件或旧发行包仅替换镜像不够。旧 Aide 保留下面的独立管理器兼容入口；不要把该兼容入口当作新版安装步骤。本版本实现与验证状态见 [集成记录](docs/MANAGER-INTEGRATION-615.md)，版本号不代表已经发布。\n\nOn Aide builds advertising `host.component.codex-bridge`, use the five controls in this workbench. The full Aide distribution includes the verified host component and starts it automatically. No separate manager download, manager page or pairing code is required. Existing Node.js 18+ and a signed-in Codex CLI are prerequisites. Keys appear only after an explicit action, masked; copy them into encrypted model-provider settings. The older standalone flow below is compatibility documentation for older Aide launchers.\n\n---\n\n# Codex Bridge · Codex 模型桥接\n\n独立 Aide 插件与本机桥接程序，支持 Windows、macOS、Linux。当前公开预览版 **0.3.4**；实际发布状态以[Release](https://github.com/skyelan1999/aide-pkg-CodexBridge/releases)为准。\n\n## Windows：解压后直接打开\n\n下载对应系统/架构的宿主安装包，**完整解压**，双击 **CodexBridgeManager.exe**。不要在 ZIP 内直接运行。\n\n安装包已包含宿主管理器、内嵌桥接程序，以及同版 `codex-bridge-0.3.4.zip` 插件包；无需克隆仓库或另找源码。需要插件工作台时，将这个插件 ZIP 导入 Aide 即可。宿主安装不下载仓库、不使用 PowerShell。\n\nmacOS 打开包内的 **Codex Bridge Manager.app**；Linux 打开 **CodexBridgeManager**。运行桥接需要本机已有 **Node.js 18+** 和已登录的 **Codex CLI**；这两个第三方依赖及账号凭据不包含在发行包中，也不会被静默安装或修改。\n\n## 就五个操作\n\n| 按钮 | 行为 |\n| --- | --- |\n| 安装 | 从内嵌程序包安装或更新桥接，保留配置和已有密钥 |\n| 启动 | 启动本机桥接 |\n| 停止 | 停止管理器启动的桥接 |\n| 卸载 | 移除桥接程序，保留配置、密钥和独立管理器，便于重新安装 |\n| 生成密钥 | 已有密钥时直接复制并复用；不会轮换或让现有模型配置失效 |\n\n第一次使用：**安装 → 启动 → 生成密钥**。将显示的 API 地址和密钥填入 Aide 的模型提供商加密设置，获取模型后发送一条测试消息。Docker Desktop 使用 `host.docker.internal`；原生 Aide 使用 `127.0.0.1`。页面会显示安装配置里的实际端口。\n\n本机五个操作不需要先配对。只有需要从 Aide 插件远程控制宿主、读模型目录或查看额度时，才打开管理器 **更多设置**，生成两分钟有效的一次性连接码，填入插件工作台。连接码与模型 API 密钥各有用途，长期管理凭据不需要手工填写。诊断、启动器修复和撤销连接也收在更多设置中。\n\n更新时先退出旧管理器，再使用新版。其他方式启动的桥接需由你先关闭一次；管理器不会擅自停止外部进程。关闭网页不会停止服务；在更多设置中退出管理器会停止其拥有的桥接。\n\n## English quick guide\n\nExtract the complete host archive and open `CodexBridgeManager.exe` on Windows, `Codex Bridge Manager.app` on macOS or `CodexBridgeManager` on Linux. The archive includes the matching plugin ZIP and the executable embeds the bridge payload. Installation does not fetch repository source. Node.js 18+ and a signed-in Codex CLI are prerequisites, not bundled dependencies.\n\nThe main window has five actions only: **Install, Start, Stop, Uninstall, Generate key**. Existing configuration and keys survive updates/uninstall; key generation reuses an existing key. Add the displayed API URL/key to Aide's encrypted provider settings. A model catalog does not prove inference entitlement.\n\nLocal management needs no pairing. Optional plugin controls and quota access use a one-time connection code under **More settings**. Diagnostic and client-administration controls are secondary. Update the plugin and manager together; older terminal-launched bridges must be stopped by their owner first.\n\n## Capability and acceptance boundaries\n\nText Chat Completions, SSE, dynamic tool handoff and bounded concurrency are supported. The bridge does not import desktop chats, execute Aide tools itself, support image/audio input or fabricate token usage. Codex sends selected text to its configured provider under the signed-in OS account; this is not offline inference or a credential sandbox.\n\nThe plugin quota panel reads `account/rateLimits/read` only. Separate account buckets/windows show remaining percentage and reset time; missing or failed reads stay unavailable. This is shared account quota, not currency balance. The development host's real quota fetch was unavailable in the preceding acceptance; no real-account quota success is implied by synthetic screenshots or CI. No reset credits are consumed.\n\nKeys are not model-tool results. Native model-key access requires the owner setup window. Plugin pairing stores permission-restricted private client state outside ordinary settings; it is not claimed to be encrypted against same-account programs. No automatic provider overwrite, account login, firewall change, startup task or dependency install.\n\n## Development and records\n\n```sh\nnode scripts/build.cjs\npython3 scripts/package-codex-bridge.py --out dist\nnpm test\n```\n\nNative archives and embedded payload identity are checked by `scripts/verify-host-bundle.py`. See [architecture](docs/ARCHITECTURE.md), [version policy](docs/VERSIONING.md), [source provenance](docs/PROVENANCE.md), [advanced CLI fallback](docs/ADVANCED-CLI.md) and the version-specific acceptance record. Native managers are unsigned previews; normal OS approval may be required. Checksums verify bytes, not publisher identity. Codex binaries, login tokens and user chats are not redistributed. Wrapper/runtime license: MIT.\n\nPublic-plugin bugs, requests and acceptance summaries belong in [Aide Issues](https://github.com/skyelan1999/aide/issues), identified as Codex Bridge and linked to this implementation repository. Do not upload keys or real account/chat data.\n\n## 图形启动时的 CLI 查找 / GUI CLI discovery\n\n启动时会检查并验证 Codex CLI，支持常用 Homebrew、npm、NVM、Volta 及 macOS 应用位置，成功后仅保存已核验的 CLI 路径。找不到时可在更多设置检查环境；失败不会覆盖原配置或账号。Windows npm 安装通过 Node 运行官方 JS 入口，不执行 shell。\n\n### 安装按钮反馈 / Install feedback\n\n0.3.3 会说明按钮为什么暂时不能执行；连接失败、失效的管理器页面和请求超时均显示错误，不再只保持“尚未安装”。请求超时不表示后台操作已取消，请等待状态检查后再决定是否重试。若页面刷新后失去连接，请重新双击管理器。Windows 请使用新版 Edge/Chrome/Firefox，不使用 Internet Explorer。\n\nBlocked actions now explain the unmet prerequisite without issuing a mutation. Lost authorization, unavailable managers and stalled requests produce visible recovery messages. Timeouts do not cancel a server-side installation or automatically retry it. Reopen the native application after a page reload loses authorization. On Windows use a current Edge, Chrome or Firefox, not Internet Explorer.\n\n### Aide 上传兼容 / Aide upload compatibility\n\n0.3.4 将插件入口编译为自包含文件，修复上传 ZIP 时 `Cannot find module './connection.cjs'`。在 Aide 上传本包的 `codex-bridge-0.3.4.zip`，不是 GitHub 自动生成的 Source code ZIP，也不是宿主管理器外层安装包。现有 Aide 无需为此升级。\n\nThe generated plugin entry is self-contained for Aide's entry-only upload validator. Import `codex-bridge-0.3.4.zip`, not the GitHub source archive or the outer native-manager archive. This patch needs no Aide core update.\n\n## Account pool quota (0.4.1)\n\nThe plugin declares a data-only provider-support catalog for the local bridge on port8787. A compatible Aide host displays remaining percentages per returned quota window and reset times in the account pool. Credentials stay in Aide and are sent only to the selected bridge origin. This is shared account quota, not USD balance. No inference or earned reset is consumed by reads. The bridge host must support GET /v1/usage (0.3.0+); older hosts remain unavailable until upgraded. Aide requires provider-account-quota-v1 source capability or a future compatible released version. Pricing is not supplied for the bridge.\n",
+        "readme": "# Codex Bridge 0.4.3 · Codex 模型桥接\n\n通过本机已登录的 Codex CLI 将文本模型接入 Aide。支持 Windows、macOS、Linux，包含文本、SSE、工具交接、有界并发、模型目录与只读账户额度。\n\n## Aide 内管理\n\nAide 启动器支持 `host.component.codex-bridge` 时，在插件工作台操作安装、启动、停止、卸载、生成密钥；无需另下管理器或填写管理连接码。宿主仍需 Node.js 18+ 和已登录的 Codex CLI；工具交接需 Codex CLI 0.92.0+。本次插件升级不会自动更新 Aide 内嵌的宿主组件。\n\n## API 地址填写\n\n模型提供商选择 OpenAI 兼容。原生后端通常填写 `http://127.0.0.1:8787/v1`；Docker Desktop 后端通常填写 `http://host.docker.internal:8787/v1`。工作台可切换运行方式，并显示已连接管理器配置的实际端口；未连接时显示默认 8787。点击“复制地址”填入 Base URL。地址已含 `/v1`，不要追加 `/chat/completions`。远程部署需使用 Aide 后端可达的宿主地址。\n\n## API Key 复制\n\n点击“生成密钥”复用已有密钥，并临时显示明文 60 秒；也可立即隐藏或再次显示。复制按钮依次尝试浏览器同步复制和 Clipboard API；权限被拒绝或超时时会选中明文并提示按 ⌘C / Ctrl+C 或右键复制，再到模型设置粘贴。离开页面时隐藏，退出页面时清除显示值。密钥只填入模型提供商设置，不要发送到聊天中。\n\n## 旧版 Aide 与独立管理器\n\n旧启动器使用同版独立管理器。下载对应系统/架构安装包，完整解压后打开 Windows 的 CodexBridgeManager.exe、macOS 的 Codex Bridge Manager.app 或 Linux 的 CodexBridgeManager。更新前先退出旧管理器。安装包内含桥接程序和同版插件 ZIP；安装不下载仓库源码、不自动安装 Node/Codex，不修改防火墙。\n\n本机五个操作无需配对。仅在需要从旧版 Aide 插件控制宿主时，在管理器“更多设置”生成两分钟有效的一次性连接码。卸载保留配置、密钥与 Codex 登录；不会切换模型或覆盖现有提供商。旧版管理器自身的界面修复需要更新独立管理器。\n\n## 额度与验证边界\n\n账户池额度需要 Aide `provider-account-quota-v1` 支持（市场最低版本 0.1.17.6 RC2，或声明兼容能力的源码构建）和桥接宿主 0.3.0+。额度为共享账户各窗口的剩余百分比与重置时间，不是金额余额；读取不发起推理，不消耗重置次数。模型目录可用不代表推理已通过。\n\n本版本通过 61 项合成 Node 测试和 9 项跨平台 CI，包含原生管理器生命周期测试与双架构构建。Chromium 已检查复制被拒绝、限时明文、地址切换及窄窗口；本机原生 WKWebView 已确认升级和新界面。未宣称 Windows 桌面目标输入框粘贴或本补丁的真实推理验收。不继承 Codex 桌面聊天，不支持图片或音频。\n\n## 发布与源码\n\n公开 MIT 预览版。安装包与 [0.4.3 Release](https://github.com/skyelan1999/aide-pkg-CodexBridge/releases/tag/v0.4.3) 的插件 ZIP 字节一致。完整安装包与 SHA256SUMS 见该 Release；源码及变更见 [PR #18](https://github.com/skyelan1999/aide-pkg-CodexBridge/pull/18)。\n",
         "screenshots": [],
-        "changelog": "0.4.1: plugin-owned account-pool quota catalog; same-origin/key isolation; quota windows and resets separate from pricing. Requires provider-account-quota-v1 host support.",
+        "changelog": "0.4.3：工作台新增 API Base URL、原生／Docker 切换与复制地址；支持自定义端口。密钥复制增加同步兼容复制与 Clipboard API 超时兜底，失败时选中明文并提示手动复制；密钥临时明文显示 60 秒，可主动隐藏，离开页面时遮蔽。复用已有密钥。",
         "distribution": "public",
         "routing": {
           "keywords": [
@@ -294,10 +294,13 @@
             "remaining percentage",
             "账户额度",
             "剩余额度",
-            "连接码"
+            "连接码",
+            "api key",
+            "api地址",
+            "密钥复制"
           ],
           "extensions": [],
-          "summary": "Codex 本机桥接：配套新版 Aide 在插件内安装、启动、停止、卸载、生成密钥，无需独立管理器；模型目录、只读账户额度，支持三端。"
+          "summary": "Codex 本机桥接：插件内管理宿主，查看并复制原生／Docker API 地址；密钥兼容复制与限时明文；模型目录、只读账户额度。"
         },
         "sourceCompatibility": {
           "minAideVersion": "0.1.17.6 RC1",
@@ -305,6 +308,71 @@
             "provider-account-quota-v1"
           ]
         }
+      },
+      {
+        "id": "compare",
+        "kind": "plugin",
+        "name": "Compare · 商业版",
+        "description": "本地只读比较与 Git 日志。支持工作区和已授权的本地 Git 引用；需离线激活。",
+        "version": "0.5.0",
+        "author": "skyelan1999",
+        "category": "workspace",
+        "icon": "workspace",
+        "distribution": "public",
+        "license": "Proprietary · 需离线激活",
+        "minAideVersion": "0.1.19.0 RC2",
+        "platforms": [
+          "macos",
+          "linux"
+        ],
+        "dependencies": [
+          "需 0.5.0 离线授权组件和匹配的新 Compare 许可；旧许可请继续使用 0.4.1",
+          "本地 Git 引用须同时经 AIDE 和本机组件授权；不支持 SSH/SFTP",
+          "Git 需宿主安装；PDF 需宿主 Python 3 和 pypdf"
+        ],
+        "permissions": "读取用户选定文件、目录或本地 Git 版本；不 fetch、不修改仓库或比较输入。证据 ZIP 可能包含原文件副本。",
+        "trustNotice": "专有商业软件，下载安装不代表获得使用授权。仅发布薄插件和审定的加密核心组件，不发布私有源、签发工具、发行私钥、内容密钥或客户授权。",
+        "features": [
+          "独立 Git 日志、分支树和拓扑图，查看提交与文件改动",
+          "工作区与本地引用切换；Git 日志与比较双向带入",
+          "分类展示已缓存的 Gerrit、GitHub 和 GitLab 评审引用，不包含远端实时检查"
+        ],
+        "screenshots": [],
+        "routing": {
+          "keywords": [
+            "compare",
+            "diff",
+            "文件比较",
+            "目录比较",
+            "git diff",
+            "分支比较",
+            "图片对比",
+            "文档对比",
+            "git 日志",
+            "分支树",
+            "git history",
+            "gerrit",
+            "github",
+            "gitlab"
+          ],
+          "extensions": [],
+          "summary": "本地只读比较和 Git 日志，支持同机授权引用，需离线激活。"
+        },
+        "activationRequired": true,
+        "package": "packages/compare/0.5.0-4402bb6e48a4.zip",
+        "sha256": "4402bb6e48a407cfa263dd7397655db90b345d8e5e0e0895a57adf3cc66657cb",
+        "bytes": 36170,
+        "source": "https://github.com/skyelan1999/aide-commercial-downloads/releases/tag/compare-offline-0.5.0",
+        "readme": "# Compare 0.5.0 商业版\n\n独立的 Git 日志页：左侧分支树，中间提交图，右侧提交说明、父提交与改动文件。可切换 AIDE 工作区和已添加的本地 Git 引用。两页共享来源与仓库；选中分支或提交后，点「带到 Git 比较」即可预填 HEAD 与目标版本。\n\nGerrit Change、GitHub PR、GitLab MR 按已缓存的 Git 引用归类。不会 fetch、联网读平台检查或修改仓库。CI/审批状态显示未连接；暂存、未暂存、未跟踪、冲突、相对上游领先/落后为本地状态。\n\n**升级前确认：0.5.0 需要同版本加密核心与新的 Compare 离线许可。** 仅升级薄插件不会让旧组件支持新日志，也不能让 0.4.x 授权打开新核心。继续使用旧许可的用户请保留 0.4.1 插件与 0.4.0 组件。其他 PP 产品继续使用原有核心与许可，不要删除或覆盖。\n\n- 通过 AIDE 市场安装 0.5.0 薄插件。已有安装先备份当前组件和服务配置，再按共享组件说明升级；保留设备身份与其他 PP 产品的加密核心。为 0.5.0 导出 Compare 设备申请，拿到匹配许可后再切换。未授权不运行核心。\n- 工作区通过 `--compare-workspace` 配置。每个额外 Git 引用需在 AIDE 中添加并允许读取，再由宿主组件用一个 `--compare-reference` 显式授权对应本机目录（可重复）。不支持 SSH/SFTP、任意路径或符号链接逃逸。额外引用只支持目录浏览及 Git 操作。\n- Mac Docker Desktop：使用标准同机挂载，将宿主 bridge 目录只读挂载为容器 `/run/pp-license`；在 Compare 设置启用「映射 Mac Docker Desktop 工作区」。工作区及引用都要可由 AIDE 映射到同一台 Mac。\n- Git 需装在宿主；PDF 提取需 Python 3 和 pypdf。支持 macOS Apple Silicon、Linux ARM64/AMD64。\n",
+        "changelog": "0.5.0：新增 Git 日志，支持选择工作区或已授权本地引用，并联动 Git 比较。需匹配组件和新许可。",
+        "resources": [
+          {
+            "title": "下载 Compare 0.5.0 离线组件（需新许可）",
+            "url": "https://github.com/skyelan1999/aide-commercial-downloads/releases/download/compare-offline-0.5.0/Compare-offline-component-v0.5.0.zip",
+            "sha256": "f79782656f48eb84a7219b73df4fe2fa7dc4ecb6ae91a93ecabd5e0917d18cdd",
+            "bytes": 37203551
+          }
+        ]
       },
       {
         "id": "computer-control",
@@ -634,6 +702,50 @@
         }
       },
       {
+        "id": "kimi-supporter",
+        "kind": "plugin",
+        "name": "KimiSupporter",
+        "description": "月之暗面 Kimi 中国区模型的离线人民币费率与兼容宿主的只读账户余额。",
+        "version": "0.1.0",
+        "author": "skyelan1999",
+        "category": "workspace",
+        "icon": "workspace",
+        "package": "packages/kimi-supporter/0.1.0-8b3e563d410d.zip",
+        "sha256": "8b3e563d410dfc62019589de4894a42834632b3612f97dffdf31ad80b418c24f",
+        "bytes": 6482,
+        "minAideVersion": "0.1.17.5 RC5",
+        "platforms": [
+          "windows",
+          "macos",
+          "linux"
+        ],
+        "dependencies": [
+          "离线费率需要 Aide 0.1.17.5 RC5 或更新版本中的 providerSupport 协议 1。",
+          "账户余额需要具备 Moonshot 账户适配的 Aide。"
+        ],
+        "permissions": "费率在本地计算。查询账户时，Aide 使用自身凭证库中的所选密钥与官方接口通信。插件入口只声明档案。",
+        "trustNotice": "公开 MIT 社区插件，与月之暗面官方产品独立。价格按中国区刊例估算，实际费用以账单为准。",
+        "features": [],
+        "source": "https://github.com/skyelan1999/aide-pkg-KimiSupporter/tree/d8fe83dbda34fc6f5c38558e4a05c779c7f5a1b1",
+        "license": "MIT",
+        "readme": "# KimiSupporter 0.1.0\n\nKimiSupporter 是 Aide 的月之暗面 Kimi 社区插件，采用 [MIT 许可](https://github.com/skyelan1999/aide-pkg-KimiSupporter/blob/d8fe83dbda34fc6f5c38558e4a05c779c7f5a1b1/LICENSE)。安装并启用后，Aide 使用离线费率档案估算中国区官方模型的对话成本。包含 Moonshot 余额适配的 Aide 还可读取所选 API Key 对应的账户余额。\n\n## 使用\n\n1. 在 [Aide 插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 搜索 KimiSupporter，或下载 [Release ZIP](https://github.com/skyelan1999/aide-pkg-KimiSupporter/releases/tag/v0.1.0) 并从 Aide 插件面板导入。启用插件。\n2. 在模型设置中选择「Moonshot / Kimi」，填写中国区官方地址 `https://api.moonshot.cn/v1` 与对应的 API Key。选择已开通的模型。\n3. 在账户面板选择该提供商和密钥。兼容的 Aide 可查询可用余额、现金和代金券，金额为人民币元。启用余额查询前可先核对 [官方接口说明](https://platform.kimi.com/docs/api/balance)。\n\n费率要求支持 `providerSupport` protocol 1 的 Aide（0.1.17.5 RC5 或更新版本）。余额另外要求宿主已内置 Moonshot 账户余额适配。Aide 加载费率档案，将所选密钥保存在自己的保险库，并向月之暗面官方余额接口鉴权。插件无需配置其他密钥。\n\n## 模型费率\n\n以下是 **2026-11-19** 核验的中国区标准实时费率，单位为人民币元／百万 token。匹配 `https://api.moonshot.cn/v1` 和精确模型 ID。国际区、第三方网关和未知模型由 Aide 使用其已有的费率选择逻辑。\n\n| 模型 ID | 未命中输入 | 缓存命中输入 | 输出 |\n| --- | ---: | ---: | ---: |\n| `kimi-k3.1-pro` | 13.00 | 1.30 | 68.00 |\n| `kimi-k3.1-pro-highspeed` | 26.00 | 1.30 | 136.00 |\n| `kimi-k3` | 20.00 | 2.00 | 100.00 |\n| `kimi-k2.7-code` | 6.50 | 1.30 | 27.00 |\n| `kimi-k2.7-code-highspeed` | 13.00 | 2.60 | 54.00 |\n| `kimi-k2.6` | 6.50 | 1.10 | 27.00 |\n\nK2 三款模型目前面向 2026 年 11 月 1 日前注册的用户，官方计划于 2026 年 12 月底全面下线。费用估算覆盖上表的输入、缓存命中和输出列。单独计费的缓存写入、批处理、联网工具、税费与账户折扣以官方账单为准。档案随插件更新。[模型推理定价](https://platform.kimi.com/docs/pricing/chat) · [模型列表](https://platform.kimi.com/docs/models)\n\n## 验证与打包\n\n```sh\nnode --test test/catalog.test.cjs\npython3 scripts/package.py\ncd dist && shasum -a 256 -c SHA256SUMS\n```\n\n安装包和市场使用同一个 ZIP。包内的 JavaScript 入口和 JSON 档案适用于 Windows、macOS 和 Linux。\n",
+        "screenshots": [],
+        "changelog": "首次发行。提供 2026-11-19 中国区 Kimi 标准实时费率。具备 Moonshot 账户适配的 Aide 可查询所选密钥的账户余额。",
+        "distribution": "public",
+        "routing": {
+          "keywords": [
+            "KimiSupporter",
+            "Kimi",
+            "Moonshot",
+            "月之暗面",
+            "kimi-k3.1-pro",
+            "kimi-k3"
+          ],
+          "extensions": [],
+          "summary": "为月之暗面 Kimi 提供中国区实时推理费率。配套宿主可查询所选密钥的账户余额。"
+        }
+      },
+      {
         "id": "lunar-calendar",
         "kind": "plugin",
         "name": "农历日历",
@@ -780,86 +892,83 @@
         }
       },
       {
-        "id": "office",
+        "id": "mimo-supporter",
         "kind": "plugin",
-        "name": "Office 文档",
-        "description": "生成 DOCX/XLSX/PPTX，读取与按锚点修改 DOCX 批注，并查看和编辑 XLSX，并提供原文搜索／RAG文档检索",
-        "version": "1.1.0",
-        "author": "Aide",
-        "category": "creation",
-        "icon": "creation",
-        "package": "packages/office/1.1.0-34b4d01a5714.zip",
-        "sha256": "34b4d01a5714cad3530471b3de86c4d81eee6ca0452b85ba149b31b8ad94553f",
-        "bytes": 4287,
-        "minAideVersion": "0.1.17.0 RC2",
+        "name": "MiMoSupporter",
+        "description": "小米 MiMo 中国区实时推理刊例价，配套宿主可查询账户余额和个人 Token Plan 余量。",
+        "version": "0.1.0",
+        "author": "skyelan1999",
+        "category": "workspace",
+        "icon": "workspace",
+        "package": "packages/mimo-supporter/0.1.0-070c043f90f1.zip",
+        "sha256": "070c043f90f164c29932e731f47559056d130319abfadd924059059aadf94d65",
+        "bytes": 3425,
+        "minAideVersion": "0.1.17.5 RC5",
         "platforms": [
           "windows",
           "macos",
           "linux"
         ],
         "dependencies": [
-          "Aide 原生 Office 工作区执行器与 Python Office 环境；ZIP 不包含执行器或 Python 依赖"
+          "离线费率需要 Aide 0.1.17.5 RC5 或更新版本中的 providerSupport 协议 1。",
+          "账户余额和个人 Token Plan Credits 需要具备 MiMo 账户适配的 Aide。"
         ],
-        "permissions": "可向 Aide 提交文件、命令或引用管理提案；相关操作沿用现有授权。",
-        "trustNotice": "Node 插件在宿主中执行；目录审核和摘要校验不等于权限沙箱。安装会注册并启用插件。",
+        "permissions": "费率在本地计算。查询账户时，Aide 使用自身凭证库中的所选密钥与官方接口通信。插件入口只声明档案。",
+        "trustNotice": "公开 MIT 社区插件，与小米官方产品独立。价格按中国区刊例估算，实际费用以账单为准。",
         "features": [],
-        "source": "https://github.com/skyelan1999/aide-pkg-office/tree/1d56ad23c7d028afe65882a534b44a9270ff406f",
+        "source": "https://github.com/skyelan1999/aide-pkg-MiMoSupporter/tree/89cf654e745cebe124bf672b528533a765840a30",
         "license": "MIT",
-        "readme": "# Office · Aide Office 文档\n\nAide `office` 1.1.0 独立分发，MIT 许可。安装 ZIP 与已有市场包保持逐字节一致。\n\n注册 `office_create`、`office_comments`、`office_comment_edit`、`office_document_search` 四项工具。支持通过宿主生成 DOCX/XLSX/PPTX、读取或按锚点修改 DOCX 批注，以及原文/RAG 片段检索；相关文件创建、编辑与来源权限沿用 Aide 现有审批通道。RAG 使用本地检索，不承诺 OCR 或整份文档已读。\n\n必须配合 Aide 原生 Office 工作区执行器及宿主 Python Office 环境（python-docx、openpyxl、python-pptx 等）；Node 入口负责协议注册，不能单独执行 Office 操作。安装 ZIP 不包含宿主执行器或 Python 依赖。市场兼容基线为 0.1.17.0 RC2。Linux 为本次验证环境，Windows/macOS 和实际 SSH 未实测。\n\n从 [v1.1.0 Release](https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.0) 的固定提交链接下载 ZIP 与 SHA256SUMS，校验后导入 Aide；也可通过[插件市场](https://skyelan1999.github.io/aide-pkg-shop/)安装。相同 ID/版本无需重复安装。\n\n```sh\nsha256sum -c SHA256SUMS\n```\n\n安装包位于 packages/v1.1.0/，保留原 LICENSE、入口、manifest、测试与包内说明；外部 README 不重新写入原 ZIP。Release 使用仓库固定提交链接，没有另行上传二进制附件。\n\n验证结果见 docs/release-verification.json。SHA-256 是完整性校验而非签名，Node 插件机制不是权限沙箱。\n",
+        "readme": "# MiMoSupporter\n\nMiMoSupporter 为 Aide 提供小米 MiMo 的离线费率。带有 MiMo 账户适配的 Aide 还可查询账户余额和个人 Token Plan 套餐余量。项目使用 MIT 许可，由社区维护，与小米官方产品独立。\n\n## 安装与使用\n\n在 Aide 插件市场安装并启用 MiMoSupporter，或导入 GitHub Release 的 ZIP。使用费率需要 Aide 0.1.17.5 RC5 或更新版本中的 `providerSupport` 协议 1。余额和套餐余量需要具备 MiMo 账户适配的 Aide。各版本在现有的使用统计中显示宿主支持的数据。[GitHub Release](https://github.com/skyelan1999/aide-pkg-MiMoSupporter/releases/tag/v0.1.0)\n\n进入「模型设置 → 添加提供商」，添加小米 MiMo 按量计费服务，使用 `https://api.xiaomimimo.com/v1` 和控制台发放的 `sk-` 密钥。Aide 按已配置的官方 HTTPS 地址与精确模型 ID 匹配费率。密钥保存在 Aide 的凭证库，由宿主使用。插件只提供声明档案。\n\n## 中国区按量计费\n\n截至 2026-11-19 的实时推理公开价格，单位为人民币／百万 Token。\n\n| 模型 ID | 输入（未命中缓存） | 输入（命中缓存） | 输出 |\n| --- | ---: | ---: | ---: |\n| `mimo-v2.6-pro` | ¥3 | ¥0.025 | ¥6 |\n| `mimo-v2.6-flash` | ¥1 | ¥0.02 | ¥2 |\n\n估算以中国区实时推理刊例价为准。批量推理、海外计价、语音、搜索、定制模型和合同折扣请查小米账单。其他模型与代理端点沿用 Aide 的费率配置。价格快照随插件版本更新。[MiMo 批量与实时价格](https://mimo.mi.com/docs/zh-CN/quick-start/usage-guide/text-generation/batch-api)\n\n## 账户余额与个人套餐余量\n\n支持 MiMo 账户适配的 Aide 会在用户查询时向小米官方接口发出只读请求。按量账户按接口返回的币种显示余额。[账户余额接口](https://mimo.mi.com/docs/zh-CN/api/asset/balance-get)\n\n个人 Token Plan 使用套餐页面提供的 OpenAI 兼容地址和 `tp-` 密钥。中国、新加坡和欧洲集群的套餐余量以 Credits 为单位。团队版请在小米控制台查看席位和额度。上表的人民币费率只适用于按量计费的实时推理。[个人套餐余量接口](https://mimo.mi.com/docs/zh-CN/api/asset/credits-get) · [Token Plan 接入](https://mimo.mi.com/docs/zh-CN/tokenplan/Token%20Plan/quick-access)\n\n## 检查与打包\n\n```sh\nnode --test test/catalog.test.cjs\npython3 scripts/package.py\ncd dist && shasum -a 256 -c SHA256SUMS\n```\n\n市场和 GitHub Release 使用同一份通用 ZIP。检查使用本地档案及合成数据。\n",
         "screenshots": [],
-        "changelog": "Office 1.1.0 独立分发；原运行代码和市场 ZIP 字节保持一致。",
+        "changelog": "首次发行。提供 2026-11-19 中国区 MiMo V2.6 Pro、Flash 实时费率。具备 MiMo 账户适配的 Aide 可查询按量余额和个人套餐 Credits。",
         "distribution": "public",
         "routing": {
           "keywords": [
-            "office",
-            "office 文档",
-            "word",
-            "excel",
-            "powerpoint",
-            "docx",
-            "xlsx",
-            "pptx",
-            "办公文档"
+            "MiMoSupporter",
+            "小米 MiMo",
+            "Xiaomi MiMo",
+            "mimo-v2.6-pro",
+            "mimo-v2.6-flash",
+            "MiMo Token Plan"
           ],
-          "extensions": [
-            ".docx",
-            ".xlsx",
-            ".pptx"
-          ],
-          "summary": "生成 DOCX/XLSX/PPTX，读取与按锚点修改 DOCX 批注，并查看和编辑 XLSX，并提供原文搜索／RAG文档检索"
+          "extensions": [],
+          "summary": "为小米 MiMo 提供中国区实时推理费率。配套宿主可查询按量账户余额和个人 Token Plan Credits。"
         }
       },
       {
         "id": "openai-supporter",
         "kind": "plugin",
         "name": "OpenAISupporter",
-        "description": "OpenAI 官方端点 USD 标准价格快照、缓存命中与长上下文阶梯；凭证由 Aide 保管。",
-        "version": "0.1.0",
+        "description": "为已配置的 OpenAI 模型提供美元费用估算；macOS 可经账户确认读取官网预付余额。",
+        "version": "0.2.0",
         "author": "skyelan1999",
         "category": "workspace",
         "icon": "workspace",
-        "package": "packages/openai-supporter/0.1.0-dae0cbbf00cf.zip",
-        "sha256": "dae0cbbf00cf955df0c086575583e90ccabbc45e72c1a495d27b4dcda71672c1",
-        "bytes": 6430,
-        "minAideVersion": "0.1.17.6 RC2",
+        "package": "packages/openai-supporter/0.2.0-1f1d2b540920.zip",
+        "sha256": "1f1d2b54092053b00af9533990ab6f2d605273053f7979d60d16106dad9ee33c",
+        "bytes": 7565,
+        "minAideVersion": "0.1.19.0 RC2",
         "platforms": [
           "windows",
           "macos",
           "linux"
         ],
         "dependencies": [
-          "正式发行版仍需 Aide 0.1.17.6 RC2。支持 sourceCompatibility 的源码宿主可按 provider-support-usd-v1 能力检查安装；旧源码仅可在包含 40b6e96 时手动导入。",
-          "只覆盖 api.openai.com/v1 的四个精确模型；Standard USD 原价，不做人民币换算。",
-          "通用 JavaScript／JSON 包，无需针对 ARM64／AMD64 单独编译。"
+          "使用 Aide 0.1.19.0 RC2 或更新版本；旧版请继续使用 0.1.0。源码安装由宿主检查所需能力。",
+          "官网余额需 macOS、Safari、已有网页登录、辅助功能权限，并由你确认网页账户与所选 API Key 对应。",
+          "费用估算沿用 2026-10-30 Standard 价格快照，本次没有重新核价，不能替代账单。当前账户余额仍需实际确认。",
+          "通用 JavaScript／JSON 包，无需区分 ARM64／AMD64。Windows／Linux 可继续使用费用估算，暂不支持官网余额同步。"
         ],
         "permissions": "数据档案插件不接触 API Key、不注册 AI 工具；凭证、模型同步和费用快照由 Aide 宿主管理。",
-        "trustNotice": "MIT 社区插件，非 OpenAI 官方产品。2026-10-30 USD Standard 快照，含缓存命中及长上下文阶梯；不提供余额接口。费用估算不替代账单。",
-        "features": [],
-        "source": "https://github.com/skyelan1999/aide-pkg-OpenAISupporter/tree/be30cefdbe467478a13f64bcc63c1020cb7b7c10",
+        "trustNotice": "MIT 社区插件，非 OpenAI 官方产品。密钥由 Aide 保存；官网余额需主动关联账户和已有网页登录。安装不会自动授予权限、关联账户或调用模型。网页读取不代表官方余额 API。",
+        "features": [
+          "provider-browser-balance-v1"
+        ],
+        "source": "https://github.com/skyelan1999/aide-pkg-OpenAISupporter/tree/4ca8b575fc9534fc9415e9612f0423ce7aae89fe",
         "license": "MIT",
-        "readme": "> 宿主兼容性更正：已发布 Aide v0.1.17.6-RC1 不包含 USD 计价支持，不能直接安装本插件。市场版本门槛设为 0.1.17.6 RC2；该宿主版本尚未发行。支持源码兼容能力检查的 Aide main 源码构建可通过市场安装；宿主需具备 provider-support-usd-v1。其他包含 40b6e96 的旧源码仍可手动导入 Release ZIP。\n\n# OpenAISupporter\n\nAide 的 OpenAI 价格支持插件，沿用 [DeepSeekSupporter](https://github.com/skyelan1999/aide-pkg-DeepSeekSupporter) 的数据档案结构。MIT 许可，非 OpenAI 官方产品。\n\n安装并启用后，Aide 读取离线 `provider-support.json`，为官方端点和已列出的模型提供 **USD／百万 token** 费率、缓存命中价格和长上下文阶梯。插件不注册 AI 工具，不接触 API Key。聊天、模型列表同步和凭证管理继续使用 Aide 原有功能。\n\n## 安装\n\n正式发行版需要 **Aide 0.1.17.6 RC2 或更新版本**。源码手动导入需包含美元计价支持提交 [`40b6e96`](https://github.com/skyelan1999/aide/commit/40b6e96bead57e19f2f4e5121b147df0a1aeb1db)。旧宿主不支持本档案的 USD 币种；请先升级宿主。\n\n在 [Aide 插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 搜索 `OpenAISupporter`，安装并启用。也可从 [Release v0.1.0](https://github.com/skyelan1999/aide-pkg-OpenAISupporter/releases/tag/v0.1.0) 下载 ZIP，在 Aide 插件面板导入。\n\n在 Aide 的模型提供商设置中配置 `https://api.openai.com/v1` 及自己的 API Key，再同步或填写所需模型。只有该 HTTPS 官方端点及以下精确模型 ID 命中档案；第三方代理、Azure、区域端点、未知别名和其他模型沿用宿主的手动费率。模型可用性以账户权限和官方返回结果为准。\n\n## 价格快照\n\n核验日期：**2026-10-30**。以下是短上下文 Standard 美元单价，不换算人民币。\n\n| 模型 ID | 输入 | 缓存命中输入 | 输出 |\n| --- | ---: | ---: | ---: |\n| gpt-6-astra | 10 | 1 | 50 |\n| gpt-6.1-sol | 2 | 0.10 | 10 |\n| gpt-6.1-terra | 1 | 0.05 | 5 |\n| gpt-6-luna | 0.10 | 0.01 | 0.50 |\n\n整次请求输入 **超过 272,000 token** 时，输入和缓存命中单价乘 2，输出单价乘 1.5；档案上限为 1,050,000 输入 token，超过上限不猜测价格。规则和原价来源分别见 [Astra](https://developers.openai.com/api/docs/models/gpt-6-astra)、[Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol)、[Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra)、[Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)。\n\n这是 token 费用估算，不替代账单。缓存写入、工具调用、音频／图像生成、Batch／Flex／Fast／Ultrafast、地区溢价、税费、订阅额度和合同折扣不在本档案中。缺少缓存拆分时由宿主按未命中估算。实际请求采用其他服务等级时，请勿将 Standard 估算视为该等级账单。运行时不抓取价格，调价通过新插件版本交付。宿主按调用保存币种和价格快照，USD 与 CNY 分别汇总。\n\n## 余额与凭证\n\n本版**不提供账户余额查询**。官方 [组织 Costs API](https://developers.openai.com/api/reference/resources/admin/subresources/organization/subresources/usage/methods/costs) 使用 Admin Key 返回已发生费用，不是预付余额；本插件不声明该接口，也不读取管理员密钥或调用旧 Dashboard 私有接口。无余额数据不会被伪装成零余额。\n\n## 开发与验证\n\n```sh\nnpm test\npython3 scripts/package.py\ncd dist && shasum -a 256 -c SHA256SUMS\n```\n\nZIP 使用显式白名单、固定时间戳和普通文件权限，不包含测试、Git、开发缓存或凭证。JavaScript／JSON 通用包无需区分 ARM64／AMD64；Release 和市场使用相同 ZIP 字节与 SHA-256。宿主验收样例位于 `test/host-acceptance.go.txt`，加载实际 ZIP 验证安装、启停、端点隔离、阶梯、缓存和 USD/CNY 记账，不调用真实账户或付费模型。\n\n官方资料、版本边界和验收记录见 [调研记录](docs/RESEARCH-20261030.md)。\n\nOpenAISupporter is a data-only Aide provider-pricing extension. It supplies a dated USD Standard snapshot for four exact official model IDs. Aide owns credentials and accounting. No balance API or generation tool is registered. The identical architecture-independent package is distributed through GitHub Releases and the Aide marketplace.\n",
+        "readme": "# OpenAISupporter 0.2.0\n\nAide 的 OpenAI 价格支持插件，沿用 [DeepSeekSupporter](https://github.com/skyelan1999/aide-pkg-DeepSeekSupporter) 的数据档案结构。MIT 许可，非 OpenAI 官方产品。\n\n安装并启用后，Aide 读取离线 `provider-support.json`，为官方端点和已列出的模型提供 **USD／百万 token** 费率、缓存命中价格和长上下文阶梯。插件不注册 AI 工具，不接触 API Key。聊天、模型列表同步和凭证管理继续使用 Aide 原有功能。\n\n## 安装\n\n需要包含 `provider-browser-balance-v1` 能力的 Aide 源码构建或兼容发行版（市场发行版门槛 0.1.19.0 RC2；源码还会核对能力标识）。旧宿主请继续使用 0.1.0。美元计价支持提交 [`40b6e96`](https://github.com/skyelan1999/aide/commit/40b6e96bead57e19f2f4e5121b147df0a1aeb1db)。旧宿主不支持本档案的 USD 币种；请先升级宿主。\n\n在 [Aide 插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 搜索 `OpenAISupporter`，安装并启用。也可从 [Release v0.2.0](https://github.com/skyelan1999/aide-pkg-OpenAISupporter/releases/tag/v0.2.0) 下载 ZIP，在 Aide 插件面板导入。\n\n在 Aide 的模型提供商设置中配置 `https://api.openai.com/v1` 及自己的 API Key，再同步或填写所需模型。只有该 HTTPS 官方端点及以下精确模型 ID 命中档案；第三方代理、Azure、区域端点、未知别名和其他模型沿用宿主的手动费率。模型可用性以账户权限和官方返回结果为准。\n\n## 价格快照\n\n核验日期：**2026-10-30**。以下是短上下文 Standard 美元单价，不换算人民币。\n\n| 模型 ID | 输入 | 缓存命中输入 | 输出 |\n| --- | ---: | ---: | ---: |\n| gpt-6-astra | 10 | 1 | 50 |\n| gpt-6.1-sol | 2 | 0.10 | 10 |\n| gpt-6.1-terra | 1 | 0.05 | 5 |\n| gpt-6-luna | 0.10 | 0.01 | 0.50 |\n\n整次请求输入 **超过 272,000 token** 时，输入和缓存命中单价乘 2，输出单价乘 1.5；档案上限为 1,050,000 输入 token，超过上限不猜测价格。规则和原价来源分别见 [Astra](https://developers.openai.com/api/docs/models/gpt-6-astra)、[Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol)、[Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra)、[Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)。\n\n这是 token 费用估算，不替代账单。缓存写入、工具调用、音频／图像生成、Batch／Flex／Fast／Ultrafast、地区溢价、税费、订阅额度和合同折扣不在本档案中。缺少缓存拆分时由宿主按未命中估算。实际请求采用其他服务等级时，请勿将 Standard 估算视为该等级账单。运行时不抓取价格，调价通过新插件版本交付。宿主按调用保存币种和价格快照，USD 与 CNY 分别汇总。\n\n## 余额与凭证\n\n本版由插件声明官网页面、金额标签、账户标签、可见项目设置链接和 300 秒查询周期。兼容的 **macOS Aide + Safari** 可在账户卡片点击「关联官网余额」：复用现有 Safari 登录，打开一个专用官网窗口。核对网站显示的组织/账户，确认它对应所选 API Key 后，Aide 每 5 分钟后台刷新该专用窗口并读取预付余额，不必每次手动同步。\n\n请保持带有刷新按钮的普通专用窗口打开。Safari 若按偏好打开为标签页，首次用「窗口 → 将标签页移到新窗口」分离官网，再回 Aide 重试读取；之后无需每次手动同步。Safari 关闭、窗口关闭、登录失效、页面布局改变、账户标签或项目标识变化时停止返回当前余额，显示待恢复和最后时间。首次需为提供 Safari 读取能力的 Aide 桌面应用授予辅助功能权限；旧宿主使用独立桥接时，按其权限提示操作。读取不使用屏幕截图、Cookie 导出或任意网页脚本；模型 Key 不发给原生读取器。API Key 与官网账户的关系由用户明确确认，不能通过显示名自动证明组织身份。\n\n官方 [Costs API](https://developers.openai.com/api/reference/resources/admin/subresources/organization/subresources/usage/methods/costs) 查询已发生费用，不是预付余额。本方式是官网登录页面读取，受页面和 Safari 可访问性结构影响，不声称存在公开的 API 余额接口。插件仍是数据档案，不注册工具、不接触 API Key 或网页登录令牌。Windows/Linux 的网页同步尚不支持，原有计价能力保留。\n\n0.2.0 按预发布交付，价格仍是 2026-10-30 的历史 Standard 快照，本次没有重新核价。数据包测试和现有安装内容核对通过；历史原生/Safari 验收见中央 [issue #667](https://github.com/skyelan1999/aide/issues/667)。当前账户余额、网页结构和权限需在实际客户端重新确认；本次发布不自动关联账户或授予权限。\n\n## 开发与验证\n\n```sh\nnpm test\npython3 scripts/package.py\ncd dist && shasum -a 256 -c SHA256SUMS\n```\n\nZIP 使用显式白名单、固定时间戳和普通文件权限，不包含测试、Git、开发缓存或凭证。JavaScript／JSON 通用包无需区分 ARM64／AMD64；Release 和市场使用相同 ZIP 字节与 SHA-256。宿主验收样例位于 `test/host-acceptance.go.txt`，加载实际 ZIP 验证安装、启停、端点隔离、阶梯、缓存和 USD/CNY 记账，不调用真实账户或付费模型。\n\n官方资料、版本边界和验收记录见 [调研记录](docs/RESEARCH-20261030.md)。\n\nOpenAISupporter is a data-only Aide provider-pricing extension. It supplies a dated USD Standard snapshot for four exact official model IDs. Aide owns credentials and accounting. The data-only browser-balance declaration requires a compatible Aide host; no cookie or model key enters plugin JavaScript. No generation tool is registered. The identical architecture-independent package is distributed through GitHub Releases and the Aide marketplace.\n",
         "screenshots": [],
-        "changelog": "首次公开发行：四个 OpenAI 旗舰模型的 USD Standard 费率、缓存命中和超过 272K 的长上下文阶梯。实际 ZIP 经 Aide 安装／启停／分币种计账 race 验证；未调用真实账户或付费模型。 市场兼容性更正：正式 RC1 不含 USD 支持，安装门槛提高至 RC2；包含 40b6e96 的旧源码宿主可手动导入。 源码兼容声明：具备 provider-support-usd-v1 的源码构建可按单独能力条件安装；正式 RC1 门槛保持，ZIP 字节不变。",
+        "changelog": "0.2.0 预发布：增加经账户确认的 Safari 官网余额声明和首次使用说明。3 项数据档案测试及安装包回读通过；历史 Safari 验收见 README，当前账户和权限需单独确认。",
         "distribution": "public",
         "routing": {
           "keywords": [
@@ -874,12 +983,13 @@
             "长上下文"
           ],
           "extensions": [],
-          "summary": "OpenAI 官方端点四个精确模型的离线 USD Standard 价格、缓存命中和长上下文阶梯；不提供聊天或余额查询。"
+          "summary": "OpenAI 美元费用估算；兼容的 macOS Aide 可经账户确认读取 Safari 官网预付余额。"
         },
         "sourceCompatibility": {
           "minAideVersion": "0.1.17.6 RC1",
           "features": [
-            "provider-support-usd-v1"
+            "provider-support-usd-v1",
+            "provider-browser-balance-v1"
           ]
         }
       },
@@ -963,6 +1073,173 @@
           "extensions": [],
           "summary": "按 aide 插件协议制作、检查和打包插件；管理插件与引用的变更先形成待确认提案。"
         }
+      },
+      {
+        "id": "pp-customer",
+        "kind": "plugin",
+        "distribution": "public",
+        "activationRequired": true,
+        "name": "PPCustomer · 商业版",
+        "description": "客户里程碑甘特图与排期审批，自动保存 .pp，支持 PDF/HTML/Markdown 项目汇报与只读 .ppc 预览。启动为空白首页。获取报价、售后、问题反馈请联系 business@sklastu.com。",
+        "version": "0.3.7",
+        "author": "skyelan1999",
+        "category": "planning",
+        "icon": "planning",
+        "package": "packages/pp-customer/0.3.7-efb458e126d7.zip",
+        "sha256": "efb458e126d7ba578625f9c0523fbe79bf52cd496a8cdc4034162978e181314a",
+        "bytes": 7660222,
+        "minAideVersion": "0.1.19.0 RC2",
+        "platforms": [
+          "macos",
+          "linux"
+        ],
+        "features": [],
+        "dependencies": [
+          "本机共享离线授权组件 0.3.0，首次独立配置和启动；升级新核心需新构建授权",
+          "支持文件来源 checkout/commit 写回的更新版 Aide；已验证 0.1.19.0 RC2 当前源码构建",
+          "macOS Apple Silicon 或 Linux ARM64/AMD64；Linux 需要 Secret Service 用户会话；首次配置需 Python 3",
+          "设备码自动命名需包含 plugin-device-info-v1 的 Aide 更新构建；旧版保留备用名称并提示"
+        ],
+        "permissions": "通过宿主来源 checkout/commit 自动写回所选可写 .pp 的 ppCustomer 专属设置区，检查整文件版本；保留基础 PP 字段。只读来源拒绝保存。.ppc 文件处理器只读，导出仅含选定已批准内容。授权和受保护计算在本机组件校验。",
+        "trustNotice": "商业专有软件，公开下载不等于授权或开源。0.3.0 使用新核心，旧许可不自动包含此构建，升级前请联系发行者取得 .plicense。未授权保持激活页。自动保存会直接写回所选 .pp，需可写来源和更新版 Aide。",
+        "source": "https://github.com/skyelan1999/aide-commercial-downloads/blob/main/docs/pp-customer.md",
+        "license": "Proprietary · 需离线激活",
+        "readme": "# PPCustomer 0.3.7 · 商业版\n\n默认只选择里程碑，直接在同一张甘特图里突出显示日期和状态。可在设置中显示阶段/普通任务、层级和明细；支持全屏与焦点范围。任务变更先形成待审批预览，在项目设置中批准后才更新客户正式排期。\n\n**自动保存直接写回当前 .pp**：客户显示设置、变更申请/审批、风险和沟通等写入 PP 的专属扩展，保留基础任务及其他 PP 字段；版本冲突时拒绝覆盖并保留当前修改。`.ppc` 只包含当前客户可见的已批准内容，是只读快速预览，不含管理设置。也可在 Aide 文件面板直接打开 `.ppc`。\n\n获取报价、售后、问题反馈请联系 **business@sklastu.com**。\n\n## 首次安装与激活\n\n1. 从 Aide 市场安装 PPCustomer 商业版，使用支持文件来源写回的更新版 Aide。0.3.0 的来源写回流程已在 Aide 0.1.19.0 RC2 源码构建的隔离真实宿主验证；本次修订的验证范围见下文。\n2. 下载并解压本机组件：https://github.com/skyelan1999/aide-commercial-downloads/releases/download/offline-components-20261115/PPCustomer-offline-component-v0.3.0.zip\n3. macOS Apple Silicon 双击组件中的“配置Aide连接.command”，选择包含 compose.yaml 的 Aide 安装目录。Linux 执行 python3 configure-aide.py /你的/Aide安装目录。首次配置需要 Python 3。\n4. 配置增加只读连接目录挂载，不读取凭据或自动重启 Aide。请保存工作，先停止再启动 Aide，使挂载生效。\n5. 双击“启动授权组件.command”（Linux 执行 ./start-core.sh），保持终端运行。插件自动发现组件，无需填写连接地址。\n6. 在激活页导出设备申请，并点击 Aide 顶部“保存文件”。将申请交给发行者，取得 `.plicense` 授权文件后导入；校验通过再开始使用。旧 `.pplicense` 可兼容导入。\n\n## 从已安装商业版升级\n\n0.3.0 包含新加密核心及共享授权组件更新。**旧授权不自动包含新核心，需要发行者签发包含新构建的 .plicense**；请先准备升级授权和保存当前工作。\n\n已有共享组件应沿用其设备身份和系统凭据。管理员先备份并停止原组件，更新对应平台运行时和 core/pp-customer.ppcore，保留其他产品核心及所有设备状态，再启动组件。不要重复启动多个组件，不混用发行身份，不重建密钥库。其他产品继续按各自许可校验。\n\n新版授权界面可以单独撤销当前插件在本机的激活，操作前会要求确认并检查未保存内容。该操作不删除项目、不修改其他产品授权，也不能离线远程撤销其他设备；以后可重新导入有效许可。\n\n## 项目与保存\n\n从工作区/引用打开一个可写 `.pp` 即可管理并自动保存。新项目只勾选里程碑，其他阶段和任务按需在设置开启；已保存的勾选范围保留。甘特图中的待审批标记代表预览，汇报和 `.ppc` 均使用已批准内容。\n\n本机文件上传及示例是预览入口，浏览器不能直接覆盖原文件；请从工作区/引用重新打开原 `.pp` 启用写回。只读、文件变化或来源权限变化会拒绝保存，不把失败说成成功。导出 `.ppc` 或汇报时仍需点击宿主顶部“保存文件”。\n\nAide 首次控制先调用 ppc_guide，再 ppc_inspect 获取事项 ID/revision；提交与审批使用专用接口，常规保存不能伪造正式任务或审批历史。\n\n## 平台与验证范围\n\n本机组件提供 macOS Apple Silicon、Linux ARM64/AMD64；没有原生 Windows 组件。Linux 需要可用 Secret Service 用户会话。macOS 二进制未做 Apple Developer ID 公证。\n\n0.3.0 已完成隔离真实 Aide Go 宿主、商业界面、模拟授权及原生加密流程验证；这些不等于本版已在用户真实系统凭据库或客户现场重新验收。旧生产窗口在测试中保持原样。完全离线不能承诺防止拥有本机控制权的攻击者修改软件。\n\n组件 connection.json 是进程连接凭据，不是授权文件，不要交给别人。发行私钥、内容密钥及客户真实许可不属于客户安装包。\n\n正式说明、摘要和下载：https://github.com/skyelan1999/aide-commercial-downloads/blob/main/docs/pp-customer.md\n\n## 0.3.1 本机授权撤销修复\n\n撤销区为独立描边按钮，勾选确认后才可点击。若提示本机授权组件过旧，请按上述步骤更新并重启原共享组件；只更新插件 ZIP 不会更新宿主程序。保留原设备身份及系统凭据，不重复运行多个组件。\n\n0.3.1 复用 0.3.0 加密业务核心及原生运行时；已经包含 0.3.0 核心的许可不需要重新签发。由 0.2.0 升级至 0.3.x 仍需匹配新核心的授权。\n\n## 0.3.2 启动与界面\n\n普通启动、刷新和重新安装均进入空白首页，不自动读取上次绑定的项目。请明确从工作区打开原 .pp；其中已保存的设置和待审批申请仍然保留。Aide 文件面板明确打开 .ppc 时仍直接显示所选只读文件。\n\n甘特图搜索、日周月、焦点范围和全屏/折叠操作统一对齐，窄屏和指定日期范围自动换行，下拉框复用 Aide 主题。界面版本号与安装包一致。继续复用 0.3.0 加密业务核心，无需为本次界面升级重新签发匹配授权。\n\n## 自动保存控制\n\nPPCustomer 0.3.3：顶部提供自动保存开关和立即保存按钮。关闭后停止自动写入并保留未保存提示，重新开启恢复自动保存；开关选择随 .pp 保存，不进入 .ppc 预览。空白及只读预览不能启用自动保存。保存失败状态可点击或用键盘重试。沿用 0.3.0 核心及匹配授权，无需重新激活。\n\n验证：36 Node、8 Python 和 11 商业阶段测试；虚构项目浏览器验证暂停、手动保存、重新打开、恢复、冲突重试和只读限制，390px 无横向溢出。未操作真实客户项目或授权。\n\n获取报价、售后、问题反馈请联系 business@sklastu.com。\n\n## PDF 汇报\n\nPPCustomer 0.3.4 新增直接导出 PDF。导出汇报格式可选择 PDF、HTML 或 Markdown。PDF 在本机离线生成，内置中文字体，包含自动分页的甘特图、完整排期、风险、沟通及客户可见记录。只使用已批准公开视图，待审批变更不进入正式汇报；只读 .ppc 也可导出。\n\n生成后仍需点击 Aide 顶部“保存文件”。输入/输出支持 64 KiB 分块与 SHA-256 校验，临时文件在传输后清理；单份最多 16 MiB/256 页，最多 4 份临时导出、10 分钟到期，过大时减少可见范围后重试。\n\n字体和通用 PDF 引擎随包提供，无需联网或调用系统打印；对应来源和第三方许可在 vendor/pdf。业务核心仍为 0.3.0，匹配许可继续有效，无需为本次客户端升级重新激活。\n\n验证：40 Node、8 Python、11 商业阶段测试；80 事项长报告生成 14 页，中文可提取且字体嵌入，待审批日期/隐藏标记被排除，首中末页通过 Poppler 目视检查。浏览器实际下载 PDF、只读预览与中断重试通过；隔离 Linux Node 24 也能生成。未使用真实客户文件或许可测试。\n\n获取报价、售后、问题反馈请联系 business@sklastu.com。\n\n## 0.3.5 流程与界面修正\n\n首次保存前的事项编号保持稳定，Aide 可直接发起待审批申请。点击甘特条可按选中事项聚焦；打开其他项目清空上一项目的搜索、焦点与保存错误。取消打开保留当前项目；手动保存失败提示清晰区分自动保存。甘特图按自然月标注月份，Esc 完整退出全屏；PDF 短排期不再重复日期刻度。\n\n沿用现有 0.3.0 加密核心和匹配许可，无需重新激活。本次验证包括 42 Node、8 Python、11 商业阶段测试以及虚构项目隔离浏览器回归，未安装到用户当前生产窗口。\n\n## 0.3.6 设备申请自动命名\n\n导出设备申请时，名称自动采用 Aide 消息面板中的“我的设备码”，文件名为“设备码-设备申请.prequest”。设置中的名称仅作备用。需要包含 plugin-device-info-v1 的更新版 Aide 源码构建；旧版或尚无设备码时仍可导出，并明确提示采用备用名称。锁屏或调用失效则拒绝继续生成。\n\n设备码只作便于核对的显示名称，不替代原有设备身份和签名校验。沿用原生授权组件、加密核心及匹配许可，无需重新激活。此版本已通过共用适配器与实际导出界面隔离测试，签名绑定测试使用临时内存设备；未重启用户当前 Aide 或生成真实设备申请。\n\n## 0.3.7 通用设备申请文件\n\n设备申请统一使用 .prequest，文件名以设备码开头，例如 AB12CD-设备申请.prequest。设备申请接口会返回 suggestedFilename 供自动化使用。无法读取设备码时保留通用备用文件名及原有提示，不伪造设备号。\n\n签发工具新版同时兼容 .prequest 和旧 .pprequest；旧申请无需改动内容。申请的签名信封、原生授权组件、加密核心、设备身份及匹配许可都保持不变，授权文件仍为 .plicense，无需重新激活。\n\n15 项共用 Node 测试、许可 Go 测试、实际界面下载与新旧扩展名导入转交检查通过；测试仅使用虚构设备和隔离端点，不代表在用户真实凭据或客户现场重新验收。\n",
+        "screenshots": [],
+        "changelog": "0.3.7：设备申请统一为 .prequest，文件名以设备码开头；接口返回 suggestedFilename。签发工具兼容旧 .pprequest，申请签名和授权校验保持不变。",
+        "routing": {
+          "keywords": [
+            "PPCustomer",
+            "PPC",
+            "客户里程碑",
+            "客户甘特图",
+            "客户汇报",
+            "客户进度",
+            "排期变更申请",
+            "客户排期审批",
+            "客户沟通"
+          ],
+          "extensions": [
+            ".ppc"
+          ],
+          "summary": "客户里程碑甘特图与排期审批；设置写回 .pp，.ppc 仅为客户只读预览；商业版需离线激活。"
+        },
+        "resources": [
+          {
+            "title": "下载本机授权组件",
+            "url": "https://github.com/skyelan1999/aide-commercial-downloads/releases/download/offline-components-20261115/PPCustomer-offline-component-v0.3.0.zip",
+            "sha256": "c80d4809eef55cd4de882a9dc576358c9d7d66e1079b4cb6f94b0e6a2b9118fe",
+            "bytes": 48687957
+          }
+        ]
+      },
+      {
+        "id": "pp-leadership",
+        "kind": "plugin",
+        "name": "PPLeaderShip · 商业版",
+        "description": "公司级多项目组合管控：打开多个 .pp，比较项目健康度、预算、风险与跨项目资源，记录战略判断和管理决策。获取报价、售后、问题反馈请联系 business@sklastu.com。",
+        "version": "0.1.3",
+        "author": "skyelan1999",
+        "category": "planning",
+        "icon": "planning",
+        "distribution": "public",
+        "minAideVersion": "0.1.19.0 RC2",
+        "platforms": [
+          "macos",
+          "linux"
+        ],
+        "dependencies": [
+          "本机共享离线授权组件 0.3.0，需首次配置和启动；已有组件应保留设备身份和其他产品核心",
+          "macOS Apple Silicon 或 Linux ARM64/AMD64；Linux 需要 Secret Service 用户会话；首次配置需要 Python 3",
+          "设备码自动命名需包含 plugin-device-info-v1 的 Aide 更新构建"
+        ],
+        "features": [],
+        "permissions": "只读打开用户选择的多个 .pp；管理判断与决策记录独立保存为 .ppl，文件打开和导出沿用 Aide 宿主授权。",
+        "trustNotice": "商业专有软件，公开下载不代表免费、开源或已获得使用授权。未激活保持激活页，导入发行者签发的匹配 .plicense 后使用。发行私钥、内容密钥、签发工具及客户许可不属于市场安装包。",
+        "license": "Proprietary · 需离线激活",
+        "readme": "# PPLeaderShip 0.1.3 · 商业版\n\n面向公司管理者的多项目组合工作台。只读打开多个 .pp，比较项目健康度、预算、风险与资源，管理判断和决策记录独立保存为 .ppl。\n\n## 安装与离线激活\n\n1. 在 Aide 市场点击安装。需要包含共享组件连接及设备码读取能力的 Aide 更新构建。\n2. 首次使用时，下载详情页提供的“共享离线授权组件”并解压到固定本地目录。macOS Apple Silicon 双击“配置Aide连接.command”选择 Aide 安装目录；Linux 执行 python3 configure-aide.py /你的/Aide安装目录。首次配置需要 Python 3。\n3. 配置只增加只读连接目录挂载，先保存工作，再停止并重新启动 Aide。随后启动组件；插件会自动连接。\n4. 打开激活页，导出设备申请，再点击 Aide 顶部“保存文件”。默认名称为 <设备码>-设备申请.prequest；旧版 Aide 或没有设备码时会明确提示备用名称。\n5. 将申请交给发行者，取得 .plicense 后导入，校验通过即可使用。签发工具兼容旧 .pprequest 申请，插件兼容旧 .pplicense 授权。有效期和指定设备以签发内容为准。\n\n已有共享组件请先停止原服务并备份安装目录，合并更新 runtime 与所需 core 文件，保留其他核心、设备身份及系统凭据，然后沿用原启动方式启动。不要重复运行组件。连接排障放在 Aide 插件卡片设置中。\n\n软件授权界面支持单独撤销当前插件的本机激活；项目和其他插件授权保留。离线撤销不影响其他设备，以后可重新导入有效授权。\n\n## 升级与验证\n\n本客户端更新沿用已有加密核心和匹配许可，不因设备申请文件名及界面更新重新签发授权。新增产品或没有对应核心授权的设备仍需发行者签发。\n\n已在 macOS Aide 实际工作台核验客户端及设备申请自动命名。共享组件使用已核对摘要的运行时与加密核心；安装配置使用虚构文件夹验证，不读取生产凭据。Linux 和客户现场未在本次发布重新验收。支持 macOS Apple Silicon、Linux ARM64/AMD64；无原生 Windows 组件，macOS 二进制未作 Developer ID 公证。\n\n获取报价、售后、问题反馈请联系 business@sklastu.com。\n\n正式发行说明：https://github.com/skyelan1999/aide-commercial-downloads/blob/main/docs/pp-leadership.md\n",
+        "screenshots": [],
+        "changelog": "0.1.3：正式开放市场下载和安装，需离线激活；设备申请自动使用 Aide 设备码并导出 <设备码>-设备申请.prequest，授权文件为 .plicense；支持单独撤销当前插件的本机激活。",
+        "source": "https://github.com/skyelan1999/aide-commercial-downloads/blob/main/docs/pp-leadership.md",
+        "routing": {
+          "keywords": [
+            "pp-leadership",
+            "PPLeaderShip",
+            "PPL",
+            "公司战略",
+            "项目组合",
+            "多项目管控",
+            "跨项目资源"
+          ],
+          "extensions": [],
+          "summary": "只读汇总多个 .pp，比较项目健康度、预算、风险及跨项目资源，管理判断和决策独立保存为 .ppl；商业版，市场安装后需离线激活。"
+        },
+        "activationRequired": true,
+        "package": "packages/pp-leadership/0.1.3-ab06da49b5a6.zip",
+        "sha256": "ab06da49b5a672a6be53c913c86a239823aabbc82910ad6820250e2881f39178",
+        "bytes": 34114,
+        "resources": [
+          {
+            "title": "下载共享离线授权组件",
+            "url": "https://github.com/skyelan1999/aide-commercial-downloads/releases/download/offline-components-20261115/PrivatePlugin-offline-component-v0.3.0-20261115.zip",
+            "sha256": "5efcb604e865374e38b2a3d0d253f7c6b3a7d606e83762d3f72728523be24aee",
+            "bytes": 114391483
+          }
+        ]
+      },
+      {
+        "id": "professional-project",
+        "kind": "plugin",
+        "name": "ProfessionalProject · 商业版",
+        "description": "项目计划、人员费用、空间规划、采购库存与手机扫码协同。商业版采用共享离线授权，市场可直接安装，使用前需离线激活。获取报价、售后、问题反馈请联系 business@sklastu.com。",
+        "version": "0.4.20",
+        "author": "skyelan1999",
+        "category": "planning",
+        "icon": "planning",
+        "distribution": "public",
+        "minAideVersion": "0.1.19.0 RC2",
+        "platforms": [
+          "macos",
+          "linux"
+        ],
+        "dependencies": [
+          "本机共享离线授权组件 0.3.0，需首次配置和启动；已有组件应保留设备身份和其他产品核心",
+          "macOS Apple Silicon 或 Linux ARM64/AMD64；Linux 需要 Secret Service 用户会话；首次配置需要 Python 3",
+          "设备码自动命名需包含 plugin-device-info-v1 的 Aide 更新构建"
+        ],
+        "features": [],
+        "permissions": "项目写入与手机采集沿用宿主权限、员工配对及区域授权。",
+        "trustNotice": "商业专有软件，公开下载不代表免费、开源或已获得使用授权。未激活保持激活页，导入发行者签发的匹配 .plicense 后使用。发行私钥、内容密钥、签发工具及客户许可不属于市场安装包。",
+        "license": "Proprietary · 需离线激活",
+        "readme": "# ProfessionalProject 0.4.20 · 商业版\n\n项目计划、任务甘特图、人员资源、费用、采购库存与手机采集协同。\n\n## 安装与离线激活\n\n1. 在 Aide 市场点击安装。需要包含共享组件连接及设备码读取能力的 Aide 更新构建。\n2. 首次使用时，下载详情页提供的“共享离线授权组件”并解压到固定本地目录。macOS Apple Silicon 双击“配置Aide连接.command”选择 Aide 安装目录；Linux 执行 python3 configure-aide.py /你的/Aide安装目录。首次配置需要 Python 3。\n3. 配置只增加只读连接目录挂载，先保存工作，再停止并重新启动 Aide。随后启动组件；插件会自动连接。\n4. 打开激活页，导出设备申请，再点击 Aide 顶部“保存文件”。默认名称为 <设备码>-设备申请.prequest；旧版 Aide 或没有设备码时会明确提示备用名称。\n5. 将申请交给发行者，取得 .plicense 后导入，校验通过即可使用。签发工具兼容旧 .pprequest 申请，插件兼容旧 .pplicense 授权。有效期和指定设备以签发内容为准。\n\n已有共享组件请先停止原服务并备份安装目录，合并更新 runtime 与所需 core 文件，保留其他核心、设备身份及系统凭据，然后沿用原启动方式启动。不要重复运行组件。连接排障放在 Aide 插件卡片设置中。\n\n软件授权界面支持单独撤销当前插件的本机激活；项目和其他插件授权保留。离线撤销不影响其他设备，以后可重新导入有效授权。\n\n## 升级与验证\n\n本客户端更新沿用已有加密核心和匹配许可，不因设备申请文件名及界面更新重新签发授权。新增产品或没有对应核心授权的设备仍需发行者签发。\n\n已在 macOS Aide 实际工作台核验客户端及设备申请自动命名。共享组件使用已核对摘要的运行时与加密核心；安装配置使用虚构文件夹验证，不读取生产凭据。Linux 和客户现场未在本次发布重新验收。支持 macOS Apple Silicon、Linux ARM64/AMD64；无原生 Windows 组件，macOS 二进制未作 Developer ID 公证。\n\n获取报价、售后、问题反馈请联系 business@sklastu.com。\n\n正式发行说明：https://github.com/skyelan1999/aide-commercial-downloads/blob/main/docs/professional-project.md\n",
+        "screenshots": [],
+        "changelog": "0.4.20：正式开放市场下载和安装，需离线激活；设备申请自动使用 Aide 设备码并导出 <设备码>-设备申请.prequest，授权文件为 .plicense；支持单独撤销当前插件的本机激活。",
+        "source": "https://github.com/skyelan1999/aide-commercial-downloads/blob/main/docs/professional-project.md",
+        "routing": {
+          "keywords": [
+            "professional-project",
+            "ProfessionalProject",
+            "PP",
+            "项目管理",
+            "任务甘特图",
+            "人员费用",
+            "采购库存"
+          ],
+          "extensions": [],
+          "summary": "项目计划、任务甘特图、人员费用、采购库存与手机采集；商业版，市场安装后需离线激活。"
+        },
+        "activationRequired": true,
+        "package": "packages/professional-project/0.4.20-ba2187c32bad.zip",
+        "sha256": "ba2187c32bad40854bb6d5e995c06ef874aaa93b8f30888bddbe971b5f82d6f9",
+        "bytes": 137301,
+        "resources": [
+          {
+            "title": "下载共享离线授权组件",
+            "url": "https://github.com/skyelan1999/aide-commercial-downloads/releases/download/offline-components-20261115/PrivatePlugin-offline-component-v0.3.0-20261115.zip",
+            "sha256": "5efcb604e865374e38b2a3d0d253f7c6b3a7d606e83762d3f72728523be24aee",
+            "bytes": 114391483
+          }
+        ]
       },
       {
         "id": "professional-resume",
@@ -1212,13 +1489,13 @@
         "kind": "plugin",
         "name": "STEP Viewer",
         "description": "STEP/STP 本地只读预览、装配爆炸图与测量，CAD 引擎按需下载。",
-        "version": "0.1.1",
+        "version": "0.1.3",
         "author": "skyelan1999",
         "category": "creation",
         "icon": "workspace",
-        "package": "packages/step-viewer/0.1.1-d19162b4784c.zip",
-        "sha256": "d19162b4784c48c0d7c6229c2e2ac13eb4fc4298f586e0772fdd1751f32c8e81",
-        "bytes": 210001,
+        "package": "packages/step-viewer/0.1.3-bb3bbeae3985.zip",
+        "sha256": "bb3bbeae3985fbd100f7c0bc8ec345fd24fd7a020f5c04628513246150249c57",
+        "bytes": 212495,
         "minAideVersion": "0.1.17.5 RC5",
         "platforms": [
           "windows",
@@ -1227,18 +1504,18 @@
         ],
         "dependencies": [
           "Requires Aide 0.1.17.5 RC5 or an equivalent file-workbench bridge.",
-          "Uses a separately downloaded precompiled Linux ARM64/AMD64 engine inside Aide Docker.",
-          "First engine download is explicit and verifies byte count and SHA-256; approximately 70–78 MB.",
-          "WebGL is required; model complexity remains subject to time, geometry and memory limits."
+          "Uses the unchanged, separately downloaded checksum-pinned Linux ARM64/AMD64 CAD engine.",
+          "Input is limited to 384 MiB; output is limited to 576 MiB, with 15-minute conversion, geometry, memory and WebGL constraints.",
+          "Upload chunks are bounded to 64 KiB; abandoned jobs use a 330-second lease and preview cancellation is immediate."
         ],
         "permissions": "只读取当前绑定模型；CAD 引擎仅在明确点击安装时下载。模型在本地处理，不需要模型 API Key。",
         "trustNotice": "公开 MIT 插件；第三方引擎保留原许可证。摘要用于完整性验证，不是发布者签名或权限沙箱。",
         "features": [],
-        "source": "https://github.com/skyelan1999/aide-pkg-STEPViewer/tree/13e96e7f14d5eb5bce391d044afa9fcfdd2c93a0",
+        "source": "https://github.com/skyelan1999/aide-pkg-STEPViewer/tree/007708ebac7dfb1cb72d7c52905ffd3aeb236ca0",
         "license": "MIT",
-        "readme": "# STEP Viewer\n\n安装并启用后打开 .stp/.step 文件。首次点击“安装 CAD 引擎并预览”，下载对应 Linux ARM64/AMD64 预编译引擎，无需本地编译。引擎缓存在主镜像外；卸载插件不会自动清理引擎。\n\n支持只读装配预览、部件显隐、爆炸图、坐标与测量，不修改或导出 STEP 模型。DXF、STL 和 URDF 仍由 Aide 内置预览。\n\n需要 Aide 0.1.17.5 RC5 或兼容的文件工作台桥接，Mac/Windows 通过 Aide Docker 使用 Linux 引擎。输入上限 384 MiB，转换最长 15 分钟，仍受几何数量、内存与 WebGL 限制。复杂模型可能无法预览。模型不上传远端。\n\n引擎来源、构建、许可证与详细限制见源码 README 和 runtime/README.md。\n\n0.1.1: background engine installation with progress and resumable retries, bounded to one hour. Closing the preview preserves the download; reopen to view progress.",
+        "readme": "# STEP Viewer\n\nPublic optional STEP/STP file-preview plugin for Aide. Aide's default release no longer bundles a STEP parser or native CAD sidecar. DXF, STL and URDF remain independent built-in formats.\n\nInstall the plugin ZIP in Aide, enable it, then open a `.step` or `.stp` file. On first use click **安装 CAD 引擎并预览** to download the separate platform runtime. Installation runs in the background with progress and resumable retries (bounded to one hour). Closing the preview does not cancel the download; reopening shows its current state. Downloads are checked against byte count and SHA-256 before extraction. Models are processed locally and never sent to the engine download service. No provider API key is required.\n\nThe original native OCCT converter preserves millimeter/metre/inch units, assembly transforms, part/face colors, mixed solid/wire/point geometry, bounded batches, measurement, coordinate calibration and assembly explode controls. Inputs remain read-only. Limits: 384 MiB input, 3 million triangles, 500,000 segments, 200,000 points, 15-minute conversion deadline. Complex models can still exceed memory/geometry limits. The converter is capped at 1 GiB address space and stops when the container memory margin falls below 128 MiB; large assemblies may need more available memory. Rendering requires WebGL. No geometry editing or STEP export is provided.\n\nFile access uses the existing bound-document MessagePort bridge (including supported read-only references); it has no arbitrary file path or parent bearer access. The trusted Node backend receives bounded 64 KiB uploaded chunks and opaque random job IDs. Closing/revoking a view sends cancellation; abandoned jobs are reclaimed after a 330-second lease. Original files are never overwritten. Without this plugin Aide offers a download/install hint.\n\nRuntime is separately distributed for Linux ARM64/AMD64 containers, not macOS/Windows native Python. The cache persists outside the image; removing the plugin does not remove the downloaded engine. See [runtime build and source provenance](runtime/README.md).\n\nTests: `python3 tests/install.py`, `node tests/worker.cjs`, `node tests/step-metrology.test.cjs`, `node tests/step-assembly.test.cjs`; native IO and full converter fidelity run inside the pinned Linux engine environment. `scripts/package.py` produces the plugin ZIP without tests, caches or the heavyweight engine.\n\nMIT wrapper; bundled Three.js is MIT, and separately downloaded OCP/OCCT retain their original licenses in licenses/. The workbench client derives from Aide's MIT-licensed public bridge.\n\n## 0.1.3\n\n保留活动的 STEP 上传作业，跨过宿主桥接调用的等待窗口；每次上传块仍限 64 KiB，作业使用 330 秒租约，关闭预览时仍可立即取消。转换输出上限为 576 MiB，覆盖 300 万三角面的约 432 MB base64 几何，以及已声明线段/点预算和 64 MiB 协议元数据预留；仍维持明确文件上限、1 GiB 进程地址空间和 15 分钟转换期限。复杂模型仍可能因几何数量、内存或 WebGL 限制无法预览。\n\n验证覆盖活动上传/转换租约、取消、内存预算、576 MiB 稀疏输出上限及跨越旧 160 MiB 边界的桥接读取；不代表已对 300 万三角面真实 CAD 模型或浏览器 GPU 完整性作验收。\n",
         "screenshots": [],
-        "changelog": "Background engine installation with progress, bounded resumable retries and cached reuse; preserves local read-only preview.",
+        "changelog": "0.1.3: preserve STEP uploads across active bridge calls, bound upload chunks and abandoned-job lifetime, and raise the declared geometry output cap to 576 MiB. The CAD engine is unchanged.",
         "distribution": "public",
         "routing": {
           "keywords": [
@@ -1299,14 +1576,14 @@
         "id": "terminal",
         "kind": "plugin",
         "name": "设备终端工作台",
-        "description": "常驻Shell、SSH、Telnet、TCP、UDP与串口工作台，支持逐会话设置、图形SSH窗口与TLS中继。1.8.1减少交互回显的额外桥接往返，并修复串口中继缓冲等待。",
-        "version": "1.8.1",
+        "description": "常驻 Shell、SSH、Telnet、TCP、UDP 与串口工作台，支持 TLS 中继和 X11。Aide 可读取截图和按时间抽取的录像帧。",
+        "version": "1.8.10",
         "author": "Aide",
         "category": "workspace",
         "icon": "workspace",
-        "package": "packages/terminal/1.8.1-fc42c5a33f4b.zip",
-        "sha256": "fc42c5a33f4ba440340fa25956aeed6c8b5b3b1561f477f8126064b6b1da5bc3",
-        "bytes": 1230048,
+        "package": "packages/terminal/1.8.10-b11565166326.zip",
+        "sha256": "b115651663265b530b3956441a184f69b8bf8087d531a4577380a20a22d5c575",
+        "bytes": 1322231,
         "minAideVersion": "0.1.18.0 RC3",
         "platforms": [
           "linux"
@@ -1316,22 +1593,25 @@
           "Node.js 24、Linux Python 3 PTY/memfd、/bin/bash、OpenSSH；包内已包含 ssh2 1.17.0、serialport 12.0.0 与运行依赖。",
           "串口实测为原生驱动虚拟PTY；真实USB/UART需设备映射和权限，硬件及Windows/macOS未实测。",
           "手动部署的设备侧中继需要 Python 3.10+ 和 cryptography；串口中继额外需要 pyserial 3.5。中继固定 TCP 端口需由 Aide 运行环境可达。",
-          "Optional X11: runtime xauth and reachable authenticated X Server; remote sshd must permit X11Forwarding and provide xauth. Native customer X Server acceptance is separate from Linux Xvfb tests.",
-          "Built-in graphical sessions need host-provided Xvfb, xauth, openbox, x11vnc and websockify in the Aide runtime image; the plugin does not install system packages. Linux is verified; macOS/Windows graphical hosts are not tested."
+          "直连和中继 SSH 的内置图形窗口由 Aide 自动分配会话专用 X Server。远端 sshd 需要允许 X11Forwarding 并提供 xauth。",
+          "Built-in graphical sessions need host-provided Xvfb, xauth, openbox, x11vnc and websockify in the Aide runtime image; the plugin does not install system packages. Linux is verified; macOS/Windows graphical hosts are not tested.",
+          "工作区映射变化后的历史恢复依赖含 Aide PR #939 的宿主。既有会话和日志按工作区保留；插件升级本身无法替换旧宿主。",
+          "支持公共工作台窗口的 Aide 提供独立图形窗口。旧版宿主使用原有图形入口，浏览器拦截弹窗时可在终端旁边显示。",
+          "X11 画面采集需要 Linux Aide 运行环境的 Pillow XCB 和 WebP 支持，当前官方 Aide 容器已包含。"
         ],
         "permissions": "Shell、SSH命令、SFTP文件传输、TCP/UDP/串口发送、代理、模拟、回放与边界报文探测均需用户明确意图。可信Node插件使用Aide运行用户权限。输出或设备回显的敏感信息也可能进入日志。",
-        "trustNotice": "Requires paired Aide 0.1.18.0 RC3 or newer. Graphical panes additionally require a host with workbench.viewer.protocol=1 and Linux Xvfb/x11vnc/openbox/websockify. Relay copies share the configured target and relay key but have independent connections, PTYs and logs. Upgrading/stopping disconnects sessions, without replay or automatic reconnection.",
+        "trustNotice": "Requires paired Aide 0.1.18.0 RC3 or newer. Graphical panes additionally require a host with workbench.viewer.protocol=1 and Linux Xvfb/x11vnc/openbox/websockify. Relay copies share the configured target and relay key but have independent connections, PTYs and logs. Upgrading/stopping disconnects sessions, without replay or automatic reconnection. Base64 中继配置备份包含中继密钥，请作为私密文件保管。加载只填充草稿，保存后由用户发起连接。 直连或中继 SSH 使用内置图形窗口时，远端应用可访问该会话的专用显示，请连接可信设备。远程剪贴板需手动复制。 外部 DISPLAY 或自定义 Xauthority 沿用受限转发。已部署的中继脚本可继续使用。回显推送需要支持相应能力的 Aide，旧版宿主继续使用轮询。",
         "features": [
           "terminal-workbench-v1",
           "terminal-ssh-workspace-v1",
           "terminal-communications-v1",
           "terminal-relay-v1"
         ],
-        "source": "https://github.com/skyelan1999/aide-pkg-terminal/tree/63dc80b8c178cd51538d57dbc6a439581e65387a",
+        "source": "https://github.com/skyelan1999/aide-pkg-terminal/tree/v1.8.10",
         "license": "MIT",
-        "readme": "# Terminal · Aide 设备终端工作台\n\n**1.8.1；实际发行状态以 GitHub Release 为准。** 图形窗口需要同步构建的 Aide 宿主（内含 viewer ticket 代理与 xvfb/x11vnc/openbox/websockify）；在旧宿主上 SSH 仍可用，但不会出现图形窗口。基础功能仍兼容 **v0.1.18.0-RC3 或更高版本**。统一 Shell、SSH、Telnet、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。\n\n## 中继交互性能（1.8.1）\n\n- SSH/Telnet 短输入可附 `offset`，确认响应在最多32毫秒的有界窗口内顺带返回实际收到的增量输出；长粘贴和旧客户端保留原发送行为，不伪造本地回显。\n- 输入与普通输出拉取共用偏移，重复/重叠片段去重；活动空轮询按8/16/32/40毫秒退避，后台和空闲仍降低频率，行号栏一帧最多更新一次。\n- 输入仍串行，结果不明不自动重发。新旧 daemon 通过 `capabilities.inputReadback` 协商兼容；没有改变认证、主机指纹或会话可见性规则。\n- 设备侧串口脚本改为等待首字节后读取已经到达的余量，去除64KiB读缓冲引入的0.5秒延迟。已有远端脚本需要重新下载并由使用者部署；仅更新本地插件不会替换远端脚本。\n- 当前验证使用本地 Aide 和回环TLS/虚拟串口夹具，不能据此承诺用户WAN、真实串口或所有设备的延迟。详见 `docs/verification/relay-performance-20261111.md`。\n\n## 安装与兼容\n\n以 [v1.8.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.8.0) 是否公开为发行状态依据。正式归档位于 `packages/v1.8.0/aide-pkg-terminal-v1.8.0.zip` 和同目录 `SHA256SUMS`；发布后从 Release 说明的固定提交链接下载，校验 `sha256sum -c SHA256SUMS` 后导入。仅出现仓库文件或本段说明不表示已公开发行。\n\n需要 **Aide v0.1.18.0-RC3+**。市场元数据最低版本为 `0.1.18.0 RC3`，不提供降低门槛的 sourceCompatibility；旧 RC1 不应自动升级至此版本。手动 ZIP 导入不经过市场门槛，请先升级宿主。运行时 `sessionCopyVersion=1` 仍作复制入口二次检查。归档不打包 xauth/X Server，部署前提见下方说明。历史1.5.3归档保持不变。\n\n插件新标签页入口已移除；后台会话、日志及 Aide 管理能力继续保留。宿主界面变更需要更新 Aide main 源码构建，单独升级插件不会替换宿主界面。\n\n## 使用\n\n已结束、中断或连接失败的会话，可在顶部点击 **重新连接**。沿用原会话 ID、名称、目标、认证方式、私钥引用、中继配置、日志开关和对 Aide 的可见性，继续保留历史日志；密码/私钥口令仍需在终端重新输入。重新连接会创建新的远端连接或 Shell，不恢复上次 Shell 内存状态，也不自动重放旧命令。运行中禁用此按钮，连接失败后可再次手动重试。\n\n本地 Shell、SSH 工作区 Shell、设备 SSH、中继、TCP 客户端、TCP 监听、UDP 和串口均可复用记录。TCP 监听接入的客户端连接须等待设备重新接入，不能反向连接设备的临时源端口；旧版未记录方向的 TCP 历史会话需新建一次客户端配置。工作区 Shell 必须先具备可用的工作区 SSH 主连接，重连固定该主连接，不回退其他身份。\n\n终端输入采用短时间合并并在写入确认后立即拉取远端回显，活动输入期间加快输出读取；空闲与后台页面降低频率。所有请求仍串行，长粘贴保持顺序，结果不确定的写入不自动重发。活动会话期间不自动执行可能阻塞的中继探测，仍可手动检测；“在线”仅表示中继可认证访问，不代表目标 SSH 登录成功。\n\n中继客户端关闭 TCP 小包合并；重新下载并运行 1.4.1 或更新版本的 Python 脚本还可应用设备侧相同优化。旧脚本继续兼容。实际回显速度仍取决于网络和设备。\n\n在配套 Aide 中启用 Terminal，点击“打开工作台”，选择“新建会话”。“工作区 Shell”在本地工作区使用 Aide 本地 PTY；在 SSH 工作区则复用 Aide 已认证的工作区 SSH 连接，并进入远程工作区目录。新建的“远程 SSH · 设备连接”由 **Aide 运行环境**的 OpenSSH 客户端连接目标设备。可以同时调试不同设备，切换标签或关闭工作台不会结束后台会话。点击“结束”并确认才结束连接，保留原有日志；已结束的会话可以明确删除记录和日志。\n\nSSH 首次连接在终端显示主机指纹，请通过可信途径核对后输入 `yes`。指纹变化由 OpenSSH 拒绝连接；本插件不会自动忽略校验。认证方式可选默认身份、用户名和密码、私钥文件。密码和加密私钥口令在终端提示后输入；记录只保存用户名、地址、端口、认证方式与私钥文件位置，不保存密码和口令。私钥可手动填写当前来源内的相对路径，或点击“从工作区 / 引用选择…”浏览当前工作区以及已启用、允许访问的本地、Skill、SFTP、工作区 SFTP 引用来源。私钥内容由宿主限量读取，经 daemon 私有通道交给 Linux 内存文件，不传给网页、不加入工具参数或连接记录，也不新增私钥磁盘副本。原始私钥文件仍由用户管理。没有启用 agent 转发、端口转发，也不会读取用户 SSH config 的 ProxyCommand。\n\n工作台按本地、SSH、历史会话分组，支持名称/主机搜索与运行状态筛选；标签栏只显示活动会话和当前选中的历史会话。桌面右侧显示真实连接状态、目标、起始目录、创建时间和日志详情。工作台在当前 Aide 页面内打开，窄屏使用会话抽屉。提供 xterm 终端、窗口尺寸适配、Ctrl+C、输出查找、日志开关与下载。每个会话可在“终端设置”中独立打开左侧行号和时间戳；偏好保存到会话记录并随会话 ID 恢复。显示标记不进入终端输入、实时输出、选择或复制内容；启用日志时，之后落盘的新日志行会保存已启用的行号和/或 ISO 时间戳，已有日志不会补写，暂停日志时不记录标记。日志 API 可按 1 起始行号或 ISO 时间范围读取，默认100行、最多500行及128 KiB，并返回 `hasMore` / `nextLine` 供分段读取；按时间读取仅匹配日志中实际带时间戳的行。历史日志回放显示本次恢复时间，该显示时间不等于原始接收时间。命令和按键直接发送到目标会话，请确认当前标签对应的设备。关闭面板不会自动发送尚未送达的输入，也不会重试结果不确定的写操作。\n\nSSH 工作区 Shell 沿用工作区设置中的密码、私钥或引用私钥认证，不在终端面板再次保存一份凭据。连接固定到已认证主连接；切换工作区、主连接断开后不会自动改接其他主机。远程主机需具备 `/bin/bash`，所填起始目录用于工作区 Shell；设备 SSH 登录后的目录由远端账户决定。\n\n## TCP、UDP 和串口工作台\n\n“新建会话”可选择 TCP 客户端、TCP 本地监听、UDP 数据报或串口。TCP 监听仅绑定 Aide 运行环境的 `127.0.0.1`，端口0自动分配；新客户端接入后显示独立会话，选择客户端会话进行发送。UDP 可指定目标主机/端口和本地接收端口，发送复用同一个已绑定 socket，设备可向该端口回复。串口提供设备路径、波特率、数据位、停止位、校验与 RTS/CTS 流控，并可刷新可用设备列表。\n\n通信会话使用独立报文发送栏：选择 UTF-8 或 HEX，文本可附加 LF/CRLF/CR。仅点击“发送”才写出报文，不按键逐字发包，不自动重发结果不确定的写入。HEX 必须为完整字节。接收视图和轮转日志保留时间、TX/RX、端点、长度、完整十六进制与可读文本，因此二进制数据和 UDP 报文边界可追溯。日志关闭后不再落盘，仍保留有界内存回放。\n\n所有设备通信均从 **Aide 运行环境**发起；SSH 工作区只改变工作区 Shell 与会话归属，不把 TCP/UDP/串口执行位置自动迁移到远程主机。容器访问物理串口需要预先映射对应设备并具备权限。Linux 原生串口绑定与虚拟 PTY 回环已验证；真实 USB/UART 硬件、Windows/macOS 未实测。\n\n## 合并的高级通信工具\n\n原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具合并到 Terminal，统一加 `terminal_` 前缀；原插件保持可用，工具名不会相互覆盖。Aide 可直接调用这些工具，工作台内部通过受限 `terminal_session_comm` 分发。工具连接、发送、文件传输、代理、回放和模拟均需用户明确意图。\n\n| 前缀 | 功能 |\n| --- | --- |\n| `terminal_ssh_*` | 密码/公钥连接、exec、SFTP 列目录/下载/上传、本地隧道、模拟 SSH/SFTP 服务端及规则 |\n| `terminal_tcp_*` | 连接/监听/发送/关闭、代理、模拟应答、录制回放与有界边界报文探测 |\n| `terminal_udp_*` | 绑定/发送/关闭、模拟应答、回环组播加入/离开 |\n| `terminal_serial_*` | 列出/打开/配置/写入/关闭串口、虚拟串口对、按帧回放 |\n\n`terminal_ssh_fingerprint` 额外提供只读指纹探测，返回 `verified:false`。高级 SSH API 连接必须提供经用户可信途径核验的 `hostFingerprint`（`SHA256:...`）；获取指纹本身不等于信任。工作台 SSH 保留 OpenSSH 的指纹确认与严格 known_hosts 行为。高级 API 的 password/privateKey/passphrase 沿用原插件的临时调用参数，插件不持久化；文件引用模式由宿主通过私有上下文传递私钥，工作台密码与口令仍在终端交互输入。\n\n通信资源按工作区独立管理，API 连接/隧道/模拟服务等句柄包含作用域身份，不能跨工作区使用；后台重启后旧句柄失效。基础 TCP/UDP/串口工具创建的连接也会显示在工作台。高级 SSH API 连接用于 exec/SFTP/隧道，与工作台交互式 SSH PTY 是各自的连接。SFTP 本地文件必须位于当前**本地工作区**，拒绝越界与符号链接逃逸；SSH 工作区不以本地安装目录作为文件传输回退路径。\n\n每个工作区最多32个通信资源，模拟规则/显式回放最多64条、总输入256KiB；TCP 保留最多32份录制，每份最多2MiB/2048帧。原有会话32条记录/16条活动限制继续生效。TCP监听、代理、SSH隧道和模拟服务只在回环监听；UDP组播沿用原实现的显式组播模式，绑定全地址但组成员接口限定回环。管理员禁用的通信工具不能经通用入口或会话发送绕过。\n\n## 后台生命周期与数据\n\n“驻留”指 **Aide 与插件后台持续运行期间**，浏览器关闭、刷新或切换面板后会话继续运行。停用/重启插件、升级插件或停止 Aide 会结束连接。重新启动后台会恢复会话记录及日志，将未正常结束的记录标记为“后台已重启”，不会自动重连或重放设备命令。断线不会自动重新认证；请新建会话。\n\n本地工作区数据保存在 `.aide/terminal-workbench/`。SSH 工作区数据保存在 **Aide 数据目录**的 `terminal-workspaces/<工作区标识>/.aide/terminal-workbench/`，按远程目录、主机、端口和用户隔离，不会回退到本地安装目录，也不会向远程设备写入会话日志。替换插件文件不会覆盖日志。目录权限 `0700`，文件权限 `0600`。请把这个目录加入项目的 Git 忽略规则；备份或清理工作区时按需保留它。\n\n- 每个会话最多保留 **4 × 2 MiB** 原始输出日志，达到上限自动覆盖最旧分卷；每个工作区最多32条会话记录，整个插件后台最多16个运行会话。删除已结束记录可以释放名额和对应日志。\n- 日志只捕获 PTY **输出**，不单独存储键盘输入；OpenSSH 的密码提示关闭回显。设备或应用自行回显的命令、口令及其他敏感内容仍会被记录，必要时先暂停日志。\n- 日志保留 ANSI 控制序列，文件名是会话 ID，开始/结束时间在同名 JSON 元数据中。无需打开工作台，后台仍会记录输出。磁盘写入失败时工作台显示错误，已有内存输出仍可查看；检查存储后重新开启日志即可重试后续写入。\n- 输出回放保留最近512 KiB，超出会明确提示恢复的是尾部；磁盘日志独立保留。查看日志可选择单个分卷准备下载，然后点击 **Aide 顶部“保存文件”**。下载固定文件身份和起始大小；读取期间发生轮转则报错，不会混合不同文件。\n\n## 运行要求与兼容性\n\nNode.js 24、Linux Python 3 标准库 PTY（引用私钥使用 memfd）、`/bin/bash` 和 OpenSSH 客户端。安装包内置固定版本 ssh2 1.17.0、serialport 12.0.0 及其运行依赖与许可证，目标环境无需执行 npm install；终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。\n\n市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.4.2 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**\n\n插件是可信 Node 代码，不是权限沙箱；交互 Shell 和 SSH 具有 Aide 运行用户的系统权限。工作区边界用于起始目录、私钥路径和会话归属，不限制 Shell 后续能访问的路径。`read-only` 宿主策略会拒绝调用这些插件工具。锁屏、工作区切换、插件停用仍按宿主策略撤销当前面板权限；取消正在执行的工具时宿主可能结束对应后台实例，以防未确认的后续副作用。\n\n## Aide 管理会话\n\nAide 可以通过下列会话工具列出、创建和操作同一工作区的终端会话。例如：“在开发板 A 会话执行 uname -a，把输出给我”。创建和输入需要明确的用户指令；关闭网页后后台继续运行，停止 Aide 后不会自动重连。\n\n## 工具兼容\n\n保留 `terminal-run(command)` 的命令提案行为与 `terminal-history(path)` 的只读目录列举行为，没有将旧提案工具改成直接执行。新增 `terminal_session_list/create/input/poll/resize/close/logging/display/configure/read/logs/delete/files` 等工具供受控工作台调用。Aide 可先用 `terminal_session_list` 选择已打开会话，再调用 `terminal_session_read` 以行范围（如 `fromLine:128,toLine:133`、`fromLine:128` 或 `toLine:50`）或时间范围读取；`limit` 默认100、最大500，响应最多128 KiB，可用 `nextLine` 继续。`terminal_session_configure` 可修改已有会话的名称、目录、目标、认证方式/私钥引用、串口/网络参数、中继、日志、行号/时间戳及 PTY 尺寸；连接目标参数只保存供下次手动重连，PTY 尺寸可即时调整。密码和私钥口令不保存，私钥路径只引用现有文件；中继密钥写入私有配置且不会从工具结果返回。会话对 Aide 的可见性仅能从认证工作台修改。创建、输入和连接需要明确的用户指令与授权。\n\n## 开发与验证\n\n```sh\nnpm ci --ignore-scripts\nnpm run build\nnpm test\n```\n\n构建时固定 xterm.js 5.5.0、fit 0.10.0、search 0.15.0；运行包仅包含固定的生产依赖，不包含构建或浏览器测试依赖。第三方 MIT 许可证保存在 `vendor/`，Aide 工作台客户端保留原始 MIT 许可证。\n\n真实浏览器验收需要 Chromium 和已启动的隔离候选 Aide：\n\n```sh\nAIDE_TEST_URL=https://127.0.0.1:8098 \\\nAIDE_TEST_DATA=/path/to/isolated/data \\\nAIDE_EVIDENCE_DIR=/path/to/evidence \\\nnode test/browser-workbench.cjs\n# 使用相同隔离环境变量检查四主题、详情与响应式布局：\nnode test/browser-layout.cjs\n```\n\n测试仅启动回环 SSH 模拟设备，不连接实际设备，不调用模型；会创建并结束自己的测试会话、保留日志，不应指向生产实例。浏览器验收覆盖本地/SSH、后台保留、刷新恢复、超过128次真实调用的续期、日志下载、明暗主题、窄屏与明确结束。测试环境的精确结果及未验证范围见 Aide `docs/tasks/terminal-workbench-20261020.json`。\n\n## 已发布旧版\n\n[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 当前正式版本为 1.8.0，要求 `terminal-workbench-v1` 能力以及 Aide v0.1.18.0-RC3+；图形窗口还需要宿主实现 `workbench.viewer.protocol=1`（aide main `def8df6a` 及之后的源码构建）。旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。\n\n## 1.4.2 串口连接与选择修复\n\n串口会话提供明确的设备下拉选择，展示路径、厂商和序列号，支持刷新与手动输入。进入串口类型时自动枚举；不会自动连接任何设备。Linux 缺少 udevadm 或 udev 未登记容器设备时，补充扫描可见的串口字符设备和 by-id 别名。打开失败后释放连接状态，可直接修正参数或权限后重试；权限拒绝和占用错误提供具体提示。\n\nWindows 通信会话不再被仅适用于 Shell 的 PTY 限制阻止，串口路径接受 COM3 等名称；Windows 真实串口仍未实测。Docker 内不能凭插件自动访问宿主 COM 口：必须由运行环境映射或转发设备，并配置访问权限。SSH 工作区不会自动将本机串口改为远程 SSH 设备的串口。\n\n验证包含 Linux 原生虚拟串口二进制回环、失败重试、无 udev 枚举与设备选择 UI；物理 USB/UART、Windows/macOS 和用户具体设备环境仍待实测。\n\n## 加密中继部署与 Aide 可见性（1.4.2）\n\n新建 SSH、TCP、UDP 或串口会话时，勾选“通过中继部署”，填写设备侧目标信息、中继地址及固定 TCP 端口（默认 17780）。加密密钥可留空自动生成，或填写 32 字节随机密钥的 Base64 文本。会话先保存为“等待中继部署”，不会立即连接目标。\n\n1. 选中会话，点击“下载部署脚本 .py”，再在工作台标题栏点击出现的“保存”按钮完成下载。脚本已包含目标主机/端口或串口参数、监听端口和密钥，无需手工编辑。\n2. 将脚本放到可访问目标设备的电脑上。准备 Python 3.10+ 并运行：\n\n```sh\npython3 -m pip install cryptography\n# 串口目标另外需要：\npython3 -m pip install pyserial==3.5\npython3 aide-relay-<会话ID>.py\n```\n\n3. 确保 Aide 可以访问中继 TCP 端口，点击“检测在线”。在线只代表中继认证成功，不代表目标设备已连接；检测不会打开串口或目标连接。\n4. 点击“连接中继”。SSH 保留主机指纹核验与密码/引用私钥流程；串口使用中继电脑上的设备路径，例如 Windows COM3。UDP 保留报文边界，经 TCP/TLS 帧传输。会话仍显示 SSH、TCP、UDP 或串口，额外标记“中继模式”。\n\n数据链路采用 TLS 1.3；本端在发送应用数据前核对由密钥派生的中继公钥，并使用随机挑战/HMAC 认证客户端。没有自制流加密算法。脚本包含密钥，需像设备凭据一样妥善保管；中继只连接脚本中固定的目标，不接受客户端任意指定地址。每个脚本固定一个目标，最多8个认证连接；串口同时只允许一个连接。脚本不自动注册系统服务，按用户命令前台运行。\n\nShell/SSH 命令、设备收发与日志仍沿用原会话机制；中继在线状态每15秒检测一次，也可手动检测。中继断开后不会自动重连或重发。该版本不支持通过中继创建本地 Shell 或 TCP 监听会话，使用 SSH 会话连接远程 Shell。\n\n创建时及连接工具栏均可设置“对 Aide 可见”（默认开启）。关闭后，Aide 会话工具无法列出、读取输出/日志、发送或关闭该会话；工作台用户仍可管理。只有宿主认证的工作台调用能修改可见性或导出部署脚本，模型参数不能伪造此身份。存在隐藏会话时，底层批量通信接口对 Aide 收紧，可见会话仍可通过其专用工具操作。此开关控制插件接口，不替代宿主系统权限或可信插件的信任边界。\n\n配套宿主将终端状态、日志和中继密钥放在 Aide 私有服务数据目录，按工作区隔离。升级时旧状态会迁入，原文件逐字节确认迁移后移除；不要在迁移期间运行两个实例操作同一工作区。密钥文件使用当前运行用户的私有文件权限，不作为普通会话字段返回，不写入流量日志；这不等同于额外的静态加密。新版本需要宿主支持 `terminal-relay-v1` 和新的私有调用上下文，不能仅升级插件替代宿主更新。\n\n实际测试包含生成脚本的 TCP/UDP/TLS 收发、错误密钥/认证拒绝、Python pyserial 虚拟串口透传、OpenSSH 经中继认证、隐藏状态持久化和真实浏览器下载/部署/连接。物理 USB/UART、Windows/macOS 设备侧部署及完整 start.command 宿主 UI 尚未实测。\n\n降级前应备份 Aide 私有会话状态；旧版本不读取新私有目录，不会自动反向迁移。已有设备会话在插件升级时断开，不自动重新连接。\n\n## 1.5.1：恢复终端工作台\n\n按用户要求撤回 RDP/VNC 功能，恢复1.4.2的 Shell、SSH、TCP、UDP、串口、加密中继、日志、可见性和手动重新连接。移除桌面类型、控制工具、截图录屏和桌面运行库设置，不再要求桌面原生依赖。1.5.0旧桌面记录和媒体留在私有存储中，不自动删除，当前版本不加载这些记录。升级会断开现有连接，其他会话和日志继续保留。\n\n## 1.5.2：输入调度（Issue #565）\n\n键盘输入与中断可优先于尚未执行的日志、轮询等请求；连续最多处理8个输入请求后，让一个等待的后台请求继续。正在执行的请求仍需完成，宿主桥仍保持单请求在途，不改变授权或重放策略。输入确认丢失时不会自动重发。1.5.2 安装包包含此修复；历史1.5.1归档保持不变。\n\n## 1.5.3：TCP 代理背压（Aide #588）\n\n双向 pipe 随接收端的 drain 暂停/恢复来源，保留半关闭，错误或关闭时清理两端；连接数超额时先拒绝再建后端。真实慢接收端回归在两个方向各发送 32 MiB，验证拥塞时来源暂停、队列受控和恢复后的长度/SHA256 一致。该观测不是所有 OS 的固定队列上限。保留 1.5.2 输入调度修复；安装/升级会结束现有设备连接，不自动重放输入。\n\n## 1.8.0：MobaXterm 式开箱即用图形窗口（issue #42）\n\n新建 SSH 会话默认启用图形转发，无需安装 XQuartz/Xorg、无需填写 DISPLAY/Xauthority。插件在 Aide 运行环境内自动分配受管 Xvfb display、生成 0600 临时 Xauthority，并附带 openbox 窗口管理器、仅监听 127.0.0.1 的 x11vnc 与 websockify；会话重连时重建 display，结束后回收进程与 cookie。宿主按插件声明的 `workbench.viewer.protocol=1` 签发一次性 viewer 票据，并把同源 `/plugin-viewer/<ticket>/websockify` 反向代理到 loopback；CSP 只把 `connect-src` 钉到当前宿主确切 origin，沙箱保持 `allow-scripts allow-downloads` 且无 `allow-same-origin`。Workbench 内联 noVNC 1.4，支持 `scaleViewport` 缩放；远程剪贴板到达时提供“复制远程剪贴板”按钮（浏览器沙箱禁止无手势写剪贴板，点击后经用户手势写入），画布内 Ctrl+V 通过 paste 事件回填远端。图形窗口在独立面板打开，SSH 会话首次进入运行态时自动连接，终端与图形可分别关闭。\n同一版本把工具栏“终端设置”升级为逐会话全参数面板：名称、可见性、日志、行号/时间戳，SSH 的主机/端口/用户名/认证/私钥/X11，Telnet 终端类型与本地回显，TCP/UDP 目标与本地端口/组播，串口设备与波特率/数据位/停止位/校验/流控，起始目录以及中继地址/端口/密钥都可按当前会话修改；只提交实际变化的字段，连接类参数提示“重新连接后生效”，并提供“保存并重连”。\n\n验收：Docker Linux 套件 67/67；隔离 AIDE 容器中经真实 Workbench bridge 连接真实 sshd，自动分配 display :90、x11vnc/websockify 仅 loopback、noVNC 连接成功并显示通过 X11 转发启动的 xterm 窗口，截图见 `docs/verification/terminal-1.8.0-graphics.png`。远程剪贴板为按钮触发的用户手势复制（浏览器沙箱不允许无手势自动写剪贴板）；不同 DPI/缩放屏幕矩阵尚未做端到端断言。\n\n## 1.7.1：发送可靠性、UDP 与容量修复\n\n修复内嵌工作台发送按钮在 iframe 沙箱内不触发（#35）；UDP 发送未回调时关闭会话会挂起请求（#36）；UDP 对非回环目标的源地址绑定错误（#37）；TCP 代理绕过 32 个通信资源上限（#12）；macOS 上 SFTP 模拟根目录被 realpath 误判越界（#6）。新增受管 Xvfb display 生命周期（`terminal_xserver_start/status/stop`，仅 Unix socket、每 display 私有 cookie、停止即撤销）；Workbench iframe CSP 下的窗口呈现与剪贴板仍是 NOT_RUN，见 `docs/design/xserver-integration.md`。\n\n## 1.7.0：可配置会话与有界日志读取\n\n新增 `terminal_session_display`、`terminal_session_configure`、`terminal_session_read`。显示设置保存在会话记录，开启后新日志行可含行号/ISO 时间戳。Aide 可按行号或时间读取日志，响应默认100行，最多500行与128 KiB，并支持 `hasMore`/`nextLine` 分页；按时间读取要求记录时间戳。现有会话可配置 Shell、SSH、Telnet、TCP、UDP、串口及中继对应的手工参数。目标改变只对下次手动重连生效；密码和私钥口令不保存，中继密钥不从 API 返回。工作台权限仍仅允许受信工作台修改可见性。\n\n## 1.6.0：会话复制、Telnet 与 X11\n\n发行状态以 Release 为准，需配套 Aide v0.1.18.0-RC2+。新增独立会话复制/复制并连接、复用同一已部署中继的独立会话、Telnet 直连及中继协议处理、独立 SSH 的非信任 X11 转发。X11 需要已有可达 X Server、运行环境及远端 xauth 与有效 Xauthority，不能把协议通路验证当作真实窗口验收。\n\n完整操作、Docker 只读认证文件示例、权限/兼容/回滚和验证边界见 [会话功能说明](https://github.com/skyelan1999/aide-pkg-terminal/blob/v1.6.0/docs/session-features.md)。真实 Linux Xvfb、xauth、OpenSSH 与 xmessage 的直连/中继窗口显示已在隔离容器通过；macOS XQuartz、用户设备、原生 Windows 仍未验收。历史1.5.3归档未改变。\n",
+        "readme": "# Terminal · Aide 设备终端工作台\n\n**1.8.10 候选，实际发行状态以 GitHub Release 为准。** 图形窗口需要配套 Aide 宿主提供 viewer 代理与 Xvfb、x11vnc、openbox、websockify。基础功能兼容 **v0.1.18.0-RC3 或更高版本**。统一 Shell、SSH、Telnet、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织。\n\n## 中继交互性能（1.8.1）\n\n- SSH/Telnet 短输入可附 `offset`，确认响应在最多32毫秒的有界窗口内顺带返回实际收到的增量输出；长粘贴和旧客户端保留原发送行为，不伪造本地回显。\n- 输入与普通输出拉取共用偏移，重复/重叠片段去重；活动空轮询按8/16/32/40毫秒退避，后台和空闲仍降低频率，行号栏一帧最多更新一次。\n- 输入仍串行，结果不明不自动重发。新旧 daemon 通过 `capabilities.inputReadback` 协商兼容；没有改变认证、主机指纹或会话可见性规则。\n- 设备侧串口脚本改为等待首字节后读取已经到达的余量，去除64KiB读缓冲引入的0.5秒延迟。已有远端脚本需要重新下载并由使用者部署；仅更新本地插件不会替换远端脚本。\n- 当前验证使用本地 Aide 和回环TLS/虚拟串口夹具，不能据此承诺用户WAN、真实串口或所有设备的延迟。详见 `docs/verification/relay-performance-20261111.md`。\n\n## 安装与兼容\n\n1.8.10 的版本归档位于 `packages/v1.8.10/aide-pkg-terminal-v1.8.10.zip`，同目录提供 `SHA256SUMS`。导入前校验 `sha256sum -c SHA256SUMS`，然后在 Aide 的已安装插件详情中选择 ZIP 升级。历史版本可从 [GitHub Releases](https://github.com/skyelan1999/aide-pkg-terminal/releases) 获取。\n\n需要 **Aide v0.1.18.0-RC3+**。市场元数据最低版本为 `0.1.18.0 RC3`，不提供降低门槛的 sourceCompatibility；旧 RC1 不应自动升级至此版本。手动 ZIP 导入不经过市场门槛，请先升级宿主。运行时 `sessionCopyVersion=1` 仍作复制入口二次检查。归档不打包 xauth/X Server，部署前提见下方说明。历史1.5.3归档保持不变。\n\n插件新标签页入口已移除；后台会话、日志及 Aide 管理能力继续保留。宿主界面变更需要更新 Aide main 源码构建，单独升级插件不会替换宿主界面。\n\n## 使用\n\n## 截图和录制 X11\n\n在启用内置 X Server 的 SSH 会话中打开「截图与录制」。可截取 PNG，或录制无音频的 WebM。采集在 Aide 运行环境中进行，关掉图形窗口后仍可继续。同一宿主最多同时运行两项采集。录像可手动停止，默认 30 秒，最长 120 秒，每段最多 15 MiB；先到达的上限会结束本段。录制使用最高 1120×840 的画面和每秒最多 8 帧。\n\n采集结果保存在当前工作区的 Terminal 私有数据区。在最近采集列表点「保存」后，点击 Aide 顶部的保存按钮导出。删除会话会同时删除私有采集记录。配套 Linux Aide 容器提供 Pillow 的 XCB 和 WebP 支持，无需配置系统录屏权限。\n\nAide 可按授权可见的会话调用 `terminal_session_capture`，包括 `screenshot`、`start`、`stop`、`status`、`list` 和 `frames`。`screenshot` 和 `start` 需要提供采集目的。截图可交给支持图片的模型。视频在工作台保存。\n\n录像完成后，Aide 可自动调用 `frames`，把录像的代表性画面和相对时间戳传给视觉模型。默认从同一会话最近完成的 WebM 中取最多四帧，按时间从早到晚返回。可用 `captureId` 指定其他录像，用 `startMs`、`endMs` 限定区间，或用 `frameCount` 调整取样数量。抽帧使用录制中的时间分布，保留所选区间内的首尾画面及中间取样点。支持由 1.8.9 及更新版本的 Terminal 生成的 VP8 WebM。模型可对比这些画面描述可见变化。\n\n\n直连和中继 SSH 的「自动启用图形窗口」都为会话分配独立、带认证的 X Server，支持 RViz 等 OpenGL 应用。远端应用可以访问该会话的专用画面，请核对 SSH 主机指纹。外部 DISPLAY 和自定义 Xauthority 继续使用受限转发。剪贴板需手动复制或粘贴。\n\n连接后可从工具栏点击「图形窗口」。支持统一窗口的 Aide 通过宿主打开独立图形窗口，旧版 Aide 沿用原有图形窗口入口。弹窗受限时，画面在终端旁边显示，窄屏采用上下排列。两种方式都可以继续使用终端输入。\n\n已结束、中断或连接失败的会话，可在顶部点击 **重新连接**。沿用原会话 ID、名称、目标、认证方式、私钥引用、中继配置、日志开关和对 Aide 的可见性，继续保留历史日志；密码/私钥口令仍需在终端重新输入。重新连接会创建新的远端连接或 Shell，不恢复上次 Shell 内存状态，也不自动重放旧命令。运行中禁用此按钮，连接失败后可再次手动重试。\n\n本地 Shell、SSH 工作区 Shell、设备 SSH、中继、TCP 客户端、TCP 监听、UDP 和串口均可复用记录。TCP 监听接入的客户端连接须等待设备重新接入，不能反向连接设备的临时源端口；旧版未记录方向的 TCP 历史会话需新建一次客户端配置。工作区 Shell 必须先具备可用的工作区 SSH 主连接，重连固定该主连接，不回退其他身份。\n\n终端输入采用短时间合并并在写入确认后立即拉取远端回显，活动输入期间加快输出读取；空闲与后台页面降低频率。所有请求仍串行，长粘贴保持顺序，结果不确定的写入不自动重发。活动会话期间不自动执行可能阻塞的中继探测，仍可手动检测；“在线”仅表示中继可认证访问，不代表目标 SSH 登录成功。\n\n中继客户端关闭 TCP 小包合并；重新下载并运行 1.4.1 或更新版本的 Python 脚本还可应用设备侧相同优化。旧脚本继续兼容。实际回显速度仍取决于网络和设备。\n\n在配套 Aide 中启用 Terminal，点击“打开工作台”，选择“新建会话”。“工作区 Shell”在本地工作区使用 Aide 本地 PTY；在 SSH 工作区则复用 Aide 已认证的工作区 SSH 连接，并进入远程工作区目录。新建的“远程 SSH · 设备连接”由 **Aide 运行环境**的 OpenSSH 客户端连接目标设备。可以同时调试不同设备，切换标签或关闭工作台不会结束后台会话。点击“结束”并确认才结束连接，保留原有日志；已结束的会话可以明确删除记录和日志。\n\n中继会话可点击 **备份中继配置 .base64**，再从 Aide 顶部保存 `aide-relay-<会话ID>.v1.base64`。会话记录丢失后，在 **新建会话 → 加载中继配置** 选择备份，核对填入的参数并保存。随后可连接仍在运行的原有中继。加载只填充草稿，连接由用户另行发起。\n\n备份包含 Aide 到中继的地址、端口和密钥，以及设备连接参数。文件名标注版本和 Base64 编码，密钥仅在文件内容中。请把备份当作凭据私下保管。设备的 SSH 密码、私钥内容和终端历史保留在原有各自的位置。跨工作区恢复时，SSH 私钥文件引用需要在目标工作区可用。设备侧依旧使用已有的 `.py` 部署脚本。\n\nSSH 首次连接在终端显示主机指纹，请通过可信途径核对后输入 `yes`。指纹变化由 OpenSSH 拒绝连接；本插件不会自动忽略校验。认证方式可选默认身份、用户名和密码、私钥文件。密码和加密私钥口令在终端提示后输入；记录只保存用户名、地址、端口、认证方式与私钥文件位置，不保存密码和口令。私钥可手动填写当前来源内的相对路径，或点击“从工作区 / 引用选择…”浏览当前工作区以及已启用、允许访问的本地、Skill、SFTP、工作区 SFTP 引用来源。私钥内容由宿主限量读取，经 daemon 私有通道交给 Linux 内存文件，不传给网页、不加入工具参数或连接记录，也不新增私钥磁盘副本。原始私钥文件仍由用户管理。没有启用 agent 转发、端口转发，也不会读取用户 SSH config 的 ProxyCommand。\n\n工作台按本地、SSH、历史会话分组，支持名称/主机搜索与运行状态筛选；标签栏只显示活动会话和当前选中的历史会话。桌面右侧显示真实连接状态、目标、起始目录、创建时间和日志详情。工作台在当前 Aide 页面内打开，窄屏使用会话抽屉。提供 xterm 终端、窗口尺寸适配、Ctrl+C、输出查找、日志开关与下载。每个会话可在“终端设置”中独立打开左侧行号和时间戳；偏好保存到会话记录并随会话 ID 恢复。显示标记不进入终端输入、实时输出、选择或复制内容；启用日志时，之后落盘的新日志行会保存已启用的行号和/或 ISO 时间戳，已有日志不会补写，暂停日志时不记录标记。日志 API 可按 1 起始行号或 ISO 时间范围读取，默认100行、最多500行及128 KiB，并返回 `hasMore` / `nextLine` 供分段读取；按时间读取仅匹配日志中实际带时间戳的行。历史日志回放显示本次恢复时间，该显示时间不等于原始接收时间。命令和按键直接发送到目标会话，请确认当前标签对应的设备。关闭面板不会自动发送尚未送达的输入，也不会重试结果不确定的写操作。\n\nSSH 工作区 Shell 沿用工作区设置中的密码、私钥或引用私钥认证，不在终端面板再次保存一份凭据。连接固定到已认证主连接；切换工作区、主连接断开后不会自动改接其他主机。远程主机需具备 `/bin/bash`，所填起始目录用于工作区 Shell；设备 SSH 登录后的目录由远端账户决定。\n\n## TCP、UDP 和串口工作台\n\n“新建会话”可选择 TCP 客户端、TCP 本地监听、UDP 数据报或串口。TCP 监听仅绑定 Aide 运行环境的 `127.0.0.1`，端口0自动分配；新客户端接入后显示独立会话，选择客户端会话进行发送。UDP 可指定目标主机/端口和本地接收端口，发送复用同一个已绑定 socket，设备可向该端口回复。串口提供设备路径、波特率、数据位、停止位、校验与 RTS/CTS 流控，并可刷新可用设备列表。\n\n通信会话使用独立报文发送栏：选择 UTF-8 或 HEX，文本可附加 LF/CRLF/CR。仅点击“发送”才写出报文，不按键逐字发包，不自动重发结果不确定的写入。HEX 必须为完整字节。接收视图和轮转日志保留时间、TX/RX、端点、长度、完整十六进制与可读文本，因此二进制数据和 UDP 报文边界可追溯。日志关闭后不再落盘，仍保留有界内存回放。\n\n所有设备通信均从 **Aide 运行环境**发起；SSH 工作区只改变工作区 Shell 与会话归属，不把 TCP/UDP/串口执行位置自动迁移到远程主机。容器访问物理串口需要预先映射对应设备并具备权限。Linux 原生串口绑定与虚拟 PTY 回环已验证；真实 USB/UART 硬件、Windows/macOS 未实测。\n\n## 合并的高级通信工具\n\n原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具合并到 Terminal，统一加 `terminal_` 前缀；原插件保持可用，工具名不会相互覆盖。Aide 可直接调用这些工具，工作台内部通过受限 `terminal_session_comm` 分发。工具连接、发送、文件传输、代理、回放和模拟均需用户明确意图。\n\n| 前缀 | 功能 |\n| --- | --- |\n| `terminal_ssh_*` | 密码/公钥连接、exec、SFTP 列目录/下载/上传、本地隧道、模拟 SSH/SFTP 服务端及规则 |\n| `terminal_tcp_*` | 连接/监听/发送/关闭、代理、模拟应答、录制回放与有界边界报文探测 |\n| `terminal_udp_*` | 绑定/发送/关闭、模拟应答、回环组播加入/离开 |\n| `terminal_serial_*` | 列出/打开/配置/写入/关闭串口、虚拟串口对、按帧回放 |\n\n`terminal_ssh_fingerprint` 额外提供只读指纹探测，返回 `verified:false`。高级 SSH API 连接必须提供经用户可信途径核验的 `hostFingerprint`（`SHA256:...`）；获取指纹本身不等于信任。工作台 SSH 保留 OpenSSH 的指纹确认与严格 known_hosts 行为。高级 API 的 password/privateKey/passphrase 沿用原插件的临时调用参数，插件不持久化；文件引用模式由宿主通过私有上下文传递私钥，工作台密码与口令仍在终端交互输入。\n\n通信资源按工作区独立管理，API 连接/隧道/模拟服务等句柄包含作用域身份，不能跨工作区使用；后台重启后旧句柄失效。基础 TCP/UDP/串口工具创建的连接也会显示在工作台。高级 SSH API 连接用于 exec/SFTP/隧道，与工作台交互式 SSH PTY 是各自的连接。SFTP 本地文件必须位于当前**本地工作区**，拒绝越界与符号链接逃逸；SSH 工作区不以本地安装目录作为文件传输回退路径。\n\n每个工作区最多32个通信资源，模拟规则/显式回放最多64条、总输入256KiB；TCP 保留最多32份录制，每份最多2MiB/2048帧。原有会话32条记录/16条活动限制继续生效。TCP监听、代理、SSH隧道和模拟服务只在回环监听；UDP组播沿用原实现的显式组播模式，绑定全地址但组成员接口限定回环。管理员禁用的通信工具不能经通用入口或会话发送绕过。\n\n## 后台生命周期与数据\n\n“驻留”指 **Aide 与插件后台持续运行期间**，浏览器关闭、刷新或切换面板后会话继续运行。停用/重启插件、升级插件或停止 Aide 会结束连接。重新启动后台会恢复会话记录及日志，将未正常结束的记录标记为“后台已重启”，不会自动重连或重放设备命令。断线不会自动重新认证；请新建会话。\n\n本地工作区数据保存在 `.aide/terminal-workbench/`。SSH 工作区数据保存在 **Aide 数据目录**的 `terminal-workspaces/<工作区标识>/.aide/terminal-workbench/`，按远程目录、主机、端口和用户隔离，不会回退到本地安装目录，也不会向远程设备写入会话日志。替换插件文件不会覆盖日志。目录权限 `0700`，文件权限 `0600`。请把这个目录加入项目的 Git 忽略规则；备份或清理工作区时按需保留它。\n\n- 每个会话最多保留 **4 × 2 MiB** 原始输出日志，达到上限自动覆盖最旧分卷；每个工作区最多32条会话记录，整个插件后台最多16个运行会话。删除已结束记录可以释放名额和对应日志。\n- 日志只捕获 PTY **输出**，不单独存储键盘输入；OpenSSH 的密码提示关闭回显。设备或应用自行回显的命令、口令及其他敏感内容仍会被记录，必要时先暂停日志。\n- 日志保留 ANSI 控制序列，文件名是会话 ID，开始/结束时间在同名 JSON 元数据中。无需打开工作台，后台仍会记录输出。磁盘写入失败时工作台显示错误，已有内存输出仍可查看；检查存储后重新开启日志即可重试后续写入。\n- 输出回放保留最近512 KiB，超出会明确提示恢复的是尾部；磁盘日志独立保留。查看日志可选择单个分卷准备下载，然后点击 **Aide 顶部“保存文件”**。下载固定文件身份和起始大小；读取期间发生轮转则报错，不会混合不同文件。\n\n## 运行要求与兼容性\n\nNode.js 24、Linux Python 3 标准库 PTY（引用私钥使用 memfd）、`/bin/bash` 和 OpenSSH 客户端。安装包内置固定版本 ssh2 1.17.0、serialport 12.0.0 及其运行依赖与许可证，目标环境无需执行 npm install；终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。\n\n市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.4.2 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**\n\n插件是可信 Node 代码，不是权限沙箱；交互 Shell 和 SSH 具有 Aide 运行用户的系统权限。工作区边界用于起始目录、私钥路径和会话归属，不限制 Shell 后续能访问的路径。`read-only` 宿主策略会拒绝调用这些插件工具。锁屏、工作区切换、插件停用仍按宿主策略撤销当前面板权限；取消正在执行的工具时宿主可能结束对应后台实例，以防未确认的后续副作用。\n\n## Aide 管理会话\n\nAide 可以通过下列会话工具列出、创建和操作同一工作区的终端会话。例如：“在开发板 A 会话执行 uname -a，把输出给我”。创建和输入需要明确的用户指令；关闭网页后后台继续运行，停止 Aide 后不会自动重连。\n\n## 工具兼容\n\n保留 `terminal-run(command)` 的命令提案行为与 `terminal-history(path)` 的只读目录列举行为，没有将旧提案工具改成直接执行。新增 `terminal_session_list/create/input/poll/resize/close/logging/display/configure/read/logs/delete/files` 等工具供受控工作台调用。Aide 可先用 `terminal_session_list` 选择已打开会话，再调用 `terminal_session_read` 以行范围（如 `fromLine:128,toLine:133`、`fromLine:128` 或 `toLine:50`）或时间范围读取；`limit` 默认100、最大500，响应最多128 KiB，可用 `nextLine` 继续。`terminal_session_configure` 可修改已有会话的名称、目录、目标、认证方式/私钥引用、串口/网络参数、中继、日志、行号/时间戳及 PTY 尺寸；连接目标参数只保存供下次手动重连，PTY 尺寸可即时调整。密码和私钥口令不保存，私钥路径只引用现有文件；中继密钥写入私有配置且不会从工具结果返回。会话对 Aide 的可见性仅能从认证工作台修改。创建、输入和连接需要明确的用户指令与授权。\n\n## 开发与验证\n\n```sh\nnpm ci --ignore-scripts\nnpm run build\nnpm test\n```\n\n构建时固定 xterm.js 5.5.0、fit 0.10.0、search 0.15.0；运行包仅包含固定的生产依赖，不包含构建或浏览器测试依赖。第三方 MIT 许可证保存在 `vendor/`，Aide 工作台客户端保留原始 MIT 许可证。\n\n真实浏览器验收需要 Chromium 和已启动的隔离候选 Aide：\n\n```sh\nAIDE_TEST_URL=https://127.0.0.1:8098 \\\nAIDE_TEST_DATA=/path/to/isolated/data \\\nAIDE_EVIDENCE_DIR=/path/to/evidence \\\nnode test/browser-workbench.cjs\n# 使用相同隔离环境变量检查四主题、详情与响应式布局：\nnode test/browser-layout.cjs\n```\n\n测试仅启动回环 SSH 模拟设备，不连接实际设备，不调用模型；会创建并结束自己的测试会话、保留日志，不应指向生产实例。浏览器验收覆盖本地/SSH、后台保留、刷新恢复、超过128次真实调用的续期、日志下载、明暗主题、窄屏与明确结束。测试环境的精确结果及未验证范围见 Aide `docs/tasks/terminal-workbench-20261020.json`。\n\n## 已发布旧版\n\n[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 当前正式版本为 1.8.0，要求 `terminal-workbench-v1` 能力以及 Aide v0.1.18.0-RC3+；图形窗口还需要宿主实现 `workbench.viewer.protocol=1`（aide main `def8df6a` 及之后的源码构建）。旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。\n\n## 1.4.2 串口连接与选择修复\n\n串口会话提供明确的设备下拉选择，展示路径、厂商和序列号，支持刷新与手动输入。进入串口类型时自动枚举；不会自动连接任何设备。Linux 缺少 udevadm 或 udev 未登记容器设备时，补充扫描可见的串口字符设备和 by-id 别名。打开失败后释放连接状态，可直接修正参数或权限后重试；权限拒绝和占用错误提供具体提示。\n\nWindows 通信会话不再被仅适用于 Shell 的 PTY 限制阻止，串口路径接受 COM3 等名称；Windows 真实串口仍未实测。Docker 内不能凭插件自动访问宿主 COM 口：必须由运行环境映射或转发设备，并配置访问权限。SSH 工作区不会自动将本机串口改为远程 SSH 设备的串口。\n\n验证包含 Linux 原生虚拟串口二进制回环、失败重试、无 udev 枚举与设备选择 UI；物理 USB/UART、Windows/macOS 和用户具体设备环境仍待实测。\n\n## 加密中继部署与 Aide 可见性（1.4.2）\n\n新建 SSH、TCP、UDP 或串口会话时，勾选“通过中继部署”，填写设备侧目标信息、中继地址及固定 TCP 端口（默认 17780）。加密密钥可留空自动生成，或填写 32 字节随机密钥的 Base64 文本。会话先保存为“等待中继部署”，不会立即连接目标。\n\n1. 选中会话，点击“下载部署脚本 .py”，再在工作台标题栏点击出现的“保存”按钮完成下载。脚本已包含目标主机/端口或串口参数、监听端口和密钥，无需手工编辑。\n2. 将脚本放到可访问目标设备的电脑上。准备 Python 3.10+ 并运行：\n\n```sh\npython3 -m pip install cryptography\n# 串口目标另外需要：\npython3 -m pip install pyserial==3.5\npython3 aide-relay-<会话ID>.py\n```\n\n3. 确保 Aide 可以访问中继 TCP 端口，点击“检测在线”。在线只代表中继认证成功，不代表目标设备已连接；检测不会打开串口或目标连接。\n4. 点击“连接中继”。SSH 保留主机指纹核验与密码/引用私钥流程；串口使用中继电脑上的设备路径，例如 Windows COM3。UDP 保留报文边界，经 TCP/TLS 帧传输。会话仍显示 SSH、TCP、UDP 或串口，额外标记“中继模式”。\n\n数据链路采用 TLS 1.3；本端在发送应用数据前核对由密钥派生的中继公钥，并使用随机挑战/HMAC 认证客户端。没有自制流加密算法。脚本包含密钥，需像设备凭据一样妥善保管；中继只连接脚本中固定的目标，不接受客户端任意指定地址。每个脚本固定一个目标，最多8个认证连接；串口同时只允许一个连接。脚本不自动注册系统服务，按用户命令前台运行。\n\nShell/SSH 命令、设备收发与日志仍沿用原会话机制；中继在线状态每15秒检测一次，也可手动检测。中继断开后不会自动重连或重发。该版本不支持通过中继创建本地 Shell 或 TCP 监听会话，使用 SSH 会话连接远程 Shell。\n\n创建时及连接工具栏均可设置“对 Aide 可见”（默认开启）。关闭后，Aide 会话工具无法列出、读取输出/日志、发送或关闭该会话；工作台用户仍可管理。只有宿主认证的工作台调用能修改可见性或导出部署脚本，模型参数不能伪造此身份。存在隐藏会话时，底层批量通信接口对 Aide 收紧，可见会话仍可通过其专用工具操作。此开关控制插件接口，不替代宿主系统权限或可信插件的信任边界。\n\n配套宿主将终端状态、日志和中继密钥放在 Aide 私有服务数据目录，按工作区隔离。升级时旧状态会迁入，原文件逐字节确认迁移后移除；不要在迁移期间运行两个实例操作同一工作区。密钥文件使用当前运行用户的私有文件权限，不作为普通会话字段返回，不写入流量日志；这不等同于额外的静态加密。新版本需要宿主支持 `terminal-relay-v1` 和新的私有调用上下文，不能仅升级插件替代宿主更新。\n\n实际测试包含生成脚本的 TCP/UDP/TLS 收发、错误密钥/认证拒绝、Python pyserial 虚拟串口透传、OpenSSH 经中继认证、隐藏状态持久化和真实浏览器下载/部署/连接。物理 USB/UART、Windows/macOS 设备侧部署及完整 start.command 宿主 UI 尚未实测。\n\n降级前应备份 Aide 私有会话状态；旧版本不读取新私有目录，不会自动反向迁移。已有设备会话在插件升级时断开，不自动重新连接。\n\n## 1.5.1：恢复终端工作台\n\n按用户要求撤回 RDP/VNC 功能，恢复1.4.2的 Shell、SSH、TCP、UDP、串口、加密中继、日志、可见性和手动重新连接。移除桌面类型、控制工具、截图录屏和桌面运行库设置，不再要求桌面原生依赖。1.5.0旧桌面记录和媒体留在私有存储中，不自动删除，当前版本不加载这些记录。升级会断开现有连接，其他会话和日志继续保留。\n\n## 1.5.2：输入调度（Issue #565）\n\n键盘输入与中断可优先于尚未执行的日志、轮询等请求；连续最多处理8个输入请求后，让一个等待的后台请求继续。正在执行的请求仍需完成，宿主桥仍保持单请求在途，不改变授权或重放策略。输入确认丢失时不会自动重发。1.5.2 安装包包含此修复；历史1.5.1归档保持不变。\n\n## 1.5.3：TCP 代理背压（Aide #588）\n\n双向 pipe 随接收端的 drain 暂停/恢复来源，保留半关闭，错误或关闭时清理两端；连接数超额时先拒绝再建后端。真实慢接收端回归在两个方向各发送 32 MiB，验证拥塞时来源暂停、队列受控和恢复后的长度/SHA256 一致。该观测不是所有 OS 的固定队列上限。保留 1.5.2 输入调度修复；安装/升级会结束现有设备连接，不自动重放输入。\n\n## 1.8.0：MobaXterm 式开箱即用图形窗口（issue #42）\n\n新建 SSH 会话默认启用图形转发，无需安装 XQuartz/Xorg、无需填写 DISPLAY/Xauthority。插件在 Aide 运行环境内自动分配受管 Xvfb display、生成 0600 临时 Xauthority，并附带 openbox 窗口管理器、仅监听 127.0.0.1 的 x11vnc 与 websockify；会话重连时重建 display，结束后回收进程与 cookie。宿主按插件声明的 `workbench.viewer.protocol=1` 签发一次性 viewer 票据，并把同源 `/plugin-viewer/<ticket>/websockify` 反向代理到 loopback；CSP 只把 `connect-src` 钉到当前宿主确切 origin，沙箱保持 `allow-scripts allow-downloads` 且无 `allow-same-origin`。Workbench 内联 noVNC 1.4，支持 `scaleViewport` 缩放；远程剪贴板到达时提供“复制远程剪贴板”按钮（浏览器沙箱禁止无手势写剪贴板，点击后经用户手势写入），画布内 Ctrl+V 通过 paste 事件回填远端。图形窗口在独立面板打开，SSH 会话首次进入运行态时自动连接，终端与图形可分别关闭。\n同一版本把工具栏“终端设置”升级为逐会话全参数面板：名称、可见性、日志、行号/时间戳，SSH 的主机/端口/用户名/认证/私钥/X11，Telnet 终端类型与本地回显，TCP/UDP 目标与本地端口/组播，串口设备与波特率/数据位/停止位/校验/流控，起始目录以及中继地址/端口/密钥都可按当前会话修改；只提交实际变化的字段，连接类参数提示“重新连接后生效”，并提供“保存并重连”。\n\n验收：Docker Linux 套件 67/67；隔离 AIDE 容器中经真实 Workbench bridge 连接真实 sshd，自动分配 display :90、x11vnc/websockify 仅 loopback、noVNC 连接成功并显示通过 X11 转发启动的 xterm 窗口，截图见 `docs/verification/terminal-1.8.0-graphics.png`。远程剪贴板为按钮触发的用户手势复制（浏览器沙箱不允许无手势自动写剪贴板）；不同 DPI/缩放屏幕矩阵尚未做端到端断言。\n\n## 1.7.1：发送可靠性、UDP 与容量修复\n\n修复内嵌工作台发送按钮在 iframe 沙箱内不触发（#35）；UDP 发送未回调时关闭会话会挂起请求（#36）；UDP 对非回环目标的源地址绑定错误（#37）；TCP 代理绕过 32 个通信资源上限（#12）；macOS 上 SFTP 模拟根目录被 realpath 误判越界（#6）。新增受管 Xvfb display 生命周期（`terminal_xserver_start/status/stop`，仅 Unix socket、每 display 私有 cookie、停止即撤销）；Workbench iframe CSP 下的窗口呈现与剪贴板仍是 NOT_RUN，见 `docs/design/xserver-integration.md`。\n\n## 1.7.0：可配置会话与有界日志读取\n\n新增 `terminal_session_display`、`terminal_session_configure`、`terminal_session_read`。显示设置保存在会话记录，开启后新日志行可含行号/ISO 时间戳。Aide 可按行号或时间读取日志，响应默认100行，最多500行与128 KiB，并支持 `hasMore`/`nextLine` 分页；按时间读取要求记录时间戳。现有会话可配置 Shell、SSH、Telnet、TCP、UDP、串口及中继对应的手工参数。目标改变只对下次手动重连生效；密码和私钥口令不保存，中继密钥不从 API 返回。工作台权限仍仅允许受信工作台修改可见性。\n\n## 1.6.0：会话复制、Telnet 与 X11\n\n发行状态以 Release 为准，需配套 Aide v0.1.18.0-RC2+。新增独立会话复制/复制并连接、复用同一已部署中继的独立会话、Telnet 直连及中继协议处理、独立 SSH 的非信任 X11 转发。X11 需要已有可达 X Server、运行环境及远端 xauth 与有效 Xauthority，不能把协议通路验证当作真实窗口验收。\n\n完整操作、Docker 只读认证文件示例、权限/兼容/回滚和验证边界见 [会话功能说明](https://github.com/skyelan1999/aide-pkg-terminal/blob/v1.6.0/docs/session-features.md)。真实 Linux Xvfb、xauth、OpenSSH 与 xmessage 的直连/中继窗口显示已在隔离容器通过；macOS XQuartz、用户设备、原生 Windows 仍未验收。历史1.5.3归档未改变。\n",
         "screenshots": [],
-        "changelog": "# Changelog\n\n## 1.8.1（发行状态以 GitHub Release 为准）\n\n- SSH/Telnet 输入确认可有界携带真实输出，避免小回显的额外拉取；动态偏移与重叠去重保证不重复显示。\n- 交互空轮询改为8/16/32/40ms退避，行号/时间戳渲染逐帧合并；保留单飞、有序输入、后台退避和不明写入不重发。\n- 串口中继读取首字节后只排空已到达数据，修复固定约500ms等待；TLS认证与UDP帧边界不变。\n- 新增输入回读、可见性重查、超时不伪造回显、调度与串口延迟回归；实测范围见性能记录。\n\n## 1.8.0（发行状态以 GitHub Release 为准）\n\n- 新增 MobaXterm 式开箱即用图形窗口：SSH 会话自动分配受管 Xvfb display、私有 Xauthority、openbox、仅 loopback 的 x11vnc 与 websockify，并在 Workbench 内自动打开 noVNC 面板（#42 第一阶段）。\n- 宿主新增一次性 viewer ticket 与同源 `/plugin-viewer/<ticket>/websockify` 反代，CSP 仅对该插件放行宿主确切 origin；沙箱仍为 `allow-scripts allow-downloads`。\n- 远程剪贴板改为按钮触发的用户手势复制，`clipboard` API 失败时降级 `execCommand('copy')`；画布内 Ctrl+V 回填远端。\n- “终端设置”升级为逐会话全参数面板：名称/可见性/日志/显示、SSH 认证与私钥、Telnet、TCP/UDP、串口、起始目录与中继均可按当前会话修改；只提交变化字段，支持“保存并重连”。\n- 修复设置弹窗端口标签重写导致输入框消失、复选框布局换行等问题（#35 回归项）。\n- 验收：插件套件 67/67；真实隔离 AIDE 宿主 + 真实 sshd 的 Workbench 图形与全参数设置脚本全部通过，截图见 `docs/verification/terminal-1.8.0-graphics.png` 与 `terminal-1.8.0-settings.png`。\n\n## 1.7.1（发行状态以 GitHub Release 为准）\n\n- 修复内嵌工作台无法发送 TCP/UDP/串口数据（#35）：发送按钮不再依赖 iframe 沙箱中被禁用的表单提交，改为显式 click 驱动并防重复提交；不扩大 iframe 权限。\n- 修复 UDP 会话在发送回调前被并发关闭时，发送 Promise 永不结算的问题（#36）；关闭时以「发送结果未确认」拒绝挂起发送，且只结算一次。\n- 修复 UDP 会话对非回环/桥接目标发送报 EINVAL（#37）：按目标路由选择本地源地址绑定，回环与组播行为不变。\n- 修复 TCP 代理接入不检查工作区全局 32 资源上限（#12）：代理注册的连接计入上限，超限立即关闭。\n- 修复 macOS 上 SFTP 模拟器把自身根目录判为越界（#6）：根目录与目标父目录统一 realpath 规范化，软链逃逸校验语义不变。\n- 新增受管 X display 生命周期（#40 第一阶段）：`terminal_xserver_start/status/stop` 在 Linux 运行环境拉起 Xvfb，每 display 私有 MIT cookie，仅 Unix socket，停止即撤销；窗口呈现与 seamless 多窗口见 `docs/design/xserver-integration.md`（NOT_RUN）。\n\n## 1.7.0（发行状态以 GitHub Release 为准）\n\n- 工作台按会话保存行号/时间戳设置；启用后仅对新写入的输出日志添加行号和 ISO 时间戳。\n- 新增 `terminal_session_read`，按行或时间范围读取保留日志，返回分页元数据并限制响应大小。\n- 新增 `terminal_session_configure`，支持编辑已有会话的手工配置；连接目标变化需要手动重连，不会自动打断当前会话。\n- 新增 `terminal_session_display`，供 Aide 管理会话显示设置。\n- 工作台复用已授权通信桥接分派设置操作，保持宿主最多16个桥接工具限制。\n\n## 1.6.0（发行状态以 GitHub Release 为准）\n\n- 独立会话复制设置/复制并连接；共享既有固定目标中继，PTY、连接和日志独立。\n- Telnet 直连/中继的流式 IAC、NVT、ECHO/SGA、TTYPE、NAWS、BINARY 处理，断开取消及动态发送禁用检查。\n- 独立 SSH 直连/中继可显式请求非信任 X11，验证 DISPLAY/xauth/Xauthority；工作区 SSH 可预填公开配置后新建独立连接并重新认证。\n- 修复遗漏部分会话类型的侧栏分组（Aide #728），复用宿主规范短 SSH socket 并核对原 master inode（#730）。\n- 增加真实 Linux Xvfb + xauth + OpenSSH + xmessage 的直连与 TLS relay 窗口显示验证；副本在源连接关闭后仍显示窗口，保存截图和窗口树。合成协议测试继续保留。\n- 要求 Aide v0.1.18.0-RC2+；市场最低版本0.1.18.0 RC2，无sourceCompatibility降级。提供正式ZIP/SHA与隔离CI，历史1.5.3不变。\n- macOS XQuartz、原生Windows、硬件与用户设备仍为NOT_RUN；宿主正式镜像另由主程序门禁验收。详见 docs/session-features.md。\n\n## 1.5.1（预发布）\n\n- 按用户要求移除 RDP/VNC，恢复1.4.2终端工作台。\n- 移除桌面控制、截图录屏、运行库配置和实验后端，保留原有设备终端全部功能。\n- 历史桌面记录不再加载；私有记录和媒体不自动删除。\n\n## 1.5.0（已撤回）\n\n- 独立 Terminal 插件新增 RDP/VNC 桌面，支持直连和既有 Python TCP/TLS 中继。\n- 每会话认证的私有 Xvfb、FreeRDP2/3 NLA/TLS 和明确的 RDP SHA256 证书信任；VNC 支持密码或显式无认证。\n- 提供虚拟鼠标点击/拖动/滚动，键盘按下/释放/组合键与文本，界面和 Aide 工具均可使用。\n- 新增 JPEG 截图、有界 H.264 MP4 录屏、私有媒体列举/下载/删除及停止后的保留。\n- 继承隐藏会话和禁用工具策略；配套 Aide 主程序支持将截图交给视觉模型。\n- 需要新宿主 terminal-desktop-v1 和 Linux 原生桌面依赖；插件不自动安装系统包、不保存连接密码。\n\n## 1.4.2（预发布）\n\n- 已结束/中断会话新增“重新连接”，复用原会话记录、配置、日志、中继和可见性，不再要求新建。\n- SSH 密码与私钥口令重新交互输入；引用私钥沿用宿主已有的按会话读取能力，不保存凭据。\n- 保留单次手动重连与失败重试，防止并发启动和旧进程退出事件覆盖新状态；不会自动重放输入。\n- TCP 客户端和监听、UDP、串口支持复用记录；被动 TCP 接入连接等待设备重新接入，拒绝反向拨号。\n\n## 1.4.1（预发布）\n\n- 缩短键盘输入合并等待，写入确认后立即拉取回显，活动期间自适应读取并及时排空分页输出。\n- 活动会话不再执行阻塞请求队列的自动中继检测；保留手动检测。\n- 中继 TCP/TLS 客户端与设备侧脚本关闭 Nagle 小包合并，旧脚本保持兼容。\n- 长粘贴保持单会话发送顺序；仍串行使用宿主桥，不自动重发结果不确定的输入。\n\n## 1.4.0（预发布）\n\n- 可选设备侧 Python 中继，下载已配置目标的脚本，通过固定 TCP 接口和256位密钥认证的 TLS1.3 传输。\n- SSH/TCP/UDP/串口保留原类型，新增等待部署、在线探测、连接与中继标识。\n- 新增会话对 Aide 可见开关，可信工作台身份在宿主绑定；隐藏会话拒绝列出、读取、发送及管理。\n- 状态、日志和密钥迁入服务私有目录，旧状态验证迁移，保留既有会话和日志。\n- 需要支持 terminal-relay-v1 的配套 Aide 主机。\n\n## 1.3.2（预发布）\n\n- 串口下拉选择、自动枚举与刷新，保留手动路径。\n- Linux 无 udev 或容器设备未登记时扫描可见串口设备。\n- 修复打开失败后残留已打开状态，补充权限与占用提示。\n- 修复 COM 路径校验及 Windows 通信会话误受 PTY 限制。\n\n## 1.3.1（预发布）\n\n- 修正串口 RTS/CTS 流控选项到原生驱动 rtscts 字段的映射，并通过原生虚拟串口配置及收发验证。\n- 保留1.3.0合并的35项通信功能及不可变归档。\n\n## 1.3.0（预发布）\n\n- 合并 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个可执行工具，使用 terminal_ 前缀避免冲突。\n- 工作台新增 TCP 客户端/本地监听、UDP 与串口会话，支持显式 UTF-8/HEX 报文发送及文本行尾。\n- 通信日志统一记录 TX/RX、端点、完整字节与可读文本；沿用轮转存储和后台生命周期。\n- 增加主机指纹核验、作用域句柄、SFTP本地路径限制、禁用策略与有界录制。\n- 安装包内置固定版 ssh2、serialport 和运行依赖；需要配套 Aide main，仍为预发布。\n\n## 1.2.0（预发布）\n\n- 工作区 Shell 支持本地与 SSH 工作区，SSH 模式复用已认证主连接并进入远程目录。\n- 设备 SSH 明确区分默认身份、用户名密码与私钥认证，加密私钥支持终端输入口令。\n- 增加工作区 / 引用来源私钥文件选择器，私钥经宿主私有通道和 Linux memfd 使用，不进入网页或会话元数据。\n- SSH 工作区日志在 Aide 数据目录按主机、端口、用户与目录隔离；固定主连接 inode，避免工作区切换误连。\n- 需要配套 Aide main 的 terminal-ssh-workspace-v1 能力，仍为预发布；不再提供插件新标签页入口。\n\n## 1.1.2（预发布）\n\n- 配套 Aide main 移除插件新标签页按钮、链接自动打开和专用布局，仅保留当前页面工作台。\n- 保留后台本地/SSH 会话、日志及 Aide 会话管理；单独升级插件不会替换宿主界面。\n- 仍要求 terminal-workbench-v1、bridge.renew 与 daemon.detach 宿主能力。\n\n## 1.1.1（预发布）\n\n- 重排设备终端为连接导航、主终端与桌面连接详情三栏，优化专业/经典明暗主题和手机布局。\n- 会话按本地、SSH和历史分组，新增搜索与运行状态筛选，历史记录不再挤占活动标签栏。\n- 桌面详情显示实际状态、连接目标、目录、创建时间与日志信息；保留后台驻留与Aide会话管理工具。\n- 配套宿主将独立标签页铺满窗口并压缩外层标题栏；仍要求PR #7中的宿主能力，不替换稳定市场。\n\n## 1.1.0（预发布）\n\n- 增加常驻设备终端工作台：本地 PTY、OpenSSH、多会话标签与列表、输出查找及尺寸适配。\n- 关闭或刷新工作台后保留运行会话；后台重启仅恢复记录和日志，不自动重连或重放命令。\n- 输出日志按工作区和会话落盘、轮转、暂停、分页下载及明确删除；不另存键盘输入或 SSH 密码。\n- 使用离线内嵌 xterm.js；要求宿主支持受控桥接续期和 daemon detach，旧宿主明确提示升级。\n- 配套宿主增加“新标签页打开”，关闭原页面后可独立调试。\n- 保留原 `terminal-run` 提案及 `terminal-history` 目录工具。\n\n## 1.0.0\n\n- 将 Aide 已有 Terminal 插件独立分发，保留 MIT 许可。\n- 保留原代码、manifest、版本和安装包字节内容。\n- 补充实际能力说明：`terminal-run` 只生成命令提案，`terminal-history` 只读列举目录；没有交互式终端或命令历史存储。\n## 1.6.0（发行状态以 GitHub Release 为准）\n\n- 独立会话复制设置/复制并连接；共享既有固定目标中继，PTY、连接和日志独立。\n- Telnet 直连/中继的流式 IAC、NVT、ECHO/SGA、TTYPE、NAWS、BINARY 处理，断开取消及动态发送禁用检查。\n- 独立 SSH 直连/中继可显式请求非信任 X11，验证 DISPLAY/xauth/Xauthority；工作区 SSH 可预填公开配置后新建独立连接并重新认证。\n- 修复遗漏部分会话类型的侧栏分组（Aide #728），复用宿主规范短 SSH socket 并核对原 master inode（#730）。\n- 增加真实 Linux Xvfb + xauth + OpenSSH + xmessage 的直连与 TLS relay 窗口显示验证；副本在源连接关闭后仍显示窗口，保存截图和窗口树。合成协议测试继续保留。\n- 要求 Aide v0.1.18.0-RC2+；市场最低版本0.1.18.0 RC2，无sourceCompatibility降级。提供正式ZIP/SHA与隔离CI，历史1.5.3不变。\n- macOS XQuartz、原生Windows、硬件与用户设备仍为NOT_RUN；宿主正式镜像另由主程序门禁验收。详见 docs/session-features.md。\n\n## 1.5.1（预发布）\n\n- 按用户要求移除 RDP/VNC，恢复1.4.2终端工作台。\n- 移除桌面控制、截图录屏、运行库配置和实验后端，保留原有设备终端全部功能。\n- 历史桌面记录不再加载；私有记录和媒体不自动删除。\n\n## 1.5.0（已撤回）\n\n- 独立 Terminal 插件新增 RDP/VNC 桌面，支持直连和既有 Python TCP/TLS 中继。\n- 每会话认证的私有 Xvfb、FreeRDP2/3 NLA/TLS 和明确的 RDP SHA256 证书信任；VNC 支持密码或显式无认证。\n- 提供虚拟鼠标点击/拖动/滚动，键盘按下/释放/组合键与文本，界面和 Aide 工具均可使用。\n- 新增 JPEG 截图、有界 H.264 MP4 录屏、私有媒体列举/下载/删除及停止后的保留。\n- 继承隐藏会话和禁用工具策略；配套 Aide 主程序支持将截图交给视觉模型。\n- 需要新宿主 terminal-desktop-v1 和 Linux 原生桌面依赖；插件不自动安装系统包、不保存连接密码。\n\n## 1.4.2（预发布）\n\n- 已结束/中断会话新增“重新连接”，复用原会话记录、配置、日志、中继和可见性，不再要求新建。\n- SSH 密码与私钥口令重新交互输入；引用私钥沿用宿主已有的按会话读取能力，不保存凭据。\n- 保留单次手动重连与失败重试，防止并发启动和旧进程退出事件覆盖新状态；不会自动重放输入。\n- TCP 客户端和监听、UDP、串口支持复用记录；被动 TCP 接入连接等待设备重新接入，拒绝反向拨号。\n\n## 1.4.1（预发布）\n\n- 缩短键盘输入合并等待，写入确认后立即拉取回显，活动期间自适应读取并及时排空分页输出。\n- 活动会话不再执行阻塞请求队列的自动中继检测；保留手动检测。\n- 中继 TCP/TLS 客户端与设备侧脚本关闭 Nagle 小包合并，旧脚本保持兼容。\n- 长粘贴保持单会话发送顺序；仍串行使用宿主桥，不自动重发结果不确定的输入。\n\n## 1.4.0（预发布）\n\n- 可选设备侧 Python 中继，下载已配置目标的脚本，通过固定 TCP 接口和256位密钥认证的 TLS1.3 传输。\n- SSH/TCP/UDP/串口保留原类型，新增等待部署、在线探测、连接与中继标识。\n- 新增会话对 Aide 可见开关，可信工作台身份在宿主绑定；隐藏会话拒绝列出、读取、发送及管理。\n- 状态、日志和密钥迁入服务私有目录，旧状态验证迁移，保留既有会话和日志。\n- 需要支持 terminal-relay-v1 的配套 Aide 主机。\n\n## 1.3.2（预发布）\n\n- 串口下拉选择、自动枚举与刷新，保留手动路径。\n- Linux 无 udev 或容器设备未登记时扫描可见串口设备。\n- 修复打开失败后残留已打开状态，补充权限与占用提示。\n- 修复 COM 路径校验及 Windows 通信会话误受 PTY 限制。\n\n## 1.3.1（预发布）\n\n- 修正串口 RTS/CTS 流控选项到原生驱动 rtscts 字段的映射，并通过原生虚拟串口配置及收发验证。\n- 保留1.3.0合并的35项通信功能及不可变归档。\n\n## 1.3.0（预发布）\n\n- 合并 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个可执行工具，使用 terminal_ 前缀避免冲突。\n- 工作台新增 TCP 客户端/本地监听、UDP 与串口会话，支持显式 UTF-8/HEX 报文发送及文本行尾。\n- 通信日志统一记录 TX/RX、端点、完整字节与可读文本；沿用轮转存储和后台生命周期。\n- 增加主机指纹核验、作用域句柄、SFTP本地路径限制、禁用策略与有界录制。\n- 安装包内置固定版 ssh2、serialport 和运行依赖；需要配套 Aide main，仍为预发布。\n\n## 1.2.0（预发布）\n\n- 工作区 Shell 支持本地与 SSH 工作区，SSH 模式复用已认证主连接并进入远程目录。\n- 设备 SSH 明确区分默认身份、用户名密码与私钥认证，加密私钥支持终端输入口令。\n- 增加工作区 / 引用来源私钥文件选择器，私钥经宿主私有通道和 Linux memfd 使用，不进入网页或会话元数据。\n- SSH 工作区日志在 Aide 数据目录按主机、端口、用户与目录隔离；固定主连接 inode，避免工作区切换误连。\n- 需要配套 Aide main 的 terminal-ssh-workspace-v1 能力，仍为预发布；不再提供插件新标签页入口。\n\n## 1.1.2（预发布）\n\n- 配套 Aide main 移除插件新标签页按钮、链接自动打开和专用布局，仅保留当前页面工作台。\n- 保留后台本地/SSH 会话、日志及 Aide 会话管理；单独升级插件不会替换宿主界面。\n- 仍要求 terminal-workbench-v1、bridge.renew 与 daemon.detach 宿主能力。\n\n## 1.1.1（预发布）\n\n- 重排设备终端为连接导航、主终端与桌面连接详情三栏，优化专业/经典明暗主题和手机布局。\n- 会话按本地、SSH和历史分组，新增搜索与运行状态筛选，历史记录不再挤占活动标签栏。\n- 桌面详情显示实际状态、连接目标、目录、创建时间与日志信息；保留后台驻留与Aide会话管理工具。\n- 配套宿主将独立标签页铺满窗口并压缩外层标题栏；仍要求PR #7中的宿主能力，不替换稳定市场。\n\n## 1.1.0（预发布）\n\n- 增加常驻设备终端工作台：本地 PTY、OpenSSH、多会话标签与列表、输出查找及尺寸适配。\n- 关闭或刷新工作台后保留运行会话；后台重启仅恢复记录和日志，不自动重连或重放命令。\n- 输出日志按工作区和会话落盘、轮转、暂停、分页下载及明确删除；不另存键盘输入或 SSH 密码。\n- 使用离线内嵌 xterm.js；要求宿主支持受控桥接续期和 daemon detach，旧宿主明确提示升级。\n- 配套宿主增加“新标签页打开”，关闭原页面后可独立调试。\n- 保留原 `terminal-run` 提案及 `terminal-history` 目录工具。\n\n## 1.0.0\n\n- 将 Aide 已有 Terminal 插件独立分发，保留 MIT 许可。\n- 保留原代码、manifest、版本和安装包字节内容。\n- 补充实际能力说明：`terminal-run` 只生成命令提案，`terminal-history` 只读列举目录；没有交互式终端或命令历史存储。\n",
+        "changelog": "# Changelog\n\n## 1.8.10\n\n- Aide 可以从指定 X11 会话的录像抽取带时间戳的 PNG 关键帧，按时间顺序提供给视觉模型。\n- 修复 Aide 调用 Terminal 会话列表时的参数处理，支持先找到授权可见的会话再查看。\n\n",
         "distribution": "public",
         "routing": {
           "keywords": [
@@ -1348,10 +1628,28 @@
             "会话复制",
             "中继",
             "终端",
-            "串口"
+            "串口",
+            "中继备份",
+            "中继恢复",
+            "base64",
+            "rviz",
+            "opengl",
+            "ros2",
+            "图形窗口",
+            "独立窗口",
+            "并排显示",
+            "按键回显",
+            "回显延迟",
+            "中继延迟",
+            "终端截图",
+            "X11 录屏",
+            "WebM",
+            "X11 抽帧",
+            "录像关键帧",
+            "RViz 轨迹"
           ],
           "extensions": [],
-          "summary": "设备终端、SSH/Telnet低延迟交互、TLS中继、TCP/UDP/串口、逐会话设置及图形SSH；基础功能需Aide 0.1.18.0 RC3，图形功能另需viewer宿主。"
+          "summary": "设备终端、TLS 中继、SSH 图形窗口、X11 截图和录像。Aide 可按时间顺序读取关键帧。"
         }
       },
       {
@@ -1541,58 +1839,74 @@
           "extensions": [],
           "summary": "DSH workflow 能力预设：注册工作流工具与面板声明；当前未实现工作流执行或进度查询 handler。"
         }
-      }
-    ],
-    "privateListings": [
+      },
       {
-        "id": "compare",
+        "id": "strategy-generator",
         "kind": "plugin",
-        "name": "Compare · 商业筹备中",
-        "description": "本地文件、目录、Git、图片与文档比较，提供可复核报告。闭源二进制商业版筹备中，当前仅展示。",
-        "version": "0.3.3",
+        "name": "策略参数生成器 / Strategy Generator",
+        "description": "根据九类任务用途及真实模型限制计算 Aide 策略参数，实时跟随 Aide 主题；新增十个型号/模式的官方配置起点、经验建议和来源。",
+        "version": "0.2.0",
         "author": "skyelan1999",
         "category": "utilities",
         "icon": "utilities",
-        "distribution": "private",
-        "commerce": {
-          "status": "coming_soon",
-          "model": "perpetual-major",
-          "priceLabel": "价格待公布",
-          "publicKeys": {}
-        },
-        "minAideVersion": "0.1.17.3 RC1",
+        "package": "packages/strategy-generator/0.2.0-b0fe4b1cfb50.zip",
+        "sha256": "b0fe4b1cfb5045b37f31d664ce224afda1d0241e039d3e72fb9b8eaa9c1398fe",
+        "bytes": 33583,
+        "minAideVersion": "0.1.17.6 RC2",
         "platforms": [
+          "windows",
+          "macos",
           "linux"
         ],
         "dependencies": [
-          "Linux ARM64 / AMD64 Aide 执行环境",
-          "Git；PDF 文本提取需要 Python 3 与 pypdf"
+          "Aide workbench protocol 1 and Node.js 18+. No runtime third-party packages or API key required.",
+          "Manually confirm model context/output limits, sampler support, JSON mode and supported reasoning levels. Exported reports are not complete Aide configuration imports.",
+          "Live palette/theme sync requires Aide workbench theme protocol 1; older hosts and standalone previews use the system theme. Model-specific native thinking/Top K/Min P fields require separate backend configuration."
         ],
-        "features": [
-          "private-plugin-v1"
-        ],
-        "permissions": "只读访问 Aide 已授权的工作区与引用；导出文件沿用宿主保存流程。",
-        "trustNotice": "仅登记商业筹备状态；未开放销售、授权安装或下载。安装包、核心源码和客户许可证不上传公开市场。",
-        "license": "Proprietary；商业许可条款待公布",
-        "readme": "商业版采用闭源编译核心，计划支持 Linux ARM64 和 AMD64。版本号标识当前技术基线，不代表已正式发售。市场仅展示元数据，不托管安装包，不提供购买或下载入口。正式交付方式、价格与授权条款确定后另行公布。",
+        "permissions": "Calculates recommendations locally and exposes three calculation tools. Does not read credentials, providers, user files or sessions; no runtime network/model calls, settings writes or browser persistence. Explicit Copy writes the clipboard; Download saves a recommendation JSON. Aide may audit tool-call arguments under its own policy. No automatic profile import or permission changes.",
+        "trustNotice": "Public MIT preview. 20 Node tests cover generic budgets, model policies and theme-message validation; two publisher-identity tests pass. Exact six-platform/Node CI identity is recorded in the Release. Chromium fixture checked all eight Aide palette/mode combinations, eleven guide choices, controls, invalid inputs, clipboard fallback, downloads and 390px layouts. An isolated actual Aide host accepted the ZIP, called all three tools and validated nineteen purpose/model profiles unchanged. Model advice has dated official sources and explicit heuristic boundaries; no new real-model benchmark, native UI theme or OS destination-paste acceptance is claimed.",
+        "features": [],
+        "source": "https://github.com/skyelan1999/aide-pkg-StrategyGenerator/tree/adefddee1b4fb8dceed20525468f8c1c600207b2",
+        "license": "MIT",
+        "readme": "# 策略参数生成器 / Strategy Generator\n\nMIT 开源的独立 Aide 插件。根据用途、复杂度、速度偏好、真实上下文窗口、输入总量和模型输出限制，生成有计算依据的策略参数。当前版本 0.2.0。\n\n支持日常问答、编程实现、排错审查、研究分析、数据与推导、专业写作、创意构思、结构化提取和翻译润色九种用途。提供本地工作台及 strategy_generate、strategy_presets、strategy_estimate_tokens 三个计算工具，无运行时第三方依赖，Node.js 18+。\n\n## 使用\n\n1. 将 Release 中的 strategy-generator-0.2.0.zip 导入 Aide，打开插件工作台。\n2. 选择用途和模型配置经验：OpenAI 推理、Codex Bridge、DeepSeek 思考/非思考、Qwen3 原版、Qwen3.6-27B、Claude 和 Gemini。也可保留通用能力模式。填写实际窗口、输入和输出上限。\n3. 查看输出预算、采样参数、推理强度、环境容量和每项填写位置。复制参数或下载完整建议 JSON。\n4. 在 Aide 的 AI 参数配置中新建自定义配置，逐项填写 profile.params；聊天栏分别设置推理强度与并行容量。插件不会自动应用或覆盖现有配置。\n\n兼容 Aide workbench protocol 1；生成配置符合 Aide profiles 的既有字段和 65536 输出上限。输出报告不是 Aide 全量配置文件，不能直接覆盖 profiles.json；现有 Aide 没有本插件专用的一键应用能力。模型支持的推理/采样档位仍需按实际服务确认。上下文不足时会禁止导出；复制权限失败时提供选中明文的手动复制兜底。\n\n## Aide 主题与模型经验\n\n工作台通过 Aide 现有主题协议实时跟随舒适、经典、专业、现代四套配色及明暗模式，背景、表单、按钮、选中态与预算条使用宿主颜色。无主题协议的旧宿主或独立预览回退到系统明暗主题。\n\n十个型号/模式预设分别显示官方约束、经验建议、来源链接与资料核对日期（2026-11-24）。Qwen 代际与思考模式分开；Top K、Min P、思考开关等服务端字段只展示，不混入 Aide profile。Claude/Gemini 原生推理参数没有确认网关映射时保持 auto；Codex Bridge 的输出预算不是 CLI 严格执行上限。选择预设不会猜测或修改真实上下文与输出上限。\n\n这些经验是试调起点，未新增真实模型评测。完整逐型号依据见 [计算方法](https://github.com/skyelan1999/aide-pkg-StrategyGenerator/blob/adefddee1b4fb8dceed20525468f8c1c600207b2/docs/METHOD.md)。\n\n## 计算而非保证最优\n\n预算按“窗口 − 输入 − 工具预留 − 安全余量”计算，并受模型与 Aide 上限约束；用途基数、复杂度系数和推理/并行阈值均为公开的经验规则。没有调用模型测试质量、token 费用或时延，也不保证推理正确、输出长度或并行提速。请用真实任务做小样本比较再调整。\n\n未知能力与推理兼容模式省略采样参数；通用标准采样每次最多调温度或 Top P 中的一项；明确选择 Qwen 型号官方基线时保留其采样组合。JSON 对象仅在确认支持时启用。文本估算是字符公式，不能替代模型 tokenizer。完整公式、Aide 源码依据与官方参数参考见 [计算方法](https://github.com/skyelan1999/aide-pkg-StrategyGenerator/blob/adefddee1b4fb8dceed20525468f8c1c600207b2/docs/METHOD.md)。\n\n## 数据与权限\n\n界面在本页内计算，不读取提供商、密钥、历史会话或用户文件，不写入浏览器持久化，不发网络请求或模型调用。显式复制会写剪贴板；下载会保存建议 JSON。AI 工具在宿主中计算；宿主可能按自身规则保存工具调用参数。无需输入 API Key。\n\n## Development\n\n```sh\nnpm run build\nnpm test\nnpm run package\n```\n\nGenerated index.js is self-contained for Aide's entry-only validator. Generated viewer.html embeds the same deterministic engine and runs offline. scripts/package.py uses a fixed allowlist and reproducible ZIP metadata. See [acceptance](https://github.com/skyelan1999/aide-pkg-StrategyGenerator/blob/adefddee1b4fb8dceed20525468f8c1c600207b2/docs/ACCEPTANCE-0.2.0.md) for actual verification and delivery state.\n\nPublic source and releases: https://github.com/skyelan1999/aide-pkg-StrategyGenerator\n\nBugs, requests and acceptance are tracked in [Aide Issues](https://github.com/skyelan1999/aide/issues); identify Strategy Generator and its version. License: MIT, copyright 2026 skyelan1999.\n",
         "screenshots": [],
-        "changelog": "登记为商业筹备中；未上传任何安装包或下载链接。",
-        "source": "https://github.com/skyelan1999/aide-pkg-Compare",
+        "changelog": "0.2.0：实时跟随 Aide 四套配色及明暗主题；新增 OpenAI 推理、Codex Bridge、DeepSeek、Qwen3 原版/Qwen3.6-27B、Claude、Gemini 十个型号/模式经验预设，区分官方基线、经验建议与服务端字段。保留九类用途、预算计算和复制/下载；不自动应用，无新增真实模型评测。",
+        "distribution": "public",
         "routing": {
           "keywords": [
-            "compare",
-            "compare · 商业筹备中"
+            "strategy generator",
+            "策略参数",
+            "策略生成器",
+            "模型策略",
+            "采样参数",
+            "输出预算",
+            "推理强度",
+            "temperature",
+            "top_p",
+            "max_tokens",
+            "profile",
+            "context window",
+            "参数计算",
+            "模型配置经验",
+            "qwen",
+            "deepseek",
+            "gemini",
+            "claude",
+            "codex bridge",
+            "aide主题"
           ],
           "extensions": [],
-          "summary": "本地文件、目录、Git、图片与文档比较，提供可复核报告。闭源二进制商业版筹备中，当前仅展示。"
+          "summary": "按九类用途、真实模型约束与十个型号/模式经验起点生成 Aide 策略参数，主题跟随宿主，本地计算并展示来源，不自动应用。"
         }
-      },
+      }
+    ],
+    "privateListings": [
       {
         "id": "pjplan",
         "kind": "plugin",
         "name": "PjPlan 项目文档 · 商业版筹备",
         "description": "按真实产品和模块编号规划项目文档命名、修订与 Office 生成参数。后续商业版私有交付，当前仅展示，不开放销售。",
-        "version": "3.1.0",
+        "version": "3.1.1",
         "author": "skyelan1999",
         "category": "planning",
         "icon": "planning",
@@ -1624,7 +1938,7 @@
         "license": "商业版条款待发布；不追溯改变已有版本或第三方内容的权利",
         "readme": "后续商业版计划一次购买、永久使用已购版本，大版本升级另行授权。当前公开仓库版本与未来商业版本分开；价格、正式版本和许可条款确定后才开放销售。购买后私下交付 ZIP 和针对设备授权码签发的许可证。授权升级需重新交付对应版本许可证，不代表重复收费。 受保护交付拆为开源连接层与私下交付的独立核心：Aide 安装许可与核心运行许可分别核验。核心用系统凭据库中的设备密钥解开授权；没有核心或许可则失败，不回退明文算法。原有 3.1.0 公开源码权利不变；本机测试与交叉构建不代表三平台实机、Docker 连通或正式发行验收。",
         "screenshots": [],
-        "changelog": "商业发行准备条目；版本号仅对应当前技术基线，不表示 3.1.0 已成为收费版本。 新增独立核心连接层技术准备；仍未开放销售或公开下载商业包。",
+        "changelog": "当前技术基线 3.1.1：完善配置提示与可用选项。商业发行准备条目，未开放销售，不提供公开商业安装包，不改变原有版本和第三方内容权利。",
         "routing": {
           "keywords": [
             "pjplan",
@@ -1632,48 +1946,6 @@
           ],
           "extensions": [],
           "summary": "按真实产品和模块编号规划项目文档命名、修订与 Office 生成参数。后续商业版私有交付，当前仅展示，不开放销售。"
-        }
-      },
-      {
-        "id": "professional-project",
-        "kind": "plugin",
-        "name": "ProfessionalProject · 商业筹备中",
-        "description": "项目计划、人员费用、空间规划、采购库存与手机扫码协同。闭源二进制商业版筹备中，当前仅展示。",
-        "version": "0.4.16",
-        "author": "skyelan1999",
-        "category": "planning",
-        "icon": "planning",
-        "distribution": "private",
-        "commerce": {
-          "status": "coming_soon",
-          "model": "perpetual-major",
-          "priceLabel": "价格待公布",
-          "publicKeys": {}
-        },
-        "minAideVersion": "0.1.17.5 RC10",
-        "platforms": [
-          "linux"
-        ],
-        "dependencies": [
-          "Linux ARM64 / AMD64 Aide 执行环境"
-        ],
-        "features": [
-          "private-plugin-v1"
-        ],
-        "permissions": "项目写入与手机采集沿用宿主权限、员工配对及区域授权。",
-        "trustNotice": "仅登记商业筹备状态；未开放销售、授权安装或下载。安装包、核心源码和客户许可证不上传公开市场。",
-        "license": "Proprietary；商业许可条款待公布",
-        "readme": "商业版采用闭源编译核心，计划支持 Linux ARM64 和 AMD64。版本号标识当前技术基线，不代表已正式发售。市场仅展示元数据，不托管安装包，不提供购买或下载入口。正式交付方式、价格与授权条款确定后另行公布。",
-        "screenshots": [],
-        "changelog": "0.4.16：PDF 项目报告一并导出甘特图和组织架构图预览，自动分页并保留明细；导出不改变项目排程和数据。市场仍仅展示商业筹备元数据，不提供安装包或下载。",
-        "source": "https://github.com/skyelan1999/aide-pkg-ProfessionalProject",
-        "routing": {
-          "keywords": [
-            "professional-project",
-            "professionalproject · 商业筹备中"
-          ],
-          "extensions": [],
-          "summary": "项目计划、人员费用、空间规划、采购库存与手机扫码协同。闭源二进制商业版筹备中，当前仅展示。"
         }
       }
     ]
