@@ -1,3 +1,19 @@
+/* The frame follows the current tab. Only the event list scrolls when it reaches the viewport limit. */
+#trajectory-sheet {
+  height: auto;
+  max-height: min(760px, calc(100dvh - 40px));
+}
+#trajectory-content {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+#trajectory-content > * { flex-shrink: 0; }
+@media (max-width: 700px), (max-height: 560px) {
+  #trajectory-sheet { max-height: calc(100dvh - 20px); }
+}
 .trajectory-content:has(.sr-heading){gap:14px;min-width:0}
 .trajectory-content:has(.sr-heading)>*{flex-shrink:0}
 .sr-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:2px 2px 0}
