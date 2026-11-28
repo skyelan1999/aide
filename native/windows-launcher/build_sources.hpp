@@ -6,6 +6,12 @@
 #include <string>
 namespace aide_build_sources {
 using Values=std::map<std::string,std::string>;
+inline bool uncredentialedPipIndex(const std::string& index){
+ // The public builder arg must not carry userinfo, queries or fragments.
+ if(index.find_first_of("?#\\")!=index.npos)return false;
+ for(unsigned char c:index)if(c<=32||c==127)return false;
+ return std::regex_match(index,std::regex("https?://[^/@]+(/.*)?"));
+}
 inline Values fallback(const std::string& output,const std::string& dockerfile,const Values& arguments){
  auto disabled=arguments.find("AIDE_CN_SOURCE_FALLBACK");if(disabled!=arguments.end()&&disabled->second=="0")return {};
  std::string errors;std::istringstream lines(output);std::string line;

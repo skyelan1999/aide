@@ -25,7 +25,9 @@ FROM toolchain AS dev
 COPY scripts/install-office-preview.sh /usr/local/lib/aide/install-office-preview.sh
 RUN sh /usr/local/lib/aide/install-office-preview.sh
 ARG PIP_INDEX_URL=https://pypi.org/simple/
-RUN sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+ARG AIDE_PRIVATE_PIP=0
+RUN --mount=type=secret,id=aide_pip_index \
+    sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 \
       python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0 \
     && groupadd -g 1000 aide \
     && useradd -m -u 1000 -g aide aide \
@@ -100,12 +102,14 @@ RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/locales/en.js
 ARG AIDE_RUN_TESTS=0
 ARG PIP_INDEX_URL=https://pypi.org/simple/
+ARG AIDE_PRIVATE_PIP=0
 # Go tests exercise the same Office scripts that the runtime image ships. Give
 # the build-stage test process the pinned Python modules too; these packages do
 # not enter the final runtime stage from this build stage.
-RUN if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
+RUN --mount=type=secret,id=aide_pip_index \
+    if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
       mkdir -p /workspace && \
-      sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+      sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi
 RUN --mount=type=cache,target=/root/.cache/go-build \
@@ -159,15 +163,16 @@ RUN groupadd -g 1000 aide && useradd -m -u 1000 -g aide aide \
     && chown -R aide:aide /data /workspace /context /local /home/aide
 
 # 2) Office 文档解析依赖（开源免费）——稳定层，pin 版本可复现
-#    PIP_INDEX_URL 默认国内镜像加速，CI/发布可 --build-arg 覆盖为官方源。
+#    PIP_INDEX_URL 仅限无凭据镜像；私有源通过 BuildKit secret aide_pip_index。
 #    pip 下载缓存经 cache mount 跨构建复用。
 #    离线/air-gap 首次构建：先在联网机跑 scripts/prebuild-wheels.sh 预下载到 docker/wheels/，
 #    再 --build-arg PIP_OFFLINE=1 用 --no-index --find-links=/wheels 纯本地安装。
 ARG PIP_INDEX_URL=https://pypi.org/simple/
+ARG AIDE_PRIVATE_PIP=0
 ARG PIP_OFFLINE=0
 COPY docker/wheels /wheels
-RUN --mount=type=cache,target=/root/.cache/pip \
-    echo "[runtime] PIP_OFFLINE=${PIP_OFFLINE} index=${PIP_INDEX_URL}" && \
+RUN --mount=type=cache,target=/root/.cache/pip --mount=type=secret,id=aide_pip_index \
+    echo "[runtime] PIP_OFFLINE=${PIP_OFFLINE}" && \
     if [ "${PIP_OFFLINE}" = "1" ]; then \
       echo "[runtime] 离线模式：从 /wheels 安装（--no-index）"; \
       test -f /wheels/.aide-wheelhouse-target || { echo "离线 wheelhouse 缺少目标平台标记，请重新运行 scripts/prebuild-wheels.sh" >&2; exit 1; }; \
@@ -176,8 +181,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
       pip install --no-index --find-links=/wheels \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     else \
-      echo "[runtime] 在线模式：从 ${PIP_INDEX_URL} 安装"; \
-      sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+      echo "[runtime] 在线模式：安装 Python 依赖"; \
+      sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi
 
