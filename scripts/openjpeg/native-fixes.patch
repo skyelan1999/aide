@@ -864,3 +864,32 @@ index 711d753f..c235b39f 100644
          l_current_node->low = 0;
          l_current_node->known = 0;
          ++l_current_node;
+diff --git a/src/lib/openjp2/jp2.c b/src/lib/openjp2/jp2.c
+--- a/src/lib/openjp2/jp2.c
++++ b/src/lib/openjp2/jp2.c
+@@ -2711,6 +2711,12 @@
+         return OPJ_FALSE;
+     }
+ 
++    /* T.800 I.5.3: one and only one top-level JP2 Header box. */
++    if (jp2->has_jp2h) {
++        opj_event_msg(p_manager, EVT_ERROR, "Duplicate JP2 Header box\n");
++        return OPJ_FALSE;
++    }
++
+     jp2->jp2_img_state = JP2_IMG_STATE_NONE;
+ 
+     /* iterate while remaining data */
+@@ -2726,6 +2732,12 @@
+         if (box.length > p_header_size) {
+             opj_event_msg(p_manager, EVT_ERROR,
+                           "Stream error while reading JP2 Header box: box length is inconsistent.\n");
++            return OPJ_FALSE;
++        }
++
++        /* JP2 Header boxes cannot be children of another JP2 Header. */
++        if (box.type == JP2_JP2H) {
++            opj_event_msg(p_manager, EVT_ERROR, "Nested JP2 Header box\n");
+             return OPJ_FALSE;
+         }
+ 
