@@ -40,3 +40,9 @@ python scripts/agent-route.py verify quick
 `Windows Desktop Check` 只做验证，不调用 Delivery 或发布 Release：Linux 分别交叉编译 AMD64/ARM64；Windows runner 用单独测试 EXE 和合成 localhost TLS 服务，实际检查 WebView2 窗口、应用内新标签、共享存储、沙箱 MessagePort、插件页原生桥隔离、未保存关闭取消及下载取消。测试 EXE 不编译进产品；测试不读真实账户、启动 Docker 或发起真实 Hello 注册/签名。合成界面不等于 Compare/ProfessionalProject 真正功能或用户设备验收。
 
 精确通过/未执行项、源码与构建证据见 [任务记录](../tasks/windows-desktop-20261103.json)。Windows Hello 硬件签名、用户环境完整 build/start 和实际插件操作仍须在对应 Windows 设备验证，不能用跨编译或隔离窗口测试替代。
+
+## 高对比度与原生焦点状态
+
+Windows 原生标签栏和按钮在系统高对比度打开时使用系统窗口、按钮、高亮、正文和灰化文字颜色；系统切换主题或高对比度时，宿主重新应用当前页面同步的主题，并关闭自定义暗标题栏覆盖。普通明暗主题仍由本机 WebView 页面配色同步。键盘聚焦的活动标签显示按 DPI 缩放的圆角描边；被禁用的原生按钮使用灰化颜色，按下态与悬停态使用不同底色。
+
+Windows Desktop Check 的隔离 UI 截图新增模拟 200% DPI 的窄窗多标签画面，并收集系统高对比度配色预览。模拟 DPI 与合成调色板验证宿主逻辑，不代表实体多显示器或人工截图验收。Topic #925 仍需人工审阅 100/150/200% 明暗、宽窄和单/多标签截图后才能关闭。
