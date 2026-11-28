@@ -1950,6 +1950,7 @@ function renderClarification(run?: any, box?: any, inTaskHub = false) {
 function timelineClock(value?: any) { return window.AideSessionTimeline?.clock?.(value) || ''; }
 function timelineBubble(entry?: any, el?: any, t?: any) {
   const bubble = el('div', 'user-message steer-message', entry.content);
+  bubble.dataset.steerIndex = String(entry.index);
   if (entry.assistantManaged) bubble.prepend(el('span', 'run-origin-label', t('助理代发')));
   const clock = timelineClock(entry.at);
   if (clock) bubble.append(el('span', 'entry-clock', clock));
@@ -1966,9 +1967,9 @@ function timelineAnswer(entry: any, index: any, {el, t, renderMarkdown}: any) {
   return group;
 }
 function renderSteerMessages(run?: any, box?: any) {
-  for (const steer of run.steers || []) {
+  for (const [index, steer] of (run.steers || []).entries()) {
     if (steer.queued) continue;
-    box.append(timelineBubble({content: steer.content, at: steer.at, assistantManaged: steer.assistantManaged}, el, t));
+    box.append(timelineBubble({index, content: steer.content, at: steer.at, assistantManaged: steer.assistantManaged}, el, t));
   }
 }
 function proposalFileLabel(file?: any) {
@@ -2136,8 +2137,9 @@ function renderSession() {
       },saved:() => { if (active()) refreshSessionSoon(); }});
     }});
     if (pluginPlans) box.append(pluginPlans);
-    if (!run.pw && !run.steps.length && run.status === 'running') box.append(el('p', 'muted', t("正在准备模型请求…")));
-    run.steps.forEach((step?: any, index?: any) => {
+    const steps = run.steps || [];
+    if (!run.pw && !steps.length && run.status === 'running') box.append(el('p', 'muted', t("正在准备模型请求…")));
+    steps.forEach((step?: any, index?: any) => {
       if (run.mode === 'chat') {
         renderStepThinking(box, run, step, index);
         // 按真实时间排列：初始 prompt → 插话 → 分段回答。插话因此落在它
@@ -2232,7 +2234,7 @@ function renderSession() {
         return;
       }
       const details = el('details', 'step'); details.dataset.key = run.id + ':' + step.name;
-      details.open = openDetails.has(details.dataset.key) || (index === run.steps.length - 1 && step.name !== 'propose');
+      details.open = openDetails.has(details.dataset.key) || (index === steps.length - 1 && step.name !== 'propose');
       const summary = el('summary', '', t(labels[step.name])); summary.append(el('span', '', t(statuses[step.status])));
       if (step.name === 'propose') {
         details.append(summary, el('pre', 'step-content', step.content || t("正在调用模型…")));
@@ -2362,6 +2364,7 @@ function renderQueueBar() {
     if (!st.queued) continue;
     const idx = qi++;
     const item = el('div', 'queue-item');
+    item.dataset.steerAt = st.at;
     const arrow = el('span', 'q-arrow', '↳');
     const content = el('span', 'q-content', st.content);if(st.assistantManaged)content.prepend(el('span','run-origin-label',t('助理代发')));
     const editBtn = el('button', 'q-btn', t('修改'));
@@ -3702,6 +3705,7 @@ $('task-form').onsubmit = action(async (event?: any) => {
     if(chatContent(cached)===chatContent(submittedDraft))sessionDrafts.delete(chatDraftKey(draftSession?.id||'',submittedScope));
   };
   let created: any = null;
+  let accepted = false;
   let stopContextCompactionWatch = null;
   try {
     const selectionSave = window.AideSessionModelSelection?.flush(draftSession);
@@ -3715,6 +3719,8 @@ $('task-form').onsubmit = action(async (event?: any) => {
     // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
+        const previousText = $('timeline')?.querySelectorAll('.assistant-msg .am-text');
+        const previousBubble = previousText?.[previousText.length-1];
         const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt, avatarFeedback: !!window.aideAvatarEnabled?.() }) });
         if (resp.avatarCue) window.aideAvatarCue?.(resp.avatarCue);
         // locked：弹密码门，不清空输入，解锁后重发
@@ -3729,6 +3735,7 @@ $('task-form').onsubmit = action(async (event?: any) => {
         if(recoveryScope()===submittedScope&&state.session?.id===target.id&&chatContent({text:$('prompt').value,attachments:state.attachments})===chatContent(submittedDraft)){ $('prompt').value = ''; state.attachments = []; renderAttachments(); }
         // 转交成功后立即打开后端刚创建的 aide 会话。此前固定回到小秘，
         // 导致新会话虽已出现在侧栏，主区域仍停留在欢迎页或小秘历史。
+        if (state.session?.id !== target.id || recoveryScope() !== submittedScope) return;
         await selectSession(window.aideAssistantLive?.snapshot().enabled?target.id:(resp.dispatched?.sessionId||target.id));
         // Refresh/select first: selectSession cancels old speech. Starting TTS
         // before it either killed the new reply or skipped it in companion mode.
@@ -3738,7 +3745,8 @@ $('task-form').onsubmit = action(async (event?: any) => {
         }
         // 按 action 分流提示
         if (state.session?.id === target.id && resp.action !== 'silent' && resp.action !== 'ignore') {
-          sendMotion?.land([...($('timeline')?.querySelectorAll('.assistant-msg .am-text') || [])].at(-1));
+          const currentBubble = [...($('timeline')?.querySelectorAll('.assistant-msg .am-text') || [])].at(-1);
+          if (currentBubble && currentBubble !== previousBubble && currentBubble.textContent === prompt) sendMotion?.land(currentBubble, false);
         }
         if (resp.action === 'dispatch' && resp.dispatched) {
           if (resp.dispatched.started) toast(t('已启动 AIDE R&D 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
@@ -3762,6 +3770,7 @@ $('task-form').onsubmit = action(async (event?: any) => {
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
     stopContextCompactionWatch = ensureContextCompactionWatch(target.id);
     const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, modelSelection: submittedSelection, parallelism: window.AideParallelChat?.value(state.mode, target.kind === 'assistant') || 1, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : submittedSelection.profile, queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    accepted = true;
     await stopContextCompactionWatch();
     stopContextCompactionWatch = null;
     await clearSubmittedDraft();
@@ -3770,18 +3779,27 @@ $('task-form').onsubmit = action(async (event?: any) => {
     }
     if (state.session?.id === target.id) { // R07：提交完成后不得抢走用户已切换到的会话
       await selectSession(target.id);
+      if (state.session?.id !== target.id || recoveryScope() !== submittedScope) return;
       reconcileAvatarRun(submitted.id || submitted.runId);
       $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: 'instant' });
       const runId = submitted.id || submitted.runId;
-      const bubble = [...($('timeline')?.querySelectorAll('article.run[data-run]') || [])]
-        .find((box?: any) => box.dataset.run === runId)?.querySelector('.user-message');
-      sendMotion?.land(bubble);
+      const box = [...($('timeline')?.querySelectorAll('article.run[data-run]') || [])].find(node => node.dataset.run === runId);
+      if (submitted.steerAt) {
+        // Queued messages may already have been promoted when the refresh returns.
+        const steers = state.session.runs?.find((run: any) => run.id === runId)?.steers || [];
+        const index = steers.findIndex((entry: any) => entry.at === submitted.steerAt);
+        const queued = [...($('queue-bar')?.querySelectorAll('.queue-item') || [])].find(node => node.dataset.steerAt === submitted.steerAt);
+        const bubble = queued || box?.querySelector(`.steer-message[data-steer-index="${index}"]`);
+        if (bubble) sendMotion?.land(bubble, false);
+      } else if (submitted.id && box) {
+        sendMotion?.land(box.querySelector('.user-message'));
+      }
     }
   } catch (err: any) {
     if (stopContextCompactionWatch) { await stopContextCompactionWatch(); stopContextCompactionWatch = null; }
     window.aideAvatarFeedback?.('error');
     // 任务未启动成功：删掉刚创建的空壳会话，避免侧栏残留“新会话”空项；正展示时退回空白页
-    if (created) {
+    if (created && !accepted) {
       if (state.session?.id === created.id) { state.session = null; state.sessionJSON = ''; renderSession(); }
       await api(`/sessions/${created.id}`, { method: 'DELETE' }).catch(() => {});
       await loadSessions().catch(() => {});

@@ -537,7 +537,8 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, Type: assistantMessageType(assistantManaged)})
 			s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
-			existing.Steers = append(existing.Steers, SteerMsg{AssistantManaged: assistantManaged, Content: in.Prompt, Queued: in.Queued, At: time.Now().UTC().Format(time.RFC3339Nano)})
+			steerAt := time.Now().UTC().Format(time.RFC3339Nano)
+			existing.Steers = append(existing.Steers, SteerMsg{AssistantManaged: assistantManaged, Content: in.Prompt, Queued: in.Queued, At: steerAt})
 			if in.Queued {
 				existing.Queue = append(existing.Queue, in.Prompt)
 			}
@@ -551,7 +552,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			if oldTitle != s.Title {
 				a.broadcastSessionsChanged(s.ID)
 			}
-			jsonOut(w, 202, map[string]any{"steered": !in.Queued, "queued": in.Queued, "runId": existing.ID})
+			jsonOut(w, 202, map[string]any{"steered": !in.Queued, "queued": in.Queued, "runId": existing.ID, "steerAt": steerAt})
 			return
 		}
 	}

@@ -1,13 +1,13 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const src=require('./fixtures/app-source.cjs').readAppSource();
-const el=(tag,cls,text)=>({tag,cls,text,children:[],setAttribute(){},prepend(node){this.children.unshift(node)},append(node){this.children.push(node)}});
+const el=(tag,cls,text)=>({tag,cls,text,dataset:{},children:[],setAttribute(){},prepend(node){this.children.unshift(node)},append(node){this.children.push(node)}});
 const ctx={el,t:x=>x,timelineClock:()=>''};vm.createContext(ctx);
 vm.runInContext(src.slice(src.indexOf('function timelineBubble('),src.indexOf('function renderSession()')),ctx);
 const assisted=ctx.renderTaskPrompt({prompt:'Preserve task text',assistantManaged:true});assert.equal(assisted.text,'Preserve task text');assert.equal(assisted.children[0].text,'助理代发');
 assert.equal(ctx.renderTaskPrompt({prompt:'Human task'}).children.length,0);
 const box=el('div');ctx.renderSteerMessages({steers:[{content:'From assistant',assistantManaged:true},{content:'From user'},{content:'Queued',assistantManaged:true,queued:true}]},box);
-assert.equal(box.children.length,2);assert.equal(box.children[0].children[0].text,'助理代发');assert.equal(box.children[1].children.length,0);
+assert.deepEqual(box.children.map(node=>node.dataset.steerIndex),['0','1']);assert.equal(box.children.length,2);assert.equal(box.children[0].children[0].text,'助理代发');assert.equal(box.children[1].children.length,0);
 const callbacks=[];let request;
 const settings={setTimeout,clearTimeout,structuredClone,state:{config:{assistantAutoReview:true}},t:x=>x,el:(tag,cls,text)=>{const node=el(tag,cls,text);callbacks.push(node);return node;},controlRenderers:{},action:fn=>fn,api:async(path,options)=>{request={path,body:JSON.parse(options.body)};},refreshConfig:async()=>{},toast(){}};
 vm.createContext(settings);vm.runInContext(src.slice(src.indexOf('let settingsWriteQueue ='),src.indexOf('// 设置面板：语音助理名称输入'))+src.slice(src.indexOf('function renderAssistantApprovalControl('),src.indexOf("controlRenderers['assistant-approval']")),settings);
