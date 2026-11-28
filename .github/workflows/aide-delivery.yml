@@ -50,6 +50,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
           VALIDATION_SCOPE: ${{ inputs.validation_scope || 'full' }}
         run: python3 scripts/ci/delivery_gate.py source
+      - name: Diagnose STEP guard on the hosted runner
+        run: |
+          python3 --version
+          python3 scripts/test_cad_step_curve_check.py -v
       - name: Recheck current source contracts
         run: |
           python3 scripts/agent-route.py verify quick
