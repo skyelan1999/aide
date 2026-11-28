@@ -1,0 +1,74 @@
+{
+  "id": "issue-986-static-boundaries",
+  "request": "独立接手 #986 剩余静态防御审核：Windows launcher 到 local-mounts Compose 选择传递和信任边界，音频窄化值域；隔离工作区，仅最小修复与正常输入回归，不推 main 不发布不关 issue。",
+  "baseline": "821ca6902492a94906fc5f58e7004f0122dccd8d",
+  "initial_status": "",
+  "acceptance": [
+    "复核 Windows launcher 到 helper 的 Compose 选择和环境传递，说明本地信任前提",
+    "证明音频窄化值域，区分协议位模式和真实截断",
+    "仅补必要防御改动及正常输入回归，记录精确提交和限制",
+    "不改用户工作树，不推 main、不发版、不关 Issue"
+  ],
+  "scope": [
+    "cmd/aide-local-mounts/main.go",
+    "cmd/aide-local-mounts/main_test.go",
+    "internal/voip/g711.go",
+    "internal/voip/g711_range_test.go",
+    "internal/server/tts/encoding_range_test.go",
+    "docs/reviews/2026-11-28/issue-986-static-boundaries.md",
+    "docs/tasks/issue-986-static-boundaries.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "限定 #986 剩余静态范围，隔离基线与边界已记录",
+      "evidence": [
+        "docs/reviews/2026-11-28/issue-986-static-boundaries.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "本地配置与命令形状分开；已证明值域，不改生产逻辑",
+      "evidence": [
+        "docs/reviews/2026-11-28/issue-986-static-boundaries.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "更正信任边界及值域注释；补充正常输入范围回归",
+      "evidence": [
+        "docs/reviews/2026-11-28/issue-986-static-boundaries.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "四包基线测试、修改后 race/vet、Windows amd64 helper 交叉编译通过；文档检查和 diff 检查通过；实机和完整门禁未执行",
+      "evidence": [
+        "docs/reviews/2026-11-28/issue-986-static-boundaries.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "审查报告记录代码位置、误报判定、测试环境及限制",
+      "evidence": [
+        "docs/reviews/2026-11-28/issue-986-static-boundaries.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅七个范围内文件；无运行服务和状态迁移",
+      "evidence": [
+        "docs/reviews/2026-11-28/issue-986-static-boundaries.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "按用户指示交回统一审查；没有推送、PR、合并、发版或关闭 Issue",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "不集成本分支或撤回本地提交；没有运行状态变化。",
+  "handoff": "详见审查报告；Windows 实机、全量验证及 Issue 关闭由统一审查处理。",
+  "github_actor": "skyelan1999"
+}

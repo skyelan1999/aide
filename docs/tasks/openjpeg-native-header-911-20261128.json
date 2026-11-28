@@ -1,0 +1,76 @@
+{
+  "id": "openjpeg-native-header-911-20261128",
+  "request": "独立处理 Issue #911：静态跟踪当前固定 OpenJPEG 与 ITU 规范；最小原生唯一顶层 JP2 Header 拒绝路径；只验证正常 JP2/J2K，不构造运行恶意或漏洞样本，不触碰 main 发布或 Issue 状态。",
+  "baseline": "821ca6902492a94906fc5f58e7004f0122dccd8d",
+  "initial_status": "",
+  "acceptance": [
+    "Trace current pinned native JP2H handling against T.800 I.5.3 without malformed-input execution.",
+    "Add minimal source rejection of repeated JP2H and direct JP2H nesting.",
+    "Verify patch application and normal JP2/J2K packaged-decoder pixel parity; distinguish native build gaps.",
+    "Hand off an isolated local commit for coordinator integration; no push, main changes, release or Issue closure."
+  ],
+  "scope": [
+    "scripts/openjpeg/native-fixes.patch",
+    "scripts/openjpeg/pins.json",
+    "scripts/openjpeg/README.md",
+    "docs/reviews/2026-11-28-openjpeg-native-header-911.md",
+    "docs/tasks/openjpeg-native-header-911-20261128.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Explicit Issue #911 assignment; normal-input-only verification and no permission expansion; baseline clean origin/main 821ca6902492a94906fc5f58e7004f0122dccd8d; operator skyelan1999.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Current pinned jp2.c confirms duplicate gap; two handler-level error returns reuse has_jp2h and preserve ABI/ownership. Unknown superboxes remain opaque.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Source patch and reviewed patch digest updated. Generated artifact/provenance/worker retain previous native implementation; source-only delivery.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "PASS pinned jp2.c blob identity and added-hunk apply, both patch hashes, existing normal JP2/J2K 48-byte RGB parity, sync check and diff check. Native compile/build/patched-native pixel checks NOT_RUN: Docker socket denied, archive DNS unavailable; no escalation per instruction. Malformed fixture runners not executed.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Source review and README distinguish source patch from old native artifact. check_docs.py PASS: 586 Markdown files, 2586 local links.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only five scoped files changed. Disposable source evidence retained in ignored .agent-state. No user worktree edits or runtime changes.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User explicitly reserved integration and prohibited main changes, release and Issue closure. No push or PR.",
+      "evidence": [
+        "docs/reviews/2026-11-28-openjpeg-native-header-911.md"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Omit/revert the isolated source-only commit; no deployed state changed.",
+  "handoff": "Coordinator must perform permitted full source build, update generated artifact/provenance/embedded worker and relevant identities, validate new normal-input pixels before product integration. Issue #911 remains open; no running service started.",
+  "branch": "fix/openjpeg-native-jp2-header-20261128",
+  "worktree": "/private/tmp/aide-openjpeg-native-header-1128",
+  "github_operator": "skyelan1999"
+}

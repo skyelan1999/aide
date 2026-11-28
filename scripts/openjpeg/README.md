@@ -12,6 +12,8 @@ Use a new work directory. The builder never resets existing trees, invokes the A
 
 The wrapper patch normalizes signed grayscale before precision narrowing and exposes allocator failure/budget errors. Failed modules are discarded by the PDF.js adapter. Preview header/output policy remains an independent layer, not full JPEG 2000 conformance or a whole-browser memory limit.
 
+For [#911](https://github.com/skyelan1999/aide/issues/911), the source patch now rejects a repeated JP2 Header before resetting its child-parser state and rejects a JP2 Header directly inside another JP2 Header. This implements the cardinality check and the directly nested case of [T.800 I.5.3](https://www.itu.int/rec/dologin_pub.asp?id=T-REC-T.800-201511-S%21%21PDF-E&lang=e&type=items); it does not recursively inspect unknown superboxes. The checked-in decoder was rebuilt from the pinned sources and verified against normal JP2/J2K inputs in [GitHub Actions run 46161290331](https://github.com/skyelan1999/aide/actions/runs/46161290331).
+
 The e-sYCC conversion uses PIMA 7667:2001 Annex B equations B7–B9 (printed page 13), with independent component normalization, doubled chroma magnitude and final 8-bit display clipping. The original standard, rather than an explanatory web summary, was inspected from a historical [document mirror](http://13thmonkey.org/documentation/fonts/pima7667-2001.pdf); ITU-T T.801 [Table M.25](https://www.itu.int/epublications/publication/itu-t-t-801-v3-2023-08-information-technology-jpeg-2000-image-coding-system-extensions) identifies EnumCS 24 with this standard. The standard text is not redistributed. Subsampled e-sYCC remains an explicit unsupported-layout error.
 
 

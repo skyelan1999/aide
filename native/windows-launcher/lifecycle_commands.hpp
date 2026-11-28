@@ -35,6 +35,8 @@
   auto configuredBuild=config()["services"]["aide"]["build"];auto file=configuredBuild.value("dockerfile","Dockerfile");arguments.insert(arguments.end(),{L"--file",wide(file)});
   if(configuredBuild.contains("network"))arguments.insert(arguments.end(),{L"--network",wide(configuredBuild["network"].get<std::string>())});
   auto values=configuredBuild.value("args",json::object());values["AIDE_VERSION"]=identity.first;values["AIDE_COMMIT"]=commit;values["AIDE_SRC_SHA"]=source;values["AIDE_RUNTIME_MODE"]="source";
+  auto publicIndex=env(L"PIP_INDEX_URL");
+  if(!publicIndex.empty()&&(!values.contains("PIP_INDEX_URL")||values["PIP_INDEX_URL"].is_null()))values["PIP_INDEX_URL"]=utf8(publicIndex);
   if(values.contains("PIP_INDEX_URL")&&!values["PIP_INDEX_URL"].is_null()){
    auto index=values["PIP_INDEX_URL"].get<std::string>();
    if(!aide_build_sources::uncredentialedPipIndex(index))

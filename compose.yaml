@@ -20,9 +20,8 @@ services:
         AIDE_RUN_TESTS: ${AIDE_RUN_TESTS:-0}
         # #43：由 scripts/aide.sh start 计算的 Go 源码哈希，写进镜像 label aide.srcsha，供快捷路径比对。
         AIDE_SRC_SHA: ${AIDE_SRC_SHA:-unknown}
-        # #46：仅限无凭据镜像；认证索引用源码启动器的 AIDE_PIP_INDEX_FILE。
+        # 不从宿主环境隐式转发索引。公开镜像和认证索引用带校验的源码启动器。
         # 离线/air-gap 首次构建先 scripts/prebuild-wheels.sh 再置 PIP_OFFLINE=1。
-        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple/}
         AIDE_BUILD_SOURCE: ${AIDE_BUILD_SOURCE:-auto}
         AIDE_APT_SOURCE: ${AIDE_APT_SOURCE:-standard}
         PIP_OFFLINE: ${PIP_OFFLINE:-0}

@@ -175,5 +175,5 @@ RO is enforced by the host server. Writes synchronize before stable acknowledgme
 
 ### 认证 Python 包索引
 
-`PIP_INDEX_URL` 和 Docker/Compose 构建参数只接收无凭据的索引，用于公开镜像等场景。认证索引请把完整 HTTPS URL 单独写在构建目录外只有自己可读的文件中，把文件路径（不是 URL）设置为宿主环境变量 `AIDE_PIP_INDEX_FILE`，然后运行源码构建入口。不要把认证 URL 写进仓库、`.env` 或命令行。
+普通 `docker compose build` 不读取宿主 `PIP_INDEX_URL`，使用 Dockerfile 默认索引。源码启动器可通过宿主 `PIP_INDEX_URL` 接收无凭据的公开镜像，并在传给 Buildx 前校验。认证索引请把完整 HTTPS URL 单独写在构建目录外只有自己可读的文件中，把文件路径（不是 URL）设置为宿主环境变量 `AIDE_PIP_INDEX_FILE`，然后运行源码构建入口。不要把认证 URL 写进仓库、`.env` 或命令行。
 启动器通过 BuildKit secret `aide_pip_index` 传入文件，不将 URL 作为构建参数。认证安装不输出原始 pip 日志、不切换镜像、不使用公共 pip 缓存，也不能和 `PIP_OFFLINE=1` 一起启用。手动调用 Buildx 时使用 `--secret id=aide_pip_index,src=/path/outside/context`、`--build-arg AIDE_PRIVATE_PIP=1` 和 `--no-cache-filter dev,build,runtime-base`，不要把认证 URL 填到 `--build-arg PIP_INDEX_URL=...`。

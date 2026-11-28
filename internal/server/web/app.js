@@ -12428,7 +12428,7 @@ function ensurePdfJs() {
     _pdfjsPromise = (async () => {
         // @ts-expect-error -- same-origin vendor module is resolved by the browser at runtime, not by tsc.
         const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=13');
-        pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=14';
+        pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=15';
         return pdfjs;
     })();
     return _pdfjsPromise;
