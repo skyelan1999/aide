@@ -40,3 +40,8 @@ python scripts/agent-route.py verify quick
 `Windows Desktop Check` 只做验证，不调用 Delivery 或发布 Release：Linux 分别交叉编译 AMD64/ARM64；Windows runner 用单独测试 EXE 和合成 localhost TLS 服务，实际检查 WebView2 窗口、应用内新标签、共享存储、沙箱 MessagePort、插件页原生桥隔离、未保存关闭取消及下载取消。测试 EXE 不编译进产品；测试不读真实账户、启动 Docker 或发起真实 Hello 注册/签名。合成界面不等于 Compare/ProfessionalProject 真正功能或用户设备验收。
 
 精确通过/未执行项、源码与构建证据见 [任务记录](../tasks/windows-desktop-20261103.json)。Windows Hello 硬件签名、用户环境完整 build/start 和实际插件操作仍须在对应 Windows 设备验证，不能用跨编译或隔离窗口测试替代。
+
+
+### 本机中文语音识别
+
+声明本机语音能力的工作台可由用户主动启动 Windows 中文听写。宿主只接受可见、活动且受信任的工作台页面发起的会话，并在打开麦克风前显示 Windows 原生确认；切换标签、导航、隐藏、最小化或关闭都会撤销会话。Windows 端使用进程内 [SAPI 识别器](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee413260(v=vs.85)) 和本机简体中文语音组件，Aide 不把原始录音传给远端。若本机组件或权限不满足，提示错误而不回退到云端。会话最长 15 分钟。

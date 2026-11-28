@@ -249,7 +249,7 @@
                     if (value.error)
                         throw Error(value.error);
                     speechStop.hidden = false;
-                    speechEvent('recording', '本机录音中');
+                    speechEvent(value.state || 'recording', value.message || '本机录音中');
                     speechPoll = setInterval(async () => { if (invalid()) {
                         void item.stopSpeech();
                         return;
@@ -260,7 +260,7 @@
                         if (value.error)
                             throw Error(value.error);
                         speechEvent(value.state, value.message || '本机录音中', value.text);
-                        if (value.state !== 'recording')
+                        if (value.state !== 'recording' && value.state !== 'starting')
                             void item.stopSpeech();
                     }
                     catch (error) {
