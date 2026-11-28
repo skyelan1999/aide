@@ -57,6 +57,19 @@ class WiringTests(unittest.TestCase):
         self.assertLess(source.index('select_build_sources'), source.index('source-sha'))
         self.assertLess(source.index('select_build_sources'), source.index('ensure_builder'))
 
+    def test_implicit_pip_index_is_launcher_only_and_validated(self):
+        from test_launcher_contract import module
+        compose = Path(__file__).resolve().parents[1] / 'compose.yaml'
+        self.assertNotIn('${PIP_INDEX_URL', compose.read_text())
+        with patch.dict(module.os.environ, {'PIP_INDEX_URL': 'https://public.invalid/simple/', 'AIDE_PIP_INDEX_FILE': ''}):
+            args = {}
+            self.assertEqual(module.Launcher().pip_build_secrets(args), [])
+            self.assertEqual(args['PIP_INDEX_URL'], 'https://public.invalid/simple/')
+        with patch.dict(module.os.environ, {'PIP_INDEX_URL': 'https://fixture:sentinel@private.invalid/simple/'}):
+            with self.assertRaisesRegex(ValueError, 'AIDE_PIP_INDEX_FILE') as error:
+                module.Launcher().pip_build_secrets({})
+            self.assertNotIn('sentinel', str(error.exception))
+
     def test_inline_login_and_signed_query_are_rejected_without_echoing(self):
         from test_launcher_contract import module
         for url in ('https://fixture:sentinel@private.invalid/simple/',
