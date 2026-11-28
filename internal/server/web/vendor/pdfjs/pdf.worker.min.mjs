@@ -44,7 +44,7 @@ a=I;m(n);var ua=[null,Yb,le,be,Mc,Mc,fb,Hd,xd,td,fd,ed,dd,cd,bd,ad,$c,_c,Sb,Yc,X
  const MiB = 1024 * 1024;
  budget(bytes.length,64*MiB,"input");
  if (bytes.length < 12) throw new Error('OpenJPEG input too short');
- let edited, streams = [], palette = 0, sycc = false, color=0,channelDefinitions=[];
+ let edited, seenJP2Header = false, streams = [], palette = 0, sycc = false, color=0,channelDefinitions=[];
  const patchType = p => { edited ||= Uint8Array.from(bytes); edited.set([102,114,101,101],p+4); };
  function boxes(start, end, header = false) {
   let first = true, seenColor = false, count = 0;
@@ -61,7 +61,12 @@ a=I;m(n);var ua=[null,Yb,le,be,Mc,Mc,fb,Hd,xd,td,fd,ed,dd,cd,bd,ad,$c,_c,Sb,Yc,X
    const body=p+size, stop=p+length;
    if (header && first && type!==0x69686472) fail('IHDR must be first JP2H child');
    if (type===0x66747970) budget(length,64*1024,'FTYP');
-   if (type===0x6a703268) {budget(length,8*MiB,'JP2H');boxes(body,stop,true);}
+   if (type===0x6a703268) {
+    // T.800 Annex I allows just one JP2 header at the top level.
+    if (header || seenJP2Header) fail('JP2H must be unique and top-level');
+    seenJP2Header = true;
+    budget(length,8*MiB,'JP2H');boxes(body,stop,true);
+   }
    if (type===0x6a703263) streams.push([body,stop]);
    if (header && type===0x636f6c72) {
     if (stop-body<3) fail('short COLR');
