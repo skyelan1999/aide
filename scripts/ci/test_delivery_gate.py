@@ -21,6 +21,28 @@ class DeliveryGateTests(unittest.TestCase):
         environment.start()
         self.addCleanup(environment.stop)
 
+    def test_backlog_accepts_only_empty_issue_and_pull_pages(self):
+        with patch.dict(os.environ, {'GH_REPO': 'owner/repo'}), \
+                patch.object(gate, 'capture', side_effect=['[[]]', '[[]]']) as capture:
+            gate.backlog()
+        self.assertEqual([c.args[0][-1] for c in capture.call_args_list],
+                         ['repos/owner/repo/pulls?state=open&per_page=100',
+                          'repos/owner/repo/issues?state=open&per_page=100'])
+        self.assertTrue(all('--paginate' in c.args[0] for c in capture.call_args_list))
+
+    def test_backlog_blocks_draft_prs_and_open_issues_without_double_counting(self):
+        pr = dict(number=11, state='open', draft=True)
+        issue = dict(number=13, state='open')
+        pages = [json.dumps([[pr]]), json.dumps([[{**pr, 'pull_request': {}}], [issue]])]
+        with patch.dict(os.environ, {'GH_REPO': 'owner/repo'}), patch.object(gate, 'capture', side_effect=pages):
+            with self.assertRaisesRegex(ValueError, r'2 open.*PR #11, Issue #13'):
+                gate.backlog()
+
+    def test_backlog_rejects_malformed_api_payload(self):
+        with patch.dict(os.environ, {'GH_REPO': 'owner/repo'}), patch.object(gate, 'capture', return_value='[]'):
+            with self.assertRaisesRegex(ValueError, 'Invalid open PR response'):
+                gate.backlog()
+
     def test_branch_candidate_is_read_only_and_cannot_publish(self):
         import tempfile
         from pathlib import Path
