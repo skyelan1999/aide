@@ -17,7 +17,7 @@ class DeliveryGateTests(unittest.TestCase):
         # Test inputs must not inherit the real branch/dispatch/tag that runs CI.
         environment = patch.dict(os.environ, {'GITHUB_REF': 'refs/heads/main',
             'GH_EVENT_NAME': 'workflow_dispatch', 'RELEASE_TAG': '',
-            'RELEASE_CADENCE_EXCEPTION_REASON': '', 'VALIDATION_SCOPE': 'full'})
+            'RELEASE_CADENCE_EXCEPTION_REASON': '', 'RC3_OFFICIAL_COMMIT': '', 'VALIDATION_SCOPE': 'full'})
         environment.start()
         self.addCleanup(environment.stop)
 
@@ -37,6 +37,34 @@ class DeliveryGateTests(unittest.TestCase):
         with patch.dict(os.environ, {'GH_REPO': 'owner/repo'}), patch.object(gate, 'capture', side_effect=pages):
             with self.assertRaisesRegex(ValueError, r'2 open.*PR #11, Issue #13'):
                 gate.backlog()
+
+    def test_rc3_official_scope_is_bounded_and_expiring(self):
+        now = datetime.datetime(2026, 11, 29, tzinfo=datetime.timezone.utc)
+        self.assertFalse(gate.rc3_official_scope(now))
+        inputs = dict(GH_REPO='skyelan1999/aide', GITHUB_REF='refs/heads/main',
+                      GH_EVENT_NAME='workflow_dispatch', RELEASE_TAG='v0.1.19.0-RC3',
+                      RC3_OFFICIAL_COMMIT=self.sha)
+        with patch.dict(os.environ, inputs), patch.object(gate, 'capture', return_value=self.sha):
+            self.assertTrue(gate.rc3_official_scope(now))
+            for key, value in dict(GH_REPO='owner/fork', GITHUB_REF='refs/heads/topic',
+                                   GH_EVENT_NAME='push', RELEASE_TAG='v0.1.19.0-RC4',
+                                   RC3_OFFICIAL_COMMIT='b' * 40).items():
+                with self.subTest(key=key), patch.dict(os.environ, {key: value}), self.assertRaises(ValueError):
+                    gate.rc3_official_scope(now)
+            with self.assertRaisesRegex(ValueError, 'expired'):
+                gate.rc3_official_scope(datetime.datetime(2026, 12, 3, tzinfo=datetime.timezone.utc))
+
+    def test_rc3_backlog_retains_open_items_but_blocks_unlisted_items(self):
+        speech = dict(number=918, state='open')
+        old = dict(number=1007, state='open', draft=True)
+        new = dict(number=1014, state='open')
+        with patch.dict(os.environ, {'GH_REPO': 'skyelan1999/aide'}), \
+                patch.object(gate, 'rc3_official_scope', return_value=True):
+            with patch.object(gate, 'capture', side_effect=[json.dumps([[old]]), json.dumps([[speech]])]):
+                gate.backlog()
+            with patch.object(gate, 'capture', side_effect=[json.dumps([[old]]), json.dumps([[speech], [new]])]):
+                with self.assertRaisesRegex(ValueError, r'1 open.*Issue #1014'):
+                    gate.backlog()
 
     def test_backlog_rejects_malformed_api_payload(self):
         with patch.dict(os.environ, {'GH_REPO': 'owner/repo'}), patch.object(gate, 'capture', return_value='[]'):

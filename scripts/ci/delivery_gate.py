@@ -68,9 +68,34 @@ def cadence():
     print('PASS: weekly public release cadence')
 
 
+# Explicit one-release owner disposition. Later versions use the default zero-open rule.
+RC3_BACKLOG = frozenset(
+    [f"PR #{n}" for n in (923, 926, 933, 1007, 1009)]
+    + [f"Issue #{n}" for n in (873, 906, 907, 908, 915, 918, 922, 924, 925, 932)]
+)
+
+
+def rc3_official_scope(now=None):
+    requested = os.environ.get('RC3_OFFICIAL_COMMIT', '')
+    if not requested:
+        return False
+    require(os.environ.get('GH_REPO') == 'skyelan1999/aide'
+            and os.environ.get('GITHUB_REF') == 'refs/heads/main'
+            and os.environ.get('GH_EVENT_NAME') == 'workflow_dispatch'
+            and os.environ.get('RELEASE_TAG') == 'v0.1.19.0-RC3',
+            'Official RC3 authorization requires the exact tag on a manual Aide main dispatch')
+    require(re.fullmatch(r'[0-9a-f]{40}', requested) and requested == capture(['git', 'rev-parse', 'HEAD']),
+            'Official RC3 authorization requires the exact checked-out commit')
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    require(now < datetime.datetime(2026, 12, 3, tzinfo=datetime.timezone.utc),
+            'Official RC3 authorization has expired')
+    return True
+
+
 def backlog():
     repo = os.environ['GH_REPO']
     require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo), 'Invalid repository')
+    official_rc3 = rc3_official_scope()
     opened = []
     for endpoint, label in (('pulls', 'PR'), ('issues', 'Issue')):
         pages = json.loads(capture(['gh', 'api', '--paginate', '--slurp',
@@ -84,8 +109,12 @@ def backlog():
             if endpoint == 'issues' and 'pull_request' in entry:
                 continue
             opened.append(f"{label} #{entry['number']}")
-    require(not opened, f"Release backlog is not clear ({len(opened)} open): " + ', '.join(opened))
-    print(f'PASS: {repo} has no open pull requests or issues')
+    blocked = [item for item in opened if not official_rc3 or item not in RC3_BACKLOG]
+    require(not blocked, f"Release backlog is not clear ({len(blocked)} open): " + ', '.join(blocked))
+    if official_rc3:
+        print('PASS: scoped official RC3 disposition; open and deferred: ' + (', '.join(opened) or 'none'))
+    else:
+        print(f'PASS: {repo} has no open pull requests or issues')
 
 
 def release_notes(tag):
@@ -121,7 +150,9 @@ def source():
         require(capture(['git', 'rev-parse', 'refs/tags/' + tag + '^{}']) == sha, 'Release tag must identify this main commit')
         release_notes(tag)
         cadence()
-    output = f'sha={sha}\ntag={tag}\npublish={str(bool(tag)).lower()}\n'
+    official = rc3_official_scope()
+    output = (f'sha={sha}\ntag={tag}\npublish={str(bool(tag)).lower()}\n'
+              f'official={str(official).lower()}\n')
     with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
         stream.write(output)
     print('PASS: source ancestry and publication boundary; ' + ('main release requested' if tag else 'read-only candidate only'))
