@@ -52,7 +52,9 @@ class Acceptance:
         plugins=json.loads(subprocess.check_output([self.docker_exe,'info','--format','{{json .ClientInfo.Plugins}}'],text=True))
         plugin_dirs=sorted({str(Path(p['Path']).parent) for p in plugins if p.get('Path')})
         for name in ('home','docker','tools','tmp','workspace','context','local'):(self.evidence/name).mkdir()
-        for name,target in (('docker',self.docker_exe),('python3',shutil.which('python3')),('bash','/bin/bash'),('git',shutil.which('git'))):
+        for name,target in (('docker',self.docker_exe),('python3',shutil.which('python3')),('bash','/bin/bash'),
+                            ('git',shutil.which('git')),('node',shutil.which('node')),
+                            ('npm',shutil.which('npm'))):
             if not target:raise RuntimeError('Missing prerequisite '+name)
             (self.evidence/'tools'/name).symlink_to(Path(target).resolve())
         (self.evidence/'docker/config.json').write_text(json.dumps({'cliPluginsExtraDirs':plugin_dirs}))
