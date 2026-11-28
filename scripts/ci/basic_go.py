@@ -15,7 +15,7 @@ PATTERN = (r'^Test(DWGPreview.*|PluginGuide.*|ChangeImpact.*|BusinessFlow.*|Goal
            r'TerminalCopyContextCanonicalIdentityAndVisibility|TerminalContextPinnedMasterNeverRetargets|'
            r'ReferenceRelayDeadlineOrdering|ReferenceRelayUntrustedPayloadAndCancellation|'
            r'VoiceModelBindings.*|SettingsAutoSavePermissionsPersistence|ExecutionScheduler.*|Incidents.*|ContextRecoverySummaryExtractsWrappedJSON|'
-           r'ParallelReadOnlyToolBatchEligibility|OpenAI.*|AssistantOpenAI(Native.*|RealtimeRelayAndLock)|QwenTTSSettings|QwenCatalogReadOnly|ShellPathGuard.*)$')
+           r'ParallelReadOnlyToolBatchEligibility|OpenAI.*|AssistantOpenAI(Native.*|RealtimeRelayAndLock)|QwenTTSSettings|QwenCatalogReadOnly|OfficialMarketEnvironmentProxyScope|NativeMediaSaveFirstVideoInFreshWorkspace|ShellPathGuard.*)$')
 COMMANDS = [
     ['go', 'test', '-mod=vendor', '-count=1', '-timeout=5m', '-run=' + PATTERN, './...'],
     ['go', 'vet', '-mod=vendor', './...'],
