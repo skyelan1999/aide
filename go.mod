@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/emiago/sipgo v1.7.4
 	github.com/fxamacker/cbor/v2 v2.9.4
-	github.com/go-git/go-billy/v5 v5.6.2
+	github.com/go-git/go-billy/v5 v5.9.0
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/pkg/sftp v1.13.10
