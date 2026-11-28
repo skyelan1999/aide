@@ -56,7 +56,7 @@ flowchart LR
 
 ### 从源码构建
 
-标准源码路径需要 Git、Docker Engine、Docker Compose 和 Buildx；macOS 可使用 Docker Desktop。
+标准源码路径需要 Git、Docker Engine、Docker Compose、Buildx，以及用于编译 TypeScript 的 Node.js 和 npm（CI 使用 Node.js 24）。macOS 可使用 Docker Desktop。仅启动预构建镜像不需要这套前端编译工具。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git

@@ -31,7 +31,9 @@ fs.mkdirSync(out,{recursive:true});
     if(width===390)await page.locator('#sidebar-toggle').click();
     await page.locator('[data-session-id="release-'+id+'"]').click();
     if(width===390&&await page.locator('#sidebar-scrim').isVisible())await page.locator('#sidebar-scrim').click({position:{x:width-8,y:80}});
-    const card=page.locator('.shell-approval-card');await card.waitFor();
+    // The current run owns its actionable approval in the composer. An
+    // earlier timeline render can briefly still show a fallback card.
+    const card=page.locator('#run-action-content .shell-approval-card');await card.waitFor();
     await card.locator('details.task-command-detail summary').click();
     assert.match(await card.locator('.approval-command').innerText(),/printf release-confirmation/);
     assert.equal(await card.locator('.approval-intent').count(),1);

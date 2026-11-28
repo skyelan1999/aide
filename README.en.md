@@ -42,7 +42,7 @@ Concurrency is not a proportional speed guarantee. Model review is not a passing
 
 For packaged installations, download the appropriate [Release](https://github.com/skyelan1999/aide/releases), verify its checksums and follow that version's instructions. Later `main` features are not automatically present in an older binary.
 
-The standard source path uses Git, Docker Engine, Compose and Buildx:
+The standard source path uses Git, Docker Engine, Compose, Buildx, and Node.js with npm to compile TypeScript (CI uses Node.js 24). Starting a prebuilt runtime does not require these frontend build tools:
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git

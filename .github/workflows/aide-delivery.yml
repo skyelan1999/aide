@@ -50,6 +50,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           VALIDATION_SCOPE: ${{ inputs.validation_scope || 'full' }}
         run: python3 scripts/ci/delivery_gate.py source
+      - name: Validate documentation before full Delivery
+        if: inputs.validation_scope == 'full'
+        run: python3 scripts/check_docs.py
       - name: Recheck current source contracts
         run: |
           python3 scripts/agent-route.py verify quick
