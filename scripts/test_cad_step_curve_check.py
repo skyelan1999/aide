@@ -1,4 +1,5 @@
 """Guard and error-path regressions; real CAD controls run separately."""
+import builtins
 import contextlib
 import hashlib
 import importlib.util
@@ -42,7 +43,16 @@ class CurveCheckTests(unittest.TestCase):
 
     def test_sha_guard_prevents_sdk_import_and_source_mutation(self):
         before = self.source.read_bytes()
-        with patch('builtins.__import__', side_effect=AssertionError('no imports expected')):
+        original_import = builtins.__import__
+
+        def forbid_sdk_import(name, *args, **kwargs):
+            if name == 'OCP' or name.startswith('OCP.'):
+                raise AssertionError('CAD SDK import before SHA256 validation: ' + name)
+            return original_import(name, *args, **kwargs)
+
+        # Python 3.12.3 pathlib imports ntpath while creating a Path. The
+        # guard promises to defer the CAD SDK, not normal standard imports.
+        with patch('builtins.__import__', side_effect=forbid_sdk_import):
             with self.assertRaisesRegex(ValueError, 'SHA256 mismatch'):
                 sdk.inspect_step(self.source, '0' * 64)
         self.assertEqual(self.source.read_bytes(), before)
