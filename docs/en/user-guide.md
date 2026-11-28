@@ -1,6 +1,6 @@
 # User guide
 
-> Operating guidance updated against the current source workline on 8 November 2026. Entry screenshots and their original scope remain from the isolated 17 October instance: [actual screenshots and limits](../ui-evidence.md) · [step-by-step demo](../demo-guide.md). Source behavior, browser observation and release acceptance are separate states.
+> Operating guidance updated against main source `be525318` on 28 November 2026. Screenshots retain their original capture dates and [evidence scope](../ui-evidence.md); see the [step-by-step demo](../demo-guide.md). Source behavior, browser observation and release acceptance are separate states.
 
 ## Current operation and screenshot reference
 
@@ -54,7 +54,7 @@ Under **General → Appearance**, select a palette independently of Light, Dark 
 
 Select a category, then a tab. You can also search by setting or control name, press Down to choose a result and Enter to open it. When a tab has focus, the Left and Right arrows switch tabs. Home and End select the first and last tabs. On narrow screens, both navigation rows scroll horizontally.
 
-Settings include Usage stats (§8), Appearance, Language, Model parameters (custom profiles, §3), Archives (session export), System logs (filter by inferred level and optional local start/end date-time, then download the same filtered results as redacted JSONL; up to 5,000 recent entries), Permissions, Account, Persona, Voice assistant, Accessibility, Configuration backup, and About. The default reasoning effort is saved in **Model settings**; available options depend on the selected model. GPT-6.1 Sol and Astra also expose xhigh and max. The strategy popup near the task input can override it per conversation.
+Settings include Usage stats (§8), Appearance, Language, Model parameters (custom profiles, §3), Archives (session export), System logs (filter by inferred level and optional local start/end date-time, then download the same filtered results as redacted JSONL; up to 5,000 recent entries), Permissions, Account, Persona, Voice assistant, AI management permissions, Messages, Accessibility, Configuration backup, and About. The default reasoning effort is saved in **Model settings**; available options depend on the selected model. GPT-6.1 Sol and Astra also expose xhigh and max. The strategy popup near the task input can override it per conversation.
 
 - **Permissions**: three sandbox modes — read-only (read-only commands such as `ls`/`cat`/`git status` only), workspace-write (default; writes still go through proposal approval and dangerous commands are blocked), and danger-full-access (not recommended for daily use). Tool rounds default to 60, range 5–200; when the limit is reached, already streamed output is kept and you can continue.
 - **Account**: username and lock-screen password, stored as an **Argon2id** slow hash (OWASP-recommended: 64 MB memory, 3 iterations, 4 threads); no password means no lock. The password also derives an AES-256 key that encrypts persona custom personalities and the voice-assistant conversation history. Users upgrading from older versions are migrated automatically on first login: the legacy SHA-256 hash is upgraded to Argon2id and existing ciphertexts are transparently re-wrapped with the new key. **Transport**: since 0.1.11 the main port speaks HTTPS/TLS (TLS 1.2 minimum, AEAD forward-secret ciphers); a loopback-only self-signed certificate is generated on first start, so tokens and conversation content no longer travel in clear text. See [Security: password hashing & key derivation](../security/password-hashing.md) and [Security: HTTPS/TLS entry hardening](../security/tls.md).
@@ -191,6 +191,8 @@ Use **Strategy** near the task input to select automatic routing or a manual par
 
 **Execution capacity** is available for ordinary chat at 1X–5X or 10X. X includes the active main runtime and up to X−1 private workers. Workers can use tools, plugins and tests on scratch copies; the main runtime continues useful work, collects ready results and registers candidates through normal version checks and approval. 1X creates no workers, and SSH/captured-root limitations retain the ordinary executor. Old tool-free `ParallelProgress` analysis remains a compatibility path. Capacity does not guarantee speed or require filling all slots. See the [environment design (Chinese)](../designs/execution-environments-20261101.md).
 
+**Goals and project knowledge**: open **Trajectory → Tasks and planning** to maintain deliverables, acceptance conditions and individual operator reviews. Project memory can retain attributed facts, constraints, decisions and open questions across sessions. For first use of change-impact analysis or staged workflows, follow the [guided instructions](project-impact-workflows.md); see [goals and knowledge](project-goals-knowledge.md) for record and authorization boundaries.
+
 ### Approval column
 
 Ordinary conversations show four columns: Strategy, Model, Reasoning effort (including the parallel analysis limit) and Approval. The selected approval mode also appears in the Strategy button summary. Assistant conversations do not show parallel analysis.
@@ -256,7 +258,7 @@ Regions represent the current local workspace, reference directory, enabled loca
 | Search mode | Use and boundary |
 | --- | --- |
 | Nodes / names | Match names, paths, indexed text excerpts, or file `F…`, code `C…`, and session `S…` IDs. File IDs remain stable while workspace, source, and path stay the same |
-| Code hierarchy | Parse Go, ordinary JavaScript, and Python declarations, imports, and call candidates; inspect callers, callees, source lines, and outward hops. This does not execute code or perform full type checking. No incoming edge does not prove unused code; TypeScript/TSX/JSX and other cases remain unsupported |
+| Code hierarchy | Parse Go, JavaScript, TypeScript/TSX/JSX, and Python declarations, imports, and call candidates. TypeScript/TSX/JSX use Babel static parsing without compiler type checking. Inspect callers, callees, source lines, and outward hops. Static analysis does not execute project code, and no incoming edge does not prove unused code |
 | Original document text | Case-sensitive exact matching over extracted text with page, paragraph, or table-row locators; no model call. It does not search the visual layout or unextracted content |
 | Document RAG | Rank excerpts locally with TF-IDF. Clicking AI sends at most eight excerpts for an answer with IDs, locators, and file hashes. This is not vector retrieval, OCR, or a persistent knowledge database. AI answers from original-text mode also use this RAG path |
 
@@ -533,14 +535,7 @@ Panels, menus and tabs use short transitions. With the system’s Reduce Motion 
 See [workspace/source paths](workspace-paths.md), [knowledge search and history](knowledge-map.md), [native realtime voice calls](assistant-voice-call.md), [plugin lifecycle](plugin-protocol.md), and [maintenance/recovery](operations.md). These English guides describe current workflows; historical screenshots above retain their original dates.
 
 
-[0.1.19 usage and migration](release-guide-0.1.19.md).
-
-
-Source additions (2026-11-13): [goals, acceptance and project decision records](project-goals-knowledge.md) extend the existing task board and project memory. Operator acceptance is separate from execution; records persist across sessions without granting authorization. These additions are not in RC2.
-
-For first use of impact analysis/workflows, open Trajectory → Tasks and planning and follow the [guided instructions](project-impact-workflows.md).
-
-See [plugin entry points and first use](plugin-usage.md).
+[0.1.19 usage and migration](release-guide-0.1.19.md) · [Plugin entry points and first use](plugin-usage.md).
 
 
 ### Assistant delegation and Weather

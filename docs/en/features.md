@@ -2,13 +2,15 @@
 
 [简体中文](../features.md) · [English documentation](README.md)
 
-Core update: 2026-11-12, source `05e0b8a7`. New multi-X chat has an active main runtime plus up to X−1 private tool-capable environments; candidates remain pending proposals until reviewed/applied. Large Markdown uses file references beyond a shared 16 KiB inline budget. Computer control includes snapshot-bound visual coordinates, drag, scroll and key combinations; eligible basic actions can use assisted review. macOS global modifier capture adds an app window and context to the draft without sending. Details: [current Chinese features](../features.md) and [technical whitepaper](../architecture/aide-technical-whitepaper.md).
+Core update: 2026-11-28, main source `be525318`. New multi-X chat has an active main runtime plus up to X−1 private tool-capable environments; candidates remain pending proposals until reviewed/applied. Large Markdown uses file references beyond a shared 16 KiB inline budget. Computer control includes snapshot-bound visual coordinates, drag, scroll and key combinations; eligible basic actions can use assisted review. macOS global modifier capture adds an app window and context to the draft without sending. Details: [current Chinese features](../features.md) and [technical whitepaper](../architecture/aide-technical-whitepaper.md).
 
 This describes public Aide source capabilities. A feature's presence in source, a visible control, an executed test, and a published package are separate facts. Historical screenshots retain their original dates and do not certify this release.
 
 | Area | What to use | Boundaries |
 | --- | --- | --- |
 | Conversations and workflows | Choose mode, strategy, model and approval policy beside the input. Queue or interrupt work while it runs. | Context budgets, enabled tools and approvals still govern execution. |
+| Goals and project knowledge | Maintain deliverables and individual acceptance in Tasks and planning; record attributed facts, constraints, decisions and open questions across sessions. | Execution completion is not operator acceptance. Records can be replaced or archived but never grant new authorization. See [goals and knowledge](project-goals-knowledge.md). |
+| Change impact and staged workflows | Review file evidence and impacts, then use guided stages, accepted predecessors and dependency checks. | Analysis is not an execution receipt; changed inputs or accepted predecessors invalidate dependent sign-off. See [impact workflows](project-impact-workflows.md). |
 | Parallel work | Ordinary chat offers 1X–5X and 10X execution capacities including the main runtime. | Private workers may use scoped tools, plugins and tests. Main-project candidates use ordinary version checks and approval. Old tool-free analysis is a compatibility path; capacity does not guarantee speed. |
 | Tasks and proposals | Inspect stage output, tool records, status and trajectory. | A proposed file is not a saved file. Verify the application receipt and destination. |
 | Usage and compaction | View cumulative session usage separately from the latest request's context window. | Parallel requests have separate windows. Missing upstream usage is unknown; estimates are labeled. Compaction does not promise smaller session files. |
@@ -17,10 +19,10 @@ This describes public Aide source capabilities. A feature's presence in source, 
 | Models | Configure providers, named credentials, compatible model catalogs and routing profiles. | Provider protocols, capability support, quotas and availability differ. Auto selection alone does not prove an image/audio/video was produced. |
 | Account balances and quotas | Settings → System → Usage shows plugin-provided currency balances or quota windows per API key and refreshes about once a minute. | Percentage quotas are not money. Unsupported or unavailable data is shown as unavailable, not zero; alerts only notify. |
 | Remote references | Browse and read a fixed remote directory through a deployed relay script; SFTP can also use a script relay. | Read-only by default. Writes still require the Aide source lock, remote account permissions and existing proposal rules. See [relay guide](../reference-relay.md). |
-| Plugins | Inspect, install, enable, disable and update trusted extensions. | Node plugins execute trusted code. They are not an OS sandbox. |
+| Plugins | Inspect, install, enable, disable and update trusted extensions; use grouped/searchable workbench panels and supported background-start controls. | Node plugins execute trusted code. They are not an OS sandbox. |
 | Local transcription in plugin workbenches | A plugin declaring both `microphone` and `onDeviceSpeech` can prepare a recording request; the user starts it with a host-owned button. | The sandboxed iframe has no microphone access. Chinese offline recognition resources are required; recording stops after 15 minutes and text is capped at 60,000 characters. See [plugin protocol](plugin-protocol.md). |
 | Assistant | Assign tasks, follow progress, configure reminders and use authorized message access. | Microphone capture requires a user action. Locking or leaving the relevant page ends listening. Management actions have independent permissions. |
-| Messages | Chats, contacts, groups, calls, file transfers and reminders. | Invitations require recipient consent. Short lookup codes do not replace full identity fingerprints. |
+| Messages | Chats, contacts, groups, calls, file transfers and reminders. Supported LAN SIP handsets can dial the assistant or an eight-digit member number and hang up explicitly. | Invitations require recipient consent. Short lookup codes do not replace full identity fingerprints. SIP/RTP and physical audio paths require their own device/LAN validation. |
 
 Automatic system documents use the workspace's configured binding. For explicit document proposals, `write_file(source="system-docs", path="relative/path")` targets that binding. Ordinary references must be enabled, visible to AI and writable. Read-only `/context` does not become writable because a tool calls it a document directory. Unconfigured document generation retains its documented cache fallback; project memory remains in the project cache.
 
@@ -34,8 +36,3 @@ Appearance includes separate palette and light/dark/system preferences, reduced 
 
 
 [0.1.19 current capabilities and limits](release-guide-0.1.19.md).
-
-
-Source additions (2026-11-13): [goals, acceptance and project knowledge](project-goals-knowledge.md), using existing plans/token memory with individual operator reviews, attributed records and explicit replacement. Not included in the RC2 package.
-
-2026-11-13 source additions: [change impact and staged workflows](project-impact-workflows.md), with evidence reviews, next-step guidance, plugin configuration, accepted inputs and invalidation. Not in RC2.

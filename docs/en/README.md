@@ -9,6 +9,8 @@ The maintained English guides below describe the public application. They distin
 | Goal | Guide |
 | --- | --- |
 | Understand the product | [Project home](../../README.en.md) · [Features](features.md) |
+| Manage goals and project knowledge | [Goals and acceptance](project-goals-knowledge.md) · [Impact and business workflows](project-impact-workflows.md) |
+| Install and use plugins | [Plugin entry points](plugin-usage.md) · [Plugin protocol](plugin-protocol.md) |
 | Install and sign in | [Installation](installation.md) |
 | Use conversations, models and files | [User guide](user-guide.md) |
 | Configure directories and references | [Workspace paths](workspace-paths.md) |
@@ -16,7 +18,7 @@ The maintained English guides below describe the public application. They distin
 | Explore sources and code | [Knowledge map](knowledge-map.md) |
 | Talk to the assistant | [Native voice calls](assistant-voice-call.md) |
 | Customize the workbench | [Customization](customization.md) |
-| Read the implementation paper | [Aide technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan; source baseline `05e0b8a7`, 2026-11-12 |
+| Read the implementation paper | [Aide technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan; source baseline `be525318`, 2026-11-28 |
 | Read the system/API design | [Architecture](architecture.md) · [Data layout](architecture/data-layout.md) |
 | Understand plugin market and account-balance capabilities | [Plugin market architecture](../architecture/plugin-market.md) |
 | Build plugins | [Plugin protocol](plugin-protocol.md) · [Daemon protocol](plugins/daemon-protocol.md) |
@@ -35,9 +37,3 @@ Dated task ledgers, reviews, old release notes, source-evidence snapshots and ar
 
 
 [v0.1.19.0-RC2 prerelease](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2) was published on 2026-11-12 from `a9f8f412`. See the [publication receipt](../reviews/2026-11-12-release-preparation/publication-rc2.json) and [usage and migration guide](release-guide-0.1.19.md). Publication does not upgrade an existing installation.
-
-[Project goals, acceptance and decision records](project-goals-knowledge.md) · 2026-11-13 source additions.
-
-[Change impact and staged business workflows](project-impact-workflows.md): file selection, impact reviews, guided scenarios and accepted predecessor handoff.
-
-- [Plugin entry points and first use](plugin-usage.md)

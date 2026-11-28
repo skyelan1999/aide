@@ -12,6 +12,7 @@ Aide is a single-user, local-first AI development workbench with controlled file
 | Models | Separate provider credentials, model capabilities, parameter profiles, routing decisions, usage and pricing. Do not equate selecting a text model with producing native media. |
 | Context | Preview request budgets, reserve output, reject over-budget requests appropriately and compact history using validated snapshots. Keep estimates distinct from upstream usage. |
 | Execution | Support ordinary conversation and workflows, cancellation, pause/resume where checkpoints permit, queueing and explicit approval. Proposed writes/commands must not be reported as executed. |
+| Goals and project memory | Maintain deliverables and individual operator acceptance separately from execution. Persist attributed facts, constraints, decisions and questions without turning records into new authorization. Support evidence-based change-impact reviews and staged workflows with dependency invalidation. |
 | Files/sources | Enforce source-relative paths, permissions, visibility, identity and hash conflicts across local/SSH access. Preserve read-only references. |
 | Knowledge | Provide bounded index/search, source-aware excerpts and evidence provenance. Clearly report incomplete coverage and unresolved static relationships. |
 | Plugins | Validate package/lifecycle contracts, actual tool ownership, dependencies and human-confirmed management. Trusted Node execution is not a sandbox. |

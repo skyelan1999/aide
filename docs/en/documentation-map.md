@@ -2,7 +2,7 @@
 
 [English index](README.md) · [Canonical coverage history](../documentation-map.md)
 
-English product documentation is maintained by topic rather than by rewriting dated receipts. The main index links to English instructions for installation, the workbench, workspace/source permissions, knowledge exploration, voice calls, customization, architecture/APIs, plugin contracts, diagnostics, maintenance, release operation, security and localization.
+English product documentation is maintained by topic against main source `be525318` (2026-11-28), rather than by rewriting dated receipts. The main index links to English instructions for installation, the workbench, workspace/source permissions, knowledge exploration, voice calls, customization, architecture/APIs, plugin contracts, diagnostics, maintenance, release operation, security and localization.
 
 | Current area | English entry |
 | --- | --- |
@@ -11,8 +11,8 @@ English product documentation is maintained by topic rather than by rewriting da
 | Files, local/SSH scope, document destinations | [Workspace paths](workspace-paths.md), [data layout](architecture/data-layout.md) |
 | Assistant, audio and communication | [User guide](user-guide.md), [voice calls](assistant-voice-call.md), [TTS](security/tts-local.md) |
 | Source/module/API navigation | [Architecture](architecture.md), [debug API](debug-api.md) |
-| Knowledge and history | [Knowledge map](knowledge-map.md), [memory access](architecture/memory-access.md) |
-| Extensibility | [Customization](customization.md), [plugin protocol](plugin-protocol.md), [daemon protocol](plugins/daemon-protocol.md) |
+| Knowledge, goals and history | [Knowledge map](knowledge-map.md), [goals and project knowledge](project-goals-knowledge.md), [change impact and workflows](project-impact-workflows.md), [memory access](architecture/memory-access.md) |
+| Extensibility | [Customization](customization.md), [plugin usage](plugin-usage.md), [plugin protocol](plugin-protocol.md), [daemon protocol](plugins/daemon-protocol.md) |
 | Development and translation | [Workflow](development-workflow.md), [localization](localization.md) |
 | Credentials, backup, privacy and transport | [Security index entries](README.md) |
 

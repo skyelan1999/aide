@@ -1,15 +1,15 @@
 # aide 产品需求文档（PRD）
 
-> 核对日期：2026-11-12；核心实现基线 `05e0b8a7`。需求表保留逐项状态，历史截图和验收不升级为本轮实测。技术原理见 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。
+> 核对日期：2026-11-28；当前实现基线 `be525318`。需求表保留逐项状态，历史截图和验收不升级为当前实测。技术原理见 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。
 
 ## 文档信息
 
 | 项 | 内容 |
 | --- | --- |
-| 文档版本 | v3.8（2026-11-12 发行文档维护） |
-| 日期 | 2026-11-12 |
+| 文档版本 | v3.9（2026-11-28 现行文档维护） |
+| 日期 | 2026-11-28 |
 | 状态 | 草稿（Draft） |
-| 对应代码基线 | `05e0b8a7`；源码基线；相关隔离验收与本次正式 Delivery 分别记录 |
+| 对应代码基线 | `be525318`；main 源码基线；相关隔离验收与正式 Delivery 分别记录 |
 | 前序基线 | v3.1（2026-09-25 全貌重编）；v3.0（2026-09-24 全貌重编）；v2.1（2026-09-23，FR-01~100 状态表，见[附录 A](#附录-a历史-fr-基线-fr-01100)） |
 | 适用范围 | 当前源码功能范围与实际入口；历史版本和发布状态分别查对应发布记录 |
 
@@ -496,7 +496,7 @@ flowchart TD
 | OQ-01 | ~~消息「🔄重试」后端 404~~ | **已解决**：`POST /api/sessions/{id}/runs/{run}/retry` 已注册（server.go retryTask，运行中返回 409） | 关闭 |
 | OQ-02 | ~~`search_text` required 误写 `"command"`~~ | **已解决**：schema required 已改为 `["query"]`（workflow.go） | 关闭 |
 | OQ-03 | `semantic_search` 是离线 TF-IDF 余弦相似度，并非向量 embedding；工具描述仍写 "Semantic vector search"，命名易被误解为真语义检索 | 实现与"语义"字面有差距 | 在 UI/提示中明确标注"本地词频语义、非向量检索"，或后续接 embedding |
-| OQ-04 | ~~远程 SSH/SFTP 工作区下 `run_shell` 不自动执行~~ | **已解决**：agent `run_shell` 复用已认证的 SSH ControlMaster，在配置的远程工作目录执行；无 PTY 交互式命令仍不支持。 | 关闭 |
+| OQ-04 | ~~远程 SSH/SFTP 工作区下 `run_shell` 不自动执行~~ | **已解决**：agent `run_shell` 复用已认证的 SSH ControlMaster，在配置的远程工作目录执行；SSH 工作区可另行启用交互终端处理持续输入和中断，本地命令面板仍不提供 PTY。 | 关闭 |
 | OQ-05 | MCP 传输与宿主登录边界 | stdio 与 Streamable HTTP 均已有受限只读实现；不自动继承宿主桌面登录和 MCP 注册表 | 传输已实现；各服务认证另验 |
 | OQ-06 | ~~推理强度（MD-08）后端无 reasoning 参数透传~~ | **已解决**：provider.go 按 `ReasoningEffort` 注入 `thinking`/`reasoning_effort`（auto 不传、off 禁用、low/medium/high 开启） | 关闭 |
 | OQ-07 | 无交互式 PTY，不适合常驻服务/交互编辑器 | 已知边界 | 列入非目标，不本期实现 |

@@ -23,6 +23,7 @@ Aide is a self-hosted engineering workbench for a trusted single-user environmen
 | Area | Current source capabilities |
 | --- | --- |
 | Tasks | Conversations and AI workflows, tool loops, steering/queues, pause and resume |
+| Goals and project memory | [Deliverables, individual operator acceptance and attributed project knowledge](docs/en/project-goals-knowledge.md); [change-impact reviews and staged business workflows](docs/en/project-impact-workflows.md) |
 | Models | Provider-bound keys, parameter profiles, Chat Completions / Responses adapters, context accounting and compaction |
 | Parallel work | 1X–5X and 10X capacities including the active main runtime and private workers; tools/tests run in scope, while merging candidates retains version checks and approval |
 | Files and attachments | Local and SSH/SFTP workspaces, visible/read-only/writable references, Markdown editing/history, extractable documents and images |
@@ -30,14 +31,12 @@ Aide is a self-hosted engineering workbench for a trusted single-user environmen
 | Knowledge | File/conversation/code graphs, source identities and incremental refresh, original-text search and local TF-IDF retrieval |
 | Plugins | Separate marketplace packages, tools, workbenches, image evidence and version-checked document interfaces |
 | Approval and control | Manual/assisted review, browser access, app inspection, image-based targeting, clicks, drag, scroll and key chords |
-| Assistant | Task coordination, speech and calls, subject to provider and device capabilities |
+| Assistant | Task coordination, speech and calls; message and assistant audio can use a [LAN SIP handset](docs/architecture/decentralized-messages.md#局域网-sip-话机接管), including member dialing and explicit hangup |
 | Desktop | Configurable shortcuts and themes; optional macOS double-Shift/Command app capture with source context |
 | Operations | Request traces, usage, diagnostics, backups, source builds and release verification |
 
 Concurrency is not a proportional speed guarantee. Model review is not a passing test. See the [source-backed whitepaper](docs/architecture/aide-technical-whitepaper.md) for mechanisms and verification limits.
 
-
-Source additions (2026-11-13): existing plans support deliverables and individual acceptance, while project memory supports attributed facts, constraints, decisions and questions. See [project goals and knowledge](docs/en/project-goals-knowledge.md). These additions are not in the v0.1.19.0-RC2 package.
 
 ## Start
 
@@ -77,8 +76,3 @@ The technical whitepaper is authored as **Skye Lan**. It distinguishes source in
 ## License
 
 [MIT](LICENSE). Third-party components retain their own licenses. Aide is an independent project inspired by [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness); it is not an official DeepSeek product or a complete DSH/Cordis runtime implementation.
-
-
-[0.1.19 usage and migration](docs/en/release-guide-0.1.19.md).
-
-Source additions: [change impact and reusable business stages](docs/en/project-impact-workflows.md) reuse plans, plugins, approvals and acceptance. Not included in the published RC2 package.

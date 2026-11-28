@@ -2,8 +2,8 @@
 
 作者：**Skye Lan**
 文档版本：**1.1 草稿**
-编写与源码核对日期：**2026-11-12**
-实现基线：[`05e0b8a76314b37565a13ff9f25746ca0f770741`](https://github.com/skyelan1999/aide/tree/05e0b8a76314b37565a13ff9f25746ca0f770741)
+编写与源码核对日期：**2026-11-28**
+实现基线：[`be525318f6a112256a5d087e6ef97f153aa17a4e`](https://github.com/skyelan1999/aide/tree/be525318f6a112256a5d087e6ef97f153aa17a4e)
 范围：Aide 本体；独立插件产品的技术方案不在本文范围内。
 
 ## 摘要
@@ -56,7 +56,7 @@ flowchart TB
 
 ### 2.1 服务、前端与工具环境
 
-Go 服务维护 HTTP API、任务调度、模型适配、状态和文件驱动。前端使用原生 JavaScript/CSS，本地 vendor 库提供 Markdown 等渲染能力；静态资源通过 `go:embed` 编入服务，更新源码后需要构建相应产物，刷新旧服务页面不会加载新后端。
+Go 服务维护 HTTP API、任务调度、模型适配、状态和文件驱动。前端产品自有逻辑以 TypeScript 为源，通过 `npm run build:web` 生成同路径 JavaScript，CSS 与本地 vendor 库提供样式和渲染能力；静态资源通过 `go:embed` 编入服务。更新源码后需要重新生成运行资源并构建相应后端产物，刷新旧服务页面不会加载新后端。
 
 标准发行路径使用 Docker 工具环境提供 Node.js、Python、Git 等依赖。macOS 桌面壳采用 AppKit/WKWebView，连接同一后端并提供原生权限、快捷键和捕获桥接。浏览器标签页或桌面窗口不是自动独立的服务实例，也不是独立操作系统桌面。其他平台有各自适配，不将一端实测结论扩展为所有平台均已通过。
 
@@ -360,7 +360,7 @@ macOS 桌面设置支持快捷键绑定和可选全局双修饰键捕获。捕�
 2. **程序公开身份**：GitHub Release 的 tag、`published_at`、公开 URL 和附件元数据，说明哪个程序版本在何时被平台记录为发布。
 3. **文稿身份**：本稿自己的提交、公开 URL、版本与内容摘要，在真正公开后补记；不能复用程序旧 Release 的日期作为本文首次公开日期。
 
-截至本次查询，最新公开程序 Release 为 [v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3)，`published_at = 2026-11-02T06:55:25Z`。它与 2026-11-12 的源码核对基线并不相同。2026-11-11 的历史公开元数据、提交身份和源码摘要保存于 [aide-public-baseline-20261111.json](evidence/aide-public-baseline-20261111.json)，可以对照公开 API 和固定提交复查。
+截至 2026-11-28 本次核对，最新公开程序 Release 为 [v0.1.19.0-RC2](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)，`published_at = 2026-11-12T12:32:55Z`，发行源码为 `a9f8f41210dc7edfa92f99ffd6635c81b7c35d8b`；公开回执见 [publication-rc2.json](../reviews/2026-11-12-release-preparation/publication-rc2.json)。它与 2026-11-28 的 main 源码核对基线并不相同。2026-11-11 的历史公开元数据、提交身份和源码摘要保存于 [aide-public-baseline-20261111.json](evidence/aide-public-baseline-20261111.json)，可以对照公开 API 和固定提交复查。
 
 Git 提交中的作者时间、提交时间、Release 创建时间和实际发布字段具有不同语义；摘要证明内容一致性，不单独证明首次公开时间。这些记录可支持后续追溯“某个版本及其内容何时可被访问”，不自动证明首创性、专利优先权或法律权属。本文不使用“全球首个”等未经检索验证的结论。
 

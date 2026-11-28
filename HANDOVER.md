@@ -1,8 +1,6 @@
 # Aide 开发与运维交接
 
-维护日期：2026-11-12；[v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)已公开，发行源码为 `a9f8f412`，七个附件与完整门禁见[发布回执](docs/reviews/2026-11-12-release-preparation/publication-rc2.json)。SQLite 1.0.3、StarLink 0.1.6 及市场登记已更新。本次未替换维护者的生产服务或已安装插件；主干、安装包与正在运行的实例分别核对，升级保留旧包及数据备份。
-
-源码增补：2026-11-13 的目标验收与项目知识记录见[使用说明](docs/project-goals-knowledge.md)及[任务](docs/tasks/project-goals-knowledge-20261113.json)。不属于 RC2 发行包；本轮不自动升级生产服务或已安装插件，回退前备份完整项目缓存。
+维护日期：2026-11-28；当前源码基线为 `be525318`。最新公开程序仍为 [v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)，发行源码为 `a9f8f412`，七个附件与完整门禁见[发布回执](docs/reviews/2026-11-12-release-preparation/publication-rc2.json)。主干、安装包与正在运行的实例分别核对，升级保留旧包及数据备份；源码文档更新不等于已发布或已升级现有实例。
 
 ## 接手顺序
 
@@ -62,8 +60,3 @@ python3 scripts/agent-route.py verify quick
 [执行策略](docs/architecture/execution-policy.md) · [上下文恢复](docs/architecture/context-recovery.md) · [知识星图](docs/architecture/knowledge-map.md) · [插件协议](docs/plugin-protocol.md) · [电脑与浏览器控制](docs/plugins/computer-browser-control.md) · [语音](docs/architecture/assistant-openai-speech.md) · [SSH 与存储](docs/architecture/ssh-storage.md) · [诊断](docs/architecture/diagnostics.md)
 
 旧版交接保留在 [archive](docs/archive/)；[2026-10-17 截图](docs/ui-evidence.md)不是当前运行环境截图，不用它判断今天的界面或发布状态。
-
-
-[0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
-
-2026-11-13 续接：变更影响与分阶段业务流程见[说明](docs/project-impact-workflows.md)及[任务](docs/tasks/project-impact-workflows-20261113.json)。源码增补不等于 RC2 包或正在运行的实例已升级；新请求还要求当前功能完成后排查 Aide/插件可用性问题。

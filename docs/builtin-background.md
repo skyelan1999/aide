@@ -15,4 +15,4 @@
 
 「每 20 分钟提醒远眺」可以关闭，计时只累计本标签页可见且未锁屏的时间。提醒可以延后 5 分钟。「现在休息」会暂停背景 20 秒，并提示放松视线、看向约 6 米外。切换到其他背景会结束本次计时，背景与提醒偏好保存在当前浏览器。远眺提示参考[美国眼科学会关于屏幕用眼疲劳的建议](https://www.aao.org/eye-health/tips-prevention/what-is-eye-strain)。
 
-源码入口为 `internal/server/web/settings-init.js`、设置 schema 和对应样式。历史素材截图保留在 `docs/images/builtin-whale-20261017/`，只作当时证据，不是可用选项或本轮视觉验收。
+源码入口为 `internal/server/web/settings-init.ts`（生成 `settings-init.js`）、设置 schema 和对应样式。历史素材截图保留在 `docs/images/builtin-whale-20261017/`，只作当时证据，不是可用选项或当前视觉验收。

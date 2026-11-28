@@ -33,6 +33,7 @@ flowchart LR
 | 能力 | 当前源码提供什么 |
 | --- | --- |
 | 对话与工程任务 | 多轮工具执行、规划与审查、运行中插话/排队、暂停与继续 |
+| 目标与项目记忆 | [交付物与逐项用户验收、项目知识](docs/project-goals-knowledge.md)；[需求变更影响与分阶段业务流程](docs/project-impact-workflows.md) |
 | 多模型与上下文 | 提供商及命名密钥、参数策略、兼容 Chat Completions / Responses 的适配、上下文预算与压缩 |
 | 并行协作 | 1X～5X、10X 容量；主环境与私有执行环境异步协同，工具与测试在各自范围执行，候选汇入主项目仍经版本校验与审批 |
 | 文件与资料 | 本地与 SSH/SFTP 工作区、引用的可见/只读/可写控制、Markdown 编辑与历史、可解析文档和图片附件 |
@@ -46,8 +47,6 @@ flowchart LR
 
 并发倍率不是等比例提速承诺；模型审查不是测试通过。详细接口、约束与已有验收见[功能说明](docs/features.md)和[技术白皮书](docs/architecture/aide-technical-whitepaper.md)。
 
-
-源码增补（2026-11-13）：现有任务规划支持交付物与逐项验收，项目记忆支持带来源的事实、约束、决策和未决问题；见[项目目标与知识记录](docs/project-goals-knowledge.md)。此增补不包含在 v0.1.19.0-RC2 安装包中。
 
 ## 快速开始
 
@@ -107,8 +106,3 @@ bash scripts/install.sh --source
 ## 许可与致谢
 
 [MIT License](LICENSE)。第三方组件保留各自许可。aide 是独立项目，借鉴 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的设计思路，不是 DeepSeek 官方产品，也不承诺完整 DSH/Cordis 运行时兼容。
-
-
-[0.1.19 使用与迁移](docs/release-guide-0.1.19.md)。
-
-源码增补：需求变更影响清单与可复用业务阶段流程见[使用说明](docs/project-impact-workflows.md)，沿用当前规划、插件、审批和验收；已发布 RC2 包不含此增补。

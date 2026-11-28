@@ -1,6 +1,6 @@
 # Runtime packages, explicit builds and recovery
 
-[简体中文](../runtime-bundle.md) · [Installation](installation.md) · [Launcher contract](../architecture/launcher-contract.md). Reviewed from source `05e0b8a7` on 2026-11-12.
+[简体中文](../runtime-bundle.md) · [Installation](installation.md) · [Launcher contract](../architecture/launcher-contract.md). Reviewed from main source `be525318` on 2026-11-28.
 
 ## Start and source updates
 

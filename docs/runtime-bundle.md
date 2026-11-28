@@ -1,6 +1,6 @@
 # 运行包、显式构建与恢复
 
-按 2026-11-12 源码 `05e0b8a7` 核对。[English](en/runtime-bundle.md) · [安装](installation.md) · [标准启动接口](architecture/launcher-contract.md)。
+按 2026-11-28 main 源码 `be525318` 核对。[English](en/runtime-bundle.md) · [安装](installation.md) · [标准启动接口](architecture/launcher-contract.md)。
 
 ## 日常启动与源码更新
 

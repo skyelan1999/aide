@@ -1,9 +1,8 @@
-# Web 前端 JS → TS 渐进改造规范
+# Web 前端 TypeScript 单源与运行产物规范
 
-目标：将 `internal/server/web/` 自有脚本与 `scripts/` 桥接脚本渐进改造为 TypeScript，
-获得静态类型检查与接口文档能力，同时**运行时零变化**。
+`internal/server/web/` 的产品自有脚本及 `scripts/` 桥接脚本以 TypeScript 为权威源码，通过类型擦除生成同路径 JavaScript/CommonJS 运行文件，在保持现有 classic-script、Go embed 和 Node 调用方式的前提下提供静态类型检查。维护时修改 `.ts` / `.cts`，不要直接编辑生成的 `.js` / `.cjs`。
 
-## 技术路线（批 1 已确定并验证）
+## 当前构建路线
 
 - `.ts` 为权威源码，`tsc` 仅做类型擦除，编译出**同名 `.js` 产物继续入库**。
   Go embed、`index.html` 的 `<script src>`、启动脚本完全不改，不引入 bundler/framework。
@@ -22,7 +21,7 @@
 1. 复制 `.js` 为 `.ts`，**逻辑零改动**，只加类型：接口、参数/返回值标注、
    `catch(e)` 中的 `(e as Error)`、必要的 `??''` 等等价守卫。
 2. `window.AideXxx` 全局 API 在文件顶层用 `interface Window { ... }` 合并声明；
-   调用方（app.js 等未改造文件）不受影响。
+   调用方通过相同的全局 API 使用，不受类型声明影响。
    **同一全局 API 的 Window 声明只保留在权威实现文件**（如 `LockCluster` 仅在
    `lock-cluster.ts`），其他文件引用即可——重复声明不同类型会报合并冲突。
 3. DOM 创建辅助函数用泛型 `node<K extends keyof HTMLElementTagNameMap>`，
@@ -34,7 +33,7 @@
    `n.textContent=text` → `String(text)`、文案、时序、轮询条件。
    类型不通过时用非空断言（`event!.preventDefault()`、`clearTimeout(timer!)`、
    `readyResolve!(...)`）保留原始表达式，而不是改写成"更安全"的版本。
-6. 编译后递增 `index.html` 中该脚本的 `?v=` 版本号。
+6. 运行资源内容变化时，同步递增 `index.html` 中该脚本的 `?v=` 资源版本；仓库回归会检查资源版本和 TS/JS 单源一致性。
 7. **文件头注释必须放在 interface 声明之前**（或紧贴首个运行时语句）：
    注释与首个输出语句之间夹 interface 时，tsc 会把注释随声明一起擦除。
 8. **源码切片测试需适配产物格式**：`scripts/*.test.cjs` 中按字符串锚点
@@ -277,7 +276,7 @@
   永远不会生效的前置重复键；URDF 删除三个被后续同名实现覆盖的函数，均保留原实际生效项。
   通过逐文件/逐声明完整诊断与回滚验证，安全移除 352 处冗余显式 `any`，并删除 app 中
   79 处 `!?.` 冗余组合；动态 API、THREE 和页面全局仍保留必要动态类型，不做无依据强转。
-  `npm run typecheck` 与 quick CI 现统一覆盖六套 TypeScript 配置，防止桥接或 worklet 回流。
+  `npm run typecheck` 与 quick CI 现统一覆盖八套 TypeScript 配置，防止桥接或 worklet 回流。
   quick CI 还执行 `npm run build:ts` 并要求入库 JS 无差异；delivery 的 source/native
   独立 runner 均先执行锁定 `npm ci`，避免干净环境缺少 TypeScript。Go embed 仅包含
   运行时资产，不打包 TS、tsconfig 或本迁移说明。

@@ -33,7 +33,7 @@ python3 scripts/agent-route.py prompt codex
 | APIs/sources/workflows | `internal/server` | Permissions, concurrency, cancellation, persistence and restart |
 | Runtime/toolchain | Dockerfiles and launchers | Architecture, non-root assets, health, backups and rollback |
 
-Use explicit translation keys for product-owned UI. Dynamic values belong in numbered placeholders, not sentence fragments. Add English entries in `locales/en.js` with each new key. Do not translate user content, paths, custom names, schema IDs, model output or protocol tokens. Static HTML opts in through `data-i18n` attributes. Check both language directions without losing editor/input drafts. See [Localization](localization.md).
+Use explicit translation keys for product-owned UI. Dynamic values belong in numbered placeholders, not sentence fragments. Add English entries in `locales/en.ts` with each new key and regenerate the runtime `en.js`; do not edit generated JavaScript directly. Do not translate user content, paths, custom names, schema IDs, model output or protocol tokens. Static HTML opts in through `data-i18n` attributes. Check both language directions without losing editor/input drafts. See [Localization](localization.md).
 
 The plugin workshop can prepare, syntax-check and package extensions. Preparation is not runtime acceptance. Plugin/reference management permissions are independent and default off; confirmation rechecks workspace, permissions and target state. Trusted plugin code retains its documented execution boundary.
 

@@ -1,6 +1,6 @@
 # 软件模块与职责说明
 
-基线：2026-11-11，`921a95a5`。本页是实现职责索引；原理、状态和设计取舍见 [技术白皮书](aide-technical-whitepaper.md)。旧截图只记录当时入口，不是本轮验收。
+基线：2026-11-28，`be525318`。本页是实现职责索引；原理、状态和设计取舍见 [技术白皮书](aide-technical-whitepaper.md)。旧截图只记录当时入口，不是当前验收。
 
 ## 分层与依赖
 
@@ -32,7 +32,7 @@ flowchart TD
 | `computer_control.go`、`computer_actions.go`、`assisted_approval_surface.go` | 目标控制、视觉引用和单次动作审核 | 系统权限、截图身份和平台能力分别生效 |
 | `files.go`、`sources.go`、`workspace_config.go` | 工作区、本地/SSH、来源身份与锁、文件读写 | 可见、启用、可写分别校验；不绕过只读挂载 |
 | `document_proposals.go`、`generated_documents.go` | 固定文档来源与目标绑定，生成文件提案；四阶段临时副本发布 | 正式目标按配置解析；未配置四阶段保留缓存旧行为，不扩权 |
-| `management.go`、`web/management.js` | 管理工具、四项授权、包预检、人工待办、执行结果 | 管理动作与日常调用分开；执行前重查授权、工作区与来源 |
+| `management.go`、`web/management.ts`（生成 `management.js`） | 管理工具、四项授权、包预检、人工待办、执行结果 | 管理动作与日常调用分开；执行前重查授权、工作区与来源 |
 | `plugins.go`、`plugin_host.js` | 登记、启停、schema、Node handler、插件工具 | 可信代码；语法预检不是安全审计或实际功能测试 |
 | `skill_catalog.go`、`skill_library.go` | 按任务搜索公开 GitHub Skill、固定提交并校验缓存、准备只读引用 | 宿主原生工具；技能插件另行分发，不把外部仓库当作主仓内置源码。不执行第三方脚本，复用引用管理权限与人工提案。详见[技能库说明](https://github.com/skyelan1999/aide-pkg-skill/blob/main/README.md) |
 | `mcp_source.go`、`mcp_http.go` | stdio / Streamable HTTP 发现与受限调用 | 仅允许实时声明为只读的工具；宿主 MCP 不自动继承 |
@@ -42,7 +42,7 @@ flowchart TD
 | `knowledge_*.go`、`code_analysis/`、`document_analysis/` | 多来源有界索引、代码关系、原文与 TF-IDF 检索 | 指纹重查、候选静态关系；无通用 OCR/向量库承诺 |
 | `config_backup.go`、`paths.go`、`migration.go` | 配置、凭据和数据分层、迁移、备份 | 数据卷与项目文件分离；不要提交令牌和业务数据 |
 
-原生 macOS 壳的 `native/macos-desktop/` 提供 WebView、修饰键手势、应用捕获与目标动作调度；前端 `web/keybindings.js` 管理快捷键绑定。它们复用主服务。
+原生 macOS 壳的 `native/macos-desktop/` 提供 WebView、修饰键手势、应用捕获与目标动作调度；前端 `web/keybindings.ts`（生成 `keybindings.js`）管理快捷键绑定。它们复用主服务。
 
 文件名均相对于 `internal/server/`，另行注明的目录除外。完整导航见[代码布局](code-layout.md)和[架构接口索引](../architecture.md)。
 

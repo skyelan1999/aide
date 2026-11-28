@@ -18,10 +18,10 @@ aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定�
 ├─ sessions/                 会话数据
 │   ├─ active/session-*.json    活动会话
 │   ├─ archived/session-*.json  归档会话
-│   └─ assistant/session-*.json  小蜜系统会话（#30，含 runs/messages 持久化，#62）
-├─ assistant/                小蜜私有区（全局、加密）
-│   ├─ voice-history.json   小蜜对话历史信封
-│   └─ voice-memory.json     小蜜长期记忆
+│   └─ assistant/session-*.json  小秘系统会话（#30，含 runs/messages 持久化，#62）
+├─ assistant/                小秘私有区（全局、加密）
+│   ├─ voice-history.json   小秘对话历史信封
+│   └─ voice-memory.json     小秘长期记忆
 ├─ memory/                   全局记忆与反馈缓存
 │   ├─ core/                 插件调用成败统计；旧版 aide memory.md 的迁移源
 │   ├─ cache/                嵌入/向量缓存（可再生）
@@ -119,7 +119,7 @@ flowchart LR
 | 损坏关键文件（settings/sessions） | 移入 `.quarantine`，settings 回退默认 | 用户数据只隔离、不自动删 |
 | 程序层被篡改/换版 | 不自动修复，healthz 标 `degraded`，提示重新部署镜像 | 程序在卷外，只读 |
 | 密码/密钥丢失 | 密码不可恢复→重置；access-token 丢失→重新生成 | 符合既有设计 |
-| 小蜜历史 re-wrap 失败 | 保留旧/新密文双份，标 `degraded`，不覆盖 | 防止历史丢失 |
+| 小秘历史 re-wrap 失败 | 保留旧/新密文双份，标 `degraded`，不覆盖 | 防止历史丢失 |
 
 每次校验与恢复都追加 `.integrity/recovery.log`，恢复后再校验形成闭环。
 
@@ -138,7 +138,7 @@ flowchart LR
 - **Docker 数据映射（2026-10-16）**：启动器将 `/data` 绑定到启动目录 `.aide-data/storage/data`，`/home/aide` 绑定到 `.aide-data/storage/home`，与所选项目分开。旧命名卷校验迁入后保留；删除 Docker 卷不删除这些宿主数据。见[启动目录持久化](launcher-storage.md)。
 - **首次启动迁移**：旧平铺卷在首次启动时自动迁移，全程备份可回滚；无需人工干预。
 - **权限**：分层目录 0700，敏感文件 0600。
-- **TLS 路径对齐**：当前运行期 TLS 证书仍写 `data/tls/`（#29/B 任务在改）；`paths.go` 已定义 `certs/` 目标位置，待 B 完成后统一对齐。
+- **TLS 路径**：运行期证书与私钥位于 `data/certs/cert.pem` 和 `data/certs/key.pem`；旧 `data/tls/` 中完整的证书对在首次启动时复制并做 SHA-256 校验，成功后删除旧文件，目标已就绪则不覆盖。
 
 ## 文档绑定与缓存分开（源码 0fef6411）
 

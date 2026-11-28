@@ -1,7 +1,7 @@
 # aide 超长对话与工业复杂任务支持说明
 
-日期：2026-10-12
-适用：aide `0.1.17.0 RC2` 当前源码线。本文区分源码能力、估算、验证与工程使用边界；写入文档不代表发布或验收通过。
+日期：2026-10-12；现行说明复核：2026-11-28（main `be525318`）
+适用：aide 当前源码线；公开程序版本以 `version.md` 和 Release 为准。本文区分源码能力、估算、验证与工程使用边界；写入文档不代表发布或验收通过。
 
 ## 定位
 
@@ -58,5 +58,5 @@ aide 可用于工程知识检索、跨文档调查、变更方案草拟、故障
 - 摘要触发、快照提交、连续摘要：`internal/server/workflow.go`
 - 会话持久化与桶归属：`internal/server/server.go`
 - 项目 token 记忆与可读投影：`internal/server/memory_tokens.go`
-- 实时流式渲染：`internal/server/web/app.js`
+- 实时流式渲染：`internal/server/web/app.ts`（运行产物为 `app.js`，由 TS 构建生成）
 - 总体模块与 API：[`架构索引`](architecture.md)

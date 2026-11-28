@@ -1,6 +1,6 @@
 # Aide 文档中心
 
-维护日期：2026-11-12。[v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)已公开，发行源码为 `a9f8f412`；实际附件与摘要见 Release，[发布回执](reviews/2026-11-12-release-preparation/publication-rc2.json)记录验收与限制。升级见[使用与迁移](release-guide-0.1.19.md)，本轮新增能力不视为旧 RC3 安装包已有功能。
+维护日期：2026-11-28；当前源码基线为 `be525318`。[v0.1.19.0-RC2 预发布](https://github.com/skyelan1999/aide/releases/tag/v0.1.19.0-RC2)仍是最新公开程序，发行源码为 `a9f8f412`；实际附件与摘要见 Release，[发布回执](reviews/2026-11-12-release-preparation/publication-rc2.json)记录验收与限制。升级见[使用与迁移](release-guide-0.1.19.md)，main 后续能力不视为该 RC2 安装包已有功能。
 
 ## 使用 Aide
 
@@ -12,6 +12,8 @@
 | 设置工作目录、引用与缓存 | [工作目录配置](workspace-paths.md) · [SSH 与存储](architecture/ssh-storage.md) · [远程目录中继](reference-relay.md) |
 | 管理文件与大附件 | [Markdown 编辑与导出](architecture/markdown-editing-export.md) · [文件传输](architecture/resumable-file-transfers.md) · [大 Markdown 附件机制与验收](reviews/2026-11-09-large-markdown-attachments.md) |
 | 理解模型窗口、摘要与记忆 | [上下文恢复](architecture/context-recovery.md) · [长会话支持](industrial-long-conversation-support.md) |
+| 管理目标、验收与项目知识 | [项目目标与知识记录](project-goals-knowledge.md) · [变更影响与业务流程](project-impact-workflows.md) |
+| 安装、启用和打开插件 | [插件入口与首次使用](plugin-usage.md) · [插件协议](plugin-protocol.md) |
 | 浏览知识、代码和文档 | [知识星图](architecture/knowledge-map.md) |
 | 按十进制分类命名项目文档 | [PjPlan 项目文档插件](plugins/pjplan.md) |
 | 使用浏览器与电脑工具 | [控制架构、审批和平台边界](plugins/computer-browser-control.md) |
@@ -40,12 +42,3 @@
 [2026-10-17 截图](ui-evidence.md)仍是当时的界面记录，不作为当前首页效果图。[连续工作交接](continuity-handoff.md)等旧交接保留原任务范围；当前接手先读根目录 [HANDOVER](../HANDOVER.md)。本次清理删除当前入口中的失效说明，不删除历史原始收据。
 
 白皮书的源码、公开发行身份和校验清单见[证据快照](architecture/evidence/aide-public-baseline-20261111.json)。白皮书在提交、推送或正式发布之前仍是本地文档，不能由已有程序 Release 的日期推定其已经公开。
-
-
-[0.1.19 使用与迁移](release-guide-0.1.19.md)。
-
-[项目目标、验收与知识决策](project-goals-knowledge.md) · 2026-11-13 source additions.
-
-[变更影响与分阶段业务流程](project-impact-workflows.md)：文件勾选、影响复核、场景向导和前置成果接续。
-
-- [插件入口与首次使用](plugin-usage.md)

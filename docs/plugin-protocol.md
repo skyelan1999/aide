@@ -472,7 +472,7 @@ workbench.fileExtensions 可声明最多 8 个不重复的小写扩展名，例�
 
 ## 模型自动选型声明 · protocol 1 候选扩展（2026-10-22）
 
-manifest 可声明 `"modelRouter":{"protocol":1,"catalog":"capabilities.json"}`。档案为包内单个 JSON 文件（不允许路径、符号链接逃逸；最多128KiB、64个模型、16个角色规则）。宿主导入时验证结构，执行时在工作区启用插件中重新读取；仅一个有效声明可生效。该扩展当前为新源码候选，v0.1.17.5-RC2 尚未包含。
+manifest 可声明 `"modelRouter":{"protocol":1,"catalog":"capabilities.json"}`。档案为包内单个 JSON 文件（不允许路径、符号链接逃逸；最多128KiB、64个模型、16个角色规则）。宿主导入时验证结构，执行时在工作区启用插件中重新读取；仅一个有效声明可生效。该扩展于 2026-10-22 作为源码候选加入，当时 v0.1.17.5-RC2 尚未包含；当前 main 与 v0.1.19.0-RC2 均已包含 `auto_model_router.go` 实现。
 
 档案包含 protocol/revision/checkedAt、sources[{id,url,assessment}]、models[{id,aliases,wireFormat,contextWindow,vision,tools,structured,weights,source}] 和 rules[{role,keywords}]。weights 的 coding/reasoning/writing/general/fast 为1–5维护者权重，不冒充官方评测得分；source 引用档案内 HTTPS 来源，不进行运行期请求。插件设置可提供 aliases（实际API名到档案ID显式映射）、preference=quality/balanced/fast。
 

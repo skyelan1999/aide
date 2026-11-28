@@ -1,6 +1,6 @@
 # 兼容路径：执行中的并行机会评估
 
-当前说明：2026-11-11，源码 `921a95a5`。 本页仅描述旧 `ParallelProgress` 检查点和分析路径；新聊天默认使用[异步执行环境](../designs/execution-environments-20261101.md)，工作者可以使用工具，不能套用本页的无工具及三轮预算规则。实现入口为 `internal/server/conversation_parallel.go` 与 `parallel_edit_drafts.go`；完整执行结构见 [Aide 技术白皮书](aide-technical-whitepaper.md#5-异步执行环境与兼容分析路径)。
+现行说明复核：2026-11-28，main `be525318`。本页仅描述旧 `ParallelProgress` 检查点和分析路径；新聊天默认使用[异步执行环境](../designs/execution-environments-20261101.md)，工作者可以使用工具，不能套用本页的无工具及三轮预算规则。实现入口为 `internal/server/conversation_parallel.go` 与 `parallel_edit_drafts.go`；完整执行结构见 [Aide 技术白皮书](aide-technical-whitepaper.md#5-异步执行环境与兼容分析路径)。
 
 普通会话的1–5x、10x表示单轮独立分析请求的并发上限。主执行器负责工具、插件、审批与文件写入，分析请求只返回待核实笔记，由主执行器结合真实证据继续执行并汇总。
 

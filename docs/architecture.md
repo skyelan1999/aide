@@ -1,6 +1,6 @@
 # aide 架构与接口索引
 
-> 核对日期：2026-11-12；实现基线 `05e0b8a7`。本页是模块和接口导航，任务、上下文、权限、并行、文件与原生控制原理见署名 Skye Lan 的 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。旧截图只说明当时界面，不是本轮运行验收。
+> 核对日期：2026-11-28；实现基线 `be525318`。本页是模块和接口导航，任务、上下文、权限、并行、文件与原生控制原理见署名 Skye Lan 的 [Aide 技术白皮书](architecture/aide-technical-whitepaper.md)。旧截图只说明当时界面，不是当前运行验收。
 
 [软件模块说明](architecture/modules.md)列出管理提案、文档绑定、页面助理、消息和 TTS 的依赖；[功能说明](features.md)与[演示](demo-guide.md)对应真实入口。
 
@@ -10,7 +10,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-Aide 由 Go 服务、嵌入式浏览器 UI、工具运行时及按平台配置的原生桥接组成。浏览器和桌面壳共享后端，模型回答、工具执行、文件应用和实际验收分别留痕。本页覆盖 0.1.19.0 RC2 发行准备；实际安装包与验证身份以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不能把主干能力视为旧 RC3 安装包已有功能。发行与运行身份见 [HANDOVER](../HANDOVER.md)，历史验收见 [验证记录](verification.md)。
+Aide 由 Go 服务、嵌入式浏览器 UI、工具运行时及按平台配置的原生桥接组成。浏览器和桌面壳共享后端，模型回答、工具执行、文件应用和实际验收分别留痕。本页描述 main 当前源码；实际安装包与验证身份以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不能把主干能力视为 v0.1.19.0-RC2 安装包已有功能。发行与运行身份见 [HANDOVER](../HANDOVER.md)，历史验收见 [验证记录](verification.md)。
 
 超长会话、摘要压缩、项目记忆及工业使用边界见[超长对话与工业复杂任务支持说明](industrial-long-conversation-support.md)。
 
@@ -50,22 +50,24 @@ OpenAI 官方端点（`api.openai.com`）在手动和自动模型选择下均自
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
 | `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio / Streamable HTTP MCP 驱动 |
 | `knowledge_map.go` / `knowledge_updates.go` / `knowledge_sources.go` | 多来源有界知识索引、来源身份重查、版本差量与文件／代码缓存 |
-| `knowledge_code.go` / `code_analysis/` | Go／JavaScript／Python AST与静态调用候选 |
+| `knowledge_code.go` / `code_analysis/` | Go／JavaScript／TypeScript（含 TSX/JSX）／Python 静态分析与调用候选；Go 可选类型服务与 TypeScript 静态解析分别说明 |
 | `knowledge_documents.go` / `document_analysis/` | 文档原文提取、本地TF-IDF RAG与原文指纹回填 |
-| `web/starmap*` | 独立知识星图、自然尺度、代码探索和自动增量绘制；直接进入，无入场过场 |
+| `goal_acceptance.go` / `project_knowledge.go` / `web/project-records.ts` | 交付物、逐项用户验收与有来源的项目知识；执行完成不等于用户验收 |
+| `change_impact.go` / `business_flow*.go` / `web/project-workflows.ts` | 变更影响证据、阶段流程、前置成果与依赖失效 |
+| `web/starmap*.ts`（生成 `.js`） | 独立知识星图、自然尺度、代码探索和自动增量绘制；直接进入，无入场过场 |
 | `command.go` | 本地/SSH 命令、NDJSON 输出、超时与取消；SSH 交互 PTY 输入透传原始按键字节 |
 | `persona.go` / `settings_persona_persist` | 性格系统：多人格（activePersona）、AES-256-GCM 密文（personaCiphers）、可演化 personalities、解锁/保存/重置 |
 | `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
 | `voice_agent.go` | 语音小秘：send/ignore/standby 研判、VoiceHistoryEntry 记录、AES-256-GCM 历史加解密、双向朗读 |
 | `generated_documents.go` / `document_proposals.go` | 配置驱动的自动系统文档、来源绑定提案和发布前重查 |
-| `management.go` / `web/management.js` | 四项管理权限、插件预检与引用变更人工队列 |
+| `management.go` / `web/management.ts`（生成 `management.js`） | 四项管理权限、插件预检与引用变更人工队列 |
 | `assistant_watch.go` / `assistant_agent.go` | 页面统筹的任务跟进、动作与授权代审 |
 | `message_center.go` / `internal/messaging/` | 联系人、群组/通话邀请、消息与文件分块恢复 |
 | `tts_catalog.go` / `tts/` | 百炼目录、合成适配与提供商边界 |
 | `environment_guide.go` | 系统文档自动挂载与环境引导 |
 | `plugins.go` / `plugin_host.js` / `management.go` | 插件登记、加载、schema 和 handler；在线替换见[插件协议](plugin-protocol.md#在线升级与恢复) |
-| `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
-| `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重）；排队/插话/暂停（运行时输入框旁固定显示暂停控制，发送键保留停止操作） |
+| `web/settings-init.ts`（生成 `settings-init.js`） | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
+| `web/settings-schema.json` / `app.ts`（生成 `app.js`） | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重）；排队/插话/暂停（运行时输入框旁固定显示暂停控制，发送键保留停止操作） |
 | `web/themes/**` / `style.css` / `macos.css` | 颜色变量、既有样式与新版表现层 |
 
 文件名省略前缀时均位于 `internal/server/`。不维护容易过时的文件行数/测试数量，查当前源码与本次测试输出。
@@ -77,7 +79,7 @@ OpenAI 官方端点（`api.openai.com`）在手动和自动模型选择下均自
 
 ## 数据与权限
 
-会话写入 `/data/session-<id>.json`；模型连接配置、令牌、Token 统计/费率等也在数据卷。`profiles.json` 与模型策略位于工程目录。来源登记在 `/data/config/sources.json`，秘密在数据卷；UI 外观在浏览器 `localStorage['aide.ui']`。
+会话写入 `/data/sessions/` 下的 active、archived 或 assistant 桶；模型连接配置、令牌、Token 统计/费率等也在数据卷。`profiles.json` 与模型策略位于工程目录。来源登记在 `/data/config/sources.json`，秘密在数据卷；UI 外观在浏览器 `localStorage['aide.ui']`。
 
 Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/context`；`/local` 映射由宿主浏览配置决定，可能包含较广的宿主目录。`os.Root` 和路径检查约束文件 API，但手动命令/Node 插件仍具有容器用户可访问的目录权限。插件 helper 当前读取 `/workspace`，不能把它等同于所有远程工作区的统一文件驱动。
 

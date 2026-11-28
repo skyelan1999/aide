@@ -2,9 +2,9 @@
 
 [简体中文](../architecture.md) · [English documentation](README.md)
 
-Maintained core baseline: `05e0b8a7`, 2026-11-12. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
+Maintained core baseline: `be525318`, 2026-11-28. The detailed [technical whitepaper (Chinese)](../architecture/aide-technical-whitepaper.md), by Skye Lan, explains the implementation and evidence boundaries.
 
-Aide is a Go HTTP service with an embedded native JavaScript/CSS browser UI and a container runtime. Model steps run in goroutines; SSE streams incremental output while persisted session snapshots provide final-state recovery. The Node plugin host executes trusted extensions and is not an independent security sandbox.
+Aide is a Go HTTP service with an embedded browser UI and a container runtime. Product-owned browser logic is authored in TypeScript and compiled to same-path classic JavaScript; CSS and vendored libraries remain runtime assets. Model steps run in goroutines; SSE streams incremental output while persisted session snapshots provide final-state recovery. The Node plugin host executes trusted extensions and is not an independent security sandbox.
 
 ```mermaid
 flowchart TB
@@ -33,8 +33,10 @@ Names without a prefix below are in `internal/server/`.
 | `workspace_config.go`, `ssh_session.go` | Workspace identity, local mappings and SSH/SFTP lifecycle |
 | `files.go`, `sources.go`, `mcp_source.go` | File/source boundaries, conflict checks and constrained MCP transports |
 | `knowledge_map.go`, `knowledge_updates.go`, `knowledge_sources.go` | Bounded multi-source indexes, identity rechecks, deltas and caches |
-| `knowledge_code.go`, `code_analysis/` | Go, JavaScript and Python ASTs and static call candidates |
+| `knowledge_code.go`, `code_analysis/` | Go, JavaScript, TypeScript/TSX/JSX and Python static analysis and call candidates; optional Go type bindings are separate from TypeScript parsing without compiler type checking |
 | `knowledge_documents.go`, `document_analysis/` | Source extraction, keyword retrieval, optional hybrid retrieval and source fingerprints |
+| `goal_acceptance.go`, `project_knowledge.go`, `web/project-records.ts` | Deliverables, individual operator acceptance and attributed project facts, constraints, decisions and open questions |
+| `change_impact.go`, `business_flow*.go`, `web/project-workflows.ts` | Change-impact evidence, staged workflows, accepted predecessors and dependency invalidation |
 | `command.go` | Local/SSH command streams, cancellation and interactive PTY bytes |
 | `persona.go`, `voice_agent.go` | Persona configuration and encrypted assistant conversation records |
 | `generated_documents.go`, `document_proposals.go` | Configured document destinations and source-bound proposals |
@@ -42,8 +44,8 @@ Names without a prefix below are in `internal/server/`.
 | `assistant_watch.go`, `assistant_agent.go` | Assistant task follow-up, actions and separately authorized review |
 | `message_center.go`, `internal/messaging/` | Contacts, groups, invitations, messaging and resumable transfers |
 | `tts_catalog.go`, `tts/` | Voice catalogs and synthesis adapters |
-| `web/settings-init.js`, `web/i18n.js`, `web/locales/en.js` | Initial preferences, explicit product translations and catalog |
-| `web/app.js`, `web/starmap*`, `web/*preview*` | Main UI, independent knowledge map and bounded viewers |
+| `web/settings-init.ts`, `web/i18n.ts`, `web/locales/en.ts` | Initial preferences, explicit product translations and catalog; runtime `.js` is generated from these sources |
+| `web/app.ts`, `web/starmap*.ts`, `web/*preview*.ts` | Main UI, independent knowledge map and bounded viewers; runtime `.js` is generated from these sources |
 
 Product model routing (`profiles.json`, `routing-policy.json`) is distinct from the development-agent workflow (`AGENTS.md`, workflow/router documents).
 
@@ -53,7 +55,7 @@ New multi-X chat uses asynchronous collaboration: X includes the active main run
 
 ## Data, identity and permissions
 
-Sessions are stored in `/data/session-<id>.json`; settings, credentials, source registry and usage are separate persisted records. Source registration is in `/data/config/sources.json`; browser appearance/language live in `localStorage['aide.ui']`. Runtime layout details are documented in [Data layout](architecture/data-layout.md).
+Sessions are stored under `/data/sessions/` in active, archived or assistant buckets; settings, credentials, source registry and usage are separate persisted records. Source registration is in `/data/config/sources.json`; browser appearance/language live in `localStorage['aide.ui']`. Runtime layout details are documented in [Data layout](architecture/data-layout.md).
 
 File APIs enforce root/source bounds and workspace identity. Editor saves and old proposals must pass identity/hash checks. Applying multiple files can partially succeed even though individual replacements are atomic. An enabled writable reference is still subject to filesystem permissions. Commands and trusted plugins can reach the directories available to their container user; UI management flags do not create an OS sandbox.
 

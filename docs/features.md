@@ -1,12 +1,14 @@
 # 当前功能说明与使用入口
 
-维护日期：2026-11-12；当前源码基线 `05e0b8a7`，覆盖 0.1.19.0 RC2 发行准备。此前批次修正见[余项核查](reviews/2026-11-12-remaining-issues/README.md)，当前迁移与验收边界见[0.1.19 指南](release-guide-0.1.19.md)。实际公开安装包以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不把主干能力视为旧 RC3 已有功能。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
+维护日期：2026-11-28；当前源码基线 `be525318`，覆盖 main 后续源码说明。公开程序仍以 [Releases](https://github.com/skyelan1999/aide/releases) 为准，不把主干能力视为 v0.1.19.0-RC2 安装包已有功能。操作见[用户指南](user-guide.md)，原理见[技术白皮书](architecture/aide-technical-whitepaper.md)，需求编号见 [PRD](PRD.md)。
 
 ## 项目与工程任务
 
 | 能力 | 使用方式 | 实现与约束 |
 | --- | --- | --- |
 | 对话和 AI 工作流 | 输入框选择模式、模型、策略和审批；可排队、插话、暂停与继续 | 任务保存输入、工具交换、提案和检查点；阶段输出不等于执行成功 |
+| 目标、验收与项目知识 | 在任务与规划中维护交付物和逐项验收，跨会话记录有来源的事实、约束、决策和未决问题 | 执行完成不等于用户验收；知识记录可替代、归档和提示冲突，但不会成为新的操作授权，见[项目目标与知识](project-goals-knowledge.md) |
+| 变更影响与业务流程 | 按文件和证据复核影响，使用阶段向导、前置成果与依赖验收推进交付 | 候选分析不代替执行回执；输入或前置成果变化会使相关签收失效，见[变更影响与业务流程](project-impact-workflows.md) |
 | 多提供商模型 | 设置中配置提供商、命名密钥、模型和参数 | Chat Completions 与适用模型的 Responses 适配；配额与支持能力取决于上游 |
 | 并行协作 | 普通对话提供 1X–5X、10X 执行容量 | 新聊天默认主环境与最多 X−1 个私有环境协同；可用工具和测试，主项目候选仍经审批；不保证等比例提速 |
 | 审批与实际应用 | 手动或辅助审批；待处理动作集中在任务区域 | 写入前重查路径、来源、身份和版本；模型答复与实际回执分开 |
@@ -29,7 +31,7 @@
 
 ## 工具、浏览器和电脑控制
 
-插件可提供工具、专用工作台、查看器、媒体与文档操作；宿主按协议登记工具和处理提案。插件管理与引用管理有独立授权，不与日常调用混用。Node 插件是可信可执行代码，包检查不是恶意代码隔离。[插件协议](plugin-protocol.md)。
+插件可提供工具、专用工作台、查看器、媒体与文档操作；宿主按协议登记工具和处理提案。插件面板支持按字母分组、搜索、详情、更新和受支持插件的后台自启动管理；管理工作台可处理多个工作台与预览图层。插件管理与引用管理有独立授权，不与日常调用混用。Node 插件是可信可执行代码，包检查不是恶意代码隔离。[插件入口](plugin-usage.md)与[插件协议](plugin-protocol.md)。
 
 电脑控制已内置到 Aide 设置，支持目标应用检查、窗口截图、视觉证据、点击、拖拽、双轴滚动与复杂组合键。平台支持时可定向读取或操作后台应用；依赖系统前台的动作仍需激活。会话虚拟焦点不等于多个独立桌面，也不保证共享实体键鼠能同时操作不同软件。
 
@@ -49,26 +51,20 @@
 
 设置中可调整快捷键。macOS 桌面可选双 Shift/双 Command 截取前台应用窗口，同时附应用名、窗口和时间等上下文；仅加入草稿，不自动发送，需相应系统权限。浏览器版没有同等原生全局手势能力。
 
-## 验证范围
+## 格式专题
 
-本页描述源码提供的能力，不把代码存在、设置可见、某次操作成功和公开安装包交付混为一项。已有[测试与审查](reviews/)按原日期和环境保留；[2026-10-17 截图](ui-evidence.md)仍是历史图片。本轮实际执行了隔离 Go/插件进程与浏览器回归；各项范围见余项核查。没有替换正在运行的生产实例，也未执行付费模型、真实音频或新的跨平台硬件验收。
+### PDF / JPX 预览边界
 
-## PDF / JPX preview support boundary
+PDF.js worker 使用可复现生成的 OpenJPEG 回退实现，固定 C 源码、补丁和编译镜像，见 `scripts/openjpeg/README.md`。在预览预算内支持基线 JPEG 2000 和受支持的 HT-only 输入；T.814 MIXED HT 信令不受支持并返回解码错误。子采样 e-sYCC 会明确拒绝，不会静默按 sYCC 转换；全分辨率无符号 e-sYCC 使用 PIMA 7667 Annex B 转换为标准 sRGB 显示值。原生所有权失败、DC shift、MCT record/offset、HT layer segment 和终端行边界由聚焦回归及 sanitizer 验证。这些是源码预览能力，不是完整的 JPEG 2000 一致性承诺。
 
-The PDF.js worker uses a reproducibly generated OpenJPEG fallback with pinned C sources, source patches and compiler image; see `scripts/openjpeg/README.md`. Baseline JPEG 2000 and supported HT-only inputs are accepted within the preview budgets; T.814 MIXED HT signaling is unsupported and returns a decoder error. Subsampled e-sYCC is explicitly rejected rather than silently converted as sYCC; full-resolution unsigned e-sYCC uses the PIMA 7667 Annex B conversion to standard sRGB display values. Native ownership failures, DC shifts, MCT record/offset handling, HT layer segments and terminal row bounds are checked by focused regressions and a native sanitizer harness. These are source preview capabilities, not a universal JPEG 2000 conformance claim.
+单份 JPX 限制：解压输入 64 MiB；FTYP 64 KiB；JP2H 8 MiB；ICC 4 MiB；4096 tiles / 16384 tile-components / 256 components；估算分量平面 96 MiB；RGBA 输出 64 MiB；4096 quality layers；8 Mi packet-iterator elements；4096 markers；256 CDEF entries；packed packet headers 4 MiB；MCT tile copies 合计 16 MiB；原生分配请求累计 256 MiB。PCLR 精度超过 31 位及 tile-part zero 后的 coding overrides 会被拒绝。限制可能拒绝有效但超出当前支持范围的大图或特定 profile，不能据此限定整个 PDF/浏览器的峰值内存，也不代表所有解码器问题均已解决。详见[专项核查](reviews/2026-11-12-remaining-issues/README.md)。
 
-Per-JPX limits: decompressed input 64 MiB; FTYP 64 KiB; JP2H 8 MiB; ICC 4 MiB; 4096 tiles / 16384 tile-components / 256 components; 96 MiB estimated component planes; 64 MiB RGBA output; 4096 quality layers; 8 Mi estimated packet-iterator elements; 4096 markers; 256 CDEF entries; packed packet headers 4 MiB; aggregate MCT tile copies 16 MiB; cumulative native allocation requests 256 MiB. PCLR precision above 31 bits and coding overrides after tile-part zero are rejected. Limits can reject valid but unsupported large/profile-specific images. They do not bound an entire PDF/browser's peak memory or resolve every remaining decoder report. See the [individual audit](reviews/2026-11-12-remaining-issues/README.md).
-
-
-[0.1.19 使用与迁移](release-guide-0.1.19.md)。
-
-
-2026-11-13 源码增补：[目标与验收、项目知识与决策记录](project-goals-knowledge.md)。使用现有规划和项目 token 记忆，支持用户逐项复核、带来源的记录及明确替代；RC2 安装包不含此增补。
-
-2026-11-13 源码增补：[变更影响与分阶段业务流程](project-impact-workflows.md)。带证据的候选复核、阶段进度与下一步、插件配置、前置快照、依赖验收和失效保护；不属于已发布 RC2。
-
-### DWG 二维预览（#899）
+### DWG 二维预览
 
 项目文件和已启用的只读引用可直接打开 `.dwg`。标准源码构建自带固定版本 GNU LibreDWG 的独立 `dwg2dxf` 工具，在本机临时目录生成 DXF，再复用已有矢量查看器；原文件、引用写锁及下载内容保持原状。提供缩放、拖动、适应窗口、原文件下载及失败重试。
 
 原始 DWG 上限 16 MiB、生成 DXF 上限 4 MiB、转换 20 秒、并发 2；解析继续受 DXF 实体、节点和点数预算约束。来源变更后拒绝旧请求。无云端转换、DWG 编辑或完整 CAD 保真承诺。三维、外部参照及部分实体可能缺失，详见 [使用与部署](architecture/dwg-preview.md)。
+
+## 验证范围
+
+本页描述 main 当前源码提供的能力，不把代码存在、设置可见、某次操作成功和公开安装包交付混为一项。已有[测试与审查](reviews/)按原日期和环境保留；[2026-10-17 截图](ui-evidence.md)仍是历史图片。本次文档整理只核对现行源码入口、文档链接和差异，不据此声称新的付费模型、真实音频、跨平台硬件或发行验收已经执行。

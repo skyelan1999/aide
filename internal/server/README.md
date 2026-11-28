@@ -1,6 +1,6 @@
 # `internal/server` 阅读索引
 
-> 2026-10-17 对照源码 `0fef6411`。[软件模块说明](../../docs/architecture/modules.md)连接实际界面和调用链；[截图证据](../../docs/ui-evidence.md)不替代服务端测试。
+> 2026-11-28 对照源码 `be525318`。[软件模块说明](../../docs/architecture/modules.md)连接实际界面和调用链；[截图证据](../../docs/ui-evidence.md)不替代服务端测试。
 
 ![服务端对应的实际工作台](../../docs/images/current-20261017/01-workbench.jpg)
 
@@ -23,7 +23,7 @@
 | 语音助理与历史 | `voice_agent.go`、`voice_personality.go`、`voice_samples.go`、`assistant_agent.go`、`assistant_history.go` |
 | 系统诊断和外部接口 | `system_log.go`、`debug.go`、`integrity.go` |
 | 独立 TTS 合成实现 | `tts/` package |
-| 浏览器端实现 | `web/`（由 `server.go` embed 并通过 HTTP 提供） |
+| 浏览器端实现 | `web/*.ts` → 同路径生成的 `web/*.js`（由 `server.go` embed 并通过 HTTP 提供） |
 
 测试文件沿用对应实现的能力前缀，例如 `provider_stream_test.go`、`file_upload_test.go`。查找行为时优先读实现和同名/同前缀测试，再查 [架构与接口索引](../../docs/architecture.md)。
 
