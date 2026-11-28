@@ -399,6 +399,10 @@ class Launcher:
         self.call(['npm', 'run', 'build:ts'], timeout=600)
 
     def pip_build_secrets(self, arguments):
+        # Plain Compose never receives the host index; keep launcher-only overrides.
+        public_index = os.environ.get("PIP_INDEX_URL")
+        if public_index and not arguments.get("PIP_INDEX_URL"):
+            arguments["PIP_INDEX_URL"] = public_index
         index = str(arguments.get('PIP_INDEX_URL') or 'https://pypi.org/simple/')
         try:
             parsed = urlsplit(index)

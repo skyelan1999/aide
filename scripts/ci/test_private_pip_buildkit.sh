@@ -13,6 +13,7 @@ mkdir "$tmp/context"
 umask 077
 marker="aide-pip-fixture-$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
 printf 'https://fixture:%s@private.invalid/simple/\n' "$marker" >"$tmp/pip-index"
+(cd "$root"; PIP_INDEX_URL="$(cat "$tmp/pip-index")" docker compose config --format json) >"$tmp/compose.json"
 cp "$root/scripts/pip-install-retry.sh" "$tmp/context/"
 cat >"$tmp/context/Dockerfile" <<'DOCKER'
 FROM python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e
@@ -38,7 +39,7 @@ python3 - "$tmp" "$marker" <<'PY'
 import json, pathlib, sys, tarfile
 root = pathlib.Path(sys.argv[1])
 marker = sys.argv[2].encode()
-for name in ("build.log", "missing.log", "history", "inspect"):
+for name in ("compose.json", "build.log", "missing.log", "history", "inspect"):
     if marker in (root/name).read_bytes():
         raise SystemExit(f"Synthetic credential leaked into {name}")
 with tarfile.open(root/"image.tar") as saved:
