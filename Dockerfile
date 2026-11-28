@@ -5,6 +5,7 @@ ARG PYTHON_BASE=python:3.12-slim-bookworm
 # node/golang 同样用本地 tag，避免受限网络下按 digest 拉取 metadata 卡死（与 python 一致）
 ARG NODE_BASE=node:24-bookworm-slim
 ARG GO_BASE=golang:1.26-bookworm
+ARG AIDE_RUNTIME_MODE=source
 FROM ${NODE_BASE} AS node
 FROM ${PYTHON_BASE} AS python
 FROM ${GO_BASE} AS toolchain
@@ -136,7 +137,7 @@ RUN --mount=type=cache,target=/toolchain \
 # 层缓存优化（#46）：把「稳定层」（系统用户 + pip 依赖）放在 COPY 业务二进制【之前】，
 # 把随每次代码/前端改动而变的 COPY 二进制放到最后。这样改 Go/前端只失效最末 COPY 层，
 # pip 层稳定 CACHED、不重复联网下载；运行期镜像自包含、绝不联网 pip。
-FROM ${PYTHON_BASE} AS runtime
+FROM ${PYTHON_BASE} AS runtime-base
 ARG TARGETOS
 ARG TARGETARCH
 COPY scripts/pip-install-retry.sh scripts/apt-install-retry.sh /usr/local/lib/aide/
@@ -244,9 +245,6 @@ USER root
 COPY --from=dwg-converter /opt/aide/dwg /opt/aide/dwg
 COPY --from=build /opt/aide/licenses /opt/aide/licenses
 COPY --from=node /usr/local/LICENSE /opt/aide/licenses/platform/node-LICENSE
-# The command panel supports Go project debugging with the same pinned Go CLI
-# as the build toolchain; keep this late so dependency layers remain cached.
-COPY --from=toolchain /usr/local/go /usr/local/go
 COPY --from=toolchain /usr/local/go/LICENSE /opt/aide/licenses/platform/go-LICENSE
 COPY --from=host-helpers /usr/local/bin/aide-message-relay /usr/local/bin/aide-message-relay
 COPY --from=host-helpers /opt/aide-message-lan /opt/aide/message-lan
@@ -269,3 +267,13 @@ WORKDIR /workspace
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 CMD curl -fsSk https://127.0.0.1:8080/healthz || exit 1
 ENTRYPOINT ["/usr/local/bin/aide"]
+
+FROM runtime-base AS runtime-release-image
+
+# Source installations support Go debugging; distribution stays SDK-free.
+FROM runtime-base AS runtime-source
+COPY --from=toolchain /usr/local/go /usr/local/go
+ENV AIDE_RUNTIME_PROFILE=source
+LABEL aide.runtime-profile="source"
+
+FROM runtime-${AIDE_RUNTIME_MODE} AS runtime

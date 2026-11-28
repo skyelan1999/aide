@@ -78,6 +78,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     await goal.getByText('历史复核记录', { exact: true }).click(); await goal.getByText(/Needs additional review/).first().waitFor();
     row.checks.push('revised conditions reset acceptance; blocked/pass reviews and prior contract are retained');
    }
+   assert.equal(await page.locator('.plan-advanced').evaluate(node => node.open), true, 'project controls stay expanded after plan updates');
    let knowledge = page.locator('.project-knowledge'); await knowledge.locator('> summary').click();
    let form = knowledge.locator('.project-knowledge-add'); await form.locator('select').selectOption('decision');
    await form.locator('[name="subject"]').fill(`Storage ${n} ${marker}`); await form.locator('[name="content"]').fill(`Use storage A ${n} ${marker}`); await form.locator('[name="source"]').fill('Synthetic design review v1'); await form.locator('button[type="submit"]').click();

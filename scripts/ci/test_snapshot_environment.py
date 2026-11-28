@@ -55,6 +55,16 @@ class NativeDeliveryGateTests(unittest.TestCase):
             self.assertIn('AIDE_RUN_TESTS', source)
             self.assertIn('COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs', source)
 
+    def test_release_runtime_cannot_inherit_source_go_sdk(self):
+        source = (Path(__file__).parents[2] / 'Dockerfile').read_text()
+        common, variants = source.split('FROM runtime-base AS runtime-release-image', 1)
+        release, development = variants.split('FROM runtime-base AS runtime-source', 1)
+        sdk = 'COPY --from=toolchain /usr/local/go /usr/local/go'
+        self.assertNotIn(sdk, common)
+        self.assertNotIn(sdk, release)
+        self.assertIn(sdk, development)
+        self.assertIn('FROM runtime-${AIDE_RUNTIME_MODE} AS runtime', development)
+
     def test_both_helper_families_are_complete_and_tampering_is_rejected(self):
         import hashlib
         spec = importlib.util.spec_from_file_location('assets', Path(__file__).parents[1] / 'test_runtime_assets.py')

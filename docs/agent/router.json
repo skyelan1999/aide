@@ -1783,6 +1783,11 @@
         "scripts/test_cad_step_curve_check.py"
       ],
       [
+        "node",
+        "--test",
+        "scripts/codex-host-control.test.cjs"
+      ],
+      [
         "python3",
         "scripts/test_build_network.py"
       ],

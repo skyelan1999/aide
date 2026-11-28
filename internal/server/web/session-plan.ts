@@ -190,6 +190,7 @@ interface Window {
     function draw(): void {
       hostRef = panelHost();
       const openGoals = new Set<any>(Array.from(hostRef.querySelectorAll('details[data-goal-item][open]'), (d: any) => d.dataset.goalItem));
+      const advancedOpen = !!hostRef.querySelector('.plan-advanced')?.open;
       const knowledgeOpen = !!hostRef.querySelector('details[data-project-knowledge][open]');
       const savedDraft = drafts.get(draftKey);
       const draftFields = new Map<any, any>(savedDraft?.values || []);
@@ -336,6 +337,7 @@ interface Window {
       hostRef.append(board);
 
       const advanced = node('details', 'plan-advanced');
+      advanced.open = advancedOpen;
       advanced.append(node('summary', '', t('高级管理')));
       const advancedBody = node('div', 'plan-advanced-body');
       advancedBody.append(io);

@@ -4,6 +4,7 @@
 // native execution. No shell, PowerShell, browser, login or provider mutation.
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os'), crypto = require('node:crypto');
 const { execFileSync, spawn } = require('node:child_process');
+const http = require('node:http');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function target(platform = process.platform, arch = process.arch) { const a = { x64: 'amd64', arm64: 'arm64' }[arch]; if (!a || !['win32', 'darwin', 'linux'].includes(platform))
     throw Error('Unsupported host platform'); return `codex-bridge-${platform === 'win32' ? 'windows' : platform}-${a}${platform === 'win32' ? '.exe' : ''}`; }
@@ -19,9 +20,40 @@ function noLinks(file) { let p = path.resolve(file); for (;;) {
         break;
     p = parent;
 } }
-async function rpc(connection, route, method = 'GET', bind = '127.0.0.1') { const value = JSON.parse(fs.readFileSync(connection, 'utf8')); if (value.protocol !== 1 || value.service !== 'codex-bridge' || value.port !== 17888 || !/^[a-f0-9]{64}$/.test(value.token))
-    throw Error('Invalid component connection'); const response = await fetch(`http://${bind}:17888/api/${route}`, { method, headers: { Host: 'host.docker.internal:17888', Authorization: 'Bearer ' + value.token, 'X-Manager-Owner-UI': '1' }, redirect: 'error', signal: AbortSignal.timeout(2500) }); if (!response.ok)
-    throw Error('Host component not ready'); return response.json(); }
+// Node 24 fetch can rewrite Host to the destination IP. The private-bridge
+// manager still requires its literal approved HTTP authority.
+function managerRequest(bind, port, route, method, token) {
+    return new Promise((resolve, reject) => {
+        const request = http.request({ hostname: bind, port, path: '/api/' + route, method, agent: false, headers: { Host: 'host.docker.internal:17888', Authorization: 'Bearer ' + token, 'X-Manager-Owner-UI': '1' } }, response => {
+            if (response.statusCode !== 200) {
+                response.resume();
+                reject(Error('Host component not ready (HTTP ' + response.statusCode + ')'));
+                return;
+            }
+            let body = '';
+            response.setEncoding('utf8');
+            response.on('data', chunk => { body += chunk; if (body.length > 65536)
+                request.destroy(Error('Host component response too large')); });
+            response.on('error', reject);
+            response.on('end', () => { try {
+                resolve(JSON.parse(body));
+            }
+            catch (e) {
+                reject(e);
+            } });
+        });
+        const timeout = setTimeout(() => request.destroy(Error('Host component response timeout')), 2500);
+        request.on('close', () => clearTimeout(timeout));
+        request.on('error', reject);
+        request.end();
+    });
+}
+async function rpc(connection, route, method = 'GET', bind = '127.0.0.1') {
+    const value = JSON.parse(fs.readFileSync(connection, 'utf8'));
+    if (value.protocol !== 1 || value.service !== 'codex-bridge' || value.port !== 17888 || !/^[a-f0-9]{64}$/.test(value.token))
+        throw Error('Invalid component connection');
+    return managerRequest(bind, value.port, route, method, value.token);
+}
 async function main(argv) {
     const action = argv.shift();
     if (!['start', 'stop'].includes(action))
@@ -57,7 +89,7 @@ async function main(argv) {
             await rpc(connection, 'quit', 'POST', bind);
         }
         catch (error) {
-            if (error.code !== 'ENOENT' && error.cause?.code !== 'ECONNREFUSED')
+            if (error.code !== 'ENOENT' && error.code !== 'ECONNREFUSED' && error.cause?.code !== 'ECONNREFUSED')
                 throw error;
         }
         console.log('Codex host component stopped.');
@@ -115,7 +147,7 @@ async function main(argv) {
             throw Error('Previous host component is still stopping');
     }
     catch (e) {
-        if (e.code === 'ENOENT' || e.cause?.code === 'ECONNREFUSED') {
+        if (e.code === 'ENOENT' || e.code === 'ECONNREFUSED' || e.cause?.code === 'ECONNREFUSED') {
             if (fs.existsSync(connection))
                 fs.unlinkSync(connection);
         }
@@ -145,6 +177,6 @@ async function main(argv) {
     }
     throw Error('Codex host component did not become ready; see .aide-data/host-components/manager.log');
 }
-module.exports = { target, verify, noLinks, main };
+module.exports = { target, verify, noLinks, main, managerRequest };
 if (require.main === module)
     main(process.argv.slice(2)).catch(e => { console.error('Codex Bridge: ' + (e?.code ? 'launcher operation failed (' + e.code + ')' : e.message)); process.exitCode = 1; });

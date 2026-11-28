@@ -54,7 +54,7 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 ### macOS / Linux 构建前网络选源
 
-POSIX 源码 `build` 首先用宿主 Node.js/npm 编译 TypeScript（CI 使用 Node.js 24），首次执行按锁文件安装依赖，再运行 `npm run build:ts`。预构建运行包的 `start` 不做这一步。Linux 干净安装验收仅显式引入这两个工具，不继承宿主的完整环境。
+POSIX 源码 `build` 首先用宿主 Node.js/npm 编译 TypeScript（CI 使用 Node.js 24），首次执行按锁文件安装依赖，再运行 `npm run build:ts`。预构建运行包的 `start` 不做这一步。源码镜像保留 Go CLI 用于命令面板；发行镜像不包含 Go SDK，需开发工具时使用独立 SDK。Linux 的 Codex Bridge 在本地 Docker 网桥上使用受认证的管理请求；停止失败仍须显式报错。Linux 干净安装验收仅显式引入这两个工具，不继承宿主的完整环境。
 
 源码构建在计算指纹、创建构建器及下载依赖之前，并发检测 Docker 标准源与 DaoCloud 镜像、PyPI 与清华镜像、Debian 与清华镜像。Docker 检测包含匿名令牌与清单读取；APT、PyPI 检查有效的源响应。标准源可用时优先使用标准源，失败而国内源可用时直接预选国内源。设置 `AIDE_BUILD_SOURCE=standard` 或 `china` 可明确指定，默认 `auto`。探测结果写入本安装 `.aide-data/build/network.json`，不包含凭据。
 
