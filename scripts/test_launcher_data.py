@@ -395,11 +395,15 @@ if args[:2]==['inspect','--format']:
 if args[0]=='info':print('linux/arm64');sys.exit(0)
 if args[:2]==['image','inspect']:
  if state=='missing':sys.exit(1)
- print('sha256:'+'1'*64+'|'+('linux/amd64' if state=='wrong-platform' else 'linux/arm64')+'|'+'2'*64+'|'+('' if state=='incomplete' else '8.0.1.1.0'));sys.exit(0)
+ platform='linux/amd64' if state in ('wrong-platform','source-wrong-platform') else 'linux/arm64'
+ source='invalid' if state=='source-bad-fingerprint' else '2'*64
+ cad='8.0.1.1.0' if state in ('healthy','wrong-platform','source-cad') else '<no value>'
+ profile='source' if state.startswith('source') else state if state in ('slim','toolbox') else '<no value>'
+ print('|'.join(('sha256:'+'1'*64,platform,source,cad,profile)));sys.exit(0)
 sys.exit(90)
 """);self.docker.chmod(0o755)
-    def probe(self,kind,state):
-        return subprocess.run(['bash','-ec','source "$1"; '+kind+' "$2" aide:local','fixture',str(ROOT/'scripts/prebuilt-image.sh'),str(self.docker)],env=dict(os.environ,FIX_STATE=state,PROJECT_DIR=str(self.docker.parent)),capture_output=True,text=True)
+    def probe(self,kind,state,*args):
+        return subprocess.run(['bash','-ec','source "$1"; '+kind+' "$2" aide:local "${@:3}"','fixture',str(ROOT/'scripts/prebuilt-image.sh'),str(self.docker),*args],env=dict(os.environ,FIX_STATE=state,PROJECT_DIR=str(self.docker.parent)),capture_output=True,text=True)
     def test_source_selection_respects_checkout_and_explicit_override(self):
         root=self.docker.parent
         def selected(mode):
@@ -431,5 +435,12 @@ sys.exit(90)
     def test_installed_runtime_requires_platform_and_complete_metadata(self):
         for state,success in [('healthy',True),('missing',False),('wrong-platform',False),('incomplete',False)]:
             with self.subTest(state=state):self.assertEqual(self.probe('launcher_local_runtime_ready',state).returncode==0,success)
+
+    def test_source_profile_requires_a_source_checkout(self):
+        for mode, accepted in [('source', {'source','slim','healthy'}), ('release', {'slim','healthy'})]:
+            for state in ('source','slim','healthy','source-cad','source-wrong-platform','source-bad-fingerprint','toolbox'):
+                with self.subTest(installation=mode,state=state):
+                    self.assertEqual(self.probe('launcher_local_runtime_ready',state,mode).returncode==0,state in accepted)
+        self.assertNotEqual(self.probe('launcher_local_runtime_ready','source').returncode,0)
 
 if __name__ == '__main__': unittest.main()

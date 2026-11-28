@@ -197,8 +197,11 @@ void privateDirectory(const fs::path& p){
 }
 bool portFree(int port){SOCKET s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s==INVALID_SOCKET)return false;BOOL exclusive=TRUE;setsockopt(s,SOL_SOCKET,SO_EXCLUSIVEADDRUSE,reinterpret_cast<char*>(&exclusive),sizeof(exclusive));sockaddr_in a{};a.sin_family=AF_INET;a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);a.sin_port=htons(USHORT(port));bool ok=bind(s,reinterpret_cast<sockaddr*>(&a),sizeof(a))==0;closesocket(s);return ok;}
 std::string label(const json& m,const std::string& key){if(!m.contains("Config")||!m["Config"].contains("Labels")||!m["Config"]["Labels"].is_object())return {};return m["Config"]["Labels"].value(key,"");}
-bool runtime(const json& m,const std::string& platform){
- return m.is_object()&&imageId(m.value("Id",""))&&m.value("Os","")+"/"+m.value("Architecture","")==platform&&digest(label(m,"aide.srcsha"))&&(label(m,"aide.cad-runtime")=="8.0.1.1.0"||(label(m,"aide.runtime-profile")=="slim"&&label(m,"aide.cad-runtime").empty()));
+bool runtime(const json& m,const std::string& platform,bool allowSource=false){
+ if(!m.is_object()||!imageId(m.value("Id",""))||m.value("Os","")+"/"+m.value("Architecture","")!=platform||!digest(label(m,"aide.srcsha")))return false;
+ auto profile=label(m,"aide.runtime-profile"),cad=label(m,"aide.cad-runtime");
+ if(profile=="source")return allowSource&&cad.empty();
+ return cad=="8.0.1.1.0"||(profile=="slim"&&cad.empty());
 }
 #include "native_http.hpp"
 #include "desktop.hpp"
@@ -388,7 +391,7 @@ public:
   if(offline){offlineImage();return;}
   auto c=config();image=c["services"]["aide"].value("image","");if(image.empty())throw std::runtime_error("Compose has no application image");
   auto m=inspect(image);
-  if(runtime(m,platform)){say("Using validated immutable local runtime; source compilation is an explicit build command.");image=m.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
+  if(runtime(m,platform,sourcePackage())){say("Using validated immutable local runtime; source compilation is an explicit build command.");image=m.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
   if(sourcePackage())throw std::runtime_error("No usable compiled source image. Run build.bat; start never compiles or substitutes a different Release");
   releaseImage(m.is_null()?"":m.value("Id",""));setenvw(L"AIDE_IMAGE",wide(image));
  }
@@ -577,7 +580,10 @@ int selfTest(){
  std::vector<std::wstring> values={L"",L"simple",L"中文 路径",L"a\"b",L"C:\\directory with spaces\\",L"x&echo injected",L"$() ; `"};
  for(auto& value:values){auto line=L"test.exe "+quote(value);int count=0;auto parsed=CommandLineToArgvW(line.c_str(),&count);if(!parsed||count!=2||std::wstring(parsed[1])!=value)throw std::runtime_error("Windows argument roundtrip failed");LocalFree(parsed);}
  json image={{"Id","sha256:"+std::string(64,'a')},{"Os","linux"},{"Architecture","amd64"},{"Config",{{"Labels",{{"aide.srcsha",std::string(64,'b')},{"aide.runtime-profile","slim"}}}}}};
- if(!runtime(image,"linux/amd64")||runtime(image,"linux/arm64"))throw std::runtime_error("Native image platform validation failed");image["Config"]["Labels"]["aide.srcsha"]="invalid";if(runtime(image,"linux/amd64"))throw std::runtime_error("Native source validation failed");
+ if(!runtime(image,"linux/amd64")||runtime(image,"linux/arm64"))throw std::runtime_error("Native image platform validation failed");
+ image["Config"]["Labels"]["aide.runtime-profile"]="source";if(runtime(image,"linux/amd64")||!runtime(image,"linux/amd64",true)||runtime(image,"linux/arm64",true))throw std::runtime_error("Native source profile boundary failed");
+ image["Config"]["Labels"]["aide.cad-runtime"]="8.0.1.1.0";if(runtime(image,"linux/amd64")||runtime(image,"linux/amd64",true))throw std::runtime_error("Native source profile accepted mixed CAD identity");
+ image["Config"]["Labels"].erase("aide.cad-runtime");image["Config"]["Labels"]["aide.srcsha"]="invalid";if(runtime(image,"linux/amd64",true))throw std::runtime_error("Native source validation failed");
  auto current=fs::current_path();if(!aide_installation::owns(current,utf8(current.wstring()))||aide_installation::owns(current,""))throw std::runtime_error("Installation ownership self-test failed");
  std::cout<<"PASS native Unicode/quote roundtrip and image validation; installation-ownership-v2\n";return 0;
 }

@@ -309,7 +309,7 @@ case "$MODE" in
       fi
       IMG="$("$DOCKER_BIN" compose config --images aide)"
       if [[ "$REUSE_RUNNING" != 1 ]]; then
-      if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
+      if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG" "$AIDE_INSTALLATION_KIND"; then
         if [[ "$AIDE_INSTALLATION_KIND" == source ]]; then
           echo "当前源码安装缺少可用的已编译镜像；请先运行 build.command / build.sh。start 不会编译或替换成其他版本。" >&2
         else
