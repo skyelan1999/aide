@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `d22d0aa0c37f79e6e99f64e2dd3d4cd5b4b7c4a9fd60b39cb8866cc6068f7654` |
-| `pdf.worker.min.mjs` | `e92c356981c782ff00c2e4d29deaca51dfcfb0d7d961bce74fc7448d5119045b` |
+| `pdf.worker.min.mjs` | `c6917ea0e3dfcceb556d4825274492139f634d1c88aaf592fb5465d10239f1e4` |
 
 校验：
 
@@ -178,3 +178,8 @@ The hardened worker, OpenJPEG payload and decoder budgets remain unchanged.
 
 Blank/failed pages may use the separate bounded `/api/file/pdf-preview` local
 Poppler process. The server never hands original source paths to that process.
+
+
+### JP2 容器头边界（#911）
+
+按 [ITU-T T.800 Annex I](https://www.itu.int/ITU-T/recommendations/rec.aspx?id=15939)，Aide 的 PDF 预览在向原生解码模块分配输入之前只允许一个顶层 JP2 Header box，不接受重复或嵌套的 JP2 Header。原生 OpenJPEG 二进制未改动；有效 JP2 和原始 J2K 入口仍执行既有资源预算。此补丁不改变底层解码器接受其他 JPEG 2000 容器和终止标记的行为。
