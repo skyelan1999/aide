@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -143,6 +143,8 @@ func (a *App) colloquialize(ctx context.Context, text string, mode string) (stri
 }
 
 func colloquialKey(model, text string) string {
-	h := sha1.Sum([]byte(model + "\x00" + text))
-	return hex.EncodeToString(h[:])
+	// Length-frame the variable model field instead of relying on a delimiter.
+	hash := sha256.New()
+	_, _ = fmt.Fprintf(hash, "%d:%s%s", len(model), model, text)
+	return hex.EncodeToString(hash.Sum(nil))
 }

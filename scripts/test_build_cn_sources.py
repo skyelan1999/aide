@@ -55,6 +55,17 @@ class SourcePlanTests(unittest.TestCase):
                     capture_output=True, text=True, check=True)
                 self.assertEqual(json.loads(result.stdout), expected)
 
+    def test_windows_public_index_rejects_inline_credentials(self):
+        for url,allowed in (
+            ('https://private.invalid/simple/',True),
+            ('https://fixture:sentinel@private.invalid/simple/',False),
+            ('https://private.invalid/simple/?token=sentinel',False),
+        ):
+            result=subprocess.run([str(self.binary),'public-pip-index'],input=json.dumps(url),
+                                  capture_output=True,text=True,check=True)
+            self.assertEqual(json.loads(result.stdout),allowed)
+            self.assertNotIn('sentinel',result.stderr)
+
     def test_streamed_diagnostics_and_timeout(self):
         with tempfile.TemporaryDirectory() as directory:
             launcher = module.Launcher(Path(directory))

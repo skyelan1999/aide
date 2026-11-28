@@ -57,6 +57,38 @@ class WiringTests(unittest.TestCase):
         self.assertLess(source.index('select_build_sources'), source.index('source-sha'))
         self.assertLess(source.index('select_build_sources'), source.index('ensure_builder'))
 
+    def test_inline_login_and_signed_query_are_rejected_without_echoing(self):
+        from test_launcher_contract import module
+        for url in ('https://fixture:sentinel@private.invalid/simple/',
+                    'https://private.invalid/simple/?token=sentinel'):
+            with self.assertRaisesRegex(ValueError, 'AIDE_PIP_INDEX_FILE') as error:
+                module.Launcher().pip_build_secrets({'PIP_INDEX_URL': url})
+            self.assertNotIn('sentinel', str(error.exception))
+
+    def test_secret_file_is_outside_build_context_and_stays_off_argv(self):
+        import tempfile
+        from test_launcher_contract import module
+        with tempfile.TemporaryDirectory() as tmp:
+            managed = Path(tmp) / 'checkout'
+            managed.mkdir()
+            secret = Path(tmp) / 'pip-index'
+            secret.write_text('https://fixture:sentinel@private.invalid/simple/')
+            launcher = module.Launcher(managed)
+            with patch.dict(module.os.environ, {'AIDE_PIP_INDEX_FILE': str(secret)}):
+                args = {'PIP_INDEX_URL': network.PIP['standard']}
+                flags = launcher.pip_build_secrets(args)
+                self.assertIn('id=aide_pip_index,src=' + str(secret.resolve()), flags)
+                self.assertIn('--no-cache-filter', flags)
+                self.assertNotIn('sentinel', ' '.join(flags))
+                self.assertEqual(args, {'AIDE_PRIVATE_PIP': '1'})
+                with self.assertRaisesRegex(ValueError, 'PIP_OFFLINE'):
+                    launcher.pip_build_secrets({'PIP_OFFLINE': '1'})
+                inside = managed / 'inside-secret'
+                inside.write_text('https://private.invalid/simple/')
+                with patch.dict(module.os.environ, {'AIDE_PIP_INDEX_FILE':str(inside)}):
+                    with self.assertRaisesRegex(ValueError, 'outside'):
+                        launcher.pip_build_secrets({})
+
     def test_private_index_offline_and_custom_image_are_preserved(self):
         import tempfile
         from test_launcher_contract import module

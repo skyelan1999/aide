@@ -25,6 +25,10 @@ int main(int argc,char** argv){
    auto plan=aide_build_proxy::resolve(input.value("env",aide_build_proxy::Environment{}),system);
    std::cout<<nlohmann::json{{"additions",plan.additions},{"source",plan.source},{"warning",plan.bypassWarning}};return 0;
   }
+  if(argc==2&&std::string(argv[1])=="public-pip-index"){
+   const auto input=nlohmann::json::parse(std::cin);
+   std::cout<<nlohmann::json(aide_build_sources::uncredentialedPipIndex(input.get<std::string>()));return 0;
+  }
   if(argc==2&&std::string(argv[1])=="build-sources"){
    auto input=nlohmann::json::parse(std::cin);
    std::cout<<nlohmann::json(aide_build_sources::fallback(input["output"],input["dockerfile"],input.value("arguments",aide_build_sources::Values{})));return 0;

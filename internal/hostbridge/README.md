@@ -5,3 +5,9 @@ The host retains an `os.Root` for each explicitly selected directory and exports
 Dependencies are pinned in `go.mod` / `go.sum`. `scripts/host-bridge-vendor.patch` is a local overlay on go-nfs v0.0.4 and its pinned go-nfs-client XDR helper: bounded records, opaque/list/reflective decoding and read replies, plus guaranteed connection close and panic containment. After vendoring, apply this overlay and run `python3 scripts/test_host_bridge_vendor.py`. Preserve the repository's other existing vendor patches separately. Original licenses remain in each vendored module.
 
 NFS is a local transport through the Docker daemon/Desktop host proxy; no LAN listener or public export list is opened. Export tokens and file handles are capabilities. The bridge enforces RO even when a client asks for RW, caps exports/connections/open files/listings, and synchronizes file writes before acknowledging stable completion. It supports regular file operations and relative symlinks within the rooted boundary; special files and ownership changes to other users are refused. NFS uses local client locks; concurrent native-host writers are not coordinated by a remote lock manager. Stop external database writers when accessing the same database through this bridge.
+
+The vendored go-billy filesystem is pinned to v5.9.0, which addresses
+[GO-2026-5597](https://pkg.go.dev/vuln/GO-2026-5597) and
+[GO-2026-5490](https://pkg.go.dev/vuln/GO-2026-5490). Retain the bridge's
+root-object access checks and preserve the separately tracked NFS/SFTP vendor
+patches when refreshing the dependency.
