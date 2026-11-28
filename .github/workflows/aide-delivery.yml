@@ -327,6 +327,7 @@ jobs:
           fi
           python3 scripts/ci/delivery_gate.py cadence
           python3 scripts/ci/delivery_gate.py backlog
+          python3 scripts/ci/delivery_gate.py market
           flags=()
           if [[ "$OFFICIAL_RELEASE" != true ]]; then
             flags+=(--prerelease)
