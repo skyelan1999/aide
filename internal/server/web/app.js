@@ -5000,9 +5000,9 @@ $('task-form').onsubmit = action(async (event) => {
                 }
                 if (resp.action === 'dispatch' && resp.dispatched) {
                     if (resp.dispatched.started)
-                        toast(t('已启动 AIDE R&D 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
+                        toast(t('已启动 aide 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
                     else
-                        toast(t('已创建 AIDE R&D 会话 #{0}，但任务未启动：{1}', resp.dispatched.number || '?', resp.dispatched.startError || t('请检查模型配置')));
+                        toast(t('已创建 aide 会话 #{0}，但任务未启动：{1}', resp.dispatched.number || '?', resp.dispatched.startError || t('请检查模型配置')));
                 }
                 else if (resp.action === 'ask') {
                     toast(resp.reply || t('小秘想追问'));

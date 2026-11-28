@@ -14,6 +14,8 @@ assert.equal(api.t('隐藏'),'Hide');
 assert.equal(api.t('关闭'),'Off');
 assert.equal(api.t('关闭对话框'),'Close dialog');
 const html = fs.readFileSync('internal/server/web/index.html', 'utf8');
+assert.match(html, /<sup class="brand-phase"[^>]*data-i18n-title="研究、开发与生产力"[^>]*>R\/D\/P<\/sup>/);
+assert.equal(api.t('研究、开发与生产力'),'Research, Development and Productivity');
 for (const [markup] of html.matchAll(/<button\b[^>]*data-close="[^"]+"[^>]*>×<\/button>/g)) {
   const label = markup.match(/data-i18n-aria-label="([^"]+)"/)?.[1];
   assert.ok(label && api.t(label).startsWith('Close'), 'Icon-only dismiss button needs a localized close action: ' + markup);

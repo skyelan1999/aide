@@ -162,7 +162,7 @@
             heading.append(icon(p.category, node), title, close);
             modal.append(heading, node('p', '', p.description));
             const facts = node('dl', 'market-facts');
-            for (const [k, v] of [[t('版本'), p.version], [t('最低 AIDE R&D 版本'), p.minAideVersion], [t('运行依赖'), (p.dependencies || []).join('；') || t('使用 AIDE R&D 内置运行环境')], [t('适用平台'), p.platforms.join(' / ')], [t('许可证'), p.license], [t('权限说明'), p.permissions], [t(p.distribution === 'private' ? '交付方式' : 'SHA-256'), p.distribution === 'private' ? t('私有交付 · 安装包不公开') : p.sha256]])
+            for (const [k, v] of [[t('版本'), p.version], [t('最低 Aide 版本'), p.minAideVersion], [t('运行依赖'), (p.dependencies || []).join('；') || t('使用 Aide 内置运行环境')], [t('适用平台'), p.platforms.join(' / ')], [t('许可证'), p.license], [t('权限说明'), p.permissions], [t(p.distribution === 'private' ? '交付方式' : 'SHA-256'), p.distribution === 'private' ? t('私有交付 · 安装包不公开') : p.sha256]])
                 facts.append(node('dt', '', k), node('dd', '', v));
             modal.append(facts, node('p', 'market-trust', p.trustNotice));
             if (p.readme) {
