@@ -128,6 +128,13 @@ def release_notes(tag):
     return text + '\n'
 
 
+def market():
+    lock = load_lock()
+    market_head = json.loads(capture(['gh', 'api', 'repos/' + lock['marketRepository'] + '/commits/main']))['sha']
+    require(market_head == lock['marketRevision'], 'Public market changed after freeze; refresh lock and rerun installation/function checks')
+    print('PASS: live public market matches the frozen release inventory')
+
+
 def source():
     sha = capture(['git', 'rev-parse', 'HEAD'])
     require(not capture(['git', 'status', '--porcelain']), 'Dirty checkout')
@@ -150,6 +157,7 @@ def source():
         require(capture(['git', 'rev-parse', 'refs/tags/' + tag + '^{}']) == sha, 'Release tag must identify this main commit')
         release_notes(tag)
         cadence()
+        market()
     official = rc3_official_scope()
     output = (f'sha={sha}\ntag={tag}\npublish={str(bool(tag)).lower()}\n'
               f'official={str(official).lower()}\n')
@@ -257,18 +265,16 @@ def remote(root):
     require(set(assets) == set(expected), 'Unexpected or missing remote assets')
     for name, value in expected.items():
         require(assets[name]['size'] == value['bytes'] and assets[name].get('digest') == 'sha256:' + value['sha256'], 'Independent remote digest mismatch: ' + name)
-    lock = load_lock()
-    market_head = json.loads(capture(['gh', 'api', 'repos/' + lock['marketRepository'] + '/commits/main']))['sha']
-    require(market_head == lock['marketRevision'], 'Public market changed after freeze; refresh lock and rerun installation/function checks')
+    market()
     print('PASS: exact remote asset set, SHA256 digests and immutable source identity')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['source', 'artifacts', 'remote', 'cadence', 'backlog'])
+    parser.add_argument('mode', choices=['source', 'artifacts', 'remote', 'cadence', 'backlog', 'market'])
     parser.add_argument('--root', type=Path, default=ROOT / '.agent-state/delivery')
     args = parser.parse_args()
-    if args.mode in ('source', 'cadence', 'backlog'):
+    if args.mode in ('source', 'cadence', 'backlog', 'market'):
         globals()[args.mode]()
     else:
         globals()[args.mode](args.root)

@@ -218,6 +218,29 @@ class DeliveryGateTests(unittest.TestCase):
                 with self.subTest(identity=identity), self.assertRaisesRegex(ValueError, 'database ID'):
                     run(identity, release)
 
+    def test_market_gate_rejects_changed_head(self):
+        revision = 'a' * 40
+        lock = dict(marketRepository='owner/shop', marketRevision=revision)
+        with patch.object(gate, 'load_lock', return_value=lock), patch.object(
+                gate, 'capture', side_effect=[json.dumps(dict(sha=revision)),
+                                             json.dumps(dict(sha='b' * 40))]) as api:
+            gate.market()
+            with self.assertRaisesRegex(ValueError, 'Public market changed after freeze'):
+                gate.market()
+        self.assertEqual(api.call_args.args[0], ['gh', 'api', 'repos/owner/shop/commits/main'])
+
+    def test_tagged_source_stops_before_exporting_outputs_when_market_is_stale(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / 'outputs'
+            with patch.dict(os.environ, {'RELEASE_TAG': self.tag, 'GITHUB_OUTPUT': str(output)}), \
+                    patch.object(gate, 'capture', side_effect=[self.sha, '', self.sha]), \
+                    patch.object(gate.subprocess, 'run'), patch.object(gate, 'expected_tag', return_value=self.tag), \
+                    patch.object(gate, 'release_notes'), patch.object(gate, 'cadence'), \
+                    patch.object(gate, 'market', side_effect=ValueError('Public market changed after freeze')):
+                with self.assertRaisesRegex(ValueError, 'Public market changed after freeze'):
+                    gate.source()
+            self.assertFalse(output.exists())
+
     def test_weekly_cadence_counts_rcs_ignores_drafts_and_has_exact_boundary(self):
         now = datetime.datetime(2026, 10, 30, 12, tzinfo=datetime.timezone.utc)
         gate.check_weekly_cadence([], now)
