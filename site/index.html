@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f8fa">
-  <meta name="description" content="aide = AI + IDE。把项目文件、AI 对话、修改提案和执行过程放在同一个本地工作空间，让想法成为下一步。">
+  <meta name="theme-color" content="#f6f8fb">
+  <meta name="description" content="aide = AI + IDE。连接项目、模型、工具与执行过程，从研究分析到开发交付，让每一步有依据、每个结果可核对。">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="aide · 让想法成为下一步">
-  <meta property="og:description" content="你的项目，你的模型，你的工作节奏。一个围绕专业任务展开的本地 AI 工作台。">
-  <title>aide · AI + IDE，让想法成为下一步</title>
+  <meta property="og:title" content="aide · 让专业工作，从想法走向成果">
+  <meta property="og:description" content="面向垂直领域的自托管 AI 工作台，以研究深化理解，以开发连接工具，让成果转化为可持续的生产力。">
+  <title>aide · AI + IDE，让专业工作从想法走向成果</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css">
   <script src="./main.js" defer></script>
@@ -17,11 +17,11 @@
   <a class="skip-link" href="#main">跳到正文</a>
   <header class="header">
     <div class="container header-inner">
-      <a class="brand" href="#" aria-label="aide 首页"><img src="./assets/favicon.svg" alt="" width="32" height="32"><span>aide<span class="brand-dot">.</span></span></a>
+      <a class="brand" href="#main" aria-label="aide 首页"><img src="./assets/favicon.svg" alt="" width="32" height="32"><span class="brand-word">aide<span class="brand-dot">.</span><sup class="brand-phase" title="Research · Development · Productivity">R/D/P</sup></span></a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation" aria-label="打开导航"><span></span><span></span></button>
       <nav id="navigation" class="navigation" aria-label="主导航">
-        <a href="#features">工作方式</a>
-        <a href="#workflow">核心能力</a>
+        <a href="#features">应用场景</a>
+        <a href="#workflow">产品能力</a>
         <a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">文档 <span aria-hidden="true">↗</span></a>
         <a class="nav-github" href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .8a11.3 11.3 0 0 0-3.57 22.02c.56.1.77-.24.77-.54v-2.1c-3.14.68-3.8-1.34-3.8-1.34-.52-1.3-1.26-1.65-1.26-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.73 1.16 1.73 1.16 1 1.72 2.64 1.22 3.28.93.1-.73.4-1.22.72-1.5-2.5-.28-5.13-1.25-5.13-5.59 0-1.24.44-2.25 1.16-3.05-.12-.28-.5-1.43.11-2.99 0 0 .95-.3 3.11 1.16a10.8 10.8 0 0 1 5.66 0c2.16-1.47 3.1-1.16 3.1-1.16.62 1.56.24 2.71.12 3 .72.79 1.16 1.8 1.16 3.04 0 4.35-2.64 5.3-5.15 5.58.4.35.77 1.03.77 2.08v3.12c0 .3.2.65.78.54A11.3 11.3 0 0 0 12 .8Z"/></svg>GitHub</a>
         <a class="button button-small" href="#get-started">开始使用 <span aria-hidden="true">↗</span></a>
@@ -34,30 +34,31 @@
       <div class="hero-grid" aria-hidden="true"></div>
       <div class="container">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span>AI + IDE<span class="eyebrow-divider"></span>你的本地 AI 工作台</div>
-          <h1 id="hero-title">让想法，<br>成为<span class="blue">下一步。</span></h1>
-          <p class="hero-description">理解项目，梳理思路，一起把事情做好。<br>你的文件与工作流，在这里井然有序。</p>
+          <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span>AI + IDE<span class="eyebrow-divider"></span>自托管专业工作台</div>
+          <h1 id="hero-title">让专业工作，<br>从想法走向<span class="blue">成果。</span></h1>
+          <p class="hero-description">连接项目、模型、工具与执行过程。<br>从研究分析到开发交付，每一步有依据，每个结果可核对。</p>
+          <div class="hero-phase" aria-label="Research、Development、Productivity，研究、开发与生产力"><strong>R / D / P</strong><span>Research · Development · Productivity</span><small>以研究深化理解，以开发连接工具，让成果转化为可持续的生产力。</small></div>
           <div class="hero-actions">
-            <a class="button" href="#get-started">开始使用 aide <span aria-hidden="true">↗</span></a>
-            <a class="text-link" href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer">探索源代码 <span aria-hidden="true">→</span></a>
+            <a class="button" href="https://github.com/skyelan1999/aide/releases" target="_blank" rel="noopener noreferrer">下载发行版 <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="#features">探索工作方式 <span aria-hidden="true">→</span></a>
           </div>
-          <p class="hero-note"><span aria-hidden="true">⌘</span> 本地运行 <span class="note-dot">·</span> 模型可选 <span class="note-dot">·</span> MIT 开源</p>
+          <p class="hero-note"><span aria-hidden="true">⌘</span> 本地与 SSH 项目 <span class="note-dot">·</span> 自选模型 <span class="note-dot">·</span> MIT 开源</p>
         </div>
-        <div class="hero-side" aria-hidden="true"><span>LESS SWITCHING.</span><span>MORE MAKING.</span><div class="connection-mark"><i></i><i></i><i></i></div><p>从想法到成果<br>在同一个工作空间</p></div>
+        <div class="hero-side" aria-hidden="true"><span>RESEARCH.</span><span>DEVELOPMENT. PRODUCTIVITY.</span><div class="connection-mark"><i></i><i></i><i></i></div><p>连接垂直领域<br>让专业能力落地</p></div>
         <figure class="workbench">
           <div class="window-bar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><span>aide / workspace</span><span class="window-local"><i aria-hidden="true"></i> LOCAL</span></div>
           <img src="./assets/workbench-preview.jpg" width="1280" height="720" alt="aide 工作台示例：左侧会话与工作空间，中间 AI 任务输入，右侧项目文件" fetchpriority="high">
-          <figcaption><span>一处工作空间，串起你的项目与 AI。</span><span>示例工作区预览 · 界面以当前版本为准</span></figcaption>
+          <figcaption><span>项目、任务与证据，在同一工作区汇聚。</span><span>真实工作台示例 · 界面以所用版本为准</span></figcaption>
         </figure>
       </div>
     </section>
 
     <section class="principles" aria-label="产品特点">
       <div class="container principle-grid">
-        <div><span class="principle-symbol" aria-hidden="true">⌂</span><p><strong>围绕真实项目</strong><span>文件、资料与任务放在一起</span></p></div>
-        <div><span class="principle-symbol" aria-hidden="true">◎</span><p><strong>选择你的模型</strong><span>连接兼容的本地或云端服务</span></p></div>
-        <div><span class="principle-symbol" aria-hidden="true">≋</span><p><strong>看清每一步</strong><span>规划、提案与工具轨迹可查</span></p></div>
-        <div><span class="principle-symbol" aria-hidden="true">↗</span><p><strong>自由扩展</strong><span>用源码与插件适配专业场景</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">⌂</span><p><strong>真实项目上下文</strong><span>文件、资料与任务保持关联</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">◎</span><p><strong>模型自由选择</strong><span>连接兼容的本地或云端服务</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">≋</span><p><strong>过程清晰可核对</strong><span>规划、提案与执行轨迹留痕</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">↗</span><p><strong>垂直领域可扩展</strong><span>以源码与插件连接专业工具</span></p></div>
       </div>
     </section>
 
@@ -104,16 +105,31 @@
 
     <section id="get-started" class="section get-started" aria-labelledby="start-title">
       <div class="container">
-        <div class="section-heading"><div><p class="section-label">03 / YOUR NEXT STEP</p><h2 id="start-title">从你的下一个想法开始。</h2></div><p class="section-intro">准备好 Git 与 Docker。<br>让 aide 在你的电脑上运行。</p></div>
+        <div class="section-heading"><div><p class="section-label">03 / GET STARTED</p><h2 id="start-title">选择更适合你的<br>使用方式。</h2></div><p class="section-intro">发行版无需编译，源码路径便于定制。<br>从下载到进入工作台，步骤清楚可选。</p></div>
         <div class="install-layout">
-          <div class="install-code"><div class="code-bar"><span><i aria-hidden="true"></i> 从源码开始</span><button id="copy-command" class="copy-button" type="button" aria-label="复制安装命令"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg><span>复制</span></button></div><pre><code id="install-command"><span class="code-comment"># 获取 aide</span>
+          <div class="install-guide">
+            <div class="install-option-heading"><span class="install-guide-number">01 / RELEASE</span><span class="install-badge">推荐 · 无需编译</span></div>
+            <h3>下载、校验，<br>即可开始。</h3>
+            <p>适合希望快速部署的使用者。按平台与 CPU 架构选择发行包，无需先准备源码环境。</p>
+            <ol class="release-steps">
+              <li><span>01</span><div><strong>下载对应发行包</strong><small>平台、架构与附件以 Release 说明为准</small></div></li>
+              <li><span>02</span><div><strong>校验并解压</strong><small>核对摘要，阅读该版本的安装与迁移说明</small></div></li>
+              <li><span>03</span><div><strong>运行包内 start 入口</strong><small>进入本地工作台后，配置模型并选择项目</small></div></li>
+            </ol>
+            <a class="button button-secondary" href="https://github.com/skyelan1999/aide/releases" target="_blank" rel="noopener noreferrer">前往 GitHub Releases <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="install-code"><div class="code-bar"><span><i aria-hidden="true"></i> 02 / SOURCE · 从源码构建</span><button id="copy-command" class="copy-button" type="button" aria-label="复制安装命令"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg><span>复制</span></button></div><pre><code id="install-command"><span class="code-comment"># 获取 aide</span>
 git clone https://github.com/skyelan1999/aide.git
 cd aide
 
 <span class="code-comment"># 检查环境并安装</span>
 bash scripts/install.sh --check
-bash scripts/install.sh --source</code></pre><div class="code-footer"><span>需要 Docker Engine 与 Docker Compose</span><span id="copy-status" role="status" aria-live="polite"></span></div></div>
-          <div class="install-guide"><span class="install-guide-number">NEXT</span><h3>启动之后，<br>连接你的模型。</h3><p>在模型设置中填写服务地址、API Key 与模型 ID，然后选一个项目，开始第一次对话。</p><a class="text-link" href="https://github.com/skyelan1999/aide/blob/main/docs/installation.md" target="_blank" rel="noopener noreferrer">完整安装说明 <span aria-hidden="true">↗</span></a><div class="release-link"><span>也可以从发行包开始</span><a href="https://github.com/skyelan1999/aide/releases" target="_blank" rel="noopener noreferrer">浏览 GitHub Releases <span aria-hidden="true">↗</span></a><small>按发行说明选择适合平台与架构的附件。</small></div></div>
+bash scripts/install.sh --source</code></pre><div class="code-footer"><span>需要 Git、Docker Engine、Compose 与 Buildx</span><span id="copy-status" role="status" aria-live="polite"></span></div></div>
+        </div>
+        <div class="start-notes" aria-label="启动后的常用入口">
+          <div><span>LOCAL WORKSPACE</span><strong>https://localhost:8097</strong><small>默认地址；端口与挂载以实际配置为准</small></div>
+          <div><span>MODEL SETUP</span><strong>提供商 · API Key · 模型 ID</strong><small>完成模型配置后，选择项目开始任务</small></div>
+          <div><span>DOCUMENTATION</span><strong><a href="https://github.com/skyelan1999/aide/blob/main/docs/installation.md" target="_blank" rel="noopener noreferrer">安装说明 ↗</a><a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">使用指南 ↗</a></strong><small>查看首次配置、平台差异与日常操作</small></div>
         </div>
       </div>
     </section>
@@ -127,9 +143,9 @@ bash scripts/install.sh --source</code></pre><div class="code-footer"><span>需�
       </div></div>
     </section>
 
-    <section class="closing" aria-labelledby="closing-title"><div class="container closing-inner"><div><p class="section-label">YOUR IDEAS, IN MOTION.</p><h2 id="closing-title">想法已经有了。<br>下一步，一起完成。</h2></div><a class="button button-white" href="#get-started">开始使用 aide <span aria-hidden="true">↗</span></a><div class="closing-decoration" aria-hidden="true">a</div></div></section>
+    <section class="closing" aria-labelledby="closing-title"><div class="container closing-inner"><div><p class="section-label">RESEARCH. DEVELOPMENT. PRODUCTIVITY.</p><h2 id="closing-title">让研究连接开发，<br>让专业成果持续发生。</h2></div><a class="button button-white" href="#get-started">选择使用方式 <span aria-hidden="true">↗</span></a><div class="closing-decoration" aria-hidden="true">a</div></div></section>
   </main>
 
-  <footer class="footer"><div class="container"><div class="footer-top"><a class="brand" href="#" aria-label="回到 aide 首页"><img src="./assets/favicon.svg" alt="" width="32" height="32"><span>aide<span class="brand-dot">.</span></span></a><span class="footer-tagline">AI + IDE，让想法成为下一步。</span><nav aria-label="页脚导航"><a href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">使用指南 ↗</a><a href="https://github.com/skyelan1999/aide/issues" target="_blank" rel="noopener noreferrer">反馈 ↗</a></nav></div><div class="footer-bottom"><span>由 skyelan1999 发起 · <a href="https://github.com/skyelan1999/aide/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></span><span>独立开源项目 · 在你的电脑上展开工作</span></div></div></footer>
+  <footer class="footer"><div class="container"><div class="footer-top"><a class="brand" href="#main" aria-label="回到 aide 首页"><img src="./assets/favicon.svg" alt="" width="32" height="32"><span class="brand-word">aide<span class="brand-dot">.</span><sup class="brand-phase" title="Research · Development · Productivity">R/D/P</sup></span></a><span class="footer-tagline">AI + IDE，让专业工作从想法走向成果。</span><nav aria-label="页脚导航"><a href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">使用指南 ↗</a><a href="https://github.com/skyelan1999/aide/issues" target="_blank" rel="noopener noreferrer">反馈 ↗</a></nav></div><div class="footer-bottom"><span>由 skyelan1999 发起 · <a href="https://github.com/skyelan1999/aide/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></span><span>独立开源项目 · 在你的电脑上展开工作</span></div></div></footer>
 </body>
 </html>

@@ -6,7 +6,7 @@
 
 ### AI + IDE: one workspace for projects, models, tools and inspectable execution.
 
-The small **R/D/P** beside the **aide.** wordmark stands for **Research, Development and Productivity**. The goal of this second phase is to connect workflows within each industry.
+The **R/D/P** alongside the **aide.** wordmark stands for **Research, Development and Productivity**. In this second phase, Aide focuses on professional domains: deepening understanding through research, connecting tools through development, and turning outcomes into lasting productivity.
 
 Connect local or SSH projects, use models you choose, inspect proposals and verify actual file and command results. Conversation, approvals, tool calls and execution receipts stay associated with the task.
 
