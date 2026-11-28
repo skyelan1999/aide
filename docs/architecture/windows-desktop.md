@@ -40,3 +40,22 @@ python scripts/agent-route.py verify quick
 `Windows Desktop Check` 只做验证，不调用 Delivery 或发布 Release：Linux 分别交叉编译 AMD64/ARM64；Windows runner 用单独测试 EXE 和合成 localhost TLS 服务，实际检查 WebView2 窗口、应用内新标签、共享存储、沙箱 MessagePort、插件页原生桥隔离、未保存关闭取消及下载取消。测试 EXE 不编译进产品；测试不读真实账户、启动 Docker 或发起真实 Hello 注册/签名。合成界面不等于 Compare/ProfessionalProject 真正功能或用户设备验收。
 
 精确通过/未执行项、源码与构建证据见 [任务记录](../tasks/windows-desktop-20261103.json)。Windows Hello 硬件签名、用户环境完整 build/start 和实际插件操作仍须在对应 Windows 设备验证，不能用跨编译或隔离窗口测试替代。
+
+## Windows 电脑控制辅助功能检查
+
+Windows Computer Bridge 的 `POST /v1/inspect` 使用 Windows UI Automation（UIA）读取已授权且当前位于前台的顶层窗口。请求仍经过 loopback/私有网段 peer、每安装 token 和允许应用校验；只把当前窗口交给 UIA，不遍历整个桌面。返回格式与 Aide 审批读取路径兼容，包含控件角色、标签、可读值、焦点和桌面坐标矩形。
+
+检查仅遍历 Control View，最大深度 10、最多遍历 320 个节点、返回 160 项，并将总遍历预算限制在 8 秒；UIA 连接/单次事务超时分别为 750/1500 毫秒。超限时返回部分结果并标记 truncated。密码控件不读取；标签、值分别截断到 240 和 500 个字符。内容作为不可信资料处理。Windows 当前阶段只恢复只读检查；没有 UIA Invoke/Value 写入操作，点击、键入仍使用原有逐次审批的输入路径。若系统或应用的 UIA provider 不响应，检查返回错误且不改变其他桥接操作。macOS Accessibility、Linux 构建及 Go 工具协议不变。
+
+这个实现已经过本机 MSVC 编译/链接和 launcher self-test；UIA 真实应用矩阵及 Linux amd64/arm64 交叉构建仍需实际验收。详见 [任务记录](../tasks/windows-computer-uia-20261116.json) 与 [Issue #924](https://github.com/skyelan1999/aide/issues/924)。
+
+
+| 电脑控制能力 | macOS | Windows 当前情况 |
+| --- | --- | --- |
+| 应用发现 / 目标选择 | 按运行中应用和 bundle 规则选择，也支持指定后台应用 | 前台窗口进程名/标题必须匹配允许列表 |
+| 窗口和控件检查 | Accessibility 控件树，深度 10 / 最多 160 项 | 只读 UIA Control View，深度 10 / 最多遍历 320 节点、返回 160 项；预算 8 秒 |
+| 编辑焦点和值 | 提供可编辑角色、当前值哈希和选区 | 返回 Edit/ComboBox 值和焦点信息；尚无语义重新聚焦或 UIA 操作 |
+| 点击 / 输入 / 按键 | 逐次审批并复核目标 | 沿用现有审批及坐标/文本/按键路径；没有 UIA Invoke/SetValue |
+| 滚动 / 浏览器流程 | 现有受控 macOS 实现 | Windows 桥接尚未实现滚动及浏览器专属流程 |
+
+This is a staged parity implementation, not a claim that Windows has full macOS feature parity. See [Issue #924](https://github.com/skyelan1999/aide/issues/924) for remaining work and acceptance.
