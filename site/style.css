@@ -28,6 +28,7 @@ img{max-width:100%;height:auto;display:block}
 .navigation>a>span{font-weight:400}
 .nav-github{display:flex;align-items:center;gap:7px}
 .nav-github svg{width:17px;height:17px;fill:currentColor}
+.language-switch{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:30px;padding:4px 7px;border:1px solid #d9e2ee;border-radius:5px;background:#ffffff8c;font:650 10px/1 var(--mono);letter-spacing:.4px}
 .button{display:inline-flex;align-items:center;justify-content:space-between;gap:36px;padding:15px 23px;min-height:54px;background:var(--blue);color:white;border-radius:8px;font-size:14px;font-weight:650;transition:background .16s,transform .16s;box-shadow:0 3px 7px #3478f619}
 .button:hover{background:var(--blue-deep);transform:translateY(-2px)}
 .button>span{font-size:20px;line-height:1}
@@ -198,6 +199,7 @@ pre code{font:inherit}
 .footer a:hover{color:var(--blue)}
 .footer-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:18px;font-size:9px;color:#9ca6b5}
 .footer-bottom a{text-decoration:underline;text-underline-offset:3px}
+@media(min-width:761px) and (max-width:900px){.navigation{gap:14px;font-size:12px}.navigation .button-small{gap:12px;padding:9px 12px}}
 @media(min-width:1600px){.hero{padding-top:100px}.hero-copy{padding-left:0}}
 @media(max-width:1050px){.container{width:calc(100% - 64px)}.navigation{gap:23px}.hero{padding-top:65px}.hero-side{right:0;top:70px}.principle-grid{gap:14px}.principle-grid>div{gap:10px}.principle-grid>div+div{padding-left:18px}.principle-grid p>span{font-size:9px}.section{padding:85px 0}.scenario-layout{gap:40px;grid-template-columns:.85fr 1.4fr}.scenario-stage{min-height:428px}.scenario-panel{padding:23px 21px}.capability-layout{gap:60px}.install-layout{gap:28px;grid-template-columns:1fr 1.2fr}.faq-layout{gap:65px}}
 @media(max-width:760px){

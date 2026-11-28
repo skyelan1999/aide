@@ -1,12 +1,13 @@
 'use strict';
 
+const english = document.documentElement.lang === 'en';
 const menuButton = document.querySelector<HTMLElement>('.menu-toggle')!;
 const navigation = document.querySelector<HTMLElement>('#navigation')!;
 
 function setMenu(open: boolean, restoreFocus = false) {
   navigation.classList.toggle('open', open);
   menuButton.setAttribute('aria-expanded', String(open));
-  menuButton.setAttribute('aria-label', open ? '关闭导航' : '打开导航');
+  menuButton.setAttribute('aria-label', open ? (english ? 'Close navigation' : '关闭导航') : (english ? 'Open navigation' : '打开导航'));
   if (restoreFocus) menuButton.focus();
 }
 
@@ -71,18 +72,18 @@ copyButton.addEventListener('click', async () => {
   try {
     if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard unavailable');
     await navigator.clipboard.writeText(text);
-    copyButton.querySelector('span')!.textContent = '已复制';
-    copyStatus.textContent = '安装命令已复制';
+    copyButton.querySelector('span')!.textContent = english ? 'Copied' : '已复制';
+    copyStatus.textContent = english ? 'Installation commands copied' : '安装命令已复制';
   } catch {
     const range = document.createRange();
     range.selectNodeContents(command);
     const selection = window.getSelection()!;
     selection.removeAllRanges();
     selection.addRange(range);
-    copyStatus.textContent = '命令已选中，请手动复制';
+    copyStatus.textContent = english ? 'Commands selected; copy them manually' : '命令已选中，请手动复制';
   }
   copyReset = setTimeout(() => {
-    copyButton.querySelector('span')!.textContent = '复制';
+    copyButton.querySelector('span')!.textContent = english ? 'Copy' : '复制';
     copyStatus.textContent = '';
   }, 4500);
 });
