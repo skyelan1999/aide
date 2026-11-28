@@ -659,6 +659,19 @@ button.primary:hover{box-shadow:0 4px 12px var(--shadow-1)}
   color:var(--on-brand);
 }
 .composer-note{margin-top:6px;font-size:10.5px;line-height:1.5;color:var(--text-faint)}
+.assistant-empty {text-align:center}
+.assistant-empty-title {font-size:20px;line-height:1.35}
+.assistant-empty-sub {max-width:34em;line-height:1.65;text-wrap:balance}
+details.assistant-work-summary:not([open]){
+  max-width:var(--wb-reading);
+  margin:0 auto 4px;
+  padding:4px 12px;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+}
+details.assistant-work-summary:not([open]) > summary {padding:4px 0}
+details.assistant-work-summary:not([open]):hover {background:var(--surface-alt);color:var(--text)}
 /* One independent context ring per lane, with measured session consumption in the header. */
 .sidebar-footer #context-card {
   position:relative; min-width:0; max-height:none; margin:0 0 4px; padding:3px 3px 4px;
