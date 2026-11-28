@@ -82,9 +82,10 @@ test('motion profile adapts to device capacity and Save-Data without overriding 
   const attributes={},values={};
   const connection={saveData,addEventListener(type,fn){this[`on${type}`]=fn;}};
   const navigator={deviceMemory:memory,hardwareConcurrency:cores,language:'en-US',connection};
-  const browser={navigator,localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},dispatchEvent(){},matchMedia:()=>({matches:false,addEventListener(){}}),addEventListener(){}};
-  vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:browser,navigator,document:{documentElement:{setAttribute:(k,v)=>attributes[k]=v}},Event:class{}});
-  return {attributes,connection};
+  const motion={matches:false,addEventListener(type,fn){this.onchange=fn;}};
+  const browser={navigator,localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},dispatchEvent(){},matchMedia:q=>q.includes('reduced-motion')?motion:({matches:false,addEventListener(){}}),addEventListener(){}};
+  vm.runInNewContext(fs.readFileSync('internal/server/web/settings-init.js','utf8'),{window:browser,navigator,document:{documentElement:{setAttribute:(k,v)=>attributes[k]=v,getAttribute:k=>attributes[k]}},Event:class{}});
+  return {attributes,connection,motion,ui:browser.aideUI};
  };
  assert.equal(run().attributes['data-motion-profile'],'full');
  assert.equal(run({cores:4}).attributes['data-motion-profile'],'balanced');
@@ -92,6 +93,15 @@ test('motion profile adapts to device capacity and Save-Data without overriding 
  const constrained=run({saveData:true});assert.equal(constrained.attributes['data-motion-profile'],'minimal');
  constrained.connection.saveData=false;constrained.connection.onchange();
  assert.equal(constrained.attributes['data-motion-profile'],'full','disabling Save-Data restores the device profile');
+ assert.equal(constrained.ui.scrollBehavior(),'smooth');
+ constrained.attributes['data-motion-profile']='minimal';
+ constrained.ui.set('palette','green');
+ assert.equal(constrained.ui.scrollBehavior(),'instant','palette changes preserve a performance downgrade');
+ constrained.attributes['data-motion-profile']='full';
+ constrained.motion.matches=true;constrained.motion.onchange();
+ assert.equal(constrained.ui.scrollBehavior(),'instant','system reduced motion applies immediately');
+ constrained.motion.matches=false;constrained.motion.onchange();
+ assert.equal(constrained.ui.scrollBehavior(),'smooth');
 });
 test('opening voice settings never requests microphone permission; explicit refresh stops its temporary track',async()=>{
  const source=require('./fixtures/app-source.cjs').readAppSource();let permissions=0,stopped=0;
