@@ -4,7 +4,7 @@
 
 ## 日常提交
 
-[Aide CI](../../.github/workflows/aide-ci.yml) 在所有分支 push、main PR 和手动运行时触发。`quick` 执行仓库静态、前端行为与流程合约检查，另以 `scripts/ci/basic_go.py` 编译所有 Go 包、运行鉴权/文件边界/上下文恢复/调度等关键回归并运行 vet。分支保护所需的汇总名称仍为 `gate`。
+[Aide CI](../../.github/workflows/aide-ci.yml) 在所有分支 push、main PR 和手动运行时触发。`quick` 执行仓库静态、前端行为与流程合约检查，另以 `scripts/ci/basic_go.py` 编译所有 Go 包、运行鉴权/文件边界/上下文恢复/调度等关键回归并运行 vet。分支保护所需的汇总名称仍为 `gate`。并发分组区分 PR 编号、push 分支和手动运行；同一次推送触发的 push 与 PR 检查互不取消，同一个 PR 的旧运行仍会被新提交取代。
 
 日常 CI 不构建发行镜像，不自动跑完整 race、跨系统、浏览器和公开插件测试，不自动发布。文档站点工作流另按其路径规则运行。历史一次性 RC3 发布工作流已退役，不能绕过 Delivery。
 
