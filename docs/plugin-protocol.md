@@ -500,7 +500,7 @@ A pricing catalog may also declare the optional `accountBalance` adapter `xiaomi
 
 独立安装的 `tts-tools` 插件可以声明 `tts_voices`、`tts_generate`，由宿主固定桥接实现。仅工具归属为该启用插件时允许调用。插件不读取或设置密钥；宿主使用所选语音生成模型的提供商保险库凭证。此桥接与助理的默认朗读提供商、音色、API Key 完全独立。`tts_generate` 接收 `text`（1–600 字）、可选 `model`、`voice`、`format`（mp3/wav），当前仅非实时 Qwen-Audio-TTS 3.0/3.1 flash/plus。省略模型时需要支持 speech 评分的 Auto 路由档案。
 
-生成记录在付费提交前保存，同一任务仅生成一个脚本/音色/格式组合；已提交且结果不明确时禁止自动重建。下载会验证服务商存储域、真实格式与文件大小，再写入绑定的本地工作区 `generated/speech/`。read-only 沙箱禁止生成写入，语音查询仍可用。旧宿主执行插件 handler 时明确报不支持，不伪装成功。该工具不实现声音复刻或实时麦克风；默认朗读继续使用既有 TTS 设置。
+生成记录在付费提交前保存，同一任务仅生成一个脚本/音色/格式组合；已提交且结果不明确时禁止自动重建。下载会验证服务商存储域、真实格式与文件大小，再在绑定的本地工作区按需创建 `generated/speech/` 并保存文件，无需预建目录。read-only 沙箱禁止生成写入，语音查询仍可用。旧宿主执行插件 handler 时明确报不支持，不伪装成功。该工具不实现声音复刻或实时麦克风；默认朗读继续使用既有 TTS 设置。
 
 ## 插件工作台本机语音转写
 

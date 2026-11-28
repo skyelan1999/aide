@@ -109,9 +109,6 @@ func writeStreamToTransfer(ctx context.Context, a *App, sourceID, dest string, i
 		return err
 	}
 	defer fs.Close()
-	if err = fs.MkdirAll(path.Dir(dest)); err != nil {
-		return err
-	}
 	return writeStreamToTransferFSContext(ctx, fs, dest, input)
 }
 
@@ -177,6 +174,15 @@ func writeStreamToTransferFS(fs *transferFS, dest string, input io.Reader) error
 }
 
 func writeStreamToTransferFSContext(ctx context.Context, fs *transferFS, dest string, input io.Reader) (err error) {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := validTransferPath(dest); err != nil {
+		return err
+	}
+	if err := fs.MkdirAll(path.Dir(dest)); err != nil {
+		return err
+	}
 	stage := path.Join(path.Dir(dest), ".aide-stream-"+newID())
 	out, err := fs.Open(stage, os.O_WRONLY|os.O_CREATE|os.O_EXCL)
 	if err != nil {

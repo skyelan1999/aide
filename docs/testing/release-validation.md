@@ -61,7 +61,7 @@
 | file-preview | 原发布 Python renderer 产生真实 JPEG、原件不变、穿越拒绝 | 先验证图片路径；Office/HTML 转换须另有 LibreOffice/Chromium 环境，不能以此替代 |
 | step-viewer | 安装需确认、发布引擎摘要、已知 10×20×30 STEP 实体实际转换、网格与边界 | 原生 ARM/AMD 分别执行 |
 | browser-control / computer-control | 已发布 handler 与带鉴权的隔离 bridge 协议互通 | 模拟 bridge 响应，不代替物理桌面点击或系统权限验收 |
-| tts-tools | 已安装原生音色入口、非法编码拒绝、合成服务协议夹具的真实请求/下载/WAV 落盘/续跑不重提 | 不使用真实付费合成账户 |
+| tts-tools | 已安装原生音色入口、非法编码拒绝、合成服务协议夹具的真实请求、下载、空白工作区自动建目录并核对 WAV 字节、续跑不重复提交或下载 | 不使用真实付费合成账户 |
 | codex-bridge | 已发布 handler 与本机 manager fixture 完成配对、授权持久化、额度换算、模型目录、断开；秘密不返回 | 不冒称真实 Codex 推理或账户额度验收 |
 
 这些是本轮必需的可重现功能场景，不是所有插件所有硬件、格式和付费服务的穷尽证明。发布记录必须保留这些限制。新增 public 包或改变任一包必须更新冻结清单和相应用例，重新跑两架构；不能只改版本号/摘要来跳过失败。

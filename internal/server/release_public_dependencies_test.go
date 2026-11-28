@@ -28,6 +28,15 @@ type releasePublicTransport func(*http.Request) (*http.Response, error)
 
 func (f releasePublicTransport) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
+func TestNativeSpeechWritesIntoFreshWorkspace(t *testing.T) {
+	a := testApp(t)
+	a.pluginSurface = []byte(`{"plugins":[{"id":"tts-tools","tools":[{"name":"tts_generate","executable":true}]}]}`)
+	if _, err := os.Stat(filepath.Join(a.workspace.Name(), "generated")); !os.IsNotExist(err) {
+		t.Fatalf("expected clean workspace without output directories: %v", err)
+	}
+	releasePublicSpeech(t, a)
+}
+
 func releasePublicSpeech(t *testing.T, a *App) []string {
 	t.Helper()
 	// Exercise the installed native generation entry, durable job state, exact
