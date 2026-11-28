@@ -31,6 +31,7 @@ class BoundaryLauncher(module.Launcher):
         self.commands = []
         self.fail_build = False
         self.wrong_source = False
+        self.runtime_profile = 'source'
         self.existing_builder = False
         self.containers = []
         self.foreign_project = False
@@ -79,7 +80,7 @@ class BoundaryLauncher(module.Launcher):
             output = json.dumps({'services': {'aide': {'build': {'dockerfile': 'Dockerfile', 'args': {}}}}})
         elif short[:2] == ['image', 'inspect']:
             output = json.dumps({'Id': SCOPE_IMAGE, 'Os': 'linux', 'Architecture': 'arm64', 'Config': {'Labels': {
-                'aide.runtime-profile': 'slim',
+                'aide.runtime-profile': self.runtime_profile,
                 'aide.srcsha': 'e' * 64 if self.wrong_source else FINGERPRINT,
                 'aide.installation': self.scope}}})
         elif short[:2] == ['ps', '-aq']:
@@ -294,6 +295,16 @@ class LauncherContractTests(unittest.TestCase):
             self.launcher.build()
         self.assertFalse((self.root / '.env').exists())
         self.assertNotEqual(self.launcher.commands[-1], ['bash', 'scripts/aide.sh', 'start-built'])
+
+    def test_source_build_rejects_release_and_toolbox_profiles(self):
+        for profile in ('slim', 'toolbox', None):
+            with self.subTest(profile=profile):
+                self.launcher.runtime_profile = profile
+                with self.assertRaisesRegex(ValueError, 'did not verify'):
+                    self.launcher.build()
+                self.assertFalse((self.root / '.env').exists())
+                self.assertFalse(any(c[:3] == ['bash', 'scripts/aide.sh', 'start-built']
+                                     for c in self.launcher.commands))
 
     def test_other_builder_is_never_adopted(self):
         self.launcher.existing_builder = True
@@ -653,7 +664,8 @@ class RecycleTests(unittest.TestCase):
         return [c for c in self.launcher.commands if c[1:3] == ['image', 'rm']]
 
     def test_deletes_obsolete_tags_and_dangling_ids_preserving_all_dependencies(self):
-        old = self.launcher.add_image('b', ['aide:old-one', 'aide:old-two'])
+        old = self.launcher.add_image('b', ['aide:old-one', 'aide:old-two'],
+                                      **{'aide.runtime-profile': 'source'})
         dangling = self.launcher.add_image('c')
         seed = self.launcher.add_image('d', ['aide:sdk-seed-fixture'])
         toolbox = self.launcher.add_image('e', ['aide:release-ci-test-tools'], **{'aide.runtime-profile': 'toolbox'})

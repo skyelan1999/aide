@@ -210,7 +210,7 @@ class SelfDev:
         metadata = json.loads(self.d("image", "inspect", image, "--format", "{{json .}}", capture=True))
         labels = metadata.get("Config", {}).get("Labels", {})
         if (not IMAGE_ID.fullmatch(metadata.get("Id", ""))
-                or labels.get("aide.runtime-profile") != "slim"
+                or labels.get("aide.runtime-profile") != "source"
                 or labels.get("aide.srcsha") != fingerprint
                 or labels.get("aide.installation") != "selfdev-" + self.scope
                 or labels.get("aide.selfdev-slot") != slot):

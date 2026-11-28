@@ -351,7 +351,7 @@ class Launcher:
             if (image in protected or image in dependencies or any(t in dependencies for t in tags)
                     or meta.get('aide.installation') != self.scope
                     or meta.get('aide.build-role') != 'runtime'
-                    or meta.get('aide.runtime-profile') != 'slim' or meta.get('aide.local-base')
+                    or meta.get('aide.runtime-profile') not in ('source', 'slim') or meta.get('aide.local-base')
                     or any(t.startswith(retained_prefixes) or not t.startswith('aide:') for t in tags)):
                 retained.append(image)
                 continue
@@ -473,7 +473,7 @@ class Launcher:
         labels = metadata.get('Config', {}).get('Labels', {})
         if (not IMAGE_ID.fullmatch(metadata.get('Id', '')) or metadata.get('Os') != 'linux'
                 or metadata.get('Architecture') not in ('amd64', 'arm64')
-                or labels.get('aide.runtime-profile') != 'slim'
+                or labels.get('aide.runtime-profile') != 'source'
                 or labels.get('aide.srcsha') != source or labels.get('aide.installation') != self.scope):
             raise ValueError('Built image identity/source/installation did not verify; existing startup configuration retained')
         # Explicit source builds refresh the Mac host before changing startup state.

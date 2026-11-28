@@ -54,7 +54,7 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 ### macOS / Linux 构建前网络选源
 
-POSIX 源码 `build` 首先用宿主 Node.js/npm 编译 TypeScript（CI 使用 Node.js 24），首次执行按锁文件安装依赖，再运行 `npm run build:ts`。预构建运行包的 `start` 不做这一步。源码镜像保留 Go CLI 用于命令面板；发行镜像不包含 Go SDK，需开发工具时使用独立 SDK。Linux 的 Codex Bridge 在本地 Docker 网桥上使用受认证的管理请求；停止失败仍须显式报错。Linux 干净安装验收仅显式引入这两个工具，不继承宿主的完整环境。
+POSIX 源码 `build` 首先用宿主 Node.js/npm 编译 TypeScript（CI 使用 Node.js 24），首次执行按锁文件安装依赖，再运行 `npm run build:ts`。预构建运行包的 `start` 不做这一步。源码镜像保留 Go CLI 用于命令面板；POSIX 启动器和隔离 selfdev A/B 在应用新构建前须核对 `source` 镜像标签、源码指纹和安装归属。发行镜像仍须为 `slim`，不包含 Go SDK；需开发工具时使用独立 SDK。Linux 的 Codex Bridge 在本地 Docker 网桥上使用受认证的管理请求；停止失败仍须显式报错。Linux 干净安装验收仅显式引入这两个工具，不继承宿主的完整环境。
 
 源码构建在计算指纹、创建构建器及下载依赖之前，并发检测 Docker 标准源与 DaoCloud 镜像、PyPI 与清华镜像、Debian 与清华镜像。Docker 检测包含匿名令牌与清单读取；APT、PyPI 检查有效的源响应。标准源可用时优先使用标准源，失败而国内源可用时直接预选国内源。设置 `AIDE_BUILD_SOURCE=standard` 或 `china` 可明确指定，默认 `auto`。探测结果写入本安装 `.aide-data/build/network.json`，不包含凭据。
 
@@ -85,7 +85,7 @@ BuildKit 自身启动镜像、GitHub Codex Bridge 源码、WebView/Windows SDK �
 
 ### POSIX 构建自动回收（#745）
 
-macOS `build.command` 与 Linux `build.sh` 在镜像身份校验、应用及健康检查成功后（Docker 状态为 starting 时最多等候 30 秒），自动回收本安装不再被容器引用的过时 slim 运行镜像。归属标签逐项复核，移除过时 tag 后按完整 ID 处理遗留的无 tag 镜像，不使用强制镜像删除。保留当前运行镜像、任何运行中或已退出容器仍引用的镜像、其他安装镜像、构建参数指定的依赖镜像、`dependencies/dependency-seed/sdk-seed` 及 toolbox 编译/验收工具镜像；不停止容器、不删除数据卷或工作区。
+macOS `build.command` 与 Linux `build.sh` 在镜像身份校验、应用及健康检查成功后（Docker 状态为 starting 时最多等候 30 秒），自动回收本安装不再被容器引用的过时 `source` 运行镜像及旧版 `slim` 运行镜像。归属标签逐项复核，移除过时 tag 后按完整 ID 处理遗留的无 tag 镜像，不使用强制镜像删除。保留当前运行镜像、任何运行中或已退出容器仍引用的镜像、其他安装镜像、构建参数指定的依赖镜像、`dependencies/dependency-seed/sdk-seed` 及 toolbox 编译/验收工具镜像；不停止容器、不删除数据卷或工作区。
 
 随后仅对有匹配归属收据的专用构建器执行 `type=regular`、`until=24h`、`--max-used-space 20GB` 的定向缓存回收。保留最近 24 小时使用的增量层以及所有编译/下载 cache mount；因此 20GB 是回收目标，不是缓存总量的硬上限。使用 Docker 默认构建器时跳过缓存回收，避免清理共享构建器。Docker 过滤及空间策略见 [Buildx prune](https://docs.docker.com/reference/cli/docker/buildx/prune/)。
 

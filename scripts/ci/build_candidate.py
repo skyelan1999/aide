@@ -265,7 +265,9 @@ def main():
          '--build-arg', 'AIDE_RUNTIME_MODE=release-image', '--build-arg', 'AIDE_SRC_SHA=' + source,
          '--build-arg', 'AIDE_RUN_TESTS=1', '--build-arg', 'PIP_INDEX_URL=https://pypi.org/simple', '-t', image, '.'])
     info = json.loads(capture(['docker', 'image', 'inspect', image]))[0]
-    if info['Os'] != 'linux' or info['Architecture'] != args.arch or info['Config']['Labels'].get('aide.srcsha') != source:
+    labels = info['Config']['Labels']
+    if (info['Os'] != 'linux' or info['Architecture'] != args.arch
+            or labels.get('aide.srcsha') != source or labels.get('aide.runtime-profile') != 'slim'):
         raise ValueError('Built image identity mismatch')
     # Race/vet use the same source in a dedicated toolchain, never the slim runtime.
     run(['python3', 'scripts/development-toolbox.py', 'build',
