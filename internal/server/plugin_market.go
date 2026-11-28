@@ -192,12 +192,66 @@ func (a *App) marketRoot() (*os.Root, error) {
 	}
 	return root.OpenRoot("cache/plugin-market")
 }
+
+// The generic plug-in updater must not use a forward proxy for arbitrary
+// sources. An administrator may opt in to the process proxy for the official
+// market only, where both HTTPS hosts and repository paths are fixed.
+const marketUseEnvProxy = "AIDE_OFFICIAL_MARKET_USE_ENV_PROXY"
+
+func officialMarketRequest(u *url.URL) bool {
+	if u == nil || u.Scheme != "https" || u.User != nil || u.Port() != "" || u.Fragment != "" || u.RawQuery != "" || u.ForceQuery || u.RawPath != "" {
+		return false
+	}
+	switch u.Host {
+	case "api.github.com":
+		return u.Path == "/repos/"+marketRepository+"/git/ref/heads/main"
+	case "raw.githubusercontent.com":
+		prefix := "/" + marketRepository + "/"
+		if !strings.HasPrefix(u.Path, prefix) || path.Clean(u.Path) != u.Path {
+			return false
+		}
+		revision, file, ok := strings.Cut(strings.TrimPrefix(u.Path, prefix), "/")
+		return ok && marketRevision.MatchString(revision) && (file == "catalog.json" ||
+			(strings.HasPrefix(file, "packages/") && strings.HasSuffix(file, ".zip")))
+	}
+	return false
+}
+
+type officialMarketTransport struct {
+	direct, proxied http.RoundTripper
+	proxy           func(*http.Request) (*url.URL, error)
+}
+
+func (t officialMarketTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Method != http.MethodGet || !officialMarketRequest(req.URL) {
+		return nil, errors.New("官方市场代理请求超出官方 HTTPS 目录")
+	}
+	proxy, err := t.proxy(req)
+	if err != nil {
+		return nil, err
+	}
+	if proxy == nil {
+		// Honor NO_PROXY without dropping the ordinary direct dial policy.
+		return t.direct.RoundTrip(req)
+	}
+	return t.proxied.RoundTrip(req)
+}
+
+var officialMarketProxyTransport = func() *http.Transport {
+	p := http.DefaultTransport.(*http.Transport).Clone()
+	p.Proxy = http.ProxyFromEnvironment
+	return p
+}()
+
 func (a *App) marketClient() *http.Client {
 	base := a.pluginUpdateClient
 	if base == nil {
 		base = newPluginUpdateClient()
 	}
 	c := *base
+	if a.pluginUpdateClient == nil && os.Getenv(marketUseEnvProxy) == "1" {
+		c.Transport = officialMarketTransport{direct: c.Transport, proxied: officialMarketProxyTransport, proxy: http.ProxyFromEnvironment}
+	}
 	prior := base.CheckRedirect
 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if req.URL.Hostname() != "raw.githubusercontent.com" && req.URL.Hostname() != "api.github.com" {

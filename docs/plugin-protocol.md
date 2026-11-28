@@ -544,3 +544,7 @@ Inputs include `phase`, a host-generated `turnId`, the current user's `heard` te
 Native audio phases (`native.begin`/`native.recall`/`native.observe`) are reserved for a future protocol revision: in the current host, an enabled generic plugin provider covers only the text/voice decision loop and native realtime calls are explicitly refused (503) rather than silently falling back to the built-in agent. Recall uses the server's current transcript, never model-supplied query arguments. Native audio transport and work authorization remain host responsibilities. Each minute, an unlocked active provider receives `pulse`; the host performs no model call for this phase. Providers must not infer new experiences from elapsed idle time.
 
 IPC is scoped to assistant unlock, vault unlock, plugin configuration/package and workspace generation. Locking, disabling or changing scope cancels the child process; no stale output is accepted. Private storage lives under the protected assistant data subtree, outside ordinary workspace tools. On-disk protection, schema, retention and migrations are the provider's responsibility. This candidate extension is not present in older released hosts. No provider implementation or private design belongs in this public repository.
+
+### 官方市场代理
+
+默认直连官方市场。若服务所在网络要求经受信任的 HTTPS 代理，可在 Aide 服务进程设置 `AIDE_OFFICIAL_MARKET_USE_ENV_PROXY=1` 以及 `HTTPS_PROXY`、`NO_PROXY`。只有官方市场目录和固定版本安装包的 HTTPS GET 可使用该代理；第三方更新地址不读取此开关，安装包摘要和来源校验不变。
