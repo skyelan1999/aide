@@ -11,6 +11,14 @@
 
 namespace aide_desktop {
 
+inline HRESULT localSpeechTokenLanguage(ISpObjectToken* token, LPWSTR* language) {
+    ISpDataKey* attributes = nullptr;
+    HRESULT hr = token->OpenKey(L"Attributes", &attributes);
+    if (SUCCEEDED(hr)) hr = attributes->GetStringValue(L"Language", language);
+    if (attributes) attributes->Release();
+    return hr;
+}
+
 inline void clearSpeechEvent(SPEVENT& event) {
     if (event.elParamType == SPET_LPARAM_IS_OBJECT && event.lParam) {
         reinterpret_cast<IUnknown*>(event.lParam)->Release();
@@ -65,7 +73,7 @@ class LocalSpeech {
             ISpObjectToken* token = nullptr;
             LPWSTR language = nullptr;
             hr = recognizer->GetRecognizer(&token);
-            if (SUCCEEDED(hr)) hr = token->GetStringValue(L"Language", &language);
+            if (SUCCEEDED(hr)) hr = localSpeechTokenLanguage(token, &language);
             bool chinese = false;
             if (SUCCEEDED(hr) && language) {
                 auto cursor = language;
