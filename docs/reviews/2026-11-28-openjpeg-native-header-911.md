@@ -40,3 +40,7 @@ The native patch SHA-256 pin is now `d83f7e323e9354911d1b7e7e228396ed53acce1137e
 ## Integration follow-up
 
 The receiving coordinator must arrange a permitted build environment, apply the entire checked native patch to the SHA-256-pinned archive, rebuild with the pinned compiler, update generated fallback/provenance/embedded worker and their affected checksums/cache identity, then compare normal JP2/J2K pixels on that new artifact. Until then, retain the browser defense from #1008 and keep #911 open. No PR, push, merge, release or Issue closure was performed here. Rollback of this source-only change is to omit/revert this branch's commit; no runtime replacement needs undoing.
+
+## Verified integration update
+
+The [pinned compiler run](https://github.com/skyelan1999/aide/actions/runs/46161290331) rebuilt the patched decoder and passed normal boxed JP2 and raw J2K pixel comparison. Its digest matches the checked-in fallback; provenance, embedded worker, checksums and cache versions were updated together. The earlier NOT_RUN referred to the first, source-only handoff. Malformed-input fixtures and sanitizer tests were not run as part of this integration.
