@@ -68,6 +68,26 @@ def cadence():
     print('PASS: weekly public release cadence')
 
 
+def backlog():
+    repo = os.environ['GH_REPO']
+    require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo), 'Invalid repository')
+    opened = []
+    for endpoint, label in (('pulls', 'PR'), ('issues', 'Issue')):
+        pages = json.loads(capture(['gh', 'api', '--paginate', '--slurp',
+                                    f'repos/{repo}/{endpoint}?state=open&per_page=100']))
+        require(isinstance(pages, list) and pages and all(isinstance(p, list) for p in pages),
+                'Invalid open ' + label + ' response')
+        for entry in (item for page in pages for item in page):
+            require(isinstance(entry, dict) and type(entry.get('number')) is int and
+                    entry['number'] > 0 and entry.get('state') == 'open', 'Invalid open ' + label + ' entry')
+            # REST's issues endpoint also enumerates PRs; count them only once.
+            if endpoint == 'issues' and 'pull_request' in entry:
+                continue
+            opened.append(f"{label} #{entry['number']}")
+    require(not opened, f"Release backlog is not clear ({len(opened)} open): " + ', '.join(opened))
+    print(f'PASS: {repo} has no open pull requests or issues')
+
+
 def release_notes(tag):
     path = ROOT / 'docs/releases' / (tag + '.md')
     require(path.is_file(), 'Missing reviewed human-readable release notes: ' + str(path))
@@ -214,10 +234,10 @@ def remote(root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['source', 'artifacts', 'remote', 'cadence'])
+    parser.add_argument('mode', choices=['source', 'artifacts', 'remote', 'cadence', 'backlog'])
     parser.add_argument('--root', type=Path, default=ROOT / '.agent-state/delivery')
     args = parser.parse_args()
-    if args.mode in ('source', 'cadence'):
+    if args.mode in ('source', 'cadence', 'backlog'):
         globals()[args.mode]()
     else:
         globals()[args.mode](args.root)
