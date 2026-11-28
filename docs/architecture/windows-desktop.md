@@ -40,3 +40,16 @@ python scripts/agent-route.py verify quick
 `Windows Desktop Check` 只做验证，不调用 Delivery 或发布 Release：Linux 分别交叉编译 AMD64/ARM64；Windows runner 用单独测试 EXE 和合成 localhost TLS 服务，实际检查 WebView2 窗口、应用内新标签、共享存储、沙箱 MessagePort、插件页原生桥隔离、未保存关闭取消及下载取消。测试 EXE 不编译进产品；测试不读真实账户、启动 Docker 或发起真实 Hello 注册/签名。合成界面不等于 Compare/ProfessionalProject 真正功能或用户设备验收。
 
 精确通过/未执行项、源码与构建证据见 [任务记录](../tasks/windows-desktop-20261103.json)。Windows Hello 硬件签名、用户环境完整 build/start 和实际插件操作仍须在对应 Windows 设备验证，不能用跨编译或隔离窗口测试替代。
+
+
+### 本机中文语音识别
+
+声明本机语音能力的工作台可由用户主动启动 Windows 中文听写。宿主只接受可见、活动且受信任的工作台页面发起的会话，并在打开麦克风前显示 Windows 原生确认；切换标签、导航、隐藏、最小化或关闭都会撤销会话。Windows 端使用进程内 [SAPI 识别器](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee413260(v=vs.85)) 和本机简体中文语音组件，Aide 不把原始录音传给远端。若本机组件或权限不满足，提示错误而不回退到云端。会话最长 15 分钟。
+
+
+#### 实机验收
+
+- 在独立 Windows 测试环境记录受测源码 SHA、Windows 版本、架构及 WebView2 版本。用声明 `microphone` 和 `onDeviceSpeech` 的测试工作台，关闭插件的自动保存和提交。
+- 先验证不采音：仅打开工作台、准备转写或在原生确认框选“否”，均不应开始录音。CI 的 `python scripts/test_windows_speech_bridge.py` 只验证本机桥接生命周期，不会启用麦克风。
+- 安装简体中文 SAPI 识别组件，并选择支持简体中文（`0804`）的默认识别引擎。断开外网但保留本机服务，设备使用者主动同意后朗读一段普通话，检查渐进文字与主动停止；再分别验证切换标签、最小化、关闭时停止且不自动恢复。
+- 拒绝 Windows 麦克风权限或使用没有中文识别组件的测试环境时，预期显示明确错误，不启用云端回退。仅记录状态和文字结果，不收集录音文件。未覆盖的项保留 `NOT_RUN`。

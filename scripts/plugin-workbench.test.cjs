@@ -90,6 +90,38 @@ test('local speech needs both declarations and a trusted host click before recor
   f.controller.close();
  }
 });
+test('Windows native starting state keeps polling until recording, then stops explicitly',async()=>{
+ const f=fixture(bridgeResponse),calls=[];
+ f.window.AideNativeSpeech=async args=>{calls.push(args);return {state:args.action==='stop'?'stopped':args.action==='status'&&calls.filter(x=>x.action==='status').length>1?'recording':'starting',text:''};};
+ await f.controller.open({...bridgePlugin,workbench:{...bridgePlugin.workbench,microphone:true,onDeviceSpeech:true}},f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+ const port=frame.contentWindow.messages[0].ports[0];await port.postMessage({protocol:1,requestId:'prepare',method:'speech.local',arguments:{action:'prepare',lang:'zh-CN'}});
+ await f.nodes.find(n=>n.textContent==='开始本机录音').onclick({isTrusted:true});
+ await f.tick();assert.deepEqual(calls.map(x=>x.action),['start','status']);
+ await f.tick();assert.deepEqual(calls.map(x=>x.action),['start','status','status']);
+ await f.nodes.find(n=>n.textContent==='停止本机录音').onclick({isTrusted:true});
+ assert.equal(calls.at(-1).action,'stop');f.controller.close();
+});
+test('native speech failure never constructs the browser recognizer',async()=>{
+ const f=fixture(bridgeResponse),calls=[];let browserStarts=0;
+ f.window.SpeechRecognition=class {constructor(){browserStarts++;} start(){browserStarts++;}};
+ f.window.AideNativeSpeech=async args=>{calls.push(args);if(args.action==='start')throw Error('Native permission or offline component unavailable');return {state:'stopped'};};
+ await f.controller.open({...bridgePlugin,workbench:{...bridgePlugin.workbench,microphone:true,onDeviceSpeech:true}},f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+ await frame.contentWindow.messages[0].ports[0].postMessage({protocol:1,requestId:'prepare',method:'speech.local',arguments:{action:'prepare',lang:'zh-CN'}});
+ await f.nodes.find(n=>n.textContent==='开始本机录音').onclick({isTrusted:true});
+ assert.equal(calls[0].action,'start');assert.equal(browserStarts,0);f.controller.close();
+});
+test('closing during native authorization stops a late successful session',async()=>{
+ const f=fixture(bridgeResponse),calls=[];let finish;
+ f.window.AideNativeSpeech=args=>{calls.push(args);return args.action==='start'?new Promise(resolve=>finish=resolve):Promise.resolve({state:'stopped'});};
+ await f.controller.open({...bridgePlugin,workbench:{...bridgePlugin.workbench,microphone:true,onDeviceSpeech:true}},f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+ await frame.contentWindow.messages[0].ports[0].postMessage({protocol:1,requestId:'prepare',method:'speech.local',arguments:{action:'prepare',lang:'zh-CN'}});
+ const pending=f.nodes.find(n=>n.textContent==='开始本机录音').onclick({isTrusted:true});
+ f.controller.close();finish({state:'starting'});await pending;
+ assert.equal(calls[0].action,'start');assert(calls.slice(1).some(x=>x.action==='stop'&&x.session===calls[0].session));assert.equal(frame.src,'about:blank');
+});
 test('MessagePort only connects to the active frame and never carries parent instance/auth',async()=>{
  const f=fixture(bridgeResponse);await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:{},data:{type:'aide.workbench.ready',protocol:1}});assert.equal(frame.contentWindow.messages.length,0);f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const message=frame.contentWindow.messages[0];assert.equal(message.data.type,'aide.workbench.connect');assert(!JSON.stringify(message.data).includes('instanceId'));const port=message.ports[0];const calls=[];f.services.api=async(url,options)=>{calls.push({url,options});return {requestId:'call1',status:'result',result:{ok:true}};};await port.postMessage({protocol:1,requestId:'bad',method:'tool.call',tool:'other'});assert.equal(calls.length,0);assert.equal(port.received.at(-1).status,'error');await port.postMessage({protocol:1,requestId:'call1',method:'tool.call',tool:'own_tool',arguments:{x:1}});assert.equal(calls.length,1);assert.equal(JSON.parse(calls[0].options.body).tool,'own_tool');assert.equal(port.received.at(-1).result.ok,true);await port.postMessage({protocol:1,requestId:'call1',method:'tool.call',tool:'own_tool'});assert.equal(calls.length,1);f.controller.close();assert.equal(port.other.closed,true);assert(port.received.some(x=>x.event==='scope.revoked'));
 });
