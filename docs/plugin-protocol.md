@@ -508,7 +508,7 @@ A pricing catalog may also declare the optional `accountBalance` adapter `xiaomi
 
 插件连接后检查握手中的 `speech.local` 能力，再调用 `await host.speech({action:'prepare',lang:'zh-CN'})`。宿主显示“开始本机录音”；用户亲自点击后才申请系统权限并开始。`host.onEvent` 接收 `{event:'speech.local',result:{state,message,text?}}`，状态包括 `authorizing`、`recording`、`stopped`、`error`。插件可调用 `host.speech({action:'stop'})` 请求停止，但不能通过请求代替用户的开始点击。文本是可变的识别结果，使用前应由用户核对；插件自行决定是否保存或提交文本。
 
-Mac 桌面版使用宿主原生语音识别并要求本机处理；不满足时明确报错。其他浏览器仅在支持 `SpeechRecognition.processLocally` 且中文离线资源可用时启动，否则拒绝，不回退到云端识别。隐藏页面、关闭工作台或作用域失效会停止录音；单段最长 15 分钟，发送给插件的文本最多 60,000 字符。麦克风授权属于设备和系统，声明能力并不自动授予权限。本功能与助理持续语音、TTS 及插件工具执行分别管理。
+Mac 桌面版使用宿主原生语音识别并要求本机处理；Windows 桌面版通过本机 SAPI 提供简体中文识别，用户须在原生确认框中逐次同意。默认识别引擎不支持简体中文或本机权限不可用时明确报错。浏览器仅在支持 `SpeechRecognition.processLocally` 且中文离线资源可用时启动，否则拒绝，不回退到云端识别。隐藏页面、关闭工作台或作用域失效会停止录音；单段最长 15 分钟，发送给插件的文本最多 60,000 字符。麦克风授权属于设备和系统，声明能力并不自动授予权限。本功能与助理持续语音、TTS 及插件工具执行分别管理。
 
 ## Project briefing message extraction (local candidate)
 
